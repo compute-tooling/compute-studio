@@ -67,7 +67,7 @@ class CoreRun(models.Model):
                              null=True, default=None)
     project = models.ForeignKey(Project, on_delete=models.PROTECT)
     # run-time in seconds
-    run_time = models.IntegerField()
+    run_time = models.IntegerField(default=0)
     creation_date = models.DateTimeField(
         default=make_aware(datetime.datetime(2015, 1, 1)))
     exp_comp_datetime = models.DateTimeField(

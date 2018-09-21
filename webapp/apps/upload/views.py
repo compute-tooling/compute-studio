@@ -10,7 +10,7 @@ from webapp.apps.core.models import Tag, TagOption
 from webapp.apps.core.views import CoreRunDetailView, CoreRunDownloadView
 from webapp.apps.core.compute import Compute, WorkersUnreachableError
 
-from webapp.apps.users.models import Plan
+from webapp.apps.users.models import Plan, Project
 
 from .models import FileInput, FileOutput
 
@@ -66,6 +66,7 @@ class FileInputView(View):
         fo.job_id = submitted_id
         delta = datetime.timedelta(seconds=20)
         fo.exp_comp_datetime = timezone.now() + delta
+        fo.project = Project.objects.get(name=self.name)
         fo.save()
         return redirect(fo)
 

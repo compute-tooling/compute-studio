@@ -97,6 +97,7 @@ class CoreRunDetailView(SuperclassTemplateNameMixin, DetailView):
                     self.object.error_text = str(e)
                     self.object.save()
                     return self.fail()
+                self.object.run_time = sum(results['meta']['job_times'])
                 self.object.outputs = results['outputs']
                 self.object.aggr_outputs = results['aggr_outputs']
                 self.object.creation_date = timezone.now()
