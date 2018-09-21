@@ -1,0 +1,139 @@
+.top-banner {
+    color: white;
+    background-color: black;
+}
+
+.explainer {
+    color: black;
+    background-color: white;
+}
+
+.banner-select {
+  position:absolute;
+  right:5px;
+  top:5px;
+  width:50%;
+}
+
+p {
+  width:80ch
+}
+
+.login-status {
+  position:absolute;
+  top:0px;
+  right:0px;
+  color:white;
+}
+
+
+/* Navbar container */
+.navbar {
+ background-color: black;
+}
+
+/* Links inside the navbar */
+.navbar a {
+ float: right;
+ font-size: 16px;
+ color: white;
+ text-align: center;
+ padding: 14px 16px;
+ text-decoration: none;
+}
+
+/* The dropdown container */
+.dropdown {
+ float: right;
+}
+
+/* Dropdown button */
+.dropdown .dropbtn {
+ font-size: 16px;
+ border: none;
+ outline: none;
+ color: white;
+ padding: 14px 16px;
+ background-color: inherit;
+ font-family: inherit; /* Important for vertical align on mobile phones */
+ margin: 0; /* Important for vertical align on mobile phones */
+}
+
+/* Add a red background color to navbar links on hover */
+.navbar a:hover, .dropdown:hover .dropbtn {
+ background-color: black;
+}
+
+/* Dropdown content (hidden by default) */
+.dropdown-content {
+ display: none;
+ position: absolute;
+ background-color: #f9f9f9;
+ min-width: 160px;
+ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+ z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+ float: none;
+ color: black;
+ padding: 12px 16px;
+ text-decoration: none;
+ display: block;
+ text-align: left;
+}
+
+/* Add a grey background color to dropdown links on hover */
+.dropdown-content a:hover {
+ background-color: #ddd;
+}
+
+/* Show the dropdown menu on hover */
+.dropdown:hover .dropdown-content {
+ display: block;
+}
+
+.dropdown-item {
+  color: black;
+}
+
+
+.progress-bar {
+  float: left;
+  width: 10%;
+  height: 100%;
+  font-size: 12px;
+  line-height: 20px;
+  color: black;
+  text-align: center;
+  background-color: black;
+}
+
+
+/**
+ * The CSS shown here will not be introduced in the Quickstart guide, but shows
+ * how you can use CSS to style your Element's container.
+ */
+ .StripeElement {
+  background-color: white;
+  height: 40px;
+  padding: 10px 12px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 3px 0 #e6ebf1;
+  -webkit-transition: box-shadow 150ms ease;
+  transition: box-shadow 150ms ease;
+}
+
+.StripeElement--focus {
+  box-shadow: 0 1px 3px 0 #cfd7df;
+}
+
+.StripeElement--invalid {
+  border-color: #fa755a;
+}
+
+.StripeElement--webkit-autofill {
+  background-color: #fefde5 !important;
+}

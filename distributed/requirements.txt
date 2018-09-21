@@ -1,0 +1,9 @@
+gunicorn
+flask
+redis
+toolz
+celery
+requests-mock
+requests
+msgpack
+pytest

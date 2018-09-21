@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row">
+        <div class="columns medium-6 medium-offset-3 end text-center">
+            <h1>Please wait while calculations are running.</h1>
+            <div class="progress">
+              <div class="progress-bar" role="progressbar" style="width: 0%">
+                <span class="sr-only">45% Complete</span>
+            </div>
+        </div>
+        <h4>Estimated time remaining: <span id="eta"></span></h4>
+    </div>
+</div>
+</div>
+
+{% endblock %}
+
+{% block bottom_scripts %}
+
+<script type="text/javascript" src="{% static 'js/vendor/moment/moment.min.js' %}"></script>
+<script type="text/javascript">
+$(function() {
+    var origEta;
+    function insertEta(eta) {
+        origEta = origEta ? origEta : eta;
+        $('.progress-bar').css('width', (1 - (eta / origEta)) * 100 + '%');
+        $('#eta').text(moment.duration(eta, 'minutes').humanize());
+    }
+
+    function ajaxEta() {
+        $.ajax(window.location.href, {
+            type: 'post',
+            data: { csrfmiddlewaretoken: '{{ csrf_token }}'},
+            success: function(data, textStatus, xhr) {
+                if (xhr.status === 202) {
+                    insertEta(data.eta);
+                } else if (xhr.status === 200) {
+                    insertEta(data.eta);
+                    setTimeout(function() {
+                        window.location.reload(1);
+                    }, 1000)
+                }
+            }
+        });
+    }
+    ajaxEta();
+    setInterval(ajaxEta, 1000);
+});
+</script>
+
+{% endblock %}

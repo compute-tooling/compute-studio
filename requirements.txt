@@ -1,0 +1,12 @@
+django==2.1
+msgpack
+requests
+requests_mock
+dj_database_url
+dataclasses
+psycopg2
+whitenoise
+gunicorn
+stripe
+sendgrid-django
+pytest

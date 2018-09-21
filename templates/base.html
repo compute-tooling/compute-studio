@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+ <title>COMP Models</title>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+ <link rel="stylesheet" href="{% static 'css/compbase.css' %}">
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+ <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+  <div class="top-banner" >
+    <div class="container-fluid">
+      <h1><a style="color:white;text-decoration:none;" href="{% url 'home' %}">COMP</a></h1>
+      <div class="navbar">
+       <div class="dropdown">
+         <button class="dropbtn">Models
+           <i class="fa fa-caret-down"></i>
+         </button>
+         <div class="dropdown-content">
+           <a href="/upload/">Upload File</a>
+           <a href="#">Cool model</a>
+           <a href="#">Neat model</a>
+         </div>
+       </div>
+       <a href="/publish/">Publish</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-status" >
+    {% if user.is_authenticated %}
+      Hi {{ user.username }}! |
+      <a style="color:white;" href="{% url 'logout' %}">logout</a>
+    {% else %}
+      <a style="color:white;" href="{% url 'login' %}">login</a> |
+      <a style="color:white;" href="{% url 'signup' %}">signup</a>
+    {% endif %}
+  </div>
+
+    <main>
+      <div class="container">
+        {% block content %}
+        {% endblock %}
+      </div>
+    </main>
+
+
+{% block bottom_scripts %}
+{% endblock %}
+</body>
+</html>

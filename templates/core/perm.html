@@ -1,0 +1,17 @@
+
+{% block perm %}
+{% csrf_token %}
+<p> You must sign-up to run models on this platform. The models are offered for free, but you pay for the computational resources used to run them. The prices are equal to AWS compute pricing.  </p>
+<p> The price per hour of a server running this model is:
+    <ul>
+        <li>Metered price: {{ metered_price }}</li>
+    </ul>
+</p>
+<p> The average cost of one run for this model is: {{ avg_run_cost }}</p>
+<a style="color:black;" href="{% url 'signup' %}">Click here to signup</a>
+{% endblock %}
+
+<!-- {% block privatemodel %}
+{% csrf_token %}
+<p> This model is not publically available. If you think that you should have access to this model, contact us at thecompmodels@gmail.com </p>
+{% endblock %} -->

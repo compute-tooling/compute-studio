@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+<style>
+  .btn {
+    color: black;
+  }
+  .text-white {
+    color: white;
+  }
+  .table > thead > tr > th {
+    border: 0;
+  }
+  .single-line {
+    white-space: nowrap;
+  }
+  .param-text {
+      margin-left: 80px;
+      margin-right: 80px;
+      margin-top: 40px;
+      margin-bottom: 40px;
+      text-align: left;
+  }
+  .file-contents{
+      font-family: "Courier New", Courier, monospace;
+      font-weight: bold;
+      margin-left: 80px;
+      margin-right: 80px;
+      margin-top: 40px;
+      margin-bottom: 40px;
+      text-align: left;
+  }
+  .container {
+    width: 95%;
+  }
+  .output, .aggr-output {
+    display: none;
+  }
+  .output.selected-table-year.selected-table-tag, .aggr-output.selected-aggr-table-tag {
+    display: block;
+  }
+  .container > .row {
+    padding: 10px 0;
+  }
+  .output h1 {
+    text-transform: uppercase;
+  }
+  #table-select-container .nav-pills li {
+    padding-top: 40px;
+  }
+  #table-select-container .nav-pills li:first-child {
+    padding-top: 0;
+  }
+  .dt-btn-wrapper {
+    text-align: center;
+  }
+</style>
+{% block content %}
+<div class="wrapper">
+  <div id="table-drilldown-container">
+    <div>
+      <div class="container">
+        <div class="row">
+          {% if object.aggr_outputs %}
+          <div class="col-md-12" id="fiscal-totals-container">
+            <div class="panel panel-default">
+              <div class="panel-body">
+                {% include "core/select_tags.html" with tags=view.aggr_tags only %}
+                {% for x in object.aggr_outputs %}
+                <div class="aggr-output" {% for key, value in x.tags.items %} data-tag-{{ key }}="{{ value }}"{% endfor %}>
+                  <h1 class="text-center">{{ x.title }}</h1>
+                  {{ x.renderable | safe }}
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        <div class="row">
+          {% if object.outputs %}
+          <div class="col-md-8 col-md-push-2" id="table-select-container">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h3 class="panel-title">Build Table</h3>
+              </div>
+              <div class="panel-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h1 class="text-center">For Year: </h1>
+                  </div>
+                  <div class="col-md-6">
+                    <h1 class="text-center">
+                      <div class="dropdown dropdown-select dropdown-inline data-switch">
+                        <a class="dropdown-toggle" id="selected-year" type="button" data-toggle="dropdown" aria-expanded="true">
+                          {{ object.inputs.years.0 }}
+                          <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu" id="year-selector" role="menu" aria-labelledby="years">
+                          {% for year in object.inputs.years %}
+                          <li role="presentation">
+                            <a role="menuitem" tabindex="-1" href="#" data-year="{{ year }}">
+                            {{ year }}
+                            </a>
+                          </li>
+                          {% endfor %}
+                        </ul>
+                      </div>
+                    </h1>
+                  </div>
+                </div>
+                {% include "core/select_tags.html" with tags=view.tags only %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+        </div>
+        <div class="row">
+          {% if object.outputs %}
+          <div class="col-md-12" id="table-container">
+            <div class="panel panel-default">
+                <div class="panel-body" style="overflow: scroll">
+                  {% for x in object.outputs %}
+                  <div class="output" data-year="{{ x.year }}" {% for key, value in x.tags.items %} data-tag-{{ key }}="{{ value }}"{% endfor %}>
+                    <h1 class="text-center">{{ x.title }}</h1>
+                    {{ x.renderable | safe }}
+                  </div>
+                  {% endfor %}
+                </div>
+            </div>
+          </div>
+        {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block bottom_scripts %}
+{{ block.super }}
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.18/js/dataTables.bootstrap.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.bootstrap.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.colVis.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.flash.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.html5.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.print.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.2/js/dataTables.responsive.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.2/js/responsive.bootstrap.min.js"></script>
+<script>
+
+var dataTableOptions = {
+  "paging": false,
+  "ordering": false,
+  "searching": false,
+  "bInfo": false,
+  'dom': 'Bt', /* Display the buttons before the table */
+  "buttons": [
+    'print',
+    {"text": "Copy table",
+     "extend": "copy"},
+    {"text": "Select columns",
+     "extend": "colvis"}
+  ]
+  // "responsive": true
+};
+
+var initDataTable = function (el) {
+  var dt = el.dataTable(dataTableOptions);
+  dt.parent().find("div.dt-buttons.btn-group")
+    .wrap("<div class='dt-btn-wrapper'></div>");
+};
+
+var initVisibleTable = function (containerSelector) {
+  /* We only expect one table to be visible at once, i.e. if the right year is
+     selected, and the right tag is selected */
+  var table_to_show = $(containerSelector + " table:visible");
+  /* Make sure we don't initialize the DataTable twice */
+  if ( ! $.fn.DataTable.isDataTable(table_to_show) ) {
+    initDataTable(table_to_show);
+  }
+};
+
+var initVisibleYearTable = function () {
+  initVisibleTable('#table-container');
+};
+
+
+var initVisibleAggrTable = function () {
+  initVisibleTable('#fiscal-totals-container');
+};
+
+var activateYearTablesBySelectedYear = function () {
+  var containers_to_show = $('.output[data-year="' + $("#selected-year").text().trim() + '"]');
+  containers_to_show.addClass('selected-table-year');
+  $('.output').not(containers_to_show).removeClass('selected-table-year');
+};
+
+var activateTablesBySelectedTags = function (args) {
+  /* Get the current set of tags */
+  var tags_to_match = {};
+  $(args.selectorContainerSelector + ' .tag-selector:visible li.active').each(function (_index, el) {
+    $.each(el.attributes, function (_index, attr) {
+      if (attr.name.startsWith('data-tag-')) {
+        tags_to_match[attr.name] = attr.value;
+      }
+    })
+  });
+
+  /* Find the tables matching that set of tags */
+  var selector = '.' + args.outputClass;
+  $.each(tags_to_match, function (key, value) {
+    selector += '[' + key + '="' + value + '"]'
+  });
+  var containers_to_show = $(selector);
+
+  /* Label these tables as selected (subject to a year selection) and
+     unlabel the rest, then initialize visible tables */
+  containers_to_show.addClass(args.selectedTableTagClass);
+  $('.' + args.outputClass).not(containers_to_show).removeClass(args.selectedTableTagClass);
+};
+
+var activateYearTablesBySelectedTags = function () {
+  activateTablesBySelectedTags({
+    "selectorContainerSelector": "#table-select-container",
+    "outputClass": "output",
+    "selectedTableTagClass": "selected-table-tag"
+  });
+};
+
+var activateAggrTablesBySelectedTags = function () {
+  activateTablesBySelectedTags({
+    "selectorContainerSelector": "#fiscal-totals-container",
+    "outputClass": "aggr-output",
+    "selectedTableTagClass": "selected-aggr-table-tag"
+  });
+};
+
+$(document).ready(function () {
+  $('table').addClass('table').addClass('table-striped');
+  activateAggrTablesBySelectedTags();
+  initVisibleAggrTable();
+  activateYearTablesBySelectedTags();
+  activateYearTablesBySelectedYear();
+  initVisibleYearTable();
+
+  $("#year-selector li a").click(function (e) {
+    e.preventDefault();
+    activateYearTablesBySelectedYear();
+    initVisibleTable();
+  });
+
+  $(".tag-selector li a").click(function (e) {
+    /* Toggle the visible selection */
+    e.preventDefault();
+    var target_li = $(e.target).parent('li');
+    target_li.addClass('active');
+    var parent_container = target_li.parents('.tag-selector-container');
+    var unselected = target_li.parent('.nav').find('li').not(target_li);
+    unselected.removeClass('active');
+
+    /* Deactivate child tags for unselected options */
+    unselected.each(function (_index, el) {
+      var children_keys = $(el).attr('data-children-keys').trim().split(" ");
+      parent_container.find($(children_keys.map(function (key) {
+          return ".tag-" + key;
+        }).join(", ")))
+        .addClass('hidden');
+    });
+
+    /* Activate child tags */
+    var children_keys = target_li.attr('data-children-keys').trim().split(" ");
+    parent_container.find($(children_keys.map(function (key) {
+        return ".tag-" + key;
+      }).join(", ")))
+      .removeClass('hidden');
+
+    activateYearTablesBySelectedTags();
+    initVisibleYearTable();
+    activateAggrTablesBySelectedTags();
+    initVisibleAggrTable();
+  });
+});
+</script>
+
+{% endblock %}

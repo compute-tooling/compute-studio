@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<form class="inputs-form" method="post" action="/upload/" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="inputs-block-header">
+    <h1>Data File: A CSV file to describe</a></h1>
+    {% if not can_run %}
+    {% include 'core/perm.html' %}
+    {% block perm %}
+    {% endblock %}
+    {% endif %}
+  </div>
+
+  <p><label for="id_datafile">Upload a data file:</label> </p>
+  <p><input id="id_datafile" name="datafile" type="file" /></p>
+
+  <div class="sidebar-button">
+    <a href="#" ></a>
+    <input id="submit" class="btn btn-secondary btn-block btn-animate" type="submit" name="full_calc" value="Show me the results!">
+  </div>
+
+</form>
+{% endblock %}
