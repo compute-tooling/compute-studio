@@ -98,6 +98,8 @@ class CoreRunDetailView(SuperclassTemplateNameMixin, DetailView):
                     self.object.save()
                     return self.fail()
                 self.object.run_time = sum(results['meta']['job_times'])
+                self.object.run_cost = (self.object.run_time *
+                                        self.object.project.server_cost_secs)
                 self.object.outputs = results['outputs']
                 self.object.aggr_outputs = results['aggr_outputs']
                 self.object.creation_date = timezone.now()

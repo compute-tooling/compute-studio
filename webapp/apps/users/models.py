@@ -252,6 +252,18 @@ class Project(models.Model):
                                       null=True)
     exp_task_time = models.IntegerField(null=True)
 
+    @staticmethod
+    def get_or_none(**kwargs):
+        try:
+            res = Project.objects.get(**kwargs)
+        except Project.DoesNotExist:
+            res = None
+        return res
+
+    @property
+    def server_cost_secs(self):
+        return float(self.server_cost) / 3600.0
+
 
 class Product(models.Model):
     stripe_id = models.CharField(max_length=255, unique=True)

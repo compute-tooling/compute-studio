@@ -16,6 +16,7 @@ class CoreAbstractViewsTest():
     app_name = 'core'
     post_data_ok = {}
     mockcompute = None
+    RunModel = None
 
     def test_get(self, monkeypatch, client):
         """
@@ -48,7 +49,8 @@ class CoreAbstractViewsTest():
         - test download page returns 200 and zip file content
         - test logged out user can view outputs page
         """
-        monkeypatch.setattr('webapp.apps.upload.views.Compute', self.mockcompute)
+        monkeypatch.setattr(f'webapp.apps.{self.app_name}.views.Compute',
+                            self.mockcompute)
         monkeypatch.setattr('webapp.apps.core.views.Compute', self.mockcompute)
 
         self.login_client(client, profile.user, password)
@@ -68,14 +70,32 @@ class CoreAbstractViewsTest():
         assert resp._headers['content-type'] == ('Content-Type',
                                                  'application/zip')
 
-        # test get outputs page without being logged in
-        user = auth.get_user(client)
-        assert user.is_authenticated
-        client.logout()
-        user = auth.get_user(client)
-        assert not user.is_authenticated
-        resp = client.get(f'/{self.app_name}/{slug}/')
+    def test_run_reporting(self, monkeypatch, client, password, profile):
+        """
+        Tests:
+        """
+        monkeypatch.setattr(f'webapp.apps.{self.app_name}.views.Compute',
+                            self.mockcompute)
+        monkeypatch.setattr('webapp.apps.core.views.Compute', self.mockcompute)
+
+        self.login_client(client, profile.user, password)
+        resp = client.post(f'/{self.app_name}/', data=self.inputs_ok())
+        assert resp.status_code == 302 # redirect
+        idx = resp.url[:-1].rfind('/')
+        slug = resp.url[(idx + 1):-1]
+        assert resp.url == f'/{self.app_name}/{slug}/'
+
+        # test get ouputs page
+        resp = client.get(resp.url)
         assert resp.status_code == 200
+
+        output = self.RunModel.objects.get(pk=slug)
+        assert output.profile
+        assert output.project
+        assert output.project.server_cost
+        assert output.run_cost > 0
+        assert output.run_time > 0
+
 
     def test_post_wo_login_redirects_to_login(self, client):
         """

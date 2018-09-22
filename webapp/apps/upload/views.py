@@ -31,25 +31,24 @@ class FileInputView(View):
     app_name = 'upload'
 
     def get(self, request, *args, **kwargs):
+        project = Project.objects.get(name=self.name)
         user = request.user
         can_run = user.is_authenticated and has_public_access(user)
-        if not can_run:
-            # plan = Plan.objects.filter(product__name=self.name)
-            # met = plan.get(usage_type='metered')
-            meter_price = 9/100
-        else:
-            meter_price = None
+        rate = round(project.server_cost, 2)
+        avg_job_cost = self.avg_job_cost(project)
 
         return render(request, self.template_name,
-                      context={'metered_price': f'${meter_price}/hr',
+                      context={'rate': f'${rate}/hr',
                                'name': self.name,
                                'redirect_back': 'fileinput',
-                               'can_run': can_run})
+                               'can_run': can_run,
+                               'avg_job_cost': f'${avg_job_cost}'})
 
     @method_decorator(login_required(login_url='/users/login/'))
     @method_decorator( #TODO: redirect to update pmt info or re-subscribe
         user_passes_test(has_public_access, login_url='/users/login/'))
     def post(self, request, *args, **kwargs):
+        project = Project.objects.get(name=self.name)
         compute = Compute()
         tmpfile = request.FILES['datafile']
         tasks = [{'data': tmpfile.read(), 'compression': 'gzip'}]
@@ -66,9 +65,16 @@ class FileInputView(View):
         fo.job_id = submitted_id
         delta = datetime.timedelta(seconds=20)
         fo.exp_comp_datetime = timezone.now() + delta
-        fo.project = Project.objects.get(name=self.name)
+        fo.project = project
+        fo.profile = request.user.profile
         fo.save()
         return redirect(fo)
+
+    def avg_job_cost(self, project, n_tasks=1):
+        rate_per_sec = project.server_cost / 3600
+        return round(
+            rate_per_sec * project.exp_task_time * n_tasks,
+            4)
 
 
 class FileRunDetailView(CoreRunDetailView):
