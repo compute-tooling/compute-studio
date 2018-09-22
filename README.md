@@ -1,8 +1,24 @@
 # COMP
 
+**COMP** is an open-source platform for sharing computational models. 
 
-Install instructions
---------------------
+To see COMP in action, visit [compmodels.com](www.compmodels.com).
+
+- Developers and organizations  share their models with the public without paying for the public's compute. 
+- Users pay for compute when submitting each simulation.  
+- Organizations share models internally, for a per-user fee. 
+
+## Contributing
+
+COMP is an open source project and anyone can contribute code or suggestions. 
+
+You can reach COMP developers to discuss how to get started by opening an issue or joining the COMP Community [chat room](https://matrix.to/#/!WQWxPnwidsSToqkeLk:matrix.org).  
+
+## License
+
+COMP is licensed under the open source [GNU Affero General Public License](/License.txt) to Henry Doupe, to be transferred to COMP Industries, LLC.
+
+## Install instructions
 
 **Database**
 1. For install: See DATABASE.md
