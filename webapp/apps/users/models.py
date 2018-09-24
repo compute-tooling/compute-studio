@@ -247,6 +247,7 @@ class Invoice(models.Model):
 
 
 class Project(models.Model):
+    SECS_IN_HOUR = 3600.0
     name = models.CharField(max_length=255)
     server_cost = models.DecimalField(max_digits=6, decimal_places=3,
                                       null=True)
@@ -261,9 +262,26 @@ class Project(models.Model):
             res = None
         return res
 
+    def run_cost(self, run_time):
+        """
+        Calculate the cost of a project run.
+        """
+        cost = round(run_time / self.n_secs_per_penny)
+        return max(cost, 0.01)
+
+    @property
+    def n_secs_per_penny(self):
+        """
+        Number of seconds the project run such that the run costs one penny
+        """
+        return 0.01 / self.server_cost_secs
+
     @property
     def server_cost_secs(self):
-        return float(self.server_cost) / 3600.0
+        """
+        Convert server cost from $P/hr to $P/sec
+        """
+        return float(self.server_cost) / self.SECS_IN_HOUR
 
 
 class Product(models.Model):
