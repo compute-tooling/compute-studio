@@ -1,12 +1,12 @@
 # COMP
 
-**COMP** is an open-source platform for sharing computational models. 
+**COMP** is an open-source utility for sharing computational models. 
 
 To see COMP in action, visit [compmodels.com](www.compmodels.com).
 
-- Developers and organizations  share their models with the public without paying for the public's compute. 
-- Users pay for compute when submitting each simulation.  
-- Organizations share models internally, for a per-user fee. 
+- Developers and organizations share their public models for free. 
+- Users pay for their own compute.  
+- Organizations share private models internally, for a per-user fee. 
 
 ## Contributing
 
