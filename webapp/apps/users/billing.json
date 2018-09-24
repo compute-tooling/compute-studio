@@ -1,7 +1,8 @@
 {
     "upload": {
         "name": "Descriptive Statistics",
-        "amount": 500,
+        "amount": 0,
+        "metered_amount": 1,
         "currency": "usd",
         "interval": "month",
         "trial_days": 0,

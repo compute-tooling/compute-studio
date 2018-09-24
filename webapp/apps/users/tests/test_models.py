@@ -9,7 +9,7 @@ import pytest
 
 from webapp.apps.users.models import (construct, get_billing_data,
                                       Customer, Plan, Product, Profile,
-                                      Subscription, SubscriptionItem,
+                                      Project, Subscription, SubscriptionItem,
                                       UsageRecord)
 
 
@@ -43,7 +43,6 @@ class TestStripeModels():
     def test_construct(self):
         billing = get_billing_data()
         assert 'upload' in billing
-        construct()
         products = Product.objects.all()
         assert len(products) == len(billing)
         name = billing['upload']['name']
@@ -51,6 +50,15 @@ class TestStripeModels():
         assert product.project.name == product.name
         assert Plan.objects.filter(product__name=name).count() == 2
 
+    def test_project(self):
+        p = Project(name='test project', server_cost=36)
+        assert p.server_cost_in_secs == 0.01
+        assert p.n_secs_per_penny == 1.0
+        assert p.run_cost(1) == 0.01
+        assert p.run_cost(0.5, adjust=True) == 0.01
+        assert p.run_cost(0.5, adjust=False) < 0.01
+        assert p.run_cost(2) == 0.02
+        assert Project.dollar_to_penny(0.01) == 1
 
     def test_construct_subscription(self, customer, licensed_plan, metered_plan):
         stripe_subscription = Subscription.create_stripe_object(
