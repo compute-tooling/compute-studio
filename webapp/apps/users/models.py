@@ -264,7 +264,9 @@ class Project(models.Model):
 
     def run_cost(self, run_time):
         """
-        Calculate the cost of a project run.
+        Calculate the cost of a project run. The run time is scaled by the time
+        required for it to cost one penny. If the cost is less than one penny,
+        then it is rounded up to a penny.
         """
         cost = round(run_time / self.n_secs_per_penny)
         return max(cost, 0.01)
@@ -272,14 +274,15 @@ class Project(models.Model):
     @property
     def n_secs_per_penny(self):
         """
-        Number of seconds the project run such that the run costs one penny
+        Calculate the number of seconds a project sim needs to run such that
+        the cost of that run is one penny.
         """
         return 0.01 / self.server_cost_secs
 
     @property
     def server_cost_secs(self):
         """
-        Convert server cost from $P/hr to $P/sec
+        Convert server cost from $P/hr to $P/sec.
         """
         return float(self.server_cost) / self.SECS_IN_HOUR
 
