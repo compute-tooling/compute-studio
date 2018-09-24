@@ -10,7 +10,7 @@ and COMP version.
   - Foreign key to `Profile`
   - Foreign key to `Project`
   - One-to-one relation with `CoreInputs`
-- `CoreInputs` - save inputs data
+- `CoreInputs`: save inputs data
 
 Users App Schema
 -------------------
@@ -71,7 +71,7 @@ Proxy objects for storing data on projects and users.
 
 - `Profile`: store data on users that is not directly relevant to login capabilities such as model runs and access parameters (e.g. public access granted or not)
   - One-to-one relation with `User`
-- `Project`: store data on projects that is not directly relevant to Stripe `product` API
+- `Project`: store data on projects that is not directly relevant to Stripe `product` API such as name, server cost (subject to change dep. on metered plan implementation), project overview, etc.
 
 [`AbstractUser`]: https://docs.djangoproject.com/en/2.1/topics/auth/customizing/#using-a-custom-user-model-when-starting-a-project
 [`django-allauth`]: https://github.com/pennersr/django-allauth
