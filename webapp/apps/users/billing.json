@@ -1,13 +1,4 @@
 {
-    "public": {
-        "name": "Public Access",
-        "amount": 0,
-        "currency": "usd",
-        "interval": "month",
-        "trial_days": 0,
-        "server_cost": null,
-        "exp_task_time": null
-    },
     "upload": {
         "name": "Descriptive Statistics",
         "amount": 500,
@@ -15,6 +6,7 @@
         "interval": "month",
         "trial_days": 0,
         "server_cost": 0.10,
-        "exp_task_time": 20
+        "exp_task_time": 20,
+        "is_public": true
     }
 }

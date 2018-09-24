@@ -251,6 +251,7 @@ class Project(models.Model):
     server_cost = models.DecimalField(max_digits=6, decimal_places=3,
                                       null=True)
     exp_task_time = models.IntegerField(null=True)
+    is_public = models.BooleanField(default=True)
 
     @staticmethod
     def get_or_none(**kwargs):
@@ -406,6 +407,9 @@ class Plan(models.Model):
             plan, created = Plan.objects.get(stripe_id), False
         return (plan, created)
 
+    @staticmethod
+    def get_public_plans(**kwargs):
+        return Plan.objects.filter(product__project__is_public=True, **kwargs)
 
 class Subscription(models.Model):
     # raises error on deletion
@@ -628,7 +632,8 @@ def construct():
         project, _ = Project.objects.update_or_create(
             name=plan['name'],
             defaults={'server_cost': plan['server_cost'],
-                      'exp_task_time': plan['exp_task_time']})
+                      'exp_task_time': plan['exp_task_time'],
+                      'is_public': plan['is_public']})
         if Product.objects.filter(name=plan['name']).count() == 0:
             stripe_product = Product.create_stripe_object(plan['name'])
             product = Product.construct(stripe_product, project)

@@ -5,7 +5,7 @@ import stripe
 from django.contrib.auth import get_user_model, forms
 from django.contrib.contenttypes.models import ContentType
 
-from .models import Customer, Profile
+from .models import Customer, Plan, Profile, Subscription, SubscriptionItem
 from webapp.apps.upload.models import FileInput
 
 
@@ -28,11 +28,20 @@ class UserCreationForm(forms.UserCreationForm):
             email=user.email,
             source=self.stripe_token
         )
-        print(stripe_customer)
-        Customer.construct(stripe_customer, user=user)
+        customer = Customer.construct(stripe_customer, user=user)
         Profile.create_from_user(user, public_access=True)
+        public_plans = Plan.get_public_plans(usage_type='metered')
+        print('public_plans: ', public_plans)
+        stripe_sub = Subscription.create_stripe_object(customer, public_plans)
+        sub = Subscription.construct(stripe_sub, customer, public_plans)
+        for raw_si in stripe_sub['items']['data']:
+            print(raw_si)
+            stripe_si = SubscriptionItem.get_stripe_object(raw_si['id'])
+            plan = public_plans.get(stripe_id=raw_si['plan']['id'])
+            si, created = SubscriptionItem.get_or_construct(stripe_si.id, plan,
+                                                            sub)
+            print(si, created)
         return user
-
 
     class Meta(forms.UserCreationForm.Meta):
         model = User
