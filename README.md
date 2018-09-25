@@ -5,8 +5,8 @@
 To see COMP in action, visit [compmodels.com](www.compmodels.com).
 
 - Developers and organizations share their public models for free. 
-- Users pay for their own compute.  
-- Organizations share private models internally, for a per-user fee. 
+- Users pay for their own compute, at cost.  
+- Share private models for a per-user fee. 
 
 ## Contributing
 
