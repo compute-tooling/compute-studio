@@ -27,6 +27,9 @@ SECRET_KEY = 'db2s+2d99a%lk$0b+)va-alck*0p^+!irt$a=5+fhnmxz3=t)8'
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+# enforce HTTPS/SSL
+SECURE_SSL_REDIRECT = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 
