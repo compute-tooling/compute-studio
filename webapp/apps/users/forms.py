@@ -5,13 +5,26 @@ import stripe
 from django.contrib.auth import get_user_model, forms
 from django.contrib.contenttypes.models import ContentType
 
-from .models import Customer, Plan, Profile, Subscription, SubscriptionItem
-from webapp.apps.upload.models import FileInput
+from .models import Profile
+from webapp.apps.billing.models import (Customer, Plan, Subscription,
+                                        SubscriptionItem)
 
 
 User = get_user_model()
 
 stripe.api_key = os.environ.get('STRIPE_SECRET')
+
+
+def subscribe_to_public_plans(customer):
+    public_plans = Plan.get_public_plans(usage_type='metered')
+    stripe_sub = Subscription.create_stripe_object(customer, public_plans)
+    sub = Subscription.construct(stripe_sub, customer, public_plans)
+    for raw_si in stripe_sub['items']['data']:
+        stripe_si = SubscriptionItem.get_stripe_object(raw_si['id'])
+        plan = public_plans.get(stripe_id=raw_si['plan']['id'])
+        si, created = SubscriptionItem.get_or_construct(stripe_si.id, plan,
+                                                        sub)
+
 
 class UserCreationForm(forms.UserCreationForm):
 
@@ -30,17 +43,7 @@ class UserCreationForm(forms.UserCreationForm):
         )
         customer = Customer.construct(stripe_customer, user=user)
         Profile.create_from_user(user, public_access=True)
-        public_plans = Plan.get_public_plans(usage_type='metered')
-        print('public_plans: ', public_plans)
-        stripe_sub = Subscription.create_stripe_object(customer, public_plans)
-        sub = Subscription.construct(stripe_sub, customer, public_plans)
-        for raw_si in stripe_sub['items']['data']:
-            print(raw_si)
-            stripe_si = SubscriptionItem.get_stripe_object(raw_si['id'])
-            plan = public_plans.get(stripe_id=raw_si['plan']['id'])
-            si, created = SubscriptionItem.get_or_construct(stripe_si.id, plan,
-                                                            sub)
-            print(si, created)
+        subscribe_to_public_plans(customer)
         return user
 
     class Meta(forms.UserCreationForm.Meta):

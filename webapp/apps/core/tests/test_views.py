@@ -93,7 +93,7 @@ class CoreAbstractViewsTest():
         assert output.profile
         assert output.project
         assert output.project.server_cost
-        assert output.run_cost > 0
+        assert output.project.run_cost(output.run_time, adjust=True) > 0
         assert output.run_time > 0
 
 

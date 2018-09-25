@@ -22,4 +22,5 @@ urlpatterns = [
     path('upload/', include('webapp.apps.upload.urls')),
     path('users/', include('webapp.apps.users.urls')),
     path('users/', include('django.contrib.auth.urls')),
+    path('billing/', include('webapp.apps.billing.urls')),
 ]

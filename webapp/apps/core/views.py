@@ -1,7 +1,6 @@
 import itertools
 from io import BytesIO
 from zipfile import ZipFile
-import traceback
 import json
 
 from django.utils import timezone
@@ -11,7 +10,8 @@ from django.views.generic.detail import SingleObjectMixin, DetailView
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, Http404, JsonResponse
 
-from webapp.apps.users.models import Project, SubscriptionItem, UsageRecord
+from webapp.apps.billing.models import SubscriptionItem, UsageRecord
+from webapp.apps.users.models import Project
 
 from .models import CoreRun
 from .compute import Compute, JobFailError

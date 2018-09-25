@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'webapp.apps.pages',
     'webapp.apps.upload',
     'webapp.apps.users',
+    'webapp.apps.billing',
 
     # 'allauth', # new
     # 'allauth.account', # new

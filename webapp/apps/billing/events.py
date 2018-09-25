@@ -9,7 +9,7 @@ stripe.api_key = os.environ.get('STRIPE_SECRET')
 
 
 def get_customer_from_event(stripe_event):
-    customer_events = ['customer.created', 'customer.updated', 
+    customer_events = ['customer.created', 'customer.updated',
                     'customer.deleted']
     customer = None
     if stripe_event.type in customer_events:
