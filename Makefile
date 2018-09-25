@@ -27,9 +27,8 @@ webapp-build:
 	docker build -t comp/web:$(TAG) ./
 
 webapp-push:
-	docker tag comp/web:$(TAG) registry.heroku.com/compmodels-test/web
-	docker push registry.heroku.com/compmodels-test/web
-	docker push comp/web:$(TAG)
+	docker tag comp/web:$(TAG) registry.heroku.com/compmodels/web
+	docker push registry.heroku.com/compmodels/web
 
 webapp-release:
-	heroku container:release web -a compmodels-test
+	heroku container:release web -a compmodels
