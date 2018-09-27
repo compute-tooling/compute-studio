@@ -15,13 +15,13 @@ class FileOutput(CoreRun):
         kwargs = {
             'pk': self.pk
         }
-        return reverse('file_results', kwargs=kwargs)
+        return reverse('upload_results', kwargs=kwargs)
 
     def get_absolute_download_url(self):
         kwargs = {
             'pk': self.pk
         }
-        return reverse('fileinput_download', kwargs=kwargs)
+        return reverse('upload_download', kwargs=kwargs)
 
     def zip_filename(self):
         return 'upload.zip'
