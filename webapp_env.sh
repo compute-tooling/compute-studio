@@ -22,3 +22,5 @@ export DEV_DEBUG=True
 export HTML_MINIFY=True
 
 export WORKERS=127.0.0.1:5050
+
+export LOCAL=True

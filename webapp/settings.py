@@ -28,7 +28,7 @@ DEBUG = False if os.environ.get('DEBUG', 'False') == 'False' else True
 
 ALLOWED_HOSTS = ['*']
 # enforce HTTPS/SSL
-SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = False if os.environ.get('LOCAL', '') else True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
