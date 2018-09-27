@@ -36,7 +36,6 @@ class UserCreationForm(forms.UserCreationForm):
 
     def save(self, commit=False):
         user = super().save()
-        print(self.stripe_token)
         stripe_customer = stripe.Customer.create(
             email=user.email,
             source=self.stripe_token

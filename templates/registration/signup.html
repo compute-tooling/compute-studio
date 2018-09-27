@@ -1,25 +1,17 @@
 {% extends 'base.html' %}
+
 {% load staticfiles %}
 {% block title %}Sign Up{% endblock %}
 
 {% block content %}
+
   <h2>Sign up</h2>
   <form method="post" id="payment-form">
     {% csrf_token %}
     {{ form.as_p }}
-    <div class="form-row">
-      <label for="card-element">
-        Credit or debit card
-      </label>
-      <div id="card-element">
-        <!-- A Stripe Element will be inserted here. -->
-      </div>
-
-      <!-- Used to display form errors. -->
-      <div id="card-errors" role="alert"></div>
+    <div class='stripe-input'>
+      {% include 'billing/base.html' %}
     </div>
     <button type="submit" class="btn">Sign Up</button>
   </form>
-  <script src="https://js.stripe.com/v3/"></script>
-  <script type="text/javascript" src="{% static 'js/stripe.js' %}"></script>
 {% endblock %}

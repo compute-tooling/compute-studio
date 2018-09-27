@@ -44,7 +44,7 @@ class FileInputView(View):
                                'can_run': can_run,
                                'avg_job_cost': f'${avg_job_cost}'})
 
-    @method_decorator(login_required(login_url='/users/login/'))
+    @method_decorator(login_required)
     @method_decorator( #TODO: redirect to update pmt info or re-subscribe
         user_passes_test(has_public_access, login_url='/users/login/'))
     def post(self, request, *args, **kwargs):
