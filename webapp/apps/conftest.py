@@ -5,9 +5,11 @@ import stripe
 
 from django.contrib.auth import get_user_model
 
-from webapp.apps.users.models import (construct,
-                                      Customer, Plan, Profile, Subscription,
+from webapp.apps.billing.models import (construct,
+                                      Customer, Plan, Subscription,
                                       SubscriptionItem)
+from webapp.apps.users.models import Profile
+
 
 stripe.api_key = os.environ.get('STRIPE_SECRET')
 
@@ -46,14 +48,20 @@ def user(db, password):
 
 
 @pytest.fixture
-def customer(db, stripe_customer, user):
+def basiccustomer(db, stripe_customer, user):
     customer, _ = Customer.get_or_construct(stripe_customer.id, user)
     return customer
 
 
 @pytest.fixture
-def profile(db, user):
-    return Profile.create_from_user(user, True)
+def customer(db, basiccustomer):
+    from webapp.apps.users.forms import subscribe_to_public_plans
+    subscribe_to_public_plans(basiccustomer)
+    return basiccustomer
+
+@pytest.fixture
+def profile(db, customer):
+    return Profile.create_from_user(customer.user, True)
 
 
 @pytest.fixture

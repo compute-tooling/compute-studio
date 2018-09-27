@@ -10,7 +10,7 @@ from webapp.apps.core.models import Tag, TagOption
 from webapp.apps.core.views import CoreRunDetailView, CoreRunDownloadView
 from webapp.apps.core.compute import Compute, WorkersUnreachableError
 
-from webapp.apps.users.models import Plan, Project
+from webapp.apps.users.models import Project
 
 from .models import FileInput, FileOutput
 
