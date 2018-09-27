@@ -31,5 +31,5 @@ def file_upload_test(data, compression):
                             'text': desc.to_csv()}],
         'renderable': desc.to_html()})
     f = time.time()
-    formatted['meta'] = {'job_time': (f - t) / 3600, 'n_jobs': 1}
+    formatted['meta'] = {'job_times': [f - t, ]}
     return json.dumps(formatted)

@@ -6,10 +6,16 @@ import stripe
 from django.contrib.auth import get_user_model
 
 from webapp.apps.users.models import (construct,
-                                      Customer, Plan, Profile, Subscription, 
+                                      Customer, Plan, Profile, Subscription,
                                       SubscriptionItem)
 
 stripe.api_key = os.environ.get('STRIPE_SECRET')
+
+
+@pytest.fixture(scope='session')
+def django_db_setup(django_db_setup, django_db_blocker):
+    with django_db_blocker.unblock():
+        construct()
 
 
 @pytest.fixture
@@ -31,7 +37,7 @@ def password():
 @pytest.fixture
 def user(db, password):
     User = get_user_model()
-    user = User.objects.create_user(username='tester', email='tester@email.com', 
+    user = User.objects.create_user(username='tester', email='tester@email.com',
                                     password=password)
     assert user.username
     assert user.email
@@ -78,15 +84,15 @@ def metered_plan(db, plans):
 @pytest.fixture
 def subscription(db, customer, licensed_plan, metered_plan):
     stripe_subscription = Subscription.create_stripe_object(
-        customer, 
+        customer,
         [licensed_plan, metered_plan])
     assert stripe_subscription
-    
+
     subscription, _ = Subscription.get_or_construct(
         stripe_subscription.id,
         customer=customer,
         plans=[licensed_plan, metered_plan])
-    
+
     for raw_si in stripe_subscription['items']['data']:
         stripe_si = SubscriptionItem.get_stripe_object(raw_si['id'])
         plan, created = Plan.get_or_construct(raw_si['plan']['id'])
@@ -94,6 +100,6 @@ def subscription(db, customer, licensed_plan, metered_plan):
         si, created = SubscriptionItem.get_or_construct(stripe_si.id, plan,
                                                         subscription)
         assert si
-    
+
     return subscription
 

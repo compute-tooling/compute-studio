@@ -1,16 +1,20 @@
-from django.utils import timezone
-from django.db import models
-from .models import CoreRun
-from .compute import Compute, JobFailError
-from django.views.generic.base import View
-from django.views.generic.detail import SingleObjectMixin, DetailView
-from django.shortcuts import render, redirect
-from django.http import HttpResponse, Http404, JsonResponse
 import itertools
 from io import BytesIO
 from zipfile import ZipFile
 import traceback
 import json
+
+from django.utils import timezone
+from django.db import models
+from django.views.generic.base import View
+from django.views.generic.detail import SingleObjectMixin, DetailView
+from django.shortcuts import render, redirect
+from django.http import HttpResponse, Http404, JsonResponse
+
+from webapp.apps.users.models import Project, SubscriptionItem, UsageRecord
+
+from .models import CoreRun
+from .compute import Compute, JobFailError
 
 
 class SuperclassTemplateNameMixin(object):
@@ -97,6 +101,23 @@ class CoreRunDetailView(SuperclassTemplateNameMixin, DetailView):
                     self.object.error_text = str(e)
                     self.object.save()
                     return self.fail()
+                self.object.run_time = sum(results['meta']['job_times'])
+                self.object.run_cost = self.object.project.run_cost(
+                    self.object.run_time)
+                plan = self.object.project.product.plans.get(
+                    usage_type='metered')
+                si = SubscriptionItem.objects.get(
+                    subscription__customer=self.object.profile.user.customer,
+                    plan=plan)
+                quantity = self.object.project.run_cost(
+                    self.object.run_time, adjust=True)
+                stripe_ur = UsageRecord.create_stripe_object(
+                    quantity=Project.dollar_to_penny(quantity),
+                    timestamp=None,
+                    subscription_item=si,
+                )
+                UsageRecord.construct(stripe_ur, si)
+
                 self.object.outputs = results['outputs']
                 self.object.aggr_outputs = results['aggr_outputs']
                 self.object.creation_date = timezone.now()

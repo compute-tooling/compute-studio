@@ -247,10 +247,51 @@ class Invoice(models.Model):
 
 
 class Project(models.Model):
+    SECS_IN_HOUR = 3600.0
     name = models.CharField(max_length=255)
     server_cost = models.DecimalField(max_digits=6, decimal_places=3,
                                       null=True)
     exp_task_time = models.IntegerField(null=True)
+    is_public = models.BooleanField(default=True)
+
+    @staticmethod
+    def get_or_none(**kwargs):
+        try:
+            res = Project.objects.get(**kwargs)
+        except Project.DoesNotExist:
+            res = None
+        return res
+
+    def run_cost(self, run_time, adjust=False):
+        """
+        Calculate the cost of a project run. The run time is scaled by the time
+        required for it to cost one penny. If adjust is true and the cost is
+        less than one penny, then it is rounded up to a penny.
+        """
+        cost = round(run_time / self.n_secs_per_penny) / 100
+        if adjust:
+            return max(cost, 0.01)
+        else:
+            return cost
+
+    @property
+    def n_secs_per_penny(self):
+        """
+        Calculate the number of seconds a project sim needs to run such that
+        the cost of that run is one penny.
+        """
+        return 0.01 / self.server_cost_in_secs
+
+    @property
+    def server_cost_in_secs(self):
+        """
+        Convert server cost from $P/hr to $P/sec.
+        """
+        return float(self.server_cost) / self.SECS_IN_HOUR
+
+    @staticmethod
+    def dollar_to_penny(c):
+        return int(round(c * 100, 0))
 
 
 class Product(models.Model):
@@ -394,6 +435,9 @@ class Plan(models.Model):
             plan, created = Plan.objects.get(stripe_id), False
         return (plan, created)
 
+    @staticmethod
+    def get_public_plans(**kwargs):
+        return Plan.objects.filter(product__project__is_public=True, **kwargs)
 
 class Subscription(models.Model):
     # raises error on deletion
@@ -561,7 +605,7 @@ class UsageRecord(models.Model):
         return usage_record
 
     @staticmethod
-    def get_or_construct(stripe_id, subscription_item):
+    def get_or_construct(stripe_id, subscription_item=None):
         try:
             (usage_record,
                 created) = UsageRecord.objects.get(stripe_id=stripe_id), False
@@ -616,7 +660,8 @@ def construct():
         project, _ = Project.objects.update_or_create(
             name=plan['name'],
             defaults={'server_cost': plan['server_cost'],
-                      'exp_task_time': plan['exp_task_time']})
+                      'exp_task_time': plan['exp_task_time'],
+                      'is_public': plan['is_public']})
         if Product.objects.filter(name=plan['name']).count() == 0:
             stripe_product = Product.create_stripe_object(plan['name'])
             product = Product.construct(stripe_product, project)
@@ -628,7 +673,7 @@ def construct():
                 currency=plan['currency'])
             Plan.construct(stripe_plan_lic, product)
             stripe_plan_met = Plan.create_stripe_object(
-                amount=plan['amount'],
+                amount=plan['metered_amount'],
                 product=product,
                 usage_type='metered',
                 interval=plan['interval'],

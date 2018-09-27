@@ -49,10 +49,13 @@ def process_event(stripe_event):
     print(stripe_event)
     customer = get_customer_from_event(stripe_event)
     event = Event.construct(stripe_event, customer=customer)
-    
+
     func = webhook_map.get(event.kind, None)
     if func is not None:
-        func(event)
-    
+        try:
+            func(event)
+        except Exception as e:
+            import traceback; traceback.print_exc()
+
     total_time = time.time() - start
     print(f'done {total_time}')

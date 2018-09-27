@@ -4,7 +4,6 @@ from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.core.validators import validate_comma_separated_integer_list
 from django.contrib.auth import get_user_model
-from django.conf import settings
 from django.utils.timezone import make_aware
 from django.utils.functional import cached_property
 
@@ -13,7 +12,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import List, Union
 
-from webapp.apps.users.models import Project
+from webapp.apps.users.models import Project, Profile
 
 
 class CoreInputs(models.Model):
@@ -63,11 +62,14 @@ class CoreRun(models.Model):
         blank=True,
         default=None,
         max_length=4000)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
-                             null=True, default=None)
-    project = models.ForeignKey(Project, on_delete=models.PROTECT)
+    profile = models.ForeignKey(Profile, on_delete=models.PROTECT,
+                                related_name='runs')
+    project = models.ForeignKey(Project, on_delete=models.PROTECT,
+                                related_name='runs')
     # run-time in seconds
-    run_time = models.IntegerField()
+    run_time = models.IntegerField(default=0)
+    # run cost can be very small. ex: 4 sec * ($0.09/hr)/3600
+    run_cost = models.DecimalField(max_digits=9, decimal_places=4, default=0.0)
     creation_date = models.DateTimeField(
         default=make_aware(datetime.datetime(2015, 1, 1)))
     exp_comp_datetime = models.DateTimeField(
