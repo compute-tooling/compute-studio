@@ -7,5 +7,8 @@ urlpatterns = [
     path('profile/cancel/', views.CancelSubscription.as_view(),
          name='cancel_subscription'),
     path('profile/cancel/done/', views.CancelSubscriptionDone.as_view(),
-         name='cancel_subscription_done')
+         name='cancel_subscription_done'),
+    path('profile/delete/', views.DeleteUser.as_view(), name='delete_user'),
+    path('profile/delete/done/', views.DeleteUserDone.as_view(),
+         name='delete_user_done')
 ]

@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
 
-from .forms import UserCreationForm, CancelSubscriptionForm
+from .forms import UserCreationForm, CancelSubscriptionForm, DeleteUserForm
 from .models import is_profile_active
 
 
@@ -26,10 +26,7 @@ class UserProfile(View):
         return render(request, self.template_name,
                       context={'username': request.user.username})
 
-class CancelSubscription(generic.edit.UpdateView):
-    template_name = 'registration/cancel_subscription.html'
-    form_class = CancelSubscriptionForm
-    success_url = reverse_lazy('cancel_subscription_done')
+class SecureUpdateView(generic.edit.UpdateView):
 
     @method_decorator(login_required)
     @method_decorator(user_passes_test(is_profile_active))
@@ -50,9 +47,28 @@ class CancelSubscription(generic.edit.UpdateView):
         return self.request.user
 
 
+class CancelSubscription(SecureUpdateView):
+    template_name = 'registration/cancel_subscription.html'
+    form_class = CancelSubscriptionForm
+    success_url = reverse_lazy('cancel_subscription_done')
+
+
 class CancelSubscriptionDone(generic.TemplateView):
     template_name = 'registration/cancel_subscription_done.html'
 
     @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+
+class DeleteUser(SecureUpdateView):
+    template_name = 'registration/delete_user.html'
+    form_class = DeleteUserForm
+    success_url = reverse_lazy('delete_user_done')
+
+
+class DeleteUserDone(generic.TemplateView):
+    template_name = 'registration/delete_user_done.html'
+
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)

@@ -40,7 +40,7 @@ class Customer(models.Model):
     livemode = models.BooleanField(default=False)
     user = models.OneToOneField(settings.AUTH_USER_MODEL,
                                 null=True,
-                                on_delete=models.PROTECT)
+                                on_delete=models.CASCADE)
     account_balance = models.DecimalField(decimal_places=2, max_digits=9, null=True,
                                           blank=True)
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default=USD)
@@ -394,7 +394,7 @@ class Subscription(models.Model):
     # raises error on deletion
     stripe_id = models.CharField(max_length=255, unique=True)
     customer = models.ForeignKey(Customer,
-                                 on_delete=models.PROTECT,
+                                 on_delete=models.CASCADE,
                                  related_name='subscriptions')
     plans = models.ManyToManyField(Plan,
                                    related_name="subscriptions")
@@ -481,7 +481,7 @@ class SubscriptionItem(models.Model):
     stripe_id = models.CharField(max_length=255, unique=True)
     livemode = models.BooleanField(default=False)
     created = models.DateTimeField()
-    plan = models.ForeignKey(Plan, on_delete=models.CASCADE,
+    plan = models.ForeignKey(Plan, on_delete=models.PROTECT,
                              related_name="subscription_items")
     subscription = models.ForeignKey(Subscription, on_delete=models.CASCADE,
                                      related_name="subscription_items")

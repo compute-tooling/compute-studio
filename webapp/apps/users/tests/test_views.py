@@ -26,7 +26,7 @@ class TestUsersViews():
         assert user
         assert user.customer
         assert user.profile
-        assert user.profile.public_access
+        assert user.profile.is_active
 
     def test_get_profile(self, client, profile, password):
         success = client.login(username=profile.user.username,
@@ -69,6 +69,22 @@ class TestUsersViews():
         resp = client.get(resp.url)
         assert resp.status_code == 200
 
+    def test_delete_user(self, client, profile, password):
+        success = client.login(username=profile.user.username,
+                               password=password)
+        assert success
+
+        resp = client.get('/users/profile/delete/')
+        assert resp.status_code == 200
+        data = {'confirm_username': profile.user.username}
+        resp = client.post('/users/profile/delete/', data=data)
+        assert resp.status_code == 302
+        assert resp.url == '/users/profile/delete/done/'
+
+        resp = client.get(resp.url)
+        assert resp.status_code == 200
+        user = auth.get_user(client)
+        assert not user.is_authenticated
 
     def test_access_to_profile_pages(self, client):
         user = auth.get_user(client)
@@ -76,7 +92,7 @@ class TestUsersViews():
         restricted = ['/users/profile/', '/users/password_change/',
                       '/users/password_change/done/', '/billing/update/',
                       '/billing/update/done/', '/users/profile/cancel/',
-                      '/users/profile/cancel/done/']
+                      '/users/profile/cancel/done/', '/users/profile/delete/']
         for url in restricted:
             resp = client.get(url)
             assert resp.status_code == 302

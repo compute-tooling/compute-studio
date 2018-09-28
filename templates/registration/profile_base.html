@@ -17,10 +17,16 @@
     </form>
     </div>
     <div style="margin:10px;">
-        <form action="{% url 'cancel_account' %}" method="GET">
+        <form action="{% url 'cancel_subscription' %}" method="GET">
             <input class="btn" type="submit" value="Cancel Subscription">
         </form>
     </div>
+    <div style="margin:10px;">
+        <form action="{% url 'delete_user' %}" method="GET">
+            <input class="btn" type="submit" value="Delete Account">
+        </form>
+    </div>
+
 </div>
 
 {% endblock %}

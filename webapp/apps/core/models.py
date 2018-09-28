@@ -62,7 +62,7 @@ class CoreRun(models.Model):
         blank=True,
         default=None,
         max_length=4000)
-    profile = models.ForeignKey(Profile, on_delete=models.PROTECT,
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE,
                                 related_name='runs')
     project = models.ForeignKey(Project, on_delete=models.PROTECT,
                                 related_name='runs')
