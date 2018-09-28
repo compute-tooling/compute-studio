@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid" style="margin:20px;">
+    {% csrf_token %}
+    <h4>{{ username }}</h4>
+    <div style="margin:10px;">
+        <form action="{% url 'password_change' %}" method="GET">
+                <input class="btn" type="submit" value="Change Password">
+        </form>
+    </div>
+    <div style="margin:10px;">
+    <form action="{% url 'update_payment' %}" method="GET">
+            <input class="btn" type="submit" value="Update Payment Information">
+    </form>
+    </div>
+    <div style="margin:10px;">
+        <form action="{% url 'cancel_subscription' %}" method="GET">
+            <input class="btn" type="submit" value="Cancel Subscription">
+        </form>
+    </div>
+    <div style="margin:10px;">
+        <form action="{% url 'delete_user' %}" method="GET">
+            <input class="btn" type="submit" value="Delete Account">
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}

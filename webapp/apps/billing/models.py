@@ -16,6 +16,8 @@ stripe.api_key = os.environ.get('STRIPE_SECRET')
 
 
 def timestamp_to_datetime(timestamp):
+    if timestamp is None:
+        return None
     if isinstance(timestamp, int):
         timestamp = date.fromtimestamp(timestamp)
     return make_aware(
@@ -38,13 +40,38 @@ class Customer(models.Model):
     livemode = models.BooleanField(default=False)
     user = models.OneToOneField(settings.AUTH_USER_MODEL,
                                 null=True,
-                                on_delete=models.PROTECT)
+                                on_delete=models.CASCADE)
     account_balance = models.DecimalField(decimal_places=2, max_digits=9, null=True,
                                           blank=True)
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default=USD)
     delinquent = models.BooleanField(default=False)
     default_source = models.TextField(blank=True, null=True)
     metadata = JSONField()
+
+    def cancel_subscriptions(self):
+        subscriptions = self.subscriptions.all()
+        for sub in subscriptions:
+            stripe_sub = Subscription.get_stripe_object(sub.stripe_id)
+            stripe_sub.cancel_at_period_end = True
+            updated_sub = stripe_sub.save()
+            sub.update_from_stripe_obj(updated_sub)
+
+    def update_source(self, stripe_token):
+        stripe_customer = stripe.Customer.retrieve(self.stripe_id)
+        stripe_customer.source = stripe_token
+        stripe_customer.save()
+        self.default_source = stripe_token
+        self.save()
+
+    def subscribe_to_public_plans(self):
+        public_plans = Plan.get_public_plans(usage_type='metered')
+        stripe_sub = Subscription.create_stripe_object(self, public_plans)
+        sub = Subscription.construct(stripe_sub, self, public_plans)
+        for raw_si in stripe_sub['items']['data']:
+            stripe_si = SubscriptionItem.get_stripe_object(raw_si['id'])
+            plan = public_plans.get(stripe_id=raw_si['plan']['id'])
+            si, created = SubscriptionItem.get_or_construct(stripe_si.id, plan,
+                                                            sub)
 
     @staticmethod
     def get_stripe_object(stripe_id):
@@ -367,17 +394,28 @@ class Subscription(models.Model):
     # raises error on deletion
     stripe_id = models.CharField(max_length=255, unique=True)
     customer = models.ForeignKey(Customer,
-                                 on_delete=models.PROTECT,
+                                 on_delete=models.CASCADE,
                                  related_name='subscriptions')
     plans = models.ManyToManyField(Plan,
                                    related_name="subscriptions")
     livemode = models.BooleanField(default=False)
     metadata = JSONField()
-    usage = models.DecimalField(max_digits=8, decimal_places=3)
+    cancel_at_period_end = models.BooleanField(default=False, null=True)
     current_period_start = models.DateTimeField(null=True, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
     canceled_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
+
+    def update_from_stripe_obj(self, stripe_obj):
+        self.current_period_start = timestamp_to_datetime(
+            stripe_obj.current_period_start)
+        self.current_period_end = timestamp_to_datetime(
+            stripe_obj.current_period_end)
+        self.cancel_at_period_end = stripe_obj.cancel_at_period_end
+        self.canceled_at = timestamp_to_datetime(
+            stripe_obj.canceled_at)
+        self.ended_at = timestamp_to_datetime(stripe_obj.ended_at)
+        self.save()
 
     @staticmethod
     def create_stripe_object(customer, plans, usage=0.0):
@@ -402,9 +440,8 @@ class Subscription(models.Model):
             customer=customer,
             livemode=stripe_subscription.livemode,
             metadata=stripe_subscription.to_dict(),
-            usage=usage,
             current_period_start=current_period_start,
-            current_period_end=current_period_end
+            current_period_end=current_period_end,
         )
         sub.plans.add(*plans)
         sub.save()
@@ -444,7 +481,7 @@ class SubscriptionItem(models.Model):
     stripe_id = models.CharField(max_length=255, unique=True)
     livemode = models.BooleanField(default=False)
     created = models.DateTimeField()
-    plan = models.ForeignKey(Plan, on_delete=models.CASCADE,
+    plan = models.ForeignKey(Plan, on_delete=models.PROTECT,
                              related_name="subscription_items")
     subscription = models.ForeignKey(Subscription, on_delete=models.CASCADE,
                                      related_name="subscription_items")

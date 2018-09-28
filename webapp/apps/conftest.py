@@ -6,8 +6,8 @@ import stripe
 from django.contrib.auth import get_user_model
 
 from webapp.apps.billing.models import (construct,
-                                      Customer, Plan, Subscription,
-                                      SubscriptionItem)
+                                        Customer, Plan, Subscription,
+                                        SubscriptionItem)
 from webapp.apps.users.models import Profile
 
 
@@ -55,9 +55,10 @@ def basiccustomer(db, stripe_customer, user):
 
 @pytest.fixture
 def customer(db, basiccustomer):
-    from webapp.apps.users.forms import subscribe_to_public_plans
-    subscribe_to_public_plans(basiccustomer)
+    basiccustomer.subscribe_to_public_plans()
+    assert basiccustomer.subscriptions.count() > 0
     return basiccustomer
+
 
 @pytest.fixture
 def profile(db, customer):
@@ -110,4 +111,3 @@ def subscription(db, customer, licensed_plan, metered_plan):
         assert si
 
     return subscription
-

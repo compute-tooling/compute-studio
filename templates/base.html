@@ -13,7 +13,6 @@
             <a href="{% url 'home' %}" class="navbar-brand">COMP</a>
         </div>
         <ul class="navbar-nav">
-            <!-- TODO: Need better solution to relative path here -->
             <li class="nav-item"><a href="/publish/" class="nav-link">Publish</a></li>
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -29,7 +28,7 @@
 
     <div class="login-status" >
     {% if user.is_authenticated %}
-      Hi {{ user.username }}! |
+      Hi <a href="{% url 'userprofile' %}">{{ user.username }}!</a> |
       <a href="{% url 'logout' %}">logout</a>
     {% else %}
       <a href="{% url 'login' %}">login</a> |
