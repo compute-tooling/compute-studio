@@ -124,3 +124,10 @@ class TestStripeModels():
         # assert usage_record
         # assert usage_record.stripe_id == stripe_usage_record.id
         # assert usage_record.quantity == 10
+
+
+    def test_update_customer(self, customer):
+        tok = 'tok_bypassPending'
+        prev_source = customer.default_source
+        customer.update_source(tok)
+        assert customer.default_source != prev_source

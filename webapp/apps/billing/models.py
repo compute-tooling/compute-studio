@@ -46,6 +46,13 @@ class Customer(models.Model):
     default_source = models.TextField(blank=True, null=True)
     metadata = JSONField()
 
+    def update_source(self, stripe_token):
+        stripe_customer = stripe.Customer.retrieve(self.stripe_id)
+        stripe_customer.source = stripe_token
+        stripe_customer.save()
+        self.default_source = stripe_token
+        self.save()
+
     @staticmethod
     def get_stripe_object(stripe_id):
         return stripe.Customer.retrieve(stripe_id)
