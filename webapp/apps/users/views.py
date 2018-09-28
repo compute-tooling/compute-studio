@@ -26,7 +26,10 @@ class UserProfile(View):
         return render(request, self.template_name,
                       context={'username': request.user.username})
 
-class SecureUpdateView(generic.edit.UpdateView):
+class CancelSubscription(generic.edit.UpdateView):
+    template_name = 'registration/cancel_subscription.html'
+    form_class = CancelSubscriptionForm
+    success_url = reverse_lazy('cancel_subscription_done')
 
     @method_decorator(login_required)
     @method_decorator(user_passes_test(is_profile_active))
@@ -47,12 +50,6 @@ class SecureUpdateView(generic.edit.UpdateView):
         return self.request.user
 
 
-class CancelSubscription(SecureUpdateView):
-    template_name = 'registration/cancel_subscription.html'
-    form_class = CancelSubscriptionForm
-    success_url = reverse_lazy('cancel_subscription_done')
-
-
 class CancelSubscriptionDone(generic.TemplateView):
     template_name = 'registration/cancel_subscription_done.html'
 
@@ -61,10 +58,25 @@ class CancelSubscriptionDone(generic.TemplateView):
         return super().dispatch(*args, **kwargs)
 
 
-class DeleteUser(SecureUpdateView):
+class DeleteUser(generic.edit.UpdateView):
     template_name = 'registration/delete_user.html'
     form_class = DeleteUserForm
     success_url = reverse_lazy('delete_user_done')
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        return super().get(self, request, *args, **kwargs)
+
+    @method_decorator(login_required)
+    def post(self, request, *args, **kwargs):
+        return super().post(self, request, *args, **kwargs)
+
+    @method_decorator(login_required)
+    def put(self, request, *args, **kwargs):
+        return super().put(self, request, *args, **kwargs)
+
+    def get_object(self):
+        return self.request.user
 
 
 class DeleteUserDone(generic.TemplateView):
