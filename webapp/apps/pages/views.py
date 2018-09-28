@@ -11,6 +11,6 @@ class BaseView(View):
 
 class Publish(View):
     template_name = 'pages/publish.html'
-    
+
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name)

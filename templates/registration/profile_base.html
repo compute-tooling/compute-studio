@@ -16,6 +16,11 @@
             <input class="btn" type="submit" value="Update Payment Information">
     </form>
     </div>
+    <div style="margin:10px;">
+        <form action="{% url 'cancel_account' %}" method="GET">
+            <input class="btn" type="submit" value="Cancel Subscription">
+        </form>
+    </div>
 </div>
 
 {% endblock %}

@@ -2,7 +2,8 @@ import os
 
 import stripe
 
-from django.contrib.auth import get_user_model, forms
+from django.contrib.auth import get_user_model, forms as authforms
+from django import forms
 from django.contrib.contenttypes.models import ContentType
 
 from .models import Profile
@@ -15,18 +16,7 @@ User = get_user_model()
 stripe.api_key = os.environ.get('STRIPE_SECRET')
 
 
-def subscribe_to_public_plans(customer):
-    public_plans = Plan.get_public_plans(usage_type='metered')
-    stripe_sub = Subscription.create_stripe_object(customer, public_plans)
-    sub = Subscription.construct(stripe_sub, customer, public_plans)
-    for raw_si in stripe_sub['items']['data']:
-        stripe_si = SubscriptionItem.get_stripe_object(raw_si['id'])
-        plan = public_plans.get(stripe_id=raw_si['plan']['id'])
-        si, created = SubscriptionItem.get_or_construct(stripe_si.id, plan,
-                                                        sub)
-
-
-class UserCreationForm(forms.UserCreationForm):
+class UserCreationForm(authforms.UserCreationForm):
 
     # stripe_token = forms.CharField(widget=forms.HiddenInput())
 
@@ -41,17 +31,43 @@ class UserCreationForm(forms.UserCreationForm):
             source=self.stripe_token
         )
         customer = Customer.construct(stripe_customer, user=user)
-        Profile.create_from_user(user, public_access=True)
-        subscribe_to_public_plans(customer)
+        Profile.create_from_user(user, is_active=True)
+        customer.subscribe_to_public_plans()
         return user
 
-    class Meta(forms.UserCreationForm.Meta):
+    class Meta(authforms.UserCreationForm.Meta):
         model = User
         fields = ('username', 'email')
 
 
-class UserChangeForm(forms.UserChangeForm):
+class UserChangeForm(authforms.UserChangeForm):
 
-    class Meta(forms.UserChangeForm.Meta):
+    class Meta(authforms.UserChangeForm.Meta):
         model = User
         fields = ('username', 'email')
+
+
+class ConfirmUsernameForm(forms.ModelForm):
+    confirm_username = authforms.UsernameField(
+        widget=forms.TextInput(attrs={'autofocus': True}))
+
+    class Meta:
+        model = User
+        fields = ('confirm_username', )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        confirm_username = cleaned_data.get('confirm_username')
+        if confirm_username != self.instance.username:
+            self.add_error('confirm_username', 'Username does not match.')
+
+
+class CancelSubscriptionForm(ConfirmUsernameForm):
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.customer.cancel_subscriptions()
+        user.profile.is_active = False
+        user.profile.save()
+        user.save()
+        return user

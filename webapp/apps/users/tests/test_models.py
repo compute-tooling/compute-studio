@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 
 import pytest
 
-from webapp.apps.users.models import Profile, Project
+from webapp.apps.users.models import Profile, Project, is_profile_active
 
 User = get_user_model()
 
@@ -29,4 +29,8 @@ class TestStripeModels():
         profile = Profile.create_from_user(user, True)
         assert profile
         assert profile.user == user
-        assert profile.public_access == True
+        assert profile.is_active == True
+        assert is_profile_active(user) == True
+        profile.is_active = False
+        assert profile.is_active == False
+        assert is_profile_active(user) == False

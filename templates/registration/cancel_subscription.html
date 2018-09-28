@@ -1,0 +1,14 @@
+<!-- templates/registration/login.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<h2>Cancel subscription</h2>
+<form method="post" action="{% url 'cancel_subscription' %}">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="btn">Cancel</button>
+</form>
+
+{% endblock %}

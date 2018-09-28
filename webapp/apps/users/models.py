@@ -2,6 +2,10 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 
+def is_profile_active(user):
+    if getattr(user, 'profile', False):
+        return user.profile.is_active
+    return False
 
 class User(AbstractUser):
 
@@ -11,19 +15,17 @@ class User(AbstractUser):
 
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL,
-                                null=True,
                                 on_delete=models.CASCADE)
-
-    public_access = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False)
 
     @staticmethod
-    def create_from_user(user, public_access):
+    def create_from_user(user, is_active):
         profile = Profile.objects.create(user=user,
-                                         public_access=public_access)
-
+                                         is_active=is_active)
         return profile
 
     class Meta:
+        # not in use yet...
         permissions = (
             ('access_public', 'Has access to public projects'),
         )

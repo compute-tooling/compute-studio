@@ -54,12 +54,29 @@ class TestUsersViews():
         resp = client.get('/users/password_change/done/')
         assert resp.status_code == 200
 
+    def test_cancel_subscriptions(self, client, profile, password):
+        success = client.login(username=profile.user.username,
+                               password=password)
+        assert success
+
+        resp = client.get('/users/profile/cancel/')
+        assert resp.status_code == 200
+        data = {'confirm_username': profile.user.username}
+        resp = client.post('/users/profile/cancel/', data=data)
+        assert resp.status_code == 302
+        assert resp.url == '/users/profile/cancel/done/'
+
+        resp = client.get(resp.url)
+        assert resp.status_code == 200
+
+
     def test_access_to_profile_pages(self, client):
         user = auth.get_user(client)
         assert not user.is_authenticated
         restricted = ['/users/profile/', '/users/password_change/',
                       '/users/password_change/done/', '/billing/update/',
-                      '/billing/update/done/']
+                      '/billing/update/done/', '/users/profile/cancel/',
+                      '/users/profile/cancel/done/']
         for url in restricted:
             resp = client.get(url)
             assert resp.status_code == 302
