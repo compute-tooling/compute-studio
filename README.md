@@ -4,9 +4,10 @@
 
 To see COMP in action, visit [compmodels.com](www.compmodels.com).
 
-- Developers and organizations share their public models for free. 
+- Developers share their public models for free. 
+- Developers share private models for a per-user fee. 
 - Users pay for their own compute, at cost.  
-- Share private models for a per-user fee. 
+
 
 ## Contributing
 
@@ -16,7 +17,7 @@ You can reach COMP developers to discuss how to get started by opening an issue 
 
 ## License
 
-COMP is licensed under the open source [GNU Affero General Public License](/License.txt) to Henry Doupe, to be transferred to COMP Industries, LLC.
+COMP is licensed under the open source [GNU Affero General Public License](/License.txt) to Compute Tooling, LLC. 
 
 ## Install instructions
 
