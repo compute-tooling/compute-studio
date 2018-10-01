@@ -2,18 +2,12 @@ Database Setup
 ---------------------
 
 Due to our reliance on the Postgres JSON field, a local Postgres installation
-is required to run the app and its tests locally. We recommend that you follow
-the [Heroku instructions](https://devcenter.heroku.com/articles/heroku-postgresql#local-setup) for local Postgres installation. Postgres 9.4 is run in production, and this is the version that
-is recommended for local development. To install this version, go to the
-potgres.app page [for installing legacy versions](https://postgresapp.com/documentation/all-versions.html)
-and download the installer for Postgres 9.4. Other useful resources are a postgres
-[installation video](https://www.youtube.com/watch?v=xaWlS9HtWYw) and the [Postgres.app installation documentation](http://postgresapp.com/documentation/install.html).
-
-COMP has not been tested on newer versions of Postgres. Thus, we cannot
-help you if you run into problems on a new version of Postgres. Older versions
-of Postgres (< 9.4) do not have as much support for operations on the JSON
-field. Thus, we cannot guarantee that the COMP will work with older
-versions.
+is required to run the app and its tests locally. COMP is compatible with Postgres 10,
+and we recommend that you follow
+the [Heroku instructions](https://devcenter.heroku.com/articles/heroku-postgresql#local-setup)
+for local Postgres setup. Other useful resources are a postgres
+[installation video](https://www.youtube.com/watch?v=xaWlS9HtWYw) and the
+[Postgres.app installation documentation](http://postgresapp.com/documentation/install.html).
 
 The default behavior is to work off of a local Postgres database
 `comp_local_database`, and in `webapp_env.sh`, the Django database url
