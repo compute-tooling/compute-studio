@@ -1,16 +1,15 @@
 <!-- templates/registration/login.html -->
 {% extends 'base.html' %}
 {% load static %}
-
 {% block content %}
 
 <h2>Login</h2>
 <form method="post">
   {% csrf_token %}
-  {{ form.as_p }}
+  {% include 'includes/prettyform.html' with form=form %}
   <button type="submit" class="btn">Login</button>
 </form>
 
-<a style="color:inherit;" href="{% url 'password_reset' %}">Forgot password?</a>
+<a style="color:inherit; margin:5px;" href="{% url 'password_reset' %}">Forgot password?</a>
 
 {% endblock %}

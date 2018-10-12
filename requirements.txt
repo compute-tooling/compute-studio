@@ -10,3 +10,4 @@ gunicorn
 stripe
 sendgrid-django
 pytest
+django_widget_tweaks

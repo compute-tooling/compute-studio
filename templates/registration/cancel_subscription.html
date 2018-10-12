@@ -10,8 +10,8 @@
   <p>Are you sure that you would like to cancel your subscription? You will still be able to view your previous simulation results, but you will not be able to submit any simulations.</p>
   <p>If you have a minute, we'd really appreciate an <a href="mailto:admin@compmodels.com">email</a> from you telling us how we can make COMP a better site and win you back in the future.</p>
   <p>Enter your username below to confirm that you would like to cancel your subscription.</p>
-  {{ form.as_p }}
-  <button type="submit" class="btn">Cancel Subscription</button>
+  {% include 'includes/prettyform.html' with form=form %}
+  <button type="submit" class="btn">Cancel subscription</button>
 </form>
 
 {% endblock %}
