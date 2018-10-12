@@ -8,10 +8,10 @@
   <h2>Sign up</h2>
   <form method="post" id="payment-form">
     {% csrf_token %}
-    {{ form.as_p }}
+    {% include 'includes/prettyform.html' with form=form %}
     <div class='stripe-input'>
       {% include 'billing/base.html' %}
     </div>
-    <button type="submit" class="btn">Sign Up</button>
+    <button style="margin: 10px;" type="submit" class="btn">Sign up</button>
   </form>
 {% endblock %}

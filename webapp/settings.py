@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'webapp.apps.users',
     'webapp.apps.billing',
 
+    'widget_tweaks',
+
     # 'allauth', # new
     # 'allauth.account', # new
     # 'allauth.socialaccount', # new
