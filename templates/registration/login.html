@@ -7,7 +7,7 @@
 <form method="post">
   {% csrf_token %}
   {% include 'includes/prettyform.html' with form=form %}
-  <button type="submit" class="btn">Login</button>
+  <button type="submit" class="btn btn-comp">Login</button>
 </form>
 
 <a style="color:inherit; margin:5px;" href="{% url 'password_reset' %}">Forgot password?</a>

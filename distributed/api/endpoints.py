@@ -7,7 +7,7 @@ import json
 import msgpack
 import os
 
-from api.celery_tasks import file_upload_test
+from api.celery_tasks import file_upload_test, taxcalc_postprocess, taxcalc_task
 
 bp = Blueprint('endpoints', __name__)
 
@@ -30,19 +30,6 @@ def aggr_endpoint(compute_task, postprocess_task):
     return json.dumps(data)
 
 
-def endpoint(task):
-    print('endpoint')
-    data = request.get_data()
-    inputs = msgpack.loads(data, encoding='utf8',
-                           use_list=True)
-    print('inputs', inputs)
-    result = task.apply_async(kwargs=inputs[0],
-                              serializer='msgpack')
-    length = client.llen(queue_name) + 1
-    data = {'job_id': str(result), 'qlength': length}
-    return json.dumps(data)
-
-
 def file_test_endpoint(task):
     print('file test endpoint')
     data = request.get_data()
@@ -57,6 +44,11 @@ def file_test_endpoint(task):
 @bp.route("/upload", methods=['POST'])
 def upload_endpoint():
     return file_test_endpoint(file_upload_test)
+
+
+@bp.route("/taxcalc", methods=['POST'])
+def taxcalc_endpoint():
+    return aggr_endpoint(taxcalc_task, taxcalc_postprocess)
 
 
 @bp.route("/get_job", methods=['GET'])

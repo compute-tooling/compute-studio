@@ -1,18 +1,27 @@
 <div class="tag-selector-container">
-  {% for tag in tags %}
-  <div class="tag-{{ tag.key }}{% if tag.hidden %} hidden{% endif %}">
-    <ul class="nav nav-pills nav-justified tag-selector">
+    {% for tag in tags %}
+    <div class="tag-{{ tag.key }}{% if tag.hidden %} hidden{% endif %}">
+      <ul class="nav nav-pills nav-fill tag-selector">
+        {% for value in tag.values %}
+        <li class="nav-item" style="padding:10px"
+            data-tag-{{ tag.key }}="{{ value.value }}"
+            data-children-keys="{% for child in value.children %} {{ child.key }} {% endfor %}">
+            <a {% if value.tooltip != None %} data-toggle="tooltip"{% endif %}
+               data-placement="bottom"
+               title="{{ value.tooltip }}"
+               class="nav-link {% if value.active %} active {% endif %}"
+               href="#">{{ value.title }}
+            </a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% comment %}
+      The children tags are placed inside a div common with its parent
+      so that they will be hidden if the parent is hidden
+      {% endcomment %}
       {% for value in tag.values %}
-      <li data-tag-{{ tag.key }}="{{ value.value }}" data-children-keys="{% for child in value.children %}{{ child.key }} {% endfor %}"{% if forloop.first %} class="active"{% endif %}><a{% if value.tooltip != None %} data-toggle="tooltip"{% endif %} data-placement="bottom" title="{{ value.tooltip }}" href="#">{{ value.title }}</a></li>
+      {% include "core/select_tags.html" with tags=value.children %}
       {% endfor %}
-    </ul>
-    {% comment %}
-    The children tags are placed inside a div common with its parent
-    so that they will be hidden if the parent is hidden
-    {% endcomment %}
-    {% for value in tag.values %}
-    {% include "core/select_tags.html" with tags=value.children %}
+    </div>
     {% endfor %}
   </div>
-  {% endfor %}
-</div>

@@ -12,11 +12,11 @@ p {
   position:absolute;
   top:0px;
   right:0px;
-  color:rgba(255,255,255,.8);
+  color:#e5e5e5;
 }
 
 .login-status a{
-  color:rgba(255,255,255,.8);
+  color:#e5e5e5;
 }
 
 .login-status a:hover{
@@ -24,24 +24,37 @@ p {
   text-decoration: none;
 }
 
-
-
 .navbar-custom {
   background-color: #212121;
 }
+
 /* change the brand and text color */
 .navbar-custom .navbar-brand,
 .navbar-custom .navbar-text {
-  color: rgba(255,255,255,.8);
+  color: #e5e5e5;
 }
 /* change the link color */
 .navbar-custom .navbar-nav .nav-link {
-  color: rgba(255,255,255,.5);
+  color: #cccc;
 }
 /* change the color of active or hovered links */
 .navbar-custom .nav-item.active .nav-link,
 .navbar-custom .nav-item:hover .nav-link {
   color: #ffffff;
+}
+
+.btn-match-nav, .nav-pills .nav-link.active {
+  background-color: #212121 !important;
+  color: #e5e5e5 !important;
+}
+
+.inverse-btn-match-nav, .nav-pills .nav-link {
+  color: #212121 !important;
+  background-color: #e5e5e5 !important;
+}
+
+.btn-comp {
+  background-color:#cccc !important;
 }
 
 .progress-bar {
@@ -82,4 +95,70 @@ p {
 
 .StripeElement--webkit-autofill {
   background-color: #fefde5 !important;
+}
+
+.wrapper {
+  display: flex;
+  align-items: stretch;
+}
+
+#sidebar {
+  min-width: 250px;
+  max-width: 250px;
+}
+
+#sidebar.active {
+  margin-left: -250px;
+}
+
+/* add tent to input boxes */
+input.model:not(:placeholder-shown) {
+  background-color:  #e5e5e5!important;
+}
+/* fade cpi button on toggle */
+.fader {
+  opacity: 0.5;
+}
+
+
+.card {
+  margin-bottom: 20px;
+  background-color: #fff;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  -moz-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+.card-body {
+  padding: 15px;
+}
+.card-header {
+  padding: 10px 15px;
+  border-bottom: 1px solid transparent;
+  border-top-right-radius: 3px;
+  border-top-left-radius: 3px;
+}
+.card-header > .dropdown .dropdown-toggle {
+  color: inherit;
+}
+.card-title {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 16px;
+  color: inherit;
+}
+.card-title > a,
+.card-title > small,
+.card-title > .small,
+.card-title > small > a,
+.card-title > .small > a {
+  color: inherit;
+}
+.card-footer {
+  padding: 10px 15px;
+  background-color: #f5f5f5;
+  border-top: 1px solid #ddd;
+  border-bottom-right-radius: 3px;
+  border-bottom-left-radius: 3px;
 }

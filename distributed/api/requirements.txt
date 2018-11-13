@@ -1,6 +1,0 @@
-msgpack
-celery
-redis
-pytest
-flask
-toolz

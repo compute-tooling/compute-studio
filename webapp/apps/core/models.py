@@ -62,10 +62,10 @@ class CoreRun(models.Model):
         blank=True,
         default=None,
         max_length=4000)
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE,
-                                related_name='runs')
+    profile = models.ForeignKey(Profile, on_delete=models.PROTECT,
+                                related_name='%(app_label)s_%(class)s_runs')
     project = models.ForeignKey(Project, on_delete=models.PROTECT,
-                                related_name='runs')
+                                related_name='%(app_label)s_%(class)s_runs')
     # run-time in seconds
     run_time = models.IntegerField(default=0)
     # run cost can be very small. ex: 4 sec * ($0.09/hr)/3600
@@ -113,4 +113,5 @@ class TagOption:
     value: str
     title: str
     tooltip: Union[str, None] = None
+    active: bool = False
     children: List[Tag] = field(default_factory=list)

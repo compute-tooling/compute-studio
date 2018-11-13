@@ -16,6 +16,8 @@ import dj_database_url
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+WEBAPP_VERSION = '0.1.0'
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
@@ -46,6 +48,8 @@ INSTALLED_APPS = [
     'webapp.apps.upload',
     'webapp.apps.users',
     'webapp.apps.billing',
+
+    'webapp.apps.taxcalc',
 
     'widget_tweaks',
 

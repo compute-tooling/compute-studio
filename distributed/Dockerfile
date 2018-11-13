@@ -13,7 +13,7 @@ RUN conda config --append channels conda-forge
 
 WORKDIR /home/distributed
 
-RUN conda install numpy>=1.12.1 pandas>=0.23.0 \
+RUN conda install python=3.6 numpy>=1.12.1 pandas>=0.23.0 \
     matplotlib numba six bokeh>=0.12.7 mock xlrd \
     sphinx nomkl
 

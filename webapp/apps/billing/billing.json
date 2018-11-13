@@ -9,5 +9,16 @@
         "server_cost": 0.10,
         "exp_task_time": 20,
         "is_public": true
+    },
+    "taxcalc": {
+        "name": "Tax-Calculator",
+        "amount": 0,
+        "metered_amount": 1,
+        "currency": "usd",
+        "interval": "month",
+        "trial_days": 0,
+        "server_cost": 0.10,
+        "exp_task_time": 20,
+        "is_public": true
     }
 }

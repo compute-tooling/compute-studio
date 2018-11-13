@@ -1,4 +1,11 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block style %}
+{% load results %}
+{{block.super}}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.18/css/dataTables.bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.5.2/css/buttons.bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.2/css/responsive.bootstrap.min.css">
 <style>
   .btn {
     color: black;
@@ -44,29 +51,31 @@
     text-transform: uppercase;
   }
   #table-select-container .nav-pills li {
-    padding-top: 40px;
-  }
-  #table-select-container .nav-pills li:first-child {
-    padding-top: 0;
+    padding-top: 5px;
   }
   .dt-btn-wrapper {
     text-align: center;
   }
 </style>
+{% endblock %}
 {% block content %}
 <div class="wrapper">
+  <br>
   <div id="table-drilldown-container">
     <div>
       <div class="container">
         <div class="row">
           {% if object.aggr_outputs %}
-          <div class="col-md-12" id="fiscal-totals-container">
-            <div class="panel panel-default">
-              <div class="panel-body">
+          <div class="col-md-12" id="aggr-totals-container">
+            <div class="card">
+              <div class="card-body">
                 {% include "core/select_tags.html" with tags=view.aggr_tags only %}
                 {% for x in object.aggr_outputs %}
-                <div class="aggr-output" {% for key, value in x.tags.items %} data-tag-{{ key }}="{{ value }}"{% endfor %}>
-                  <h1 class="text-center">{{ x.title }}</h1>
+                <div class="aggr-output"
+                     {% for key, value in x.tags.items %}
+                       data-tag-{{ key }}="{{ value }}"
+                     {% endfor %}>
+                  <h1 class="card-title">{{ x.title }}</h1>
                   {{ x.renderable | safe }}
                 </div>
                 {% endfor %}
@@ -78,11 +87,11 @@
         <div class="row">
           {% if object.outputs %}
           <div class="col-md-8 col-md-push-2" id="table-select-container">
-            <div class="panel panel-default">
-              <div class="panel-heading">
-                <h3 class="panel-title">Build Table</h3>
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Build Table</h3>
               </div>
-              <div class="panel-body">
+              <div class="card-body">
                 <div class="row">
                   <div class="col-md-6">
                     <h1 class="text-center">For Year: </h1>
@@ -116,10 +125,14 @@
         <div class="row">
           {% if object.outputs %}
           <div class="col-md-12" id="table-container">
-            <div class="panel panel-default">
-                <div class="panel-body" style="overflow: scroll">
+            <div class="card">
+                <div class="card-body">
                   {% for x in object.outputs %}
-                  <div class="output" data-year="{{ x.year }}" {% for key, value in x.tags.items %} data-tag-{{ key }}="{{ value }}"{% endfor %}>
+                  <div class="output"
+                       data-year="{{ x.year }}"
+                       {% for key, value in x.tags.items %}
+                         data-tag-{{ key }}="{{ value }}"
+                       {% endfor %}>
                     <h1 class="text-center">{{ x.title }}</h1>
                     {{ x.renderable | safe }}
                   </div>
@@ -133,6 +146,7 @@
     </div>
   </div>
 </div>
+
 {% endblock %}
 
 {% block bottom_scripts %}
@@ -175,6 +189,7 @@ var initVisibleTable = function (containerSelector) {
   /* We only expect one table to be visible at once, i.e. if the right year is
      selected, and the right tag is selected */
   var table_to_show = $(containerSelector + " table:visible");
+  console.log(table_to_show);
   /* Make sure we don't initialize the DataTable twice */
   if ( ! $.fn.DataTable.isDataTable(table_to_show) ) {
     initDataTable(table_to_show);
@@ -187,7 +202,7 @@ var initVisibleYearTable = function () {
 
 
 var initVisibleAggrTable = function () {
-  initVisibleTable('#fiscal-totals-container');
+  initVisibleTable('#aggr-totals-container');
 };
 
 var activateYearTablesBySelectedYear = function () {
@@ -199,7 +214,8 @@ var activateYearTablesBySelectedYear = function () {
 var activateTablesBySelectedTags = function (args) {
   /* Get the current set of tags */
   var tags_to_match = {};
-  $(args.selectorContainerSelector + ' .tag-selector:visible li.active').each(function (_index, el) {
+  //edit: added a selector
+  $(args.selectorContainerSelector + ' .tag-selector:visible li a.active').parent('li').each(function (_index, el) {
     $.each(el.attributes, function (_index, attr) {
       if (attr.name.startsWith('data-tag-')) {
         tags_to_match[attr.name] = attr.value;
@@ -230,7 +246,7 @@ var activateYearTablesBySelectedTags = function () {
 
 var activateAggrTablesBySelectedTags = function () {
   activateTablesBySelectedTags({
-    "selectorContainerSelector": "#fiscal-totals-container",
+    "selectorContainerSelector": "#aggr-totals-container",
     "outputClass": "aggr-output",
     "selectedTableTagClass": "selected-aggr-table-tag"
   });
@@ -254,10 +270,12 @@ $(document).ready(function () {
     /* Toggle the visible selection */
     e.preventDefault();
     var target_li = $(e.target).parent('li');
-    target_li.addClass('active');
+    var target_a = $(e.target)
+    target_a.addClass('active');
     var parent_container = target_li.parents('.tag-selector-container');
+
     var unselected = target_li.parent('.nav').find('li').not(target_li);
-    unselected.removeClass('active');
+    unselected.find('a').removeClass("active");
 
     /* Deactivate child tags for unselected options */
     unselected.each(function (_index, el) {
@@ -265,7 +283,7 @@ $(document).ready(function () {
       parent_container.find($(children_keys.map(function (key) {
           return ".tag-" + key;
         }).join(", ")))
-        .addClass('hidden');
+        .attr('hidden', true);
     });
 
     /* Activate child tags */
@@ -273,7 +291,7 @@ $(document).ready(function () {
     parent_container.find($(children_keys.map(function (key) {
         return ".tag-" + key;
       }).join(", ")))
-      .removeClass('hidden');
+      .attr('hidden', false);
 
     activateYearTablesBySelectedTags();
     initVisibleYearTable();

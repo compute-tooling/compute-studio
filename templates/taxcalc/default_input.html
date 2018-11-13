@@ -1,0 +1,44 @@
+{% load strings %}
+
+<fieldset id="{{ title|make_id }}" class="inputs-block">
+    <div class="container">
+      <h1>
+        {{ title }}
+        <div class="float-right">
+          <button
+            class="btn collapse-button"
+            type="button"
+            data-toggle="collapse"
+            data-target="#{{ title|make_id }}-collapse"
+            aria-expanded="false"
+            aria-controls="{{ title|make_id }}-collapse"
+            style="margin-left:20px;">
+            <i class="far fa-plus-square" style="size:5x;" ></i>
+          </button>
+        </div>
+      </h1>
+    </div>
+    <hr class="my-4">
+    <div class="container">
+      <div class="collapse" id="{{ title|make_id }}-collapse">
+        <div class="card card-body" style="border:0;">
+        {% for field in param %}
+          {% for name, param_object in field.items %}
+            {% if param_object.name %}
+              <h2>{{ param_object.name }}</h2>
+              {% include 'taxcalc/param.html' with param=param_object %}
+            {% else %}
+              <h2>{{ name }}</h2>
+              {% for x in param_object %}
+                {% for y, z in x.items %}
+                  {% include 'taxcalc/param.html' with param=z%}
+                {% endfor %}
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+        </div>
+      </div>
+      {% block section_warnings %}{% endblock %}
+    </div>
+</fieldset>
