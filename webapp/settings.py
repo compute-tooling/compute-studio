@@ -45,11 +45,11 @@ INSTALLED_APPS = [
 
     'webapp.apps.core',
     'webapp.apps.pages',
-    'webapp.apps.upload',
     'webapp.apps.users',
     'webapp.apps.billing',
 
-    'webapp.apps.taxcalc',
+    'webapp.apps.projects.upload',
+    'webapp.apps.projects.taxcalc',
 
     'widget_tweaks',
 

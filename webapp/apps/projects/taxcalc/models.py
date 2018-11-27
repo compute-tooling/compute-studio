@@ -1,9 +1,9 @@
 from django.db import models
 from django.urls import reverse
 from django.contrib.postgres.fields import ArrayField
-from ..core.models import CoreInputs, CoreRun
+from webapp.apps.core.models import CoreInputs, CoreRun
 
-from webapp.apps.taxcalc.helpers import json_int_key_encode
+from webapp.apps.projects.taxcalc.helpers import json_int_key_encode
 
 
 class TaxcalcInputs(CoreInputs):

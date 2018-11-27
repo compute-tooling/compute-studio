@@ -6,7 +6,7 @@ from django.forms import NullBooleanSelect
 import taxcalc
 
 from .helpers import is_wildcard, is_reverse
-from webapp.apps.taxcalc.param_displayer import ParamDisplayer
+from webapp.apps.projects.taxcalc.param_displayer import ParamDisplayer
 
 MetaParam = namedtuple("MetaParam", ["param_name", "param_meta"])
 CPI_WIDGET = NullBooleanSelect()
@@ -304,6 +304,3 @@ def append_errors_warnings(errors_warnings, append_func):
             ):
                 msg = errors_warnings[action][param][year]
                 append_func(param, msg)
-
-def get_reform_from_file(*args, **kwargs):
-    pass

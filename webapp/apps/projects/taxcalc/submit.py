@@ -4,7 +4,7 @@ from django.utils import timezone
 
 
 from webapp.apps.users.models import Project
-from webapp.apps.taxcalc.param_parser import (
+from webapp.apps.projects.taxcalc.param_parser import (
     ParamParser,
     GUIParamParser,
     append_errors_warnings,
@@ -12,8 +12,8 @@ from webapp.apps.taxcalc.param_parser import (
 from .helpers import make_bool
 from .constants import (START_YEAR, OUT_OF_RANGE_ERROR_MSG, NUM_BUDGET_YEARS,
                         WEBAPP_VERSION, TAXCALC_VERSION)
-from webapp.apps.taxcalc.forms import TaxcalcForm
-from webapp.apps.taxcalc.models import TaxcalcRun, TaxcalcInputs
+from webapp.apps.projects.taxcalc.forms import TaxcalcForm
+from webapp.apps.projects.taxcalc.models import TaxcalcRun, TaxcalcInputs
 
 BadPost = namedtuple("BadPost", ["http_response_404", "has_errors"])
 PostResult = namedtuple("PostResult", ["submit", "save"])
