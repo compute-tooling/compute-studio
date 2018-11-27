@@ -126,7 +126,7 @@
           {% if object.outputs %}
           <div class="col-md-12" id="table-container">
             <div class="card">
-                <div class="card-body">
+                <div class="card-body" style="overflow: scroll">
                   {% for x in object.outputs %}
                   <div class="output"
                        data-year="{{ x.year }}"
@@ -206,8 +206,10 @@ var initVisibleAggrTable = function () {
 };
 
 var activateYearTablesBySelectedYear = function () {
+  console.log("here" + $("#selected-year").text().trim());
   var containers_to_show = $('.output[data-year="' + $("#selected-year").text().trim() + '"]');
   containers_to_show.addClass('selected-table-year');
+  console.log(containers_to_show);
   $('.output').not(containers_to_show).removeClass('selected-table-year');
 };
 

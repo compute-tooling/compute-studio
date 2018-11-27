@@ -28,8 +28,8 @@ COC_TOOLTIP = ("The cost of capital is calculated as the net-of-depreciation, "
                "before-tax rate of return.")
 DPRC_TOOLTIP = "Net present value of depreciation deductions."
 
-START_YEARS = ('2013', '2014', '2015', '2016', '2017', '2018')
-START_YEAR = os.environ.get('START_YEAR', '2017')
+START_YEARS = (2013, 2014, 2015, 2016, 2017, 2018)
+START_YEAR = os.environ.get('START_YEAR', 2017)
 DATA_SOURCES = ('PUF', 'CPS')
 DEFAULT_SOURCE = os.environ.get('DEFAULT_SOURCE', 'PUF')
 
@@ -50,8 +50,7 @@ OUT_OF_RANGE_ERROR_MSG = mark_safe("""
 
 
 WEBAPP_VERSION = settings.WEBAPP_VERSION
-tcversion_info = taxcalc._version.get_versions()
-TAXCALC_VERSION = tcversion_info['version']
+TAXCALC_VERSION = taxcalc.__version__
 
 NUM_BUDGET_YEARS = 10
 NUM_BUDGET_YEARS_QUICK = 1

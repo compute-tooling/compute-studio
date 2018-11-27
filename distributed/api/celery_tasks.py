@@ -48,8 +48,7 @@ def postprocess(ans, postprocess_func):
             all_to_process[key] += value
     results = postprocess_func(all_to_process)
     # Add taxcalc version to results
-    vinfo = taxcalc._version.get_versions()
-    results['taxcalc_version'] = vinfo['version']
+    results['taxcalc_version'] = taxcalc.__version__
     # TODO: Make this the distributed app version, not the TC version
     finish = time.time()
     job_times.append(finish - start)
@@ -59,7 +58,7 @@ def postprocess(ans, postprocess_func):
 
 @celery_app.task(name='api.celery_tasks.taxcalc_task', soft_time_limit=40)
 def taxcalc_task(year_n, user_mods, start_year, use_puf_not_cps,
-                 use_full_sample):
+                 use_full_sample, data_source=None):
     start = time.time()
     print('running task')
     print(

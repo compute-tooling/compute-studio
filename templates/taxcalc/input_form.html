@@ -9,44 +9,41 @@
 <form class="inputs-form" method="post" action="/taxcalc/?start_year={{start_year}}&data_source={{data_source}}">
 {% csrf_token %}
 <input type="hidden" name="has_errors" value="{{ has_errors }}" />
-<div class="wrapper">
+<div class="wrapper" style="padding:50px 50px;">
     <!-- Sidebar -->
     <nav id="sidebar">
         <div class="sidebar-header">
-            <h3>Param headers</h3>
+            <h3>Input Sections</h3>
         </div>
         <ul class="list-unstyled components">
             <li>
-              <label> Start Year:
-                <select id="start-year-select" class="form-control">
-                  {% for year in start_years %}
-                    <option value="{{year}}" {% if year == start_year %} selected {% endif %}>{{year}}</option>
-                  {% endfor %}
-                </select>
-              </label>
-            </li>
-            <li>
-                <label> Principal Data Source:
-                  <select id="data-source-select" class="form-control">
-                    {% for data in data_sources %}
-                      <option value="{{data}}" {% if data == data_source %} selected {% endif %}>{{data}}</option>
-                    {% endfor %}
-                  </select>
-              </label>
-            </li>
-            <li>
                 <a href="/taxcalc" class="btn btn-secondary">Reset Parameters</a>
             </li>
+            <hr>
             <li>
               <ul class="list-unstyled components">
-                <li class="get-started"><a style="color:inherit;" href="#get-started">Get Started</a></li>
-                  {% for param in params %}
-                    {% for key, value in param.items %}
-                      <li><a style="color:inherit;margin-top:2px;margin-bottom:2px;" href="#{{ key|make_id }}">{{ key }}</a></li>
+                  {% for section, params in default_form.items %}
+                    <li><a class="btn inverse-btn-match-nav dropdown-toggle"
+                        style="color:inherit;margin-top:10px;margin-bottom:2px;"
+                        href="#{{ section }}-submenu"
+                        data-toggle="collapse"
+                        aria-expanded="false"
+                        role="button"
+                        aria-controls="{{ section }}-submenu">
+                        {{ section.title }} Parameter Sections
+                    </a>
+                    </li>
+                    <ul class="collapse list-unstyled" id="{{ section }}-submenu">
+                    {% for param in params %}
+                      {% for key, value in param.items %}
+                        <li><a style="color:inherit;margin-top:2px;margin-bottom:2px;" href="#{{ key|make_id }}">{{ key }}</a></li>
+                      {% endfor %}
                     {% endfor %}
+                    </ul>
                   {% endfor %}
-              </ul>
-            </li>
+                </ul>
+              </li>
+            <hr>
             <li>
               <button class="btn btn-block btn-match-nav" type="submit" name="full_calc" value="true" style="margin:10px;margin-left:0px;">Run simulation</button>
             </li>
@@ -55,10 +52,10 @@
             </li>
         </ul>
     </nav>
-  <div id="content">
+  <div id="content" style="margin-left:20px">
     <div class="col-xs-9">
         <div class="inputs-main">
-
+          {% include 'taxcalc/metaparameters.html' with title="Meta-Parameters" start_years=start_years data_sources=data_sources %}
           {% for error in form.non_field_errors %}
               <div class="alert alert-danger text-center lert-dismissible" role="alert">
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -67,17 +64,8 @@
                 {{ error }}
               </div>
           {% endfor %}
-
-          {% for param in params %}
-            {% for key, value in param.items %}
-              {% if key != "ubi" %}
-                {% if params|is_first:param %}
-                  {% include 'taxcalc/default_input.html' with title=key param=value is_first=True %}
-                {% else %}
-                  {% include 'taxcalc/default_input.html' with title=key param=value is_first=False %}
-                {% endif %}
-              {% endif %}
-            {% endfor %}
+          {% for section, params in default_form.items %}
+              {% include 'taxcalc/major_section.html' with title=section.title params=params %}
           {% endfor %}
         </div> <!-- main -->
       </div>
@@ -89,15 +77,15 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="padding:0;margin:0;"><span aria-hidden="true">&times;</span></button>
           <h4 class="modal-title" id="myModalLabel">Change Start Year</h4>
         </div>
         <div class="modal-body">
           Warning: This will clear your current inputs.
         </div>
         <div class="modal-footer">
-          <a type="button" class="btn btn-default" data-dismiss="modal">Nevermind.</a>
-          <a type="button" class="btn btn-primary" id="current-year-link">OK, go for it.</a>
+          <a type="button" class="btn inverse-btn-match-nav" data-dismiss="modal">Nevermind.</a>
+          <a type="button" class="btn btn-match-nav" id="current-year-link">OK, go for it.</a>
         </div>
       </div>
     </div>
@@ -106,15 +94,15 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="padding:0;margin:0;"><span aria-hidden="true">&times;</span></button>
           <h4 class="modal-title" id="myModalLabel">Change Data Source</h4>
         </div>
         <div class="modal-body">
           Warning: This will clear your current inputs.
         </div>
         <div class="modal-footer">
-          <a type="button" class="btn btn-default" data-dismiss="modal">Nevermind.</a>
-          <a type="button" class="btn btn-primary" id="data-source-link">OK, go for it.</a>
+          <a type="button" class="btn inverse-btn-match-nav" data-dismiss="modal">Nevermind.</a>
+          <a type="button" class="btn btn-match-nav" id="data-source-link">OK, go for it.</a>
         </div>
       </div>
     </div>

@@ -1,19 +1,23 @@
-{% load widget_tweaks %}
-
 <!-- hide the checkbox; add a hidden input for the "False" scenario;
 provide label users will click to toggle the CPI on and off -->
-{% render_field cpi class="form-control model" value="True" style="display:none;"%}
-<input id="hidden-{{ cpi.id_for_label }}" type="hidden" value="False" name="{{ cpi.name }}" class="model">
-<label for="{{ cpi.id_for_label }}" id="label-{{ cpi.id_for_label }}" class="btn btn-match-nav btn-sm {% if not cpi.value %}fader{% endif %}">
+<input type="checkbox" id="{{ cpi.id_for_label }}" name="{{ cpi.name }}"
+  value="True" class="form-control model" style="display:none;"
+  {% if cpi.initial %} checked {% endif %} >
+<input type="hidden" id="hidden-{{ cpi.id_for_label }}"name="{{ cpi.name }}" value="False" class="model">
+<label for="{{ cpi.id_for_label }}" id="label-{{ cpi.id_for_label }}" class="btn btn-match-nav btn-sm {% if not cpi.initial %}fader{% endif %}">
     CPI
 </label>
+<p>{{cpi.initial}}</p>
 
 <!-- toggle fade on CPI buttons and mark as edited when clicked -->
 <script>
   $(document).ready(function(){
     $("#label-{{ cpi.id_for_label }}").click(function(){
       $(this).toggleClass("fader");
-      $("#{{ cpi.id_for_label}}").prop("check-edited", true);
+      $("#{{ cpi.id_for_label }}").prop("checked", function(i, val) {
+        return !val;
+      });
+      $("#{{ cpi.id_for_label }}").prop("check-edited", true);
     });
   });
 </script>

@@ -12,19 +12,18 @@
 
     <div class="col-xs-12">
       <label>
-        {{ param.name }}
+        {{ param.long_name }}
         {% include 'taxcalc/tooltip.html' with text=param.info %}
       </label>
 
       {% if param.inflatable %}
-        {% with form|dict_get:param.cpi_field.id as cpi_field %}
+        {% with form|dict_get:param.cpi_field.name as cpi_field %}
           {% include 'taxcalc/cpi_button.html' with cpi=cpi_field %}
         {% endwith %}
       {% endif %}
     </div>
   </div>
   <div class="row has-statuses">
-
     {% for field in param.col_fields %}
       <div class="{{ param|col_input_class }}">
         {% include 'taxcalc/field.html' with field=field %}

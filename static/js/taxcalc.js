@@ -28,6 +28,8 @@ $("form").on("submit", function(e){
   $(this).find("input.model[type=checkbox]").each(function(){
     if($(this).prop("checked")){
       $("#hidden-" + $(this).prop("id")).prop("disabled", true);
+    } else {
+      $(this).prop("disabled", true);
     }
     if(!$(this).prop("check-edited")){
       $("#hidden-" + $(this).prop("id")).prop("disabled", true);

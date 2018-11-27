@@ -8,7 +8,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 
 from .forms import TaxcalcForm
 from .helpers import json_int_key_encode
-from .param_displayers import nested_form_parameters
+from .param_displayer import ParamDisplayer
 from ..core.compute import Compute
 from .models import TaxcalcRun
 from ..core.views import CoreRunDetailView, CoreRunDownloadView
@@ -21,8 +21,7 @@ from .constants import (DISTRIBUTION_TOOLTIP, DIFFERENCE_TOOLTIP,
                          DATA_SOURCES, DEFAULT_SOURCE, OUT_OF_RANGE_ERROR_MSG,
                          WEBAPP_VERSION, TAXCALC_VERSION, NUM_BUDGET_YEARS)
 
-from .param_formatters import append_errors_warnings
-from .submit_data import PostMeta, BadPost, process_reform, save_model
+from .submit import BadPost, handle_submission
 
 ENABLE_QUICK_CALC = bool(os.environ.get('ENABLE_QUICK_CALC', ''))
 
@@ -136,29 +135,35 @@ def taxcalc_inputs(request):
     Receive data from GUI interface and returns parsed data or default data if
     get request
     """
-    start_year = START_YEAR
+    meta_parameters = {
+        "start_year": int(START_YEAR),
+        "data_source": DEFAULT_SOURCE,
+        "use_puf_not_cps": DEFAULT_SOURCE == "PUF",
+    }
+    meta_options = {
+        "start_years": START_YEARS,
+        "data_sources": DATA_SOURCES,
+    }
     has_errors = False
-    data_source = DEFAULT_SOURCE
     if request.method == 'POST':
         print('method=POST get', request.GET)
         print('method=POST post', request.POST)
-        obj, post_meta = process_reform(request, compute)
+        result = handle_submission(request, compute)
         # case where validation failed in forms.TaxcalcForm
         # TODO: assert HttpResponse status is 404
-        if isinstance(post_meta, BadPost):
-            return post_meta.http_response_404
+        if isinstance(result, BadPost):
+            return submission.http_response_404
 
         # No errors--submit to model
-        if not post_meta.stop_submission:
-            print('redirecting...', obj, obj.get_absolute_url())
-            return redirect(obj)
+        if result.save is not None:
+            print('redirecting...', result.save, result.save.runmodel.get_absolute_url())
+            return redirect(result.save.runmodel)
         # Errors from taxcalc.tbi.reform_warnings_errors
         else:
-            personal_inputs = post_meta.personal_inputs
-            start_year = post_meta.start_year
-            data_source = post_meta.data_source
-            use_puf_not_cps = (data_source == 'PUF')
-            has_errors = post_meta.has_errors
+            personal_inputs = result.submit.form
+            print(personal_inputs.errors)
+            meta_parameters = result.submit.meta_parameters
+            has_errors = result.submit.has_errors
 
     else:
         # Probably a GET request, load a default form
@@ -167,6 +172,9 @@ def taxcalc_inputs(request):
         params = parse_qs(urlparse(request.build_absolute_uri()).query)
         if 'start_year' in params and params['start_year'][0] in START_YEARS:
             start_year = params['start_year'][0]
+            meta_parameters.update({
+                "start_year": int(start_year)
+            })
 
         # use puf by default
         use_puf_not_cps = True
@@ -175,21 +183,22 @@ def taxcalc_inputs(request):
             data_source = params['data_source'][0]
             if data_source != 'PUF':
                 use_puf_not_cps = False
+            meta_parameters.update({
+                "data_source": data_source,
+                "use_puf_not_cps": use_puf_not_cps,
+            })
 
-        personal_inputs = TaxcalcForm(first_year=start_year,
-                                       use_puf_not_cps=use_puf_not_cps)
+        personal_inputs = TaxcalcForm()#**meta_parameters)
 
-    init_context = {
-        'form': personal_inputs,
-        'params': nested_form_parameters(int(start_year), use_puf_not_cps),
-        'upstream_version': TAXCALC_VERSION,
-        'webapp_version': WEBAPP_VERSION,
-        'start_years': START_YEARS,
-        'start_year': start_year,
-        'has_errors': has_errors,
-        'data_sources': DATA_SOURCES,
-        'data_source': data_source,
-        'enable_quick_calc': ENABLE_QUICK_CALC
-    }
-
-    return render(request, 'taxcalc/input_form.html', init_context)
+    pd = ParamDisplayer(**meta_parameters)
+    metadict = dict(meta_parameters, **meta_options)
+    context = dict(
+        form=personal_inputs,
+        default_form=pd.default_form(),
+        upstream_version=TAXCALC_VERSION,
+        webapp_version=WEBAPP_VERSION,
+        has_errors=has_errors,
+        enable_quick_calc=ENABLE_QUICK_CALC,
+        **metadict
+    )
+    return render(request, 'taxcalc/input_form.html', context)

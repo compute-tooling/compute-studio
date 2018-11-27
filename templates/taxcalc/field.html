@@ -1,8 +1,8 @@
 {% load utility %}
 
-{% with form|dict_get:field.id as form_field %}
+{% with form|dict_get:field.name as form_field %}
 
-<div class="form-group{% if form_field.errors %} has-warning{% endif %}">
+<div class="form-group{% if form_field.errors %} has-warning{% endif %}" style="padding:0px 5px;">
 
   {% if form_field.label %}
     <label for="{{ form_field.id_for_label }}">

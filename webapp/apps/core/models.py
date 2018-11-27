@@ -16,8 +16,8 @@ from webapp.apps.users.models import Project, Profile
 
 
 class CoreInputs(models.Model):
-    raw_gui_field_inputs = JSONField(default=None, blank=True, null=True)
-    gui_field_inputs = JSONField(default=None, blank=True, null=True)
+    raw_gui_inputs = JSONField(default=None, blank=True, null=True)
+    gui_inputs = JSONField(default=None, blank=True, null=True)
 
     # Validated GUI input that has been parsed to have the correct data types,
     # or JSON reform uploaded as file
@@ -28,18 +28,21 @@ class CoreInputs(models.Model):
     # The parameters that will be used to run the model
     upstream_parameters = JSONField(default=dict, blank=True, null=True)
 
-    # Starting year of the reform calculation
-    first_year = models.IntegerField(default=None, null=True)
+    # Parameters used to define the space of the upstream parameters
+    # meta_parameters = JSONField(default=dict, blank=True, null=True)
 
-    # List of years for which to calculate the reform, as offsets from the
-    # first year
-    years_n = models.CharField(
-        validators=[validate_comma_separated_integer_list],
-        max_length=300)
+    quick_calc = models.BooleanField()
 
-    @cached_property
-    def years(self):
-        return [self.first_year + int(i) for i in self.years_n.split(",")]
+    @property
+    def deserialized_inputs(self):
+        """
+        Method for de-serializing parameters for submission to the modeling
+        project. This is helpful if information required for deserializing an
+        object is lost during serialization. For example, projects that depend
+        on integer keys in a dictionary will run into issues with those keys
+        being converted into strings during serialization.
+        """
+        return self.upstream_parameters
 
     class Meta:
         abstract = True

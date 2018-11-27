@@ -6,7 +6,7 @@ http://blog.kevinastone.com/django-model-behaviors.html
 """
 
 from django.db import models
-from . import param_formatters
+from . import param_parser
 
 
 class Fieldable(models.Model):
@@ -17,7 +17,7 @@ class Fieldable(models.Model):
     class Meta:
         abstract = True
 
-    def set_fields(self, upstream_objs, nonparam_fields=None):
+    def set_fields(self, default_data, nonparam_fields=None):
         """
         Parse raw fields
             1. Only keep fields that user specifies
@@ -25,13 +25,8 @@ class Fieldable(models.Model):
             3. Do more specific type checking--in particular, check if
                field is the type that Tax-Calculator expects from this param
         """
-        default_data = {}
-        for obj in upstream_objs:
-            dd = obj.default_data(start_year=self.start_year,
-                                                     metadata=True)
-            default_data.update(dd)
 
-        gui_field_inputs, failed_lookups = param_formatters.parse_fields(
+        gui_field_inputs, failed_lookups = param_parser.parse_fields(
             self.raw_gui_field_inputs,
             default_data
         )
@@ -75,17 +70,10 @@ class DataSourceable(models.Model):
     class Meta:
         abstract = True
 
-    # data source for model
-    data_source = models.CharField(
-        default="PUF",
-        blank=True,
-        null=True,
-        max_length=20)
-
     @property
     def use_puf_not_cps(self):
         # which file to use, front-end not yet implemented
-        if self.data_source == 'PUF':
+        if self.meta_parameters["data_source"] == 'PUF':
             return True
         else:
             return False
