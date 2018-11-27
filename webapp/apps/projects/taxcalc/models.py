@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.contrib.postgres.fields import ArrayField
 from webapp.apps.core.models import CoreInputs, CoreRun
 
-from webapp.apps.projects.taxcalc.helpers import json_int_key_encode
+from webapp.apps.core.utils import json_int_key_encode
 
 
 class TaxcalcInputs(CoreInputs):

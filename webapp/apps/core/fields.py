@@ -1,6 +1,6 @@
 from django import forms
 
-from webapp.apps.core.utils import is_reverse, is_wildcard
+from .utils import is_reverse, is_wildcard
 
 class SeparatedValueField(forms.Field):
 

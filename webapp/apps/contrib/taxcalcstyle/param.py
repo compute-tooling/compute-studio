@@ -1,9 +1,4 @@
-from django import forms
-
-from webapp.apps.core.fields import SeparatedValueField
-from webapp.apps.core.param import BaseParam, CheckBox, SeparatedValue
-
-
+from webapp.apps.core.param import CheckBox
 
 class TaxCalcParam(BaseParam):
 

@@ -7,7 +7,7 @@ from urllib.parse import urlparse, parse_qs
 from django.shortcuts import render, redirect
 
 from .forms import TaxcalcForm
-from .param_displayer import ParamDisplayer
+from webapp.apps.core.param_displayer import ParamDisplayer
 from webapp.apps.core.compute import Compute
 from .models import TaxcalcRun
 from webapp.apps.core.views import CoreRunDetailView, CoreRunDownloadView
@@ -18,9 +18,12 @@ from .constants import (DISTRIBUTION_TOOLTIP, DIFFERENCE_TOOLTIP,
                          REFORM_TOOLTIP, INCOME_BINS_TOOLTIP,
                          INCOME_DECILES_TOOLTIP, START_YEAR, START_YEARS,
                          DATA_SOURCES, DEFAULT_SOURCE,
-                         WEBAPP_VERSION, TAXCALC_VERSION)
+                         TAXCALC_VERSION)
+from webapp.apps.core.constants import WEBAPP_VERSION
 
-from .submit import BadPost, handle_submission
+
+from webapp.apps.core.submit import BadPost, handle_submission
+from webapp.apps.projects.taxcalc.submit import Submit, Save
 
 ENABLE_QUICK_CALC = bool(os.environ.get('ENABLE_QUICK_CALC', ''))
 
@@ -147,7 +150,7 @@ def taxcalc_inputs(request):
     if request.method == 'POST':
         print('method=POST get', request.GET)
         print('method=POST post', request.POST)
-        result = handle_submission(request, compute)
+        result = handle_submission(request, compute, Submit, Save)
         # case where validation failed in forms.TaxcalcForm
         # TODO: assert HttpResponse status is 404
         if isinstance(result, BadPost):
