@@ -5,10 +5,8 @@ from ..core.models import CoreInputs, CoreRun
 
 from webapp.apps.taxcalc.helpers import json_int_key_encode
 
-from .behaviors import Fieldable, DataSourceable
 
-
-class TaxcalcInputs(DataSourceable, Fieldable, CoreInputs):
+class TaxcalcInputs(CoreInputs):
     start_year = models.IntegerField()
     data_source = models.CharField(max_length=10)
 
