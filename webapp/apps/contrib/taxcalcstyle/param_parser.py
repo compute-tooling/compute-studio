@@ -129,7 +129,7 @@ class ParamParser(param_parser.ParamParser):
         )
         # get errors and warnings on parameters that do not cause ValueErrors
         tc_errors_warnings = taxcalc.tbi.reform_warnings_errors(
-            policy_dict, self.use_puf_not_cps
+            policy_dict, self.data_source
         )
         # errors_warnings contains warnings and errors separated by each
         # project/project module

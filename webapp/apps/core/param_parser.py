@@ -8,12 +8,12 @@ class ParameterLookUpException(Exception):
 class ParamParser:
     ParamDisplayerCls = ParamDisplayer
 
-    def __init__(self, raw_input, **meta_parameters):
+    def __init__(self, raw_input, **valid_meta_params):
         self.raw_input = raw_input
-        for param, value in meta_parameters.items():
+        for param, value in valid_meta_params.items():
             setattr(self, param, value)
         self.grouped_defaults = self.ParamDisplayerCls(
-            **meta_parameters
+            **valid_meta_params
         ).package_defaults()
         self.flat_defaults = {
             k: v

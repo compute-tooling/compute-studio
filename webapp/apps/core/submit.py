@@ -1,9 +1,8 @@
-import ast
 import datetime
 from collections import namedtuple
 
 from django.utils import timezone
-
+from django import forms
 
 from webapp.apps.users.models import Project
 from webapp.apps.core.param_parser import ParamParser, append_errors_warnings
@@ -23,6 +22,7 @@ class Submit:
     webapp_version = WEBAPP_VERSION
     upstream_version = None
     task_run_time_secs = None
+    meta_parameters = None
 
     def __init__(self, request, compute, **kwargs):
         self.request = request
@@ -31,6 +31,7 @@ class Submit:
         self.kwargs = kwargs
         self.model = None
         self.badpost = None
+        self.valid_meta_params = {}
 
         self.get_fields()
         self.create_model()
@@ -42,21 +43,15 @@ class Submit:
             self.submit()
 
     def get_fields(self):
-        fields = dict(self.request.GET)
-        fields.update(dict(self.request.POST))
-        fields = {
-            k: v[0] if isinstance(v, list) else v
-            for k, v in list(fields.items())
-        }
+        fields = self.request.GET.dict()
+        fields.update(self.request.POST.dict())
         fields.pop("full_calc", None)
-        self.has_errors = ast.literal_eval(fields["has_errors"])
-        self.is_quick_calc = True if fields.get("quick_calc") else False
-        fields["quick_calc"] = str(self.is_quick_calc)
+        self.has_errors = forms.BooleanField(required=False).clean(fields["has_errors"])
         self.fields = fields
-        self.meta_parameters = {"use_full_sample": not self.is_quick_calc}
+        self.valid_meta_params = self.meta_parameters.validate(self.fields)
 
     def create_model(self):
-        self.form = self.FormCls(dict(self.fields, **self.meta_parameters))
+        self.form = self.FormCls(dict(self.fields, **self.valid_meta_params))
         if self.form.non_field_errors():
             self.badpost = BadPost(
                 http_response_404=HttpResponse("Bad Input!", status=400),
@@ -69,7 +64,7 @@ class Submit:
             self.model = self.form.save(self.InputModelCls, commit=False)
             paramparser = self.ParamParserCls(
                 self.model.gui_inputs,
-                **self.meta_parameters
+                **self.valid_meta_params
             )
 
             (
@@ -80,7 +75,6 @@ class Submit:
             self.model.upstream_parameters = upstream_parameters
             self.model.input_file = upstream_json_files
             self.model.errors_warnings = errors_warnings
-            self.model.quick_calc = self.is_quick_calc
             self.model.save()
 
     @property
@@ -123,7 +117,7 @@ class Submit:
 
     def submit(self):
         data = dict({"user_mods": self.model.deserialized_inputs},
-                    **self.meta_parameters)
+                    **self.valid_meta_params)
         print('submit', data)
         self.data_list = self.extend_data(data)
         self.submitted_id, self.max_q_length = self.compute.submit_job(

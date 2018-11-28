@@ -24,7 +24,7 @@ def test_taxcalc_endpoint(celery_worker):
             "growmodel": {}
         },
         'start_year': 2017,
-        'use_puf_not_cps': False,
+        'data_source': "PUF",
         'year_n': 0,
         'use_full_sample': False
     }

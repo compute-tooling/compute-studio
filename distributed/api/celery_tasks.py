@@ -57,8 +57,8 @@ def postprocess(ans, postprocess_func):
 
 
 @celery_app.task(name='api.celery_tasks.taxcalc_task', soft_time_limit=40)
-def taxcalc_task(year_n, user_mods, start_year, use_puf_not_cps,
-                 use_full_sample, data_source=None):
+def taxcalc_task(year_n, user_mods, start_year, data_source,
+                 use_full_sample):
     start = time.time()
     print('running task')
     print(
@@ -66,7 +66,7 @@ def taxcalc_task(year_n, user_mods, start_year, use_puf_not_cps,
         dict(
             year_n=year_n,
             start_year=int(start_year),
-            use_puf_not_cps=use_puf_not_cps,
+            data_source=data_source,
             use_full_sample=use_full_sample,
             user_mods=user_mods
         )
@@ -75,7 +75,7 @@ def taxcalc_task(year_n, user_mods, start_year, use_puf_not_cps,
     raw_data = taxcalc.tbi.run_nth_year_taxcalc_model(
         year_n=year_n,
         start_year=int(start_year),
-        use_puf_not_cps=use_puf_not_cps,
+        data_source=data_source,
         use_full_sample=use_full_sample,
         user_mods=user_mods
     )

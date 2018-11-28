@@ -5,36 +5,36 @@ from django import forms
 from .param_displayer import ParamDisplayer
 
 
-MetaParam = namedtuple("MetaParam", ["name", "default", "field"])
-
 class InputsForm(forms.Form):
 
     ParamDisplayerCls = ParamDisplayer
-    meta_parameters = []
+    meta_parameters = None
 
     def __init__(self, *args, **kwargs):
+        print(args, kwargs)
         fields = args[0] if args else {}
         args = ({}, )
-        clean_meta_parameters = {}
-        for param in self.meta_parameters:
-            try:
-                cleaned = param.field.clean(fields.get(param.name))
-            except forms.ValidationError:
-                # fall back on default. deal with bad data in full validation.
-                cleaned = param.field.clean(param.default)
-            clean_meta_parameters[param.name] = cleaned
+        print('dirty', fields)
+        clean_meta_parameters = self.meta_parameters.validate(fields)
+        # guarantee that we have meta_parameters
+        # this is important for empty or partially empty GET requests
+        print('clean', clean_meta_parameters)
+        fields.update(clean_meta_parameters)
         pd = self.ParamDisplayerCls(**clean_meta_parameters)
         default_params = pd.get_defaults()
         update_fields = {}
         for param in list(default_params.values()):
             update_fields.update(param.fields)
-        update_fields.update({mp.name: mp.field for mp in self.meta_parameters})
+        update_fields.update({
+            mp.name: mp.field for mp in self.meta_parameters.parameters
+        })
         super().__init__(data=fields, **kwargs)
         # funky things happen when dict is not copied
         self.fields.update(update_fields.copy())
+        print(fields)
 
     def save(self, ModelCls, commit=True):
-        meta_parameters = [mp.name for mp in self.meta_parameters]
+        meta_parameters = [mp.name for mp in self.meta_parameters.parameters]
         clean_meta_parameters = {name: self.cleaned_data[name]
                                  for name in meta_parameters}
         # use cleaned_data keys to filter out un-needed params like request

@@ -27,11 +27,6 @@ class CoreInputs(models.Model):
     # The parameters that will be used to run the model
     upstream_parameters = JSONField(default=dict, blank=True, null=True)
 
-    # Parameters used to define the space of the upstream parameters
-    # meta_parameters = JSONField(default=dict, blank=True, null=True)
-
-    quick_calc = models.BooleanField()
-
     @property
     def deserialized_inputs(self):
         """
