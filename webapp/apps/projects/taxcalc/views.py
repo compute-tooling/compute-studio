@@ -1,26 +1,24 @@
-import os
-
 from django.shortcuts import render, redirect
 from webapp.apps.core.compute import Compute
 from webapp.apps.core.views import CoreRunDetailView, CoreRunDownloadView
 from webapp.apps.core.models import Tag, TagOption
 from webapp.apps.core.constants import WEBAPP_VERSION
 from webapp.apps.core.submit import BadPost, handle_submission
+from django.views import View
 
+from .models import TaxcalcRun
+from .param_displayer import ParamDisplayer
+from .submit import Submit, Save
+from .forms import TaxcalcInputsForm
+from .meta_parameters import meta_parameters
+from .constants import TAXCALC_VERSION
 from .constants import (DISTRIBUTION_TOOLTIP, DIFFERENCE_TOOLTIP,
                          PAYROLL_TOOLTIP, INCOME_TOOLTIP, BASE_TOOLTIP,
                          REFORM_TOOLTIP, INCOME_BINS_TOOLTIP,
                          INCOME_DECILES_TOOLTIP, START_YEARS,
                          DATA_SOURCES,
                          TAXCALC_VERSION)
-from .models import TaxcalcRun
-from .submit import Submit, Save
-from .forms import TaxcalcInputsForm
-from .param_displayer import ParamDisplayer
-from .meta_parameters import meta_parameters
 
-
-ENABLE_QUICK_CALC = bool(os.environ.get('ENABLE_QUICK_CALC', ''))
 
 compute = Compute()
 
@@ -41,6 +39,80 @@ def get_version(url_obj, attr_name, current_version):
 
     return vers_disp
 
+
+class TaxcalcInputsView(View):
+    FormCls = TaxcalcInputsForm
+    ParamDisplayerCls = ParamDisplayer
+    SubmitCls = Submit
+    SaveCls = Save
+    result_header = "Tax-Calculator Results"
+    template_name = "taxcalc/input_form.html"
+    name = "Tax-Calculator"
+    app_name = "taxcalc"
+    meta_parameters = meta_parameters
+    meta_options = {"start_years": START_YEARS, "data_sources": DATA_SOURCES}
+    has_errors = False
+    upstream_version = TAXCALC_VERSION
+
+    def get(self, request, *args, **kwargs):
+        print("method=GET", request.GET)
+        inputs_form = self.FormCls(request.GET.dict())
+        if inputs_form.is_valid():
+            inputs_form.clean()
+        else:
+            inputs_form = FormCls()
+            inputs_form.is_valid()
+            inputs_form.clean()
+        names = {mp.name for mp in self.meta_parameters.parameters}
+        valid_meta_params = {
+            k: inputs_form.cleaned_data.get(k, "") for k in names
+        }
+
+        pd = self.ParamDisplayerCls(**valid_meta_params)
+        metadict = dict(valid_meta_params, **self.meta_options)
+        context = dict(
+            form=inputs_form,
+            default_form=pd.default_form(),
+            upstream_version=self.upstream_version,
+            webapp_version=WEBAPP_VERSION,
+            has_errors=self.has_errors,
+            enable_quick_calc=True,
+            **metadict
+        )
+        return render(request, "taxcalc/input_form.html", context)
+
+    def post(self, request, *args, **kwargs):
+        print("method=POST get", request.GET)
+        print("method=POST post", request.POST)
+        result = handle_submission(
+            request, compute, self.SubmitCls, self.SaveCls
+        )
+        # case where validation failed
+        if isinstance(result, BadPost):
+            return submission.http_response_404
+
+        # No errors--submit to model
+        if result.save is not None:
+            print("redirecting...", result.save.runmodel.get_absolute_url())
+            return redirect(result.save.runmodel)
+        # Errors from taxcalc.tbi.reform_warnings_errors
+        else:
+            inputs_form = result.submit.form
+            valid_meta_params = result.submit.valid_meta_params
+            has_errors = result.submit.has_errors
+
+        pd = self.ParamDisplayerCls(**valid_meta_params)
+        metadict = dict(valid_meta_params, **self.meta_options)
+        context = dict(
+            form=inputs_form,
+            default_form=pd.default_form(),
+            upstream_version=self.upstream_version,
+            webapp_version=WEBAPP_VERSION,
+            has_errors=self.has_errors,
+            enable_quick_calc=ENABLE_QUICK_CALC,
+            **metadict
+        )
+        return render(request, "taxcalc/input_form.html", context)
 
 class TaxcalcRunDetailView(CoreRunDetailView):
     model = TaxcalcRun
@@ -125,60 +197,3 @@ class TaxcalcRunDetailView(CoreRunDetailView):
 
 class TaxcalcRunDownloadView(CoreRunDownloadView):
     model = TaxcalcRun
-
-
-def taxcalc_inputs(request):
-    """
-    Receive data from GUI interface and returns parsed data or default data if
-    get request
-    """
-    # meta_parameters = meta_parameters
-    meta_options = {
-        "start_years": START_YEARS,
-        "data_sources": DATA_SOURCES,
-    }
-    has_errors = False
-    if request.method == 'POST':
-        print('method=POST get', request.GET)
-        print('method=POST post', request.POST)
-        result = handle_submission(request, compute, Submit, Save)
-        # case where validation failed
-        if isinstance(result, BadPost):
-            return submission.http_response_404
-
-        # No errors--submit to model
-        if result.save is not None:
-            print('redirecting...', result.save, result.save.runmodel.get_absolute_url())
-            return redirect(result.save.runmodel)
-        # Errors from taxcalc.tbi.reform_warnings_errors
-        else:
-            inputs_form = result.submit.form
-            valid_meta_params = result.submit.valid_meta_params
-            has_errors = result.submit.has_errors
-
-    else:
-        # retrieve, clean, validate GET parameters
-        print('method=GET', request.GET)
-        inputs_form = TaxcalcInputsForm(request.GET.dict())
-        if inputs_form.is_valid():
-            inputs_form.clean()
-        else:
-            inputs_form = TaxcalcInputsForm()
-            inputs_form.is_valid()
-            inputs_form.clean()
-        names = {mp.name for mp in meta_parameters.parameters}
-        valid_meta_params = {k: inputs_form.cleaned_data.get(k, '')
-                             for k in names}
-
-    pd = ParamDisplayer(**valid_meta_params)
-    metadict = dict(valid_meta_params, **meta_options)
-    context = dict(
-        form=inputs_form,
-        default_form=pd.default_form(),
-        upstream_version=TAXCALC_VERSION,
-        webapp_version=WEBAPP_VERSION,
-        has_errors=has_errors,
-        enable_quick_calc=ENABLE_QUICK_CALC,
-        **metadict
-    )
-    return render(request, 'taxcalc/input_form.html', context)
