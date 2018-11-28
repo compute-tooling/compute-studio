@@ -1,15 +1,16 @@
 from webapp.apps.core import submit
-from webapp.apps.projects.taxcalc.forms import Form
-from webapp.apps.projects.taxcalc.param_parser import ParamParser
-from webapp.apps.projects.taxcalc.models import TaxcalcInputs, TaxcalcRun
-from webapp.apps.projects.taxcalc.constants import TAXCALC_VERSION, NUM_BUDGET_YEARS
+from .forms import TaxcalcInputsForm
+from .param_parser import ParamParser
+from .models import TaxcalcInputs, TaxcalcRun
+from .constants import (TAXCALC_VERSION, NUM_BUDGET_YEARS, START_YEAR,
+                        DEFAULT_SOURCE)
 
 
 class Submit(submit.Submit):
 
     Name = "taxcalc"
     ParamParserCls = ParamParser
-    FormCls = Form
+    FormCls = TaxcalcInputsForm
     InputModelCls = TaxcalcInputs
     upstream_version = TAXCALC_VERSION
     task_run_time_secs = 25
@@ -24,7 +25,7 @@ class Submit(submit.Submit):
         start_year = self.fields.get("start_year", START_YEAR)
         if hasattr(start_year, 'isdigit') and start_year.isdigit():
             start_year = int(start_year)
-        data_source = self.fields.get("data_source", "PUF")
+        data_source = self.fields.get("data_source", DEFAULT_SOURCE)
         use_puf_not_cps = data_source == "PUF"
         self.meta_parameters.update({
             "start_year": start_year,

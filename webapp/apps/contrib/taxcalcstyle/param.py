@@ -1,6 +1,6 @@
-from webapp.apps.core.param import CheckBox
+from webapp.apps.core.param import CheckBox, BaseParam
 
-class TaxCalcParam(BaseParam):
+class Param(BaseParam):
 
     def __init__(self, name, attributes, **meta_parameters):
         super().__init__(name, attributes, **meta_parameters)

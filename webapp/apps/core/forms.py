@@ -5,10 +5,11 @@ from django import forms
 from .param_displayer import ParamDisplayer
 
 
-MetaParam = namedtuple("MetaParam", ["name", "default", "FieldCls"])
+MetaParam = namedtuple("MetaParam", ["name", "default", "field"])
 
-class Form(forms.Form):
+class InputsForm(forms.Form):
 
+    ParamDisplayerCls = ParamDisplayer
     meta_parameters = []
 
     def __init__(self, *args, **kwargs):
@@ -17,17 +18,17 @@ class Form(forms.Form):
         clean_meta_parameters = {}
         for param in self.meta_parameters:
             try:
-                cleaned = param.FieldCls(fields.get("start_year"))
+                cleaned = param.field.clean(fields.get(param.name))
             except forms.ValidationError:
                 # fall back on default. deal with bad data in full validation.
-                cleaned = param.FieldCls(fields.default)
+                cleaned = param.field.clean(param.default)
             clean_meta_parameters[param.name] = cleaned
-        pd = ParamDisplayer(**clean_meta_parameters)
+        pd = self.ParamDisplayerCls(**clean_meta_parameters)
         default_params = pd.get_defaults()
         update_fields = {}
         for param in list(default_params.values()):
             update_fields.update(param.fields)
-        update_fields.updaet(clean_meta_parameters)
+        update_fields.update({mp.name: mp.field for mp in self.meta_parameters})
         super().__init__(data=fields, **kwargs)
         # funky things happen when dict is not copied
         self.fields.update(update_fields.copy())

@@ -1,20 +1,22 @@
 from django import forms
 
-from webapp.apps.core.forms import Form, MetaParam
+from webapp.apps.core.forms import InputsForm, MetaParam
+from .param_displayer import ParamDisplayer
 from .constants import START_YEAR, DEFAULT_SOURCE
 
 
 
-class TaxcalcForm(Form):
+class TaxcalcInputsForm(InputsForm):
+    ParamDisplayerCls = ParamDisplayer
     meta_parameters = [
         MetaParam(
             name="start_year",
             default=START_YEAR,
-            FieldCls=forms.IntegerField(min_value=2013, max_value=2018),
+            field=forms.IntegerField(min_value=2013, max_value=2018),
         ),
         MetaParam(
             name="data_source",
             default=DEFAULT_SOURCE,
-            FieldCls=forms.CharField(max_length=3)
+            field=forms.CharField(max_length=3)
         )
     ]

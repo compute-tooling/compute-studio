@@ -12,7 +12,7 @@ class ParamParser:
         self.raw_input = raw_input
         for param, value in meta_parameters.items():
             setattr(self, param, value)
-        self.grouped_defaults = self.ParamDisplayer(
+        self.grouped_defaults = self.ParamDisplayerCls(
             **meta_parameters
         ).package_defaults()
         self.flat_defaults = {

@@ -1,6 +1,6 @@
 from django import forms
 
-from webapp.apps.projects.taxcalc.fields import SeparatedValueField
+from .fields import SeparatedValueField
 
 
 class SeparatedValue:

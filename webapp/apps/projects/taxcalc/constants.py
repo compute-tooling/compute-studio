@@ -1,9 +1,6 @@
 import os
 import taxcalc
 
-from django.conf import settings
-from django.utils.safestring import mark_safe
-
 DISTRIBUTION_TOOLTIP = "Key variables in the computation of tax liabilities."
 DIFFERENCE_TOOLTIP = ("Key variables that highlight the differences between "
                       "two tax plans.")

@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from webapp.apps.users.models import Project
 from webapp.apps.core.param_parser import ParamParser, append_errors_warnings
-from webapp.apps.core.forms import Form
+from webapp.apps.core.forms import InputsForm
 from webapp.apps.core.constants import OUT_OF_RANGE_ERROR_MSG, WEBAPP_VERSION
 from webapp.apps.core.models import CoreInputs
 
@@ -18,7 +18,7 @@ class Submit:
 
     Name = None
     ParamParserCls = ParamParser
-    FormCls = Form
+    FormCls = InputsForm
     InputModelCls = None
     webapp_version = WEBAPP_VERSION
     upstream_version = None
@@ -66,7 +66,7 @@ class Submit:
 
         self.is_valid = self.form.is_valid()
         if self.is_valid:
-            self.model = self.form.save(TaxcalcInputs, commit=False)
+            self.model = self.form.save(self.InputModelCls, commit=False)
             paramparser = self.ParamParserCls(
                 self.model.gui_inputs,
                 **self.meta_parameters
@@ -176,5 +176,5 @@ def handle_submission(request, compute, SubmitCls, SaveCls, **kwargs):
     elif sub.stop_submission:
         return PostResult(sub, None)
     else:
-        save = SaveCls(tcsub)
+        save = SaveCls(sub)
         return PostResult(sub, save)
