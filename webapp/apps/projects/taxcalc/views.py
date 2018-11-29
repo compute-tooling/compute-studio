@@ -1,10 +1,6 @@
-from django.shortcuts import render, redirect
 from webapp.apps.core.compute import Compute
 from webapp.apps.core.views import InputsView, OutputsView, OutputsDownloadView
 from webapp.apps.core.models import Tag, TagOption
-from webapp.apps.core.constants import WEBAPP_VERSION
-from webapp.apps.core.submit import BadPost, handle_submission
-from django.views import View
 
 from .models import TaxcalcRun
 from .param_displayer import ParamDisplayer

@@ -35,7 +35,6 @@ class TestUpload(CoreAbstractViewsTest):
         return outputs_ok()
 
 
-
 def write_outputs_ok():
     import pandas as pd
     import io

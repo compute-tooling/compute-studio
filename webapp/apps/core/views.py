@@ -18,7 +18,6 @@ from .models import CoreRun
 from .compute import Compute, JobFailError
 from .param_displayer import ParamDisplayer
 from .meta_parameters import meta_parameters
-from .submit import Submit, Save
 
 
 class InputsView(View):
