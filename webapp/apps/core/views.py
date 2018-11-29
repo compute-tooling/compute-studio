@@ -18,6 +18,7 @@ from .models import CoreRun
 from .compute import Compute, JobFailError
 from .param_displayer import ParamDisplayer
 from .meta_parameters import meta_parameters
+from .submit import handle_submission
 
 
 class InputsView(View):
@@ -49,7 +50,6 @@ class InputsView(View):
         }
 
         pd = self.ParamDisplayerCls(**valid_meta_params)
-        metadict = dict(valid_meta_params, **self.meta_options)
         context = dict(
             form=inputs_form,
             default_form=pd.default_form(),
@@ -57,7 +57,6 @@ class InputsView(View):
             webapp_version=WEBAPP_VERSION,
             has_errors=self.has_errors,
             enable_quick_calc=True,
-            **metadict
         )
         return render(request, self.template_name, context)
 
@@ -82,7 +81,6 @@ class InputsView(View):
             has_errors = result.submit.has_errors
 
         pd = self.ParamDisplayerCls(**valid_meta_params)
-        metadict = dict(valid_meta_params, **self.meta_options)
         context = dict(
             form=inputs_form,
             default_form=pd.default_form(),
@@ -90,7 +88,6 @@ class InputsView(View):
             webapp_version=WEBAPP_VERSION,
             has_errors=self.has_errors,
             enable_quick_calc=ENABLE_QUICK_CALC,
-            **metadict
         )
         return render(request, self.template_name, context)
 

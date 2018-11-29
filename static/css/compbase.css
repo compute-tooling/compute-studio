@@ -162,3 +162,13 @@ input.model:not(:placeholder-shown) {
   border-bottom-right-radius: 3px;
   border-bottom-left-radius: 3px;
 }
+
+
+/* remove asterisk on crispy-form-fields */
+.asteriskField {
+  display: none;
+}
+
+.input-tooltip:hover {
+  opacity: 0.5;
+}

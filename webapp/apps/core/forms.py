@@ -26,7 +26,6 @@ class InputsForm(forms.Form):
         super().__init__(data=fields, **kwargs)
         # funky things happen when dict is not copied
         self.fields.update(update_fields.copy())
-        print(fields)
 
     def save(self, ModelCls, commit=True):
         meta_parameters = [mp.name for mp in self.meta_parameters.parameters]

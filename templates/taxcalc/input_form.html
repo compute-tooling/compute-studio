@@ -6,7 +6,7 @@
 {% load inputs %}
 {% block content %}
 
-<form class="inputs-form" method="post" action="/taxcalc/?start_year={{start_year}}&data_source={{data_source}}">
+<form class="inputs-form form-horizontal" method="post" action="/taxcalc/">
 {% csrf_token %}
 <input type="hidden" name="has_errors" value="{{ has_errors }}" />
 <div class="wrapper" style="padding:50px 50px;">
@@ -17,7 +17,7 @@
         </div>
         <ul class="list-unstyled components">
             <li>
-                <a href="/taxcalc" class="btn btn-secondary">Reset Parameters</a>
+                <a href="/taxcalc/" class="btn btn-secondary">Reset Parameters</a>
             </li>
             <hr>
             <li>
@@ -47,15 +47,11 @@
             <li>
               <button class="btn btn-block btn-match-nav" type="submit" name="full_calc" value="true" style="margin:10px;margin-left:0px;">Run simulation</button>
             </li>
-            <li>
-              <button class="btn btn-block btn-match-nav" type="submit" name="use_full_sample" value="true" style="margin:10px;margin-left:0px;">Run quick simulation</button>
-            </li>
         </ul>
     </nav>
-  <div id="content" style="margin-left:20px">
+  <div id="content" style="margin-left:20px; width: 60rem;">
     <div class="col-xs-9">
         <div class="inputs-main">
-          {% include 'taxcalc/metaparameters.html' with title="Meta-Parameters" start_years=start_years data_sources=data_sources %}
           {% for error in form.non_field_errors %}
               <div class="alert alert-danger text-center lert-dismissible" role="alert">
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -64,6 +60,8 @@
                 {{ error }}
               </div>
           {% endfor %}
+          {% include 'taxcalc/metaparameters.html' with form=form title="Meta-Parameters" %}
+          <hr class="my-4">
           {% for section, params in default_form.items %}
               {% include 'taxcalc/major_section.html' with title=section.title params=params %}
           {% endfor %}
@@ -72,41 +70,5 @@
   </div>
 </div>
 </form>
-
-  <div class="modal fade" id="current-year-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="padding:0;margin:0;"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title" id="myModalLabel">Change Start Year</h4>
-        </div>
-        <div class="modal-body">
-          Warning: This will clear your current inputs.
-        </div>
-        <div class="modal-footer">
-          <a type="button" class="btn inverse-btn-match-nav" data-dismiss="modal">Nevermind.</a>
-          <a type="button" class="btn btn-match-nav" id="current-year-link">OK, go for it.</a>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="modal fade" id="data-source-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="padding:0;margin:0;"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title" id="myModalLabel">Change Data Source</h4>
-        </div>
-        <div class="modal-body">
-          Warning: This will clear your current inputs.
-        </div>
-        <div class="modal-footer">
-          <a type="button" class="btn inverse-btn-match-nav" data-dismiss="modal">Nevermind.</a>
-          <a type="button" class="btn btn-match-nav" id="data-source-link">OK, go for it.</a>
-        </div>
-      </div>
-    </div>
-  </div>
-  <script src="{% static 'js/taxcalc.js' %}"></script>
 
 {% endblock %}

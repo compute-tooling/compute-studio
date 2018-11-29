@@ -61,6 +61,11 @@ class BaseParam:
 
         self.default_value = self.attributes["value"]
 
+        self.info = " ".join([
+            attributes['description'],
+            attributes.get('notes') or ""
+        ]).strip()
+
         self.fields = {}
 
     def set_fields(self, values, **field_kwargs):

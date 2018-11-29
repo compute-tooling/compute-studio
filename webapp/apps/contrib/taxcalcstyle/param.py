@@ -13,6 +13,11 @@ class Param(BaseParam):
         else:
             # if compatible_data is not specified do not gray out
             self.gray_out = False
+        self.info = " ".join([
+            attributes['description'],
+            attributes.get('irs_ref') or "",
+            attributes.get('notes') or ""
+        ]).strip()
         field_kwargs = {"disabled": self.gray_out}
         dictvalues = self.convert_to_dict(self.default_value)
         self.set_fields(dictvalues, **field_kwargs)

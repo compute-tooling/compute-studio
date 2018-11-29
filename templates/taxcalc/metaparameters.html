@@ -1,6 +1,7 @@
 {% load strings %}
 {% load inputs %}
-
+{% load utility %}
+{% load crispy_forms_tags %}
 
 <fieldset id="{{ title|make_id }}" class="inputs-block">
     <div class="container">
@@ -20,28 +21,22 @@
         </div>
       </h1>
     </div>
-    <hr class="my-4">
     <div class="container">
       <div class="collapse" id="{{ title|make_id }}-collapse">
-        <div class="card card-body" style="border:0;">
+        <div class="card card-body" style="width: 50rem;">
             <ul class="list-unstyled components">
+                {% for param in form.meta_parameters.parameters %}
+                    <li>
+                        {{form|dict_get:param.name|as_crispy_field}}
+                    </li>
+                {% endfor %}
                 <li>
-                    <label> Start Year:
-                    <select id="start-year-select" class="form-control">
-                        {% for year in start_years %}
-                        <option value="{{year}}" {% if year == start_year %} selected {% endif %}>{{year}}</option>
-                        {% endfor %}
-                    </select>
-                    </label>
-                </li>
-                <li>
-                    <label> Principal Data Source:
-                        <select id="data-source-select" class="form-control">
-                        {% for data in data_sources %}
-                            <option value="{{data}}" {% if data == data_source %} selected {% endif %}>{{data}}</option>
-                        {% endfor %}
-                        </select>
-                    </label>
+                    <button class="btn btn-block btn-match-nav"
+                      type="submit"
+                      name="reset"
+                      value="true"
+                      style="margin:10px;margin-left:0px;">Reset default parameters
+                    </button>
                 </li>
             </ul>
         </div>

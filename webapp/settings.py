@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'webapp.apps.projects.taxcalc',
 
     'widget_tweaks',
+    'crispy_forms',
 
     # 'allauth', # new
     # 'allauth.account', # new
@@ -88,6 +89,8 @@ TEMPLATES = [
         },
     },
 ]
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 WSGI_APPLICATION = 'webapp.wsgi.application'
 
