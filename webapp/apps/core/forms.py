@@ -9,14 +9,11 @@ class InputsForm(forms.Form):
     meta_parameters = None
 
     def __init__(self, *args, **kwargs):
-        print(args, kwargs)
         fields = args[0] if args else {}
         args = ({}, )
-        print('dirty', fields)
         clean_meta_parameters = self.meta_parameters.validate(fields)
         # guarantee that we have meta_parameters
         # this is important for empty or partially empty GET requests
-        print('clean', clean_meta_parameters)
         fields.update(clean_meta_parameters)
         pd = self.ParamDisplayerCls(**clean_meta_parameters)
         default_params = pd.get_defaults()

@@ -12,9 +12,89 @@ from django.http import HttpResponse, Http404, JsonResponse
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
 from webapp.apps.users.models import Project
+from .constants import WEBAPP_VERSION
 
 from .models import CoreRun
 from .compute import Compute, JobFailError
+from .param_displayer import ParamDisplayer
+from .meta_parameters import meta_parameters
+from .submit import Submit, Save
+
+
+class InputsView(View):
+    FormCls = None
+    ParamDisplayerCls = ParamDisplayer
+    SubmitCls = None
+    SaveCls = None
+    result_header = "Results"
+    template_name = "core/input_form.html"
+    name = "Inputs"
+    app_name = "core"
+    meta_parameters = meta_parameters
+    meta_options = {}
+    has_errors = False
+    upstream_version = None
+
+    def get(self, request, *args, **kwargs):
+        print("method=GET", request.GET)
+        inputs_form = self.FormCls(request.GET.dict())
+        if inputs_form.is_valid():
+            inputs_form.clean()
+        else:
+            inputs_form = FormCls()
+            inputs_form.is_valid()
+            inputs_form.clean()
+        names = {mp.name for mp in self.meta_parameters.parameters}
+        valid_meta_params = {
+            k: inputs_form.cleaned_data.get(k, "") for k in names
+        }
+
+        pd = self.ParamDisplayerCls(**valid_meta_params)
+        metadict = dict(valid_meta_params, **self.meta_options)
+        context = dict(
+            form=inputs_form,
+            default_form=pd.default_form(),
+            upstream_version=self.upstream_version,
+            webapp_version=WEBAPP_VERSION,
+            has_errors=self.has_errors,
+            enable_quick_calc=True,
+            **metadict
+        )
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        print("method=POST get", request.GET)
+        print("method=POST post", request.POST)
+        result = handle_submission(
+            request, compute, self.SubmitCls, self.SaveCls
+        )
+        # case where validation failed
+        if isinstance(result, BadPost):
+            return submission.http_response_404
+
+        # No errors--submit to model
+        if result.save is not None:
+            print("redirecting...", result.save.runmodel.get_absolute_url())
+            return redirect(result.save.runmodel)
+        # Errors from taxcalc.tbi.reform_warnings_errors
+        else:
+            inputs_form = result.submit.form
+            valid_meta_params = result.submit.valid_meta_params
+            has_errors = result.submit.has_errors
+
+        pd = self.ParamDisplayerCls(**valid_meta_params)
+        metadict = dict(valid_meta_params, **self.meta_options)
+        context = dict(
+            form=inputs_form,
+            default_form=pd.default_form(),
+            upstream_version=self.upstream_version,
+            webapp_version=WEBAPP_VERSION,
+            has_errors=self.has_errors,
+            enable_quick_calc=ENABLE_QUICK_CALC,
+            **metadict
+        )
+        return render(request, self.template_name, context)
+
 
 
 class SuperclassTemplateNameMixin(object):
@@ -43,7 +123,7 @@ class SuperclassTemplateNameMixin(object):
         return names
 
 
-class CoreRunDetailView(SuperclassTemplateNameMixin, DetailView):
+class OutputsView(SuperclassTemplateNameMixin, DetailView):
     """
     This view is the single page of diplaying a progress bar for how
     close the job is to finishing, and then it will also display the
@@ -161,7 +241,7 @@ class CoreRunDetailView(SuperclassTemplateNameMixin, DetailView):
             return ''
 
 
-class CoreRunDownloadView(SingleObjectMixin, View):
+class OutputsDownloadView(SingleObjectMixin, View):
     model = CoreRun
 
     def get(self, request, *args, **kwargs):

@@ -2,14 +2,15 @@
 
 from django.conf.urls import url
 
-from .views import (FileInputView, FileRunDetailView, FileRunDownloadView)
+from .views import (UploadInputsView, UploadOutputsView,
+                    UploadOutputsDownloadView)
 
 
 urlpatterns = [
-    url(r'^$', FileInputView.as_view(),
+    url(r'^$', UploadInputsView.as_view(),
         name='upload'),
-    url(r'^(?P<pk>[-\d\w]+)/download/?$', FileRunDownloadView.as_view(),
+    url(r'^(?P<pk>[-\d\w]+)/download/?$', UploadOutputsDownloadView.as_view(),
         name='upload_download'),
-    url(r'^(?P<pk>[-\d\w]+)/', FileRunDetailView.as_view(),
+    url(r'^(?P<pk>[-\d\w]+)/', UploadOutputsView.as_view(),
         name='upload_results'),
 ]

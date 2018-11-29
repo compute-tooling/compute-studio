@@ -7,7 +7,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
 
 from webapp.apps.core.models import Tag, TagOption
-from webapp.apps.core.views import CoreRunDetailView, CoreRunDownloadView
+from webapp.apps.core.views import OutputsView, OutputsDownloadView
 from webapp.apps.core.compute import Compute, WorkersUnreachableError
 
 from webapp.apps.users.models import Project, is_profile_active
@@ -18,7 +18,7 @@ from .models import FileInput, FileOutput
 Compute = Compute
 
 
-class FileInputView(View):
+class UploadInputsView(View):
     model = FileInput
     result_header = 'Describe'
     template_name = 'upload/input.html'
@@ -72,7 +72,7 @@ class FileInputView(View):
             4)
 
 
-class FileRunDetailView(CoreRunDetailView):
+class UploadOutputsView(OutputsView):
     model = FileOutput
 
     result_header = "Static Results"
@@ -90,5 +90,5 @@ class FileRunDetailView(CoreRunDetailView):
         return False
 
 
-class FileRunDownloadView(CoreRunDownloadView):
+class UploadOutputsDownloadView(OutputsDownloadView):
     model = FileOutput

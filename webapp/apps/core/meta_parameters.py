@@ -5,7 +5,7 @@ from django import forms
 
 @dataclass
 class MetaParameters:
-    parameters: List['MetaParameter']
+    parameters: List['MetaParameter'] = None
 
     def validate(self, fields):
         validated = {}
@@ -24,3 +24,6 @@ class MetaParameter:
     name: str
     default: str
     field: forms.Field
+
+
+meta_parameters = MetaParameters()

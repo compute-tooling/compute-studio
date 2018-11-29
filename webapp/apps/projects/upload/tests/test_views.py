@@ -1,5 +1,3 @@
-import io
-import json
 import os
 
 from django.core.files.uploadedfile import SimpleUploadedFile
