@@ -42,8 +42,7 @@ class Submit:
             self.submit()
 
     def get_fields(self):
-        fields = self.request.GET.dict()
-        fields.update(self.request.POST.dict())
+        fields = self.request.POST.dict()
         fields.pop("full_calc", None)
         self.has_errors = forms.BooleanField(required=False).clean(fields["has_errors"])
         self.fields = fields

@@ -2,7 +2,7 @@
 provide label users will click to toggle the CPI on and off -->
 <input type="checkbox" id="{{ cpi.id_for_label }}" name="{{ cpi.name }}"
   value="True" class="form-control model" style="display:none;"
-  {% if cpi.initial %} checked {% endif %} >
+  {% if cpi.initial %} checked {% endif %}>
 <input type="hidden" id="hidden-{{ cpi.id_for_label }}"name="{{ cpi.name }}" value="False" class="model">
 <label for="{{ cpi.id_for_label }}" id="label-{{ cpi.id_for_label }}" class="btn btn-match-nav btn-sm {% if not cpi.initial %}fader{% endif %}">
     CPI

@@ -29,7 +29,7 @@ class CheckBox:
         attrs = {
             'class': 'form-control sr-only',
         }
-        self.form_field = forms.BooleanField(
+        self.form_field = forms.NullBooleanField(
             label=self.label,
             widget=forms.TextInput(attrs=attrs),
             required=False,

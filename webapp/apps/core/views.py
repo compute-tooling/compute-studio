@@ -18,7 +18,7 @@ from .models import CoreRun
 from .compute import Compute, JobFailError
 from .param_displayer import ParamDisplayer
 from .meta_parameters import meta_parameters
-from .submit import handle_submission
+from .submit import handle_submission, BadPost
 
 
 class InputsView(View):
@@ -34,35 +34,29 @@ class InputsView(View):
     meta_options = {}
     has_errors = False
     upstream_version = None
+    webapp_version = WEBAPP_VERSION
 
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET)
-        inputs_form = self.FormCls(request.GET.dict())
-        if inputs_form.is_valid():
-            inputs_form.clean()
-        else:
-            inputs_form = FormCls()
-            inputs_form.is_valid()
-            inputs_form.clean()
-        names = {mp.name for mp in self.meta_parameters.parameters}
-        valid_meta_params = {
-            k: inputs_form.cleaned_data.get(k, "") for k in names
-        }
-
-        pd = self.ParamDisplayerCls(**valid_meta_params)
-        context = dict(
-            form=inputs_form,
-            default_form=pd.default_form(),
-            upstream_version=self.upstream_version,
-            webapp_version=WEBAPP_VERSION,
-            has_errors=self.has_errors,
-            enable_quick_calc=True,
-        )
-        return render(request, self.template_name, context)
+        inputs_form = self.FormCls()
+        # set cleaned_data with is_valid call
+        inputs_form.is_valid()
+        inputs_form.clean()
+        return self._render_inputs_form(request, inputs_form)
 
     def post(self, request, *args, **kwargs):
-        print("method=POST get", request.GET)
-        print("method=POST post", request.POST)
+        print("method=POST", request.POST)
+        compute = Compute()
+        if request.POST.get("reset", ''):
+            inputs_form = self.FormCls(request.POST.dict())
+            if inputs_form.is_valid():
+                inputs_form.clean()
+            else:
+                inputs_form = FormCls()
+                inputs_form.is_valid()
+                inputs_form.clean()
+            return self._render_inputs_form(request, inputs_form)
+
         result = handle_submission(
             request, compute, self.SubmitCls, self.SaveCls
         )
@@ -85,12 +79,25 @@ class InputsView(View):
             form=inputs_form,
             default_form=pd.default_form(),
             upstream_version=self.upstream_version,
-            webapp_version=WEBAPP_VERSION,
+            webapp_version=self.webapp_version,
             has_errors=self.has_errors,
-            enable_quick_calc=ENABLE_QUICK_CALC,
         )
         return render(request, self.template_name, context)
 
+    def _render_inputs_form(self, request, inputs_form):
+        names = {mp.name for mp in self.meta_parameters.parameters}
+        valid_meta_params = {
+            k: inputs_form.cleaned_data.get(k, "") for k in names
+        }
+        pd = self.ParamDisplayerCls(**valid_meta_params)
+        context = dict(
+            form=inputs_form,
+            default_form=pd.default_form(),
+            upstream_version=self.upstream_version,
+            webapp_version=self.webapp_version,
+            has_errors=self.has_errors,
+        )
+        return render(request, self.template_name, context)
 
 
 class SuperclassTemplateNameMixin(object):

@@ -42,7 +42,7 @@ class ParamParser:
         inputs_by_section = defaultdict(dict)
         failed_lookups = [] # TODO: deal with failed lookups
         for param, value in self.raw_input.items():
-            if not value:
+            if value in ('', None):
                 continue
             success = False
             for section in order_by_list_len:

@@ -6,7 +6,7 @@
 {% load inputs %}
 {% block content %}
 
-<form class="inputs-form form-horizontal" method="post" action="/taxcalc/">
+<form class="inputs-form" id="inputs-form" method="post" action="/taxcalc/">
 {% csrf_token %}
 <input type="hidden" name="has_errors" value="{{ has_errors }}" />
 <div class="wrapper" style="padding:50px 50px;">
@@ -70,5 +70,5 @@
   </div>
 </div>
 </form>
-
+<script src="{% static 'js/taxcalc.js' %}"></script>
 {% endblock %}

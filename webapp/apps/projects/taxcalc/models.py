@@ -45,7 +45,7 @@ class TaxcalcRun(CoreRun):
         kwargs = {
             'pk': self.pk
         }
-        return reverse('taxcalc_detail', kwargs=kwargs)
+        return reverse('taxcalc_outputs', kwargs=kwargs)
 
     # def get_absolute_edit_url(self):
     #     kwargs = {
