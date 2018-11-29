@@ -2,8 +2,7 @@ from webapp.apps.core import submit
 from .forms import TaxcalcInputsForm
 from .param_parser import ParamParser
 from .models import TaxcalcInputs, TaxcalcRun
-from .constants import (TAXCALC_VERSION, NUM_BUDGET_YEARS, START_YEAR,
-                        DEFAULT_SOURCE)
+from .constants import TAXCALC_VERSION, NUM_BUDGET_YEARS
 from .meta_parameters import meta_parameters
 
 
