@@ -8,7 +8,6 @@ from webapp.apps.users.models import Project
 from webapp.apps.core.param_parser import ParamParser, append_errors_warnings
 from webapp.apps.core.forms import InputsForm
 from webapp.apps.core.constants import OUT_OF_RANGE_ERROR_MSG, WEBAPP_VERSION
-from webapp.apps.core.models import CoreInputs
 
 BadPost = namedtuple("BadPost", ["http_response_404", "has_errors"])
 PostResult = namedtuple("PostResult", ["submit", "save"])

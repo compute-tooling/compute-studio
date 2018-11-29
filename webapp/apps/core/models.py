@@ -6,10 +6,7 @@ from typing import List, Union
 
 from django.db import models
 from django.contrib.postgres.fields import JSONField
-from django.core.validators import validate_comma_separated_integer_list
-from django.contrib.auth import get_user_model
 from django.utils.timezone import make_aware
-from django.utils.functional import cached_property
 
 from webapp.apps.users.models import Project, Profile
 

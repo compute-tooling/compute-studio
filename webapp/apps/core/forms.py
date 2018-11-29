@@ -1,5 +1,3 @@
-from collections import namedtuple
-
 from django import forms
 
 from .param_displayer import ParamDisplayer
