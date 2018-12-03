@@ -2,7 +2,23 @@ from django import forms
 
 from .utils import is_reverse, is_wildcard
 
+
+def coerce_int(val):
+    return int(float(val))
+
+
+def coerce_float(val):
+    return float(val)
+
+
+def coerce_bool(val):
+    return val in ("True", True)
+
+
 class SeparatedValueField(forms.Field):
+    default_error_messages = {
+        'invalid_type': ('%(value)s is not able to be converted to the correct type',),
+    }
 
     def __init__(self, *, coerce=lambda val: val, empty_value="", **kwargs):
         self.coerce = coerce
@@ -18,8 +34,9 @@ class SeparatedValueField(forms.Field):
             return self.empty_value
         try:
             value = self.coerce(value)
-        except (ValueError, TypeError):
-            raise ValidationError(self.error_messages['invalid'], code='invalid')
+        except (ValueError, TypeError) as e:
+            raise forms.ValidationError(self.error_messages['invalid_type'],
+                                        code='invalid')
         return value
 
     def to_python(self, value):

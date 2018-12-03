@@ -1,11 +1,12 @@
 from django import forms
 
-from .param_displayer import ParamDisplayer
+from .displayer import Displayer
 
 
 class InputsForm(forms.Form):
 
-    ParamDisplayerCls = ParamDisplayer
+    model = None
+    displayer_class = Displayer
     meta_parameters = None
 
     def __init__(self, *args, **kwargs):
@@ -15,8 +16,8 @@ class InputsForm(forms.Form):
         # guarantee that we have meta_parameters
         # this is important for empty or partially empty GET requests
         fields.update(clean_meta_parameters)
-        pd = self.ParamDisplayerCls(**clean_meta_parameters)
-        default_params = pd.get_defaults()
+        pd = self.displayer_class(**clean_meta_parameters)
+        default_params = pd.defaults(flat=True)
         update_fields = {}
         for param in list(default_params.values()):
             update_fields.update(param.fields)
@@ -27,7 +28,7 @@ class InputsForm(forms.Form):
         # funky things happen when dict is not copied
         self.fields.update(update_fields.copy())
 
-    def save(self, ModelCls, commit=True):
+    def save(self, commit=True):
         meta_parameters = [mp.name for mp in self.meta_parameters.parameters]
         clean_meta_parameters = {name: self.cleaned_data[name]
                                  for name in meta_parameters}
@@ -39,7 +40,7 @@ class InputsForm(forms.Form):
             if k not in meta_parameters:
                 raw_gui_inputs[k] = self.data.get(k, None)
                 gui_inputs[k] = self.cleaned_data[k]
-        model = ModelCls(
+        model = self.model(
             raw_gui_inputs=raw_gui_inputs,
             gui_inputs=gui_inputs)
         # try to set metaparameters as model attributes. ignore errors.

@@ -4,7 +4,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from webapp.apps.core.tests.test_views import CoreAbstractViewsTest
 from webapp.apps.core.tests.compute import MockCompute
-from webapp.apps.upload.models import FileOutput
+from webapp.apps.projects.upload.models import FileOutput
 
 def outputs_ok():
     curr = os.path.abspath(os.path.dirname(__file__))

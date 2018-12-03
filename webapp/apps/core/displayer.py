@@ -1,29 +1,38 @@
-class ParamDisplayer:
+class Displayer:
 
-    ParamCls = None
+    param_class = None
 
     def __init__(self, **meta_parameters):
         self.meta_parameters = meta_parameters
 
-    def get_defaults(self, flat=False):
+    def defaults(self, flat=True):
+        if flat:
+            return self._default_flatdict()
+        else:
+            return self._default_form()
+
+    def package_defaults(self):
+        raise NotImplementedError()
+
+    def _default_flatdict(self):
         """
         Get _flat_ dictionary of default parameters, i.e. major section types
         are collapsed. This is used to specify the default inputs on the Django
-        Form. Return parameters after wrapping in the
-        specified `ParamCls`.
+        Form and for looking up parameter data. Return parameters after
+        wrapping in the specified `param_class`.
         """
         raw_defaults = self.package_defaults()
         default_params = {}
         for input_type, defaults in raw_defaults.items():
             for k, v in defaults.items():
-                param = self.ParamCls(k, v, **self.meta_parameters)
+                param = self.param_class(k, v, **self.meta_parameters)
                 default_params[param.name] = param
         return default_params
 
-    def default_form(self):
+    def _default_form(self):
         """
         Get dictionary split by major input types. Each parameter is wrapped
-        in the specified `ParamCls`. This is used to build the GUI.
+        in the specified `param_class`. This is used to build the GUI.
         """
         raw_defaults = self.package_defaults()
         major_groups = {}
@@ -34,9 +43,6 @@ class ParamDisplayer:
                     x[y] = self._parse_sub_category(z)
             major_groups[input_type] = groups
         return major_groups
-
-    def package_defaults(self):
-        raise NotImplementedError()
 
     def _parse_top_level(self, ordered_dict):
         output = []
@@ -59,7 +65,7 @@ class ParamDisplayer:
             for y, z in x.items():
                 section_name = dict(z).get("section_2")
                 new_param = {
-                    y[y.index("_") + 1 :]: self.ParamCls(
+                    y: self.param_class(
                         y, z, **self.meta_parameters
                     )
                 }

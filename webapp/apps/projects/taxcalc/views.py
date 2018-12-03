@@ -3,8 +3,8 @@ from webapp.apps.core.views import InputsView, OutputsView, OutputsDownloadView
 from webapp.apps.core.models import Tag, TagOption
 
 from .models import TaxcalcRun
-from .param_displayer import ParamDisplayer
-from .submit import Submit, Save
+from .displayer import TaxcalcDisplayer
+from .submit import TaxcalcSubmit, TaxcalcSave
 from .forms import TaxcalcInputsForm
 from .meta_parameters import meta_parameters
 from .constants import TAXCALC_VERSION
@@ -37,10 +37,10 @@ def get_version(url_obj, attr_name, current_version):
 
 
 class TaxcalcInputsView(InputsView):
-    FormCls = TaxcalcInputsForm
-    ParamDisplayerCls = ParamDisplayer
-    SubmitCls = Submit
-    SaveCls = Save
+    form_class = TaxcalcInputsForm
+    displayer_class = TaxcalcDisplayer
+    submit_class = TaxcalcSubmit
+    save_class = TaxcalcSave
     result_header = "Tax-Calculator Results"
     template_name = "taxcalc/input_form.html"
     name = "Tax-Calculator"

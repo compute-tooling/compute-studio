@@ -1,17 +1,15 @@
-from webapp.apps.core import submit
+from webapp.apps.core.submit import Submit, Save
 from .forms import TaxcalcInputsForm
-from .param_parser import ParamParser
-from .models import TaxcalcInputs, TaxcalcRun
+from .parser import TaxcalcParser
+from .models import TaxcalcRun
 from .constants import TAXCALC_VERSION, NUM_BUDGET_YEARS
 from .meta_parameters import meta_parameters
 
 
-class Submit(submit.Submit):
+class TaxcalcSubmit(Submit):
 
-    Name = "taxcalc"
-    ParamParserCls = ParamParser
-    FormCls = TaxcalcInputsForm
-    InputModelCls = TaxcalcInputs
+    parser_class = TaxcalcParser
+    form_class = TaxcalcInputsForm
     upstream_version = TAXCALC_VERSION
     task_run_time_secs = 25
     meta_parameters = meta_parameters
@@ -25,7 +23,7 @@ class Submit(submit.Submit):
         return data_list
 
 
-class Save(submit.Save):
+class TaxcalcSave(Save):
 
-    ProjectName = "Tax-Calculator"
-    RunModelCls = TaxcalcRun
+    project_name = "Tax-Calculator"
+    runmodel = TaxcalcRun

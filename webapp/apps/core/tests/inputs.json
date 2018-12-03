@@ -1,0 +1,42 @@
+{
+    "majorsection1": {
+        "intparam": {
+            "long_name": "Integer parameter",
+            "description": "An integer type parameter",
+            "section_1": "section1",
+            "section_2": "section2",
+            "notes": "no notes",
+            "type": "int",
+            "value": [2]
+        },
+        "boolparam": {
+            "long_name": "Boolean parameter",
+            "description": "A boolean type parameter",
+            "section_1": "anothersection1",
+            "section_2": "somesection2",
+            "notes": "no notes",
+            "type": "bool",
+            "value": [true]
+        },
+        "floatparam": {
+            "long_name": "Integer parameter",
+            "description": "An integer type parameter",
+            "section_1": "section1",
+            "section_2": "anothersection2",
+            "notes": "no notes",
+            "type": "float",
+            "value": [4.0]
+        }
+    },
+    "majorsection2": {
+        "mj2param": {
+            "long_name": "A param for major section 2",
+            "description": "Gotta provide an example with two major sections",
+            "section_1": "section3",
+            "section_2": "section4",
+            "notes": "no notes",
+            "type": "float",
+            "value": [3.0]
+        }
+    }
+}

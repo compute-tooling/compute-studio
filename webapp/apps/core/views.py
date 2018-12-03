@@ -16,16 +16,16 @@ from .constants import WEBAPP_VERSION
 
 from .models import CoreRun
 from .compute import Compute, JobFailError
-from .param_displayer import ParamDisplayer
+from .displayer import Displayer
 from .meta_parameters import meta_parameters
 from .submit import handle_submission, BadPost
 
 
 class InputsView(View):
-    FormCls = None
-    ParamDisplayerCls = ParamDisplayer
-    SubmitCls = None
-    SaveCls = None
+    form_class = None
+    displayer_class = Displayer
+    submit_class = None
+    save_class = None
     result_header = "Results"
     template_name = "core/input_form.html"
     name = "Inputs"
@@ -38,7 +38,7 @@ class InputsView(View):
 
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET)
-        inputs_form = self.FormCls()
+        inputs_form = self.form_class()
         # set cleaned_data with is_valid call
         inputs_form.is_valid()
         inputs_form.clean()
@@ -48,17 +48,17 @@ class InputsView(View):
         print("method=POST", request.POST)
         compute = Compute()
         if request.POST.get("reset", ''):
-            inputs_form = self.FormCls(request.POST.dict())
+            inputs_form = self.form_class(request.POST.dict())
             if inputs_form.is_valid():
                 inputs_form.clean()
             else:
-                inputs_form = FormCls()
+                inputs_form = self.form_class()
                 inputs_form.is_valid()
                 inputs_form.clean()
             return self._render_inputs_form(request, inputs_form)
 
         result = handle_submission(
-            request, compute, self.SubmitCls, self.SaveCls
+            request, compute, self.submit_class, self.save_class
         )
         # case where validation failed
         if isinstance(result, BadPost):
@@ -66,18 +66,17 @@ class InputsView(View):
 
         # No errors--submit to model
         if result.save is not None:
-            print("redirecting...", result.save.runmodel.get_absolute_url())
-            return redirect(result.save.runmodel)
-        # Errors from taxcalc.tbi.reform_warnings_errors
+            print("redirecting...", result.save.runmodel_instance.get_absolute_url())
+            return redirect(result.save.runmodel_instance)
         else:
             inputs_form = result.submit.form
             valid_meta_params = result.submit.valid_meta_params
             has_errors = result.submit.has_errors
 
-        pd = self.ParamDisplayerCls(**valid_meta_params)
+        displayer = self.displayer_class(**valid_meta_params)
         context = dict(
             form=inputs_form,
-            default_form=pd.default_form(),
+            default_form=displayer.defaults(flat=False),
             upstream_version=self.upstream_version,
             webapp_version=self.webapp_version,
             has_errors=self.has_errors,
@@ -89,10 +88,10 @@ class InputsView(View):
         valid_meta_params = {
             k: inputs_form.cleaned_data.get(k, "") for k in names
         }
-        pd = self.ParamDisplayerCls(**valid_meta_params)
+        displayer = self.displayer_class(**valid_meta_params)
         context = dict(
             form=inputs_form,
-            default_form=pd.default_form(),
+            default_form=displayer.defaults(flat=False),
             upstream_version=self.upstream_version,
             webapp_version=self.webapp_version,
             has_errors=self.has_errors,

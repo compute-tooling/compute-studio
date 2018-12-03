@@ -1,28 +1,21 @@
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 import json
 
 import taxcalc
 
-from webapp.apps.core import param_parser
+from webapp.apps.core.parser import ParamData, Parser
 from webapp.apps.core.utils import is_wildcard, is_reverse
 
-ParamData = namedtuple("ParamData", ["name", "data"])
-
-class ParamParser(param_parser.ParamParser):
+class TaxcalcStyleParser(Parser):
 
     def parse_parameters(self):
         """
         Implement custom parameter parsing logic
         """
-        inputs_by_section, failed_lookups = super().parse_parameters()
-
-        flat_policy_inputs = inputs_by_section["policy"]
-        flat_behavior_inputs = inputs_by_section["behavior"]
-        if flat_policy_inputs is not None:
-            policy_inputs = self.unflatten(flat_policy_inputs)
-        if flat_behavior_inputs is not None:
-            behavior_inputs = self.unflatten(flat_behavior_inputs)
-
+        params, _, _ = super().parse_parameters()
+        print(params)
+        policy_inputs = params["policy"]
+        behavior_inputs = params["behavior"]
         policy_inputs = {"policy": policy_inputs}
 
         policy_inputs_json = json.dumps(policy_inputs, indent=4)
@@ -228,3 +221,18 @@ class ParamParser(param_parser.ParamParser):
                     [msg_action] + msg_parse + ["for", year]
                 )
         return parsed
+
+    @staticmethod
+    def append_errors_warnings(errors_warnings, append_func):
+        """
+        Appends warning/error messages to some object, append_obj, according to
+        the provided function, append_func
+        """
+        for action in ["warnings", "errors"]:
+            for param in errors_warnings[action]:
+                for year in sorted(
+                    list(errors_warnings[action][param].keys()),
+                    key=lambda x: int(x),
+                ):
+                    msg = errors_warnings[action][param][year]
+                    append_func(param, msg)

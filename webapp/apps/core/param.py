@@ -1,6 +1,6 @@
 from django import forms
 
-from .fields import SeparatedValueField
+from .fields import SeparatedValueField, coerce_bool, coerce_float, coerce_int
 
 
 class SeparatedValue:
@@ -40,7 +40,13 @@ class CheckBox:
 
 class BaseParam:
 
-    FieldCls = SeparatedValue
+    field_class = SeparatedValue
+
+    type_map = {
+        "int": coerce_int,
+        "float": coerce_float,
+        "bool": coerce_bool,
+    }
 
     def __init__(self, name, attributes, **meta_parameters):
         self.name = name
@@ -50,15 +56,7 @@ class BaseParam:
         self.col_fields = []
         for mp, value in meta_parameters.items():
             setattr(self, mp, value)
-
-        # TODO: swap to use "type" attribute instead of process of elimination
-        if self.attributes["boolean_value"]:
-            self.coerce_func = lambda x: bool(x)
-        elif self.attributes["integer_value"]:
-            self.coerce_func = lambda x: int(x)
-        else:
-            self.coerce_func = lambda x: float(x)
-
+        self.coerce_func = self.get_coerce_func()
         self.default_value = self.attributes["value"]
 
         self.info = " ".join([
@@ -68,31 +66,24 @@ class BaseParam:
 
         self.fields = {}
 
-    def set_fields(self, values, **field_kwargs):
-        for value in values:
-            # TODO: find better way to map suffixes to parameters based on
-            # their dimensions
-            suffix_ix = "_".join(suff[0] for k, suff in value.items() if k != "value")
-            suffix_name = "_".join(suff[1] for k, suff in value.items() if k != "value")
-            if suffix_ix:
-                field_name = f"{self.name}_{suffix_ix}"
-            else:
-                field_name = self.name
-            field = self.FieldCls(
-                field_name,
-                suffix_name,
-                value["value"],
-                self.coerce_func,
-                **field_kwargs
-            )
-            self.fields[field_name] = field.form_field
-            self.col_fields.append(field)
+    def set_fields(self, value, **field_kwargs):
+        field = self.field_class(
+            self.name,
+            '',
+            value,
+            self.coerce_func,
+            **field_kwargs
+        )
+        self.fields[self.name] = field.form_field
+        self.col_fields.append(field)
+
+    def get_coerce_func(self):
+        datatype = self.attributes["type"]
+        return self.type_map[datatype]
 
 
 class Param(BaseParam):
 
     def __init__(self, name, attributes, **meta_parameters):
-        super().__init__(self, name, attributes, **meta_parameters)
+        super().__init__(name, attributes, **meta_parameters)
         self.set_fields(self.default_value)
-
-

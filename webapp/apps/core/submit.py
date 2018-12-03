@@ -5,7 +5,7 @@ from django.utils import timezone
 from django import forms
 
 from webapp.apps.users.models import Project
-from webapp.apps.core.param_parser import ParamParser, append_errors_warnings
+from webapp.apps.core.parser import Parser
 from webapp.apps.core.forms import InputsForm
 from webapp.apps.core.constants import OUT_OF_RANGE_ERROR_MSG, WEBAPP_VERSION
 
@@ -14,20 +14,16 @@ PostResult = namedtuple("PostResult", ["submit", "save"])
 
 class Submit:
 
-    Name = None
-    ParamParserCls = ParamParser
-    FormCls = InputsForm
-    InputModelCls = None
+    parser_class = Parser
+    form_class = InputsForm
     webapp_version = WEBAPP_VERSION
     upstream_version = None
     task_run_time_secs = None
     meta_parameters = None
 
-    def __init__(self, request, compute, **kwargs):
+    def __init__(self, request, compute):
         self.request = request
         self.compute = compute
-        # TODO: what is this
-        self.kwargs = kwargs
         self.model = None
         self.badpost = None
         self.valid_meta_params = {}
@@ -49,7 +45,7 @@ class Submit:
         self.valid_meta_params = self.meta_parameters.validate(self.fields)
 
     def create_model(self):
-        self.form = self.FormCls(dict(self.fields, **self.valid_meta_params))
+        self.form = self.form_class(dict(self.fields, **self.valid_meta_params))
         if self.form.non_field_errors():
             self.badpost = BadPost(
                 http_response_404=HttpResponse("Bad Input!", status=400),
@@ -59,8 +55,8 @@ class Submit:
 
         self.is_valid = self.form.is_valid()
         if self.is_valid:
-            self.model = self.form.save(self.InputModelCls, commit=False)
-            paramparser = self.ParamParserCls(
+            self.model = self.form.save(commit=False)
+            parser = self.parser_class(
                 self.model.gui_inputs,
                 **self.valid_meta_params
             )
@@ -69,7 +65,7 @@ class Submit:
                 upstream_parameters,
                 upstream_json_files,
                 errors_warnings,
-            ) = paramparser.parse_parameters()
+            ) = parser.parse_parameters()
             self.model.upstream_parameters = upstream_parameters
             self.model.input_file = upstream_json_files
             self.model.errors_warnings = errors_warnings
@@ -98,7 +94,7 @@ class Submit:
         if self.warn_msgs or self.error_msgs:
             self.form.add_error(None, OUT_OF_RANGE_ERROR_MSG)
             for input_type in self.model.errors_warnings:
-                append_errors_warnings(
+                self.parser_class.append_errors_warnings(
                     self.model.errors_warnings[input_type],
                     lambda param, msg: self.form.add_error(param, msg),
                 )
@@ -118,6 +114,7 @@ class Submit:
                     **self.valid_meta_params)
         print('submit', data)
         self.data_list = self.extend_data(data)
+        print(self.data_list)
         self.submitted_id, self.max_q_length = self.compute.submit_job(
             self.data_list, "taxcalc"
         )
@@ -128,8 +125,8 @@ class Submit:
 
 class Save:
 
-    ProjectName = None
-    RunModelCls = None
+    project_name = None
+    runmodel = None
 
     def __init__(self, submit):
         """
@@ -141,11 +138,11 @@ class Save:
         RunModel
         """
         # create OutputUrl object
-        runmodel = self.RunModelCls()
+        runmodel = self.runmodel()
         runmodel.job_id = submit.submitted_id
         runmodel.inputs = submit.model
         runmodel.profile = submit.request.user.profile
-        runmodel.project = Project.objects.get(name=self.ProjectName)
+        runmodel.project = Project.objects.get(name=self.project_name)
 
         runmodel.upstream_vers = submit.upstream_version
         runmodel.webapp_vers = submit.webapp_version
@@ -157,16 +154,16 @@ class Save:
         expected_completion = cur_dt + future_offset
         runmodel.exp_comp_datetime = expected_completion
         runmodel.save()
-        self.runmodel = runmodel
+        self.runmodel_instance = runmodel
 
 
 
-def handle_submission(request, compute, SubmitCls, SaveCls, **kwargs):
-    sub = SubmitCls(request, compute, **kwargs)
+def handle_submission(request, compute, submit_class, save_class):
+    sub = submit_class(request, compute)
     if sub.badpost is not None:
         return sub.badpost
     elif sub.stop_submission:
         return PostResult(sub, None)
     else:
-        save = SaveCls(sub)
+        save = save_class(sub)
         return PostResult(sub, save)
