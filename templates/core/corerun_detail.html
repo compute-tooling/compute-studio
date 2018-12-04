@@ -64,6 +64,9 @@
   <div id="table-drilldown-container">
     <div>
       <div class="container">
+        <div class="row col-6" style="padding:10px">
+          <a href="{{ object.get_absolute_download_url }}" class="btn btn-block btn-match-nav">Download Results</a>
+        </div>
         <div class="row">
           {% if object.aggr_outputs %}
           <div class="col-md-12" id="aggr-totals-container">
@@ -142,9 +145,18 @@
           </div>
         {% endif %}
         </div>
+        <div class="row col-3" style="padding:10px">
+            <a href="{{ object.get_absolute_download_url }}/?raw_json=True" class="btn btn-block inverse-btn-match-nav">Download Raw Output</a>
+          </div>
       </div>
     </div>
   </div>
+  <!-- <a class="btn btn-block btn-match-nav"
+    type="submit"
+    name="reset"
+    value="true"
+    style="margin:10px;margin-left:0px;">Reset default parameters
+  </a> -->
 </div>
 
 {% endblock %}

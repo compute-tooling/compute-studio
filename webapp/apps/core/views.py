@@ -70,15 +70,10 @@ class InputsView(View):
         print("method=POST", request.POST)
         compute = Compute()
         if request.POST.get("reset", ''):
-            post_data = request.POST.dict()
-            mps = {mp.name: post_data.get(mp.name, mp.default)
-                   for mp in self.meta_parameters.parameters}
-            inputs_form = self.form_class(mps)
+            inputs_form = self.form_class(request.POST.dict())
             if inputs_form.is_valid():
-                print('valid')
                 inputs_form.clean()
             else:
-                print('not valid', inputs_form.errors)
                 inputs_form = self.form_class()
                 inputs_form.is_valid()
                 inputs_form.clean()
@@ -212,7 +207,7 @@ class OutputsView(SuperclassTemplateNameMixin, DetailView):
                     self.object.error_text = str(e)
                     self.object.save()
                     return self.fail()
-                self.object.run_time = sum(results['meta']['job_times'])
+                self.object.run_time = sum(results['meta']['task_times'])
                 self.object.run_cost = self.object.project.run_cost(
                     self.object.run_time)
                 plan = self.object.project.product.plans.get(
@@ -230,6 +225,7 @@ class OutputsView(SuperclassTemplateNameMixin, DetailView):
                 UsageRecord.construct(stripe_ur, si)
                 with open("taxcalc_outputs.json", "w") as f:
                     f.write(json.dumps(results, indent=4))
+                self.object.meta_data = results["meta"]
                 self.object.outputs = results['outputs']
                 self.object.aggr_outputs = results['aggr_outputs']
                 self.object.creation_date = timezone.now()
@@ -282,6 +278,17 @@ class OutputsDownloadView(SingleObjectMixin, View):
         if (not (self.object.outputs or self.object.aggr_outputs) or
            self.object.error_text):
             return redirect(self.object)
+
+        # option to download the raw JSON for testing purposes.
+        if request.GET.get("raw_json", False):
+            raw_json = json.dumps({
+                "meta": self.object.meta_data,
+                "outputs": self.object.outputs,
+                "aggr_outputs": self.object.aggr_outputs},
+                indent=4)
+            resp = HttpResponse(raw_json, content_type="text/plain")
+            resp['Content-Disposition'] = "attachment; filename=outputs.json"
+            return resp
 
         try:
             downloadables = list(itertools.chain.from_iterable(

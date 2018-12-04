@@ -34,16 +34,16 @@ def file_upload_test(data, compression):
                             'text': desc.to_csv()}],
         'renderable': desc.to_html()})
     f = time.time()
-    formatted['meta'] = {'job_times': [f - t, ]}
+    formatted['meta'] = {'task_times': [f - t, ]}
     return json.dumps(formatted)
 
 
 def postprocess(ans, postprocess_func):
     start = time.time()
     all_to_process = defaultdict(list)
-    job_times = []
+    task_times = []
     for year_data in ans.copy():
-        job_times += year_data.pop('job_time')
+        task_times += year_data.pop('task_time')
         for key, value in year_data.items():
             all_to_process[key] += value
     results = postprocess_func(all_to_process)
@@ -51,8 +51,8 @@ def postprocess(ans, postprocess_func):
     results['taxcalc_version'] = taxcalc.__version__
     # TODO: Make this the distributed app version, not the TC version
     finish = time.time()
-    job_times.append(finish - start)
-    results['meta'] = {'job_times': job_times}
+    task_times.append(finish - start)
+    results['meta'] = {'task_times': task_times}
     return json.dumps(results)
 
 
@@ -80,7 +80,7 @@ def taxcalc_task(year_n, user_mods, start_year, data_source,
         user_mods=user_mods
     )
     finish = time.time()
-    raw_data['job_time'] = [finish - start, ]
+    raw_data['task_time'] = [finish - start, ]
     return raw_data
 
 

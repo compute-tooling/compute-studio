@@ -102,7 +102,7 @@ class CoreAbstractViewsTest():
         """
         resp = client.post(f'/{self.app_name}/', data=self.inputs_ok())
         assert resp.status_code == 302
-        assert resp.url == '/users/login/?next=/upload/'
+        assert resp.url == f'/users/login/?next=/{self.app_name}/'
 
     def login_client(self, client, user, password):
         """
@@ -113,7 +113,7 @@ class CoreAbstractViewsTest():
         return success
 
     def inputs_ok(self):
-        raise NotImplementedError()
+        return {"has_errors": False}
 
     def outputs_ok(self):
         raise NotImplementedError()
