@@ -622,6 +622,7 @@ def construct():
             name=plan['name'],
             defaults={'server_cost': plan['server_cost'],
                       'exp_task_time': plan['exp_task_time'],
+                      'exp_num_tasks': plan['exp_num_tasks'],
                       'is_public': plan['is_public']})
         if Product.objects.filter(name=plan['name']).count() == 0:
             stripe_product = Product.create_stripe_object(plan['name'])

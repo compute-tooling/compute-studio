@@ -8,6 +8,13 @@
 
 <form class="inputs-form" id="inputs-form" method="post" action="/taxcalc/">
 {% csrf_token %}
+<div class="container" style="padding:50px 50px;">
+  <h1>{{ project_name }}</a></h1>
+  {% include 'core/project_info.html' %}
+  {% block project_context %}
+  {% endblock %}
+</div>
+
 <input type="hidden" name="has_errors" value="{{ has_errors }}" />
 <div class="wrapper" style="padding:50px 50px;">
     <!-- Sidebar -->

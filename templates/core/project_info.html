@@ -1,0 +1,14 @@
+
+{% block project_context %}
+{% csrf_token %}
+<p> {% if not can_run %}You must sign-up to run models on this platform.{% endif %} The models are offered for free, but you pay for the computational resources used to run them. The prices are equal to AWS compute pricing, subject to costing at least one penny for a single run.  </p>
+  <ul>
+    <li>The price per hour of a server running this model is: {{ rate }}</li>
+    <li>The expected time required for a single run of this model is: {{exp_time}}</li>
+  </ul>
+</p>
+<p> The average cost of one run for this model is: {{ exp_cost }}</p>
+{% if not can_run %}
+<a href="{% url 'signup' %}" class="btn btn-block btn-match-nav" style="width:150px;">Signup</a>
+{% endif %}
+{% endblock %}

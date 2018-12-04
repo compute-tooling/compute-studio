@@ -37,6 +37,7 @@ class Project(models.Model):
     server_cost = models.DecimalField(max_digits=6, decimal_places=3,
                                       null=True)
     exp_task_time = models.IntegerField(null=True)
+    exp_num_tasks = models.IntegerField(null=True)
     is_public = models.BooleanField(default=True)
 
     @staticmethod
@@ -46,6 +47,15 @@ class Project(models.Model):
         except Project.DoesNotExist:
             res = None
         return res
+
+    def exp_job_info(self, adjust=False):
+        rate_per_sec = self.server_cost / 3600
+        job_time = self.exp_task_time * self.exp_num_tasks
+        cost = round(rate_per_sec * job_time, 4)
+        if adjust:
+            return max(cost, 0.01), job_time
+        else:
+            return cost, job_time
 
     def run_cost(self, run_time, adjust=False):
         """
