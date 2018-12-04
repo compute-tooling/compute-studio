@@ -10,7 +10,8 @@ $("#inputs-form").submit(function(e){
     }
     if(!$(this).prop("check-edited")){
       $("#hidden-" + $(this).prop("id")).prop("disabled", true);
-      $(this).prop("disabled", true);
+      $(this).prop("disabled", false);
+      $(this).prop("value", "");
     }
   })
 });
