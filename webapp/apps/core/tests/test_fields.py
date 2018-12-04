@@ -1,6 +1,6 @@
 import pytest
-from webapp.apps.core.fields import (SeparatedValueField, coerce_bool,
-                                     coerce_int, coerce_float)
+from webapp.apps.core.fields import (SeparatedValueField,
+                                     coerce_bool, coerce_int, coerce_float)
 
 
 def test_coerce_bool():

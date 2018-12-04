@@ -43,7 +43,7 @@ class TaxcalcInputsView(InputsView):
     save_class = TaxcalcSave
     result_header = "Tax-Calculator Results"
     template_name = "taxcalc/input_form.html"
-    name = "Tax-Calculator"
+    project_name = "Tax-Calculator"
     app_name = "taxcalc"
     meta_parameters = meta_parameters
     meta_options = {"start_years": START_YEARS, "data_sources": DATA_SOURCES}

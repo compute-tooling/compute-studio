@@ -9,9 +9,11 @@ from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin, DetailView
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, Http404, JsonResponse
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required, user_passes_test
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
-from webapp.apps.users.models import Project
+from webapp.apps.users.models import Project, is_profile_active
 from .constants import WEBAPP_VERSION
 
 from .models import CoreRun
@@ -28,7 +30,7 @@ class InputsView(View):
     save_class = None
     result_header = "Results"
     template_name = "core/input_form.html"
-    name = "Inputs"
+    project_name = "Inputs"
     app_name = "core"
     meta_parameters = meta_parameters
     meta_options = {}
@@ -36,26 +38,52 @@ class InputsView(View):
     upstream_version = None
     webapp_version = WEBAPP_VERSION
 
+    def project_context(self, request):
+        project = Project.objects.get(name=self.project_name)
+        user = request.user
+        can_run = user.is_authenticated and is_profile_active(user)
+        rate = round(project.server_cost, 2)
+        exp_cost, exp_time = project.exp_job_info(adjust=True)
+
+        context = {
+            'rate': f'${rate}/hour',
+            'project_name': self.project_name,
+            'redirect_back': self.app_name,
+            'can_run': can_run,
+            'exp_cost': f'${exp_cost}',
+            'exp_time': f'{exp_time} seconds'}
+        return context
+
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET)
         inputs_form = self.form_class()
         # set cleaned_data with is_valid call
         inputs_form.is_valid()
         inputs_form.clean()
-        return self._render_inputs_form(request, inputs_form)
+        context = self.project_context(request)
+        return self._render_inputs_form(request, inputs_form, context)
 
+    @method_decorator(login_required)
+    @method_decorator(
+        user_passes_test(is_profile_active, login_url='/users/login/'))
     def post(self, request, *args, **kwargs):
         print("method=POST", request.POST)
         compute = Compute()
         if request.POST.get("reset", ''):
-            inputs_form = self.form_class(request.POST.dict())
+            post_data = request.POST.dict()
+            mps = {mp.name: post_data.get(mp.name, mp.default)
+                   for mp in self.meta_parameters.parameters}
+            inputs_form = self.form_class(mps)
             if inputs_form.is_valid():
+                print('valid')
                 inputs_form.clean()
             else:
+                print('not valid', inputs_form.errors)
                 inputs_form = self.form_class()
                 inputs_form.is_valid()
                 inputs_form.clean()
-            return self._render_inputs_form(request, inputs_form)
+            context = self.project_context(request)
+            return self._render_inputs_form(request, inputs_form, context)
 
         result = handle_submission(
             request, compute, self.submit_class, self.save_class
@@ -83,7 +111,7 @@ class InputsView(View):
         )
         return render(request, self.template_name, context)
 
-    def _render_inputs_form(self, request, inputs_form):
+    def _render_inputs_form(self, request, inputs_form, context):
         names = {mp.name for mp in self.meta_parameters.parameters}
         valid_meta_params = {
             k: inputs_form.cleaned_data.get(k, "") for k in names
@@ -95,6 +123,7 @@ class InputsView(View):
             upstream_version=self.upstream_version,
             webapp_version=self.webapp_version,
             has_errors=self.has_errors,
+            **context
         )
         return render(request, self.template_name, context)
 
@@ -199,7 +228,8 @@ class OutputsView(SuperclassTemplateNameMixin, DetailView):
                     subscription_item=si,
                 )
                 UsageRecord.construct(stripe_ur, si)
-
+                with open("taxcalc_outputs.json", "w") as f:
+                    f.write(json.dumps(results, indent=4))
                 self.object.outputs = results['outputs']
                 self.object.aggr_outputs = results['aggr_outputs']
                 self.object.creation_date = timezone.now()

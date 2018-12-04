@@ -1,6 +1,7 @@
 from django import forms
 
-from .fields import SeparatedValueField, coerce_bool, coerce_float, coerce_int
+from .fields import (SeparatedValueField, coerce_bool,
+                     coerce_float, coerce_int)
 
 
 class SeparatedValue:
@@ -21,6 +22,9 @@ class SeparatedValue:
         )
 
 
+class UnsupportedFieldArgument(Exception):
+    pass
+
 class CheckBox:
 
     def __init__(self, name, label, default_value, **field_kwargs):
@@ -29,6 +33,12 @@ class CheckBox:
         attrs = {
             'class': 'form-control sr-only',
         }
+        # strange behavior results when disabled is used with the checkbox
+        # due to some javascript hackery that is already used for
+        # enabling/disabling this field
+        if "disabled" in field_kwargs:
+            msg = "Don't use 'disabled' with CheckBox Fields."
+            raise UnsupportedFieldArgument(msg)
         self.form_field = forms.NullBooleanField(
             label=self.label,
             widget=forms.TextInput(attrs=attrs),

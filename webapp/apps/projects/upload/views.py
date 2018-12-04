@@ -22,11 +22,11 @@ class UploadInputsView(View):
     model = FileInput
     result_header = 'Describe'
     template_name = 'upload/input.html'
-    name = 'Descriptive Statistics'
+    project_name = 'Descriptive Statistics'
     app_name = 'upload'
 
     def get(self, request, *args, **kwargs):
-        project = Project.objects.get(name=self.name)
+        project = Project.objects.get(name=self.project_name)
         user = request.user
         can_run = user.is_authenticated and is_profile_active(user)
         rate = round(project.server_cost, 2)

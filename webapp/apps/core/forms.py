@@ -52,5 +52,3 @@ class InputsForm(forms.Form):
         if commit:
             model.save()
         return model
-
-

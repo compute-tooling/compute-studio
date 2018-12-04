@@ -43,6 +43,7 @@ class TaxcalcStyleParam(BaseParam):
 
         # get attribute indicating whether parameter is cpi inflatable.
         self.inflatable = self.attributes.get("cpi_inflatable", False)
+        field_kwargs.pop("disabled", None)
         if self.inflatable:
             field_name = f"{self.name}_cpi"
             self.cpi_field = CheckBox(
