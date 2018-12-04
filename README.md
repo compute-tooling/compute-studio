@@ -1,23 +1,23 @@
 # COMP
 
-**COMP** is an open-source utility for sharing computational models. 
+**COMP** is an open-source utility for sharing computational models.
 
 To see COMP in action, visit [compmodels.com](www.compmodels.com).
 
-- Developers share their public models for free. 
-- Developers share private models for a per-user fee. 
-- Users pay for their own compute, at cost.  
+- Developers share their public models for free.
+- Developers share private models for a per-user fee.
+- Users pay for their own compute, at cost.
 
 
 ## Contributing
 
-COMP is an open source project and anyone can contribute code or suggestions. 
+COMP is an open source project and anyone can contribute code or suggestions.
 
-You can reach COMP developers to discuss how to get started by opening an issue or joining the COMP Community [chat room](https://matrix.to/#/!WQWxPnwidsSToqkeLk:matrix.org).  
+You can reach COMP developers to discuss how to get started by opening an issue or joining the COMP Community [chat room](https://matrix.to/#/!WQWxPnwidsSToqkeLk:matrix.org).
 
 ## License
 
-COMP is licensed under the open source [GNU Affero General Public License](/License.txt) to Compute Tooling, LLC. 
+COMP is licensed under the open source [GNU Affero General Public License](/License.txt) to Compute Tooling, LLC.
 
 ## Install instructions
 
@@ -71,3 +71,14 @@ for information on how to set this up on your operating system.
 2. Export the image tag that you want to use: `export TAG=dev`
 Build the images: `make dist-build`
 Navigate to `COMP/distributed` directory and run: `docker-compose up`
+
+**Run tests**
+```
+py.test webapp/apps -v
+```
+
+with test-coverage:
+```
+pip install pytest-cov
+py.test --cov=webapp/apps webapp/apps -v
+```
