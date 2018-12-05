@@ -7,7 +7,8 @@ import json
 import msgpack
 import os
 
-from api.celery_tasks import file_upload_test, taxcalc_postprocess, taxcalc_task
+from api.celery_app.taxcalc_tasks import taxcalc_postprocess, taxcalc_task
+from api.celery_app.upload_tasks import file_upload_test
 
 bp = Blueprint('endpoints', __name__)
 
@@ -56,7 +57,7 @@ def results():
     job_id = request.args.get('job_id', '')
     async_result = AsyncResult(job_id)
     if async_result.ready() and async_result.successful():
-        return async_result.result
+        return json.dumps(async_result.result)
     elif async_result.failed():
         print('traceback', async_result.traceback)
         return async_result.traceback

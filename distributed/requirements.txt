@@ -1,6 +1,6 @@
 msgpack
 celery
-redis
+redis==2.10.6
 pytest
 flask
 toolz

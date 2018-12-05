@@ -17,9 +17,13 @@ ENV DEBUG true
 EXPOSE 80
 EXPOSE 5050
 
+RUN pip install -r requirements.txt
+
 COPY ./api /home/distributed/api
 COPY ./setup.py /home/distributed
 RUN cd /home/distributed && pip install -e .
+
+WORKDIR /home/distributed/api
 
 # run the app server
 CMD ["gunicorn", "--bind", "0.0.0.0:5050", "api:create_app()", "--access-logfile", "-"]

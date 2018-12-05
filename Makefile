@@ -3,19 +3,19 @@ dist-build:
 	cd distributed && \
 	docker build -t comp/distributed:$(TAG) ./ && \
 	docker build --no-cache --build-arg TAG=$(TAG) -t comp/flask:$(TAG) --file Dockerfile.flask ./ && \
-	docker build --no-cache --build-arg TAG=$(TAG) -t comp/celery:$(TAG) --file Dockerfile.celery ./
+	docker build --no-cache --build-arg TAG=$(TAG) -t comp/taxcalc_tasks:$(TAG) --file Dockerfile.taxcalc_tasks ./
 
 dist-build-local:
 	cd distributed && \
 	docker build -t comp/distributed:$(TAG) ./ --file Dockerfile.local && \
-	docker build --no-cache --build-arg TAG=$(TAG) -t comp/flask:$(TAG) --file Dockerfile.flask ./ && \
-	docker build --no-cache --build-arg TAG=$(TAG) -t comp/celery:$(TAG) --file Dockerfile.celery ./
+	docker build --build-arg TAG=$(TAG) -t comp/flask:$(TAG) --file Dockerfile.flask ./ && \
+	docker build --build-arg TAG=$(TAG) -t comp/taxcalc_tasks:$(TAG) --file Dockerfile.taxcalc_tasks ./
 
 dist-push:
 	cd distributed && \
 	docker push comp/distributed:$(TAG) && \
 	docker push comp/flask:$(TAG) && \
-	docker push comp/celery:$(TAG)
+	docker push comp/taxcalc_tasks:$(TAG)
 
 dist-test:
 	cd distributed && \

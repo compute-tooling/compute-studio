@@ -1,7 +1,7 @@
 import pytest
 from celery import chord
 
-from api.celery_tasks import (taxcalc_task, taxcalc_postprocess)
+from api.celery_app.taxcalc_tasks import (taxcalc_task, taxcalc_postprocess)
 
 @pytest.fixture(scope='session')
 def celery_config():
