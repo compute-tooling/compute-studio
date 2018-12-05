@@ -7,7 +7,7 @@ register = template.Library()
 def col_input_class(taxcalc_param):
     cols = len(taxcalc_param.col_fields)
     if cols == 1:
-        return "col-3"
+        return "col-6"
     return "col"
 
 

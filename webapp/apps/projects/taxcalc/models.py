@@ -27,9 +27,6 @@ class TaxcalcInputs(CoreInputs):
         """
         return json_int_key_encode(self.upstream_parameters)
 
-    @property
-    def years(self):
-        return list(i + self.start_year for i in range(0, 10))
 
     class Meta:
         permissions = (
@@ -38,6 +35,8 @@ class TaxcalcInputs(CoreInputs):
 
 
 class TaxcalcRun(CoreRun):
+    dimension_name = "Year"
+
     inputs = models.OneToOneField(TaxcalcInputs, on_delete=models.PROTECT,
                                   related_name='outputs')
 

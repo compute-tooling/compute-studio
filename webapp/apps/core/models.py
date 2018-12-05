@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from typing import List, Union
 
 from django.db import models
+from django.utils.functional import cached_property
 from django.contrib.postgres.fields import JSONField
 from django.utils.timezone import make_aware
 
@@ -41,6 +42,8 @@ class CoreInputs(models.Model):
 
 
 class CoreRun(models.Model):
+    dimension_name = "Dimension"
+
     # Subclasses must implement:
     # inputs = models.OneToOneField(CoreInputs)
     meta_data = JSONField(default=None, blank=True, null=True)
@@ -86,6 +89,11 @@ class CoreRun(models.Model):
 
     def zip_filename(self):
         return 'comp.zip'
+
+    @cached_property
+    def dimension(self):
+        # return unique values set at the dimension level.
+        return list({item["dimension"] for item in self.outputs})
 
     class Meta:
         abstract = True

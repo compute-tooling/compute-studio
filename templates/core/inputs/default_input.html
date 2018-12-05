@@ -1,6 +1,4 @@
 {% load strings %}
-{% load inputs %}
-
 
 <fieldset id="{{ title|make_id }}" class="inputs-block">
     <div class="container">
@@ -23,18 +21,22 @@
     <hr class="my-4">
     <div class="container">
       <div class="collapse" id="{{ title|make_id }}-collapse">
-        <div class="card card-body" style="width: 50rem;">
-            {% for param in params %}
-            {% for key, value in param.items %}
-              {% if key != "ubi" %}
-                {% if params|is_first:param %}
-                  {% include 'taxcalc/default_input.html' with title=key param=value is_first=True %}
-                {% else %}
-                  {% include 'taxcalc/default_input.html' with title=key param=value is_first=False %}
-                {% endif %}
-              {% endif %}
-            {% endfor %}
+        <div class="card card-body" style="border:0;">
+        {% for field in param %}
+          {% for name, param_object in field.items %}
+            {% if param_object.name %}
+              <h2>{{ param_object.name }}</h2>
+              {% include 'core/inputs/param.html' with param=param_object %}
+            {% else %}
+              <h2>{{ name }}</h2>
+              {% for x in param_object %}
+                {% for y, z in x.items %}
+                  {% include 'core/inputs/param.html' with param=z%}
+                {% endfor %}
+              {% endfor %}
+            {% endif %}
           {% endfor %}
+        {% endfor %}
         </div>
       </div>
       {% block section_warnings %}{% endblock %}

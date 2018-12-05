@@ -1,0 +1,22 @@
+<!-- hide the checkbox; add a hidden input for the "False" scenario;
+provide label users will click to toggle the CPI on and off -->
+<input type="checkbox" id="{{ checkbox.id_for_label }}" name="{{ checkbox.name }}"
+  value="True" class="form-control model" style="display:none;"
+  {% if checkbox.initial %} checked {% endif %}>
+<input type="hidden" id="hidden-{{ checkbox.id_for_label }}"name="{{ checkbox.name }}" value="False" class="model">
+<label for="{{ checkbox.id_for_label }}" id="label-{{ checkbox.id_for_label }}" class="btn btn-match-nav btn-sm {% if not checkbox.initial %}fader{% endif %}">
+    CPI
+</label>
+
+<!-- toggle fade on CPI buttons and mark as edited when clicked -->
+<script>
+  $(document).ready(function(){
+    $("#label-{{ checkbox.id_for_label }}").click(function(){
+      $(this).toggleClass("fader");
+      $("#{{ checkbox.id_for_label }}").prop("checked", function(i, val) {
+        return !val;
+      });
+      $("#{{ checkbox.id_for_label }}").prop("check-edited", true);
+    });
+  });
+</script>

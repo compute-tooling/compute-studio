@@ -6,7 +6,7 @@
 {% load inputs %}
 {% block content %}
 
-<form class="inputs-form" id="inputs-form" method="post" action="/taxcalc/">
+<form class="inputs-form" id="inputs-form" method="post" action="/{{app_name}}/">
 {% csrf_token %}
 <div class="container" style="padding:50px 50px;">
   <h1>{{ project_name }}</a></h1>
@@ -24,7 +24,7 @@
         </div>
         <ul class="list-unstyled components">
             <li>
-                <a href="/taxcalc/" class="btn btn-secondary">Reset Parameters</a>
+                <a href="/{{app_name}}/" class="btn btn-secondary">Reset Parameters</a>
             </li>
             <hr>
             <li>
@@ -67,15 +67,15 @@
                 {{ error }}
               </div>
           {% endfor %}
-          {% include 'taxcalc/metaparameters.html' with form=form title="Meta-Parameters" %}
+          {% include 'core/inputs/metaparameters.html' with form=form title="Meta-Parameters" %}
           <hr class="my-4">
           {% for section, params in default_form.items %}
-              {% include 'taxcalc/major_section.html' with title=section.title params=params %}
+              {% include 'core/inputs/major_section.html' with title=section.title params=params %}
           {% endfor %}
         </div> <!-- main -->
       </div>
   </div>
 </div>
 </form>
-<script src="{% static 'js/taxcalc.js' %}"></script>
+<script src="{% static 'js/core.js' %}"></script>
 {% endblock %}

@@ -29,7 +29,7 @@ class InputsView(View):
     submit_class = None
     save_class = None
     result_header = "Results"
-    template_name = "core/input_form.html"
+    template_name = "core/inputs_form.html"
     project_name = "Inputs"
     app_name = "core"
     meta_parameters = meta_parameters
@@ -48,6 +48,7 @@ class InputsView(View):
         context = {
             'rate': f'${rate}/hour',
             'project_name': self.project_name,
+            'app_name': self.app_name,
             'redirect_back': self.app_name,
             'can_run': can_run,
             'exp_cost': f'${exp_cost}',
@@ -145,7 +146,7 @@ class SuperclassTemplateNameMixin(object):
                     c.model._meta.app_label,
                     c.model._meta.model_name,
                     self.template_name_suffix))
-
+        print(names)
         return names
 
 
@@ -223,8 +224,6 @@ class OutputsView(SuperclassTemplateNameMixin, DetailView):
                     subscription_item=si,
                 )
                 UsageRecord.construct(stripe_ur, si)
-                with open("taxcalc_outputs.json", "w") as f:
-                    f.write(json.dumps(results, indent=4))
                 self.object.meta_data = results["meta"]
                 self.object.outputs = results['outputs']
                 self.object.aggr_outputs = results['aggr_outputs']

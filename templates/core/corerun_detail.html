@@ -41,7 +41,7 @@
   .output, .aggr-output {
     display: none;
   }
-  .output.selected-table-year.selected-table-tag, .aggr-output.selected-aggr-table-tag {
+  .output.selected-table-dimension.selected-table-tag, .aggr-output.selected-aggr-table-tag {
     display: block;
   }
   .container > .row {
@@ -97,20 +97,20 @@
               <div class="card-body">
                 <div class="row">
                   <div class="col-md-6">
-                    <h1 class="text-center">For Year: </h1>
+                    <h1 class="text-center">{{object.dimension_name}}: </h1>
                   </div>
                   <div class="col-md-6">
                     <h1 class="text-center">
                       <div class="dropdown dropdown-select dropdown-inline data-switch">
-                        <a class="dropdown-toggle" id="selected-year" type="button" data-toggle="dropdown" aria-expanded="true">
-                          {{ object.inputs.years.0 }}
+                        <a class="dropdown-toggle" id="selected-dimension" type="button" data-toggle="dropdown" aria-expanded="true">
+                          {{ object.dimension.0 }}
                           <span class="caret"></span>
                         </a>
-                        <ul class="dropdown-menu" id="year-selector" role="menu" aria-labelledby="years">
-                          {% for year in object.inputs.years %}
+                        <ul class="dropdown-menu" id="dimension-selector" role="menu" aria-labelledby="dimension">
+                          {% for dim in object.dimension %}
                           <li role="presentation">
-                            <a role="menuitem" tabindex="-1" href="#" data-year="{{ year }}">
-                            {{ year }}
+                            <a role="menuitem" tabindex="-1" href="#" data-dimension="{{ dim }}">
+                            {{ dim }}
                             </a>
                           </li>
                           {% endfor %}
@@ -132,7 +132,7 @@
                 <div class="card-body" style="overflow: scroll">
                   {% for x in object.outputs %}
                   <div class="output"
-                       data-year="{{ x.year }}"
+                       data-dimension="{{ x.dimension }}"
                        {% for key, value in x.tags.items %}
                          data-tag-{{ key }}="{{ value }}"
                        {% endfor %}>
@@ -198,8 +198,8 @@ var initDataTable = function (el) {
 };
 
 var initVisibleTable = function (containerSelector) {
-  /* We only expect one table to be visible at once, i.e. if the right year is
-     selected, and the right tag is selected */
+  /* We only expect one table to be visible at once, i.e. if the right dimension
+     is selected, and the right tag is selected */
   var table_to_show = $(containerSelector + " table:visible");
   console.log(table_to_show);
   /* Make sure we don't initialize the DataTable twice */
@@ -218,11 +218,11 @@ var initVisibleAggrTable = function () {
 };
 
 var activateYearTablesBySelectedYear = function () {
-  console.log("here" + $("#selected-year").text().trim());
-  var containers_to_show = $('.output[data-year="' + $("#selected-year").text().trim() + '"]');
-  containers_to_show.addClass('selected-table-year');
+  console.log("here" + $("#selected-dimension").text().trim());
+  var containers_to_show = $('.output[data-dimension="' + $("#selected-dimension").text().trim() + '"]');
+  containers_to_show.addClass('selected-table-dimension');
   console.log(containers_to_show);
-  $('.output').not(containers_to_show).removeClass('selected-table-year');
+  $('.output').not(containers_to_show).removeClass('selected-table-dimension');
 };
 
 var activateTablesBySelectedTags = function (args) {
@@ -244,7 +244,7 @@ var activateTablesBySelectedTags = function (args) {
   });
   var containers_to_show = $(selector);
 
-  /* Label these tables as selected (subject to a year selection) and
+  /* Label these tables as selected (subject to a dimension selection) and
      unlabel the rest, then initialize visible tables */
   containers_to_show.addClass(args.selectedTableTagClass);
   $('.' + args.outputClass).not(containers_to_show).removeClass(args.selectedTableTagClass);
@@ -274,7 +274,15 @@ $(document).ready(function () {
   activateYearTablesBySelectedYear();
   initVisibleYearTable();
 
-  $("#year-selector li a").click(function (e) {
+  // Select behavior for dropdowns
+  $(".dropdown-select .dropdown-menu li a").click(function(){
+    console.log("found me");
+    selection = $(this);
+    dropdown_label = $(this).parents('.dropdown-select').find('.dropdown-toggle')
+    dropdown_label.html(selection.text() + ' <span class="caret"></span>');
+  });
+
+  $("#dimension-selector li a").click(function (e) {
     e.preventDefault();
     activateYearTablesBySelectedYear();
     initVisibleTable();

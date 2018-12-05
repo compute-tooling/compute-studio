@@ -13,7 +13,7 @@
   {{ form_field }}
 
   {% for error in form_field.errors %}
-    <span class="help-block">
+    <span class="help-block" style="display:block; color:red;">
       {{ error }}
     </span>
   {% endfor %}

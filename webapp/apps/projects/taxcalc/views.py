@@ -42,7 +42,6 @@ class TaxcalcInputsView(InputsView):
     submit_class = TaxcalcSubmit
     save_class = TaxcalcSave
     result_header = "Tax-Calculator Results"
-    template_name = "taxcalc/input_form.html"
     project_name = "Tax-Calculator"
     app_name = "taxcalc"
     meta_parameters = meta_parameters
@@ -55,6 +54,7 @@ class TaxcalcOutputsView(OutputsView):
     model = TaxcalcRun
 
     result_header = "Static Results"
+    dimension_name = "Year"
 
     tags = [
         Tag(key="table_type",
