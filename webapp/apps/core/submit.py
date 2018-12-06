@@ -18,7 +18,6 @@ class Submit:
     form_class = InputsForm
     webapp_version = WEBAPP_VERSION
     upstream_version = None
-    task_run_time_secs = None
     meta_parameters = None
 
     def __init__(self, request, compute):
@@ -149,7 +148,7 @@ class Save:
 
         cur_dt = timezone.now()
         future_offset_seconds = ((2 + submit.max_q_length) *
-                                  submit.task_run_time_secs)
+                                  runmodel.project.exp_task_time)
         future_offset = datetime.timedelta(seconds=future_offset_seconds)
         expected_completion = cur_dt + future_offset
         runmodel.exp_comp_datetime = expected_completion

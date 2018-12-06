@@ -11,7 +11,6 @@ class TaxcalcSubmit(Submit):
     parser_class = TaxcalcParser
     form_class = TaxcalcInputsForm
     upstream_version = TAXCALC_VERSION
-    task_run_time_secs = 25
     meta_parameters = meta_parameters
 
     def extend_data(self, data):
