@@ -1,4 +1,4 @@
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from webapp.apps.core.displayer import Displayer
 
 
