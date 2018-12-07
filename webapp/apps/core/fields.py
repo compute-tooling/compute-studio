@@ -16,6 +16,9 @@ def coerce_float(val):
 def coerce_bool(val):
     return val in ("True", True)
 
+def coerce(val):
+    return val
+
 def coerce_date(val):
     # see django.DateField and Django BaseTemporalField de-serializers
     input_formats = ['%Y-%m-%d', '%m/%d/%Y', '%m/%d/%y']
@@ -27,7 +30,9 @@ def coerce_date(val):
         return val
     for format in input_formats:
         try:
-            return datetime.datetime.strptime(val, format).date()
+            # just want to make sure that it is serializable
+            res = datetime.datetime.strptime(val, format).date()
+            return res.strftime(format)
         except (ValueError, TypeError):
             continue
     raise ValueError("Invalid date supplied")

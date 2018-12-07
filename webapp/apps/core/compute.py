@@ -47,6 +47,7 @@ class Compute(object):
         return job_response
 
     def submit_job(self, tasks, endpoint):
+        print("submitting", tasks, endpoint)
         url = f'http://{WORKER_HN}/{endpoint}'
         return self.submit(tasks, url)
 
@@ -65,7 +66,7 @@ class Compute(object):
                     url, data=packed, timeout=TIMEOUT_IN_SECONDS,
                     headers=BYTES_HEADER)
                 if response.status_code == 200:
-                    print("submitted: ", )
+                    print("submitted: ", url)
                     submitted = True
                     response_d = response.json()
                     job_id = response_d['job_id']

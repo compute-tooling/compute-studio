@@ -146,7 +146,6 @@ class SuperclassTemplateNameMixin(object):
                     c.model._meta.app_label,
                     c.model._meta.model_name,
                     self.template_name_suffix))
-        print(names)
         return names
 
 

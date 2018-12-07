@@ -1,7 +1,7 @@
 from django import forms
 
 from .fields import (SeparatedValueField, coerce_bool,
-                     coerce_float, coerce_int, coerce_date)
+                     coerce_float, coerce_int, coerce_date, coerce)
 
 
 class SeparatedValue:
@@ -57,6 +57,7 @@ class BaseParam:
         "float": coerce_float,
         "bool": coerce_bool,
         "date": coerce_date,
+        "str": coerce,
     }
 
     def __init__(self, name, attributes, **meta_parameters):

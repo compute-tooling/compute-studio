@@ -17,6 +17,7 @@ class Submit:
     parser_class = Parser
     form_class = InputsForm
     webapp_version = WEBAPP_VERSION
+    app_name = None
     upstream_version = None
     meta_parameters = None
 
@@ -115,7 +116,7 @@ class Submit:
         self.data_list = self.extend_data(data)
         print(self.data_list)
         self.submitted_id, self.max_q_length = self.compute.submit_job(
-            self.data_list, "taxcalc"
+            self.data_list, self.app_name
         )
 
     def extend_data(self, data):
