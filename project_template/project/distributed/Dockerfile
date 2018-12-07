@@ -1,0 +1,27 @@
+ARG TAG
+FROM comp/distributed:$TAG
+
+ENV CELERY_BROKER_URL redis://redis:6379/0
+ENV CELERY_RESULT_BACKEND redis://redis:6379/0
+ENV C_FORCE_ROOT true
+
+# install packages here
+# install packages necessary for celery,
+RUN pip install -r requirements.txt
+# Edit Dockerfile here for installing necessary packages, copying files, etc.
+######################
+
+
+######################
+
+
+# copy over necessary files for this project's celery app
+COPY ./api/__init__.py /home/distributed/api/__init__.py
+COPY ./api/celery_app/__init__.py /home/distributed/api/celery_app/__init__.py
+COPY ./api/celery_app/{project}_tasks.py /home/distributed/api/celery_app/{project}_tasks.py
+COPY ./setup.py /home/distributed
+RUN cd /home/distributed && pip install -e .
+
+WORKDIR /home/distributed/api
+
+ENTRYPOINT celery -A celery_app.{project}_tasks worker --loglevel=info --concurrency=1 -Q {project}_queue
