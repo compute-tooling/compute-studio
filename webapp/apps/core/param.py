@@ -1,7 +1,7 @@
 from django import forms
 
 from .fields import (SeparatedValueField, coerce_bool,
-                     coerce_float, coerce_int)
+                     coerce_float, coerce_int, coerce_date)
 
 
 class SeparatedValue:
