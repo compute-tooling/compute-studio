@@ -34,3 +34,5 @@ TAXCALC_VERSION = taxcalc.__version__
 
 NUM_BUDGET_YEARS = 2
 NUM_BUDGET_YEARS_QUICK = 1
+
+APP_NAME = "taxcalc"

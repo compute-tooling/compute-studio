@@ -10,7 +10,8 @@ CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND',
                                        'redis://localhost:6379')
 
 task_routes = {
-    'taxcalc_tasks.*': {'queue': 'taxcalc_queue'}
+    'taxcalc_tasks.*': {'queue': 'taxcalc_queue'},
+    'compbaseball_tasks.*': {'queue': 'compbaseball_queue'},
 }
 
 

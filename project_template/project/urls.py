@@ -5,7 +5,7 @@ from .views import ({Project}InputsView, {Project}OutputsView,
 
 
 urlpatterns = [
-    url(r'^$', {Project}InputsView.as_view(), name='project'),
+    url(r'^$', {Project}InputsView.as_view(), name='{project}'),
     url(r'^(?P<pk>[-\d\w]+)/download/?$', {Project}OutputsDownloadView.as_view(),
         name='{project}_download'),
     url(r'^(?P<pk>[-\d\w]+)/', {Project}OutputsView.as_view(),

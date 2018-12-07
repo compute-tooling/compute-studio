@@ -50,6 +50,7 @@ INSTALLED_APPS = [
 
     'webapp.apps.projects.upload',
     'webapp.apps.projects.taxcalc',
+    'webapp.apps.projects.compbaseball',
 
     'widget_tweaks',
     'crispy_forms',

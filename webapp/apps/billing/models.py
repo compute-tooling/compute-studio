@@ -641,3 +641,8 @@ def construct():
                 interval=plan['interval'],
                 currency=plan['currency'])
             Plan.construct(stripe_plan_met, product)
+
+
+def sync_customer_subscriptions():
+    for customer in Customer.objects.all():
+        customer.subscribe_to_public_plans()

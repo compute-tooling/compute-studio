@@ -2,7 +2,7 @@ from webapp.apps.core.submit import Submit, Save
 from .forms import CompbaseballInputsForm
 from .parser import CompbaseballParser
 from .models import CompbaseballRun
-from .constants import COMPBASEBALL_VERSION
+from .constants import COMPBASEBALL_VERSION, APP_NAME
 from .meta_parameters import compbaseball_meta_parameters
 
 
@@ -16,14 +16,15 @@ class CompbaseballSubmit(Submit):
     upstream_version = COMPBASEBALL_VERSION
     project = "Compbaseball"
     meta_parameters = compbaseball_meta_parameters
+    app_name = APP_NAME
 
     def extend_data(self, data):
-        data = super().extend_data()
+        data = super().extend_data(data)
         return data
 
 class CompbaseballSave(Save):
     """
     Creates a Run Model instance for this model run.
     """
-    project_name = "Compbaseball"
+    project_name = "CompBaseball"
     runmodel = CompbaseballRun

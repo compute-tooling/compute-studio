@@ -7,7 +7,7 @@ from .displayer import {Project}Displayer
 from .submit import {Project}Submit, {Project}Save
 from .forms import {Project}InputsForm
 from .meta_parameters import {project}_meta_parameters
-from .constants import ({PROJECT}_VERSION)
+from .constants import ({PROJECT}_VERSION, APP_NAME)
 
 
 compute = Compute()
@@ -23,7 +23,7 @@ class {Project}InputsView(InputsView):
     save_class = {Project}Save
     result_header = "{Project} Results"
     project_name = "{Project}"
-    app_name = "{project}"
+    app_name = "APP_NAME"
     meta_parameters = {project}_meta_parameters
     meta_options = []
     has_errors = False

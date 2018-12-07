@@ -1,6 +1,7 @@
 from webapp.apps.core.displayer import Displayer
 from webapp.apps.core.param import Param
 
+from compbaseball import baseball
 
 class CompbaseballDisplayer(Displayer):
     param_class = Param
@@ -12,4 +13,4 @@ class CompbaseballDisplayer(Displayer):
         functions to load the project's inputs data. In the future, this will
         be done over the distributed REST API.
         """
-        pass
+        return baseball.get_inputs()

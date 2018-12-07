@@ -66,7 +66,7 @@ def write_distributed_templates(project_name):
         template = f.read()
     dockerfile = fillin_template(template)
     outpath = os.path.join(CURRENT_PATH, "..", "distributed", "dockerfiles",
-                              "projects", f"Dockerfile.{project_name}")
+                              "projects", f"Dockerfile.{project_name}_tasks")
     new_files[outpath] = dockerfile
 
     for outpath, text in new_files.items():

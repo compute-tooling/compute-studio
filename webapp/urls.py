@@ -21,6 +21,7 @@ urlpatterns = [
     path('', include("webapp.apps.pages.urls")),
     path('upload/', include('webapp.apps.projects.upload.urls')),
     path('taxcalc/', include('webapp.apps.projects.taxcalc.urls')),
+    path('compbaseball/', include('webapp.apps.projects.compbaseball.urls')),
     path('users/', include('webapp.apps.users.urls')),
     path('users/', include('django.contrib.auth.urls')),
     path('billing/', include('webapp.apps.billing.urls')),

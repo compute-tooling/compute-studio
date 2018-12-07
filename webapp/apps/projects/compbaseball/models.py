@@ -19,7 +19,7 @@ class CompbaseballRun(CoreRun):
     on baseball pitchers, this would allow you to toggle a set of tables by
     the pitcher who is being analyzed.
     """
-    dimension_name = "Name of table dimension goes here"
+    dimension_name = "Pitchers"
 
     inputs = models.OneToOneField(CompbaseballInputs, on_delete=models.PROTECT,
                                   related_name='outputs')
@@ -40,7 +40,7 @@ class CompbaseballRun(CoreRun):
         kwargs = {
             'pk': self.pk
         }
-        return reverse('{taxcalc}_download', kwargs=kwargs)
+        return reverse('compbaseball_download', kwargs=kwargs)
 
     def zip_filename(self):
-        return '{taxcalc}.zip'
+        return 'compbaseball.zip'

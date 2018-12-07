@@ -12,6 +12,7 @@ class TaxcalcSubmit(Submit):
     form_class = TaxcalcInputsForm
     upstream_version = TAXCALC_VERSION
     meta_parameters = meta_parameters
+    app_name = "taxcalc"
 
     def extend_data(self, data):
         if not self.valid_meta_params["use_full_sample"]:

@@ -9,6 +9,8 @@ import os
 
 from api.celery_app.taxcalc_tasks import taxcalc_postprocess, taxcalc_task
 from api.celery_app.upload_tasks import file_upload_test
+from api.celery_app.compbaseball_tasks import (compbaseball_postprocess,
+                                               compbaseball_task)
 
 bp = Blueprint('endpoints', __name__)
 
@@ -50,6 +52,11 @@ def upload_endpoint():
 @bp.route("/taxcalc", methods=['POST'])
 def taxcalc_endpoint():
     return aggr_endpoint(taxcalc_task, taxcalc_postprocess)
+
+
+@bp.route("/compbaseball", methods=['POST'])
+def compbaseball_endpoint():
+    return aggr_endpoint(compbaseball_task, compbaseball_postprocess)
 
 
 @bp.route("/get_job", methods=['GET'])

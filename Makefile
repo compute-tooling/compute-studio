@@ -2,9 +2,10 @@
 dist-build:
 	cd distributed && \
 	docker build -t comp/distributed:$(TAG) ./ -f dockerfiles/Dockerfile && \
-	docker build --no-cache --build-arg TAG=$(TAG) -t comp/flask:$(TAG) --file dockerfiles/Dockerfile.flask ./ && \
-	docker build --no-cache --build-arg TAG=$(TAG) -t comp/celerybase:$(TAG) --file dockerfiles/Dockerfile.celerybase ./ && \
-	docker build --no-cache --build-arg TAG=$(TAG) -t comp/taxcalc_tasks:$(TAG) --file dockerfiles/projects/Dockerfile.taxcalc_tasks ./
+	docker build --build-arg TAG=$(TAG) -t comp/flask:$(TAG) --file dockerfiles/Dockerfile.flask ./ && \
+	docker build --build-arg TAG=$(TAG) -t comp/celerybase:$(TAG) --file dockerfiles/Dockerfile.celerybase ./ && \
+	docker build --build-arg TAG=$(TAG) -t comp/taxcalc_tasks:$(TAG) --file dockerfiles/projects/Dockerfile.taxcalc_tasks ./ && \
+	docker build --build-arg TAG=$(TAG) -t comp/compbaseball_tasks:$(TAG) --file dockerfiles/projects/Dockerfile.compbaseball_tasks ./
 
 dist-push:
 	cd distributed && \

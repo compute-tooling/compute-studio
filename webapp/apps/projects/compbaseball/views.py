@@ -7,7 +7,7 @@ from .displayer import CompbaseballDisplayer
 from .submit import CompbaseballSubmit, CompbaseballSave
 from .forms import CompbaseballInputsForm
 from .meta_parameters import compbaseball_meta_parameters
-from .constants import (COMPBASEBALL_VERSION)
+from .constants import (COMPBASEBALL_VERSION, APP_NAME)
 
 
 compute = Compute()
@@ -22,8 +22,8 @@ class CompbaseballInputsView(InputsView):
     submit_class = CompbaseballSubmit
     save_class = CompbaseballSave
     result_header = "Compbaseball Results"
-    project_name = "Compbaseball"
-    app_name = "compbaseball"
+    project_name = "CompBaseball"
+    app_name = APP_NAME
     meta_parameters = compbaseball_meta_parameters
     meta_options = []
     has_errors = False
@@ -39,7 +39,18 @@ class CompbaseballOutputsView(OutputsView):
     model = CompbaseballRun
     result_header = "Compbaseball Results"
     tags = []
-    aggr_tags = []
+    aggr_tags = [Tag(key="statistic",
+                     values=[
+                         TagOption(
+                            value="mean",
+                            title="StatCast Means",
+                         ),
+                         TagOption(
+                             value="std",
+                             title="StatCast Standard Dev."
+                         )
+                     ]
+                )]
 
 
 class CompbaseballOutputsDownloadView(OutputsDownloadView):
