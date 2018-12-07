@@ -13,6 +13,10 @@ from .constants import ({PROJECT}_VERSION)
 compute = Compute()
 
 class {Project}InputsView(InputsView):
+    """
+    A Django view for serving the default input page, validating the inputs,
+    and submitting them to the backend worker nodes.
+    """
     form_class = {Project}InputsForm
     displayer_class = {Project}Displayer
     submit_class = {Project}Submit
@@ -27,12 +31,19 @@ class {Project}InputsView(InputsView):
 
 
 class {Project}OutputsView(OutputsView):
+    """
+    A Django view that polls the backend workers to check whether the result
+    is ready yet. Once the result is ready, it is stored in the database and
+    served from this view.
+    """
     model = {Project}Run
     result_header = "{Project} Results"
-    dimension_name = "Dimension name here"
     tags = []
     aggr_tags = []
 
 
 class {Project}OutputsDownloadView(OutputsDownloadView):
+    """
+    A Django view for downloading the result of the project run.
+    """
     model = {Project}Run

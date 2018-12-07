@@ -7,6 +7,10 @@ from .meta_parameters import {project}_meta_parameters
 
 
 class {Project}Submit(Submit):
+    """
+    High level logic for formatting the inputs, validating them, handling
+    errors if they exist, and submitting to the backend workers.
+    """
     parser_class = {Project}Parser
     form_class = {Project}InputsForm
     upstream_version = {PROJECT}_VERSION
@@ -18,5 +22,8 @@ class {Project}Submit(Submit):
         return data
 
 class {Project}Save(Save):
+    """
+    Creates a Run Model instance for this model run.
+    """
     project_name = "{Project}"
     runmodel = {Project}Run
