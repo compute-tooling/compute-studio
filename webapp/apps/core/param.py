@@ -56,6 +56,7 @@ class BaseParam:
         "int": coerce_int,
         "float": coerce_float,
         "bool": coerce_bool,
+        "date": coerce_date,
     }
 
     def __init__(self, name, attributes, **meta_parameters):

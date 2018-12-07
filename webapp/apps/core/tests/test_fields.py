@@ -1,6 +1,10 @@
+import datetime
+
 import pytest
+
 from webapp.apps.core.fields import (SeparatedValueField,
-                                     coerce_bool, coerce_int, coerce_float)
+                                     coerce_bool, coerce_int, coerce_float,
+                                     coerce_date)
 
 
 def test_coerce_bool():
@@ -24,6 +28,13 @@ def test_coerce_float():
     assert coerce_float(2.0) == 2.0
     with pytest.raises(ValueError):
         assert coerce_float("abc")
+
+
+def test_coerce_date():
+    exp = datetime.datetime.strptime("2018-01-01", "%Y-%m-%d").date()
+    assert coerce_date("2018-01-01") == exp
+    with pytest.raises(ValueError):
+        assert coerce_date("abc")
 
 
 def test_SeparatedValueField():

@@ -1,3 +1,5 @@
+import datetime
+
 from django import forms
 
 from .utils import is_reverse, is_wildcard
@@ -13,6 +15,22 @@ def coerce_float(val):
 
 def coerce_bool(val):
     return val in ("True", True)
+
+def coerce_date(val):
+    # see django.DateField and Django BaseTemporalField de-serializers
+    input_formats = ['%Y-%m-%d', '%m/%d/%Y', '%m/%d/%y']
+    if val in ["", None]:
+        return None
+    if isinstance(val, datetime.datetime):
+        return val.date()
+    if isinstance(val, datetime.date):
+        return val
+    for format in input_formats:
+        try:
+            return datetime.datetime.strptime(val, format).date()
+        except (ValueError, TypeError):
+            continue
+    raise ValueError("Invalid date supplied")
 
 
 class SeparatedValueField(forms.Field):
