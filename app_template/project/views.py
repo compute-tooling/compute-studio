@@ -22,7 +22,7 @@ class {Project}InputsView(InputsView):
     submit_class = {Project}Submit
     save_class = {Project}Save
     project_name = "{Project-Title}"
-    app_name = "APP_NAME"
+    app_name = APP_NAME
     meta_parameters = {project}_meta_parameters
     meta_options = []
     has_errors = False
