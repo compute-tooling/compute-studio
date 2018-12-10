@@ -6,15 +6,5 @@ services:
       - 5050:5050
     depends_on:
       - redis
-      - taxcalc_tasks
-      - compbaseball_tasks
-  taxcalc_tasks:
-    image: "comp/taxcalc_tasks:${TAG}"
-    depends_on:
-      - redis
-  compbaseball_tasks:
-    image: "comp/compbaseball_tasks:${TAG}"
-    depends_on:
-      - redis
   redis:
     image: redis
