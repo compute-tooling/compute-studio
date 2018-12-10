@@ -25,6 +25,30 @@ celery_app.conf.update(
 
 
 def postprocess(ans, postprocess_func):
+    """
+    Assumes ans is of the form
+    ans = [
+        {"ouptut1": {"dimension": dim1, ...}},
+        {"ouptut1": {"dimension": dim2, ...}},
+        ...
+        {"ouptut2": {"dimension": dim1, ...}},
+        {"ouptut2": {"dimension": dim2, ...}},
+        ...
+    ]
+
+    Groups to:
+
+    all_to_process = {
+        "output1": [{"dimension": dim1, ...}, {"dimension": dim2, ...}, ...],
+        "output2": [{"dimension": dim1, ...}, {"dimension": dim2, ...}, ...],
+        ...
+    }
+
+    Passes all_to_process to provided post_process function.
+
+    returns Output Schema as described in the docs.
+
+    """
     start = time.time()
     all_to_process = defaultdict(list)
     task_times = []
