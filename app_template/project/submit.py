@@ -14,7 +14,6 @@ class {Project}Submit(Submit):
     parser_class = {Project}Parser
     form_class = {Project}InputsForm
     upstream_version = {PROJECT}_VERSION
-    project = "{Project}"
     meta_parameters = {project}_meta_parameters
     app_name = APP_NAME
 
@@ -26,5 +25,5 @@ class {Project}Save(Save):
     """
     Creates a Run Model instance for this model run.
     """
-    project_name = "{Project}"
+    project_name = "{Project-Title}"
     runmodel = {Project}Run

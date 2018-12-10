@@ -21,8 +21,7 @@ class {Project}InputsView(InputsView):
     displayer_class = {Project}Displayer
     submit_class = {Project}Submit
     save_class = {Project}Save
-    result_header = "{Project} Results"
-    project_name = "{Project}"
+    project_name = "{Project-Title}"
     app_name = "APP_NAME"
     meta_parameters = {project}_meta_parameters
     meta_options = []
@@ -37,7 +36,7 @@ class {Project}OutputsView(OutputsView):
     served from this view.
     """
     model = {Project}Run
-    result_header = "{Project} Results"
+    result_header = "{Project-Title} Results"
     tags = []
     aggr_tags = []
 

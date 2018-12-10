@@ -28,7 +28,6 @@ class InputsView(View):
     displayer_class = Displayer
     submit_class = None
     save_class = None
-    result_header = "Results"
     template_name = "core/inputs_form.html"
     project_name = "Inputs"
     app_name = "core"
