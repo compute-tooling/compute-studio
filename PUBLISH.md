@@ -48,11 +48,9 @@ If the upstream project meets the following requirements, then it can be put on 
                 "col_label": ["list of column names"],
                 "type": "type here",
                 "value": "value here"
-            },
-            ...
+            }
         },
         "majorsection2": {
-            ...
         }
     }
     ```
@@ -89,7 +87,6 @@ If the upstream project meets the following requirements, then it can be put on 
                 ],
                 "renderable": "HTML table to render"
             }
-            ...
         ],
         "outputs": [
             {
@@ -104,7 +101,6 @@ If the upstream project meets the following requirements, then it can be put on 
                 ],
                 "renderable": "HTML table to render"
             },
-            ...
         ],
         "meta": {
             "task_times": ["list of task times in seconds"],
@@ -159,12 +155,9 @@ If the upstream project meets the following requirements, then it can be put on 
             ...
             "user_mods": {
                 "major_section1": {
-                    ...
                 },
                 "major_section2": {
-                    ...
                 },
-                ...
             }
         }
     ```
