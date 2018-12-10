@@ -2,7 +2,7 @@ import os
 
 from webapp.apps.core.tests.test_views import CoreAbstractViewsTest
 from webapp.apps.core.tests.compute import MockCompute
-from webapp.apps.projects.taxcalc.models import {Project}Run
+from webapp.apps.projects.{project}.models import {Project}Run
 
 def read_outputs():
     curr = os.path.abspath(os.path.dirname(__file__))
@@ -24,7 +24,7 @@ class Test{Project}(CoreAbstractViewsTest):
     def inputs_ok(self):
         inputs = super().inputs_ok()
         upstream_inputs = {}
-        return dict(inputs, **inputs)
+        return dict(inputs, **upstream_inputs)
 
     def outputs_ok(self):
         return read_outputs()
