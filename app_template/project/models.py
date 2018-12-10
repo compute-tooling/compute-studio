@@ -40,7 +40,7 @@ class {Project}Run(CoreRun):
         kwargs = {
             'pk': self.pk
         }
-        return reverse('{taxcalc}_download', kwargs=kwargs)
+        return reverse('{project}_download', kwargs=kwargs)
 
     def zip_filename(self):
-        return '{taxcalc}.zip'
+        return '{project}.zip'
