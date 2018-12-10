@@ -8,4 +8,5 @@ def {project}_task(*args):
 
 @celery_app.task(name='{project}_tasks.{project}_postprocess', soft_time_limit=10)
 def {project}_postprocess(ans):
-    pass
+    # do nothing by default
+    return ans[0]
