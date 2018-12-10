@@ -1,2 +1,0 @@
-pandas
-taxcalc==0.23.0
