@@ -9,7 +9,6 @@ dist-push:
 	cd distributed && \
 	docker push comp/distributed:$(TAG) && \
 	docker push comp/flask:$(TAG) && \
-	docker push comp/taxcalc_tasks:$(TAG)
 
 dist-test:
 	cd distributed && \
