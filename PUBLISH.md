@@ -16,7 +16,7 @@ COMP has three essential components:
 
   The webapp is a Django application, and it is the workhorse of COMP. It validates and formats the inputs for each modeling project. It determines whether the data is submitted for a model run with its own validation methods and by running it through the modeling project's validation methods. If the inputs data is not valid, then the warnings and errors will be shown to the user. If the inputs data is valid, then it will be submitted to the model through the distributed API.
 
-  The goal of the `core` app is to provide a framework that can be used with varying levels of customization. The `core` app by itself provides enough functionality to publish the average model on COMP. However, more customized approaches will be added to the `contrib` app. The first example is the `taxcalcstyle` package. This approach is specific for the Tax-Calculator style of inputs, naming convention, JSON files, and error messages. Other approaches are welcome, too. However, COMP recommends giving the `core` app a try before checking out the custom approaches or building your own.
+  The goal of the `core` app is to provide a framework that can be used with varying levels of customization. The `core` app by itself provides enough functionality to publish the average model on COMP. However, more customized approaches will be added to the `contrib` app. The first example is the `taxcalcstyle` package. This approach is specific for the [Tax-Calculator][3] style of inputs, naming convention, JSON files, and error messages. Other approaches are welcome, too. However, COMP recommends giving the `core` app a try before checking out the custom approaches or building your own.
 
   The Django webapp also handles login and user capabilities.
 
@@ -35,7 +35,7 @@ Project Criteria
 If the upstream project meets the following requirements, then it can be put on COMP with very little custom work:
 
 - **Inputs schema**
-  COMP was built with and will continue to support a JSON schema developed by the Tax-Calculator project. In the future, COMP will transition to using the [ParamProject Schema][1] as the preferred input schema. For now, here is the Tax-Calculator Schema:
+  COMP was built with and will continue to support a JSON schema developed by the [Tax-Calculator][3] project. In the future, COMP will transition to using the [ParamProject Schema][1] as the preferred input schema. For now, here is the Tax-Calculator Schema:
 
     ```json
     {
@@ -287,3 +287,4 @@ Working through the installation instructions in the COMP `README.md` document i
 
 [1]: https://github.com/hdoupe/ParamProject
 [2]: https://aws.amazon.com/ec2/pricing/on-demand/
+[3]: https://github.com/PSLmodels/Tax-Calculator
