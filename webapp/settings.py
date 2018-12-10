@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'webapp.apps.users',
     'webapp.apps.billing',
 
+    # Append new apps here in the form webapp.apps.projects.{project_name}
     'webapp.apps.projects.upload',
     'webapp.apps.projects.taxcalc',
     'webapp.apps.projects.compbaseball',
