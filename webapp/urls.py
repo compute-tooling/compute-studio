@@ -22,9 +22,6 @@ urlpatterns = [
     path('', include("webapp.apps.pages.urls")),
 
     # add project URL's here
-    path('upload/', include('webapp.apps.projects.upload.urls')),
-    path('taxcalc/', include('webapp.apps.projects.taxcalc.urls')),
-    path('compbaseball/', include('webapp.apps.projects.compbaseball.urls')),
 
     # user/billing apps
     path('users/', include('webapp.apps.users.urls')),

@@ -7,10 +7,11 @@ import json
 import msgpack
 import os
 
-from api.celery_app.taxcalc_tasks import taxcalc_postprocess, taxcalc_task
-from api.celery_app.upload_tasks import file_upload_test
-from api.celery_app.compbaseball_tasks import (compbaseball_postprocess,
-                                               compbaseball_task)
+# import celery tasks here using the template:
+# from api.celery_app.{project_name}_tasks import (
+#     {project_name}_postprocess,
+#     {project_name}_task)
+
 
 bp = Blueprint('endpoints', __name__)
 
@@ -33,30 +34,10 @@ def aggr_endpoint(compute_task, postprocess_task):
     return json.dumps(data)
 
 
-def file_test_endpoint(task):
-    print('file test endpoint')
-    data = request.get_data()
-    inputs = msgpack.loads(data, encoding='utf8',
-                           use_list=True)
-    result = task.apply_async(kwargs=inputs[0], serializer='msgpack')
-    length = client.llen(queue_name) + 1
-    data = {'job_id': str(result), 'qlength': length}
-    return json.dumps(data)
-
-
-@bp.route("/upload", methods=['POST'])
-def upload_endpoint():
-    return file_test_endpoint(file_upload_test)
-
-
-@bp.route("/taxcalc", methods=['POST'])
-def taxcalc_endpoint():
-    return aggr_endpoint(taxcalc_task, taxcalc_postprocess)
-
-
-@bp.route("/compbaseball", methods=['POST'])
-def compbaseball_endpoint():
-    return aggr_endpoint(compbaseball_task, compbaseball_postprocess)
+# template for app endpoints:
+# @bp.route("/{project_name}", methods=['POST'])
+# def {project_name}_endpoint():
+#     return aggr_endpoint({project_name}_task, {project_name}_postprocess)
 
 
 @bp.route("/get_job", methods=['GET'])
