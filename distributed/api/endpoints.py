@@ -11,6 +11,9 @@ import os
 # from api.celery_app.{project_name}_tasks import (
 #     {project_name}_postprocess,
 #     {project_name}_task)
+from api.celery_app.compbaseball_tasks import (
+    compbaseball_postprocess,
+    compbaseball_task)
 
 
 bp = Blueprint('endpoints', __name__)
@@ -38,6 +41,11 @@ def aggr_endpoint(compute_task, postprocess_task):
 # @bp.route("/{project_name}", methods=['POST'])
 # def {project_name}_endpoint():
 #     return aggr_endpoint({project_name}_task, {project_name}_postprocess)
+
+
+@bp.route("/compbaseball", methods=['POST'])
+def compbaseball_endpoint():
+    return aggr_endpoint(compbaseball_task, compbaseball_postprocess)
 
 
 @bp.route("/get_job", methods=['GET'])

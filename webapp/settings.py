@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'webapp.apps.billing',
 
     # Append new apps here in the form webapp.apps.projects.{project_name}
+    'webapp.apps.projects.compbaseball',
 
     'widget_tweaks',
     'crispy_forms',
