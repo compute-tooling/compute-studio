@@ -1,5 +1,8 @@
 
 dist-build:
+	# template command:
+	# docker build --build-arg TAG=$(TAG) -t comp/{project_name}_tasks:$(TAG) --file dockerfiles/projects/Dockerfile.{project_name}_tasks ./
+
 	cd distributed && \
 	docker build -t comp/distributed:$(TAG) ./ -f dockerfiles/Dockerfile && \
 	docker build --build-arg TAG=$(TAG) -t comp/flask:$(TAG) --file dockerfiles/Dockerfile.flask ./ && \
