@@ -75,7 +75,6 @@ def profile(db, user):
 
 @pytest.fixture
 def plans(db):
-    # construct()
     plans = Plan.objects.filter(product__name='Descriptive Statistics')
     return plans
 

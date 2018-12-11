@@ -46,7 +46,6 @@ class TestUsersViews():
         assert user.profile
         assert user.profile.is_active
 
-
     def test_get_profile(self, client, profile, password):
         success = client.login(username=profile.user.username,
                                password=password)
