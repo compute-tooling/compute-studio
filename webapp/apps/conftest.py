@@ -3,10 +3,10 @@ import os
 import pytest
 import stripe
 
+from django.core.management import call_command
 from django.contrib.auth import get_user_model
 
-from webapp.apps.billing.models import (construct,
-                                        Customer, Plan, Subscription,
+from webapp.apps.billing.models import (Customer, Plan, Subscription,
                                         SubscriptionItem)
 from webapp.apps.users.models import Profile
 
@@ -16,8 +16,9 @@ stripe.api_key = os.environ.get('STRIPE_SECRET')
 
 @pytest.fixture(scope='session')
 def django_db_setup(django_db_setup, django_db_blocker):
+    use_stripe = os.environ.get("USE_STRIPE", "False").lower() == "true"
     with django_db_blocker.unblock():
-        construct()
+        call_command("init_projects", use_stripe=use_stripe)
 
 
 @pytest.fixture
@@ -67,7 +68,7 @@ def profile(db, customer):
 
 @pytest.fixture
 def plans(db):
-    construct()
+    # construct()
     plans = Plan.objects.filter(product__name='Descriptive Statistics')
     return plans
 
