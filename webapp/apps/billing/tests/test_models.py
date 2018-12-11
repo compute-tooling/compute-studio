@@ -14,6 +14,7 @@ User = get_user_model()
 
 
 @pytest.mark.django_db
+@pytest.mark.requires_stripe
 class TestStripeModels():
 
     def test_construct_customer(self, stripe_customer, user):

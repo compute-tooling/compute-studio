@@ -18,12 +18,6 @@ class Profile(models.Model):
                                 on_delete=models.CASCADE)
     is_active = models.BooleanField(default=False)
 
-    @staticmethod
-    def create_from_user(user, is_active):
-        profile = Profile.objects.create(user=user,
-                                         is_active=is_active)
-        return profile
-
     class Meta:
         # not in use yet...
         permissions = (
