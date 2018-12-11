@@ -1,0 +1,36 @@
+{
+    "meta": {
+        "task_times": [
+            6.19889760017395
+        ]
+    },
+    "outputs": [],
+    "aggr_outputs": [
+        {
+            "tags": {
+                "statistic": "mean"
+            },
+            "title": "StatCast Means",
+            "renderable": "<table class=\"dataframe\">\n  <thead>\n    <tr>\n      <th></th>\n      <th>release_speed</th>\n      <th>launch_speed</th>\n    </tr>\n    <tr>\n      <th>pitch_type</th>\n      <th></th>\n      <th></th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>CH</th>\n      <td>84.592000</td>\n      <td>76.768000</td>\n    </tr>\n    <tr>\n      <th>CU</th>\n      <td>78.576471</td>\n      <td>82.915385</td>\n    </tr>\n    <tr>\n      <th>FC</th>\n      <td>89.523729</td>\n      <td>85.650000</td>\n    </tr>\n    <tr>\n      <th>FF</th>\n      <td>94.971746</td>\n      <td>81.390323</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>85.793407</td>\n      <td>78.400000</td>\n    </tr>\n  </tbody>\n</table>",
+            "downloadable": [
+                {
+                    "text": "pitch_type,release_speed,launch_speed\nCH,84.59200000000003,76.76799999999999\nCU,78.57647058823532,82.91538461538461\nFC,89.52372881355933,85.65000000000002\nFF,94.97174603174605,81.39032258064516\nSL,85.7934065934066,78.39999999999999\n",
+                    "filename": "mean.csv"
+                }
+            ]
+        },
+        {
+            "tags": {
+                "statistic": "std"
+            },
+            "title": "StatCast Standard Dev.",
+            "renderable": "<table class=\"dataframe\">\n  <thead>\n    <tr>\n      <th></th>\n      <th>release_speed</th>\n      <th>launch_speed</th>\n    </tr>\n    <tr>\n      <th>pitch_type</th>\n      <th></th>\n      <th></th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>CH</th>\n      <td>1.047236</td>\n      <td>13.888146</td>\n    </tr>\n    <tr>\n      <th>CU</th>\n      <td>1.335521</td>\n      <td>16.839133</td>\n    </tr>\n    <tr>\n      <th>FC</th>\n      <td>0.589078</td>\n      <td>17.715128</td>\n    </tr>\n    <tr>\n      <th>FF</th>\n      <td>1.045735</td>\n      <td>12.363938</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>1.091869</td>\n      <td>16.377352</td>\n    </tr>\n  </tbody>\n</table>",
+            "downloadable": [
+                {
+                    "text": "pitch_type,release_speed,launch_speed\nCH,1.0472359000258846,13.88814602457794\nCU,1.3355213244562063,16.839133298849152\nFC,0.589078468823406,17.715128258942105\nFF,1.0457352572655931,12.363938310545898\nSL,1.0918691616573246,16.377351649727235\n",
+                    "filename": "std.csv"
+                }
+            ]
+        }
+    ]
+}
