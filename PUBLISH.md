@@ -169,7 +169,7 @@ If the upstream project meets the following requirements, then it can be put on 
 How to publish a model on COMP
 -------------------------------
 
-Working through the installation instructions in the COMP `README.md` document is strongly recommended. This will give a more intuitive feel for how this project is setup. In addition, it will be easier to resolve any issues relating to the installation of the webapp before any changes are made to it.
+Working through the installation instructions in the COMP `README.md` document is strongly recommended. This will give a more intuitive feel for how this project is setup. In addition, it will be easier to resolve any issues relating to the installation of the webapp before any changes are made to it. There is also an example app, `compbaseball` ([github repo][4]). This may help if there are some questions about which parts need to be filled in or what structure the data should have.
 
 1. Use the app templating script to automatically write most of the boiler plate code required to put the project on COMP.
     ```
@@ -288,3 +288,4 @@ Working through the installation instructions in the COMP `README.md` document i
 [1]: https://github.com/hdoupe/ParamProject
 [2]: https://aws.amazon.com/ec2/pricing/on-demand/
 [3]: https://github.com/PSLmodels/Tax-Calculator
+[4]: https://github.com/hdoupe/compbaseball
