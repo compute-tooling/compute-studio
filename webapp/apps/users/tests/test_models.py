@@ -10,7 +10,7 @@ User = get_user_model()
 @pytest.mark.django_db
 class TestStripeModels():
 
-    def test_construct_user(self, stripe_customer):
+    def test_construct_user(self):
         user = User.objects.create(username='tester', email='tester@email.com')
         assert user.username
         assert user.email
@@ -26,7 +26,7 @@ class TestStripeModels():
         assert Project.dollar_to_penny(0.01) == 1
 
     def test_create_profile(self, user):
-        profile = Profile.create_from_user(user, True)
+        profile = Profile.objects.create(user=user, is_active=True)
         assert profile
         assert profile.user == user
         assert profile.is_active == True

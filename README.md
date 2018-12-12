@@ -1,23 +1,23 @@
 # COMP
 
-**COMP** is an open-source utility for sharing computational models. 
+**COMP** is an open-source utility for sharing computational models.
 
 To see COMP in action, visit [compmodels.com](www.compmodels.com).
 
-- Developers share their public models for free. 
-- Developers share private models for a per-user fee. 
-- Users pay for their own compute, at cost.  
+- Developers share their public models for free.
+- Developers share private models for a per-user fee.
+- Users pay for their own compute, at cost.
 
 
 ## Contributing
 
-COMP is an open source project and anyone can contribute code or suggestions. 
+COMP is an open source project and anyone can contribute code or suggestions.
 
-You can reach COMP developers to discuss how to get started by opening an issue or joining the COMP Community [chat room](https://matrix.to/#/!WQWxPnwidsSToqkeLk:matrix.org).  
+You can reach COMP developers to discuss how to get started by opening an issue or joining the COMP Community [chat room](https://matrix.to/#/!WQWxPnwidsSToqkeLk:matrix.org).
 
 ## License
 
-COMP is licensed under the open source [GNU Affero General Public License](/License.txt) to Compute Tooling, LLC. 
+COMP is licensed under the open source [GNU Affero General Public License](/License.txt) to Compute Tooling, LLC.
 
 ## Install instructions
 
@@ -40,10 +40,14 @@ Note: your user name is your computer "username":
 source activate comp-dev
 ```
 
-**Set stripe and email keys**
-TODO: app should run without these.
+**Set stripe and email keys, if available**
 ```
-./secret.sh
+source secret.sh
+```
+
+**Set other environment variables, such as the backend hostname**
+```
+source webapp_env.sh
 ```
 
 **Django setup**
@@ -58,7 +62,7 @@ python manage.py runserver
 
 **Run tests**
 ```
-py.test webapp/apps -v
+py.test webapp/apps -v -k "not requires_stripe"
 ```
 
 **Docker**

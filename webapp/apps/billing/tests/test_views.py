@@ -1,16 +1,17 @@
 import pytest
 
 @pytest.mark.django_db
+@pytest.mark.requires_stripe
 class TestBillingViews():
 
-    def test_update_payment_info(self, client, profile, password):
+    def test_update_payment_info(self, client, profilewcustomer, password):
         """
         Test update payment information
         - change payment
         - make sure of redirect and able to get done page
         - make sure payment info is updated
         """
-        success = client.login(username=profile.user.username,
+        success = client.login(username=profilewcustomer.user.username,
                                password=password)
         assert success
 
