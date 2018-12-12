@@ -5,7 +5,7 @@ from webapp.apps.core.meta_parameters import (MetaParameter, MetaParameters,
 
 def test_meta_parameters_instance():
     assert meta_parameters
-    assert meta_parameters.parameters is None
+    assert meta_parameters.parameters == []
 
 def test_meta_parameters():
     meta_parameters = MetaParameters([
