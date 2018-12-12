@@ -16,6 +16,8 @@ then
     createdb $DATABASE_NAME -U $DATABASE_USER
 fi
 
+# set stripe use to False by default
+export USE_STRIPE=False
 
 export NUM_BUDGET_YEARS=10
 export DEBUG=True

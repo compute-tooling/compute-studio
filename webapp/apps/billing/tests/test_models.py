@@ -5,16 +5,16 @@ from django.contrib.auth import get_user_model
 
 import pytest
 
-from webapp.apps.billing.models import (get_billing_data,
-                                        Customer, Plan, Product,
+from webapp.apps.billing.models import (Customer, Plan, Product,
                                         Subscription, SubscriptionItem,
                                         UsageRecord)
-
+from webapp.apps.billing.utils import get_billing_data
 
 User = get_user_model()
 
 
 @pytest.mark.django_db
+@pytest.mark.requires_stripe
 class TestStripeModels():
 
     def test_construct_customer(self, stripe_customer, user):

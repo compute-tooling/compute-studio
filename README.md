@@ -40,10 +40,14 @@ Note: your user name is your computer "username":
 source activate comp-dev
 ```
 
-**Set stripe and email keys**
-TODO: app should run without these.
+**Set stripe and email keys, if available**
 ```
-./secret.sh
+source secret.sh
+```
+
+**Set other environment variables, such as the backend hostname**
+```
+source webapp_env.sh
 ```
 
 **Django setup**
@@ -58,7 +62,7 @@ python manage.py runserver
 
 **Run tests**
 ```
-py.test webapp/apps -v
+py.test webapp/apps -v -k "not requires_stripe"
 ```
 
 **Docker**

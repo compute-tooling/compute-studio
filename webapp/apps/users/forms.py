@@ -10,6 +10,7 @@ from django.core.mail import send_mail
 from .models import Profile
 from webapp.apps.billing.models import (Customer, Plan, Subscription,
                                         SubscriptionItem)
+from webapp.apps.billing.utils import USE_STRIPE
 
 
 User = get_user_model()
@@ -27,13 +28,14 @@ class UserCreationForm(authforms.UserCreationForm):
 
     def save(self, commit=False):
         user = super().save()
-        stripe_customer = stripe.Customer.create(
-            email=user.email,
-            source=self.stripe_token
-        )
-        customer = Customer.construct(stripe_customer, user=user)
-        Profile.create_from_user(user, is_active=True)
-        customer.subscribe_to_public_plans()
+        if USE_STRIPE:
+            stripe_customer = stripe.Customer.create(
+                email=user.email,
+                source=self.stripe_token
+            )
+            customer = Customer.construct(stripe_customer, user=user)
+            customer.subscribe_to_public_plans()
+        Profile.objects.create(user=user, is_active=True)
         return user
 
     class Meta(authforms.UserCreationForm.Meta):
@@ -67,7 +69,8 @@ class CancelSubscriptionForm(ConfirmUsernameForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.customer.cancel_subscriptions()
+        if hasattr(user, "customer"):
+            user.customer.cancel_subscriptions()
         user.profile.is_active = False
         if commit:
             user.profile.save()

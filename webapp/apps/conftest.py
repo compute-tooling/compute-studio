@@ -5,11 +5,12 @@ import pytest
 import stripe
 
 from django import forms
+from django.core.management import call_command
 from django.contrib.auth import get_user_model
 
-from webapp.apps.billing.models import (construct,
-                                        Customer, Plan, Subscription,
+from webapp.apps.billing.models import (Customer, Plan, Subscription,
                                         SubscriptionItem)
+from webapp.apps.billing.utils import USE_STRIPE
 from webapp.apps.users.models import Profile
 
 from webapp.apps.core.meta_parameters import MetaParameter, MetaParameters
@@ -22,7 +23,7 @@ stripe.api_key = os.environ.get('STRIPE_SECRET')
 @pytest.fixture(scope='session')
 def django_db_setup(django_db_setup, django_db_blocker):
     with django_db_blocker.unblock():
-        construct()
+        call_command("init_projects", use_stripe=USE_STRIPE)
 
 
 @pytest.fixture
@@ -66,13 +67,19 @@ def customer(db, basiccustomer):
 
 
 @pytest.fixture
-def profile(db, customer):
-    return Profile.create_from_user(customer.user, True)
+def profilewcustomer(db, customer):
+    return Profile.objects.create(user=customer.user,
+                                  is_active=True)
+
+
+@pytest.fixture
+def profile(db, user):
+    return Profile.objects.create(user=user,
+                                  is_active=True)
 
 
 @pytest.fixture
 def plans(db):
-    construct()
     plans = Plan.objects.filter(product__name='Descriptive Statistics')
     return plans
 

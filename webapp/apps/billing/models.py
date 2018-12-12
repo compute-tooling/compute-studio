@@ -606,43 +606,7 @@ class Event(models.Model):
         )
         return event
 
-
-def get_billing_data():
-    import json
-    path = os.path.abspath(os.path.dirname(__file__))
-    with open(os.path.join(path, 'billing.json')) as f:
-        billing = json.loads(f.read())
-    return billing
-
-
-def construct():
-    billing = get_billing_data()
-    for app_name, plan in billing.items():
-        project, _ = Project.objects.update_or_create(
-            name=plan['name'],
-            defaults={'server_cost': plan['server_cost'],
-                      'exp_task_time': plan['exp_task_time'],
-                      'exp_num_tasks': plan['exp_num_tasks'],
-                      'is_public': plan['is_public']})
-        if Product.objects.filter(name=plan['name']).count() == 0:
-            stripe_product = Product.create_stripe_object(plan['name'])
-            product = Product.construct(stripe_product, project)
-            stripe_plan_lic = Plan.create_stripe_object(
-                amount=plan['amount'],
-                product=product,
-                usage_type='licensed',
-                interval=plan['interval'],
-                currency=plan['currency'])
-            Plan.construct(stripe_plan_lic, product)
-            stripe_plan_met = Plan.create_stripe_object(
-                amount=plan['metered_amount'],
-                product=product,
-                usage_type='metered',
-                interval=plan['interval'],
-                currency=plan['currency'])
-            Plan.construct(stripe_plan_met, product)
-
-
 def sync_customer_subscriptions():
+    """needs improvement, creates duplicate items"""
     for customer in Customer.objects.all():
         customer.subscribe_to_public_plans()
