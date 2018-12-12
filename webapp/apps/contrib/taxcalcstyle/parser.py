@@ -1,7 +1,10 @@
 from collections import defaultdict
 import json
 
-import taxcalc
+try:
+    import taxcalc
+except ModuleNotFoundError:
+    pass
 
 from webapp.apps.core.parser import ParamData, Parser
 from webapp.apps.core.utils import is_wildcard, is_reverse

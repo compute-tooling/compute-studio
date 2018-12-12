@@ -13,6 +13,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
+from webapp.apps.billing.utils import USE_STRIPE
 from webapp.apps.users.models import Project, is_profile_active
 from .constants import WEBAPP_VERSION
 
@@ -209,19 +210,20 @@ class OutputsView(SuperclassTemplateNameMixin, DetailView):
                 self.object.run_time = sum(results['meta']['task_times'])
                 self.object.run_cost = self.object.project.run_cost(
                     self.object.run_time)
-                plan = self.object.project.product.plans.get(
-                    usage_type='metered')
-                si = SubscriptionItem.objects.get(
-                    subscription__customer=self.object.profile.user.customer,
-                    plan=plan)
                 quantity = self.object.project.run_cost(
                     self.object.run_time, adjust=True)
-                stripe_ur = UsageRecord.create_stripe_object(
-                    quantity=Project.dollar_to_penny(quantity),
-                    timestamp=None,
-                    subscription_item=si,
-                )
-                UsageRecord.construct(stripe_ur, si)
+                if USE_STRIPE:
+                    plan = self.object.project.product.plans.get(
+                        usage_type='metered')
+                    si = SubscriptionItem.objects.get(
+                        subscription__customer=self.object.profile.user.customer,
+                        plan=plan)
+                    stripe_ur = UsageRecord.create_stripe_object(
+                        quantity=Project.dollar_to_penny(quantity),
+                        timestamp=None,
+                        subscription_item=si,
+                    )
+                    UsageRecord.construct(stripe_ur, si)
                 self.object.meta_data = results["meta"]
                 self.object.outputs = results['outputs']
                 self.object.aggr_outputs = results['aggr_outputs']
