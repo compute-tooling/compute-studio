@@ -31,7 +31,7 @@ def test_coerce_float():
 
 
 def test_coerce_date():
-    exp = datetime.datetime.strptime("2018-01-01", "%Y-%m-%d").date()
+    exp = "2018-01-01"
     assert coerce_date("2018-01-01") == exp
     with pytest.raises(ValueError):
         assert coerce_date("abc")
