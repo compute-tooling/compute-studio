@@ -103,12 +103,7 @@ class CoreRun(models.Model):
 class Tag:
     key: str
     values: List['TagOption']
-    hidden: bool = False
-
-    def __post_init__(self):
-        for option in self.values[1:]:
-            for child in option.children:
-                child.hidden = True
+    hidden: bool = True
 
 
 @dataclass
