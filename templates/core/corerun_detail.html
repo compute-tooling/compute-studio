@@ -78,7 +78,7 @@
                      {% for key, value in x.tags.items %}
                        data-tag-{{ key }}="{{ value }}"
                      {% endfor %}>
-                  <h1 class="card-title">{{ x.title }}</h1>
+                  <h1 class="text-center">{{ x.title }}</h1>
                   {{ x.renderable | safe }}
                 </div>
                 {% endfor %}
@@ -95,7 +95,7 @@
                 <h3 class="card-title">Build Table</h3>
               </div>
               <div class="card-body">
-                <div class="row">
+                <div class="row" {% if not object.dimension %} hidden {% endif %}>
                   <div class="col-md-6">
                     <h1 class="text-center">{{object.dimension_name}}: </h1>
                   </div>

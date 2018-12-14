@@ -93,7 +93,7 @@ class CoreRun(models.Model):
     @cached_property
     def dimension(self):
         # return unique values set at the dimension level.
-        return list({item["dimension"] for item in self.outputs})
+        return list({item["dimension"] for item in self.outputs if item["dimension"]})
 
     class Meta:
         abstract = True
