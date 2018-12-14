@@ -2,7 +2,7 @@ from django import forms
 
 from webapp.apps.core.meta_parameters import (meta_parameters, MetaParameters,
                                               MetaParameter)
-
+from webapp.apps.core.fields import coerce_bool
 """
 A module for defining this project's "meta-parameters." One way to think of
 these parameters is as control parameters. They define some base conditions for
@@ -45,6 +45,14 @@ def meta_parameter_factory(mp):
 
 def meta_parameter_factory(mp):
     # optionally edit parameters attribute on mp
+    mp.parameters = [
+        MetaParameter(
+            name="use_2018",
+            default=True,
+            field=forms.TypedChoiceField(coerce=coerce_bool,
+                                         choices=list((i, i) for i in (True, False))),
+        )
+    ]
     return mp
 
 

@@ -10,6 +10,8 @@ class CompbaseballInputs(CoreInputs):
     some parameters may be specific to this project, such as the
     meta_parameters defined in this project's meta_parameters module.
     """
+    use_2018 = models.BooleanField()
+
 
 class CompbaseballRun(CoreRun):
     """
@@ -19,7 +21,7 @@ class CompbaseballRun(CoreRun):
     on baseball pitchers, this would allow you to toggle a set of tables by
     the pitcher who is being analyzed.
     """
-    dimension_name = "Name of table dimension goes here"
+    dimension_name = ""
 
     inputs = models.OneToOneField(CompbaseballInputs, on_delete=models.PROTECT,
                                   related_name='outputs')

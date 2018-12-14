@@ -14,6 +14,7 @@ class CompbaseballParser(Parser):
     def parse_parameters(self):
         params, jsonparams, errors_warnings = super().parse_parameters()
         # parse the params, jsonparams, and errors_warnings further
-        params, jsonparams, errors_warnings = baseball.parse_inputs(params)
+        params, jsonparams, errors_warnings = baseball.parse_inputs(
+            self.use_2018, params)
         # done parsing
         return params, jsonparams, errors_warnings

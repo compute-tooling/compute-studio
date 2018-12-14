@@ -37,16 +37,74 @@ class CompbaseballOutputsView(OutputsView):
     """
     model = CompbaseballRun
     result_header = "CompBaseball Results"
-    tags = []
-    aggr_tags = [Tag(key="statistic",
+    tags = [
+        Tag(
+            key="attribute",
+            hidden=False,
+            values=[
+                    TagOption(
+                        value="pitch-outcome",
+                        title="Pitch Outcome Table",
+                        tooltip="Pitch outcome tooltip",
+                        active=True,
+                        children=[
+                            Tag(
+                                key="count",
+                                hidden=False,
+                                values=[
+                                    TagOption(
+                                        title="Normalized",
+                                        value="normalized",
+                                        tooltip="Normalized Pitch Outcome Count"
+                                    ),
+                                    TagOption(
+                                        title="Count",
+                                        value="raw-count",
+                                        tooltip="Pitch Outcome Count",
+                                        active=True
+                                    )
+                                ]
+                            )
+                        ]
+                    ),
+                    TagOption(
+                        value="pitch-type",
+                        title="Pitch Type Table",
+                        tooltip="Pitch type tooltip",
+                        children=[
+                            Tag(
+                                key="count",
+                                hidden=True,
+                                values=[
+                                    TagOption(
+                                        title="Normalized",
+                                        value="normalized",
+                                        tooltip="Normalized Pitch Type Count"
+                                    ),
+                                    TagOption(
+                                        title="Count",
+                                        value="raw-count",
+                                        active=True,
+                                        tooltip="Pitch Type Count"
+                                    )
+                                ]
+                            )
+                        ]
+                    ),
+                ]
+            )
+    ]
+    aggr_tags = [Tag(key="attribute",
+                     hidden=False,
                      values=[
                          TagOption(
-                            value="mean",
-                            title="StatCast Means",
+                            title="Pitch Outcome",
+                            value="pitch-outcome",
                          ),
                          TagOption(
-                             value="std",
-                             title="StatCast Standard Dev."
+                             title="Pitch Type",
+                             value="pitch-type",
+                             active=True
                          )
                      ]
                 )]

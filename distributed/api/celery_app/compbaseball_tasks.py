@@ -2,12 +2,12 @@ import time
 
 from api.celery_app import celery_app
 
-@celery_app.task(name='compbaseball_tasks.compbaseball_task', soft_time_limit=40)
-def compbaseball_task(user_mods):
+@celery_app.task(name='compbaseball_tasks.compbaseball_task', soft_time_limit=60)
+def compbaseball_task(use_2018, user_mods):
     from compbaseball import baseball
     start = time.time()
     print('pitching', user_mods)
-    result = baseball.get_data(**user_mods["pitching"])
+    result = baseball.get_matchup(use_2018, user_mods)
     finish = time.time()
     result["meta"]["task_times"] = [finish - start]
     return result

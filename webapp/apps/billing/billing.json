@@ -19,7 +19,7 @@
         "interval": "month",
         "trial_days": 0,
         "server_cost": 0.10,
-        "exp_task_time": 10,
+        "exp_task_time": 45,
         "exp_num_tasks": 1,
         "is_public": true
     }
