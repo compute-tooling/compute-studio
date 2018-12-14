@@ -175,24 +175,9 @@
 <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.2/js/responsive.bootstrap.min.js"></script>
 <script>
 
-var dataTableOptions = {
-  "paging": false,
-  "ordering": false,
-  "searching": false,
-  "bInfo": false,
-  'dom': 'Bt', /* Display the buttons before the table */
-  "buttons": [
-    'print',
-    {"text": "Copy table",
-     "extend": "copy"},
-    {"text": "Select columns",
-     "extend": "colvis"}
-  ]
-  // "responsive": true
-};
 
 var initDataTable = function (el) {
-  var dt = el.dataTable(dataTableOptions);
+  var dt = el;
   dt.parent().find("div.dt-buttons.btn-group")
     .wrap("<div class='dt-btn-wrapper'></div>");
 };
@@ -201,7 +186,6 @@ var initVisibleTable = function (containerSelector) {
   /* We only expect one table to be visible at once, i.e. if the right dimension
      is selected, and the right tag is selected */
   var table_to_show = $(containerSelector + " table:visible");
-  console.log(table_to_show);
   /* Make sure we don't initialize the DataTable twice */
   if ( ! $.fn.DataTable.isDataTable(table_to_show) ) {
     initDataTable(table_to_show);
@@ -218,10 +202,8 @@ var initVisibleAggrTable = function () {
 };
 
 var activateYearTablesBySelectedYear = function () {
-  console.log("here" + $("#selected-dimension").text().trim());
   var containers_to_show = $('.output[data-dimension="' + $("#selected-dimension").text().trim() + '"]');
   containers_to_show.addClass('selected-table-dimension');
-  console.log(containers_to_show);
   $('.output').not(containers_to_show).removeClass('selected-table-dimension');
 };
 
@@ -236,7 +218,6 @@ var activateTablesBySelectedTags = function (args) {
       }
     })
   });
-
   /* Find the tables matching that set of tags */
   var selector = '.' + args.outputClass;
   $.each(tags_to_match, function (key, value) {
@@ -273,10 +254,8 @@ $(document).ready(function () {
   activateYearTablesBySelectedTags();
   activateYearTablesBySelectedYear();
   initVisibleYearTable();
-
   // Select behavior for dropdowns
   $(".dropdown-select .dropdown-menu li a").click(function(){
-    console.log("found me");
     selection = $(this);
     dropdown_label = $(this).parents('.dropdown-select').find('.dropdown-toggle')
     dropdown_label.html(selection.text() + ' <span class="caret"></span>');
@@ -304,7 +283,7 @@ $(document).ready(function () {
       var children_keys = $(el).attr('data-children-keys').trim().split(" ");
       parent_container.find($(children_keys.map(function (key) {
           return ".tag-" + key;
-        }).join(", ")))
+        })))
         .attr('hidden', true);
     });
 
@@ -312,7 +291,7 @@ $(document).ready(function () {
     var children_keys = target_li.attr('data-children-keys').trim().split(" ");
     parent_container.find($(children_keys.map(function (key) {
         return ".tag-" + key;
-      }).join(", ")))
+      })))
       .attr('hidden', false);
 
     activateYearTablesBySelectedTags();
