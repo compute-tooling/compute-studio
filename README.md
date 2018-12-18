@@ -9,11 +9,15 @@ Features:
 - Users pay for their own compute, at cost.
 
 Under development: 
-- Developers may pay for their users' compute.
-- Developers may share models privately, for a per-user fee.
+- Developers choose to pay for their users' compute.
+- Developers coose to share models privately, for a fee.
+- Developers may share non-tabular output. 
 
 Planned:
-- Developers may charge a subscription for their model to support development and data. 
+- Users may use a COMP REST API to run simulations and build GUI simulation pages.  
+- Developers may charge a model subscription, for a fee.
+- Users may upload and download simulation input files from the COMP GUI. 
+
 
 
 ## Contributing
