@@ -1,13 +1,13 @@
 # COMP Publishing Information
 
-Project Name
+App Name
 -----------------
-*What's the name of this project?*
+*What's the name of the app?*
 
 
-Project Overview
+App Overview
 ----------------------------------------
-*What's this project do? Must be less than 1000 characters.*
+*What does this app do? Must be less than 1000 characters.*
 
 
 
