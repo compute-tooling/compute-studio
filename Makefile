@@ -1,13 +1,13 @@
 
 dist-build:
 	# template command:
-	# docker build --build-arg TAG=$(TAG) -t comp/{project_name}_tasks:$(TAG) --file dockerfiles/projects/Dockerfile.{project_name}_tasks ./
+	# docker build --no-cache --build-arg TAG=$(TAG) -t comp/{project_name}_tasks:$(TAG) --file dockerfiles/projects/Dockerfile.{project_name}_tasks ./
 
 	cd distributed && \
 	docker build -t comp/distributed:$(TAG) ./ -f dockerfiles/Dockerfile && \
 	docker build --build-arg TAG=$(TAG) -t comp/flask:$(TAG) --file dockerfiles/Dockerfile.flask ./ && \
 	docker build --build-arg TAG=$(TAG) -t comp/celerybase:$(TAG) --file dockerfiles/Dockerfile.celerybase ./ && \
-	docker build --build-arg TAG=$(TAG) -t comp/compbaseball_tasks:$(TAG) --file dockerfiles/projects/Dockerfile.compbaseball_tasks ./
+	docker build --no-cache --build-arg TAG=$(TAG) -t comp/compbaseball_tasks:$(TAG) --file dockerfiles/projects/Dockerfile.compbaseball_tasks ./
 
 dist-push:
 	cd distributed && \
