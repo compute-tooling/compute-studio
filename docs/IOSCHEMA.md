@@ -1,6 +1,6 @@
 # Input-Output Schema
 
-COMP relies on three primary JSON schemas: Meta-Parameters, Inputs, and Outputs. COMP derives the input form that the user will use, its own validation functionality, and the outputs page from each of these schemas.
+COMP relies on three primary JSON schemas: Meta-Parameters, Inputs, and Outputs. COMP uses them to derive the input form that the user will use, its own validation functionality, and the outputs page.
 
 Meta-Parameters
 --------------------------------
