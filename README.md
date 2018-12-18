@@ -14,9 +14,9 @@ Under development:
 - Developers may share non-tabular output. 
 
 Planned:
-- Users may use a COMP REST API to run simulations and build GUI simulation pages.  
+- Users may use a REST API to run simulations and build GUI simulation pages.  
 - Developers may charge a model subscription, for a fee.
-- Users may upload and download simulation input files from the COMP GUI. 
+- Users may upload and download simulation input files from the GUI. 
 
 
 
