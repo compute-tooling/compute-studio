@@ -1,13 +1,9 @@
-# API endpoints
+# Python functions
 
-The modeling project must provide an API endpoint for each of the following tasks:
-- Get the baseline inputs and their meta data
-- Do model-specific formatting and validation on the user inputs
-- Define the tasks for a given user submission
-- Submit each task to the modeling project
-- Combine the results after all of the tasks have run
-
-The four API endpoints and a corresponding code snippet are discussed below:
+The modeling project must provide a Python function for each of the following tasks:
+- **Package Defaults**: Get the baseline inputs and their meta data
+- **Parse user inputs**: Do model-specific formatting and validation on the user inputs
+- **Run simulation**: Submit the user inputs to the model to run the simulations
 
 Package defaults
 ----------------------
@@ -85,71 +81,12 @@ Warnings/Errors:
         return parsed_inputs, jsonstr, errors_warnings
     ```
 
-
-Define the inputs for each task
------------------------------------
-
-Accepts data that has been parsed, formatted, and validated. Returns list of tasks to be submitted to the modeling project. COMP allows the model to run tasks in parallel but only when the parallel tasks can be defined prior to submiting them to the modeling project. For example, in the baseball data example, one can view historical data on how a pitcher has pitched to several batters. So, the relationship between the pitcher and each hitter can be evaluated in parallel. Each task will be submitted to the endpoint defined in the "Run tasks" section below.
-
-Parsed data:
-
-```json
-[{
-    "use_2018": false,
-    "matchup": {
-        "pitcher": "Clayton Kershaw",
-        "batter": ["Freddie Freeman", "Bryce Harper", "Aaron Judge"]
-    }
-}]
-```
-
-Extended data:
-```json
-[{
-    "use_2018": false,
-    "matchup": {
-        "pitcher": "Clayton Kershaw",
-        "batter": "Freddie Freeman"
-    }
-},
-{
-    "use_2018": false,
-    "matchup": {
-        "pitcher": "Clayton Kershaw",
-        "batter": "Brye Harper"
-    }
-}
-{
-    "use_2018": false,
-    "matchup": {
-        "pitcher": "Clayton Kershaw",
-        "batter": "Aaron Judge"
-    }
-}]
-```
-
-- **Python**
-    ```python
-    def extend_data(inputs): # meta-parameters are included
-        tasks = []
-        for batter in inputs[0]["matchups"]["batter"]:
-            tasks.append({
-                "use_2018": inputs[0]["use_2018"]
-                "matchup": {
-                    "pitcher": inputs[0]["pitcher"],
-                    "batter": batter
-                }
-            })
-
-        return tasks
-    ```
-
-
-Run tasks
+Run simulation
 ----------------
 
-Accepts meta-parameter values and parsed and formatted user inputs. Returns the result of each task as an object that can be serialized to JSON.
+Accepts meta-parameter values and parsed and formatted user inputs. Returns outputs as specified by the [Outputs schema](IOSCHEMA.md)
 
+COMP submits the model's meta parameters and the parsed and formatted inputs:
 ```
     {
         "meta_parameter1": value,
@@ -167,29 +104,15 @@ Accepts meta-parameter values and parsed and formatted user inputs. Returns the 
     }
 ```
 
+The function returns the results of the simulation:
+
+[Outputs schema](IOSCHEMA.md)
+
 - **Python**:
     ```python
     from compbaseball import baseball
 
-    def submit_inputs(use_2018, user_mods):
+    def run_simulation(use_2018, user_mods):
         result = baseball.get_matchup(use_2018, user_mods)
         return result
     ```
-
-
-Combine task results
--------------------------
-
- Accepts list consisting of the results from each of the tasks. Returns combnined results of the format specified in the "Outputs schema" section of [`IOSCHEMA.md`](IOSCHEMA.md).
-
- - **Python**:
-    ```python
-    from compbaseball import baseball
-
-    def aggregate_outputs(outputs):
-        result = baseball.combine_outputs(outputs)
-        return result
-    ```
-
-
-[1]: https://en.wikipedia.org/wiki/Embarrassingly_parallel
