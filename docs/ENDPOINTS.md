@@ -80,7 +80,7 @@ Warnings/Errors:
     def parse_inputs(parsed_inputs, jsonstr, errors_warnings):
         (parsed_inputs,
             jsonstr,
-            errors_warningsf) = baseball.parse_inputs(parsed_inputs, jsonstr,
+            errors_warnings) = baseball.parse_inputs(parsed_inputs, jsonstr,
                                                       errors_warnings)
         return parsed_inputs, jsonstr, errors_warnings
     ```
