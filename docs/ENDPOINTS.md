@@ -5,7 +5,9 @@ The modeling project must provide an API endpoint for each of the following task
 - Do model-specific formatting and validation on the user inputs
 - Define the tasks for a given user submission
 - Submit each task to the modeling project
-- Combine the results after all of the tasks have run. The four API endpoints and a corresponding code snippet are discussed below:
+- Combine the results after all of the tasks have run
+
+The four API endpoints and a corresponding code snippet are discussed below:
 
 Package defaults
 ----------------------
