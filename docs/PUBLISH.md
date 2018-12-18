@@ -10,7 +10,7 @@ Once you've completed this guide, send me an email at henrymdoupe@gmail.com cont
 - Code snippets showing how each of the three python functions in the [functions documentation](ENDPOINTS.md) are to be called.
 - Installation instructions as described in [the installation documentation](ENVIRONMENT.md).
 
-I will then review your work. If all of the criteria has been met, it will be deployed to COMP. If there are any issues, then I will work with you to resolve them. Once the model has been deployed, you will have the opportunity to test it out. Since COMP being an open-source website, you can check my work to verify that the code was plugged in correctly.
+I will then review your work. If all of the criteria has been met, it will be deployed to COMP. If there are any issues, then I will work with you to resolve them. Once the model has been deployed, you will have the opportunity to test it out. Since COMP is an open-source website, you can check my work to verify that the code was plugged in correctly.
 
 If you have any questions about this guide, feel free to email me at henrymdoupe@gmail.com. I'm happy to help.
 
