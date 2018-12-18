@@ -28,7 +28,7 @@ Notes:
 Inputs
 ----------------
 
-COMP was built with and will continue to support a JSON schema developed by the [Tax-Calculator][3] project. In the near future, COMP will use the [ParamProject Schema][1] as the preferred input schema. For now, here is the Tax-Calculator Schema:
+COMP was built with and will continue to support a JSON schema developed by the [Tax-Calculator][1] project. In the near future, COMP will use the [ParamProject Schema][2] as the preferred input schema. For now, here is the Tax-Calculator Schema:
 
 ```json
 {
@@ -102,3 +102,6 @@ The Outputs Schema:
     }
 }
 ```
+
+[1]: https://github.com/PSLmodels/Tax-Calculator
+[2]: https://github.com/hdoupe/ParamProject
