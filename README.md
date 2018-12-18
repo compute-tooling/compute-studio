@@ -4,9 +4,16 @@
 
 To see COMP in action, visit [compmodels.com](www.compmodels.com).
 
+Features:
 - Developers share their public models for free.
-- Developers share private models for a per-user fee.
 - Users pay for their own compute, at cost.
+
+Under development: 
+- Developers may pay for their users' compute.
+- Developers may share models privately, for a per-user fee.
+
+Planned:
+- Developers may charge a subscription for their model to support development and data. 
 
 
 ## Contributing
