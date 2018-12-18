@@ -1,6 +1,6 @@
-import datetime
-
 import pytest
+
+from django import forms
 
 from webapp.apps.core.fields import (SeparatedValueField,
                                      coerce_bool, coerce_int, coerce_float,
@@ -55,3 +55,17 @@ def test_SeparatedValueField():
     # needs to be the same, not just equal
     assert svf.clean("1,2,3.0") == [1, 2, 3]
     assert all(isinstance(x, float) for x in svf.clean("1,2,3.0"))
+
+def test_SeparatedValueField_zerodim():
+    svf = SeparatedValueField(number_dims=0)
+    assert svf.clean("a") == "a"
+
+    svf = SeparatedValueField(coerce=coerce_int, number_dims=0)
+    assert svf.clean("1") == 1
+    # needs to be the same, not just equal
+    assert svf.clean("3.0") == 3
+    assert isinstance(svf.clean("3.0"), int)
+
+    with pytest.raises(forms.ValidationError):
+        svf = SeparatedValueField(coerce=coerce_float, number_dims=0)
+        svf.clean("1,2,3.0")

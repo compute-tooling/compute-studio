@@ -6,7 +6,8 @@ from .fields import (SeparatedValueField, coerce_bool,
 
 class SeparatedValue:
 
-    def __init__(self, name, label, default_value, coerce_func, **field_kwargs):
+    def __init__(self, name, label, default_value, coerce_func, number_dims,
+                 **field_kwargs):
         self.name = name
         self.label = label
         attrs = {
@@ -18,6 +19,7 @@ class SeparatedValue:
             widget=forms.TextInput(attrs=attrs),
             required=False,
             coerce=coerce_func,
+            number_dims=number_dims,
             **field_kwargs
         )
 
@@ -65,6 +67,7 @@ class BaseParam:
         self.attributes = attributes
         self.long_name = self.attributes["long_name"]
         self.description = self.attributes["description"]
+        self.number_dims = self.attributes.get("number_dims", 1)
         self.col_fields = []
         for mp, value in meta_parameters.items():
             setattr(self, mp, value)
@@ -84,6 +87,7 @@ class BaseParam:
             '',
             value,
             self.coerce_func,
+            self.number_dims,
             **field_kwargs
         )
         self.fields[self.name] = field.form_field

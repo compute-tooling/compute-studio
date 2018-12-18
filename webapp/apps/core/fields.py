@@ -43,9 +43,11 @@ class SeparatedValueField(forms.Field):
         'invalid_type': ('%(value)s is not able to be converted to the correct type',),
     }
 
-    def __init__(self, *, coerce=lambda val: val, empty_value="", **kwargs):
+    def __init__(self, *, coerce=lambda val: val, number_dims=1, empty_value="",
+                 **kwargs):
         self.coerce = coerce
         self.empty_value = empty_value
+        self.number_dims = number_dims
         super().__init__(**kwargs)
 
     def clean(self, value):
@@ -73,4 +75,10 @@ class SeparatedValueField(forms.Field):
                 python_values.append(stripped)
             else:
                 python_values.append(self._coerce(stripped))
+        if self.number_dims == 0:
+            if len(python_values) > 1:
+                raise forms.ValidationError(self.error_messages['invalid_type'],
+                                            code='invalid')
+            else:
+                python_values = python_values[0]
         return python_values

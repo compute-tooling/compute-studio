@@ -52,8 +52,8 @@ def test_paramdisplayer(core_inputs, valid_meta_params):
     assert displayer
     flatdict = displayer.defaults(flat=True)
     nesteddict = displayer.defaults(flat=False)
-    assert list(flatdict.keys()) == ["intparam", "boolparam", "floatparam",
-                                     "mj2param"]
+    assert set(flatdict.keys()) == {"intparam", "boolparam", "floatparam",
+                                    "mj2param", "zerodimparam"}
     assert all(isinstance(v , Param) for v in flatdict.values())
     assert list(nesteddict.keys()) == ["majorsection1", "majorsection2"]
     assert (len(nesteddict["majorsection1"]) == 2 and
