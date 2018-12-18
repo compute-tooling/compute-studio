@@ -21,7 +21,7 @@ class CompbaseballRun(CoreRun):
     on baseball pitchers, this would allow you to toggle a set of tables by
     the pitcher who is being analyzed.
     """
-    dimension_name = ""
+    dimension_name = "Batter"
 
     inputs = models.OneToOneField(CompbaseballInputs, on_delete=models.PROTECT,
                                   related_name='outputs')
