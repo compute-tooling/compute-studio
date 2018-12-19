@@ -18,6 +18,9 @@ Accepts Meta Parameters, if they are being utilized. Returns data in the form sp
         return baseball.get_inputs(use_2018=meta_parameters["use_2018"])
     ```
 
+    Here's what you get after filling in this function:
+    ![alt text](https://user-images.githubusercontent.com/9206065/50243845-480b6a80-039c-11e9-8452-029fefd866b0.png)
+
 Parse user adjustemnts
 ----------------------
 Accepts parsed user adjustments, separated by each major section. Returns parsed user adjustments, JSON representation of the user adjustments, and warnings/errors (if any).
@@ -82,6 +85,9 @@ Warnings/Errors:
         return params, jsonparams, errors_warnings
     ```
 
+    Here's what you get after filling in this function:
+    ![alt text](https://user-images.githubusercontent.com/9206065/50243758-0a0e4680-039c-11e9-9a98-56e2cbdd2f8f.png)
+
 Run simulation
 ----------------
 
@@ -118,3 +124,14 @@ The function returns the results of the simulation:
         result = baseball.get_matchup(use_2018, user_mods)
         return result
     ```
+
+    Here's what you get after filling in this function:
+
+    Aggregate outputs:
+    ![alt text](https://user-images.githubusercontent.com/9206065/50243787-1eeada00-039c-11e9-8c1a-984dcf7c871f.png)
+
+    Outputs:
+    ![alt text](https://user-images.githubusercontent.com/9206065/50243648-ad129080-039b-11e9-87ee-fe5ec4e8ef3f.png)
+
+    Toggle along dimension:
+    ![alt text](https://user-images.githubusercontent.com/9206065/50243656-b26fdb00-039b-11e9-8648-6d083a54a47f.png)
