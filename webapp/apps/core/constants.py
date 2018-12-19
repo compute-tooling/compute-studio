@@ -8,7 +8,7 @@ OUT_OF_RANGE_ERROR_MSG = mark_safe("""
     message(s) below them beginning with \'ERROR\'.
     <br /> <br />
     &emsp;- If the field has a warning message , then review the input to make
-    sure it is correct and click \'SUBMIT\' to run the model with these inputs.
+    sure it is correct and click \'Run Simulation\' to run the model with these inputs.
     <br />
     &emsp;- If the field has an error message, then the parameter value must be
     changed so that it is in a valid range.
