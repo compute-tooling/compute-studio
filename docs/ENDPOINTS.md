@@ -1,14 +1,14 @@
 # Python functions
 
 The modeling project must provide a Python function for each of the following tasks:
-- **Package Defaults**: Get the baseline inputs and their meta data
-- **Parse user inputs**: Do model-specific formatting and validation on the user inputs
-- **Run simulation**: Submit the user inputs to the model to run the simulations
+- **Package Defaults**: Get the default Model Parameters and their meta data. 
+- **Parse user adjustments**: Do model-specific formatting and validation on user adjustments. 
+- **Run simulation**: Submit the user adjustments (or none) to the model to run the simulation.
 
 Package defaults
 ----------------------
 
-Accepts meta-parameters, if they are being utilized. Returns data in the form specified in the "Inputs Schema" section of [`IOSCHEMA.md`](IOSCHEMA.md).
+Accepts Meta Parameters, if they are being utilized. Returns data in the form specified in the "Model Parameters" section of [`IOSCHEMA.md`](IOSCHEMA.md).
 
 - **Python**:
     ```python
@@ -18,11 +18,11 @@ Accepts meta-parameters, if they are being utilized. Returns data in the form sp
         return baseball.get_inputs(use_2018=use_2018)
     ```
 
-Parse user inputs
+Parse user adjustemnts
 ----------------------
-Accepts parsed data, separated by each major section. Returns parsed inputs, JSON representation of the inputs, and warnings/errors (if any).
+Accepts parsed user adjustments, separated by each major section. Returns parsed user adjustments, JSON representation of the user adjustments, and warnings/errors (if any).
 
-COMP will submit parsed data of the form:
+COMP will provide parsed user adjustments of the form:
 
 ```json
 {
@@ -84,9 +84,9 @@ Warnings/Errors:
 Run simulation
 ----------------
 
-Accepts meta-parameter values and parsed and formatted user inputs. Returns outputs as specified by the [Outputs schema](IOSCHEMA.md)
+Accepts Meta Parameters values and parsed and formatted user adjustments. Returns outputs as specified by the [Outputs schema](IOSCHEMA.md)
 
-COMP submits the model's meta parameters and the parsed and formatted inputs:
+COMP submits the model's meta parameters and the parsed and formatted user adjustments:
 ```
     {
         "meta_parameter1": value,

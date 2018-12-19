@@ -16,7 +16,7 @@ Python Functions
 *Insert code snippets satisfying the requirements detailed in the [functions documentation.](ENDPOINTS.md)*
 
 
-**Package Defaults:** Get the baseline inputs and their meta data
+**Package Defaults:** Get the default Model Parameters and their meta data
 
 ```python
 # code snippet here
@@ -28,7 +28,7 @@ Python Functions
 
 
 
-**Parse user inputs:** Do model-specific formatting and validation on the user inputs
+**Parse user adjustments:** Do model-specific formatting and validation on the user adjustments
 
 ```python
 # code snippet here
@@ -38,7 +38,7 @@ Python Functions
 ```
 
 
-**Run simulation:** Submit the user inputs to the model to run the simulations
+**Run simulation:** Submit the user adjustments (or none) to the model to run the simulations
 
 ```python
 # code snippet here

@@ -1,11 +1,11 @@
 # Input-Output Schema
 
-COMP relies on three primary JSON schemas: Meta-Parameters, Inputs, and Outputs. COMP uses them to derive the input form that the user will use, its own validation functionality, and the outputs page.
+COMP relies on three primary JSON schemas: Meta Parameters, Model Parameters, and Outputs. COMP uses them to derive the COMP input form representing your model's default specification and your model's output page. One of the required Python functions in the next step of this guide will also rely on these scheme to validate user adjustments on the COMP input form. 
 
-Meta-Parameters
+Meta Parameters
 --------------------------------
 
-These are the "Control Parameters". They can be thought of as the parameters that other parameters depend on. For example, if the model has parameters that depend on which dataset is being used, a meta-parameter named `data_set` could be helfpul. This should be of the form:
+These are the parameters upon which Model Parameters depend. For example, if your model's default Model Parameters depend on the dataset being used, a meta parameter named `data_set` could be helfpul. This should be of the form:
 
 ```json
 {
@@ -25,10 +25,10 @@ Notes:
 - Supported types are `"int"`, `"float"`, `"bool"`, `"str"`, and `"date"`. Parameters of type `"date"` expect the format `"YYYY-MM-DD"`.
 - Validators are optional. More validators will be added in the future.
 
-Inputs
+Model Parameters
 ----------------
 
-COMP uses the JSON schema below for documenting the baseline parameters:
+COMP uses the JSON schema below for documenting Model Parameters and their values under the default sepcification:
 
 ```json
 {
@@ -53,7 +53,7 @@ COMP uses the JSON schema below for documenting the baseline parameters:
 ```
 
 Notes:
-- The major sections can be thought of as broad categories of input parameters. A baseball model may break up its inputs into Hitting, Pitching, and Fielding major sections.
+- The major sections can be thought of as broad categories of model parameters. A baseball model may break up its model parameters into Hitting, Pitching, and Fielding major sections.
 - Supported types are `"int"`, `"float"`, `"bool"`, `"str"`, and `"date"`. Parameters of type `"date"` expect the format `"YYYY-MM-DD"`.
 
 Outputs
