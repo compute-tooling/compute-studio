@@ -10,6 +10,7 @@
 {% csrf_token %}
 <div class="container" style="padding:50px 50px;">
   <h1>{{ project_name }}</a></h1>
+  <div>{{app_description}}</div>
   {% include 'core/project_info.html' %}
   {% block project_context %}
   {% endblock %}

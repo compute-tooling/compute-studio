@@ -10,8 +10,8 @@ ENV C_FORCE_ROOT true
 RUN pip install -r requirements.txt
 # Edit Dockerfile here for installing necessary packages, copying files, etc.
 ######################
-RUN conda install pandas pyarrow
-RUN pip install pybaseball compbaseball>=0.1.3
+RUN conda install pandas pyarrow bokeh
+RUN pip install pybaseball compbaseball
 ######################
 
 

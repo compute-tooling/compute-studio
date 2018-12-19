@@ -1,6 +1,7 @@
 
 {% block project_context %}
 {% csrf_token %}
+<h4>Pricing: </h4>
 <p> {% if not can_run %}You must sign-up to run models on this platform.{% endif %} The models are offered for free, but you pay for the computational resources used to run them. The prices are equal to AWS compute pricing, subject to costing at least one penny for a single run.  </p>
   <ul>
     <li>The price per hour of a server running this model is: {{ rate }}</li>

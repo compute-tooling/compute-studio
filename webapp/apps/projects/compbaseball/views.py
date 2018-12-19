@@ -7,7 +7,7 @@ from .displayer import CompbaseballDisplayer
 from .submit import CompbaseballSubmit, CompbaseballSave
 from .forms import CompbaseballInputsForm
 from .meta_parameters import compbaseball_meta_parameters
-from .constants import (COMPBASEBALL_VERSION, APP_NAME)
+from .constants import (COMPBASEBALL_VERSION, APP_NAME, APP_DESCRIPTION)
 
 
 compute = Compute()
@@ -23,6 +23,7 @@ class CompbaseballInputsView(InputsView):
     save_class = CompbaseballSave
     project_name = "CompBaseball"
     app_name = APP_NAME
+    app_description = APP_DESCRIPTION
     meta_parameters = compbaseball_meta_parameters
     meta_options = []
     has_errors = False

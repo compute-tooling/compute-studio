@@ -14,6 +14,7 @@ class Parser:
 
     def __init__(self, clean_inputs, **valid_meta_params):
         self.clean_inputs = clean_inputs
+        self.valid_meta_params = valid_meta_params
         for param, value in valid_meta_params.items():
             setattr(self, param, value)
         displayer = self.displayer_class(

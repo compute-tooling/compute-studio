@@ -13,4 +13,11 @@ class CompbaseballDisplayer(Displayer):
         functions to load the project's inputs data. In the future, this will
         be done over the distributed REST API.
         """
-        return baseball.get_inputs()
+        ####################################
+        # code snippet
+        def package_defaults(**meta_parameters):
+            return baseball.get_inputs(use_2018=meta_parameters["use_2018"])
+
+        ####################################
+
+        return package_defaults(**self.meta_parameters)

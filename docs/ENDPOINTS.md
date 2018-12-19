@@ -14,8 +14,8 @@ Accepts meta-parameters, if they are being utilized. Returns data in the form sp
     ```python
     from compbaseball import baseball
 
-    def get_inputs(use_2018): # use_2018 is a metaparameter
-        return baseball.get_inputs(use_2018=use_2018)
+    def package_defaults(**meta_parameters):
+        return baseball.get_inputs(use_2018=meta_parameters["use_2018"])
     ```
 
 Parse user inputs
@@ -73,12 +73,13 @@ Warnings/Errors:
     ```python
     from compbaseball import baseball
 
-    def parse_inputs(parsed_inputs, jsonstr, errors_warnings):
-        (parsed_inputs,
-            jsonstr,
-            errors_warnings) = baseball.parse_inputs(parsed_inputs, jsonstr,
-                                                      errors_warnings)
-        return parsed_inputs, jsonstr, errors_warnings
+    def parse_user_inputs(params, jsonparams, errors_warnings, **meta_parameters):
+        # parse the params, jsonparams, and errors_warnings further
+        use_2018 = meta_parameters["use_2018"]
+        params, jsonparams, errors_warnings = baseball.parse_inputs(
+            params, jsonparams, errors_warnings, use_2018=use_2018)
+        # done parsing
+        return params, jsonparams, errors_warnings
     ```
 
 Run simulation

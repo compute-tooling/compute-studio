@@ -32,6 +32,7 @@ class InputsView(View):
     template_name = "core/inputs_form.html"
     project_name = "Inputs"
     app_name = "core"
+    app_description = "Placeholder description"
     meta_parameters = meta_parameters
     meta_options = {}
     has_errors = False
@@ -49,6 +50,7 @@ class InputsView(View):
             'rate': f'${rate}/hour',
             'project_name': self.project_name,
             'app_name': self.app_name,
+            'app_description': self.app_description,
             'redirect_back': self.app_name,
             'can_run': can_run,
             'exp_cost': f'${exp_cost}',

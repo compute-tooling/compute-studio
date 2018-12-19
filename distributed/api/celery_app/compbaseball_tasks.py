@@ -4,12 +4,22 @@ from api.celery_app import celery_app
 
 @celery_app.task(name='compbaseball_tasks.compbaseball_task', soft_time_limit=60)
 def compbaseball_task(use_2018, user_mods):
-    from compbaseball import baseball
     start = time.time()
-    print('pitching', user_mods)
-    result = baseball.get_matchup(use_2018, user_mods)
+
+    #######################################
+    # code snippet
+    from compbaseball import baseball
+
+    def run_simulation(use_2018, user_mods):
+        result = baseball.get_matchup(use_2018, user_mods)
+        return result
+    #######################################
+
+    result = run_simulation(use_2018, user_mods)
+
     finish = time.time()
     result["meta"]["task_times"] = [finish - start]
+    print("finished result")
     return result
 
 
