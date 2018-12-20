@@ -12,4 +12,4 @@ sendgrid-django
 pytest
 django-widget-tweaks
 django-crispy-forms
-compbaseball
+compbaseball==0.1.13
