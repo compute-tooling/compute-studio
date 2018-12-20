@@ -2,7 +2,7 @@
 
 **COMP** is an open-source utility for sharing computational models.
 
-To see COMP in action, visit [compmodels.com](www.compmodels.com).
+To see COMP in action, visit [compmodels.com](https://www.compmodels.com).
 
 Features:
 - Developers share their public models for free.
