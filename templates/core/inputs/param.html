@@ -1,0 +1,28 @@
+{% load inputs %}
+{% load utility %}
+
+<div class="container">
+  <div class="row has-statuses">
+
+    <div class="col-xs-12">
+      <label>
+        {{ param.long_name }}
+        {% include 'core/inputs/fields/tooltip.html' with text=param.info %}
+      </label>
+
+      <!-- TODO: add auxillary block for optional checkbox parameter. -->
+      {% if param.inflatable %}
+        {% with form|dict_get:param.cpi_field.name as cpi_field %}
+          {% include 'core/inputs/fields/checkbox.html' with checkbox=cpi_field %}
+        {% endwith %}
+      {% endif %}
+    </div>
+  </div>
+  <div class="form-row has-statuses">
+    {% for field in param.col_fields %}
+      <div class="{{ param|col_input_class }}">
+        {% include 'core/inputs/fields/field.html' with field=field %}
+      </div>
+    {% endfor %}
+  </div>
+</div>

@@ -1,21 +1,18 @@
 
 dist-build:
-	cd distributed && \
-	docker build -t comp/distributed:$(TAG) ./ && \
-	docker build --no-cache --build-arg TAG=$(TAG) -t comp/flask:$(TAG) --file Dockerfile.flask ./ && \
-	docker build --no-cache --build-arg TAG=$(TAG) -t comp/celery:$(TAG) --file Dockerfile.celery ./
+	# template command:
+	# docker build --no-cache --build-arg TAG=$(TAG) -t comp/{project_name}_tasks:$(TAG) --file dockerfiles/projects/Dockerfile.{project_name}_tasks ./
 
-dist-build-local:
 	cd distributed && \
-	docker build -t comp/distributed:$(TAG) ./ --file Dockerfile.local && \
-	docker build --no-cache --build-arg TAG=$(TAG) -t comp/flask:$(TAG) --file Dockerfile.flask ./ && \
-	docker build --no-cache --build-arg TAG=$(TAG) -t comp/celery:$(TAG) --file Dockerfile.celery ./
+	docker build -t comp/distributed:$(TAG) ./ -f dockerfiles/Dockerfile && \
+	docker build --build-arg TAG=$(TAG) -t comp/flask:$(TAG) --file dockerfiles/Dockerfile.flask ./ && \
+	docker build --build-arg TAG=$(TAG) -t comp/celerybase:$(TAG) --file dockerfiles/Dockerfile.celerybase ./ && \
+	docker build --no-cache --build-arg TAG=$(TAG) -t comp/compbaseball_tasks:$(TAG) --file dockerfiles/projects/Dockerfile.compbaseball_tasks ./
 
 dist-push:
 	cd distributed && \
 	docker push comp/distributed:$(TAG) && \
 	docker push comp/flask:$(TAG) && \
-	docker push comp/celery:$(TAG)
 
 dist-test:
 	cd distributed && \

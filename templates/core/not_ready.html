@@ -21,10 +21,9 @@
 {% endblock %}
 
 {% block bottom_scripts %}
-
 <script type="text/javascript" src="{% static 'js/vendor/moment/moment.min.js' %}"></script>
 <script type="text/javascript">
-$(function() {
+$(document).ready(function() {
     var origEta;
     function insertEta(eta) {
         origEta = origEta ? origEta : eta;
@@ -52,5 +51,4 @@ $(function() {
     setInterval(ajaxEta, 1000);
 });
 </script>
-
 {% endblock %}

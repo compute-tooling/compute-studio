@@ -7,7 +7,14 @@ import json
 import msgpack
 import os
 
-from api.celery_tasks import file_upload_test
+# import celery tasks here using the template:
+# from api.celery_app.{project_name}_tasks import (
+#     {project_name}_postprocess,
+#     {project_name}_task)
+from api.celery_app.compbaseball_tasks import (
+    compbaseball_postprocess,
+    compbaseball_task)
+
 
 bp = Blueprint('endpoints', __name__)
 
@@ -30,33 +37,15 @@ def aggr_endpoint(compute_task, postprocess_task):
     return json.dumps(data)
 
 
-def endpoint(task):
-    print('endpoint')
-    data = request.get_data()
-    inputs = msgpack.loads(data, encoding='utf8',
-                           use_list=True)
-    print('inputs', inputs)
-    result = task.apply_async(kwargs=inputs[0],
-                              serializer='msgpack')
-    length = client.llen(queue_name) + 1
-    data = {'job_id': str(result), 'qlength': length}
-    return json.dumps(data)
+# template for app endpoints:
+# @bp.route("/{project_name}", methods=['POST'])
+# def {project_name}_endpoint():
+#     return aggr_endpoint({project_name}_task, {project_name}_postprocess)
 
 
-def file_test_endpoint(task):
-    print('file test endpoint')
-    data = request.get_data()
-    inputs = msgpack.loads(data, encoding='utf8',
-                           use_list=True)
-    result = task.apply_async(kwargs=inputs[0], serializer='msgpack')
-    length = client.llen(queue_name) + 1
-    data = {'job_id': str(result), 'qlength': length}
-    return json.dumps(data)
-
-
-@bp.route("/upload", methods=['POST'])
-def upload_endpoint():
-    return file_test_endpoint(file_upload_test)
+@bp.route("/compbaseball", methods=['POST'])
+def compbaseball_endpoint():
+    return aggr_endpoint(compbaseball_task, compbaseball_postprocess)
 
 
 @bp.route("/get_job", methods=['GET'])
@@ -64,7 +53,7 @@ def results():
     job_id = request.args.get('job_id', '')
     async_result = AsyncResult(job_id)
     if async_result.ready() and async_result.successful():
-        return async_result.result
+        return json.dumps(async_result.result)
     elif async_result.failed():
         print('traceback', async_result.traceback)
         return async_result.traceback

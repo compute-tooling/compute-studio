@@ -9,12 +9,121 @@ from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin, DetailView
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, Http404, JsonResponse
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required, user_passes_test
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
-from webapp.apps.users.models import Project
+from webapp.apps.billing.utils import USE_STRIPE
+from webapp.apps.users.models import Project, is_profile_active
+from .constants import WEBAPP_VERSION
 
 from .models import CoreRun
 from .compute import Compute, JobFailError
+from .displayer import Displayer
+from .meta_parameters import meta_parameters
+from .submit import handle_submission, BadPost
+
+
+class InputsView(View):
+    form_class = None
+    displayer_class = Displayer
+    submit_class = None
+    save_class = None
+    template_name = "core/inputs_form.html"
+    project_name = "Inputs"
+    app_name = "core"
+    app_description = "Placeholder description"
+    meta_parameters = meta_parameters
+    meta_options = {}
+    has_errors = False
+    upstream_version = None
+    webapp_version = WEBAPP_VERSION
+
+    def project_context(self, request):
+        project = Project.objects.get(name=self.project_name)
+        user = request.user
+        can_run = user.is_authenticated and is_profile_active(user)
+        rate = round(project.server_cost, 2)
+        exp_cost, exp_time = project.exp_job_info(adjust=True)
+
+        context = {
+            'rate': f'${rate}/hour',
+            'project_name': self.project_name,
+            'app_name': self.app_name,
+            'app_description': self.app_description,
+            'redirect_back': self.app_name,
+            'can_run': can_run,
+            'exp_cost': f'${exp_cost}',
+            'exp_time': f'{exp_time} seconds'}
+        return context
+
+    def get(self, request, *args, **kwargs):
+        print("method=GET", request.GET)
+        inputs_form = self.form_class()
+        # set cleaned_data with is_valid call
+        inputs_form.is_valid()
+        inputs_form.clean()
+        context = self.project_context(request)
+        return self._render_inputs_form(request, inputs_form, context)
+
+    @method_decorator(login_required)
+    @method_decorator(
+        user_passes_test(is_profile_active, login_url='/users/login/'))
+    def post(self, request, *args, **kwargs):
+        print("method=POST", request.POST)
+        compute = Compute()
+        if request.POST.get("reset", ''):
+            inputs_form = self.form_class(request.POST.dict())
+            if inputs_form.is_valid():
+                inputs_form.clean()
+            else:
+                inputs_form = self.form_class()
+                inputs_form.is_valid()
+                inputs_form.clean()
+            context = self.project_context(request)
+            return self._render_inputs_form(request, inputs_form, context)
+
+        result = handle_submission(
+            request, compute, self.submit_class, self.save_class
+        )
+        # case where validation failed
+        if isinstance(result, BadPost):
+            return submission.http_response_404
+
+        # No errors--submit to model
+        if result.save is not None:
+            print("redirecting...", result.save.runmodel_instance.get_absolute_url())
+            return redirect(result.save.runmodel_instance)
+        else:
+            inputs_form = result.submit.form
+            valid_meta_params = result.submit.valid_meta_params
+            has_errors = result.submit.has_errors
+
+        displayer = self.displayer_class(**valid_meta_params)
+        context = dict(
+            form=inputs_form,
+            default_form=displayer.defaults(flat=False),
+            upstream_version=self.upstream_version,
+            webapp_version=self.webapp_version,
+            has_errors=self.has_errors,
+        )
+        return render(request, self.template_name, context)
+
+    def _render_inputs_form(self, request, inputs_form, context):
+        names = {mp.name for mp in self.meta_parameters.parameters}
+        valid_meta_params = {
+            k: inputs_form.cleaned_data.get(k, "") for k in names
+        }
+        displayer = self.displayer_class(**valid_meta_params)
+        context = dict(
+            form=inputs_form,
+            default_form=displayer.defaults(flat=False),
+            upstream_version=self.upstream_version,
+            webapp_version=self.webapp_version,
+            has_errors=self.has_errors,
+            **context
+        )
+        return render(request, self.template_name, context)
 
 
 class SuperclassTemplateNameMixin(object):
@@ -39,11 +148,10 @@ class SuperclassTemplateNameMixin(object):
                     c.model._meta.app_label,
                     c.model._meta.model_name,
                     self.template_name_suffix))
-
         return names
 
 
-class CoreRunDetailView(SuperclassTemplateNameMixin, DetailView):
+class OutputsView(SuperclassTemplateNameMixin, DetailView):
     """
     This view is the single page of diplaying a progress bar for how
     close the job is to finishing, and then it will also display the
@@ -101,23 +209,24 @@ class CoreRunDetailView(SuperclassTemplateNameMixin, DetailView):
                     self.object.error_text = str(e)
                     self.object.save()
                     return self.fail()
-                self.object.run_time = sum(results['meta']['job_times'])
+                self.object.run_time = sum(results['meta']['task_times'])
                 self.object.run_cost = self.object.project.run_cost(
                     self.object.run_time)
-                plan = self.object.project.product.plans.get(
-                    usage_type='metered')
-                si = SubscriptionItem.objects.get(
-                    subscription__customer=self.object.profile.user.customer,
-                    plan=plan)
                 quantity = self.object.project.run_cost(
                     self.object.run_time, adjust=True)
-                stripe_ur = UsageRecord.create_stripe_object(
-                    quantity=Project.dollar_to_penny(quantity),
-                    timestamp=None,
-                    subscription_item=si,
-                )
-                UsageRecord.construct(stripe_ur, si)
-
+                if USE_STRIPE:
+                    plan = self.object.project.product.plans.get(
+                        usage_type='metered')
+                    si = SubscriptionItem.objects.get(
+                        subscription__customer=self.object.profile.user.customer,
+                        plan=plan)
+                    stripe_ur = UsageRecord.create_stripe_object(
+                        quantity=Project.dollar_to_penny(quantity),
+                        timestamp=None,
+                        subscription_item=si,
+                    )
+                    UsageRecord.construct(stripe_ur, si)
+                self.object.meta_data = results["meta"]
                 self.object.outputs = results['outputs']
                 self.object.aggr_outputs = results['aggr_outputs']
                 self.object.creation_date = timezone.now()
@@ -161,7 +270,7 @@ class CoreRunDetailView(SuperclassTemplateNameMixin, DetailView):
             return ''
 
 
-class CoreRunDownloadView(SingleObjectMixin, View):
+class OutputsDownloadView(SingleObjectMixin, View):
     model = CoreRun
 
     def get(self, request, *args, **kwargs):
@@ -170,6 +279,17 @@ class CoreRunDownloadView(SingleObjectMixin, View):
         if (not (self.object.outputs or self.object.aggr_outputs) or
            self.object.error_text):
             return redirect(self.object)
+
+        # option to download the raw JSON for testing purposes.
+        if request.GET.get("raw_json", False):
+            raw_json = json.dumps({
+                "meta": self.object.meta_data,
+                "outputs": self.object.outputs,
+                "aggr_outputs": self.object.aggr_outputs},
+                indent=4)
+            resp = HttpResponse(raw_json, content_type="text/plain")
+            resp['Content-Disposition'] = "attachment; filename=outputs.json"
+            return resp
 
         try:
             downloadables = list(itertools.chain.from_iterable(

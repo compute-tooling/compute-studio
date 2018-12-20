@@ -86,3 +86,14 @@ for information on how to set this up on your operating system.
 2. Export the image tag that you want to use: `export TAG=dev`
 Build the images: `make dist-build`
 Navigate to `COMP/distributed` directory and run: `docker-compose up`
+
+**Run tests**
+```
+py.test webapp/apps -v
+```
+
+with test-coverage:
+```
+pip install pytest-cov
+py.test --cov=webapp/apps webapp/apps -v
+```

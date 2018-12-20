@@ -1,9 +1,7 @@
-gunicorn
-flask
-redis
-toolz
-celery
-requests-mock
-requests
 msgpack
+celery
+redis==2.10.6
 pytest
+flask
+toolz
+gunicorn

@@ -1,0 +1,97 @@
+{
+    "meta": {
+        "task_times": [
+            11.422766923904419
+        ]
+    },
+    "outputs": [
+        {
+            "tags": {
+                "count": "normalized",
+                "attribute": "pitch outcome"
+            },
+            "title": "Normalized pitch outcome by count for Clayton Kershaw v. Freddie Freeman",
+            "dimension": "",
+            "renderable": "<table class=\"dataframe\">\n  <thead>\n    <tr>\n      <th></th>\n      <th></th>\n      <th></th>\n      <th>type</th>\n    </tr>\n    <tr>\n      <th>balls</th>\n      <th>strikes</th>\n      <th>type</th>\n      <th></th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th rowspan=\"4\" valign=\"top\">0.0</th>\n      <th rowspan=\"2\" valign=\"top\">0.0</th>\n      <th>S</th>\n      <td>0.666667</td>\n    </tr>\n    <tr>\n      <th>B</th>\n      <td>0.333333</td>\n    </tr>\n    <tr>\n      <th rowspan=\"2\" valign=\"top\">1.0</th>\n      <th>B</th>\n      <td>0.750000</td>\n    </tr>\n    <tr>\n      <th>X</th>\n      <td>0.250000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"6\" valign=\"top\">1.0</th>\n      <th rowspan=\"2\" valign=\"top\">0.0</th>\n      <th>B</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>S</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"3\" valign=\"top\">1.0</th>\n      <th>X</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>B</th>\n      <td>0.250000</td>\n    </tr>\n    <tr>\n      <th>S</th>\n      <td>0.250000</td>\n    </tr>\n    <tr>\n      <th>2.0</th>\n      <th>X</th>\n      <td>1.000000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"4\" valign=\"top\">2.0</th>\n      <th>0.0</th>\n      <th>S</th>\n      <td>1.000000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"2\" valign=\"top\">1.0</th>\n      <th>B</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>S</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>2.0</th>\n      <th>X</th>\n      <td>1.000000</td>\n    </tr>\n    <tr>\n      <th>3.0</th>\n      <th>1.0</th>\n      <th>X</th>\n      <td>1.000000</td>\n    </tr>\n  </tbody>\n</table>",
+            "downloadable": [
+                {
+                    "text": "balls,strikes,type,type\n0.0,0.0,S,0.6666666666666666\n0.0,0.0,B,0.3333333333333333\n0.0,1.0,B,0.75\n0.0,1.0,X,0.25\n1.0,0.0,B,0.5\n1.0,0.0,S,0.5\n1.0,1.0,X,0.5\n1.0,1.0,B,0.25\n1.0,1.0,S,0.25\n1.0,2.0,X,1.0\n2.0,0.0,S,1.0\n2.0,1.0,B,0.5\n2.0,1.0,S,0.5\n2.0,2.0,X,1.0\n3.0,1.0,X,1.0\n",
+                    "filename": "normalized_pitch_outcome_Clayton Kershaw_Freddie Freeman.csv"
+                }
+            ]
+        },
+        {
+            "tags": {
+                "count": "raw count",
+                "attribute": "pitch outcome"
+            },
+            "title": "Pitch outcome by count for Clayton Kershaw v. Freddie Freeman",
+            "dimension": "",
+            "renderable": "<table class=\"dataframe\">\n  <thead>\n    <tr>\n      <th></th>\n      <th></th>\n      <th></th>\n      <th>type</th>\n    </tr>\n    <tr>\n      <th>balls</th>\n      <th>strikes</th>\n      <th>type</th>\n      <th></th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th rowspan=\"4\" valign=\"top\">0.0</th>\n      <th rowspan=\"2\" valign=\"top\">0.0</th>\n      <th>S</th>\n      <td>4</td>\n    </tr>\n    <tr>\n      <th>B</th>\n      <td>2</td>\n    </tr>\n    <tr>\n      <th rowspan=\"2\" valign=\"top\">1.0</th>\n      <th>B</th>\n      <td>3</td>\n    </tr>\n    <tr>\n      <th>X</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th rowspan=\"6\" valign=\"top\">1.0</th>\n      <th rowspan=\"2\" valign=\"top\">0.0</th>\n      <th>B</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>S</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th rowspan=\"3\" valign=\"top\">1.0</th>\n      <th>X</th>\n      <td>2</td>\n    </tr>\n    <tr>\n      <th>B</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>S</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>2.0</th>\n      <th>X</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th rowspan=\"4\" valign=\"top\">2.0</th>\n      <th>0.0</th>\n      <th>S</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th rowspan=\"2\" valign=\"top\">1.0</th>\n      <th>B</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>S</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>2.0</th>\n      <th>X</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>3.0</th>\n      <th>1.0</th>\n      <th>X</th>\n      <td>1</td>\n    </tr>\n  </tbody>\n</table>",
+            "downloadable": [
+                {
+                    "text": "balls,strikes,type,type\n0.0,0.0,S,4\n0.0,0.0,B,2\n0.0,1.0,B,3\n0.0,1.0,X,1\n1.0,0.0,B,1\n1.0,0.0,S,1\n1.0,1.0,X,2\n1.0,1.0,B,1\n1.0,1.0,S,1\n1.0,2.0,X,1\n2.0,0.0,S,1\n2.0,1.0,B,1\n2.0,1.0,S,1\n2.0,2.0,X,1\n3.0,1.0,X,1\n",
+                    "filename": "pitch_outcome_Clayton Kershaw_Freddie Freeman.csv"
+                }
+            ]
+        },
+        {
+            "tags": {
+                "count": "normalized",
+                "attribute": "pitch type"
+            },
+            "title": "Normalized pitch type by count for Clayton Kershaw v. Freddie Freeman",
+            "dimension": "",
+            "renderable": "<table class=\"dataframe\">\n  <thead>\n    <tr>\n      <th></th>\n      <th></th>\n      <th></th>\n      <th>pitch_type</th>\n    </tr>\n    <tr>\n      <th>balls</th>\n      <th>strikes</th>\n      <th>pitch_type</th>\n      <th></th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th rowspan=\"6\" valign=\"top\">0.0</th>\n      <th rowspan=\"3\" valign=\"top\">0.0</th>\n      <th>CU</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>FF</th>\n      <td>0.333333</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>0.166667</td>\n    </tr>\n    <tr>\n      <th rowspan=\"3\" valign=\"top\">1.0</th>\n      <th>FF</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>CU</th>\n      <td>0.250000</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>0.250000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"5\" valign=\"top\">1.0</th>\n      <th rowspan=\"2\" valign=\"top\">0.0</th>\n      <th>FF</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"2\" valign=\"top\">1.0</th>\n      <th>FF</th>\n      <td>0.750000</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>0.250000</td>\n    </tr>\n    <tr>\n      <th>2.0</th>\n      <th>FF</th>\n      <td>1.000000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"4\" valign=\"top\">2.0</th>\n      <th>0.0</th>\n      <th>SL</th>\n      <td>1.000000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"2\" valign=\"top\">1.0</th>\n      <th>FF</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>2.0</th>\n      <th>FF</th>\n      <td>1.000000</td>\n    </tr>\n    <tr>\n      <th>3.0</th>\n      <th>1.0</th>\n      <th>SL</th>\n      <td>1.000000</td>\n    </tr>\n  </tbody>\n</table>",
+            "downloadable": [
+                {
+                    "text": "balls,strikes,pitch_type,pitch_type\n0.0,0.0,CU,0.5\n0.0,0.0,FF,0.3333333333333333\n0.0,0.0,SL,0.16666666666666666\n0.0,1.0,FF,0.5\n0.0,1.0,CU,0.25\n0.0,1.0,SL,0.25\n1.0,0.0,FF,0.5\n1.0,0.0,SL,0.5\n1.0,1.0,FF,0.75\n1.0,1.0,SL,0.25\n1.0,2.0,FF,1.0\n2.0,0.0,SL,1.0\n2.0,1.0,FF,0.5\n2.0,1.0,SL,0.5\n2.0,2.0,FF,1.0\n3.0,1.0,SL,1.0\n",
+                    "filename": "normalized_pitch_type_Clayton Kershaw_Freddie Freeman.csv"
+                }
+            ]
+        },
+        {
+            "tags": {
+                "count": "raw count",
+                "attribute": "pitch type"
+            },
+            "title": "Pitch type by count for Clayton Kershaw v. Freddie Freeman",
+            "dimension": "",
+            "renderable": "<table class=\"dataframe\">\n  <thead>\n    <tr>\n      <th></th>\n      <th></th>\n      <th></th>\n      <th>pitch_type</th>\n    </tr>\n    <tr>\n      <th>balls</th>\n      <th>strikes</th>\n      <th>pitch_type</th>\n      <th></th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th rowspan=\"6\" valign=\"top\">0.0</th>\n      <th rowspan=\"3\" valign=\"top\">0.0</th>\n      <th>CU</th>\n      <td>3</td>\n    </tr>\n    <tr>\n      <th>FF</th>\n      <td>2</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th rowspan=\"3\" valign=\"top\">1.0</th>\n      <th>FF</th>\n      <td>2</td>\n    </tr>\n    <tr>\n      <th>CU</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th rowspan=\"5\" valign=\"top\">1.0</th>\n      <th rowspan=\"2\" valign=\"top\">0.0</th>\n      <th>FF</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th rowspan=\"2\" valign=\"top\">1.0</th>\n      <th>FF</th>\n      <td>3</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>2.0</th>\n      <th>FF</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th rowspan=\"4\" valign=\"top\">2.0</th>\n      <th>0.0</th>\n      <th>SL</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th rowspan=\"2\" valign=\"top\">1.0</th>\n      <th>FF</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>2.0</th>\n      <th>FF</th>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>3.0</th>\n      <th>1.0</th>\n      <th>SL</th>\n      <td>1</td>\n    </tr>\n  </tbody>\n</table>",
+            "downloadable": [
+                {
+                    "text": "balls,strikes,pitch_type,pitch_type\n0.0,0.0,CU,3\n0.0,0.0,FF,2\n0.0,0.0,SL,1\n0.0,1.0,FF,2\n0.0,1.0,CU,1\n0.0,1.0,SL,1\n1.0,0.0,FF,1\n1.0,0.0,SL,1\n1.0,1.0,FF,3\n1.0,1.0,SL,1\n1.0,2.0,FF,1\n2.0,0.0,SL,1\n2.0,1.0,FF,1\n2.0,1.0,SL,1\n2.0,2.0,FF,1\n3.0,1.0,SL,1\n",
+                    "filename": "pitch_typeClayton Kershaw_Freddie Freeman.csv"
+                }
+            ]
+        }
+    ],
+    "aggr_outputs": [
+        {
+            "tags": {
+                "attribute": "pitch outcome"
+            },
+            "title": "Pitch outcome by count for all players",
+            "renderable": "<table class=\"dataframe\">\n  <thead>\n    <tr>\n      <th></th>\n      <th></th>\n      <th></th>\n      <th>type</th>\n    </tr>\n    <tr>\n      <th>balls</th>\n      <th>strikes</th>\n      <th>type</th>\n      <th></th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th rowspan=\"4\" valign=\"top\">0.0</th>\n      <th rowspan=\"2\" valign=\"top\">0.0</th>\n      <th>S</th>\n      <td>0.666667</td>\n    </tr>\n    <tr>\n      <th>B</th>\n      <td>0.333333</td>\n    </tr>\n    <tr>\n      <th rowspan=\"2\" valign=\"top\">1.0</th>\n      <th>B</th>\n      <td>0.750000</td>\n    </tr>\n    <tr>\n      <th>X</th>\n      <td>0.250000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"6\" valign=\"top\">1.0</th>\n      <th rowspan=\"2\" valign=\"top\">0.0</th>\n      <th>B</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>S</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"3\" valign=\"top\">1.0</th>\n      <th>X</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>B</th>\n      <td>0.250000</td>\n    </tr>\n    <tr>\n      <th>S</th>\n      <td>0.250000</td>\n    </tr>\n    <tr>\n      <th>2.0</th>\n      <th>X</th>\n      <td>1.000000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"4\" valign=\"top\">2.0</th>\n      <th>0.0</th>\n      <th>S</th>\n      <td>1.000000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"2\" valign=\"top\">1.0</th>\n      <th>B</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>S</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>2.0</th>\n      <th>X</th>\n      <td>1.000000</td>\n    </tr>\n    <tr>\n      <th>3.0</th>\n      <th>1.0</th>\n      <th>X</th>\n      <td>1.000000</td>\n    </tr>\n  </tbody>\n</table>",
+            "downloadable": [
+                {
+                    "text": "balls,strikes,type,type\n0.0,0.0,S,0.6666666666666666\n0.0,0.0,B,0.3333333333333333\n0.0,1.0,B,0.75\n0.0,1.0,X,0.25\n1.0,0.0,B,0.5\n1.0,0.0,S,0.5\n1.0,1.0,X,0.5\n1.0,1.0,B,0.25\n1.0,1.0,S,0.25\n1.0,2.0,X,1.0\n2.0,0.0,S,1.0\n2.0,1.0,B,0.5\n2.0,1.0,S,0.5\n2.0,2.0,X,1.0\n3.0,1.0,X,1.0\n",
+                    "filename": "pitch_outcome.csv"
+                }
+            ]
+        },
+        {
+            "tags": {
+                "attribute": "pitch type"
+            },
+            "title": "Pitch type by count for all players",
+            "renderable": "<table class=\"dataframe\">\n  <thead>\n    <tr>\n      <th></th>\n      <th></th>\n      <th></th>\n      <th>pitch_type</th>\n    </tr>\n    <tr>\n      <th>balls</th>\n      <th>strikes</th>\n      <th>pitch_type</th>\n      <th></th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th rowspan=\"6\" valign=\"top\">0.0</th>\n      <th rowspan=\"3\" valign=\"top\">0.0</th>\n      <th>CU</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>FF</th>\n      <td>0.333333</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>0.166667</td>\n    </tr>\n    <tr>\n      <th rowspan=\"3\" valign=\"top\">1.0</th>\n      <th>FF</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>CU</th>\n      <td>0.250000</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>0.250000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"5\" valign=\"top\">1.0</th>\n      <th rowspan=\"2\" valign=\"top\">0.0</th>\n      <th>FF</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"2\" valign=\"top\">1.0</th>\n      <th>FF</th>\n      <td>0.750000</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>0.250000</td>\n    </tr>\n    <tr>\n      <th>2.0</th>\n      <th>FF</th>\n      <td>1.000000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"4\" valign=\"top\">2.0</th>\n      <th>0.0</th>\n      <th>SL</th>\n      <td>1.000000</td>\n    </tr>\n    <tr>\n      <th rowspan=\"2\" valign=\"top\">1.0</th>\n      <th>FF</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>SL</th>\n      <td>0.500000</td>\n    </tr>\n    <tr>\n      <th>2.0</th>\n      <th>FF</th>\n      <td>1.000000</td>\n    </tr>\n    <tr>\n      <th>3.0</th>\n      <th>1.0</th>\n      <th>SL</th>\n      <td>1.000000</td>\n    </tr>\n  </tbody>\n</table>",
+            "downloadable": [
+                {
+                    "text": "balls,strikes,pitch_type,pitch_type\n0.0,0.0,CU,0.5\n0.0,0.0,FF,0.3333333333333333\n0.0,0.0,SL,0.16666666666666666\n0.0,1.0,FF,0.5\n0.0,1.0,CU,0.25\n0.0,1.0,SL,0.25\n1.0,0.0,FF,0.5\n1.0,0.0,SL,0.5\n1.0,1.0,FF,0.75\n1.0,1.0,SL,0.25\n1.0,2.0,FF,1.0\n2.0,0.0,SL,1.0\n2.0,1.0,FF,0.5\n2.0,1.0,SL,0.5\n2.0,2.0,FF,1.0\n3.0,1.0,SL,1.0\n",
+                    "filename": "pitch_type.csv"
+                }
+            ]
+        }
+    ]
+}

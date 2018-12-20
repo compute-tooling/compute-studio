@@ -2,8 +2,6 @@ import pytest
 
 from django.contrib import auth
 
-from webapp.apps.core.tests.compute import MockCompute
-
 @pytest.mark.django_db
 class CoreAbstractViewsTest():
     """
@@ -49,7 +47,7 @@ class CoreAbstractViewsTest():
         - test download page returns 200 and zip file content
         - test logged out user can view outputs page
         """
-        monkeypatch.setattr(f'webapp.apps.{self.app_name}.views.Compute',
+        monkeypatch.setattr(f'webapp.apps.projects.{self.app_name}.views.Compute',
                             self.mockcompute)
         monkeypatch.setattr('webapp.apps.core.views.Compute', self.mockcompute)
 
@@ -74,7 +72,7 @@ class CoreAbstractViewsTest():
         """
         Tests:
         """
-        monkeypatch.setattr(f'webapp.apps.{self.app_name}.views.Compute',
+        monkeypatch.setattr(f'webapp.apps.projects.{self.app_name}.views.Compute',
                             self.mockcompute)
         monkeypatch.setattr('webapp.apps.core.views.Compute', self.mockcompute)
 
@@ -104,7 +102,7 @@ class CoreAbstractViewsTest():
         """
         resp = client.post(f'/{self.app_name}/', data=self.inputs_ok())
         assert resp.status_code == 302
-        assert resp.url == '/users/login/?next=/upload/'
+        assert resp.url == f'/users/login/?next=/{self.app_name}/'
 
     def login_client(self, client, user, password):
         """
@@ -115,7 +113,7 @@ class CoreAbstractViewsTest():
         return success
 
     def inputs_ok(self):
-        raise NotImplementedError()
+        return {"has_errors": False}
 
     def outputs_ok(self):
         raise NotImplementedError()

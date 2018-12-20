@@ -1,8 +1,10 @@
 import os
+import json
 
 import pytest
 import stripe
 
+from django import forms
 from django.core.management import call_command
 from django.contrib.auth import get_user_model
 
@@ -11,9 +13,12 @@ from webapp.apps.billing.models import (Customer, Plan, Subscription,
 from webapp.apps.billing.utils import USE_STRIPE
 from webapp.apps.users.models import Profile
 
+from webapp.apps.core.meta_parameters import MetaParameter, MetaParameters
+
 
 stripe.api_key = os.environ.get('STRIPE_SECRET')
 
+###########################User/Billing Fixtures###############################
 
 @pytest.fixture(scope='session')
 def django_db_setup(django_db_setup, django_db_blocker):
@@ -118,3 +123,27 @@ def subscription(db, customer, licensed_plan, metered_plan):
         assert si
 
     return subscription
+
+
+############################Core Fixtures###############################
+@pytest.fixture
+def core_inputs():
+    path = os.path.abspath(os.path.dirname(__file__))
+    with open(os.path.join(path, "core/tests/inputs.json")) as f:
+        return json.loads(f.read())
+
+
+@pytest.fixture
+def meta_param():
+    return MetaParameters(
+        parameters=[MetaParameter(
+            name="metaparam",
+            default=1,
+            field=forms.IntegerField()
+        )]
+    )
+
+
+@pytest.fixture
+def valid_meta_params(meta_param):
+    return meta_param.validate({})

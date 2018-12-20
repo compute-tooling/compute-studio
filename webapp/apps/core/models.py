@@ -1,23 +1,20 @@
 import datetime
-
-from django.db import models
-from django.contrib.postgres.fields import JSONField
-from django.core.validators import validate_comma_separated_integer_list
-from django.contrib.auth import get_user_model
-from django.utils.timezone import make_aware
-from django.utils.functional import cached_property
-
 import uuid
 
 from dataclasses import dataclass, field
 from typing import List, Union
 
+from django.db import models
+from django.utils.functional import cached_property
+from django.contrib.postgres.fields import JSONField
+from django.utils.timezone import make_aware
+
 from webapp.apps.users.models import Project, Profile
 
 
 class CoreInputs(models.Model):
-    raw_gui_field_inputs = JSONField(default=None, blank=True, null=True)
-    gui_field_inputs = JSONField(default=None, blank=True, null=True)
+    raw_gui_inputs = JSONField(default=None, blank=True, null=True)
+    gui_inputs = JSONField(default=None, blank=True, null=True)
 
     # Validated GUI input that has been parsed to have the correct data types,
     # or JSON reform uploaded as file
@@ -28,18 +25,16 @@ class CoreInputs(models.Model):
     # The parameters that will be used to run the model
     upstream_parameters = JSONField(default=dict, blank=True, null=True)
 
-    # Starting year of the reform calculation
-    first_year = models.IntegerField(default=None, null=True)
-
-    # List of years for which to calculate the reform, as offsets from the
-    # first year
-    years_n = models.CharField(
-        validators=[validate_comma_separated_integer_list],
-        max_length=300)
-
-    @cached_property
-    def years(self):
-        return [self.first_year + int(i) for i in self.years_n.split(",")]
+    @property
+    def deserialized_inputs(self):
+        """
+        Method for de-serializing parameters for submission to the modeling
+        project. This is helpful if information required for deserializing an
+        object is lost during serialization. For example, projects that depend
+        on integer keys in a dictionary will run into issues with those keys
+        being converted into strings during serialization.
+        """
+        return self.upstream_parameters
 
     class Meta:
         abstract = True
@@ -47,8 +42,11 @@ class CoreInputs(models.Model):
 
 
 class CoreRun(models.Model):
+    dimension_name = "Dimension"
+
     # Subclasses must implement:
     # inputs = models.OneToOneField(CoreInputs)
+    meta_data = JSONField(default=None, blank=True, null=True)
     outputs = JSONField(default=None, blank=True, null=True)
     aggr_outputs = JSONField(default=None, blank=True, null=True)
     uuid = models.UUIDField(
@@ -62,10 +60,10 @@ class CoreRun(models.Model):
         blank=True,
         default=None,
         max_length=4000)
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE,
-                                related_name='runs')
+    profile = models.ForeignKey(Profile, on_delete=models.PROTECT,
+                                related_name='%(app_label)s_%(class)s_runs')
     project = models.ForeignKey(Project, on_delete=models.PROTECT,
-                                related_name='runs')
+                                related_name='%(app_label)s_%(class)s_runs')
     # run-time in seconds
     run_time = models.IntegerField(default=0)
     # run cost can be very small. ex: 4 sec * ($0.09/hr)/3600
@@ -92,6 +90,11 @@ class CoreRun(models.Model):
     def zip_filename(self):
         return 'comp.zip'
 
+    @cached_property
+    def dimension(self):
+        # return unique values set at the dimension level.
+        return list({item["dimension"] for item in self.outputs if item["dimension"]})
+
     class Meta:
         abstract = True
 
@@ -100,12 +103,7 @@ class CoreRun(models.Model):
 class Tag:
     key: str
     values: List['TagOption']
-    hidden: bool = False
-
-    def __post_init__(self):
-        for option in self.values[1:]:
-            for child in option.children:
-                child.hidden = True
+    hidden: bool = True
 
 
 @dataclass
@@ -113,4 +111,5 @@ class TagOption:
     value: str
     title: str
     tooltip: Union[str, None] = None
+    active: bool = False
     children: List[Tag] = field(default_factory=list)

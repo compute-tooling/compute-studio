@@ -17,9 +17,14 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
+    # admin apps
     path('admin/', admin.site.urls),
     path('', include("webapp.apps.pages.urls")),
-    path('upload/', include('webapp.apps.upload.urls')),
+
+    # add project URL's here
+    path('compbaseball/', include('webapp.apps.projects.compbaseball.urls')),
+
+    # user/billing apps
     path('users/', include('webapp.apps.users.urls')),
     path('users/', include('django.contrib.auth.urls')),
     path('billing/', include('webapp.apps.billing.urls')),

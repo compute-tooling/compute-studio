@@ -605,3 +605,8 @@ class Event(models.Model):
             metadata=stripe_event.to_dict()
         )
         return event
+
+def sync_customer_subscriptions():
+    """needs improvement, creates duplicate items"""
+    for customer in Customer.objects.all():
+        customer.subscribe_to_public_plans()

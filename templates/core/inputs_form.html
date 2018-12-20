@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load strings %}
+{% load inputs %}
+{% block content %}
+
+<form class="inputs-form" id="inputs-form" method="post" action="/{{app_name}}/">
+{% csrf_token %}
+<div class="container" style="padding:50px 50px;">
+  <h1>{{ project_name }}</a></h1>
+  <div>{{app_description}}</div>
+  {% include 'core/project_info.html' %}
+  {% block project_context %}
+  {% endblock %}
+</div>
+
+<input type="hidden" name="has_errors" value="{{ has_errors }}" />
+<div class="wrapper" style="padding:50px 50px;">
+    <!-- Sidebar -->
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <h3>Input Sections</h3>
+        </div>
+        <ul class="list-unstyled components">
+            <li>
+                <a href="/{{app_name}}/" class="btn btn-secondary">Reset Parameters</a>
+            </li>
+            <hr>
+            <li>
+              <ul class="list-unstyled components">
+                  {% for section, params in default_form.items %}
+                    <li><a class="btn inverse-btn-match-nav dropdown-toggle"
+                        style="color:inherit;margin-top:10px;margin-bottom:2px;"
+                        href="#{{ section }}-submenu"
+                        data-toggle="collapse"
+                        aria-expanded="false"
+                        role="button"
+                        aria-controls="{{ section }}-submenu">
+                        {{ section.title }} Parameter Sections
+                    </a>
+                    </li>
+                    <ul class="collapse list-unstyled" id="{{ section }}-submenu">
+                    {% for param in params %}
+                      {% for key, value in param.items %}
+                        <li><a style="color:inherit;margin-top:2px;margin-bottom:2px;" href="#{{ key|make_id }}">{{ key }}</a></li>
+                      {% endfor %}
+                    {% endfor %}
+                    </ul>
+                  {% endfor %}
+                </ul>
+              </li>
+            <hr>
+            <li>
+              <button class="btn btn-block btn-match-nav" type="submit" name="full_calc" value="true" style="margin:10px;margin-left:0px;">Run simulation</button>
+            </li>
+        </ul>
+    </nav>
+  <div id="content" style="margin-left:20px; width: 60rem;">
+    <div class="col-xs-9">
+        <div class="inputs-main">
+          {% for error in form.non_field_errors %}
+              <div class="alert alert-danger text-center lert-dismissible" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+                {{ error }}
+              </div>
+          {% endfor %}
+          {% include 'core/inputs/metaparameters.html' with form=form title="Meta-Parameters" %}
+          <hr class="my-4">
+          {% for section, params in default_form.items %}
+              {% include 'core/inputs/major_section.html' with title=section.title params=params %}
+          {% endfor %}
+        </div> <!-- main -->
+      </div>
+  </div>
+</div>
+</form>
+<script src="{% static 'js/core.js' %}"></script>
+{% endblock %}
