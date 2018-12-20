@@ -10,5 +10,6 @@ gunicorn
 stripe
 sendgrid-django
 pytest
-django_widget_tweaks
+django-widget-tweaks
+django-crispy-forms
 compbaseball
