@@ -1,6 +1,6 @@
 // Create a Stripe client.
 // todo read token from environment variable
-var stripe = Stripe('pk_test_HTL5HF0j7ss0EgfAXRCPfnNT');
+var stripe = Stripe('pk_test_EXRaylwZlEb3BZ668mbRWCZz');
 
 // Create an instance of Elements.
 var elements = stripe.elements();
@@ -65,7 +65,7 @@ function stripeTokenHandler(token) {
     hiddenInput.setAttribute('name', 'stripeToken');
     hiddenInput.setAttribute('value', token.id);
     form.appendChild(hiddenInput);
-  
+
     // Submit the form
     form.submit();
   }
