@@ -10,6 +10,8 @@ class SeparatedValue:
                  **field_kwargs):
         self.name = name
         self.label = label
+        if number_dims > 0:
+            default_value = ', '.join([str(v) for v in default_value])
         attrs = {
             'class': 'form-control',
             'placeholder': default_value,

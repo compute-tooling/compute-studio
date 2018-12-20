@@ -5,6 +5,8 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
 
+from webapp.apps.billing.utils import USE_STRIPE
+
 from .forms import UserCreationForm, CancelSubscriptionForm, DeleteUserForm
 from .models import is_profile_active
 
@@ -17,6 +19,10 @@ class SignUp(generic.CreateView):
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["use_stripe"] = USE_STRIPE
+        return context
 
 class UserProfile(View):
     template_name = 'registration/profile_base.html',
