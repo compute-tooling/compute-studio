@@ -75,11 +75,12 @@
   <br>
   <div id="table-drilldown-container">
     <div>
-      <div class="container">
-        <div class="row col-6" style="padding:10px">
-          <a href="{{ object.get_absolute_download_url }}" class="btn btn-block btn-match-nav">Download Results</a>
-        </div>
-        <div class="row">
+      <div class="container" style="padding:20px;">
+          <div class="container">
+              <div style="padding:10px;">
+                <a href="{{ object.get_absolute_download_url }}" class="btn btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Download Results</a>
+              </div>
+            <div class="row">
           {% if object.aggr_outputs %}
           <div class="col-md-12" id="aggr-totals-container">
             <div class="card">
