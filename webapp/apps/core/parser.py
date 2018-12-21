@@ -58,8 +58,9 @@ class Parser:
         unflattened = {}
         for sect, inputs in inputs_by_section.items():
             unflattened[sect] = self.unflatten(inputs)
-
-        return unflattened, "", {}
+        errors_warnings = {sect: {"errors": {}, "warnings": {}}
+                           for sect in inputs_by_section}
+        return unflattened, "", errors_warnings
 
     def unflatten(self, parsed_input):
         """

@@ -176,6 +176,11 @@ class OutputsView(SuperclassTemplateNameMixin, DetailView):
         return render(self.request, 'core/failed.html',
                       {"error_msg": self.object.error_text})
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["result_header"] = self.result_header
+        return context
+
     def dispatch(self, request, *args, **kwargs):
         compute = Compute()
         self.object = self.get_object()

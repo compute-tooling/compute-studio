@@ -67,7 +67,7 @@ class Submit:
                 errors_warnings,
             ) = parser.parse_parameters()
             self.model.upstream_parameters = upstream_parameters
-            self.model.input_file = upstream_json_files
+            self.model.inputs_file = upstream_json_files
             self.model.errors_warnings = errors_warnings
             self.model.save()
 
