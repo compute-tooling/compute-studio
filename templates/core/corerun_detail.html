@@ -157,10 +157,14 @@
           </div>
         {% endif %}
         </div>
-        <div class="row col-4" style="padding:10px">
-            <a href="{{ object.get_absolute_download_url }}/?raw_json=True" class="btn btn-block inverse-btn-match-nav">Download Raw Output</a>
+        <div class="container">
+          <div style="padding:10px;">
+            <a href="{{ object.get_absolute_download_url }}" class="btn btn-lg btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Download Results</a>
           </div>
-      </div>
+          <div style="padding:10px;">
+            <a href="{{ object.get_absolute_download_url }}/?raw_json=True" class="btn btn-sm inverse-btn-match-nav w-50 mx-auto" style="display:block;">Download raw JSON</a>
+          </div>
+        </div>
     </div>
   </div>
   <!-- <a class="btn btn-block btn-match-nav"
