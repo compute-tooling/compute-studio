@@ -83,8 +83,8 @@
             {% for sect, jsonobj in object.inputs.inputs_file.items %}
               <li>
               <ul class="list-unstyled">
-              <li><i> Inputs for section: <code>{{sect}}</code></i></li>
-              <li><code>{{jsonobj}}</code></li>
+              <li><p><i> Inputs for section: </i> <code>{{sect}}</code></p></li>
+              <li><pre><code>{{jsonobj}}</code></li></pre>
               </ul>
               </li>
             {% endfor %}
