@@ -128,10 +128,10 @@ The function returns the results of the simulation:
     Here's what you get after filling in this function:
 
     Aggregate outputs:
-    ![alt text](https://user-images.githubusercontent.com/9206065/50243787-1eeada00-039c-11e9-8c1a-984dcf7c871f.png)
+    ![alt text](https://user-images.githubusercontent.com/9206065/50352415-21bc0b00-0513-11e9-9fc2-b84cedb3cafe.png)
 
     Outputs:
-    ![alt text](https://user-images.githubusercontent.com/9206065/50243648-ad129080-039b-11e9-87ee-fe5ec4e8ef3f.png)
+    ![alt text](https://user-images.githubusercontent.com/9206065/50352416-21bc0b00-0513-11e9-8ec8-260a80b6c114.png)
 
     Toggle along dimension:
-    ![alt text](https://user-images.githubusercontent.com/9206065/50243656-b26fdb00-039b-11e9-8648-6d083a54a47f.png)
+    ![alt text](https://user-images.githubusercontent.com/9206065/50352417-21bc0b00-0513-11e9-8e4e-d0bb329e842e.png)
