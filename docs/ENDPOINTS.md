@@ -88,6 +88,10 @@ Warnings/Errors:
     Here's what you get after filling in this function:
     ![alt text](https://user-images.githubusercontent.com/9206065/50243758-0a0e4680-039c-11e9-9a98-56e2cbdd2f8f.png)
 
+    The `jsonparams` data is displayed on the outputs page:
+
+    ![alt text](https://user-images.githubusercontent.com/9206065/50363819-60fe5200-053b-11e9-8b5c-e2eafe7f2668.png)
+
 Run simulation
 ----------------
 

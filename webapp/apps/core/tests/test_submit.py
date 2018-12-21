@@ -1,3 +1,5 @@
+import json
+
 from django.test import RequestFactory
 
 from webapp.apps.core.submit import Submit, Save
@@ -23,6 +25,11 @@ def test_submit(core_inputs, meta_param, profile):
 
         def package_defaults(self):
             return core_inputs
+
+        def parse_parameters(self):
+            params, jsonstr, errors_warnings = super().parse_parameters()
+            jsonstr = json.dumps({"testing": [1, 2, 3]})
+            return params, jsonstr, errors_warnings
 
     class MockInputsForm(InputsForm):
         displayer_class = MockDisplayer
@@ -52,5 +59,8 @@ def test_submit(core_inputs, meta_param, profile):
     compute = MockCompute()
     submit = MockSubmit(request, compute)
     assert not submit.stop_submission
+    assert submit.model.upstream_parameters
+    assert submit.model.inputs_file
+    assert submit.model.errors_warnings
     save = MockSave(submit)
     assert save.runmodel_instance
