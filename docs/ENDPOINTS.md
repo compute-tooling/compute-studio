@@ -90,7 +90,7 @@ Warnings/Errors:
 
     The `jsonparams` data is displayed on the outputs page:
 
-    ![alt text](https://user-images.githubusercontent.com/9206065/50363064-3232ac80-0538-11e9-9eee-4f6dd8ab2238.png)
+    ![alt text](https://user-images.githubusercontent.com/9206065/50363819-60fe5200-053b-11e9-8b5c-e2eafe7f2668.png)
 
 Run simulation
 ----------------
