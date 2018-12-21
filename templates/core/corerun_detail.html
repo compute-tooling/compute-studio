@@ -13,9 +13,21 @@
   .text-white {
     color: white;
   }
-  .table > thead > tr > th {
-    border: 0;
+  /* table css */
+  table.table-bordered{
+    border:1px solid #212121;
+    margin-top:20px;
   }
+  table.table-bordered > thead > tr > th{
+      border:1px solid #212121;
+  }
+  table.table-bordered > tbody > tr > td{
+      border:1px solid #212121;
+  }
+  table.table-bordered > tbody > tr > th{
+      border:1px solid #212121;
+  }
+
   .single-line {
     white-space: nowrap;
   }
@@ -248,7 +260,7 @@ var activateAggrTablesBySelectedTags = function () {
 };
 
 $(document).ready(function () {
-  $('table').addClass('table').addClass('table-striped');
+  $('table').addClass('table').addClass('table-bordered');
   activateAggrTablesBySelectedTags();
   initVisibleAggrTable();
   activateYearTablesBySelectedTags();
