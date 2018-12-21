@@ -9,9 +9,11 @@
   <form method="post" id="payment-form">
     {% csrf_token %}
     {% include 'includes/prettyform.html' with form=form %}
-    <div class='stripe-input'>
-      {% include 'billing/base.html' %}
-    </div>
+    {% if use_stripe %}
+      <div class='stripe-input'>
+        {% include 'billing/base.html' %}
+      </div>
+    {% endif %}
     <button style="margin: 10px;" type="submit" class="btn btn-comp">Sign up</button>
   </form>
 {% endblock %}
