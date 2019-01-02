@@ -178,3 +178,7 @@ code {
   color: inherit;
   background-color: rgba(27,31,35,0.05);
 }
+
+.form-group.edited .form-control {
+  background-color: #e5e5e5;
+}

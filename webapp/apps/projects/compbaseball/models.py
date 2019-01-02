@@ -36,7 +36,7 @@ class CompbaseballRun(CoreRun):
         kwargs = {
             'pk': self.pk
         }
-        return reverse('edit_compbaseball_inputs', kwargs=kwargs)
+        return reverse('compbaseball_edit', kwargs=kwargs)
 
     def get_absolute_download_url(self):
         kwargs = {
