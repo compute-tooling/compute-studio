@@ -182,3 +182,11 @@ code {
 .form-group.edited .form-control {
   background-color: #e5e5e5;
 }
+
+.input-divider {
+  border-top: 3px solid #e5e5e5;
+}
+
+.card {
+  box-shadow: 0 1px 1px white;
+}
