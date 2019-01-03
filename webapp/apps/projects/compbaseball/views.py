@@ -13,6 +13,7 @@ from .constants import (COMPBASEBALL_VERSION, APP_NAME, APP_DESCRIPTION)
 
 compute = Compute()
 
+
 class CompbaseballInputsMixin:
     form_class = CompbaseballInputsForm
     displayer_class = CompbaseballDisplayer
@@ -36,8 +37,7 @@ class CompbaseballInputsView(CompbaseballInputsMixin, InputsView):
 
 class CompbaseballEditInputsView(CompbaseballInputsMixin, EditInputsView):
     """
-    A Django view for serving the default input page, validating the inputs,
-    and submitting them to the backend worker nodes.
+    A Django view for serving serving edited parameters.
     """
     model = CompbaseballRun
 
