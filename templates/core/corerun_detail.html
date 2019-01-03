@@ -92,10 +92,10 @@
           </div>
           <div class="container">
             <div style="padding:10px;">
-              <a href="{{ object.get_absolute_download_url }}" class="btn btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Download results</a>
+              <a href="{{ object.get_absolute_edit_url }}" class="btn inverse-btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Edit inputs</a>
             </div>
             <div style="padding:10px;">
-              <a href="{{ object.get_absolute_edit_url }}" class="btn btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Edit inputs</a>
+              <a href="{{ object.get_absolute_download_url }}" class="btn inverse-btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Download results</a>
             </div>
           <div class="row">
           {% if object.aggr_outputs %}
