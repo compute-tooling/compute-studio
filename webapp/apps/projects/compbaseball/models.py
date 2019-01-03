@@ -23,7 +23,7 @@ class CompbaseballRun(CoreRun):
     """
     dimension_name = "Batter"
 
-    inputs = models.OneToOneField(CompbaseballInputs, on_delete=models.PROTECT,
+    inputs = models.OneToOneField(CompbaseballInputs, on_delete=models.CASCADE,
                                   related_name='outputs')
 
     def get_absolute_url(self):
