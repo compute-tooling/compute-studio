@@ -68,6 +68,39 @@ class CoreAbstractViewsTest():
         assert resp._headers['content-type'] == ('Content-Type',
                                                  'application/zip')
 
+    def test_edit_page(self, monkeypatch, client, password, profile):
+        """
+        Tests:
+        - post with logged-in user returns 302 redirect
+        - test render results page returns 200
+        - test get edit page
+
+        Note: it would be helpful to do a post with a subset of the inputs
+        parameters and a subsequent post on the edit page with the remaining
+        parameters. However, the django client doesn't keep the context state
+        in the same way as the browser. For now, ability to get the edit page
+        is all that will be tested.
+        """
+        monkeypatch.setattr(f'webapp.apps.projects.{self.app_name}.views.Compute',
+                            self.mockcompute)
+        monkeypatch.setattr('webapp.apps.core.views.Compute', self.mockcompute)
+
+        self.login_client(client, profile.user, password)
+        resp = client.post(f'/{self.app_name}/', data=self.inputs_ok())
+        assert resp.status_code == 302 # redirect
+        idx = resp.url[:-1].rfind('/')
+        slug = resp.url[(idx + 1):-1]
+        outputs_url = resp.url
+        assert outputs_url == f'/{self.app_name}/{slug}/'
+
+        # test get ouputs page
+        resp = client.get(outputs_url)
+        assert resp.status_code == 200
+
+        # test get edit page
+        edit_resp = client.get(f"{outputs_url}/edit")
+        assert edit_resp.status_code == 200
+
     def test_run_reporting(self, monkeypatch, client, password, profile):
         """
         Tests:
