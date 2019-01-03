@@ -21,7 +21,7 @@ class {Project}Run(CoreRun):
     """
     dimension_name = "Name of table dimension goes here"
 
-    inputs = models.OneToOneField({Project}Inputs, on_delete=models.PROTECT,
+    inputs = models.OneToOneField({Project}Inputs, on_delete=models.CASCADE,
                                   related_name='outputs')
 
     def get_absolute_url(self):
@@ -34,7 +34,7 @@ class {Project}Run(CoreRun):
         kwargs = {
             'pk': self.pk
         }
-        return reverse('edit_{project}_inputs', kwargs=kwargs)
+        return reverse('{project}_edit', kwargs=kwargs)
 
     def get_absolute_download_url(self):
         kwargs = {

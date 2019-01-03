@@ -12,4 +12,9 @@ class {Project}Displayer(Displayer):
         functions to load the project's inputs data. In the future, this will
         be done over the distributed REST API.
         """
-        pass
+        ####################################
+        # code snippet
+
+        ####################################
+
+        return package_defaults(**self.meta_parameters)
