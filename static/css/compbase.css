@@ -53,6 +53,11 @@ p {
   background-color: #e5e5e5 !important;
 }
 
+.go-btn {
+  color: white;
+  background-color: #009900;
+}
+
 .btn-comp {
   background-color:#cccc !important;
 }
