@@ -13,11 +13,7 @@ from .constants import (COMPBASEBALL_VERSION, APP_NAME, APP_DESCRIPTION)
 
 compute = Compute()
 
-class CompbaseballInputsView(InputsView):
-    """
-    A Django view for serving the default input page, validating the inputs,
-    and submitting them to the backend worker nodes.
-    """
+class CompbaseballInputsMixin:
     form_class = CompbaseballInputsForm
     displayer_class = CompbaseballDisplayer
     submit_class = CompbaseballSubmit
@@ -31,25 +27,19 @@ class CompbaseballInputsView(InputsView):
     upstream_version = COMPBASEBALL_VERSION
 
 
-class CompbaseballEditInputsView(EditInputsView):
+class CompbaseballInputsView(CompbaseballInputsMixin, InputsView):
+    """
+    A Django view for serving the default input page, validating the inputs,
+    and submitting them to the backend worker nodes.
+    """
+
+
+class CompbaseballEditInputsView(CompbaseballInputsMixin, EditInputsView):
     """
     A Django view for serving the default input page, validating the inputs,
     and submitting them to the backend worker nodes.
     """
     model = CompbaseballRun
-
-    form_class = CompbaseballInputsForm
-    displayer_class = CompbaseballDisplayer
-    submit_class = CompbaseballSubmit
-    save_class = CompbaseballSave
-    project_name = "CompBaseball"
-    app_name = APP_NAME
-    app_description = APP_DESCRIPTION
-    meta_parameters = compbaseball_meta_parameters
-    meta_options = []
-    has_errors = False
-    upstream_version = COMPBASEBALL_VERSION
-
 
 class CompbaseballOutputsView(OutputsView):
     """

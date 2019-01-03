@@ -24,7 +24,10 @@ from .meta_parameters import meta_parameters
 from .submit import handle_submission, BadPost
 
 
-class InputsView(View):
+class InputsMixin:
+    """
+    Define class attributes and common methods for inputs form views.
+    """
     form_class = None
     displayer_class = Displayer
     submit_class = None
@@ -56,6 +59,9 @@ class InputsView(View):
             'exp_cost': f'${exp_cost}',
             'exp_time': f'{exp_time} seconds'}
         return context
+
+
+class InputsView(InputsMixin, View):
 
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET)
@@ -127,61 +133,25 @@ class InputsView(View):
         return render(request, self.template_name, context)
 
 
-class EditInputsView(DetailView):
+class EditInputsView(InputsMixin, DetailView):
     model = CoreRun
-
-    form_class = None
-    displayer_class = Displayer
-    submit_class = None
-    save_class = None
-    template_name = "core/inputs_form.html"
-    project_name = "Inputs"
-    app_name = "core"
-    app_description = "Placeholder description"
-    meta_parameters = meta_parameters
-    meta_options = {}
-    has_errors = False
-    upstream_version = None
-    webapp_version = WEBAPP_VERSION
-
-    def project_context(self, request):
-        project = Project.objects.get(name=self.project_name)
-        user = request.user
-        can_run = user.is_authenticated and is_profile_active(user)
-        rate = round(project.server_cost, 2)
-        exp_cost, exp_time = project.exp_job_info(adjust=True)
-
-        context = {
-            'rate': f'${rate}/hour',
-            'project_name': self.project_name,
-            'app_name': self.app_name,
-            'app_description': self.app_description,
-            'redirect_back': self.app_name,
-            'can_run': can_run,
-            'exp_cost': f'${exp_cost}',
-            'exp_time': f'{exp_time} seconds'}
-        return context
 
     def get(self, request, *args, **kwargs):
         print("edit method=GET", request.GET)
         model = self.get_object()
         initial = model.inputs.raw_gui_inputs
-        print(initial)
-        # names = {mp.name for mp in self.meta_parameters.parameters}
-        # valid_meta_params = {
-        #     k: inputs_form.cleaned_data.get(k, "") for k in names
-        # }
         inputs_form = self.form_class(initial=initial)
-
         # set cleaned_data with is_valid call
         inputs_form.is_valid()
         inputs_form.clean()
+        # is_bound is turned off so that the `initial` data is displayed.
+        # Note that form is validated and cleaned.
         inputs_form.is_bound = False
         context = self.project_context(request)
         return self._render_inputs_form(request, inputs_form, context)
 
     def post(self, request, *args, **kwargs):
-        raise Exception()
+        return HttpResponseNotFound('<h1>Post not allowed to edit page</h1>')
 
     def _render_inputs_form(self, request, inputs_form, context):
         names = {mp.name for mp in self.meta_parameters.parameters}
