@@ -68,7 +68,7 @@
                 {{ error }}
               </div>
           {% endfor %}
-          {% include 'core/inputs/metaparameters.html' with form=form title="Meta-Parameters" %}
+          {% include 'core/inputs/metaparameters.html' with form=form title="Meta Parameters" %}
           <hr class="my-4 input-divider">
           {% for section, params in default_form.items %}
               {% include 'core/inputs/major_section.html' with title=section.title params=params %}
