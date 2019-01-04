@@ -10,11 +10,12 @@ class SeparatedValue:
                  **field_kwargs):
         self.name = name
         self.label = label
+        self.default_value = default_value
         if number_dims > 0:
-            default_value = ', '.join([str(v) for v in default_value])
+            self.default_value = ', '.join([str(v) for v in self.default_value])
         attrs = {
             'class': 'form-control',
-            'placeholder': default_value,
+            'placeholder': self.default_value,
         }
         self.form_field = SeparatedValueField(
             label=self.label,
@@ -34,6 +35,7 @@ class CheckBox:
     def __init__(self, name, label, default_value, **field_kwargs):
         self.name = name
         self.label = label
+        self.default_value = default_value
         attrs = {
             'class': 'form-control sr-only',
         }
@@ -47,7 +49,7 @@ class CheckBox:
             label=self.label,
             widget=forms.TextInput(attrs=attrs),
             required=False,
-            initial=default_value,
+            initial=self.default_value,
             **field_kwargs
         )
 

@@ -25,20 +25,20 @@
         </div>
         <ul class="list-unstyled components">
             <li>
-                <a href="/{{app_name}}/" class="btn btn-secondary">Reset Parameters</a>
+                <a href="/{{app_name}}/" class="btn btn-block btn-secondary" style="margin:10px;margin-left:0px;">Reset</a>
             </li>
             <hr>
             <li>
               <ul class="list-unstyled components">
                   {% for section, params in default_form.items %}
-                    <li><a class="btn inverse-btn-match-nav dropdown-toggle"
+                    <li><a class="btn btn-block inverse-btn-match-nav dropdown-toggle"
                         style="color:inherit;margin-top:10px;margin-bottom:2px;"
                         href="#{{ section }}-submenu"
                         data-toggle="collapse"
                         aria-expanded="false"
                         role="button"
                         aria-controls="{{ section }}-submenu">
-                        {{ section.title }} Parameter Sections
+                        {{ section.title }}
                     </a>
                     </li>
                     <ul class="collapse list-unstyled" id="{{ section }}-submenu">
@@ -53,7 +53,7 @@
               </li>
             <hr>
             <li>
-              <button class="btn btn-block btn-match-nav" type="submit" name="full_calc" value="true" style="margin:10px;margin-left:0px;">Run simulation ({{ exp_cost }})</button>
+              <button class="btn btn-block go-btn" type="submit" name="full_calc" value="true" style="margin:10px;margin-left:0px;"><b>Run ({{ exp_cost }})</b></button>
             </li>
         </ul>
     </nav>
@@ -69,7 +69,7 @@
               </div>
           {% endfor %}
           {% include 'core/inputs/metaparameters.html' with form=form title="Meta-Parameters" %}
-          <hr class="my-4">
+          <hr class="my-4 input-divider">
           {% for section, params in default_form.items %}
               {% include 'core/inputs/major_section.html' with title=section.title params=params %}
           {% endfor %}

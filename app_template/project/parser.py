@@ -12,7 +12,11 @@ class {Project}Parser(Parser):
 
     def parse_parameters(self):
         params, jsonparams, errors_warnings = super().parse_parameters()
-        # parse the params, jsonparams, and errors_warnings further
 
-        # done parsing
-        return params, jsonparams, errors_warnings
+        ###################################
+        # code snippet
+
+        ####################################
+
+        return parse_user_inputs(params, jsonparams, errors_warnings,
+                                 **self.valid_meta_params)

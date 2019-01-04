@@ -1,5 +1,6 @@
 from webapp.apps.core.compute import Compute
-from webapp.apps.core.views import InputsView, OutputsView, OutputsDownloadView
+from webapp.apps.core.views import (InputsView, EditInputsView, OutputsView,
+                                    OutputsDownloadView)
 from webapp.apps.core.models import Tag, TagOption
 
 from .models import {Project}Run
@@ -7,26 +8,38 @@ from .displayer import {Project}Displayer
 from .submit import {Project}Submit, {Project}Save
 from .forms import {Project}InputsForm
 from .meta_parameters import {project}_meta_parameters
-from .constants import ({PROJECT}_VERSION, APP_NAME)
+from .constants import ({PROJECT}_VERSION, APP_NAME, APP_DESCRIPTION)
 
 
 compute = Compute()
 
-class {Project}InputsView(InputsView):
-    """
-    A Django view for serving the default input page, validating the inputs,
-    and submitting them to the backend worker nodes.
-    """
+
+class {Project}InputsMixin:
     form_class = {Project}InputsForm
     displayer_class = {Project}Displayer
     submit_class = {Project}Submit
     save_class = {Project}Save
     project_name = "{Project-Title}"
     app_name = APP_NAME
+    app_description = APP_DESCRIPTION
     meta_parameters = {project}_meta_parameters
     meta_options = []
     has_errors = False
     upstream_version = {PROJECT}_VERSION
+
+
+class {Project}InputsView({Project}InputsMixin, InputsView):
+    """
+    A Django view for serving the default input page, validating the inputs,
+    and submitting them to the backend worker nodes.
+    """
+
+
+class {Project}EditInputsView({Project}InputsMixin, EditInputsView):
+    """
+    A Django view for serving serving edited parameters.
+    """
+    model = {Project}Run
 
 
 class {Project}OutputsView(OutputsView):

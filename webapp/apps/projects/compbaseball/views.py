@@ -1,5 +1,6 @@
 from webapp.apps.core.compute import Compute
-from webapp.apps.core.views import InputsView, OutputsView, OutputsDownloadView
+from webapp.apps.core.views import (InputsView, EditInputsView, OutputsView,
+                                    OutputsDownloadView)
 from webapp.apps.core.models import Tag, TagOption
 
 from .models import CompbaseballRun
@@ -12,11 +13,8 @@ from .constants import (COMPBASEBALL_VERSION, APP_NAME, APP_DESCRIPTION)
 
 compute = Compute()
 
-class CompbaseballInputsView(InputsView):
-    """
-    A Django view for serving the default input page, validating the inputs,
-    and submitting them to the backend worker nodes.
-    """
+
+class CompbaseballInputsMixin:
     form_class = CompbaseballInputsForm
     displayer_class = CompbaseballDisplayer
     submit_class = CompbaseballSubmit
@@ -29,6 +27,19 @@ class CompbaseballInputsView(InputsView):
     has_errors = False
     upstream_version = COMPBASEBALL_VERSION
 
+
+class CompbaseballInputsView(CompbaseballInputsMixin, InputsView):
+    """
+    A Django view for serving the default input page, validating the inputs,
+    and submitting them to the backend worker nodes.
+    """
+
+
+class CompbaseballEditInputsView(CompbaseballInputsMixin, EditInputsView):
+    """
+    A Django view for serving serving edited parameters.
+    """
+    model = CompbaseballRun
 
 class CompbaseballOutputsView(OutputsView):
     """

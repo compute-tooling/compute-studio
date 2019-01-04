@@ -23,7 +23,7 @@ class CompbaseballRun(CoreRun):
     """
     dimension_name = "Batter"
 
-    inputs = models.OneToOneField(CompbaseballInputs, on_delete=models.PROTECT,
+    inputs = models.OneToOneField(CompbaseballInputs, on_delete=models.CASCADE,
                                   related_name='outputs')
 
     def get_absolute_url(self):
@@ -36,7 +36,7 @@ class CompbaseballRun(CoreRun):
         kwargs = {
             'pk': self.pk
         }
-        return reverse('edit_compbaseball_inputs', kwargs=kwargs)
+        return reverse('compbaseball_edit', kwargs=kwargs)
 
     def get_absolute_download_url(self):
         kwargs = {

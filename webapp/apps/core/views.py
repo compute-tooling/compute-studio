@@ -24,7 +24,10 @@ from .meta_parameters import meta_parameters
 from .submit import handle_submission, BadPost
 
 
-class InputsView(View):
+class InputsMixin:
+    """
+    Define class attributes and common methods for inputs form views.
+    """
     form_class = None
     displayer_class = Displayer
     submit_class = None
@@ -56,6 +59,9 @@ class InputsView(View):
             'exp_cost': f'${exp_cost}',
             'exp_time': f'{exp_time} seconds'}
         return context
+
+
+class InputsView(InputsMixin, View):
 
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET)
@@ -106,6 +112,7 @@ class InputsView(View):
             upstream_version=self.upstream_version,
             webapp_version=self.webapp_version,
             has_errors=self.has_errors,
+            **self.project_context(request)
         )
         return render(request, self.template_name, context)
 
@@ -113,6 +120,43 @@ class InputsView(View):
         names = {mp.name for mp in self.meta_parameters.parameters}
         valid_meta_params = {
             k: inputs_form.cleaned_data.get(k, "") for k in names
+        }
+        displayer = self.displayer_class(**valid_meta_params)
+        context = dict(
+            form=inputs_form,
+            default_form=displayer.defaults(flat=False),
+            upstream_version=self.upstream_version,
+            webapp_version=self.webapp_version,
+            has_errors=self.has_errors,
+            **context
+        )
+        return render(request, self.template_name, context)
+
+
+class EditInputsView(InputsMixin, DetailView):
+    model = CoreRun
+
+    def get(self, request, *args, **kwargs):
+        print("edit method=GET", request.GET)
+        model = self.get_object()
+        initial = model.inputs.raw_gui_inputs
+        inputs_form = self.form_class(initial=initial)
+        # set cleaned_data with is_valid call
+        inputs_form.is_valid()
+        inputs_form.clean()
+        # is_bound is turned off so that the `initial` data is displayed.
+        # Note that form is validated and cleaned.
+        inputs_form.is_bound = False
+        context = self.project_context(request)
+        return self._render_inputs_form(request, inputs_form, context)
+
+    def post(self, request, *args, **kwargs):
+        return HttpResponseNotFound('<h1>Post not allowed to edit page</h1>')
+
+    def _render_inputs_form(self, request, inputs_form, context):
+        names = {mp.name for mp in self.meta_parameters.parameters}
+        valid_meta_params = {
+            k: inputs_form.initial.get(k, "") for k in names
         }
         displayer = self.displayer_class(**valid_meta_params)
         context = dict(

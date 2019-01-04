@@ -1,13 +1,19 @@
 
+/* text */
 .explainer {
-    color: #212121;
+  color: #212121;
 }
-
 
 p {
   width:80ch
 }
 
+code {
+  color: inherit;
+  background-color: rgba(27,31,35,0.05);
+}
+
+/* login */
 .login-status {
   position:absolute;
   top:0px;
@@ -24,6 +30,7 @@ p {
   text-decoration: none;
 }
 
+/* navbar */
 .navbar-custom {
   background-color: #212121;
 }
@@ -43,6 +50,8 @@ p {
   color: #ffffff;
 }
 
+/* buttons with navbar color scheme */
+
 .btn-match-nav, .nav-pills .nav-link.active {
   background-color: #212121 !important;
   color: #e5e5e5 !important;
@@ -53,54 +62,25 @@ p {
   background-color: #e5e5e5 !important;
 }
 
+/*  go button! used for submitting things/important buttons on page */
+.go-btn {
+  color: white;
+  background-color: #009900;
+}
+
+/* used for the profile page--should probably be a the inverse-button-match-nav */
 .btn-comp {
   background-color:#cccc !important;
 }
 
-.progress-bar {
-  float: left;
-  width: 10%;
-  height: 100%;
-  font-size: 12px;
-  line-height: 20px;
-  color: #212121;
-  text-align: center;
-  background-color: #212121;
-}
 
-
-/**
- * The CSS shown here will not be introduced in the Quickstart guide, but shows
- * how you can use CSS to style your Element's container.
- */
- .StripeElement {
-  background-color: white;
-  height: 40px;
-  width:100%;
-  padding: 10px 12px;
-  border-radius: 4px;
-  border: 1px solid transparent;
-  box-shadow: 0 1px 3px 0 #e6ebf1;
-  -webkit-transition: box-shadow 150ms ease;
-  transition: box-shadow 150ms ease;
-}
-
-.StripeElement--focus {
-  box-shadow: 0 1px 3px 0 #cfd7df;
-}
-
-.StripeElement--invalid {
-  border-color: #fa755a;
-}
-
-.StripeElement--webkit-autofill {
-  background-color: #fefde5 !important;
-}
-
+/* format blocks of text */
 .wrapper {
   display: flex;
   align-items: stretch;
 }
+
+/* input form/output page formatting */
 
 #sidebar {
   min-width: 250px;
@@ -115,12 +95,13 @@ p {
 input.model:not(:placeholder-shown) {
   background-color:  #e5e5e5!important;
 }
-/* fade cpi button on toggle */
+
+/* fade auxillary button on toggle */
 .fader {
   opacity: 0.5;
 }
 
-
+/* format card objects */
 .card {
   margin-bottom: 20px;
   background-color: #fff;
@@ -162,7 +143,10 @@ input.model:not(:placeholder-shown) {
   border-bottom-right-radius: 3px;
   border-bottom-left-radius: 3px;
 }
-
+/* remove card border */
+.card {
+  box-shadow: 0 1px 1px white;
+}
 
 /* remove asterisk on crispy-form-fields */
 .asteriskField {
@@ -173,8 +157,23 @@ input.model:not(:placeholder-shown) {
   opacity: 0.5;
 }
 
+.form-group.edited .form-control {
+  background-color: #e5e5e5;
+}
 
-code {
-  color: inherit;
-  background-color: rgba(27,31,35,0.05);
+/* thicken hr-4 input divider */
+.input-divider {
+  border-top: 3px solid #e5e5e5;
+}
+
+/* format the progress bar */
+.progress-bar {
+  float: left;
+  width: 10%;
+  height: 100%;
+  font-size: 12px;
+  line-height: 20px;
+  color: #212121;
+  text-align: center;
+  background-color: #212121;
 }

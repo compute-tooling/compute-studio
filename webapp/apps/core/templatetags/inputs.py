@@ -4,8 +4,8 @@ register = template.Library()
 
 
 @register.filter
-def col_input_class(taxcalc_param):
-    cols = len(taxcalc_param.col_fields)
+def col_input_class(param):
+    cols = len(param.col_fields)
     if cols == 1:
         return "col-6"
     return "col"
