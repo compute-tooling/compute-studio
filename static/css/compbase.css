@@ -40,10 +40,12 @@ code {
 .navbar-custom .navbar-text {
   color: #e5e5e5;
 }
+
 /* change the link color */
 .navbar-custom .navbar-nav .nav-link {
   color: #cccc;
 }
+
 /* change the color of active or hovered links */
 .navbar-custom .nav-item.active .nav-link,
 .navbar-custom .nav-item:hover .nav-link {

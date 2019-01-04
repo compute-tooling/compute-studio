@@ -10,7 +10,7 @@ COMPBASEBALL_VERSION = "0.1.0"
 APP_DESCRIPTION = mark_safe("""
 <div>
     <p>
-        <a style="color:inherit;" href="https://github.com/hdoupe/compbaseball">CompBaseball</a>
+        <a href="https://github.com/hdoupe/compbaseball">CompBaseball</a>
         is an entertaining way to document COMP and demonstrate its abilities. Select a date
         range using the format YYYY-MM-DD. Keep in mind that CompBaseball only provides data
         on matchups going back to 2008. Two datasets are offered to run this model: one that
