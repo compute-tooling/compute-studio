@@ -30,18 +30,20 @@
                   <a class="dropdown-item" href="{% url 'compbaseball' %}">CompBaseball</a>
                 </div>
             </li>
+            <li>
+              <div class="login-status float-right" >
+                {% if user.is_authenticated %}
+                  Hi <a href="{% url 'userprofile' %}">{{ user.username }}!</a> |
+                  <a href="{% url 'logout' %}">logout</a>
+                {% else %}
+                  <a href="{% url 'login' %}">login</a> |
+                  <a href="{% url 'signup' %}">signup</a>
+                {% endif %}
+              </div>
+            </li>
         </ul>
     </nav>
 
-    <div class="login-status" >
-    {% if user.is_authenticated %}
-      Hi <a href="{% url 'userprofile' %}">{{ user.username }}!</a> |
-      <a href="{% url 'logout' %}">logout</a>
-    {% else %}
-      <a href="{% url 'login' %}">login</a> |
-      <a href="{% url 'signup' %}">signup</a>
-    {% endif %}
-  </div>
 
   <div class="container">
     {% block content %}
