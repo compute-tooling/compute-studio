@@ -84,4 +84,4 @@ The parties will engage in good faith negotiations to resolve the dispute for a 
 
 ## Governing law
 
-Except to the extent applicable law provides otherwise, this Agreement between you and GitHub and any access to or use of the Website or the Service are governed by the federal laws of the United States of America and the laws of the State of New Jersey, without regard to conflict of law provisions. You and COMP agree to submit to the exclusive jurisdiction and venue of the courts located in the City of Atlantic Highlands, NJ.
+Except to the extent applicable law provides otherwise, this Agreement between you and COMP and any access to or use of the Website or the Service are governed by the federal laws of the United States of America and the laws of the State of New Jersey, without regard to conflict of law provisions. You and COMP agree to submit to the exclusive jurisdiction and venue of the courts located in the City of Atlantic Highlands, NJ.
