@@ -13,6 +13,8 @@ dist-push:
 	cd distributed && \
 	docker push comp/distributed:$(TAG) && \
 	docker push comp/flask:$(TAG) && \
+	docker push comp/celerybase:$(TAG) && \
+	docker push comp/compbaseball_tasks:$(TAG)
 
 dist-test:
 	cd distributed && \
