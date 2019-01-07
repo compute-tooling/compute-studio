@@ -138,7 +138,10 @@ class EditInputsView(InputsMixin, DetailView):
     def get(self, request, *args, **kwargs):
         print("edit method=GET", request.GET)
         model = self.get_object()
-        initial = model.inputs.raw_gui_inputs
+        initial = {}
+        for k, v in model.inputs.raw_gui_inputs.items():
+            if v not in ("", None):
+                initial[k] = v
         for mp in self.meta_parameters.parameters:
             mp_val = getattr(model.inputs, mp.name, None)
             if mp_val is not None:
