@@ -11,7 +11,7 @@ class SeparatedValue:
         self.name = name
         self.label = label
         self.default_value = default_value
-        if number_dims > 0:
+        if isinstance(self.default_value, list):
             self.default_value = ', '.join([str(v) for v in self.default_value])
         attrs = {
             'class': 'form-control',

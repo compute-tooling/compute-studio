@@ -117,10 +117,9 @@ class InputsView(InputsMixin, View):
         return render(request, self.template_name, context)
 
     def _render_inputs_form(self, request, inputs_form, context):
-        names = {mp.name for mp in self.meta_parameters.parameters}
-        valid_meta_params = {
-            k: inputs_form.cleaned_data.get(k, "") for k in names
-        }
+        valid_meta_params = {}
+        for mp in self.meta_parameters.parameters:
+            valid_meta_params[mp.name] = inputs_form.cleaned_data[mp.name]
         displayer = self.displayer_class(**valid_meta_params)
         context = dict(
             form=inputs_form,
@@ -140,12 +139,15 @@ class EditInputsView(InputsMixin, DetailView):
         print("edit method=GET", request.GET)
         model = self.get_object()
         initial = model.inputs.raw_gui_inputs
+        for mp in self.meta_parameters.parameters:
+            mp_val = getattr(model.inputs, mp.name, None)
+            if mp_val is not None:
+                initial[mp.name] = mp_val
         inputs_form = self.form_class(initial=initial)
-        # set cleaned_data with is_valid call
+        # clean data with is_valid call.
         inputs_form.is_valid()
-        inputs_form.clean()
         # is_bound is turned off so that the `initial` data is displayed.
-        # Note that form is validated and cleaned.
+        # Note that form is validated and cleaned with is_bound call.
         inputs_form.is_bound = False
         context = self.project_context(request)
         return self._render_inputs_form(request, inputs_form, context)
@@ -154,10 +156,11 @@ class EditInputsView(InputsMixin, DetailView):
         return HttpResponseNotFound('<h1>Post not allowed to edit page</h1>')
 
     def _render_inputs_form(self, request, inputs_form, context):
-        names = {mp.name for mp in self.meta_parameters.parameters}
-        valid_meta_params = {
-            k: inputs_form.initial.get(k, "") for k in names
-        }
+        valid_meta_params = {}
+        for mp in self.meta_parameters.parameters:
+            valid_meta_params[mp.name] = (
+                inputs_form.initial.get(mp.name, None) or inputs_form[mp.name]
+            )
         displayer = self.displayer_class(**valid_meta_params)
         context = dict(
             form=inputs_form,
