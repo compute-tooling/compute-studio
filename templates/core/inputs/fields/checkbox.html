@@ -4,7 +4,7 @@
 provide label users will click to toggle the CPI on and off -->
 <input type="checkbox" id="{{ checkbox.id_for_label }}" name="{{ checkbox.name }}"
   value="True" class="form-control model" style="display:none;"
-  {% if checkbox.initial|is_truthy %} checked {% endif %} >
+  {% if checkbox.initial|is_truthy %} checked="checked" {% endif %} >
 <input type="hidden" id="hidden-{{ checkbox.id_for_label }}"name="{{ checkbox.name }}" value="False" class="model">
 <label for="{{ checkbox.id_for_label }}" id="label-{{ checkbox.id_for_label }}" class="btn btn-match-nav btn-sm {% if not checkbox.initial|is_truthy %}fader{% endif %}">
     CPI
@@ -15,9 +15,12 @@ provide label users will click to toggle the CPI on and off -->
   $(document).ready(function(){
     $("#label-{{ checkbox.id_for_label }}").click(function(){
       $(this).toggleClass("fader");
-      $("#{{ checkbox.id_for_label }}").prop("checked", function(i, val) {
-        return !val;
-      });
+      $input = $("{{ checkbox.id_for_label }}");
+      if ($input.prop("checked")) {
+        $input.prop("checked", false);
+      } else {
+        $input.prop("checked", true);
+      }
       $("#{{ checkbox.id_for_label }}").prop("check-edited", true);
     });
   });
