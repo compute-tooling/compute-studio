@@ -26,6 +26,24 @@ def dict_get(hash, key):
 
 
 @register.filter
+def is_truthy(checkbox):
+    """
+    Decide if checkbox should be on or not:
+    - value is set and it is true --> turn on
+    - place holder is True and value is not set --> turn on
+    """
+    def _is_truthy(val):
+        if val is True:
+            return True
+        if val == "True":
+            return True
+        return False
+    placeholder = checkbox.field.widget.attrs["placeholder"]
+    value = checkbox.value()
+    return _is_truthy(value) or (_is_truthy(placeholder) and value in (None, ""))
+
+
+@register.filter
 def length(list):
     return len(list)
 

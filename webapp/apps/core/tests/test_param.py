@@ -1,6 +1,6 @@
 import pytest
 
-from webapp.apps.core.param import Param, CheckBox, UnsupportedFieldArgument
+from webapp.apps.core.param import Param, CheckBox
 from webapp.apps.core.displayer import Displayer
 from webapp.apps.core.parser import Parser
 from webapp.apps.core.forms import InputsForm
@@ -24,13 +24,6 @@ def test_param(core_inputs, valid_meta_params):
 
 
 def test_checkboxfield():
-    with pytest.raises(UnsupportedFieldArgument):
-        checkbox = CheckBox(
-            "test",
-            "label",
-            True,
-            **{"disabled": True})
-
     checkbox = CheckBox(
         "test",
         "label",

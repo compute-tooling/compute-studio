@@ -11,10 +11,16 @@ class InputsForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         fields = args[0] if args else {}
-        args = ({}, )
-        clean_meta_parameters = self.meta_parameters.validate(fields)
-        # guarantee that we have meta_parameters
-        # this is important for empty or partially empty GET requests
+        if fields:
+            # POST inputs form
+            clean_meta_parameters = self.meta_parameters.validate(fields)
+        elif kwargs.get("initial", None) is not None:
+            # GET edit inputs form
+            clean_meta_parameters = self.meta_parameters.validate(
+                kwargs.get("initial"))
+        else:
+            # GET fresh inputs form
+            clean_meta_parameters = self.meta_parameters.validate({})
         fields.update(clean_meta_parameters)
         pd = self.displayer_class(**clean_meta_parameters)
         default_params = pd.defaults(flat=True)
