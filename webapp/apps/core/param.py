@@ -27,9 +27,6 @@ class SeparatedValue:
         )
 
 
-class UnsupportedFieldArgument(Exception):
-    pass
-
 class CheckBox:
 
     def __init__(self, name, label, default_value, **field_kwargs):
@@ -37,19 +34,12 @@ class CheckBox:
         self.label = label
         self.default_value = default_value
         attrs = {
-            'class': 'form-control sr-only',
+            'placeholder': str(self.default_value),
         }
-        # strange behavior results when disabled is used with the checkbox
-        # due to some javascript hackery that is already used for
-        # enabling/disabling this field
-        if "disabled" in field_kwargs:
-            msg = "Don't use 'disabled' with CheckBox Fields."
-            raise UnsupportedFieldArgument(msg)
         self.form_field = forms.NullBooleanField(
             label=self.label,
             widget=forms.TextInput(attrs=attrs),
             required=False,
-            initial=self.default_value,
             **field_kwargs
         )
 
