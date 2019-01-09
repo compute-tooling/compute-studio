@@ -308,25 +308,21 @@ $(document).ready(function () {
     var target_a = $(e.target)
     target_a.addClass('active');
     var parent_container = target_li.parents('.tag-selector-container');
-
     var unselected = target_li.parent('.nav').find('li').not(target_li);
     unselected.find('a').removeClass("active");
-
-    /* Deactivate child tags for unselected options */
+    /* Deactivate keys */
     unselected.each(function (_index, el) {
       var children_keys = $(el).attr('data-children-keys').trim().split(" ");
-      parent_container.find($(children_keys.map(function (key) {
-          return ".tag-" + key;
-        })))
-        .attr('hidden', true);
+      $.each(children_keys, function (index, key) {
+          parent_container.find(".tag-" + key).css('display', 'none');
+        });
     });
 
-    /* Activate child tags */
+    /* Activate tags */
     var children_keys = target_li.attr('data-children-keys').trim().split(" ");
-    parent_container.find($(children_keys.map(function (key) {
-        return ".tag-" + key;
-      })))
-      .attr('hidden', false);
+    $.each(children_keys, function (index, key) {
+      parent_container.find(".tag-" + key).css('display', 'block');
+    });
 
     activateYearTablesBySelectedTags();
     initVisibleYearTable();
