@@ -59,52 +59,31 @@ class CompbaseballOutputsView(OutputsView):
                         title="Pitch Outcome Table",
                         tooltip="Pitch outcome tooltip",
                         active=True,
-                        children=[
-                            Tag(
-                                key="count",
-                                hidden=False,
-                                values=[
-                                    TagOption(
-                                        title="Normalized",
-                                        value="normalized",
-                                        tooltip="Normalized Pitch Outcome Count"
-                                    ),
-                                    TagOption(
-                                        title="Count",
-                                        value="raw-count",
-                                        tooltip="Pitch Outcome Count",
-                                        active=True
-                                    )
-                                ]
-                            )
-                        ]
                     ),
                     TagOption(
                         value="pitch-type",
                         title="Pitch Type Table",
                         tooltip="Pitch type tooltip",
-                        children=[
-                            Tag(
-                                key="count",
-                                hidden=True,
-                                values=[
-                                    TagOption(
-                                        title="Normalized",
-                                        value="normalized",
-                                        tooltip="Normalized Pitch Type Count"
-                                    ),
-                                    TagOption(
-                                        title="Count",
-                                        value="raw-count",
-                                        active=True,
-                                        tooltip="Pitch Type Count"
-                                    )
-                                ]
-                            )
-                        ]
-                    ),
-                ]
-            )
+                    )
+            ]
+        ),
+        Tag(
+            key="count",
+            hidden=False,
+            values=[
+                TagOption(
+                    title="Normalized",
+                    value="normalized",
+                    tooltip="Normalized"
+                ),
+                TagOption(
+                    title="Count",
+                    value="raw-count",
+                    active=True,
+                    tooltip="Count"
+                )
+            ]
+        )
     ]
     aggr_tags = [Tag(key="attribute",
                      hidden=False,

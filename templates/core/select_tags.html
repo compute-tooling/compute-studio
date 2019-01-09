@@ -1,6 +1,6 @@
 <div class="tag-selector-container">
   {% for tag in tags %}
-  <div class="tag-{{ tag.key }}" {% if tag.hidden %} hidden{% endif %}>
+  <div class="tag-{{ tag.key }}" {% if tag.hidden %} style="display:none;" {% endif %}>
     <ul class="nav nav-pills nav-fill tag-selector">
       {% for value in tag.values %}
       <li class="nav-item" style="padding:10px"
