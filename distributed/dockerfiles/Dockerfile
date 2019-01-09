@@ -8,6 +8,6 @@ RUN mkdir /home/distributed/api
 COPY requirements.txt home/distributed
 
 RUN conda config --append channels conda-forge
-RUN conda install python=3.6
+RUN conda install python>3.7
 
 WORKDIR /home/distributed
