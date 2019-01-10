@@ -1,6 +1,6 @@
 django>=2.1.2
 msgpack
-requests
+requests>=2.20
 requests_mock
 dj_database_url
 dataclasses
@@ -13,3 +13,4 @@ pytest
 django-widget-tweaks
 django-crispy-forms
 compbaseball
+psycopg2-binary
