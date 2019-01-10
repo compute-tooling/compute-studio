@@ -1,3 +1,4 @@
+pip
 msgpack
 celery
 redis==2.10.6

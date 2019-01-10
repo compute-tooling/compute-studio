@@ -4,9 +4,6 @@ FROM heroku/miniconda:3
 ADD ./requirements.txt /requirements.txt
 ADD ./conda-requirements.txt /conda-requirements.txt
 
-# python version
-RUN python --version
-
 # Install dependencies
 RUN conda update conda
 RUN conda install -c anaconda --file conda-requirements.txt --yes
