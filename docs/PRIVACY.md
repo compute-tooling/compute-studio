@@ -96,7 +96,7 @@ We may allow others to provide analytics services on our behalf. These entities 
 
 ### Account Information
 
-You may update, correct or delete information about you at any time by logging into your online account. If you wish to delete your account, please email us at admin@compmodels.com, but note that we may retain certain information as required by law or for legitimate business purposes. We may also retain cached or archived copies of information about you for a certain period of time.
+You may update, correct or delete information about you at any time by logging into your online account. Note that we may retain certain information as required by law or for legitimate business purposes. We may also retain cached or archived copies of information about you for a certain period of time.
 
 ### Cookies
 
