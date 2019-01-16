@@ -30,23 +30,23 @@ COMP will provide parsed user adjustments of the form:
 ```json
 {
     "matchup": {
-        "start_date": "2012-08-01",
-        "end_date": "2012-09-01",
-        "pitcher": "Not a Real Pitcher",
+        "start_date": [{"value": "2012-08-01"}],
+        "end_date": [{"value": "2012-09-01"}],
+        "pitcher": [{"value": "Not a Real Pitcher"}],
     }
 }
 ```
 
 The function should return:
 
-Reformatted data (no reformatting necessary for this project):
+Potentially, reformatted data (no reformatting necessary for this project):
 
 ```json
 {
     "matchup": {
-        "start_date": "2012-08-01",
-        "end_date": "2012-09-01",
-        "pitcher": "Not a Real Pitcher",
+        "start_date": [{"value": "2012-08-01"}],
+        "end_date": [{"value": "2012-09-01"}],
+        "pitcher": [{"value": "Not a Real Pitcher"}],
     }
 }
 ```
@@ -55,7 +55,7 @@ JSON representation of each major section of parameters:
 
 ```python
     {
-        "matchup":  '{"start_date": "2012-08-01", "end_date": "2012-09-01", "pitcher": "Not a Real Pitcher"}'
+        "matchup": '{"start_date": [{"value": "2012-08-01"}], "end_date": [{"value": "2012-09-01"}], "pitcher": [{"value": "Not a Real Pitcher"}]}'
     }
 ```
 
@@ -65,7 +65,7 @@ Warnings/Errors:
     {
         "matchup": {
             "errors": {
-                "pitcher": "Pitcher \"Not a Real Pitcher\" not allowed"
+                "pitcher": ["Pitcher \"Not a Real Pitcher\" not allowed"]
             },
             "warnings": {}
         }
