@@ -1,6 +1,6 @@
 # Input-Output Schema
 
-COMP relies on three primary JSON schemas: Meta Parameters, Model Parameters, and Outputs. COMP uses them to derive the COMP input form representing your model's default specification and your model's output page. One of the required Python functions in the next step of this guide will also rely on these scheme to validate user adjustments on the COMP input form.
+COMP relies on three primary JSON schemas: Meta Parameters, Model Parameters, and Outputs. COMP uses them to derive the COMP input form representing your model's default specification and your model's output page. One of the required Python functions in the next step of this guide will also rely on these schemas to validate user adjustments on the COMP input form. The [ParamTools][3] project is compatible with the inputs schemas below and can be used for the parameter processing and validation that is described in the Python functions documentation.
 
 Meta Parameters
 --------------------------------
@@ -165,4 +165,4 @@ JSON Objects
 
 [1]: https://github.com/PSLmodels/Tax-Calculator
 [2]: https://github.com/hdoupe/ParamProject
-
+[3]: https://github.com/PSLmodels/ParamTools
