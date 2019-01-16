@@ -1,10 +1,10 @@
 from webapp.apps.core.displayer import Displayer
-from webapp.apps.core.param import Param
+from webapp.apps.contrib.ptstyle.param import ParamToolsParam
 
 from compbaseball import baseball
 
 class CompbaseballDisplayer(Displayer):
-    param_class = Param
+    param_class = ParamToolsParam
 
     def package_defaults(self):
         """
