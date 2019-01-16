@@ -52,7 +52,7 @@ COMP uses the JSON schema below for documenting Model Parameters and their value
   - `"str"` - String.
   - `"date"`- Date. Needs to be of the format `"YYYY-MM-DD"`.
 - "value": A list of [Value Objects](#value-object). Describes the default values of the parameter.
-- "validators": A Mapping of [Validator Objects](#validator-object).
+- "validators": A mapping of [Validator Objects](#validator-object).
 
 Example:
 
