@@ -1,9 +1,9 @@
-from webapp.apps.contrib.ptstyle.parser import ParmToolsParser
+from webapp.apps.contrib.ptstyle.parser import ParamToolsParser
 from .displayer import CompbaseballDisplayer
 
 from compbaseball import baseball
 
-class CompbaseballParser(ParmToolsParser):
+class CompbaseballParser(ParamToolsParser):
     """
     Formats the parameters into the format defined by the upstream project,
     calls the upstream project's validation functions, and formats the errors

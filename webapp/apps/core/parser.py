@@ -52,7 +52,6 @@ class Parser:
                 )
                 if search_hit is not None:
                     inputs_by_section[section][search_hit.name] = value
-                    success = True
                     break
 
         unflattened = {}

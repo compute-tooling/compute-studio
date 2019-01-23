@@ -1,0 +1,106 @@
+{
+    "min_int_param": {
+        "title": "min integer parameter",
+        "description": "Serves as minimum reference variable.",
+        "notes": "See max_int_param",
+        "section_1": "",
+        "section_2": "",
+        "opt0": "an option",
+        "type": "int",
+        "number_dims": 0,
+        "value": [
+            {"dim0": "zero", "dim1": 1, "value": 1},
+            {"dim0": "one", "dim1": 2, "value": 2}
+        ],
+        "validators": {"range": {"min": 0, "max": "max_int_param"}},
+        "out_of_range_minmsg": "",
+        "out_of_range_maxmsg": "",
+        "out_of_range_action": "stop"
+    },
+    "max_int_param": {
+        "title": "max integer parameter",
+        "description": "Serves as maximum reference variable.",
+        "notes": "See min_int_param",
+        "section_1": "",
+        "section_2": "",
+        "opt0": "an option",
+        "type": "int",
+        "number_dims": 0,
+        "value": [
+            {"dim0": "zero", "dim1": 1, "value": 3},
+            {"dim0": "one", "dim1": 2, "value": 4}
+        ],
+        "validators": {"range": {"min": "min_int_param", "max": 10}},
+        "out_of_range_minmsg": "",
+        "out_of_range_maxmsg": "",
+        "out_of_range_action": "stop"
+    },
+    "str_choice_param": {
+        "title": "String Choice Param",
+        "description": "Example for string type params using a choice validator",
+        "notes": "",
+        "section_1": "",
+        "section_2": "",
+        "opt0": "another option",
+        "type": "str",
+        "number_dims": 0,
+        "value": [
+            {"value": "value0"}
+        ],
+        "validators": {"choice": {"choices": ["value0", "value1"]}},
+        "out_of_range_minmsg": "",
+        "out_of_range_maxmsg": "",
+        "out_of_range_action": "stop"
+    },
+    "date_param": {
+        "title": "Date parameter",
+        "description": "Example for a date parameter",
+        "notes": "",
+        "section_1": "",
+        "section_2": "",
+        "opt0": "another option",
+        "type": "date",
+        "number_dims": 0,
+        "value": [
+            {"dim0": "zero", "dim1": 1, "value": "2018-01-15"}
+        ],
+        "validators": {"range": {"min": "2018-01-01", "max": "2018-12-31"}},
+        "out_of_range_minmsg": "",
+        "out_of_range_maxmsg": "",
+        "out_of_range_action": "stop"
+    },
+    "date_min_param": {
+        "title": "Date Min Param",
+        "description": "Serves as minimum reference variable.",
+        "notes": "See date_max_param.",
+        "section_1": "",
+        "section_2": "",
+        "opt0": "an option",
+        "type": "date",
+        "number_dims": 0,
+        "value": [
+            {"dim0": "zero", "dim1": 1, "value": "2018-01-15"}
+        ],
+        "validators": {"range": {"min": "2018-01-01", "max": "date_max_param"}},
+        "out_of_range_minmsg": "",
+        "out_of_range_maxmsg": "",
+        "out_of_range_action": "stop"
+    },
+    "date_max_param": {
+        "title": "Date max parameter",
+        "description": "Serves as maximum reference variable.",
+        "notes": "See date_min_param.",
+        "section_1": "",
+        "section_2": "",
+        "opt0": "an option",
+        "type": "date",
+        "number_dims": 0,
+        "value": [
+            {"dim0": "zero", "dim1": 1, "value": "2018-01-15"}
+        ],
+        "validators": {"range": {"min": "date_min_param", "max": "2018-12-31"}},
+        "out_of_range_minmsg": "",
+        "out_of_range_maxmsg": "",
+        "out_of_range_action": "stop"
+    }
+}

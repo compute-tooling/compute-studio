@@ -14,17 +14,10 @@ class ParamToolsParam(Param):
         -
 
         """
-        vals_to_set = []
         for value_item in value:
-            vals_to_set.append({
-                k: v for k, v in value_item.items()
-                if getattr(self, k, None) is None
-            })
-
-        for value_item in vals_to_set:
             suffix = self.name_from_dims(value_item)
             if suffix:
-                field_name = f"{self.name}__{suffix}"
+                field_name = f"{self.name}___{suffix}"
             else:
                 field_name = self.name
             field = self.field_class(
@@ -42,7 +35,7 @@ class ParamToolsParam(Param):
         dims = {k: v for k, v in value.items() if k != "value"}
         if dims:
             suffix = "__".join([
-                f"{name}_{value}" for name, value in dims
+                f"{dim_name}_{dim_value}" for dim_name, dim_value in dims.items()
             ])
         else:
             suffix = ""
