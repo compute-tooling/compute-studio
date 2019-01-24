@@ -1,6 +1,7 @@
 {
     "mock": {
         "name": "Used strictly for testing",
+        "sponsor": null,
         "username": null,
         "amount": 0,
         "metered_amount": 1,
@@ -14,6 +15,7 @@
     },
     "matchups": {
         "name": "Matchups",
+        "sponsor": "hdoupe",
         "username": "hdoupe",
         "amount": 0,
         "metered_amount": 1,

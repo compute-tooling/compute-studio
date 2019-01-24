@@ -1,5 +1,5 @@
 from webapp.apps.core.compute import Compute
-from webapp.apps.core.views import (InputsView, EditInputsView, OutputsView,
+from webapp.apps.core.views import (_InputsView, EditInputsView, OutputsView,
                                     OutputsDownloadView)
 from webapp.apps.core.models import Tag, TagOption
 
@@ -8,7 +8,8 @@ from .displayer import MatchupsDisplayer
 from .submit import MatchupsSubmit, MatchupsSave
 from .forms import MatchupsInputsForm
 from .meta_parameters import matchups_meta_parameters
-from .constants import (MATCHUPS_VERSION, APP_NAME, APP_DESCRIPTION)
+from .constants import (MATCHUPS_VERSION, APP_NAME, APP_DESCRIPTION,
+                        PROVIDED_FREE)
 
 
 compute = Compute()
@@ -26,9 +27,10 @@ class MatchupsInputsMixin:
     meta_options = []
     has_errors = False
     upstream_version = MATCHUPS_VERSION
+    provided_free = PROVIDED_FREE
 
 
-class MatchupsInputsView(MatchupsInputsMixin, InputsView):
+class MatchupsInputsView(MatchupsInputsMixin, _InputsView):
     """
     A Django view for serving the default input page, validating the inputs,
     and submitting them to the backend worker nodes.

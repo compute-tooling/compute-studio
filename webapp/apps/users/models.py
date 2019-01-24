@@ -34,6 +34,12 @@ class Project(models.Model):
         related_name="projects",
         on_delete=models.CASCADE,
     )
+    sponsor = models.ForeignKey(
+        Profile,
+        null=True,
+        related_name="sponsored_projects",
+        on_delete=models.SET_NULL
+    )
     server_cost = models.DecimalField(
         max_digits=6, decimal_places=3, null=True
     )

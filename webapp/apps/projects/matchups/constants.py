@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe
 This file is used to specify constant variables such as the app's name
  and the project version.
 """
+PROVIDED_FREE = True
 APP_NAME = "matchups"
 APP_DESCRIPTION = APP_DESCRIPTION = mark_safe("""
 <div>

@@ -43,7 +43,7 @@
               </ul>
             </li>
             <li>
-              <button class="btn btn-block go-btn" type="submit" name="full_calc" value="true" style="margin:10px;margin-left:0px;"><b>Run ({{ exp_cost }})</b></button>
+              <button class="btn btn-block go-btn" type="submit" name="full_calc" value="true" style="margin:10px;margin-left:0px;"><b>Run {% if not provided_free %}({{ exp_cost }}){% endif %}</b></button>
             </li>
             <li>
               <a href="/{{app_name}}/" class="btn btn-block inverse-btn-match-nav" style="margin:10px;margin-left:0px;">Reset</a>

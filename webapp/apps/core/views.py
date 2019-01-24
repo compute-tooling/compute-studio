@@ -41,11 +41,13 @@ class InputsMixin:
     has_errors = False
     upstream_version = None
     webapp_version = WEBAPP_VERSION
+    provided_free = False
 
     def project_context(self, request):
         project = Project.objects.get(name=self.project_name)
         user = request.user
         can_run = user.is_authenticated and is_profile_active(user)
+        can_run = can_run or self.provided_free
         rate = round(project.server_cost, 2)
         exp_cost, exp_time = project.exp_job_info(adjust=True)
 
@@ -57,11 +59,12 @@ class InputsMixin:
             'redirect_back': self.app_name,
             'can_run': can_run,
             'exp_cost': f'${exp_cost}',
-            'exp_time': f'{exp_time} seconds'}
+            'exp_time': f'{exp_time} seconds',
+            'is_free': self.provided_free}
         return context
 
 
-class InputsView(InputsMixin, View):
+class _InputsView(InputsMixin, View):
 
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET)
@@ -72,9 +75,6 @@ class InputsView(InputsMixin, View):
         context = self.project_context(request)
         return self._render_inputs_form(request, inputs_form, context)
 
-    @method_decorator(login_required)
-    @method_decorator(
-        user_passes_test(is_profile_active, login_url='/users/login/'))
     def post(self, request, *args, **kwargs):
         print("method=POST", request.POST)
         compute = Compute()
@@ -130,6 +130,18 @@ class InputsView(InputsMixin, View):
             **context
         )
         return render(request, self.template_name, context)
+
+
+class InputsView(_InputsView):
+    """
+    This class adds a paywall to the _InputsView class.
+    """
+
+    @method_decorator(login_required)
+    @method_decorator(
+        user_passes_test(is_profile_active, login_url='/users/login/'))
+    def post(self, request, *args, **kwargs):
+        super().post(request, *args, **kwargs)
 
 
 class EditInputsView(InputsMixin, DetailView):
@@ -267,20 +279,8 @@ class OutputsView(SuperclassTemplateNameMixin, DetailView):
                 self.object.run_time = sum(results['meta']['task_times'])
                 self.object.run_cost = self.object.project.run_cost(
                     self.object.run_time)
-                quantity = self.object.project.run_cost(
-                    self.object.run_time, adjust=True)
                 if USE_STRIPE:
-                    plan = self.object.project.product.plans.get(
-                        usage_type='metered')
-                    si = SubscriptionItem.objects.get(
-                        subscription__customer=self.object.profile.user.customer,
-                        plan=plan)
-                    stripe_ur = UsageRecord.create_stripe_object(
-                        quantity=Project.dollar_to_penny(quantity),
-                        timestamp=None,
-                        subscription_item=si,
-                    )
-                    UsageRecord.construct(stripe_ur, si)
+                    self.charge_run()
                 self.object.meta_data = results["meta"]
                 self.object.outputs = results['outputs']
                 self.object.aggr_outputs = results['aggr_outputs']
@@ -311,6 +311,26 @@ class OutputsView(SuperclassTemplateNameMixin, DetailView):
                         'core/not_ready.html',
                         context
                     )
+
+    def charge_run(self):
+        quantity = self.object.project.run_cost(
+            self.object.run_time, adjust=True)
+        plan = self.object.project.product.plans.get(
+            usage_type='metered')
+        sponsor = self.object.project.sponsor
+        if sponsor is not None:
+            sponsor = sponsor.user.customer
+        else:
+            sponsor = self.object.profile.user.customer
+        si = SubscriptionItem.objects.get(
+            subscription__customer=self.object.profile.user.customer,
+            plan=plan)
+        stripe_ur = UsageRecord.create_stripe_object(
+            quantity=Project.dollar_to_penny(quantity),
+            timestamp=None,
+            subscription_item=si,
+        )
+        UsageRecord.construct(stripe_ur, si)
 
     def is_from_file(self):
         if hasattr(self.object.inputs, 'raw_gui_field_inputs'):
