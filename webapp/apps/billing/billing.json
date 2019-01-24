@@ -12,8 +12,8 @@
         "exp_num_tasks": 5,
         "is_public": false
     },
-    "compbaseball": {
-        "name": "CompBaseball",
+    "matchups": {
+        "name": "Matchups",
         "username": "hdoupe",
         "amount": 0,
         "metered_amount": 1,

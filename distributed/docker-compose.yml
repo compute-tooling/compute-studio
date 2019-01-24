@@ -8,14 +8,14 @@ services:
       - redis
       # Add celery workers here:
       # - {project_name}_tasks
-      - compbaseball_tasks
+      - matchups_tasks
   # configure celery workers:
   # {project_name}_tasks:
   #   image: "comporg/{project_name}_tasks:${TAG}"
   #   depends_on:
   #     redis
-  compbaseball_tasks:
-    image: "comporg/compbaseball_tasks:${TAG}"
+  matchups_tasks:
+    image: "comporg/matchups_tasks:${TAG}"
     depends_on:
       - redis
   redis:

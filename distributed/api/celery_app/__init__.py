@@ -11,7 +11,7 @@ CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND',
 
 task_routes = {
     # '{project_name}_tasks.*': {'queue': '{project_name}_queue'},
-    "compbaseball_tasks.*": {"queue": "compbaseball_queue"},
+    "matchups_tasks.*": {"queue": "matchups_queue"},
 }
 
 

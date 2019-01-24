@@ -12,5 +12,5 @@ sendgrid-django
 pytest
 django-widget-tweaks
 django-crispy-forms
-compbaseball
+matchups
 psycopg2-binary

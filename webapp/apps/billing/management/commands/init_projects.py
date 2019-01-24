@@ -4,6 +4,8 @@ from django.contrib.auth import get_user_model
 from webapp.apps.billing.models import (Project, Product, Plan)
 from webapp.apps.billing.utils import get_billing_data
 
+User = get_user_model()
+
 class Command(BaseCommand):
 
     def add_arguments(self, parser):

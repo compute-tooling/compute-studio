@@ -2,7 +2,7 @@ import os
 
 from webapp.apps.core.tests.test_views import CoreAbstractViewsTest
 from webapp.apps.core.tests.compute import MockCompute
-from webapp.apps.projects.compbaseball.models import CompbaseballRun
+from webapp.apps.projects.matchups.models import MatchupsRun
 
 def read_outputs():
     curr = os.path.abspath(os.path.dirname(__file__))
@@ -10,23 +10,20 @@ def read_outputs():
         outputs = f.read()
     return outputs
 
-class CompbaseballMockCompute(MockCompute):
+class MatchupsMockCompute(MockCompute):
     outputs = read_outputs()
 
-class TestCompbaseball(CoreAbstractViewsTest):
+class TestMatchups(CoreAbstractViewsTest):
     """
     Inherits test cases and functionality from CoreAbstractViewsTest
     """
-    app_name = 'compbaseball'
-    mockcompute = CompbaseballMockCompute
-    RunModel = CompbaseballRun
+    app_name = 'matchups'
+    mockcompute = MatchupsMockCompute
+    RunModel = MatchupsRun
 
     def inputs_ok(self):
         inputs = super().inputs_ok()
-        upstream_inputs = {
-            "pitcher": "Max Scherzer",
-            "start_date": "2018-08-12",
-        }
+        upstream_inputs = {}
         return dict(inputs, **upstream_inputs)
 
     def outputs_ok(self):
