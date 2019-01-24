@@ -19,7 +19,7 @@ Accepts Meta Parameters, if they are being utilized. Returns data in the form sp
     ```
 
     Here's what you get after filling in this function:
-    ![alt text](https://user-images.githubusercontent.com/9206065/50243845-480b6a80-039c-11e9-8452-029fefd866b0.png)
+    ![alt text](https://user-images.githubusercontent.com/9206065/51710288-a3152a80-1ff6-11e9-8dcb-16f39f7e9e66.png)
 
 Parse user adjustemnts
 ----------------------
@@ -86,11 +86,11 @@ Warnings/Errors:
     ```
 
     Here's what you get after filling in this function:
-    ![alt text](https://user-images.githubusercontent.com/9206065/50243758-0a0e4680-039c-11e9-9a98-56e2cbdd2f8f.png)
+    ![alt text](https://user-images.githubusercontent.com/9206065/51710289-a3152a80-1ff6-11e9-975d-ba3dfc2b35e9.png)
 
     The `jsonparams` data is displayed on the outputs page:
 
-    ![alt text](https://user-images.githubusercontent.com/9206065/50363819-60fe5200-053b-11e9-8b5c-e2eafe7f2668.png)
+    ![alt text](https://user-images.githubusercontent.com/9206065/51710291-a3152a80-1ff6-11e9-8c0d-7a41f8966350.png)
 
 Run simulation
 ----------------
@@ -132,10 +132,10 @@ The function returns the results of the simulation:
     Here's what you get after filling in this function:
 
     Aggregate outputs:
-    ![alt text](https://user-images.githubusercontent.com/9206065/50352415-21bc0b00-0513-11e9-9fc2-b84cedb3cafe.png)
+    ![alt text](https://user-images.githubusercontent.com/9206065/51710292-a3152a80-1ff6-11e9-9640-661aabd5d76f.png)
 
     Outputs:
-    ![alt text](https://user-images.githubusercontent.com/9206065/50352416-21bc0b00-0513-11e9-8ec8-260a80b6c114.png)
+    ![alt text](https://user-images.githubusercontent.com/9206065/51710347-dbb50400-1ff6-11e9-8f28-1c4e5b802fbf.png)
 
     Toggle along dimension:
-    ![alt text](https://user-images.githubusercontent.com/9206065/50352417-21bc0b00-0513-11e9-8e4e-d0bb329e842e.png)
+    ![alt text](https://user-images.githubusercontent.com/9206065/51710310-baecae80-1ff6-11e9-933a-6308a8baf293.png)
