@@ -1,6 +1,7 @@
 {
     "mock": {
         "name": "Used strictly for testing",
+        "username": null,
         "amount": 0,
         "metered_amount": 1,
         "currency": "usd",
@@ -13,6 +14,7 @@
     },
     "compbaseball": {
         "name": "CompBaseball",
+        "username": "hdoupe",
         "amount": 0,
         "metered_amount": 1,
         "currency": "usd",
