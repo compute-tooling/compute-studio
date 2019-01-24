@@ -50,9 +50,58 @@ class MatchupsOutputsView(OutputsView):
     """
     model = MatchupsRun
     result_header = "Matchups Results"
-    tags = []
-    aggr_tags = []
-
+    tags = [
+        Tag(
+            key="attribute",
+            hidden=False,
+            values=[
+                    TagOption(
+                        value="pitch-outcome",
+                        title="Pitch Outcome Table",
+                        tooltip="Pitch outcome tooltip",
+                        active=True,
+                    ),
+                    TagOption(
+                        value="pitch-type",
+                        title="Pitch Type Table",
+                        tooltip="Pitch type tooltip",
+                    )
+            ]
+        ),
+        Tag(
+            key="count",
+            hidden=False,
+            values=[
+                TagOption(
+                    title="Normalized",
+                    value="normalized",
+                    tooltip="Normalized"
+                ),
+                TagOption(
+                    title="Count",
+                    value="raw-count",
+                    active=True,
+                    tooltip="Count"
+                )
+            ]
+        )
+    ]
+    aggr_tags = [
+        Tag(key="attribute",
+            hidden=False,
+            values=[
+                TagOption(
+                    title="Pitch Outcome",
+                    value="pitch-outcome",
+                    ),
+                    TagOption(
+                        title="Pitch Type",
+                        value="pitch-type",
+                        active=True
+                    )
+                ]
+        )
+    ]
 
 class MatchupsOutputsDownloadView(OutputsDownloadView):
     """
