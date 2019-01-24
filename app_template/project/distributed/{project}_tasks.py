@@ -3,7 +3,7 @@ import time
 from api.celery_app import celery_app
 
 @celery_app.task(name='{project}_tasks.{project}_task', soft_time_limit=60)
-def {project}_task(*args):
+def {project}_task(**kwargs):
     start = time.time()
 
     #######################################
@@ -11,7 +11,7 @@ def {project}_task(*args):
 
     #######################################
 
-    result = run(*args)
+    result = run(**kwargs)
 
     finish = time.time()
     result["meta"]["task_times"] = [finish - start]
