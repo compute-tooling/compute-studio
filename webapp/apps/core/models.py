@@ -60,8 +60,10 @@ class CoreRun(models.Model):
         blank=True,
         default=None,
         max_length=4000)
-    profile = models.ForeignKey(Profile, on_delete=models.PROTECT,
+    profile = models.ForeignKey(Profile, on_delete=models.PROTECT, null=True,
                                 related_name='%(app_label)s_%(class)s_runs')
+    sponsor = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True,
+                                related_name='%(app_label)s_%(class)s_sponsored_runs')
     project = models.ForeignKey(Project, on_delete=models.PROTECT,
                                 related_name='%(app_label)s_%(class)s_runs')
     # run-time in seconds

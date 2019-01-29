@@ -28,8 +28,21 @@ class Profile(models.Model):
 class Project(models.Model):
     SECS_IN_HOUR = 3600.0
     name = models.CharField(max_length=255)
-    server_cost = models.DecimalField(max_digits=6, decimal_places=3,
-                                      null=True)
+    profile = models.ForeignKey(
+        Profile,
+        null=True,
+        related_name="projects",
+        on_delete=models.CASCADE,
+    )
+    sponsor = models.ForeignKey(
+        Profile,
+        null=True,
+        related_name="sponsored_projects",
+        on_delete=models.SET_NULL
+    )
+    server_cost = models.DecimalField(
+        max_digits=6, decimal_places=3, null=True
+    )
     exp_task_time = models.IntegerField(null=True)
     exp_num_tasks = models.IntegerField(null=True)
     is_public = models.BooleanField(default=True)

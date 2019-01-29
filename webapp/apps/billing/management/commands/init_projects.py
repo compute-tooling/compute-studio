@@ -1,7 +1,10 @@
 from django.core.management.base import BaseCommand
+from django.contrib.auth import get_user_model
 
 from webapp.apps.billing.models import (Project, Product, Plan)
 from webapp.apps.billing.utils import get_billing_data
+
+User = get_user_model()
 
 class Command(BaseCommand):
 
@@ -17,12 +20,30 @@ class Command(BaseCommand):
         use_stripe = options["use_stripe"]
         billing = get_billing_data()
         for app_name, plan in billing.items():
+            if plan["username"]:
+                try:
+                    profile = User.objects.get(username=plan["username"]).profile
+                except User.DoesNotExist:
+                    print(f"Username: {plan['username']} not found.")
+                    profile = None
+            else:
+                profile = None
+            if plan["sponsor"]:
+                try:
+                    sponsor = User.objects.get(username=plan["sponsor"]).profile
+                except User.DoesNotExist:
+                    print(f"Sponsor: {plan['sponsor']} not found.")
+                    sponsor = None
+            else:
+                sponsor = None
             project, _ = Project.objects.update_or_create(
                 name=plan['name'],
                 defaults={'server_cost': plan['server_cost'],
                           'exp_task_time': plan['exp_task_time'],
                           'exp_num_tasks': plan['exp_num_tasks'],
-                          'is_public': plan['is_public']})
+                          'is_public': plan['is_public'],
+                          'profile': profile,
+                          'sponsor': sponsor})
             if use_stripe:
                 if Product.objects.filter(name=plan['name']).count() == 0:
                     stripe_product = Product.create_stripe_object(plan['name'])

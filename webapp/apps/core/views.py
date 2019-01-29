@@ -13,7 +13,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
-from webapp.apps.billing.utils import USE_STRIPE
+from webapp.apps.billing.utils import USE_STRIPE, ChargeRunMixin
 from webapp.apps.users.models import Project, is_profile_active
 from .constants import WEBAPP_VERSION
 
@@ -41,11 +41,13 @@ class InputsMixin:
     has_errors = False
     upstream_version = None
     webapp_version = WEBAPP_VERSION
+    provided_free = False
 
     def project_context(self, request):
         project = Project.objects.get(name=self.project_name)
         user = request.user
         can_run = user.is_authenticated and is_profile_active(user)
+        can_run = can_run or self.provided_free
         rate = round(project.server_cost, 2)
         exp_cost, exp_time = project.exp_job_info(adjust=True)
 
@@ -57,11 +59,12 @@ class InputsMixin:
             'redirect_back': self.app_name,
             'can_run': can_run,
             'exp_cost': f'${exp_cost}',
-            'exp_time': f'{exp_time} seconds'}
+            'exp_time': f'{exp_time} seconds',
+            'provided_free': self.provided_free}
         return context
 
 
-class InputsView(InputsMixin, View):
+class UnrestrictedInputsView(InputsMixin, View):
 
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET)
@@ -72,9 +75,6 @@ class InputsView(InputsMixin, View):
         context = self.project_context(request)
         return self._render_inputs_form(request, inputs_form, context)
 
-    @method_decorator(login_required)
-    @method_decorator(
-        user_passes_test(is_profile_active, login_url='/users/login/'))
     def post(self, request, *args, **kwargs):
         print("method=POST", request.POST)
         compute = Compute()
@@ -130,6 +130,18 @@ class InputsView(InputsMixin, View):
             **context
         )
         return render(request, self.template_name, context)
+
+
+class InputsView(UnrestrictedInputsView):
+    """
+    This class adds a paywall to the _InputsView class.
+    """
+
+    @method_decorator(login_required)
+    @method_decorator(
+        user_passes_test(is_profile_active, login_url='/users/login/'))
+    def post(self, request, *args, **kwargs):
+        super().post(request, *args, **kwargs)
 
 
 class EditInputsView(InputsMixin, DetailView):
@@ -201,7 +213,7 @@ class SuperclassTemplateNameMixin(object):
         return names
 
 
-class OutputsView(SuperclassTemplateNameMixin, DetailView):
+class OutputsView(ChargeRunMixin, SuperclassTemplateNameMixin, DetailView):
     """
     This view is the single page of diplaying a progress bar for how
     close the job is to finishing, and then it will also display the
@@ -264,23 +276,7 @@ class OutputsView(SuperclassTemplateNameMixin, DetailView):
                     self.object.error_text = str(e)
                     self.object.save()
                     return self.fail()
-                self.object.run_time = sum(results['meta']['task_times'])
-                self.object.run_cost = self.object.project.run_cost(
-                    self.object.run_time)
-                quantity = self.object.project.run_cost(
-                    self.object.run_time, adjust=True)
-                if USE_STRIPE:
-                    plan = self.object.project.product.plans.get(
-                        usage_type='metered')
-                    si = SubscriptionItem.objects.get(
-                        subscription__customer=self.object.profile.user.customer,
-                        plan=plan)
-                    stripe_ur = UsageRecord.create_stripe_object(
-                        quantity=Project.dollar_to_penny(quantity),
-                        timestamp=None,
-                        subscription_item=si,
-                    )
-                    UsageRecord.construct(stripe_ur, si)
+                self.charge_run(results["meta"], use_stripe=USE_STRIPE)
                 self.object.meta_data = results["meta"]
                 self.object.outputs = results['outputs']
                 self.object.aggr_outputs = results['aggr_outputs']

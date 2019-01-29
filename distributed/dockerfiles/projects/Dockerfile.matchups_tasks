@@ -11,17 +11,17 @@ RUN pip install -r requirements.txt
 # Edit Dockerfile here for installing necessary packages, copying files, etc.
 ######################
 RUN conda install pandas pyarrow bokeh
-RUN pip install pybaseball compbaseball
+RUN pip install pybaseball matchups
 ######################
 
 
 # copy over necessary files for this project's celery app
 COPY ./api/__init__.py /home/distributed/api/__init__.py
 COPY ./api/celery_app/__init__.py /home/distributed/api/celery_app/__init__.py
-COPY ./api/celery_app/compbaseball_tasks.py /home/distributed/api/celery_app/compbaseball_tasks.py
+COPY ./api/celery_app/matchups_tasks.py /home/distributed/api/celery_app/matchups_tasks.py
 COPY ./setup.py /home/distributed
 RUN cd /home/distributed && pip install -e .
 
 WORKDIR /home/distributed/api
 
-ENTRYPOINT celery -A celery_app.compbaseball_tasks worker --loglevel=info --concurrency=1 -Q compbaseball_queue
+ENTRYPOINT celery -A celery_app.matchups_tasks worker --loglevel=info --concurrency=1 -Q matchups_queue

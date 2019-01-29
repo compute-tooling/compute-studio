@@ -7,14 +7,14 @@ dist-build:
 	docker build -t comporg/distributed:$(TAG) ./ -f dockerfiles/Dockerfile && \
 	docker build --build-arg TAG=$(TAG) -t comporg/flask:$(TAG) --file dockerfiles/Dockerfile.flask ./ && \
 	docker build --build-arg TAG=$(TAG) -t comporg/celerybase:$(TAG) --file dockerfiles/Dockerfile.celerybase ./ && \
-	docker build --no-cache --build-arg TAG=$(TAG) -t comporg/compbaseball_tasks:$(TAG) --file dockerfiles/projects/Dockerfile.compbaseball_tasks ./
+	docker build --build-arg TAG=$(TAG) -t comporg/matchups_tasks:$(TAG) --file dockerfiles/projects/Dockerfile.matchups_tasks ./
 
 dist-push:
 	cd distributed && \
 	docker push comporg/distributed:$(TAG) && \
 	docker push comporg/flask:$(TAG) && \
 	docker push comporg/celerybase:$(TAG) && \
-	docker push comporg/compbaseball_tasks:$(TAG)
+	docker push comporg/matchups_tasks:$(TAG)
 
 dist-test:
 	cd distributed && \

@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 
 from webapp.apps.billing.models import (Customer, Plan, Subscription,
                                         SubscriptionItem)
-from webapp.apps.billing.utils import USE_STRIPE
+from webapp.apps.billing.utils import USE_STRIPE, get_billing_data
 from webapp.apps.users.models import Profile
 
 from webapp.apps.core.meta_parameters import MetaParameter, MetaParameters
@@ -24,7 +24,22 @@ stripe.api_key = os.environ.get('STRIPE_SECRET')
 def django_db_setup(django_db_setup, django_db_blocker):
     with django_db_blocker.unblock():
         call_command("init_projects", use_stripe=USE_STRIPE)
-
+        for name, proj in get_billing_data().items():
+            if proj["sponsor"] is None:
+                continue
+            else:
+                username = proj["sponsor"]
+                User = get_user_model()
+                user = User.objects.create_user(username=username,
+                                                email='sponsor@email.com',
+                                                password="sponsor2222")
+                stripe_customer = stripe.Customer.create(email='tester@example.com',
+                                                        source='tok_bypassPending')
+                customer, _ = Customer.get_or_construct(stripe_customer.id, user)
+                customer.subscribe_to_public_plans()
+                Profile.objects.create(user=customer.user,
+                                       is_active=True)
+        call_command("init_projects", use_stripe=USE_STRIPE)
 
 @pytest.fixture
 def stripe_customer():
@@ -80,26 +95,20 @@ def profile(db, user):
 
 @pytest.fixture
 def plans(db):
-    plans = Plan.objects.filter(product__name='Descriptive Statistics')
+    plans = Plan.objects.filter(product__name='Used strictly for testing')
     return plans
 
 
 @pytest.fixture
 def licensed_plan(db, plans):
     assert len(plans) > 0
-    for plan in plans:
-        if plan.usage_type == 'licensed':
-            return plan
-    raise ValueError('No plan with usage type: licensed')
+    return plans.get(usage_type="licensed")
 
 
 @pytest.fixture
 def metered_plan(db, plans):
     assert len(plans) > 0
-    for plan in plans:
-        if plan.usage_type == 'metered':
-            return plan
-    raise ValueError('No plan with usage type: metered')
+    return plans.get(usage_type="metered")
 
 
 @pytest.fixture

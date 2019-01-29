@@ -2,13 +2,17 @@ import time
 
 from api.celery_app import celery_app
 
-@celery_app.task(name='{project}_tasks.{project}_task', soft_time_limit=60)
-def {project}_task(**kwargs):
+@celery_app.task(name='matchups_tasks.matchups_task', soft_time_limit=60)
+def matchups_task(**kwargs):
     start = time.time()
 
     #######################################
     # code snippet
+    import matchups
 
+    def run(**kwargs):
+        result = matchups.get_matchup(kwargs["use_2018"], kwargs["user_mods"])
+        return result
     #######################################
 
     result = run(**kwargs)
@@ -18,7 +22,7 @@ def {project}_task(**kwargs):
     print("finished result")
     return result
 
-@celery_app.task(name='{project}_tasks.{project}_postprocess', soft_time_limit=10)
-def {project}_postprocess(ans):
+@celery_app.task(name='matchups_tasks.matchups_postprocess', soft_time_limit=10)
+def matchups_postprocess(ans):
     # do nothing by default
     return ans[0]

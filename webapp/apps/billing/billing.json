@@ -1,6 +1,8 @@
 {
     "mock": {
         "name": "Used strictly for testing",
+        "sponsor": null,
+        "username": null,
         "amount": 0,
         "metered_amount": 1,
         "currency": "usd",
@@ -11,8 +13,10 @@
         "exp_num_tasks": 5,
         "is_public": false
     },
-    "compbaseball": {
-        "name": "CompBaseball",
+    "matchups": {
+        "name": "Matchups",
+        "sponsor": "hdoupe",
+        "username": "hdoupe",
         "amount": 0,
         "metered_amount": 1,
         "currency": "usd",
