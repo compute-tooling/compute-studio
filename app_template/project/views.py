@@ -8,7 +8,8 @@ from .displayer import {Project}Displayer
 from .submit import {Project}Submit, {Project}Save
 from .forms import {Project}InputsForm
 from .meta_parameters import {project}_meta_parameters
-from .constants import ({PROJECT}_VERSION, APP_NAME, APP_DESCRIPTION)
+from .constants import ({PROJECT}_VERSION, APP_NAME, APP_DESCRIPTION,
+                        PROVIDED_FREE)
 
 
 compute = Compute()
@@ -26,6 +27,7 @@ class {Project}InputsMixin:
     meta_options = []
     has_errors = False
     upstream_version = {PROJECT}_VERSION
+    provided_free = PROVIDED_FREE
 
 
 class {Project}InputsView({Project}InputsMixin, InputsView):
