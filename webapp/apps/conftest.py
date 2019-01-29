@@ -38,8 +38,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
                 customer, _ = Customer.get_or_construct(stripe_customer.id, user)
                 customer.subscribe_to_public_plans()
                 Profile.objects.create(user=customer.user,
-                                    is_active=True)
-        # with django_db_blocker.unblock():
+                                       is_active=True)
         call_command("init_projects", use_stripe=USE_STRIPE)
 
 @pytest.fixture
@@ -96,26 +95,20 @@ def profile(db, user):
 
 @pytest.fixture
 def plans(db):
-    plans = Plan.objects.filter(product__name='Descriptive Statistics')
+    plans = Plan.objects.filter(product__name='Used strictly for testing')
     return plans
 
 
 @pytest.fixture
 def licensed_plan(db, plans):
     assert len(plans) > 0
-    for plan in plans:
-        if plan.usage_type == 'licensed':
-            return plan
-    raise ValueError('No plan with usage type: licensed')
+    return plans.get(usage_type="licensed")
 
 
 @pytest.fixture
 def metered_plan(db, plans):
     assert len(plans) > 0
-    for plan in plans:
-        if plan.usage_type == 'metered':
-            return plan
-    raise ValueError('No plan with usage type: metered')
+    return plans.get(usage_type="metered")
 
 
 @pytest.fixture
