@@ -1,6 +1,6 @@
 from django import forms
 
-from webapp.apps.core.meta_parameters import (MetaParameters, MetaParameter)
+from webapp.apps.core.meta_parameters import MetaParameters, MetaParameter
 from webapp.apps.core.fields import coerce_bool
 
 
@@ -45,12 +45,13 @@ def meta_parameter_factory(mp):
 """
 
 matchups_meta_parameters = MetaParameters(
-    parameters = [
+    parameters=[
         MetaParameter(
-        name="use_2018",
-        default=True,
-        field=forms.TypedChoiceField(coerce=coerce_bool,
-                                     choices=list((i, i) for i in (True, False))),
+            name="use_2018",
+            default=True,
+            field=forms.TypedChoiceField(
+                coerce=coerce_bool, choices=list((i, i) for i in (True, False))
+            ),
         )
     ]
 )
