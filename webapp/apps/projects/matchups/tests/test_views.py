@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 from webapp.apps.core.tests.test_views import CoreAbstractViewsTest
 from webapp.apps.core.tests.compute import MockCompute
 from webapp.apps.projects.matchups.models import MatchupsRun
@@ -18,6 +20,7 @@ class TestMatchups(CoreAbstractViewsTest):
     Inherits test cases and functionality from CoreAbstractViewsTest
     """
     app_name = 'matchups'
+    title = "Matchups"
     mockcompute = MatchupsMockCompute
     RunModel = MatchupsRun
 

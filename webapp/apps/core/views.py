@@ -13,7 +13,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
-from webapp.apps.billing.utils import USE_STRIPE
+from webapp.apps.billing.utils import USE_STRIPE, ChargeRunMixin
 from webapp.apps.users.models import Project, is_profile_active
 from .constants import WEBAPP_VERSION
 
@@ -60,11 +60,11 @@ class InputsMixin:
             'can_run': can_run,
             'exp_cost': f'${exp_cost}',
             'exp_time': f'{exp_time} seconds',
-            'is_free': self.provided_free}
+            'provided_free': self.provided_free}
         return context
 
 
-class _InputsView(InputsMixin, View):
+class UnrestrictedInputsView(InputsMixin, View):
 
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET)
@@ -132,7 +132,7 @@ class _InputsView(InputsMixin, View):
         return render(request, self.template_name, context)
 
 
-class InputsView(_InputsView):
+class InputsView(UnrestrictedInputsView):
     """
     This class adds a paywall to the _InputsView class.
     """
@@ -213,7 +213,7 @@ class SuperclassTemplateNameMixin(object):
         return names
 
 
-class OutputsView(SuperclassTemplateNameMixin, DetailView):
+class OutputsView(ChargeRunMixin, SuperclassTemplateNameMixin, DetailView):
     """
     This view is the single page of diplaying a progress bar for how
     close the job is to finishing, and then it will also display the
@@ -276,11 +276,7 @@ class OutputsView(SuperclassTemplateNameMixin, DetailView):
                     self.object.error_text = str(e)
                     self.object.save()
                     return self.fail()
-                self.object.run_time = sum(results['meta']['task_times'])
-                self.object.run_cost = self.object.project.run_cost(
-                    self.object.run_time)
-                if USE_STRIPE:
-                    self.charge_run()
+                self.charge_run(results["meta"], use_stripe=USE_STRIPE)
                 self.object.meta_data = results["meta"]
                 self.object.outputs = results['outputs']
                 self.object.aggr_outputs = results['aggr_outputs']
@@ -311,26 +307,6 @@ class OutputsView(SuperclassTemplateNameMixin, DetailView):
                         'core/not_ready.html',
                         context
                     )
-
-    def charge_run(self):
-        quantity = self.object.project.run_cost(
-            self.object.run_time, adjust=True)
-        plan = self.object.project.product.plans.get(
-            usage_type='metered')
-        sponsor = self.object.project.sponsor
-        if sponsor is not None:
-            sponsor = sponsor.user.customer
-        else:
-            sponsor = self.object.profile.user.customer
-        si = SubscriptionItem.objects.get(
-            subscription__customer=self.object.profile.user.customer,
-            plan=plan)
-        stripe_ur = UsageRecord.create_stripe_object(
-            quantity=Project.dollar_to_penny(quantity),
-            timestamp=None,
-            subscription_item=si,
-        )
-        UsageRecord.construct(stripe_ur, si)
 
     def is_from_file(self):
         if hasattr(self.object.inputs, 'raw_gui_field_inputs'):

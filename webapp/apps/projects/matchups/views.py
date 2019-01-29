@@ -1,5 +1,5 @@
 from webapp.apps.core.compute import Compute
-from webapp.apps.core.views import (_InputsView, EditInputsView, OutputsView,
+from webapp.apps.core.views import (UnrestrictedInputsView, EditInputsView, OutputsView,
                                     OutputsDownloadView)
 from webapp.apps.core.models import Tag, TagOption
 
@@ -30,7 +30,7 @@ class MatchupsInputsMixin:
     provided_free = PROVIDED_FREE
 
 
-class MatchupsInputsView(MatchupsInputsMixin, _InputsView):
+class MatchupsInputsView(MatchupsInputsMixin, UnrestrictedInputsView):
     """
     A Django view for serving the default input page, validating the inputs,
     and submitting them to the backend worker nodes.
