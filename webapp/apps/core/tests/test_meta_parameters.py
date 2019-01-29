@@ -1,9 +1,9 @@
 from django import forms
 
-from webapp.apps.core.meta_parameters import (MetaParameter, MetaParameters,
-                                              meta_parameters)
+from webapp.apps.core.meta_parameters import (MetaParameter, MetaParameters)
 
 def test_meta_parameters_instance():
+    meta_parameters = MetaParameters()
     assert meta_parameters
     assert meta_parameters.parameters == []
 
