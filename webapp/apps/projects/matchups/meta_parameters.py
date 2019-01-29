@@ -1,7 +1,6 @@
 from django import forms
 
-from webapp.apps.core.meta_parameters import (meta_parameters, MetaParameters,
-                                              MetaParameter)
+from webapp.apps.core.meta_parameters import (MetaParameters, MetaParameter)
 from webapp.apps.core.fields import coerce_bool
 
 
@@ -45,17 +44,13 @@ def meta_parameter_factory(mp):
 
 """
 
-def meta_parameter_factory(mp):
-    # optionally edit parameters attribute on mp
-    mp.parameters = [
+matchups_meta_parameters = MetaParameters(
+    parameters = [
         MetaParameter(
-            name="use_2018",
-            default=True,
-            field=forms.TypedChoiceField(coerce=coerce_bool,
-                                         choices=list((i, i) for i in (True, False))),
+        name="use_2018",
+        default=True,
+        field=forms.TypedChoiceField(coerce=coerce_bool,
+                                     choices=list((i, i) for i in (True, False))),
         )
     ]
-    return mp
-
-
-matchups_meta_parameters = meta_parameter_factory(meta_parameters)
+)
