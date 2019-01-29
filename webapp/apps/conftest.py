@@ -33,12 +33,16 @@ def django_db_setup(django_db_setup, django_db_blocker):
                 user = User.objects.create_user(username=username,
                                                 email='sponsor@email.com',
                                                 password="sponsor2222")
-                stripe_customer = stripe.Customer.create(email='tester@example.com',
-                                                        source='tok_bypassPending')
-                customer, _ = Customer.get_or_construct(stripe_customer.id, user)
-                customer.subscribe_to_public_plans()
-                Profile.objects.create(user=customer.user,
-                                       is_active=True)
+                if USE_STRIPE:
+                    stripe_customer = stripe.Customer.create(email='tester@example.com',
+                                                            source='tok_bypassPending')
+                    customer, _ = Customer.get_or_construct(stripe_customer.id, user)
+                    customer.subscribe_to_public_plans()
+                    customer_user = customer.user
+                else:
+                    customer_user = user
+                    Profile.objects.create(user=customer_user,
+                                        is_active=True)
         call_command("init_projects", use_stripe=USE_STRIPE)
 
 @pytest.fixture
