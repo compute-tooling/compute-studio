@@ -44,7 +44,7 @@ def test_submit(core_inputs, meta_param, profile):
         meta_parameters = meta_param
 
     class MockSave(Save):
-        project_name = "Used strictly for testing"
+        project_name = "Used for testing"
         runmodel = MockModel
 
 
@@ -64,3 +64,61 @@ def test_submit(core_inputs, meta_param, profile):
     assert submit.model.errors_warnings
     save = MockSave(submit)
     assert save.runmodel_instance
+    assert save.runmodel_instance.profile
+    assert save.runmodel_instance.sponsor is None
+
+
+def test_submit_sponsored(core_inputs, meta_param, profile):
+
+    class MockDisplayer(Displayer):
+        param_class = Param
+
+        def package_defaults(self):
+            return core_inputs
+
+    class MockParser(Parser):
+        displayer_class = MockDisplayer
+
+        def package_defaults(self):
+            return core_inputs
+
+        def parse_parameters(self):
+            params, jsonstr, errors_warnings = super().parse_parameters()
+            jsonstr = json.dumps({"testing": [1, 2, 3]})
+            return params, jsonstr, errors_warnings
+
+    class MockInputsForm(InputsForm):
+        displayer_class = MockDisplayer
+        model = MockModel
+        meta_parameters = meta_param
+
+    class MockSubmit(Submit):
+        parser_class = MockParser
+        form_class = MockInputsForm
+        upstream_version = "0.1.0"
+        task_run_time_secs = 10
+        meta_parameters = meta_param
+
+    class MockSave(Save):
+        project_name = "Used for testing sponsored apps"
+        runmodel = MockModel
+
+
+    factory = RequestFactory()
+    data = {
+        "has_errors": ["False"],
+        "metaparam": ["3"],
+        "intparam": ["1"]
+    }
+    request = factory.post("/mockcore", data)
+    request.user = profile.user
+    compute = MockCompute()
+    submit = MockSubmit(request, compute)
+    assert not submit.stop_submission
+    assert submit.model.upstream_parameters
+    assert submit.model.inputs_file
+    assert submit.model.errors_warnings
+    save = MockSave(submit)
+    assert save.runmodel_instance
+    assert save.runmodel_instance.profile
+    assert save.runmodel_instance.sponsor.user.username == "sponsor"

@@ -8,10 +8,13 @@ from .models import SubscriptionItem, UsageRecord
 USE_STRIPE = os.environ.get("USE_STRIPE", "false").lower() == "true"
 
 
-def get_billing_data():
+def get_billing_data(include_mock_data=False):
     path = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(path, 'billing.json')) as f:
         billing = json.loads(f.read())
+    if include_mock_data:
+        with open(os.path.join(path, 'tests', 'mock-billing.json')) as f:
+            billing.update(json.loads(f.read()))
     return billing
 
 
@@ -30,8 +33,10 @@ class ChargeRunMixin:
                 self.object.run_time, adjust=True)
             plan = self.object.project.product.plans.get(
                 usage_type='metered')
+            # The sponsor is also stored on the CoreRun object. However, the
+            # Project object should be considered the single source of truth
+            # for sending usage records.
             sponsor = self.object.project.sponsor
-            self.object.sponsor = sponsor
             if sponsor is not None:
                 customer = sponsor.user.customer
             else:
