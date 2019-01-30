@@ -1,6 +1,10 @@
 import pytest
 
 from django.contrib import auth
+from django.urls import reverse
+
+from webapp.apps.users.models import Project
+
 
 @pytest.mark.django_db
 class CoreAbstractViewsTest():
@@ -12,6 +16,7 @@ class CoreAbstractViewsTest():
     of the same tests would be cumbersome, time-consuming, and error-prone.
     """
     app_name = 'core'
+    title = "Core"
     post_data_ok = {}
     mockcompute = None
     RunModel = None
@@ -20,7 +25,7 @@ class CoreAbstractViewsTest():
         """
         Test simple get returns 200 status
         """
-        resp = client.get(f'/{self.app_name}/')
+        resp = client.get(reverse(self.app_name))
         assert resp.status_code == 200
 
     def test_logged_in(self, client, profile, password):
@@ -28,13 +33,13 @@ class CoreAbstractViewsTest():
         Test simple get returns AnonymousUser and login returns authenticated
         user
         """
-        resp = client.get(f'/{self.app_name}/')
+        resp = client.get(reverse(self.app_name))
         assert resp.status_code == 200
         anon_user = auth.get_user(client)
         assert not anon_user.is_authenticated
 
         assert self.login_client(client, profile.user, password)
-        resp = client.get(f'/{self.app_name}/')
+        resp = client.get(reverse(self.app_name))
         assert resp.status_code == 200
         user = auth.get_user(client)
         assert user.is_authenticated
@@ -52,18 +57,18 @@ class CoreAbstractViewsTest():
         monkeypatch.setattr('webapp.apps.core.views.Compute', self.mockcompute)
 
         self.login_client(client, profile.user, password)
-        resp = client.post(f'/{self.app_name}/', data=self.inputs_ok())
+        resp = client.post(reverse(self.app_name), data=self.inputs_ok())
         assert resp.status_code == 302 # redirect
         idx = resp.url[:-1].rfind('/')
         slug = resp.url[(idx + 1):-1]
-        assert resp.url == f'/{self.app_name}/{slug}/'
+        assert resp.url == f'{reverse(self.app_name)}{slug}/'
 
         # test get ouputs page
         resp = client.get(resp.url)
         assert resp.status_code == 200
 
         # test ouptut download
-        resp = client.get(f'/{self.app_name}/{slug}/download')
+        resp = client.get(f'{reverse(self.app_name)}{slug}/download')
         assert resp.status_code == 200
         assert resp._headers['content-type'] == ('Content-Type',
                                                  'application/zip')
@@ -86,12 +91,12 @@ class CoreAbstractViewsTest():
         monkeypatch.setattr('webapp.apps.core.views.Compute', self.mockcompute)
 
         self.login_client(client, profile.user, password)
-        resp = client.post(f'/{self.app_name}/', data=self.inputs_ok())
+        resp = client.post(reverse(self.app_name), data=self.inputs_ok())
         assert resp.status_code == 302 # redirect
         idx = resp.url[:-1].rfind('/')
         slug = resp.url[(idx + 1):-1]
         outputs_url = resp.url
-        assert outputs_url == f'/{self.app_name}/{slug}/'
+        assert outputs_url == f'{reverse(self.app_name)}{slug}/'
 
         # test get ouputs page
         resp = client.get(outputs_url)
@@ -104,17 +109,18 @@ class CoreAbstractViewsTest():
     def test_run_reporting(self, monkeypatch, client, password, profile):
         """
         Tests:
+        - post run
         """
         monkeypatch.setattr(f'webapp.apps.projects.{self.app_name}.views.Compute',
                             self.mockcompute)
         monkeypatch.setattr('webapp.apps.core.views.Compute', self.mockcompute)
 
         self.login_client(client, profile.user, password)
-        resp = client.post(f'/{self.app_name}/', data=self.inputs_ok())
+        resp = client.post(reverse(self.app_name), data=self.inputs_ok())
         assert resp.status_code == 302 # redirect
         idx = resp.url[:-1].rfind('/')
         slug = resp.url[(idx + 1):-1]
-        assert resp.url == f'/{self.app_name}/{slug}/'
+        assert resp.url == f'{reverse(self.app_name)}{slug}/'
 
         # test get ouputs page
         resp = client.get(resp.url)
@@ -127,15 +133,24 @@ class CoreAbstractViewsTest():
         assert output.project.run_cost(output.run_time, adjust=True) > 0
         assert output.run_time > 0
 
+        if self.provided_free:
+            assert output.sponsor is not None
 
-    def test_post_wo_login_redirects_to_login(self, client):
+    def test_post_wo_login(self, client):
         """
-        Test post without logged-in user returns 302 status and redirects
-        to login page
+        Test post without logged-in user:
+        - returns 302 status and redirects to login page on non-sponsored model.
+        - the post kicks off a run on a sponsored model.
         """
-        resp = client.post(f'/{self.app_name}/', data=self.inputs_ok())
-        assert resp.status_code == 302
-        assert resp.url == f'/users/login/?next=/{self.app_name}/'
+        resp = client.post(reverse(self.app_name), data=self.inputs_ok())
+        if self.provided_free:
+            assert resp.status_code == 302
+            idx = resp.url[:-1].rfind('/')
+            slug = resp.url[(idx + 1):-1]
+            assert resp.url == f'{reverse(self.app_name)}{slug}/'
+        else:
+            assert resp.status_code == 302
+            assert resp.url == f'/users/login/?next={reverse(self.app_name)}'
 
     def login_client(self, client, user, password):
         """
@@ -144,6 +159,12 @@ class CoreAbstractViewsTest():
         success = client.login(username=user.username, password=password)
         assert success
         return success
+
+    @property
+    def provided_free(self):
+        if not hasattr(self, "project"):
+            self.project = Project.objects.get(name=self.title)
+        return self.project.sponsor is not None
 
     def inputs_ok(self):
         return {"has_errors": False}

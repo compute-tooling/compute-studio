@@ -1,9 +1,9 @@
 from webapp.apps.core.displayer import Displayer
 from webapp.apps.contrib.ptstyle.param import ParamToolsParam
 
-from compbaseball import baseball
+import matchups
 
-class CompbaseballDisplayer(Displayer):
+class MatchupsDisplayer(Displayer):
     param_class = ParamToolsParam
 
     def package_defaults(self):
@@ -16,8 +16,7 @@ class CompbaseballDisplayer(Displayer):
         ####################################
         # code snippet
         def package_defaults(**meta_parameters):
-            return baseball.get_inputs(use_2018=meta_parameters["use_2018"])
-
+            return matchups.get_inputs(use_2018=meta_parameters["use_2018"])
         ####################################
 
         return package_defaults(**self.meta_parameters)

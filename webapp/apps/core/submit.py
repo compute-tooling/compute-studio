@@ -141,9 +141,9 @@ class Save:
         runmodel = self.runmodel()
         runmodel.job_id = submit.submitted_id
         runmodel.inputs = submit.model
-        runmodel.profile = submit.request.user.profile
+        runmodel.profile = getattr(submit.request.user, "profile", None)
         runmodel.project = Project.objects.get(name=self.project_name)
-
+        runmodel.sponsor = runmodel.project.sponsor
         runmodel.upstream_vers = submit.upstream_version
         runmodel.webapp_vers = submit.webapp_version
 

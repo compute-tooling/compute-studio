@@ -22,7 +22,7 @@ urlpatterns = [
     path('', include("webapp.apps.pages.urls")),
 
     # add project URL's here
-    path('compbaseball/', include('webapp.apps.projects.compbaseball.urls')),
+    path('hdoupe/matchups/', include('webapp.apps.projects.matchups.urls')),
 
     # user/billing apps
     path('users/', include('webapp.apps.users.urls')),

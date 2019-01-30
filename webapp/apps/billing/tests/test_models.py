@@ -35,11 +35,11 @@ class TestStripeModels():
         assert not customer.livemode
 
     def test_construct(self):
-        billing = get_billing_data()
-        assert 'upload' in billing
+        billing = get_billing_data(include_mock_data=True)
+        assert 'mock' in billing
         products = Product.objects.all()
         assert len(products) == len(billing)
-        name = billing['upload']['name']
+        name = billing['mock']['name']
         product = Product.objects.get(name=name)
         assert product.project.name == product.name
         assert Plan.objects.filter(product__name=name).count() == 2

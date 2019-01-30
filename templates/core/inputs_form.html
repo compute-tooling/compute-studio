@@ -6,7 +6,7 @@
 {% load inputs %}
 {% block content %}
 
-<form class="inputs-form" id="inputs-form" method="post" action="/{{app_name}}/">
+<form class="inputs-form" id="inputs-form" method="post" action="{{app_url}}">
 {% csrf_token %}
 <input type="hidden" name="has_errors" value="{{ has_errors }}" />
 <div class="wrapper">
@@ -43,10 +43,10 @@
               </ul>
             </li>
             <li>
-              <button class="btn btn-block go-btn" type="submit" name="full_calc" value="true" style="margin:10px;margin-left:0px;"><b>Run ({{ exp_cost }})</b></button>
+              <button class="btn btn-block go-btn" type="submit" name="full_calc" value="true" style="margin:10px;margin-left:0px;"><b>Run {% if not provided_free %}({{ exp_cost }}){% endif %}</b></button>
             </li>
             <li>
-              <a href="/{{app_name}}/" class="btn btn-block inverse-btn-match-nav" style="margin:10px;margin-left:0px;">Reset</a>
+              <a href="{{app_url}}" class="btn btn-block inverse-btn-match-nav" style="margin:10px;margin-left:0px;">Reset</a>
             </li>
         </ul>
     </nav>

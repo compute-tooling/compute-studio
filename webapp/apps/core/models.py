@@ -49,19 +49,15 @@ class CoreRun(models.Model):
     meta_data = JSONField(default=None, blank=True, null=True)
     outputs = JSONField(default=None, blank=True, null=True)
     aggr_outputs = JSONField(default=None, blank=True, null=True)
-    uuid = models.UUIDField(
-        default=uuid.uuid1,
-        editable=False,
-        max_length=32,
-        unique=True,
-        primary_key=True)
     error_text = models.CharField(
         null=True,
         blank=True,
         default=None,
         max_length=4000)
-    profile = models.ForeignKey(Profile, on_delete=models.PROTECT,
+    profile = models.ForeignKey(Profile, on_delete=models.PROTECT, null=True,
                                 related_name='%(app_label)s_%(class)s_runs')
+    sponsor = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True,
+                                related_name='%(app_label)s_%(class)s_sponsored_runs')
     project = models.ForeignKey(Project, on_delete=models.PROTECT,
                                 related_name='%(app_label)s_%(class)s_runs')
     # run-time in seconds
