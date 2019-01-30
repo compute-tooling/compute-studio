@@ -11,6 +11,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, Http404, JsonResponse
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.urls import reverse
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
 from webapp.apps.billing.utils import USE_STRIPE, ChargeRunMixin
@@ -54,13 +55,13 @@ class InputsMixin:
         context = {
             'rate': f'${rate}/hour',
             'project_name': self.project_name,
-            'app_name': self.app_name,
             'app_description': self.app_description,
             'redirect_back': self.app_name,
             'can_run': can_run,
             'exp_cost': f'${exp_cost}',
             'exp_time': f'{exp_time} seconds',
-            'provided_free': self.provided_free}
+            'provided_free': self.provided_free,
+            'app_url': reverse(self.app_name)}
         return context
 
 
