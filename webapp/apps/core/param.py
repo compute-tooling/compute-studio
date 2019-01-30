@@ -59,7 +59,9 @@ class BaseParam:
     def __init__(self, name, attributes, **meta_parameters):
         self.name = name
         self.attributes = attributes
-        self.title = self.attributes["title"]
+        # title is preferred, but long_name is also acceptable.
+        self.title = (self.attributes.get("title", None) or
+                      self.attributes["long_name"])
         self.description = self.attributes["description"]
         self.number_dims = self.attributes.get("number_dims", 1)
         self.col_fields = []
