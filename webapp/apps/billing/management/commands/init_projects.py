@@ -15,10 +15,18 @@ class Command(BaseCommand):
             dest='use_stripe',
             help='Use stripe when initializing the database',
         )
+        parser.add_argument(
+            '--include_mock_data',
+            action='store_true',
+            dest='include_mock_data',
+            help='Include mock data. Used for testing.',
+        )
+
 
     def handle(self, *args, **options):
         use_stripe = options["use_stripe"]
-        billing = get_billing_data()
+        include_mock_data = options["include_mock_data"]
+        billing = get_billing_data(include_mock_data=options["include_mock_data"])
         for app_name, plan in billing.items():
             if plan["username"]:
                 try:

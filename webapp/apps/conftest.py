@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from webapp.apps.billing.models import (Customer, Plan, Subscription,
                                         SubscriptionItem)
 from webapp.apps.billing.utils import USE_STRIPE, get_billing_data
-from webapp.apps.users.models import Profile
+from webapp.apps.users.models import Profile, Project
 
 from webapp.apps.core.meta_parameters import MetaParameter, MetaParameters
 
@@ -23,8 +23,9 @@ stripe.api_key = os.environ.get('STRIPE_SECRET')
 @pytest.fixture(scope='session')
 def django_db_setup(django_db_setup, django_db_blocker):
     with django_db_blocker.unblock():
-        call_command("init_projects", use_stripe=USE_STRIPE)
-        for name, proj in get_billing_data().items():
+        call_command("init_projects", use_stripe=USE_STRIPE,
+                     include_mock_data=True)
+        for name, proj in get_billing_data(include_mock_data=True).items():
             if proj["sponsor"] is None:
                 continue
             else:
@@ -41,9 +42,10 @@ def django_db_setup(django_db_setup, django_db_blocker):
                     customer_user = customer.user
                 else:
                     customer_user = user
-                    Profile.objects.create(user=customer_user,
+                Profile.objects.create(user=customer_user,
                                         is_active=True)
-        call_command("init_projects", use_stripe=USE_STRIPE)
+        call_command("init_projects", use_stripe=USE_STRIPE,
+                     include_mock_data=True)
 
 @pytest.fixture
 def stripe_customer():
@@ -99,7 +101,7 @@ def profile(db, user):
 
 @pytest.fixture
 def plans(db):
-    plans = Plan.objects.filter(product__name='Used strictly for testing')
+    plans = Plan.objects.filter(product__name='Used for testing')
     return plans
 
 
