@@ -49,12 +49,6 @@ class CoreRun(models.Model):
     meta_data = JSONField(default=None, blank=True, null=True)
     outputs = JSONField(default=None, blank=True, null=True)
     aggr_outputs = JSONField(default=None, blank=True, null=True)
-    uuid = models.UUIDField(
-        default=uuid.uuid1,
-        editable=False,
-        max_length=32,
-        unique=True,
-        primary_key=True)
     error_text = models.CharField(
         null=True,
         blank=True,
