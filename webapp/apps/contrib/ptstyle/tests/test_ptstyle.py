@@ -10,7 +10,7 @@ from webapp.apps.core.meta_parameters import meta_parameters, MetaParameter
 from webapp.apps.core.displayer import Displayer
 from webapp.apps.contrib.ptstyle.param import ParamToolsParam
 from webapp.apps.contrib.ptstyle.parser import ParamToolsParser
-from webapp.apps.contrib.ptstyle.utils import to_dict, to_string
+from webapp.apps.contrib.ptstyle.utils import dims_to_dict, dims_to_string
 
 CURRENT_PATH = os.path.abspath(os.path.dirname(__file__))
 
@@ -74,12 +74,12 @@ def test_param_naming(TestParams, pt_metaparam):
     pname = "min_int_param"
     fake_vi = {"dim0": "one", "dim1": "heyo", "dim2": "byo", "value": 123}
     param = ParamToolsParam(pname, spec[pname], **mp_inst)
-    newname, suffix = to_string(pname, fake_vi)
-    assert suffix == "dim0__one___dim1__heyo___dim2__byo"
+    newname, suffix = dims_to_string(pname, fake_vi, mp_inst)
+    assert suffix == "dim0__mp___dim1__heyo___dim2__byo"
     assert newname == pname + "____" + suffix
 
     param.set_fields([fake_vi])
-    exp = "min_int_param____dim0__one___dim1__heyo___dim2__byo"
+    exp = "min_int_param____dim0__mp___dim1__heyo___dim2__byo"
     assert param.col_fields[-1].name == exp
     assert param.col_fields[-1].default_value == 123
     assert exp in param.fields
@@ -87,7 +87,7 @@ def test_param_naming(TestParams, pt_metaparam):
     pname = "min_int_param"
     fake_vi = {"value": 123}
     param = ParamToolsParam(pname, spec[pname], **mp_inst)
-    newname, suffix = to_string(pname, fake_vi)
+    newname, suffix = dims_to_string(pname, fake_vi, mp_inst)
     assert suffix == ""
     assert newname == pname
 
@@ -121,8 +121,8 @@ def test_param_parser(TestParams):
 
     # test good data; make sure there are no warnings/errors
     inputs = {
-        "min_int_param____dim0__zero___dim1__1": 1,
-        "min_int_param____dim0__zero___dim1__2": 2,
+        "min_int_param____dim0__mp___dim1__1": 1,
+        "min_int_param____dim0__mp___dim1__2": 2,
         "str_choice_param": "value1"
     }
     parser = MockParser(inputs, **valid_meta_params)
@@ -144,8 +144,8 @@ def test_param_parser(TestParams):
         assert ew == {"errors": {}, "warnings": {}}
 
     inputs = {
-        "min_int_param____dim0__zero___dim1__1": -1,
-        "min_int_param____dim0__zero___dim1__2": -2,
+        "min_int_param____dim0__mp___dim1__1": -1,
+        "min_int_param____dim0__mp___dim1__2": -2,
         "str_choice_param": "notachoice"
     }
     parser = MockParser(inputs, **valid_meta_params)

@@ -1,9 +1,10 @@
-def to_dict(param_name):
+
+def dims_to_dict(param_name, meta_parameters):
     """
     Convert value object from string to dict:
-       "param_name___dim0_dimval__dim1_dimval1..."
-       -->
-       {"value": val, dim0": dimval, ...}
+    "param_name___dim0_dimval__dim1_dimval1..."
+    -->
+    {"value": val, dim0": dimval, ...}
 
     Return: base parameter name, value object dict
     """
@@ -21,20 +22,29 @@ def to_dict(param_name):
         # and its value.
         for dim in dimstrings:
             dim_name, dim_value = dim.split("__")
+            if dim_name in meta_parameters:
+                dim_value = meta_parameters[dim_name]
             value_object[dim_name] = dim_value
     return basename, value_object
 
 
-def to_string(param_name, value_object):
+def dims_to_string(param_name, value_object, meta_parameters):
     """
     Convert value object from dict to string:
-       {"value": val, dim0": dimval, ...}
-       -->
-       "param_name____dim0__dimval___dim1__dimval1..."
+    {"value": val, dim0": dimval, ...}
+    -->
+    "param_name____dim0__dimval___dim1__dimval1..."
 
     Return: New name, suffix
     """
-    dims = {k: v for k, v in value_object.items() if k != "value"}
+    dims = {}
+    for dim_name, dim_value in value_object.items():
+        if dim_name == "value":
+            continue
+        if dim_name in meta_parameters:
+            dim_value = "mp"
+        dims[dim_name] = dim_value
+
     if dims:
         suffix = "___".join([
             f"{dim_name}__{dim_value}" for dim_name, dim_value in dims.items()

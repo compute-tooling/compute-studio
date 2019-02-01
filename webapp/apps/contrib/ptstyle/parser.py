@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from webapp.apps.core.parser import Parser, ParamData, ParameterLookUpException
-from .utils import to_dict
+from .utils import dims_to_dict
 
 class ParamToolsParser(Parser):
 
@@ -11,7 +11,7 @@ class ParamToolsParser(Parser):
         Look up the parameter by its base name--without the dimension info
         attached. Return using the name with the dimension info attached.
         """
-        param_spl = param.split("___")
+        param_spl = param.split("____")
         search_hit = defaults.get(param_spl[0], None)
         if search_hit:
             return ParamData(param, search_hit)
@@ -23,7 +23,7 @@ class ParamToolsParser(Parser):
     def unflatten(self, parsed_input):
         params = defaultdict(list)
         for param, value in parsed_input.items():
-            basename, value_object = to_dict(param)
+            basename, value_object = dims_to_dict(param, self.valid_meta_params)
             if value_object:
                 value_object["value"] = value
                 # Make sure meta parameter dimensions are updated.

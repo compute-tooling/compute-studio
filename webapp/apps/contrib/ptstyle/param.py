@@ -1,21 +1,5 @@
 from webapp.apps.core.param import Param, Value, SeparatedValue
-from .utils import to_string, to_dict
-
-
-class ParamToolsValueMixin:
-
-    def format_label(self):
-        _, value_object = to_dict(self.name)
-        return ",".join([f"{dim_name.replace('_', ' ').title()}: {dim_value}"
-                         for dim_name, dim_value in value_object.items()])
-
-
-class ParamToolsValue(ParamToolsValueMixin, Value):
-    pass
-
-
-class ParamToolsSeparatedValue(ParamToolsValueMixin, SeparatedValue):
-    pass
+from .utils import dims_to_string
 
 
 class ParamToolsParam(Param):
@@ -33,15 +17,17 @@ class ParamToolsParam(Param):
 
         """
         if self.number_dims == 0:
-            self.field_class = ParamToolsValue
+            self.field_class = Value
         else:
-            self.field_class = ParamToolsSeparatedValue
+            self.field_class = SeparatedValue
 
         for value_object in value:
-            field_name, suffix = to_string(self.name, value_object)
+            field_name, suffix = dims_to_string(
+                self.name, value_object, self.meta_parameters)
+            label = self.format_label(value_object)
             field = self.field_class(
                 field_name,
-                suffix,
+                label,
                 value_object["value"],
                 self.coerce_func,
                 1,
@@ -49,3 +35,10 @@ class ParamToolsParam(Param):
             )
             self.fields[field_name] = field.form_field
             self.col_fields.append(field)
+
+    def format_label(self, value_object):
+        label = ""
+        for dim_name, dim_value in value_object.items():
+            if dim_name != "value" and dim_name not in self.meta_parameters:
+                label += f"{dim_name.replace('_', ' ').title()}: {dim_value} "
+        return label

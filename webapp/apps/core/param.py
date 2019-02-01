@@ -18,16 +18,13 @@ class SeparatedValue:
             'placeholder': self.default_value,
         }
         self.form_field = SeparatedValueField(
-            label=self.format_label(),
+            label=self.label,
             widget=forms.TextInput(attrs=attrs),
             required=False,
             coerce=coerce_func,
             number_dims=number_dims,
             **field_kwargs
         )
-
-    def format_label(self):
-        return self.label
 
 
 class Value:
@@ -42,16 +39,13 @@ class Value:
             'placeholder': self.default_value,
         }
         self.form_field = ValueField(
-            label=self.format_label(),
+            label=self.label,
             widget=forms.TextInput(attrs=attrs),
             required=False,
             coerce=coerce_func,
             number_dims=number_dims,
             **field_kwargs
         )
-
-    def format_label(self):
-        return self.label
 
 class CheckBox:
 
@@ -91,6 +85,7 @@ class BaseParam:
         self.description = self.attributes["description"]
         self.number_dims = self.attributes.get("number_dims", 1)
         self.col_fields = []
+        self.meta_parameters = meta_parameters
         for mp, value in meta_parameters.items():
             setattr(self, mp, value)
         self.coerce_func = self.get_coerce_func()

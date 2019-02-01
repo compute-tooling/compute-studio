@@ -41,7 +41,7 @@ def coerce_date(val):
 
 class ValueField(forms.Field):
     default_error_messages = {
-        'invalid_type': _('%(name)s: %(value)s is not able to be converted to the correct type',),
+        'invalid_type': _('%(value)s is not able to be converted to the correct type',),
     }
 
     def __init__(self, *, coerce=lambda val: val, number_dims=1, empty_value="",
@@ -62,8 +62,7 @@ class ValueField(forms.Field):
             value = self.coerce(value)
         except (ValueError, TypeError) as e:
             raise forms.ValidationError(self.error_messages['invalid_type'],
-                                        params={'value': value,
-                                                'name': self.label},
+                                        params={'value': value},
                                         code='invalid')
         return value
 
