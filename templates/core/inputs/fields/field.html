@@ -1,35 +1,9 @@
 {% load utility %}
+{% load crispy_forms_tags %}
 
 {% with form|dict_get:field.name as form_field %}
-
-<div class="form-group{% if form_field.errors %} has-warning{% endif %}" style="padding:0px 5px;">
-
-  {% if form_field.label %}
-    <label for="{{ form_field.id_for_label }}">
-      {{ form_field.label }}
-    </label>
-  {% endif %}
-
-  {{ form_field }}
-
-  {% for error in form_field.errors %}
-    <span class="help-block" style="display:block; color:red;">
-      {{ error }}
-    </span>
-  {% endfor %}
-
-  {% if field.default_value %}
-    <span class="default" style="color:#869191;">
-      Default: {{ field.default_value }}
-    </span>
-  {% endif %}
-
+<div style="padding:0px">
+  {{form_field|as_crispy_field}}
 </div>
 
 {% endwith %}
-
-<!--
-<input type="text" id="inputHelpBlock" class="form-control" aria-describedby="helpBlock">
-<span id="helpBlock" class="help-block">A block of help text that breaks onto a new line and m
-ay extend beyond one line.</span>
--->
