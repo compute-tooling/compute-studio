@@ -10,6 +10,7 @@
         "number_dims": 0,
         "value": [
             {"dim0": "zero", "dim1": 1, "value": 1},
+            {"dim0": "zero", "dim1": 2, "value": 3},
             {"dim0": "one", "dim1": 2, "value": 2}
         ],
         "validators": {"range": {"min": 0, "max": "max_int_param"}},
@@ -28,6 +29,7 @@
         "number_dims": 0,
         "value": [
             {"dim0": "zero", "dim1": 1, "value": 3},
+            {"dim0": "zero", "dim1": 2, "value": 5},
             {"dim0": "one", "dim1": 2, "value": 4}
         ],
         "validators": {"range": {"min": "min_int_param", "max": 10}},

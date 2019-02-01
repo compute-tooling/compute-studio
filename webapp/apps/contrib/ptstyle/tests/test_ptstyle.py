@@ -4,12 +4,13 @@ import json
 import pytest
 from django import forms
 
-from paramtools import parameters
+from paramtools import Parameters, ValidationError
 
 from webapp.apps.core.meta_parameters import meta_parameters, MetaParameter
 from webapp.apps.core.displayer import Displayer
 from webapp.apps.contrib.ptstyle.param import ParamToolsParam
 from webapp.apps.contrib.ptstyle.parser import ParamToolsParser
+from webapp.apps.contrib.ptstyle.utils import to_dict, to_string
 
 CURRENT_PATH = os.path.abspath(os.path.dirname(__file__))
 
@@ -28,7 +29,7 @@ def defaults_spec_path():
 
 @pytest.fixture
 def TestParams(schema_def_path, defaults_spec_path):
-    class _TestParams(parameters.Parameters):
+    class _TestParams(Parameters):
         schema = schema_def_path
         defaults = defaults_spec_path
 
@@ -73,13 +74,22 @@ def test_param_naming(TestParams, pt_metaparam):
     pname = "min_int_param"
     fake_vi = {"dim0": "one", "dim1": "heyo", "dim2": "byo", "value": 123}
     param = ParamToolsParam(pname, spec[pname], **mp_inst)
-    assert param.name_from_dims(fake_vi) == "dim0_one__dim1_heyo__dim2_byo"
+    newname, suffix = to_string(pname, fake_vi)
+    assert suffix == "dim0__one___dim1__heyo___dim2__byo"
+    assert newname == pname + "____" + suffix
 
     param.set_fields([fake_vi])
-    exp = "min_int_param___dim0_one__dim1_heyo__dim2_byo"
+    exp = "min_int_param____dim0__one___dim1__heyo___dim2__byo"
     assert param.col_fields[-1].name == exp
     assert param.col_fields[-1].default_value == 123
     assert exp in param.fields
+
+    pname = "min_int_param"
+    fake_vi = {"value": 123}
+    param = ParamToolsParam(pname, spec[pname], **mp_inst)
+    newname, suffix = to_string(pname, fake_vi)
+    assert suffix == ""
+    assert newname == pname
 
 
 def test_param_parser(TestParams):
@@ -111,15 +121,47 @@ def test_param_parser(TestParams):
 
     # test good data; make sure there are no warnings/errors
     inputs = {
-        "min_int_param___dim0_zero__dim1_1": 1,
+        "min_int_param____dim0__zero___dim1__1": 1,
+        "min_int_param____dim0__zero___dim1__2": 2,
         "str_choice_param": "value1"
     }
     parser = MockParser(inputs, **valid_meta_params)
     parsed = parser.parse_parameters()
     assert parsed
     params, jsonstrs, errors_warnings = parsed
-    assert params["test"]["min_int_param"][0]["value"] == 1
-    assert params["test"]["str_choice_param"][0]["value"] == "value1"
+    exp = {
+        "min_int_param": [
+            {"value": 1, "dim0": "zero", "dim1": "1"},
+            {"value": 2, "dim0": "zero", "dim1": "2"}
+        ],
+        "str_choice_param": [
+            {"value": "value1"}
+        ]
+    }
+    assert dict(params["test"]) == exp
     assert jsonstrs
     for ew in errors_warnings.values():
         assert ew == {"errors": {}, "warnings": {}}
+
+    inputs = {
+        "min_int_param____dim0__zero___dim1__1": -1,
+        "min_int_param____dim0__zero___dim1__2": -2,
+        "str_choice_param": "notachoice"
+    }
+    parser = MockParser(inputs, **valid_meta_params)
+    parsed = parser.parse_parameters()
+    assert parsed
+    params, jsonstrs, errors_warnings = parsed
+    exp = {
+        "min_int_param": [
+            {"value": -1, "dim0": "zero", "dim1": "1"},
+            {"value": -2, "dim0": "zero", "dim1": "2"}
+        ],
+        "str_choice_param": [
+            {"value": "notachoice"}
+        ]
+    }
+    assert dict(params["test"]) == exp
+    assert jsonstrs
+    assert len(errors_warnings["test"]["errors"]["min_int_param"]) == 2
+    assert len(errors_warnings["test"]["errors"]["str_choice_param"]) == 1

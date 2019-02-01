@@ -67,12 +67,6 @@ class Parser:
         """
         return parsed_input
 
-    def check_revisions_for_errors(self, *args, **kwargs):
-        """
-        Does nothing by default, for now.
-        """
-        return {}
-
     @staticmethod
     def get_default_param(param, defaults, param_get=None, raise_error=True):
         """
@@ -88,14 +82,6 @@ class Parser:
             msg = "Received unexpected parameter: {}"
             raise ParameterLookUpException(msg.format(param))
         return None
-
-    @staticmethod
-    def parse_errors_warnings(errors_warnings):
-        """
-        Custom logic can be added here if the error messages need to be
-        converted to the COMP errors_warnings criteria.
-        """
-        return errors_warnings
 
     @staticmethod
     def append_errors_warnings(errors_warnings, append_func):

@@ -1,6 +1,7 @@
 import datetime
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from .utils import is_reverse, is_wildcard
 
@@ -38,9 +39,9 @@ def coerce_date(val):
     raise ValueError("Invalid date supplied")
 
 
-class SeparatedValueField(forms.Field):
+class ValueField(forms.Field):
     default_error_messages = {
-        'invalid_type': ('%(value)s is not able to be converted to the correct type',),
+        'invalid_type': _('%(name)s: %(value)s is not able to be converted to the correct type',),
     }
 
     def __init__(self, *, coerce=lambda val: val, number_dims=1, empty_value="",
@@ -61,8 +62,20 @@ class SeparatedValueField(forms.Field):
             value = self.coerce(value)
         except (ValueError, TypeError) as e:
             raise forms.ValidationError(self.error_messages['invalid_type'],
+                                        params={'value': value,
+                                                'name': self.label},
                                         code='invalid')
         return value
+
+    def to_python(self, value):
+        if not value:
+            return value
+        python_value = []
+        value = value.strip()
+        python_value = self._coerce(value)
+        return python_value
+
+class SeparatedValueField(ValueField):
 
     def to_python(self, value):
         if not value:

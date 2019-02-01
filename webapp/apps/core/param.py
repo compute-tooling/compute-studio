@@ -1,6 +1,6 @@
 from django import forms
 
-from .fields import (SeparatedValueField, coerce_bool,
+from .fields import (ValueField, SeparatedValueField, coerce_bool,
                      coerce_float, coerce_int, coerce_date, coerce)
 
 
@@ -18,7 +18,7 @@ class SeparatedValue:
             'placeholder': self.default_value,
         }
         self.form_field = SeparatedValueField(
-            label=self.label,
+            label=self.format_label(),
             widget=forms.TextInput(attrs=attrs),
             required=False,
             coerce=coerce_func,
@@ -26,6 +26,32 @@ class SeparatedValue:
             **field_kwargs
         )
 
+    def format_label(self):
+        return self.label
+
+
+class Value:
+
+    def __init__(self, name, label, default_value, coerce_func, number_dims,
+                 **field_kwargs):
+        self.name = name
+        self.label = label
+        self.default_value = default_value
+        attrs = {
+            'class': 'form-control',
+            'placeholder': self.default_value,
+        }
+        self.form_field = ValueField(
+            label=self.format_label(),
+            widget=forms.TextInput(attrs=attrs),
+            required=False,
+            coerce=coerce_func,
+            number_dims=number_dims,
+            **field_kwargs
+        )
+
+    def format_label(self):
+        return self.label
 
 class CheckBox:
 
@@ -78,6 +104,10 @@ class BaseParam:
         self.fields = {}
 
     def set_fields(self, value, **field_kwargs):
+        if self.number_dims == 0:
+            self.field_class = Value
+        else:
+            self.field_class = SeparatedValue
         field = self.field_class(
             self.name,
             '',

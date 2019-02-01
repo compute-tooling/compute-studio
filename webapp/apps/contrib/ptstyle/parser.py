@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from webapp.apps.core.parser import Parser, ParamData, ParameterLookUpException
-
+from .utils import to_dict
 
 class ParamToolsParser(Parser):
 
@@ -23,28 +23,15 @@ class ParamToolsParser(Parser):
     def unflatten(self, parsed_input):
         params = defaultdict(list)
         for param, value in parsed_input.items():
-            # Split into name and dimension components.
-            spl = param.split("___")
-            # len(spl) > 1 implies dimension info is in the second component
-            if len(spl) > 1:
-                assert len(spl) == 2
-                base_name, dims = spl
-                # Split dimension component by each dimension
-                dimstrings = dims.split("__")
-                value_item = {}
-                # Further parse those down into the name of the dimension
-                # and its value.
-                for dim in dimstrings:
-                    dim_name, dim_value = dim.split("_")
-                    value_item[dim_name] = dim_value
-                value_item["value"] = value
+            basename, value_object = to_dict(param)
+            if value_object:
+                value_object["value"] = value
                 # Make sure meta parameter dimensions are updated.
                 for mp, mp_val in self.valid_meta_params.items():
-                    if mp in value_item:
-                        value_item[mp] = mp_val
-                params[base_name].append(value_item)
+                    if mp in value_object:
+                        value_object[mp] = mp_val
+                params[basename].append(value_object)
             else:
                 # No dimension information is encoded.
-                assert len(spl) == 1
                 params[param].append({"value": value})
         return params
