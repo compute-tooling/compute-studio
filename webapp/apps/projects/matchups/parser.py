@@ -21,9 +21,9 @@ class MatchupsParser(ParamToolsParser):
         def parse_user_inputs(params, jsonparams, errors_warnings,
                               **meta_parameters):
             # parse the params, jsonparams, and errors_warnings further
-            use_2018 = meta_parameters["use_2018"]
+            use_full_data = meta_parameters["use_full_data"]
             params, jsonparams, errors_warnings = matchups.parse_inputs(
-                params, jsonparams, errors_warnings, use_2018=use_2018)
+                params, jsonparams, errors_warnings, use_full_data==use_full_data)
             return params, jsonparams, errors_warnings
         ####################################
 

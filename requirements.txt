@@ -13,4 +13,5 @@ pytest
 django-widget-tweaks
 django-crispy-forms
 matchups
+paramtools==0.2.0rc1
 psycopg2-binary

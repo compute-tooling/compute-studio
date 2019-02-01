@@ -16,7 +16,7 @@ class MatchupsDisplayer(Displayer):
         ####################################
         # code snippet
         def package_defaults(**meta_parameters):
-            return matchups.get_inputs(use_2018=meta_parameters["use_2018"])
+            return matchups.get_inputs(use_full_data=meta_parameters["use_full_data"])
         ####################################
 
         return package_defaults(**self.meta_parameters)
