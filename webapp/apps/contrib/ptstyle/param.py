@@ -22,9 +22,12 @@ class Value:
         self.number_dims = number_dims
         if self.number_dims == 0 and "choice" in validators:
             choices_ = validators["choice"]["choices"]
-            dv_ix = choices_.remove(self.default_value)
-            choices_.insert(0, self.default_value)
-            choices = [(c, c) for c in choices_]
+            if len(choices) < 25:
+                dv_ix = choices_.remove(self.default_value)
+                choices_.insert(0, self.default_value)
+                choices = [(c, c) for c in choices_]
+            else:
+                choices = None
         else:
             choices = None
         if isinstance(self.default_value, list):
