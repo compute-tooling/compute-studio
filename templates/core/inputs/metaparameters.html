@@ -7,6 +7,9 @@
     <div class="container">
       <h1>
         {{ title }}
+        <label>
+          {% include 'core/inputs/fields/tooltip.html' with text="These are the parameters upon which the Model Parameters below depend." %}
+        </label>
         <div class="float-right">
           <button
             class="btn collapse-button"
