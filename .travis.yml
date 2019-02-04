@@ -3,10 +3,15 @@ language: python
 python:
   - "3.6"
   - "3.7"
-# command to install dependencies
+
 install:
   - ./python_env.sh
 
-# command to run tests
-script:
-  - pytest webapp/apps/ -v -m "not requires_stripe"
+addons:
+  postgresql: "10"
+
+before_script:
+  - psql -c 'create database test_db;' -U postgres
+
+  script:
+  - pytest webapp/apps/ -v
