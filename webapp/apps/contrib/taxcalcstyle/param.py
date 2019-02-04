@@ -1,24 +1,25 @@
 from webapp.apps.core.param import CheckBox, BaseParam
 from webapp.apps.core.fields import coerce_bool, coerce_float, coerce_int
 
-class TaxcalcStyleParam(BaseParam):
 
+class TaxcalcStyleParam(BaseParam):
     def __init__(self, name, attributes, **meta_parameters):
         super().__init__(name, attributes, **meta_parameters)
         if "compatible_data" in attributes:
             self.gray_out = not (
-                (attributes["compatible_data"]["cps"] and
-                 self.data_source == "CPS")
-                or (attributes["compatible_data"]["puf"] and
-                    self.data_source == "PUF"))
+                (attributes["compatible_data"]["cps"] and self.data_source == "CPS")
+                or (attributes["compatible_data"]["puf"] and self.data_source == "PUF")
+            )
         else:
             # if compatible_data is not specified do not gray out
             self.gray_out = False
-        self.info = " ".join([
-            attributes['description'],
-            attributes.get('irs_ref') or "",
-            attributes.get('notes') or ""
-        ]).strip()
+        self.info = " ".join(
+            [
+                attributes["description"],
+                attributes.get("irs_ref") or "",
+                attributes.get("notes") or "",
+            ]
+        ).strip()
         field_kwargs = {"disabled": self.gray_out}
         self.set_fields(self.default_value, **field_kwargs)
 
@@ -37,7 +38,8 @@ class TaxcalcStyleParam(BaseParam):
                 value[dim1],
                 self.coerce_func,
                 0,
-                **field_kwargs
+                {},
+                **field_kwargs,
             )
             self.fields[field_name] = field.form_field
             self.col_fields.append(field)
@@ -48,10 +50,8 @@ class TaxcalcStyleParam(BaseParam):
         if self.inflatable:
             field_name = f"{self.name}_cpi"
             self.cpi_field = CheckBox(
-                field_name,
-                "CPI",
-                self.attributes['cpi_inflated'],
-                **field_kwargs)
+                field_name, "CPI", self.attributes["cpi_inflated"], **field_kwargs
+            )
             self.fields[field_name] = self.cpi_field.form_field
 
     def get_coerce_func(self):

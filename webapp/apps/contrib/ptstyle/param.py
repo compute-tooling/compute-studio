@@ -1,9 +1,8 @@
-from webapp.apps.core.param import Param, Value, SeparatedValue
+from webapp.apps.core.param import Param, Value
 from .utils import dims_to_string
 
 
 class ParamToolsParam(Param):
-
     def set_fields(self, value, **field_kwargs):
         """
         Value is of the shape:
@@ -16,22 +15,19 @@ class ParamToolsParam(Param):
         -
 
         """
-        if self.number_dims == 0:
-            self.field_class = Value
-        else:
-            self.field_class = SeparatedValue
-
         for value_object in value:
             field_name, suffix = dims_to_string(
-                self.name, value_object, self.meta_parameters)
+                self.name, value_object, self.meta_parameters
+            )
             label = self.format_label(value_object)
             field = self.field_class(
                 field_name,
                 label,
                 value_object["value"],
                 self.coerce_func,
-                1,
-                **field_kwargs
+                self.number_dims,
+                self.attributes.get("validators", {}),
+                **field_kwargs,
             )
             self.fields[field_name] = field.form_field
             self.col_fields.append(field)
