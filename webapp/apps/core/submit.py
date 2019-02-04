@@ -91,23 +91,22 @@ class Submit:
         return self._stop_submission
 
     def handle_errors(self):
-        if self.warn_msgs or self.error_msgs:
+        if self.warn_msgs or self.error_msgs or self.form.errors:
             self.form.add_error(None, OUT_OF_RANGE_ERROR_MSG)
+
+        def add_errors(param, msg):
+            message = "{param}: {msg}".format(
+                param=param,
+                msg=" ,".join(msg)
+            )
+            self.form.add_error(None, message)
+
+        if self.warn_msgs or self.error_msgs:
             for input_type in self.model.errors_warnings:
                 self.parser_class.append_errors_warnings(
                     self.model.errors_warnings[input_type],
-                    lambda param, msg: self.form.add_error(param, msg),
+                    add_errors,
                 )
-        has_parse_errors = any(
-            "Unrecognize value" in e[0]
-            for e in list(self.form.errors.values())
-        )
-        if has_parse_errors:
-            msg = (
-                "Some fields have unrecognized values. Enter comma "
-                "separated values for each input."
-            )
-            self.form.add_error(None, msg)
 
     def submit(self):
         data = dict({"user_mods": self.model.deserialized_inputs},

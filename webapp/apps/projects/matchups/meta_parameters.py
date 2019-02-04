@@ -47,7 +47,7 @@ def meta_parameter_factory(mp):
 matchups_meta_parameters = MetaParameters(
     parameters=[
         MetaParameter(
-            name="use_2018",
+            name="use_full_data",
             default=True,
             field=forms.TypedChoiceField(
                 coerce=coerce_bool, choices=list((i, i) for i in (True, False))

@@ -1,10 +1,10 @@
-from webapp.apps.core.parser import Parser
+from webapp.apps.contrib.ptstyle.parser import ParamToolsParser
 from .displayer import MatchupsDisplayer
 
 import matchups
 
 
-class MatchupsParser(Parser):
+class MatchupsParser(ParamToolsParser):
     """
     Formats the parameters into the format defined by the upstream project,
     calls the upstream project's validation functions, and formats the errors
@@ -21,9 +21,9 @@ class MatchupsParser(Parser):
         def parse_user_inputs(params, jsonparams, errors_warnings,
                               **meta_parameters):
             # parse the params, jsonparams, and errors_warnings further
-            use_2018 = meta_parameters["use_2018"]
+            use_full_data = meta_parameters["use_full_data"]
             params, jsonparams, errors_warnings = matchups.parse_inputs(
-                params, jsonparams, errors_warnings, use_2018=use_2018)
+                params, jsonparams, errors_warnings, use_full_data==use_full_data)
             return params, jsonparams, errors_warnings
         ####################################
 

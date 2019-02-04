@@ -175,7 +175,7 @@ class EditInputsView(InputsMixin, DetailView):
         valid_meta_params = {}
         for mp in self.meta_parameters.parameters:
             valid_meta_params[mp.name] = (
-                inputs_form.initial.get(mp.name, None) or inputs_form[mp.name]
+                inputs_form.initial.get(mp.name, None) or inputs_form[mp.name].data
             )
         displayer = self.displayer_class(**valid_meta_params)
         context = dict(

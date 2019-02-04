@@ -1,7 +1,7 @@
 {
     "majorsection1": {
         "intparam": {
-            "long_name": "Integer parameter",
+            "title": "Integer parameter",
             "description": "An integer type parameter",
             "section_1": "section1",
             "section_2": "section2",
@@ -10,7 +10,7 @@
             "value": [2]
         },
         "boolparam": {
-            "long_name": "Boolean parameter",
+            "title": "Boolean parameter",
             "description": "A boolean type parameter",
             "section_1": "anothersection1",
             "section_2": "somesection2",
@@ -19,7 +19,7 @@
             "value": [true]
         },
         "floatparam": {
-            "long_name": "Integer parameter",
+            "title": "Integer parameter",
             "description": "An integer type parameter",
             "section_1": "section1",
             "section_2": "anothersection2",
@@ -28,7 +28,7 @@
             "value": [4.0]
         },
         "zerodimparam": {
-            "long_name": "Zerodim parameter",
+            "title": "Zerodim parameter",
             "description": "An zerodim type parameter",
             "section_1": "section1",
             "section_2": "anothersection2",
@@ -39,7 +39,7 @@
     },
     "majorsection2": {
         "mj2param": {
-            "long_name": "A param for major section 2",
+            "title": "A param for major section 2",
             "description": "Gotta provide an example with two major sections",
             "section_1": "section3",
             "section_2": "section4",

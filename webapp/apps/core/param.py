@@ -1,6 +1,6 @@
 from django import forms
 
-from .fields import (SeparatedValueField, coerce_bool,
+from .fields import (ValueField, SeparatedValueField, coerce_bool,
                      coerce_float, coerce_int, coerce_date, coerce)
 
 
@@ -26,6 +26,26 @@ class SeparatedValue:
             **field_kwargs
         )
 
+
+class Value:
+
+    def __init__(self, name, label, default_value, coerce_func, number_dims,
+                 **field_kwargs):
+        self.name = name
+        self.label = label
+        self.default_value = default_value
+        attrs = {
+            'class': 'form-control',
+            'placeholder': self.default_value,
+        }
+        self.form_field = ValueField(
+            label=self.label,
+            widget=forms.TextInput(attrs=attrs),
+            required=False,
+            coerce=coerce_func,
+            number_dims=number_dims,
+            **field_kwargs
+        )
 
 class CheckBox:
 
@@ -59,10 +79,13 @@ class BaseParam:
     def __init__(self, name, attributes, **meta_parameters):
         self.name = name
         self.attributes = attributes
-        self.long_name = self.attributes["long_name"]
+        # title is preferred, but long_name is also acceptable.
+        self.title = (self.attributes.get("title", None) or
+                      self.attributes["long_name"])
         self.description = self.attributes["description"]
         self.number_dims = self.attributes.get("number_dims", 1)
         self.col_fields = []
+        self.meta_parameters = meta_parameters
         for mp, value in meta_parameters.items():
             setattr(self, mp, value)
         self.coerce_func = self.get_coerce_func()
@@ -76,6 +99,10 @@ class BaseParam:
         self.fields = {}
 
     def set_fields(self, value, **field_kwargs):
+        if self.number_dims == 0:
+            self.field_class = Value
+        else:
+            self.field_class = SeparatedValue
         field = self.field_class(
             self.name,
             '',

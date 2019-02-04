@@ -47,15 +47,15 @@ class Displayer:
     def _parse_top_level(self, ordered_dict):
         output = []
         for x, y in ordered_dict.items():
-            section_name = dict(y).get("section_1")
+            section_name = y.get("section_1")
             if section_name:
                 section = next(
                     (item for item in output if section_name in item), None
                 )
                 if not section:
-                    output.append({section_name: [{x: dict(y)}]})
+                    output.append({section_name: [{x: y}]})
                 else:
-                    section[section_name].append({x: dict(y)})
+                    section[section_name].append({x: y})
         return output
 
     def _parse_sub_category(self, field_section):
@@ -63,7 +63,7 @@ class Displayer:
         free_fields = []
         for x in field_section:
             for y, z in x.items():
-                section_name = dict(z).get("section_2")
+                section_name = z.get("section_2")
                 new_param = {
                     y: self.param_class(
                         y, z, **self.meta_parameters

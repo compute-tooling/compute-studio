@@ -11,7 +11,7 @@ def matchups_task(**kwargs):
     import matchups
 
     def run(**kwargs):
-        result = matchups.get_matchup(kwargs["use_2018"], kwargs["user_mods"])
+        result = matchups.get_matchup(kwargs["use_full_data"], kwargs["user_mods"])
         return result
     #######################################
 

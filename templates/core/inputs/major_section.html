@@ -22,9 +22,9 @@
     </div>
     <hr class="my-4 input-divider">
     <div class="container">
-      <div class="collapse" id="{{ title|make_id }}-collapse">
+      <div class="collapse show" id="{{ title|make_id }}-collapse">
         <div class="card card-body" style="width: 50rem;">
-            {% for param in params %}
+          {% for param in params %}
             {% for key, value in param.items %}
               {% if key != "ubi" %}
                 {% if params|is_first:param %}

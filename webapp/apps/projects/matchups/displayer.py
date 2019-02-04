@@ -1,10 +1,10 @@
 from webapp.apps.core.displayer import Displayer
-from webapp.apps.core.param import Param
+from webapp.apps.contrib.ptstyle.param import ParamToolsParam
 
 import matchups
 
 class MatchupsDisplayer(Displayer):
-    param_class = Param
+    param_class = ParamToolsParam
 
     def package_defaults(self):
         """
@@ -16,7 +16,7 @@ class MatchupsDisplayer(Displayer):
         ####################################
         # code snippet
         def package_defaults(**meta_parameters):
-            return matchups.get_inputs(use_2018=meta_parameters["use_2018"])
+            return matchups.get_inputs(use_full_data=meta_parameters["use_full_data"])
         ####################################
 
         return package_defaults(**self.meta_parameters)
