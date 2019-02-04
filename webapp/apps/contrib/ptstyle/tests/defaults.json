@@ -104,5 +104,22 @@
         "out_of_range_minmsg": "",
         "out_of_range_maxmsg": "",
         "out_of_range_action": "stop"
+    },
+    "int_array_param": {
+        "title": "integer array parameter",
+        "description": "Serves as array reference variable.",
+        "notes": "",
+        "section_1": "",
+        "section_2": "",
+        "opt0": "an option",
+        "type": "int",
+        "number_dims": 1,
+        "value": [
+            {"dim0": "zero", "dim1": 1, "value": [1, 2, 3]}
+        ],
+        "validators": {"range": {"min": 0, "max": 10}},
+        "out_of_range_minmsg": "",
+        "out_of_range_maxmsg": "",
+        "out_of_range_action": "stop"
     }
 }
