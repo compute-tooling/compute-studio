@@ -2,11 +2,16 @@
 def dims_to_dict(param_name, meta_parameters):
     """
     Convert value object from string to dict:
-    "param_name___dim0_dimval__dim1_dimval1..."
+    "param_name____dim0__dimval___dim1__dimval1..."
     -->
     {"value": val, dim0": dimval, ...}
 
     Return: base parameter name, value object dict
+
+    Note: Dimensions that are also meta parameters are saved with the value "mp"
+    because their value is saved and controlled by the corresponding meta
+    parameter. Thus, this function replaces "mp" with the value in
+    meta_parameters.
     """
 
     value_object = {}
@@ -36,6 +41,14 @@ def dims_to_string(param_name, value_object, meta_parameters):
     "param_name____dim0__dimval___dim1__dimval1..."
 
     Return: New name, suffix
+
+    Note: Dimensions that are also meta parameters are saved with the value "mp"
+    because their value is saved and controlled by the corresponding meta
+    parameter. Thus, dims_to_dict replaces "mp" with the specified meta
+    parameter value.
+
+    The dimension names are added to the string in alphabetic order to
+    better ensure replicable field name creation.
     """
     dims = {}
     for dim_name, dim_value in value_object.items():
@@ -47,7 +60,8 @@ def dims_to_string(param_name, value_object, meta_parameters):
 
     if dims:
         suffix = "___".join([
-            f"{dim_name}__{dim_value}" for dim_name, dim_value in dims.items()
+            f"{dim_name}__{dim_value}"
+            for dim_name, dim_value in sorted(dims.items())
         ])
     else:
         suffix = ""
