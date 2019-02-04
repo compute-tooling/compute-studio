@@ -16,7 +16,6 @@ def mockparam():
     with open(os.path.join(path, "mocktaxcalc_inputs.json")) as f:
         return json.loads(f.read())
 
-@pytest.mark.taxcalc
 def test_param(mockparam):
     mp_inst = {mp.name: mp.default for mp in meta_parameters.parameters}
     for name, attrs in mockparam["policy"].items():
@@ -29,7 +28,6 @@ def test_param(mockparam):
         if attrs["cpi_inflatable"]:
             assert param.cpi_field
 
-@pytest.mark.taxcalc
 def test_meta_params():
     # make sure things parse correctly
     raw_meta_params = {"start_year": "2018", "data_source": "PUF",
@@ -55,7 +53,7 @@ def test_meta_params():
     assert valid["data_source"] != "not a choice"
     assert valid["use_full_sample"] != "not boolean"
 
-@pytest.mark.taxcalc
+@pytest.mark.requires_taxcalc
 def test_param_parser(mockparam):
 
     # set up test data and classes
