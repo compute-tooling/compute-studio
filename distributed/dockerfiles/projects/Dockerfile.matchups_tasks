@@ -11,7 +11,7 @@ RUN pip install -r requirements.txt
 # Edit Dockerfile here for installing necessary packages, copying files, etc.
 ######################
 RUN conda install pandas pyarrow bokeh
-RUN pip install pybaseball matchups==0.3.4 paramtools==0.2.0rc1
+RUN pip install pybaseball matchups==0.3.5 paramtools==0.2.0rc1
 ######################
 
 
