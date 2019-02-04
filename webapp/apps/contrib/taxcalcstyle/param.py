@@ -38,7 +38,6 @@ class TaxcalcStyleParam(BaseParam):
                 value[dim1],
                 self.coerce_func,
                 0,
-                {},
                 **field_kwargs,
             )
             self.fields[field_name] = field.form_field
