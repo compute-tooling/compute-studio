@@ -13,8 +13,8 @@ from .models import is_profile_active
 
 class SignUp(generic.CreateView):
     form_class = UserCreationForm
-    success_url = reverse_lazy('login')
-    template_name = 'registration/signup.html'
+    success_url = reverse_lazy("login")
+    template_name = "registration/signup.html"
 
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
@@ -24,18 +24,27 @@ class SignUp(generic.CreateView):
         context["use_stripe"] = USE_STRIPE
         return context
 
+
 class UserProfile(View):
-    template_name = 'registration/profile_base.html',
+    template_name = ("registration/profile_base.html",)
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name,
-                      context={'username': request.user.username})
+        username = kwargs["username"]
+        return render(
+            request,
+            self.template_name,
+            context={
+                "username": request.user.username,
+                "isuser": request.user.username == username,
+            },
+        )
+
 
 class CancelSubscription(generic.edit.UpdateView):
-    template_name = 'registration/cancel_subscription.html'
+    template_name = "registration/cancel_subscription.html"
     form_class = CancelSubscriptionForm
-    success_url = reverse_lazy('cancel_subscription_done')
+    success_url = reverse_lazy("cancel_subscription_done")
 
     @method_decorator(login_required)
     @method_decorator(user_passes_test(is_profile_active))
@@ -57,7 +66,7 @@ class CancelSubscription(generic.edit.UpdateView):
 
 
 class CancelSubscriptionDone(generic.TemplateView):
-    template_name = 'registration/cancel_subscription_done.html'
+    template_name = "registration/cancel_subscription_done.html"
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
@@ -65,9 +74,9 @@ class CancelSubscriptionDone(generic.TemplateView):
 
 
 class DeleteUser(generic.edit.UpdateView):
-    template_name = 'registration/delete_user.html'
+    template_name = "registration/delete_user.html"
     form_class = DeleteUserForm
-    success_url = reverse_lazy('delete_user_done')
+    success_url = reverse_lazy("delete_user_done")
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
@@ -86,7 +95,7 @@ class DeleteUser(generic.edit.UpdateView):
 
 
 class DeleteUserDone(generic.TemplateView):
-    template_name = 'registration/delete_user_done.html'
+    template_name = "registration/delete_user_done.html"
 
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)

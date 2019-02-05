@@ -33,7 +33,7 @@
             <li>
               <div class="login-status float-right" >
                 {% if user.is_authenticated %}
-                  Hi <a href="{% url 'userprofile' %}">{{ user.username }}!</a> |
+                  Hi <a href="{% url 'userprofile' username=user.username %}">{{ user.username }}!</a> |
                   <a href="{% url 'logout' %}">logout</a>
                 {% else %}
                   <a href="{% url 'login' %}">login</a> |
