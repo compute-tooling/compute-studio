@@ -5,7 +5,14 @@
 
 <div class="container-fluid" style="margin:20px;">
     {% csrf_token %}
-    <h4>{{ username }}</h4>
+    <h1>Runs</h1>
+    <hr>
+    {% for project, queryset in runs.items %}
+      <h4>{{project}}</h4>
+      {% for run in queryset %}
+        <p><a href="{{run.get_absolute_url}}">{{run.get_absolute_url}}</a></p>
+      {% endfor %}
+    {% endfor %}
 </div>
 
 {% endblock %}

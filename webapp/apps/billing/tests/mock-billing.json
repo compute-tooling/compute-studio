@@ -1,6 +1,7 @@
 {
     "mock": {
         "name": "Used for testing",
+        "app_name": "testing",
         "sponsor": null,
         "username": null,
         "amount": 0,
@@ -15,6 +16,7 @@
     },
     "sponsor-mock": {
         "name": "Used for testing sponsored apps",
+        "app_name": "sponsored_testing",
         "sponsor": "sponsor",
         "username": null,
         "amount": 0,

@@ -2,47 +2,38 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 
+
 def is_profile_active(user):
-    if getattr(user, 'profile', False):
+    if getattr(user, "profile", False):
         return user.profile.is_active
     return False
 
-class User(AbstractUser):
 
+class User(AbstractUser):
     def __str__(self):
         return self.email
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL,
-                                on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=False)
 
     class Meta:
         # not in use yet...
-        permissions = (
-            ('access_public', 'Has access to public projects'),
-        )
+        permissions = (("access_public", "Has access to public projects"),)
 
 
 class Project(models.Model):
     SECS_IN_HOUR = 3600.0
     name = models.CharField(max_length=255)
+    app_name = models.CharField(max_length=30)
     profile = models.ForeignKey(
-        Profile,
-        null=True,
-        related_name="projects",
-        on_delete=models.CASCADE,
+        Profile, null=True, related_name="projects", on_delete=models.CASCADE
     )
     sponsor = models.ForeignKey(
-        Profile,
-        null=True,
-        related_name="sponsored_projects",
-        on_delete=models.SET_NULL
+        Profile, null=True, related_name="sponsored_projects", on_delete=models.SET_NULL
     )
-    server_cost = models.DecimalField(
-        max_digits=6, decimal_places=3, null=True
-    )
+    server_cost = models.DecimalField(max_digits=6, decimal_places=3, null=True)
     exp_task_time = models.IntegerField(null=True)
     exp_num_tasks = models.IntegerField(null=True)
     is_public = models.BooleanField(default=True)

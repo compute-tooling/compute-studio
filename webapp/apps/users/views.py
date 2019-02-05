@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from webapp.apps.billing.utils import USE_STRIPE
 
 from .forms import UserCreationForm, CancelSubscriptionForm, DeleteUserForm
-from .models import is_profile_active
+from .models import is_profile_active, Project
 
 
 class SignUp(generic.CreateView):
@@ -30,19 +30,33 @@ class SignUp(generic.CreateView):
 
 class UserProfile(View):
     template_name = "profile/profile_base.html"
+    projects = Project.objects.all()
 
     def get(self, request, *args, **kwargs):
         username = kwargs["username"]
         print("user", request.user.username, username)
         if username == request.user.username:
             return render(
-                request, self.template_name, context={"username": request.user.username}
+                request,
+                self.template_name,
+                context={
+                    "username": request.user.username,
+                    "runs": self.get_runs(request.user),
+                },
             )
         User = get_user_model()
         if User.objects.filter(username=username):
             raise PermissionDenied()
         else:
             raise Http404()
+
+    def get_runs(self, user):
+        runs = {}
+        for project in self.projects:
+            relation = f"{project.app_name}_{project.app_name}run_runs"
+            qs = getattr(user.profile, relation)
+            runs[project.name] = qs.all()
+        return runs
 
 
 class UserSettings(View):
