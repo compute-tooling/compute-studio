@@ -4,6 +4,9 @@ from django.views.generic.edit import FormView
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import PermissionDenied
+from django.http import Http404
+from django.contrib.auth import get_user_model
 
 from webapp.apps.billing.utils import USE_STRIPE
 
@@ -26,18 +29,29 @@ class SignUp(generic.CreateView):
 
 
 class UserProfile(View):
-    template_name = ("registration/profile_base.html",)
+    template_name = "profile/profile_base.html"
+
+    def get(self, request, *args, **kwargs):
+        username = kwargs["username"]
+        print("user", request.user.username, username)
+        if username == request.user.username:
+            return render(
+                request, self.template_name, context={"username": request.user.username}
+            )
+        User = get_user_model()
+        if User.objects.filter(username=username):
+            raise PermissionDenied()
+        else:
+            raise Http404()
+
+
+class UserSettings(View):
+    template_name = ("registration/settings_base.html",)
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        username = kwargs["username"]
         return render(
-            request,
-            self.template_name,
-            context={
-                "username": request.user.username,
-                "isuser": request.user.username == username,
-            },
+            request, self.template_name, context={"username": request.user.username}
         )
 
 

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid" style="margin:20px;">
+    {% csrf_token %}
+    <h4>{{ username }}</h4>
+</div>
+
+{% endblock %}
