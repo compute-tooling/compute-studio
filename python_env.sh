@@ -3,3 +3,4 @@ source activate comp-dev
 conda install -c anaconda --file conda-requirements.txt --yes
 pip install -r requirements.txt
 pip install pytest-django pre-commit black
+pre-commit install
