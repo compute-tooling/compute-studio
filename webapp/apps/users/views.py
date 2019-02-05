@@ -42,6 +42,9 @@ class UserProfile(View):
                 context={
                     "username": request.user.username,
                     "runs": self.get_runs(request.user),
+                    "cost_breakdown": request.user.profile.cost_breakdown(
+                        self.projects
+                    ),
                 },
             )
         User = get_user_model()

@@ -49,30 +49,35 @@ class CoreRun(models.Model):
     meta_data = JSONField(default=None, blank=True, null=True)
     outputs = JSONField(default=None, blank=True, null=True)
     aggr_outputs = JSONField(default=None, blank=True, null=True)
-    error_text = models.CharField(
+    error_text = models.CharField(null=True, blank=True, default=None, max_length=4000)
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.PROTECT,
         null=True,
-        blank=True,
-        default=None,
-        max_length=4000)
-    profile = models.ForeignKey(Profile, on_delete=models.PROTECT, null=True,
-                                related_name='%(app_label)s_%(class)s_runs')
-    sponsor = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True,
-                                related_name='%(app_label)s_%(class)s_sponsored_runs')
-    project = models.ForeignKey(Project, on_delete=models.PROTECT,
-                                related_name='%(app_label)s_%(class)s_runs')
+        related_name="%(app_label)s_%(class)s_runs",
+    )
+    sponsor = models.ForeignKey(
+        Profile,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="%(app_label)s_%(class)s_sponsored_runs",
+    )
+    project = models.ForeignKey(
+        Project, on_delete=models.PROTECT, related_name="%(app_label)s_%(class)s_runs"
+    )
     # run-time in seconds
     run_time = models.IntegerField(default=0)
     # run cost can be very small. ex: 4 sec * ($0.09/hr)/3600
     run_cost = models.DecimalField(max_digits=9, decimal_places=4, default=0.0)
     creation_date = models.DateTimeField(
-        default=make_aware(datetime.datetime(2015, 1, 1)))
+        default=make_aware(datetime.datetime(2015, 1, 1))
+    )
     exp_comp_datetime = models.DateTimeField(
-        default=make_aware(datetime.datetime(2015, 1, 1)))
+        default=make_aware(datetime.datetime(2015, 1, 1))
+    )
     job_id = models.UUIDField(blank=True, default=None, null=True)
-    upstream_vers = models.CharField(blank=True, default=None, null=True,
-                                     max_length=50)
-    webapp_vers = models.CharField(blank=True, default=None, null=True,
-                                   max_length=50)
+    upstream_vers = models.CharField(blank=True, default=None, null=True, max_length=50)
+    webapp_vers = models.CharField(blank=True, default=None, null=True, max_length=50)
 
     def get_absolute_url(self):
         raise NotImplementedError()
@@ -84,12 +89,16 @@ class CoreRun(models.Model):
         raise NotImplementedError()
 
     def zip_filename(self):
-        return 'comp.zip'
+        return "comp.zip"
 
     @cached_property
     def dimension(self):
         # return unique values set at the dimension level.
         return list({item["dimension"] for item in self.outputs if item["dimension"]})
+
+    @property
+    def effective_cost(self):
+        return self.project.run_cost(self.run_time, adjust=True)
 
     class Meta:
         abstract = True
@@ -98,7 +107,7 @@ class CoreRun(models.Model):
 @dataclass
 class Tag:
     key: str
-    values: List['TagOption']
+    values: List["TagOption"]
     hidden: bool = True
 
 

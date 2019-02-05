@@ -6,13 +6,39 @@
 <div class="container-fluid" style="margin:20px;">
     {% csrf_token %}
     <h1>Runs</h1>
-    <hr>
     {% for project, queryset in runs.items %}
       <h4>{{project}}</h4>
-      {% for run in queryset %}
-        <p><a href="{{run.get_absolute_url}}">{{run.get_absolute_url}}</a></p>
-      {% endfor %}
+      <table class="table">
+        <tr>
+          <th>Output</th>
+          <th>Run time</th>
+          <th>Run cost</th>
+          <th>date</th>
+        </tr>
+        {% for run in queryset %}
+          <tr>
+            <td><a href="{{run.get_absolute_url}}">{{run.get_absolute_url}}</a></td>
+            <td>{{run.run_time}}</td>
+            <td>{{run.effective_cost}}</td>
+            <td>{{run.creation_date}}</td>
+          </tr>
+        {% endfor %}
+      </table>
     {% endfor %}
+
+    <h1>Cost Breakdown</h1>
+    <table class="table">
+      <tr>
+        <th>Month</th>
+        <th>Cost ($)</th>
+      </tr>
+    {% for month, cost in cost_breakdown.items %}
+      <tr>
+        <td>{{month}}</td>
+        <td>{{cost}}</td>
+      </tr>
+    {% endfor %}
+  </table>
 </div>
 
 {% endblock %}

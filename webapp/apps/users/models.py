@@ -1,4 +1,8 @@
+from collections import defaultdict
+
 from django.db import models
+from django.db.models.functions import TruncMonth
+from django.db.models import F, Case, When, Sum
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 
@@ -17,6 +21,24 @@ class User(AbstractUser):
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=False)
+
+    def cost_breakdown(self, projects=None):
+        if projects is None:
+            projects = Project.objects.all()
+        agg = defaultdict(float)
+        for project in projects:
+            relation = f"{project.app_name}_{project.app_name}run_runs"
+            res = (
+                getattr(self, relation)
+                .values(month=TruncMonth("creation_date"))
+                .annotate(
+                    effective=Case(When(run_cost=0.0, then=0.01), default=F("run_cost"))
+                )
+                .annotate(Sum("effective"))
+            )
+            for month in res:
+                agg[month["month"]] += float(month["effective__sum"])
+        return {k.strftime("%B %Y"): v for k, v in sorted(agg.items())}
 
     class Meta:
         # not in use yet...
