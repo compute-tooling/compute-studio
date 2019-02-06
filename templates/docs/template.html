@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div style="width:50rem;">
+  {% autoescape off %}{{ doc }}{% endautoescape %}
+</div>
+{% endblock %}

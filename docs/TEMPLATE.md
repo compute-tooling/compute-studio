@@ -13,7 +13,7 @@ App Overview
 
 Python Functions
 -------------------------
-*Insert code snippets satisfying the requirements detailed in the [functions documentation.](ENDPOINTS.md)*
+*Insert code snippets satisfying the requirements detailed in the [functions documentation.](FUNCTIONS.md)*
 
 
 **Package Defaults:** Get the default Model Parameters and their meta data

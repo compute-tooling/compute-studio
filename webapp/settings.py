@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "webapp.apps.pages",
     "webapp.apps.users",
     "webapp.apps.billing",
+    "webapp.apps.docs",
     # Append new apps here in the form webapp.apps.projects.{project_name}
     "webapp.apps.projects.matchups",
     # third-party apps

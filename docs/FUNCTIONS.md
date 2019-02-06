@@ -8,18 +8,19 @@ The modeling project must provide a Python function for each of the following ta
 Package defaults
 ----------------------
 
-Accepts Meta Parameters, if they are being utilized. Returns data in the form specified in the "Model Parameters" section of [`IOSCHEMA.md`](IOSCHEMA.md).
+Accepts Meta Parameters, if they are being utilized. Returns data in the form specified in the "Model Parameters" section of [`IO schema`](IOSCHEMA.md).
 
 - **Python**:
-    ```python
-    from compbaseball import baseball
 
-    def package_defaults(**meta_parameters):
-        return baseball.get_inputs(use_2018=meta_parameters["use_2018"])
-    ```
+```python
+from compbaseball import baseball
 
-    Here's what you get after filling in this function:
-    ![alt text](https://user-images.githubusercontent.com/9206065/51710288-a3152a80-1ff6-11e9-8dcb-16f39f7e9e66.png)
+def package_defaults(**meta_parameters):
+    return baseball.get_inputs(use_2018=meta_parameters["use_2018"])
+```
+
+Here's what you get after filling in this function:
+![alt text](https://user-images.githubusercontent.com/9206065/51710288-a3152a80-1ff6-11e9-8dcb-16f39f7e9e66.png)
 
 Parse user adjustemnts
 ----------------------
@@ -73,24 +74,26 @@ Warnings/Errors:
 ```
 
 - **Python**:
-    ```python
-    from compbaseball import baseball
 
-    def parse_user_inputs(params, jsonparams, errors_warnings,
-                            **meta_parameters):
-        # parse the params, jsonparams, and errors_warnings further
-        use_2018 = meta_parameters["use_2018"]
-        params, jsonparams, errors_warnings = baseball.parse_inputs(
-            params, jsonparams, errors_warnings, use_2018=use_2018)
-        return params, jsonparams, errors_warnings
-    ```
+```python
+from compbaseball import baseball
 
-    Here's what you get after filling in this function:
-    ![alt text](https://user-images.githubusercontent.com/9206065/51710289-a3152a80-1ff6-11e9-975d-ba3dfc2b35e9.png)
+def parse_user_inputs(params, jsonparams, errors_warnings,
+                        **meta_parameters):
+    # parse the params, jsonparams, and errors_warnings further
+    use_2018 = meta_parameters["use_2018"]
+    params, jsonparams, errors_warnings = baseball.parse_inputs(
+        params, jsonparams, errors_warnings, use_2018=use_2018)
+    return params, jsonparams, errors_warnings
 
-    The `jsonparams` data is displayed on the outputs page:
+```
 
-    ![alt text](https://user-images.githubusercontent.com/9206065/51710291-a3152a80-1ff6-11e9-8c0d-7a41f8966350.png)
+Here's what you get after filling in this function:
+![alt text](https://user-images.githubusercontent.com/9206065/51710289-a3152a80-1ff6-11e9-975d-ba3dfc2b35e9.png)
+
+The `jsonparams` data is displayed on the outputs page:
+
+![alt text](https://user-images.githubusercontent.com/9206065/51710291-a3152a80-1ff6-11e9-8c0d-7a41f8966350.png)
 
 Run simulation
 ----------------
@@ -120,22 +123,24 @@ The function returns the results of the simulation:
 [Outputs schema](IOSCHEMA.md)
 
 - **Python**:
-    ```python
-    from compbaseball import baseball
+
+```python
+from compbaseball import baseball
 
 
-    def run_simulation(use_2018, user_mods):
-        result = baseball.get_matchup(use_2018, user_mods)
-        return result
-    ```
+def run_simulation(use_2018, user_mods):
+    result = baseball.get_matchup(use_2018, user_mods)
+    return result
 
-    Here's what you get after filling in this function:
+```
 
-    Aggregate outputs:
-    ![alt text](https://user-images.githubusercontent.com/9206065/51710292-a3152a80-1ff6-11e9-9640-661aabd5d76f.png)
+Here's what you get after filling in this function:
 
-    Outputs:
-    ![alt text](https://user-images.githubusercontent.com/9206065/51710347-dbb50400-1ff6-11e9-8f28-1c4e5b802fbf.png)
+Aggregate outputs:
+![alt text](https://user-images.githubusercontent.com/9206065/51710292-a3152a80-1ff6-11e9-9640-661aabd5d76f.png)
 
-    Toggle along dimension:
-    ![alt text](https://user-images.githubusercontent.com/9206065/51710310-baecae80-1ff6-11e9-933a-6308a8baf293.png)
+Outputs:
+![alt text](https://user-images.githubusercontent.com/9206065/51710347-dbb50400-1ff6-11e9-8f28-1c4e5b802fbf.png)
+
+Toggle along dimension:
+![alt text](https://user-images.githubusercontent.com/9206065/51710310-baecae80-1ff6-11e9-933a-6308a8baf293.png)

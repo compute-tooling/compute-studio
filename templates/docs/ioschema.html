@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+ <title>COMP Models</title>
+ <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+ <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+ <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+ <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+ <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/styles/default.min.css">
+ <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
+ <script>hljs.initHighlightingOnLoad();</script>
+ <link rel="stylesheet" href="/static/css/compbase.css">
+ <link rel="stylesheet" href="/static/css/stripe.css">
+ 
+ 
+</head>
+
+<body>
+    <nav class="navbar navbar-custom navbar-expand-lg fixed-top">
+        <div class="navbar-header">
+            <a href="/" class="navbar-brand">COMP</a>
+        </div>
+        <ul class="navbar-nav">
+            <li class="nav-item"><a href="https://github.com/comp-org/comp/blob/master/docs//docs/publish/publish/" class="nav-link">Publish</a></li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Models
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <!-- Add new projects to the dropdown menu here! -->
+                  <a class="dropdown-item" href="/hdoupe/matchups/">hdoupe/Matchups</a>
+                </div>
+            </li>
+            <li>
+              <div class="login-status float-right" >
+                
+                  <a href="/users/login/">login</a> |
+                  <a href="/users/signup/">signup</a>
+                
+              </div>
+            </li>
+        </ul>
+    </nav>
+
+
+  <div class="container" style="margin-top:100px;">
+    
+<div style="width:50rem;">
+  <h1 id="input-output-schema">Input-Output Schema</h1>
+<p>COMP relies on three primary JSON schemas: Meta Parameters, Model Parameters, and Outputs. COMP uses them to derive the COMP input form representing your model's default specification and your model's output page. One of the required Python functions in the next step of this guide will also rely on these schemas to validate user adjustments on the COMP input form. The <a href="https://github.com/PSLmodels/ParamTools">ParamTools</a> project is compatible with the inputs schemas below and can be used for the parameter processing and validation that is described in the Python functions documentation.</p>
+<h2 id="meta-parameters">Meta Parameters</h2>
+<p>These are the parameters upon which Model Parameters depend. For example, if your model's default Model Parameters depend on the dataset being used, a meta parameter named <code>data_set</code> could be helfpul. This should be of the form:</p>
+<ul>
+<li>"variable_name": The name of the meta parameter as it is used in the modeling project.</li>
+<li>"title": A human readable name for the parameter.</li>
+<li>"default": A default value for the meta parameter.</li>
+<li>"type": The parameter's data type. Supported types are:</li>
+<li>"int": Integer.</li>
+<li>"float": Floating point.</li>
+<li>"bool": Boolean. Either <code>True</code> or <code>False</code>.</li>
+<li>"str"`: String.</li>
+<li>"date": Date. Needs to be of the format <code>"YYYY-MM-DD"</code>.</li>
+<li>"validators": A mapping of <a href="#validator-object">Validator Objects</a>.</li>
+</ul>
+<p>Example:</p>
+<pre><code class="json">{
+    &quot;time_of_day&quot;: {
+        &quot;title&quot;: &quot;Time of the Day&quot;,
+        &quot;default&quot;: 12,
+        &quot;type&quot;: &quot;int&quot;,
+        &quot;validators&quot;: {
+            &quot;range&quot;: {&quot;min&quot;: 0, &quot;max&quot;: 23}
+        }
+    }
+}
+</code></pre>
+
+<h2 id="model-parameters">Model Parameters</h2>
+<p>COMP uses the JSON schema below for documenting Model Parameters and their values under the default sepcification:</p>
+<ul>
+<li>"major_section": Broad categories of model parameters. A baseball model may break up its model parameters into Hitting, Pitching, and Fielding major sections.</li>
+<li>"param_name": The name of the parameter as it is used in the modeling project.</li>
+<li>"title": A human readable name for the parameter.</li>
+<li>"description": Describes this parameter.</li>
+<li>"notes": Any additional information that should be displayed to the user.</li>
+<li>"section_1": Section of parameters that are like this one</li>
+<li>"section_2": Subsection of section 1.</li>
+<li>"type": The parameter's data type. Supported types are:</li>
+<li><code>"int"</code> - Integer.</li>
+<li><code>"float"</code>- Floating point.</li>
+<li><code>"bool"</code>- Boolean. Either <code>True</code> or <code>False</code>.</li>
+<li><code>"str"</code> - String.</li>
+<li><code>"date"</code>- Date. Needs to be of the format <code>"YYYY-MM-DD"</code>.</li>
+<li>"value": A list of <a href="#value-object">Value Objects</a>. Describes the default values of the parameter.</li>
+<li>"validators": A mapping of <a href="#validator-object">Validator Objects</a>.</li>
+</ul>
+<p>Example:</p>
+<pre><code class="json">{
+    &quot;weather&quot;: {
+        &quot;temperature&quot;: {
+            &quot;title&quot;: &quot;Temperature&quot;,
+            &quot;description&quot;: &quot;Temperature at a given hour in the day&quot;,
+            &quot;section_1&quot;: &quot;Hourly Weather&quot;,
+            &quot;section_2&quot;: &quot;Standard Measurements&quot;,
+            &quot;notes&quot;: &quot;This is in Fahrenheit.&quot;,
+            &quot;type&quot;: &quot;int&quot;,
+            &quot;value&quot;: [
+                {&quot;time_of_day&quot;: 0, &quot;value&quot;: 40},
+                {&quot;time_of_day&quot;: 8, &quot;value&quot;: 38},
+                {&quot;time_of_day&quot;: 16, &quot;value&quot;: 50}
+            ],
+            &quot;validators&quot;: {
+                &quot;range&quot;: {&quot;min&quot;: -130, &quot;max&quot;: 135}
+            }
+        }
+    }
+}
+</code></pre>
+
+<h2 id="outputs">Outputs</h2>
+<p>Currently, tables are the only supported media that can be served. In the future, COMP will serve media such as pictures and charts.</p>
+<p>Upstream projects can specify downloadable content such as CSVs in addition to the rendered content.</p>
+<p>A tag system is used to organize the outputs. For example, a baseball model might produce outputs for each of baseball's two leagues and have tags: <code>{"league": "american"}</code> and <code>{"league": "national"}</code>. There can be multiple levels of tags. Continuing the previous example, there could be a muti-level tag <code>{"league": "american", "team": "yankees"}</code> or <code>{"league": national", "team": "braves"}</code>.</p>
+<p>There are two types of outputs. One type is "Aggregate Outputs." These will be displayed at the top of the outputs page. The other type is "Outputs." A <code>dimension</code> attribute can be specified for each set of outputs. If it is specified, the <code>dimension</code> attribute will be used to toggle between different sets of outputs. For example, a baseball model that runs on each season over a ten year period will have a dimension attribute named <code>"Season"</code> and a set of outputs that corresponds to each of those seasons.</p>
+<p>The Outputs Schema:</p>
+<pre><code class="json">{
+    &quot;aggr_outputs&quot;: [
+        {
+            &quot;tags&quot;: {&quot;category&quot;: &quot;a category&quot;},
+            &quot;title&quot;: &quot;Title to be displayed&quot;,
+            &quot;downloadable&quot;: [
+                {
+                    &quot;filename&quot;: &quot;filename.csv&quot;,
+                    &quot;text&quot;: &quot;data here&quot;
+                },
+            ],
+            &quot;renderable&quot;: &quot;HTML table to render&quot;
+        }
+    ],
+    &quot;outputs&quot;: [
+        {
+            &quot;tags&quot;: {&quot;category&quot;: &quot;a category&quot;, &quot;subcategory&quot;: &quot;a subcategory&quot;},
+            &quot;dimension&quot;: &quot;Dimension corresponding to the task producing this output&quot;,
+            &quot;title&quot;: &quot;Title to be displayed (may want to include dimension)&quot;,
+            &quot;downloadable&quot;: [
+                {
+                    &quot;filename&quot;: &quot;filename.csv&quot;,
+                    &quot;text&quot;: &quot;data here&quot;
+                },
+            ],
+            &quot;renderable&quot;: &quot;HTML table to render&quot;
+        },
+    ],
+    &quot;meta&quot;: {
+        &quot;task_times&quot;: [&quot;list of task times in seconds&quot;],
+        &quot;version&quot;: &quot;model version, e.g. 1.1.0&quot;
+    }
+}
+</code></pre>
+
+<h2 id="json-objects">JSON Objects</h2>
+<h3 id="validator-object">Validator Object</h3>
+<ul>
+<li>Used for validating user input.</li>
+<li>Available validators:</li>
+<li>"range": Define a minimum and maximum value for a given parameter.<ul>
+<li>Arguments:</li>
+<li>"min": Minimum allowed value.</li>
+<li>"max": Maximum allowed value.</li>
+<li>Example:
+    <code>json
+    {
+        "range": {"min": 0, "max": 10}
+    }</code></li>
+</ul>
+</li>
+<li>"choice": Define a set of values that this parameter can take.<ul>
+<li>Arguments:</li>
+<li>"choice": List of allowed values.</li>
+<li>Example:
+    <code>json
+    {
+        "choice": {"choices": ["allowed choice", "another allowed choice"]}
+    }</code></li>
+</ul>
+</li>
+</ul>
+<h3 id="value-object">Value Object</h3>
+<ul>
+<li>Used for defining the value of a parameter. The Value Object consists of a "value" attribute indicating the parameter's value and zero or more key-value pairs that describe the dimensions of the parameter space that the value should be applied to.</li>
+<li>Example:
+    <code>json
+    {"time_of_day": 0, "value": 40},</code></li>
+</ul>
+</div>
+
+  </div>
+
+
+
+
+</body>
+</html>
