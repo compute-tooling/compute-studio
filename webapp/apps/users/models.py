@@ -22,7 +22,7 @@ class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=False)
 
-    def cost_breakdown(self, projects=None):
+    def costs(self, projects=None):
         if projects is None:
             projects = Project.objects.all()
         agg = defaultdict(float)
@@ -40,7 +40,7 @@ class Profile(models.Model):
                 agg[month["month"]] += float(month["effective__sum"])
         return {k.strftime("%B %Y"): v for k, v in sorted(agg.items())}
 
-    def get_runs(self, projects=None):
+    def runs(self, projects=None):
         if projects is None:
             projects = Project.objects.all()
         runs = {}

@@ -42,8 +42,8 @@ class UserProfile(View):
                 self.template_name,
                 context={
                     "username": request.user.username,
-                    "runs": profile.get_runs(self.projects),
-                    "cost_breakdown": profile.cost_breakdown(self.projects),
+                    "runs": profile.runs(self.projects),
+                    "cost_breakdown": profile.costs(self.projects),
                 },
             )
         User = get_user_model()
