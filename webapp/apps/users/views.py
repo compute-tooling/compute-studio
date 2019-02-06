@@ -36,15 +36,14 @@ class UserProfile(View):
         username = kwargs["username"]
         print("user", request.user.username, username)
         if username == request.user.username:
+            profile = request.user.profile
             return render(
                 request,
                 self.template_name,
                 context={
                     "username": request.user.username,
-                    "runs": self.get_runs(request.user),
-                    "cost_breakdown": request.user.profile.cost_breakdown(
-                        self.projects
-                    ),
+                    "runs": profile.get_runs(self.projects),
+                    "cost_breakdown": profile.cost_breakdown(self.projects),
                 },
             )
         User = get_user_model()
@@ -52,14 +51,6 @@ class UserProfile(View):
             raise PermissionDenied()
         else:
             raise Http404()
-
-    def get_runs(self, user):
-        runs = {}
-        for project in self.projects:
-            relation = f"{project.app_name}_{project.app_name}run_runs"
-            qs = getattr(user.profile, relation)
-            runs[project.name] = qs.all()
-        return runs
 
 
 class UserSettings(View):

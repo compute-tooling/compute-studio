@@ -40,6 +40,16 @@ class Profile(models.Model):
                 agg[month["month"]] += float(month["effective__sum"])
         return {k.strftime("%B %Y"): v for k, v in sorted(agg.items())}
 
+    def get_runs(self, projects=None):
+        if projects is None:
+            projects = Project.objects.all()
+        runs = {}
+        for project in projects:
+            relation = f"{project.app_name}_{project.app_name}run_runs"
+            queryset = getattr(self, relation)
+            runs[project.name] = queryset.all()
+        return runs
+
     class Meta:
         # not in use yet...
         permissions = (("access_public", "Has access to public projects"),)
