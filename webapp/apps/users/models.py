@@ -5,6 +5,7 @@ from django.db.models.functions import TruncMonth
 from django.db.models import F, Case, When, Sum
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+from django.urls import reverse
 
 
 def is_profile_active(user):
@@ -117,3 +118,19 @@ class Project(models.Model):
     @staticmethod
     def dollar_to_penny(c):
         return int(round(c * 100, 0))
+
+    @property
+    def app_url(self):
+        return reverse(self.app_name)
+
+    @property
+    def show_sponsor(self):
+        if self.sponsor is not None:
+            return self.sponsor.user.username
+        else:
+            return "Not sponsored"
+
+    @property
+    def number_runs(self):
+        relation = relation = f"{self.app_name}_{self.app_name}run_runs"
+        return getattr(self, relation).count()
