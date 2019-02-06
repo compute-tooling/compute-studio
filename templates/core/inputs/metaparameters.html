@@ -7,6 +7,9 @@
     <div class="container">
       <h1>
         {{ title }}
+        <label>
+          {% include 'core/inputs/fields/tooltip.html' with text="These are the parameters upon which the Model Parameters below depend. Changing the value of one of the meta parameters may change the default value(s) of some of the Model Parameters." %}
+        </label>
         <div class="float-right">
           <button
             class="btn collapse-button"
@@ -35,7 +38,7 @@
                       type="submit"
                       name="reset"
                       value="true"
-                      style="margin:10px;margin-left:0px;">Reset default parameters
+                      style="margin:10px;margin-left:0px;">Reset with updated meta parameters
                     </button>
                 </li>
             </ul>
