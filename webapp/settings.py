@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "webapp.apps.billing",
     # Append new apps here in the form webapp.apps.projects.{project_name}
     "webapp.apps.projects.matchups",
+    # third-party apps
     "widget_tweaks",
     "crispy_forms",
     # 'allauth', # new

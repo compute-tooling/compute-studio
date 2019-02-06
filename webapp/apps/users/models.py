@@ -124,7 +124,7 @@ class Project(models.Model):
         return reverse(self.app_name)
 
     @property
-    def show_sponsor(self):
+    def display_sponsor(self):
         if self.sponsor is not None:
             return self.sponsor.user.username
         else:
