@@ -1,0 +1,12 @@
+<table class="table">
+  <tr>
+    <th>Month</th>
+    <th>Cost ($)</th>
+  </tr>
+  {% for month, cost in cost_breakdown.items %}
+    <tr>
+      <td>{{month}}</td>
+      <td>{{cost}}</td>
+    </tr>
+  {% endfor %}
+</table>

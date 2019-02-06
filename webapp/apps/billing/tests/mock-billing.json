@@ -1,8 +1,9 @@
 {
     "mock": {
         "name": "Used for testing",
+        "app_name": "testapp",
         "sponsor": null,
-        "username": null,
+        "username": "modeler",
         "amount": 0,
         "metered_amount": 1,
         "currency": "usd",
@@ -15,8 +16,9 @@
     },
     "sponsor-mock": {
         "name": "Used for testing sponsored apps",
+        "app_name": "sponsoredtestapp",
         "sponsor": "sponsor",
-        "username": null,
+        "username": "modeler",
         "amount": 0,
         "metered_amount": 1,
         "currency": "usd",

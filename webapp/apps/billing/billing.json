@@ -1,6 +1,7 @@
 {
     "matchups": {
         "name": "Matchups",
+        "app_name": "matchups",
         "sponsor": "hdoupe",
         "username": "hdoupe",
         "amount": 0,

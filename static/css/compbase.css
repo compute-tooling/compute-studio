@@ -177,3 +177,8 @@ input.model:not(:placeholder-shown) {
   text-align: center;
   background-color: #212121;
 }
+
+
+.profile-tab-content {
+  padding: 25px;
+}

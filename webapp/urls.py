@@ -16,16 +16,17 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+from webapp.apps.users import views as userviews
+
 urlpatterns = [
     # admin apps
-    path('admin/', admin.site.urls),
-    path('', include("webapp.apps.pages.urls")),
-
+    path("admin/", admin.site.urls),
+    path("", include("webapp.apps.pages.urls")),
     # add project URL's here
-    path('hdoupe/matchups/', include('webapp.apps.projects.matchups.urls')),
-
+    path("hdoupe/matchups/", include("webapp.apps.projects.matchups.urls")),
     # user/billing apps
-    path('users/', include('webapp.apps.users.urls')),
-    path('users/', include('django.contrib.auth.urls')),
-    path('billing/', include('webapp.apps.billing.urls')),
+    path("<str:username>/", userviews.UserProfile.as_view(), name="userprofile"),
+    path("users/", include("webapp.apps.users.urls")),
+    path("users/", include("django.contrib.auth.urls")),
+    path("billing/", include("webapp.apps.billing.urls")),
 ]

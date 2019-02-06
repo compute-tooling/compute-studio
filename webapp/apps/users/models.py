@@ -1,48 +1,72 @@
+from collections import defaultdict
+
 from django.db import models
+from django.db.models.functions import TruncMonth
+from django.db.models import F, Case, When, Sum
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+from django.urls import reverse
+
 
 def is_profile_active(user):
-    if getattr(user, 'profile', False):
+    if getattr(user, "profile", False):
         return user.profile.is_active
     return False
 
-class User(AbstractUser):
 
+class User(AbstractUser):
     def __str__(self):
         return self.email
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL,
-                                on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=False)
+
+    def costs(self, projects=None):
+        if projects is None:
+            projects = Project.objects.all()
+        agg = defaultdict(float)
+        for project in projects:
+            relation = f"{project.app_name}_{project.app_name}run_runs"
+            res = (
+                getattr(self, relation)
+                .values(month=TruncMonth("creation_date"))
+                .annotate(
+                    effective=Case(When(run_cost=0.0, then=0.01), default=F("run_cost"))
+                )
+                .annotate(Sum("effective"))
+            )
+            for month in res:
+                agg[month["month"]] += float(month["effective__sum"])
+        return {k.strftime("%B %Y"): v for k, v in sorted(agg.items())}
+
+    def runs(self, projects=None):
+        if projects is None:
+            projects = Project.objects.all()
+        runs = {}
+        for project in projects:
+            relation = f"{project.app_name}_{project.app_name}run_runs"
+            queryset = getattr(self, relation)
+            runs[project.name] = queryset.all()
+        return runs
 
     class Meta:
         # not in use yet...
-        permissions = (
-            ('access_public', 'Has access to public projects'),
-        )
+        permissions = (("access_public", "Has access to public projects"),)
 
 
 class Project(models.Model):
     SECS_IN_HOUR = 3600.0
     name = models.CharField(max_length=255)
+    app_name = models.CharField(max_length=30)
     profile = models.ForeignKey(
-        Profile,
-        null=True,
-        related_name="projects",
-        on_delete=models.CASCADE,
+        Profile, null=True, related_name="projects", on_delete=models.CASCADE
     )
     sponsor = models.ForeignKey(
-        Profile,
-        null=True,
-        related_name="sponsored_projects",
-        on_delete=models.SET_NULL
+        Profile, null=True, related_name="sponsored_projects", on_delete=models.SET_NULL
     )
-    server_cost = models.DecimalField(
-        max_digits=6, decimal_places=3, null=True
-    )
+    server_cost = models.DecimalField(max_digits=6, decimal_places=3, null=True)
     exp_task_time = models.IntegerField(null=True)
     exp_num_tasks = models.IntegerField(null=True)
     is_public = models.BooleanField(default=True)
@@ -94,3 +118,19 @@ class Project(models.Model):
     @staticmethod
     def dollar_to_penny(c):
         return int(round(c * 100, 0))
+
+    @property
+    def app_url(self):
+        return reverse(self.app_name)
+
+    @property
+    def display_sponsor(self):
+        if self.sponsor is not None:
+            return self.sponsor.user.username
+        else:
+            return "Not sponsored"
+
+    @property
+    def number_runs(self):
+        relation = relation = f"{self.app_name}_{self.app_name}run_runs"
+        return getattr(self, relation).count()
