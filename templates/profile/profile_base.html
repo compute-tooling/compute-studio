@@ -3,42 +3,36 @@
 
 {% block content %}
 
-<div class="container-fluid" style="margin:20px;">
+<div class="container-fluid" style="margin:20px;" id="profileTab" role="tablist">
     {% csrf_token %}
-    <h1>Runs</h1>
-    {% for project, queryset in runs.items %}
-      <h4>{{project}}</h4>
-      <table class="table">
-        <tr>
-          <th>Output</th>
-          <th>Run time</th>
-          <th>Run cost</th>
-          <th>date</th>
-        </tr>
-        {% for run in queryset %}
-          <tr>
-            <td><a href="{{run.get_absolute_url}}">{{run.get_absolute_url}}</a></td>
-            <td>{{run.run_time}}</td>
-            <td>{{run.effective_cost}}</td>
-            <td>{{run.creation_date}}</td>
-          </tr>
-        {% endfor %}
-      </table>
-    {% endfor %}
-
-    <h1>Cost Breakdown</h1>
-    <table class="table">
-      <tr>
-        <th>Month</th>
-        <th>Cost ($)</th>
-      </tr>
-    {% for month, cost in cost_breakdown.items %}
-      <tr>
-        <td>{{month}}</td>
-        <td>{{cost}}</td>
-      </tr>
-    {% endfor %}
-  </table>
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" id="runs-tab" data-toggle="tab" href="#runs" role="tab" aria-controls="runs" aria-selected="true">Runs</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="models-tab" data-toggle="tab" href="#models" role="tab" aria-controls="models" aria-selected="false">Models</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="costs-tab" data-toggle="tab" href="#costs" role="tab" aria-controls="costs" aria-selected="false">Costs</a>
+      </li>
+    </ul>
+    <div class="tab-content" id="profileTab">
+      <div class="tab-pane fade show active" id="runs" role="tabpanel" aria-labelledby="runs-tab">
+        <div class="profile-tab-content">
+          {% include 'profile/runs.html' %}
+        </div>
+      </div>
+      <div class="tab-pane fade" id="models" role="tabpanel" aria-labelledby="models-tab">
+        <div class="profile-tab-content">
+          <p>not yet</p>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="costs" role="tabpanel" aria-labelledby="costs-tab">
+        <div class="profile-tab-content">
+          {% include 'profile/costs.html' %}
+        </div>
+      </div>
+    </div>
 </div>
 
 {% endblock %}
