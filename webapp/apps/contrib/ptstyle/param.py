@@ -1,8 +1,72 @@
-from webapp.apps.core.param import Param, Value, SeparatedValue
+from django import forms
+
+from webapp.apps.core.param import Param, Value
+from webapp.apps.core.fields import ValueField, SeparatedValueField
 from .utils import dims_to_string
 
 
+class Value:
+    def __init__(
+        self,
+        name,
+        label,
+        default_value,
+        coerce_func,
+        number_dims,
+        validators,
+        **field_kwargs,
+    ):
+        self.name = name
+        self.label = label
+        self.default_value = default_value
+        self.number_dims = number_dims
+        if self.number_dims == 0 and "choice" in validators:
+            choices_ = validators["choice"]["choices"]
+            if len(choices) < 25:
+                dv_ix = choices_.remove(self.default_value)
+                choices_.insert(0, self.default_value)
+                choices = [(c, c) for c in choices_]
+            else:
+                choices = None
+        else:
+            choices = None
+        if isinstance(self.default_value, list):
+            self.default_value = ", ".join([str(v) for v in self.default_value])
+        attrs = {"placeholder": self.default_value}
+        if self.number_dims == 0:
+            if choices is not None:
+                attrs["class"] = "unedited"
+                self.form_field = forms.TypedChoiceField(
+                    label=self.label,
+                    required=False,
+                    initial=self.default_value,
+                    widget=forms.Select(attrs=attrs),
+                    coerce=coerce_func,
+                    choices=choices,
+                    **field_kwargs,
+                )
+            else:
+                self.form_field = ValueField(
+                    label=self.label,
+                    widget=forms.TextInput(attrs=attrs),
+                    required=False,
+                    coerce=coerce_func,
+                    number_dims=number_dims,
+                    **field_kwargs,
+                )
+        else:
+            self.form_field = SeparatedValueField(
+                label=self.label,
+                widget=forms.TextInput(attrs=attrs),
+                required=False,
+                coerce=coerce_func,
+                number_dims=number_dims,
+                **field_kwargs,
+            )
+
+
 class ParamToolsParam(Param):
+    field_class = Value
 
     def set_fields(self, value, **field_kwargs):
         """
@@ -16,22 +80,19 @@ class ParamToolsParam(Param):
         -
 
         """
-        if self.number_dims == 0:
-            self.field_class = Value
-        else:
-            self.field_class = SeparatedValue
-
         for value_object in value:
             field_name, suffix = dims_to_string(
-                self.name, value_object, self.meta_parameters)
+                self.name, value_object, self.meta_parameters
+            )
             label = self.format_label(value_object)
             field = self.field_class(
                 field_name,
                 label,
                 value_object["value"],
                 self.coerce_func,
-                1,
-                **field_kwargs
+                self.number_dims,
+                self.attributes.get("validators", {}),
+                **field_kwargs,
             )
             self.fields[field_name] = field.form_field
             self.col_fields.append(field)

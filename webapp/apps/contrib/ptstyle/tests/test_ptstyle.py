@@ -8,6 +8,7 @@ from paramtools import Parameters, ValidationError
 
 from webapp.apps.core.meta_parameters import meta_parameters, MetaParameter
 from webapp.apps.core.displayer import Displayer
+from webapp.apps.core.fields import ValueField, SeparatedValueField
 from webapp.apps.contrib.ptstyle.param import ParamToolsParam
 from webapp.apps.contrib.ptstyle.parser import ParamToolsParser
 from webapp.apps.contrib.ptstyle.utils import dims_to_dict, dims_to_string
@@ -42,8 +43,8 @@ def pt_metaparam(TestParams):
         MetaParameter(
             name="dim0",
             default="zero",
-            field=forms.ChoiceField(choices=list((i, i) for i in ["zero", "one"]))
-        ),
+            field=forms.ChoiceField(choices=list((i, i) for i in ["zero", "one"])),
+        )
     )
     return meta_parameters
 
@@ -63,6 +64,23 @@ def test_param(TestParams, pt_metaparam):
         assert param.fields
         value = attrs["value"]
         assert len(param.fields) == len(value)
+
+
+def test_make_field_types(TestParams, pt_metaparam):
+    params = TestParams()
+    mp_inst = {mp.name: mp.default for mp in pt_metaparam.parameters}
+    spec = params.specification(meta_data=True, **mp_inst)
+
+    param = ParamToolsParam("str_choice_param", spec["str_choice_param"])
+    assert isinstance(param.fields["str_choice_param"], forms.TypedChoiceField)
+
+    param = ParamToolsParam("min_int_param", spec["min_int_param"])
+    assert all([isinstance(field, ValueField) for _, field in param.fields.items()])
+
+    param = ParamToolsParam("int_array_param", spec["int_array_param"])
+    assert all(
+        [isinstance(field, SeparatedValueField) for _, field in param.fields.items()]
+    )
 
 
 def test_param_naming(TestParams, pt_metaparam):
@@ -102,8 +120,9 @@ def test_param_parser(TestParams):
         param_class = ParamToolsParam
 
         def package_defaults(self):
-            return {"test": test_params.specification(meta_data=True,
-                                                      **valid_meta_params)}
+            return {
+                "test": test_params.specification(meta_data=True, **valid_meta_params)
+            }
 
     class MockParser(ParamToolsParser):
         displayer_class = MockDisplayer
@@ -113,17 +132,13 @@ def test_param_parser(TestParams):
             test_params = TestParams()
             test_params.adjust(params["test"], raise_errors=False)
             errors_warnings["test"]["errors"] = test_params.errors
-            return (
-                params,
-                {"test": json.dumps(params["test"])},
-                errors_warnings
-            )
+            return (params, {"test": json.dumps(params["test"])}, errors_warnings)
 
     # test good data; make sure there are no warnings/errors
     inputs = {
         "min_int_param____dim0__mp___dim1__1": 1,
         "min_int_param____dim0__mp___dim1__2": 2,
-        "str_choice_param": "value1"
+        "str_choice_param": "value1",
     }
     parser = MockParser(inputs, **valid_meta_params)
     parsed = parser.parse_parameters()
@@ -132,11 +147,9 @@ def test_param_parser(TestParams):
     exp = {
         "min_int_param": [
             {"value": 1, "dim0": "zero", "dim1": "1"},
-            {"value": 2, "dim0": "zero", "dim1": "2"}
+            {"value": 2, "dim0": "zero", "dim1": "2"},
         ],
-        "str_choice_param": [
-            {"value": "value1"}
-        ]
+        "str_choice_param": [{"value": "value1"}],
     }
     assert dict(params["test"]) == exp
     assert jsonstrs
@@ -146,7 +159,7 @@ def test_param_parser(TestParams):
     inputs = {
         "min_int_param____dim0__mp___dim1__1": -1,
         "min_int_param____dim0__mp___dim1__2": -2,
-        "str_choice_param": "notachoice"
+        "str_choice_param": "notachoice",
     }
     parser = MockParser(inputs, **valid_meta_params)
     parsed = parser.parse_parameters()
@@ -155,11 +168,9 @@ def test_param_parser(TestParams):
     exp = {
         "min_int_param": [
             {"value": -1, "dim0": "zero", "dim1": "1"},
-            {"value": -2, "dim0": "zero", "dim1": "2"}
+            {"value": -2, "dim0": "zero", "dim1": "2"},
         ],
-        "str_choice_param": [
-            {"value": "notachoice"}
-        ]
+        "str_choice_param": [{"value": "notachoice"}],
     }
     assert dict(params["test"]) == exp
     assert jsonstrs

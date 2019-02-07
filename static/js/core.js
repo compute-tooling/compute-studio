@@ -17,4 +17,15 @@ $(document).ready(function(){
     }
   });
 
-})
+  $('select.form-control').change(function(e) {
+    console.log($(this));
+    $(this).removeClass("unedited");
+  });
+
+  $('#inputs-form').submit(function(e) {
+    $(".unedited.select.form-control").each(function() {
+      select = $(this);
+      select.prop("disabled", true);
+    });
+  });
+});

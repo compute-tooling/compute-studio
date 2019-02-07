@@ -1,61 +1,53 @@
 from django import forms
 
-from .fields import (ValueField, SeparatedValueField, coerce_bool,
-                     coerce_float, coerce_int, coerce_date, coerce)
-
-
-class SeparatedValue:
-
-    def __init__(self, name, label, default_value, coerce_func, number_dims,
-                 **field_kwargs):
-        self.name = name
-        self.label = label
-        self.default_value = default_value
-        if isinstance(self.default_value, list):
-            self.default_value = ', '.join([str(v) for v in self.default_value])
-        attrs = {
-            'class': 'form-control',
-            'placeholder': self.default_value,
-        }
-        self.form_field = SeparatedValueField(
-            label=self.label,
-            widget=forms.TextInput(attrs=attrs),
-            required=False,
-            coerce=coerce_func,
-            number_dims=number_dims,
-            **field_kwargs
-        )
+from .fields import (
+    ValueField,
+    SeparatedValueField,
+    coerce_bool,
+    coerce_float,
+    coerce_int,
+    coerce_date,
+    coerce,
+)
 
 
 class Value:
-
-    def __init__(self, name, label, default_value, coerce_func, number_dims,
-                 **field_kwargs):
+    def __init__(
+        self, name, label, default_value, coerce_func, number_dims, **field_kwargs
+    ):
         self.name = name
         self.label = label
         self.default_value = default_value
-        attrs = {
-            'class': 'form-control',
-            'placeholder': self.default_value,
-        }
-        self.form_field = ValueField(
-            label=self.label,
-            widget=forms.TextInput(attrs=attrs),
-            required=False,
-            coerce=coerce_func,
-            number_dims=number_dims,
-            **field_kwargs
-        )
+        self.number_dims = number_dims
+        if isinstance(self.default_value, list):
+            self.default_value = ", ".join([str(v) for v in self.default_value])
+        attrs = {"placeholder": self.default_value}
+        if self.number_dims == 0:
+            self.form_field = ValueField(
+                label=self.label,
+                widget=forms.TextInput(attrs=attrs),
+                required=False,
+                coerce=coerce_func,
+                number_dims=number_dims,
+                **field_kwargs
+            )
+        else:
+            self.form_field = SeparatedValueField(
+                label=self.label,
+                widget=forms.TextInput(attrs=attrs),
+                required=False,
+                coerce=coerce_func,
+                number_dims=number_dims,
+                **field_kwargs
+            )
+
 
 class CheckBox:
-
     def __init__(self, name, label, default_value, **field_kwargs):
         self.name = name
         self.label = label
         self.default_value = default_value
-        attrs = {
-            'placeholder': str(self.default_value),
-        }
+        attrs = {"placeholder": str(self.default_value)}
         self.form_field = forms.NullBooleanField(
             label=self.label,
             widget=forms.TextInput(attrs=attrs),
@@ -66,7 +58,7 @@ class CheckBox:
 
 class BaseParam:
 
-    field_class = SeparatedValue
+    field_class = Value
 
     type_map = {
         "int": coerce_int,
@@ -80,8 +72,7 @@ class BaseParam:
         self.name = name
         self.attributes = attributes
         # title is preferred, but long_name is also acceptable.
-        self.title = (self.attributes.get("title", None) or
-                      self.attributes["long_name"])
+        self.title = self.attributes.get("title", None) or self.attributes["long_name"]
         self.description = self.attributes["description"]
         self.number_dims = self.attributes.get("number_dims", 1)
         self.col_fields = []
@@ -91,25 +82,15 @@ class BaseParam:
         self.coerce_func = self.get_coerce_func()
         self.default_value = self.attributes["value"]
 
-        self.info = " ".join([
-            attributes['description'],
-            attributes.get('notes') or ""
-        ]).strip()
+        self.info = " ".join(
+            [attributes["description"], attributes.get("notes") or ""]
+        ).strip()
 
         self.fields = {}
 
     def set_fields(self, value, **field_kwargs):
-        if self.number_dims == 0:
-            self.field_class = Value
-        else:
-            self.field_class = SeparatedValue
         field = self.field_class(
-            self.name,
-            '',
-            value,
-            self.coerce_func,
-            self.number_dims,
-            **field_kwargs
+            self.name, "", value, self.coerce_func, self.number_dims, **field_kwargs
         )
         self.fields[self.name] = field.form_field
         self.col_fields.append(field)
@@ -120,7 +101,6 @@ class BaseParam:
 
 
 class Param(BaseParam):
-
     def __init__(self, name, attributes, **meta_parameters):
         super().__init__(name, attributes, **meta_parameters)
         self.set_fields(self.default_value)
