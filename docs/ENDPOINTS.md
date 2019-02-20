@@ -12,10 +12,10 @@ Accepts Meta Parameters, if they are being utilized. Returns data in the form sp
 
 - **Python**:
     ```python
-    from compbaseball import baseball
+    import matchups
 
     def package_defaults(**meta_parameters):
-        return baseball.get_inputs(use_2018=meta_parameters["use_2018"])
+        return matchups.get_inputs(use_full_data=meta_parameters["use_full_data"])
     ```
 
     Here's what you get after filling in this function:
@@ -74,14 +74,14 @@ Warnings/Errors:
 
 - **Python**:
     ```python
-    from compbaseball import baseball
+    import matchups
 
     def parse_user_inputs(params, jsonparams, errors_warnings,
                             **meta_parameters):
         # parse the params, jsonparams, and errors_warnings further
-        use_2018 = meta_parameters["use_2018"]
-        params, jsonparams, errors_warnings = baseball.parse_inputs(
-            params, jsonparams, errors_warnings, use_2018=use_2018)
+        use_full_data = meta_parameters["use_full_data"]
+        params, jsonparams, errors_warnings = matchups.parse_inputs(
+            params, jsonparams, errors_warnings, use_full_data==use_full_data)
         return params, jsonparams, errors_warnings
     ```
 
@@ -121,11 +121,10 @@ The function returns the results of the simulation:
 
 - **Python**:
     ```python
-    from compbaseball import baseball
+    import matchups
 
-
-    def run_simulation(use_2018, user_mods):
-        result = baseball.get_matchup(use_2018, user_mods)
+    def run(**kwargs):
+        result = matchups.get_matchup(kwargs["use_full_data"], kwargs["user_mods"])
         return result
     ```
 

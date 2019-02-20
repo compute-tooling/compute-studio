@@ -23,7 +23,7 @@ COMP has three essential components:
 How to publish a model on COMP
 -------------------------------
 
-Working through the installation instructions in the COMP `README.md` document is strongly recommended. This will give a more intuitive feel for how this project is setup. In addition, it will be easier to resolve any issues relating to the installation of the webapp before any changes are made to it. There is also an example app, `compbaseball` ([github repo][4]). This may help if there are some questions about which parts need to be filled in or what structure the data should have.
+Working through the installation instructions in the COMP `README.md` document is strongly recommended. This will give a more intuitive feel for how this project is setup. In addition, it will be easier to resolve any issues relating to the installation of the webapp before any changes are made to it. There is also an example app, `matchups` ([github repo][4]). This may help if there are some questions about which parts need to be filled in or what structure the data should have.
 
 1. Use the app templating script to automatically write most of the boiler plate code required to put the project on COMP.
     ```
@@ -32,18 +32,21 @@ Working through the installation instructions in the COMP `README.md` document i
 
     where `"project_name"` is the name that will be used throughout the codebase to describe the COMP classes and functions pertaining to this app and `"Project Title"` is the name that will be displayed to the user and will be used to look up the project in the `Project` table. This command will write a new app in `webapp/apps/projects/{project_name}`, a new module in the `distributed/api/celery_app/{project_name}_tasks.py`, and a new `Dockerfile` at `distributed/dockerfiles/projects/Dockerfile.{project_name}`.
 
-2. Add an entry into the `webapp/apps/billing.json` file:
+2. Add an entry into the `webapp/apps/billing/billing.json` file:
 
     ```
         "project_name": {
-            "name": "Project-Title",
+            "name": "Matchups",
+            "app_name": "matchups",
+            "sponsor": "hdoupe",
+            "username": "hdoupe",
             "amount": 0,
             "metered_amount": 1,
             "currency": "usd",
-            "interval": "month",
+            "interval": "day",
             "trial_days": 0,
-            "server_cost": 0.10,
-            "exp_task_time": 200,
+            "server_cost": 0.05,
+            "exp_task_time": 20,
             "exp_num_tasks": 1,
             "is_public": true
         }
@@ -51,6 +54,9 @@ Working through the installation instructions in the COMP `README.md` document i
 
     The only attributes that should be edited are:
       - name - The title of the webapp (same as the project-title used with the template module)
+      - app_name - This is the name of this project's comp app package (webapp.apps.projects.{app_name}).
+      - sponsor - The COMP username of the sponsor, if applicable.
+      - username - The COMP username of the author of this app.
       - server_cost - The price of the AWS server in dollars per hour. A good resource to figure out which AWS server is needed for this model is the [AWS EC2 pricing page][2].
       - exp_task_time - On average, how long in seconds will each task take? This should be estimated carefully since a time limit will be applied to each task in the celery app. When the task goes over the allotted time, it will be killed.
       - exp_num_tasks - On average, how many tasks will be run?
@@ -78,7 +84,6 @@ Working through the installation instructions in the COMP `README.md` document i
     - `webapp.apps.projects.{project_name}.displayer.Display.package_defaults`
     - `webapp.apps.projects.{project_name}.parser.Parser.parse_parameters`
     - `api.celery_app.{project_name}_tasks.{project_name}_tasks.{project_name}_task`
-    - `api.celery_app.{project_name}_tasks.{project_name}_tasks.{project_name}_postprocess`
 
 7. Create a task route for the new celery worker in `celery_app.__init__.py`:
 
@@ -114,11 +119,11 @@ Working through the installation instructions in the COMP `README.md` document i
     - Run bash commands with the `RUN` command:
         ```docker
         RUN conda install pandas
-        RUN git clone https://github.com/hdoupe/compbaseball
+        RUN git clone https://github.com/hdoupe/matchups
         ```
     - Copy files to the image with the `COPY` command (note: working directory is `distributed`):
         ```docker
-        COPY ./compbaseball /home/distributed/compbaseball`
+        COPY ./matchups /home/distributed/matchups`
         ```
 
     Once these instructions have been added, add the `Dockerfile` to the list of docker images to be built by following the template commands in the `Makefile`. Next, add the new worker to the `docker-compose.yml` file according to the template configuration there. Set a tag for these images like so: `export TAG=test-build`, build the images: `make dist-build`, and spin up the containers from the `distributed` directory: `cd distributed && docker-compose up`.
@@ -140,4 +145,4 @@ Working through the installation instructions in the COMP `README.md` document i
 [1]: https://github.com/hdoupe/ParamProject
 [2]: https://aws.amazon.com/ec2/pricing/on-demand/
 [3]: https://github.com/PSLmodels/Tax-Calculator
-[4]: https://github.com/hdoupe/compbaseball
+[4]: https://github.com/hdoupe/matchups
