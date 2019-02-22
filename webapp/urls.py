@@ -22,6 +22,7 @@ urlpatterns = [
     # admin apps
     path("admin/", admin.site.urls),
     path("", include("webapp.apps.pages.urls")),
+    path("publish/", include("webapp.apps.publish.urls")),
     # add project URL's here
     path("hdoupe/matchups/", include("webapp.apps.projects.matchups.urls")),
     # user/billing apps
