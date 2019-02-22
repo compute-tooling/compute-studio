@@ -1,8 +1,8 @@
-'use strict';
+"use strict";
 
 const e = React.createElement;
 
-const csrftoken = Cookies.get('csrftoken');
+const csrftoken = Cookies.get("csrftoken");
 
 class Description extends React.Component {
   constructor(props) {
@@ -19,21 +19,21 @@ class Description extends React.Component {
     const charsLeft = 1000 - description.length;
     return (
       <p className="description">
-      <label>
-        <b>App overview:</b>
-        <textarea
-          className="form-control"
-          name="app_description"
-          type="text"
-          placeholder="What does this app do? Must be less than 1000 characters."
-          value={description}
-          onChange={this.handleChange}
-          maxLength="1000"
-          style={{width: "50rem"}}
-          // required - shows up red before entering text on firefox?
-        />
-      </label>
-      <small>{charsLeft}</small>
+        <label>
+          <b>App overview:</b>
+          <textarea
+            className="form-control"
+            name="app_description"
+            type="text"
+            placeholder="What does this app do? Must be less than 1000 characters."
+            value={description}
+            onChange={this.handleChange}
+            maxLength="1000"
+            style={{ width: "50rem" }}
+            // required - shows up red before entering text on firefox?
+          />
+        </label>
+        <small>{charsLeft}</small>
       </p>
     );
   }
@@ -49,7 +49,7 @@ class CodeSnippet extends React.Component {
     this.props.handleCodeSnippetChange(this.props.name, event.target.value);
   }
 
-  render () {
+  render() {
     return (
       <p>
         <label>
@@ -61,7 +61,7 @@ class CodeSnippet extends React.Component {
             placeholder="# code snippet here"
             value={this.props.code}
             onChange={this.handleChange}
-            style={{width: "50rem"}}
+            style={{ width: "50rem" }}
             // required - shows up red before entering text on firefox?
           />
         </label>
@@ -74,14 +74,14 @@ class Publish extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      app_name: '',
-      app_description: '',
-      package_defaults: '',
-      parse_user_adjustments: '',
-      run_simulation: '',
-      install: '',
-      server_size: '',
-      exp_task_time: 0,
+      app_name: "",
+      app_description: "",
+      package_defaults: "",
+      parse_user_adjustments: "",
+      run_simulation: "",
+      install: "",
+      server_size: "",
+      exp_task_time: 0
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -93,16 +93,16 @@ class Publish extends React.Component {
   handleChange(event) {
     const target = event.target;
     const value = target.value;
-    const name = target.name
-    this.setState({[name]: value});
+    const name = target.name;
+    this.setState({ [name]: value });
   }
 
   handleDescriptionChange(description) {
-    this.setState({app_description: description});
+    this.setState({ app_description: description });
   }
 
   handleCodeSnippetChange(name, code) {
-    this.setState({[name]: code})
+    this.setState({ [name]: code });
   }
 
   handleSubmit(event) {
@@ -118,10 +118,10 @@ class Publish extends React.Component {
     data.set("server_size", this.state.server_size);
     data.set("exp_task_time", this.state.exp_task_time);
 
-    fetch('/publish/', {
-      method: 'POST',
+    fetch("/publish/", {
+      method: "POST",
       body: data,
-      credentials: 'same-origin',
+      credentials: "same-origin"
     });
   }
 
@@ -129,7 +129,7 @@ class Publish extends React.Component {
     return (
       <form onSubmit={this.handleSubmit}>
         <h3>About</h3>
-        <hr className="my-4"/>
+        <hr className="my-4" />
         <p>
           <label>
             <b>App Name:</b>
@@ -146,10 +146,18 @@ class Publish extends React.Component {
         </p>
         <Description
           handleDescriptionChange={this.handleDescriptionChange}
-          app_description={this.state.app_description}/>
+          app_description={this.state.app_description}
+        />
         <h3>Python Functions</h3>
-        <hr className="my-4"/>
-        <p><em>Insert code snippets satisfying the requirements detailed in the <a href="https://github.com/comp-org/comp/blob/master/docs/ENDPOINTS.md">functions documentation.</a></em></p>
+        <hr className="my-4" />
+        <p>
+          <em>
+            Insert code snippets satisfying the requirements detailed in the{" "}
+            <a href="https://github.com/comp-org/comp/blob/master/docs/ENDPOINTS.md">
+              functions documentation.
+            </a>
+          </em>
+        </p>
         <CodeSnippet
           handleCodeSnippetChange={this.handleCodeSnippetChange}
           function_name="Get package defaults"
@@ -172,8 +180,16 @@ class Publish extends React.Component {
           code={this.state.run_simulation}
         />
         <h3>Environment</h3>
-        <hr className="my-4"/>
-        <p><em>Describe how to install this project and its resource requirements as detailed in <a href="/comp-org/comp/blob/master/docs/ENVIRONMENT.md">the environment documentation.</a></em></p>
+        <hr className="my-4" />
+        <p>
+          <em>
+            Describe how to install this project and its resource requirements
+            as detailed in{" "}
+            <a href="/comp-org/comp/blob/master/docs/ENVIRONMENT.md">
+              the environment documentation.
+            </a>
+          </em>
+        </p>
         <CodeSnippet
           handleCodeSnippetChange={this.handleCodeSnippetChange}
           function_name="Installation"
@@ -185,11 +201,11 @@ class Publish extends React.Component {
           <label>
             Choose the server size:
             <select value={this.state.server_size} onChange={this.handleChange}>
-              <option value=" 4 GB 	2 vCPUs "> 4 GB 	2 vCPUs </option>
-              <option value=" 8 GB 	4 vCPUs "> 8 GB 	4 vCPUs </option>
-              <option value="16 GB 	8 vCPUs">16 GB 	8 vCPUs</option>
-              <option value="32 GB 	16 vCPUs">32 GB 	16 vCPUs</option>
-              <option value=" 64 GB 	32 vCPUs "> 64 GB 	32 vCPUs </option>
+              <option value=" 4 GB 	2 vCPUs "> 4 GB 2 vCPUs </option>
+              <option value=" 8 GB 	4 vCPUs "> 8 GB 4 vCPUs </option>
+              <option value="16 GB 	8 vCPUs">16 GB 8 vCPUs</option>
+              <option value="32 GB 	16 vCPUs">32 GB 16 vCPUs</option>
+              <option value=" 64 GB 	32 vCPUs "> 64 GB 32 vCPUs </option>
             </select>
           </label>
         </p>
@@ -213,5 +229,5 @@ class Publish extends React.Component {
   }
 }
 
-const domContainer = document.querySelector('#publish-container');
+const domContainer = document.querySelector("#publish-container");
 ReactDOM.render(e(Publish), domContainer);
