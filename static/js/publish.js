@@ -81,6 +81,7 @@ class Publish extends React.Component {
       run_simulation: '',
       install: '',
       server_size: '',
+      exp_task_time: 0,
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -115,6 +116,7 @@ class Publish extends React.Component {
     data.set("run_simulation", this.state.run_simulation);
     data.set("install", this.state.install);
     data.set("server_size", this.state.server_size);
+    data.set("exp_task_time", this.state.exp_task_time);
 
     fetch('/publish/', {
       method: 'POST',
@@ -180,16 +182,30 @@ class Publish extends React.Component {
           code={this.state.install}
         />
         <p>
-        <label>
-          Choose the server size:
-          <select value={this.state.server_size} onChange={this.handleChange}>
-            <option value=" 4 GB 	2 vCPUs "> 4 GB 	2 vCPUs </option>
-            <option value=" 8 GB 	4 vCPUs "> 8 GB 	4 vCPUs </option>
-            <option value="16 GB 	8 vCPUs">16 GB 	8 vCPUs</option>
-            <option value="32 GB 	16 vCPUs">32 GB 	16 vCPUs</option>
-            <option value=" 64 GB 	32 vCPUs "> 64 GB 	32 vCPUs </option>
-          </select>
-        </label>
+          <label>
+            Choose the server size:
+            <select value={this.state.server_size} onChange={this.handleChange}>
+              <option value=" 4 GB 	2 vCPUs "> 4 GB 	2 vCPUs </option>
+              <option value=" 8 GB 	4 vCPUs "> 8 GB 	4 vCPUs </option>
+              <option value="16 GB 	8 vCPUs">16 GB 	8 vCPUs</option>
+              <option value="32 GB 	16 vCPUs">32 GB 	16 vCPUs</option>
+              <option value=" 64 GB 	32 vCPUs "> 64 GB 	32 vCPUs </option>
+            </select>
+          </label>
+        </p>
+        <p>
+          <label>
+            <b>Expected time in seconds for simulation completion:</b>
+            <input
+              className="form-control"
+              name="exp_task_time"
+              type="number"
+              value={this.state.exp_task_time}
+              // placeholder=
+              onChange={this.handleChange}
+              required
+            />
+          </label>
         </p>
         <input type="submit" value="Submit" />
       </form>
