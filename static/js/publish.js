@@ -15,7 +15,7 @@ class Description extends React.Component {
   }
 
   render() {
-    const description = this.props.app_description;
+    const description = this.props.description;
     const charsLeft = 1000 - description.length;
     return (
       <p className="description">
@@ -23,7 +23,7 @@ class Description extends React.Component {
           <b>App overview:</b>
           <textarea
             className="form-control"
-            name="app_description"
+            name="description"
             type="text"
             placeholder="What does this app do? Must be less than 1000 characters."
             value={description}
@@ -70,58 +70,111 @@ class CodeSnippet extends React.Component {
   }
 }
 
+class ServerSize extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+  }
+
+  handleChange(event) {
+    var [ram, cpu] = event.target.value;
+    console.log(event.target.value);
+    this.props.handleServerSizeChange(cpu, ram);
+  }
+
+  render() {
+    return (
+      <p>
+        <label>
+          Choose the server size:
+          <select name="server_size" onChange={this.handleChange}>
+            <option multiple={true} value={[4, 2]}>
+              {" "}
+              4 GB 2 vCPUs{" "}
+            </option>
+            <option multiple={true} value={[8, 4]}>
+              {" "}
+              8 GB 4 vCPUs{" "}
+            </option>
+            <option multiple={true} value={[16, 8]}>
+              16 GB 8 vCPUs
+            </option>
+            <option multiple={true} value={[32, 16]}>
+              32 GB 16 vCPUs
+            </option>
+            <option multiple={true} value={[64, 32]}>
+              {" "}
+              64 GB 32 vCPUs{" "}
+            </option>
+          </select>
+        </label>
+      </p>
+    );
+  }
+}
+
 class Publish extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      app_name: "",
-      app_description: "",
+      name: "",
+      description: "",
       package_defaults: "",
       parse_user_adjustments: "",
       run_simulation: "",
-      install: "",
-      server_size: "",
+      installation: "",
+      server_ram: 4,
+      server_cpu: 2,
       exp_task_time: 0
     };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
     this.handleCodeSnippetChange = this.handleCodeSnippetChange.bind(this);
+    this.handleServerSizeChange = this.handleServerSizeChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   handleChange(event) {
-    const target = event.target;
-    const value = target.value;
-    const name = target.name;
-    this.setState({ [name]: value });
+    console.log(event.target.name);
+    console.log(event.target.value);
+    this.setState({ [event.target.name]: event.target.value });
   }
 
   handleDescriptionChange(description) {
-    this.setState({ app_description: description });
+    this.setState({ description: description });
   }
 
   handleCodeSnippetChange(name, code) {
     this.setState({ [name]: code });
   }
 
+  handleServerSizeChange(ram, cpu) {
+    this.setState({
+      server_ram: ram,
+      server_cpu: cpu
+    });
+  }
+
   handleSubmit(event) {
     event.preventDefault();
     let data = new FormData(event.target);
     data.set("csrfmiddlewaretoken", csrftoken);
-    data.set("app_name", this.state.app_name);
-    data.set("app_description", this.state.app_description);
+    data.set("name", this.state.name);
+    data.set("description", this.state.description);
     data.set("package_defaults", this.state.package_defaults);
     data.set("parse_user_adjustments", this.state.parse_user_adjustments);
     data.set("run_simulation", this.state.run_simulation);
-    data.set("install", this.state.install);
-    data.set("server_size", this.state.server_size);
+    data.set("installation", this.state.installation);
+    data.set("server_ram", this.state.server_ram);
+    data.set("server_cpu", this.state.server_cpu);
     data.set("exp_task_time", this.state.exp_task_time);
-
-    fetch("/publish/", {
+    response = fetch("/publish/", {
       method: "POST",
       body: data,
       credentials: "same-origin"
+    }).then(function(response) {
+      window.location.replace(response.url);
     });
   }
 
@@ -135,9 +188,9 @@ class Publish extends React.Component {
             <b>App Name:</b>
             <input
               className="form-control"
-              name="app_name"
+              name="name"
               type="text"
-              value={this.state.app_name}
+              value={this.state.name}
               placeholder="What's the name of the app?"
               onChange={this.handleChange}
               required
@@ -146,7 +199,7 @@ class Publish extends React.Component {
         </p>
         <Description
           handleDescriptionChange={this.handleDescriptionChange}
-          app_description={this.state.app_description}
+          description={this.state.description}
         />
         <h3>Python Functions</h3>
         <hr className="my-4" />
@@ -193,22 +246,15 @@ class Publish extends React.Component {
         <CodeSnippet
           handleCodeSnippetChange={this.handleCodeSnippetChange}
           function_name="Installation"
-          name="install"
+          name="installation"
           description="Bash commands for installing this project"
-          code={this.state.install}
+          code={this.state.installation}
         />
-        <p>
-          <label>
-            Choose the server size:
-            <select value={this.state.server_size} onChange={this.handleChange}>
-              <option value=" 4 GB 	2 vCPUs "> 4 GB 2 vCPUs </option>
-              <option value=" 8 GB 	4 vCPUs "> 8 GB 4 vCPUs </option>
-              <option value="16 GB 	8 vCPUs">16 GB 8 vCPUs</option>
-              <option value="32 GB 	16 vCPUs">32 GB 16 vCPUs</option>
-              <option value=" 64 GB 	32 vCPUs "> 64 GB 32 vCPUs </option>
-            </select>
-          </label>
-        </p>
+        <ServerSize
+          handleServerSizeChange={this.handleServerSizeChange}
+          server_ram={this.state.server_ram}
+          server_cpu={this.state.server_cpu}
+        />
         <p>
           <label>
             <b>Expected time in seconds for simulation completion:</b>

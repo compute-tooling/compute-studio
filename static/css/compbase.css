@@ -5,7 +5,11 @@
 }
 
 p {
-  width:80ch
+  width:80ch;
+}
+
+.publish p {
+  width:100ch;
 }
 
 code {
