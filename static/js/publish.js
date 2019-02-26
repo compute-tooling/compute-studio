@@ -126,7 +126,7 @@ class ServerSize extends React.Component {
   }
 }
 
-class Publish extends React.Component {
+class PublishForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -144,6 +144,7 @@ class Publish extends React.Component {
     this.handleChange = this.handleChange.bind(this);
     this.handleServerSizeChange = this.handleServerSizeChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.componentDidMount = this.componentDidMount.bind(this);
   }
 
   handleChange(event) {
@@ -158,47 +159,23 @@ class Publish extends React.Component {
   }
 
   componentDidMount() {
-    const username = this.props.username;
-    const app_name = this.props.app_name;
-    if (this.props.app_name) {
-      fetch(`/publish/api/${username}/${app_name}/detail/`).then(response => {
-        response
-          .json()
-          .then(data => ({
-            data: data,
-            status: response.status
-          }))
-          .then(res => {
-            if (res.status == 200) {
-              this.setState(res.data);
-            } else {
-              console.log(response);
-            }
-          });
-      });
-    }
+    this.setState(this.props.fetch_init_state());
   }
 
   handleSubmit(event) {
     event.preventDefault();
-    let data = new FormData(event.target);
-    data.set("csrfmiddlewaretoken", csrftoken);
-    data.set("name", this.state.name);
-    data.set("description", this.state.description);
-    data.set("package_defaults", this.state.package_defaults);
-    data.set("parse_user_adjustments", this.state.parse_user_adjustments);
-    data.set("run_simulation", this.state.run_simulation);
-    data.set("installation", this.state.installation);
-    data.set("server_ram", this.state.server_ram);
-    data.set("server_cpu", this.state.server_cpu);
-    data.set("exp_task_time", this.state.exp_task_time);
-    fetch("/publish/", {
-      method: "POST",
-      body: data,
-      credentials: "same-origin"
-    }).then(function(response) {
-      window.location.replace(response.url);
-    });
+    let formdata = new FormData(event.target);
+    formdata.set("csrfmiddlewaretoken", csrftoken);
+    formdata.set("name", this.state.name);
+    formdata.set("description", this.state.description);
+    formdata.set("package_defaults", this.state.package_defaults);
+    formdata.set("parse_user_adjustments", this.state.parse_user_adjustments);
+    formdata.set("run_simulation", this.state.run_simulation);
+    formdata.set("installation", this.state.installation);
+    formdata.set("server_ram", this.state.server_ram);
+    formdata.set("server_cpu", this.state.server_cpu);
+    formdata.set("exp_task_time", this.state.exp_task_time);
+    this.props.fetch_on_submit(formdata);
   }
 
   render() {
@@ -281,6 +258,83 @@ class Publish extends React.Component {
         />
         <input type="submit" value="Submit" />
       </form>
+    );
+  }
+}
+
+class DetailApp extends react.Component {
+  constructor(props) {
+    super(props);
+    this.fetch_init_state = fetch_init_state.bind(this);
+  }
+
+  fetch_init_state() {
+    const username = this.props.username;
+    const app_name = this.props.app_name;
+    fetch(`/publish/api/${username}/${app_name}/detail/`).then(response => {
+      response
+        .json()
+        .then(data => ({
+          data: data,
+          status: response.status
+        }))
+        .then(res => {
+          if (res.status == 200) {
+            return res.data;
+          } else {
+            console.log(response);
+          }
+        });
+    });
+    return {};
+  }
+
+  fetch_on_submit(formdata) {
+    fetch(`/publish/api/${this.props.username}/${this.props.app_name}/detail`, {
+      method: "PUT",
+      body: formdata,
+      credentials: "same-origin"
+    }).then(function(response) {
+      window.location.replace(`/${this.props.username}/`);
+    });
+  }
+
+  render() {
+    return <PublishForm fetch_init_state={this.fetch_init_state} />;
+  }
+}
+
+class CreateApp extends react.Component {
+  constructor(props) {
+    super(props);
+  }
+  fetch_init_state() {
+    return {};
+  }
+  fetch_on_submit(formdata) {
+    fetch("/publish/", {
+      method: "POST",
+      body: formdata,
+      credentials: "same-origin"
+    }).then(function(response) {
+      window.location.replace(response.url);
+    });
+  }
+  render() {
+    return <PublishForm componentDidMount={this.componentDidMount} />;
+  }
+}
+
+class PublishApp extends react.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <BrowserRouter>
+        <CreateApp />
+      </BrowserRouter>
     );
   }
 }
