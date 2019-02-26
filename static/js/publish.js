@@ -1,17 +1,35 @@
 "use strict";
 
-const e = React.createElement;
-
 const csrftoken = Cookies.get("csrftoken");
+
+class TextField extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <p>
+        <label>
+          <b>{this.props.label}:</b>
+          <input
+            className="form-control"
+            name={this.props.name}
+            type={this.props.type}
+            value={this.props.value}
+            placeholder={this.props.placeholder}
+            onChange={this.props.handleChange}
+            required
+          />
+        </label>
+      </p>
+    );
+  }
+}
 
 class Description extends React.Component {
   constructor(props) {
     super(props);
-    this.handleChange = this.handleChange.bind(this);
-  }
-
-  handleChange(event) {
-    this.props.handleDescriptionChange(event.target.value);
   }
 
   render() {
@@ -27,7 +45,7 @@ class Description extends React.Component {
             type="text"
             placeholder="What does this app do? Must be less than 1000 characters."
             value={description}
-            onChange={this.handleChange}
+            onChange={this.props.handleChange}
             maxLength="1000"
             style={{ width: "50rem" }}
             // required - shows up red before entering text on firefox?
@@ -42,11 +60,6 @@ class Description extends React.Component {
 class CodeSnippet extends React.Component {
   constructor(props) {
     super(props);
-    this.handleChange = this.handleChange.bind(this);
-  }
-
-  handleChange(event) {
-    this.props.handleCodeSnippetChange(this.props.name, event.target.value);
   }
 
   render() {
@@ -60,7 +73,7 @@ class CodeSnippet extends React.Component {
             type="text"
             placeholder="# code snippet here"
             value={this.props.code}
-            onChange={this.handleChange}
+            onChange={this.props.handleChange}
             style={{ width: "50rem" }}
             // required - shows up red before entering text on firefox?
           />
@@ -129,24 +142,12 @@ class Publish extends React.Component {
     };
 
     this.handleChange = this.handleChange.bind(this);
-    this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
-    this.handleCodeSnippetChange = this.handleCodeSnippetChange.bind(this);
     this.handleServerSizeChange = this.handleServerSizeChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   handleChange(event) {
-    console.log(event.target.name);
-    console.log(event.target.value);
     this.setState({ [event.target.name]: event.target.value });
-  }
-
-  handleDescriptionChange(description) {
-    this.setState({ description: description });
-  }
-
-  handleCodeSnippetChange(name, code) {
-    this.setState({ [name]: code });
   }
 
   handleServerSizeChange(ram, cpu) {
@@ -154,6 +155,28 @@ class Publish extends React.Component {
       server_ram: ram,
       server_cpu: cpu
     });
+  }
+
+  componentDidMount() {
+    const username = this.props.username;
+    const app_name = this.props.app_name;
+    if (this.props.app_name) {
+      fetch(`/publish/api/${username}/${app_name}/detail/`).then(response => {
+        response
+          .json()
+          .then(data => ({
+            data: data,
+            status: response.status
+          }))
+          .then(res => {
+            if (res.status == 200) {
+              this.setState(res.data);
+            } else {
+              console.log(response);
+            }
+          });
+      });
+    }
   }
 
   handleSubmit(event) {
@@ -169,7 +192,7 @@ class Publish extends React.Component {
     data.set("server_ram", this.state.server_ram);
     data.set("server_cpu", this.state.server_cpu);
     data.set("exp_task_time", this.state.exp_task_time);
-    response = fetch("/publish/", {
+    fetch("/publish/", {
       method: "POST",
       body: data,
       credentials: "same-origin"
@@ -183,22 +206,16 @@ class Publish extends React.Component {
       <form onSubmit={this.handleSubmit}>
         <h3>About</h3>
         <hr className="my-4" />
-        <p>
-          <label>
-            <b>App Name:</b>
-            <input
-              className="form-control"
-              name="name"
-              type="text"
-              value={this.state.name}
-              placeholder="What's the name of the app?"
-              onChange={this.handleChange}
-              required
-            />
-          </label>
-        </p>
+        <TextField
+          handleChange={this.handleChange}
+          label="App Name"
+          name="name"
+          value={this.state.name}
+          type="text"
+          placeholder="What's the name of this app?"
+        />
         <Description
-          handleDescriptionChange={this.handleDescriptionChange}
+          handleChange={this.handleChange}
           description={this.state.description}
         />
         <h3>Python Functions</h3>
@@ -212,21 +229,21 @@ class Publish extends React.Component {
           </em>
         </p>
         <CodeSnippet
-          handleCodeSnippetChange={this.handleCodeSnippetChange}
+          handleChange={this.handleChange}
           function_name="Get package defaults"
           name="package_defaults"
           description="Get the default Model Parameters and their meta data"
           code={this.state.package_defaults}
         />
         <CodeSnippet
-          handleCodeSnippetChange={this.handleCodeSnippetChange}
+          handleChange={this.handleChange}
           function_name="Parse user adjustments"
           name="parse_user_adjustments"
           description="Do model-specific formatting and validation on the user adjustments"
           code={this.state.parse_user_adjustments}
         />
         <CodeSnippet
-          handleCodeSnippetChange={this.handleCodeSnippetChange}
+          handleChange={this.handleChange}
           function_name="Run simulation"
           name="run_simulation"
           description="Submit the user adjustments (or none) to the model to run the simulations"
@@ -244,7 +261,7 @@ class Publish extends React.Component {
           </em>
         </p>
         <CodeSnippet
-          handleCodeSnippetChange={this.handleCodeSnippetChange}
+          handleChange={this.handleChange}
           function_name="Installation"
           name="installation"
           description="Bash commands for installing this project"
@@ -255,20 +272,13 @@ class Publish extends React.Component {
           server_ram={this.state.server_ram}
           server_cpu={this.state.server_cpu}
         />
-        <p>
-          <label>
-            <b>Expected time in seconds for simulation completion:</b>
-            <input
-              className="form-control"
-              name="exp_task_time"
-              type="number"
-              value={this.state.exp_task_time}
-              // placeholder=
-              onChange={this.handleChange}
-              required
-            />
-          </label>
-        </p>
+        <TextField
+          handleChange={this.handleChange}
+          label="Expected time in seconds for simulation completion"
+          name="exp_task_time"
+          value={this.state.exp_task_time}
+          type="number"
+        />
         <input type="submit" value="Submit" />
       </form>
     );
@@ -276,4 +286,10 @@ class Publish extends React.Component {
 }
 
 const domContainer = document.querySelector("#publish-container");
-ReactDOM.render(e(Publish), domContainer);
+ReactDOM.render(
+  React.createElement(Publish, {
+    username: domContainer.attributes["data-username"].value,
+    app_name: domContainer.attributes["data-appname"].value
+  }),
+  domContainer
+);

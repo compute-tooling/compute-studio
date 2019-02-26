@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<div id="publish-container" class="container publish">
+<div id="publish-container" class="container publish" data-username="{{user.username}}" data-appname="{{app_name}}">
 </div>
 <script type="text/jsx" src="{% static 'js/publish.js' %}"></script>
 {% endblock %}
