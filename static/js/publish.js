@@ -4,8 +4,6 @@ var BrowserRouter = ReactRouterDOM.BrowserRouter;
 var Route = ReactRouterDOM.Route;
 var Switch = ReactRouterDOM.Switch;
 
-const csrftoken = Cookies.get("csrftoken");
-
 class TextField extends React.Component {
   constructor(props) {
     super(props);
@@ -105,12 +103,10 @@ class ServerSize extends React.Component {
           Choose the server size:
           <select name="server_size" onChange={this.handleChange}>
             <option multiple={true} value={[4, 2]}>
-              {" "}
-              4 GB 2 vCPUs{" "}
+              4 GB 2 vCPUs
             </option>
             <option multiple={true} value={[8, 4]}>
-              {" "}
-              8 GB 4 vCPUs{" "}
+              8 GB 4 vCPUs
             </option>
             <option multiple={true} value={[16, 8]}>
               16 GB 8 vCPUs
@@ -119,8 +115,7 @@ class ServerSize extends React.Component {
               32 GB 16 vCPUs
             </option>
             <option multiple={true} value={[64, 32]}>
-              {" "}
-              64 GB 32 vCPUs{" "}
+              64 GB 32 vCPUs
             </option>
           </select>
         </label>
@@ -169,18 +164,7 @@ class PublishForm extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault();
-    let formdata = new FormData(event.target);
-    formdata.set("csrfmiddlewaretoken", csrftoken);
-    formdata.set("name", this.state.name);
-    formdata.set("description", this.state.description);
-    formdata.set("package_defaults", this.state.package_defaults);
-    formdata.set("parse_user_adjustments", this.state.parse_user_adjustments);
-    formdata.set("run_simulation", this.state.run_simulation);
-    formdata.set("installation", this.state.installation);
-    formdata.set("server_ram", this.state.server_ram);
-    formdata.set("server_cpu", this.state.server_cpu);
-    formdata.set("exp_task_time", this.state.exp_task_time);
-    this.props.fetch_on_submit(formdata);
+    this.props.fetch_on_submit(this.state);
   }
 
   render() {
@@ -277,16 +261,18 @@ class AppDetail extends React.Component {
   fetch_init_state() {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
-    return fetch(`/publish/api/${username}/${app_name}/detail/`)
-      .then(response => {
-        return response.json();
+    return axios
+      .get(`/publish/api/${username}/${app_name}/detail/`)
+      .then(function(response) {
+        console.log(response);
+        return response.data;
       })
-      .then(data => {
-        return data;
+      .catch(function(error) {
+        console.log(error);
       });
   }
 
-  fetch_on_submit(formdata) {
+  fetch_on_submit(postData) {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     fetch(`/publish/api/${username}/${app_name}/detail/`, {
@@ -315,17 +301,18 @@ class CreateApp extends React.Component {
     this.fetch_on_submit = this.fetch_on_submit.bind(this);
   }
   fetch_init_state() {
-    // fake a promise.
     return new Promise(() => {});
   }
-  fetch_on_submit(formdata) {
-    fetch("/publish/", {
-      method: "POST",
-      body: formdata,
-      credentials: "same-origin"
-    }).then(function(response) {
-      window.location.replace(response.url);
-    });
+  fetch_on_submit(data) {
+    axios
+      .post("/publish/", data)
+      .then(function(response) {
+        console.log(response);
+        window.location.replace(response.url);
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
   }
   render() {
     return (
