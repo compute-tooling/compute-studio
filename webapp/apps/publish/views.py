@@ -35,21 +35,24 @@ class ProjectView(View):
             model = serializer.save(
                 profile=request.user.profile, status="pending", app_name=app_name
             )
-        status_url = request.build_absolute_uri(
-            reverse("userprofile", kwargs={"username": request.user.username})
-        )
-        send_mail(
-            f"{request.user.username} is publishing a model on COMP!",
-            (
-                f"{model.name} will be live or you will have feedback within "
-                f"the next 24 hours. Check the status of the submission at "
-                f"{status_url}."
-            ),
-            "thecompmodels@gmail.com",
-            ["henrymdoupe@gmail.com", "thecompmodels@gmail.com"],
-            fail_silently=False,
-        )
-        return redirect(f"/{request.user.username}")
+            status_url = request.build_absolute_uri(
+                reverse("userprofile", kwargs={"username": request.user.username})
+            )
+            send_mail(
+                f"{request.user.username} is publishing a model on COMP!",
+                (
+                    f"{model.name} will be live or you will have feedback within "
+                    f"the next 24 hours. Check the status of the submission at "
+                    f"{status_url}."
+                ),
+                "thecompmodels@gmail.com",
+                ["henrymdoupe@gmail.com", "thecompmodels@gmail.com"],
+                fail_silently=False,
+            )
+            return redirect(f"/{request.user.username}")
+        else:
+            print(request.url)
+            return render(request, self.template_name, {"errors": serializer.errors})
 
 
 class ProjectDetailView(View):

@@ -4,6 +4,9 @@ var BrowserRouter = ReactRouterDOM.BrowserRouter;
 var Route = ReactRouterDOM.Route;
 var Switch = ReactRouterDOM.Switch;
 
+axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
+axios.defaults.xsrfCookieName = "csrftoken";
+
 class TextField extends React.Component {
   constructor(props) {
     super(props);
@@ -272,16 +275,18 @@ class AppDetail extends React.Component {
       });
   }
 
-  fetch_on_submit(postData) {
+  fetch_on_submit(data) {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
-    fetch(`/publish/api/${username}/${app_name}/detail/`, {
-      method: "PUT",
-      body: formdata,
-      credentials: "same-origin"
-    }).then(function(response) {
-      window.location.replace(`/${username}/`);
-    });
+    axios
+      .put(`/publish/api/${username}/${app_name}/detail/`, data)
+      .then(function(response) {
+        console.log(response);
+        window.location.replace(`/${username}/`);
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
   }
 
   render() {

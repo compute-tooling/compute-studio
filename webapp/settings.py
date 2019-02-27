@@ -33,6 +33,8 @@ ALLOWED_HOSTS = ["*"]
 SECURE_SSL_REDIRECT = False if os.environ.get("LOCAL", "") else True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+CSRF_COOKIE_NAME = "csrftoken"
+
 # Application definition
 
 INSTALLED_APPS = [
