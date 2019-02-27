@@ -62,9 +62,7 @@ class ProjectDetailView(View):
 
     def get(self, request, *args, **kwargs):
         self.get_object(**kwargs)
-        return render(
-            request, self.template_name, context={"app_name": kwargs["app_name"]}
-        )
+        return render(request, self.template_name)
 
 
 class ProjectDetailAPIView(APIView):
@@ -74,7 +72,6 @@ class ProjectDetailAPIView(APIView):
         )
 
     def get(self, request, *args, **kwargs):
-        print(args, kwargs)
         project = self.get_object(**kwargs)
         serializer = PublishSerializer(project)
         return Response(serializer.data)

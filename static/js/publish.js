@@ -1,5 +1,9 @@
 "use strict";
 
+var BrowserRouter = ReactRouterDOM.BrowserRouter;
+var Route = ReactRouterDOM.Route;
+var Switch = ReactRouterDOM.Switch;
+
 const csrftoken = Cookies.get("csrftoken");
 
 class TextField extends React.Component {
@@ -91,7 +95,6 @@ class ServerSize extends React.Component {
 
   handleChange(event) {
     var [ram, cpu] = event.target.value;
-    console.log(event.target.value);
     this.props.handleServerSizeChange(cpu, ram);
   }
 
@@ -159,7 +162,9 @@ class PublishForm extends React.Component {
   }
 
   componentDidMount() {
-    this.setState(this.props.fetch_init_state());
+    this.props.fetch_init_state().then(data => {
+      this.setState(data);
+    });
   }
 
   handleSubmit(event) {
@@ -262,54 +267,56 @@ class PublishForm extends React.Component {
   }
 }
 
-class DetailApp extends react.Component {
+class AppDetail extends React.Component {
   constructor(props) {
     super(props);
-    this.fetch_init_state = fetch_init_state.bind(this);
+    this.fetch_init_state = this.fetch_init_state.bind(this);
+    this.fetch_on_submit = this.fetch_on_submit.bind(this);
   }
 
   fetch_init_state() {
-    const username = this.props.username;
-    const app_name = this.props.app_name;
-    fetch(`/publish/api/${username}/${app_name}/detail/`).then(response => {
-      response
-        .json()
-        .then(data => ({
-          data: data,
-          status: response.status
-        }))
-        .then(res => {
-          if (res.status == 200) {
-            return res.data;
-          } else {
-            console.log(response);
-          }
-        });
-    });
-    return {};
+    const username = this.props.match.params.username;
+    const app_name = this.props.match.params.app_name;
+    return fetch(`/publish/api/${username}/${app_name}/detail/`)
+      .then(response => {
+        return response.json();
+      })
+      .then(data => {
+        return data;
+      });
   }
 
   fetch_on_submit(formdata) {
-    fetch(`/publish/api/${this.props.username}/${this.props.app_name}/detail`, {
+    const username = this.props.match.params.username;
+    const app_name = this.props.match.params.app_name;
+    fetch(`/publish/api/${username}/${app_name}/detail/`, {
       method: "PUT",
       body: formdata,
       credentials: "same-origin"
     }).then(function(response) {
-      window.location.replace(`/${this.props.username}/`);
+      window.location.replace(`/${username}/`);
     });
   }
 
   render() {
-    return <PublishForm fetch_init_state={this.fetch_init_state} />;
+    return (
+      <PublishForm
+        fetch_init_state={this.fetch_init_state}
+        fetch_on_submit={this.fetch_on_submit}
+      />
+    );
   }
 }
 
-class CreateApp extends react.Component {
+class CreateApp extends React.Component {
   constructor(props) {
     super(props);
+    this.fetch_init_state = this.fetch_init_state.bind(this);
+    this.fetch_on_submit = this.fetch_on_submit.bind(this);
   }
   fetch_init_state() {
-    return {};
+    // fake a promise.
+    return new Promise(() => {});
   }
   fetch_on_submit(formdata) {
     fetch("/publish/", {
@@ -321,29 +328,23 @@ class CreateApp extends react.Component {
     });
   }
   render() {
-    return <PublishForm componentDidMount={this.componentDidMount} />;
-  }
-}
-
-class PublishApp extends react.Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
     return (
-      <BrowserRouter>
-        <CreateApp />
-      </BrowserRouter>
+      <PublishForm
+        fetch_init_state={this.fetch_init_state}
+        fetch_on_submit={this.fetch_on_submit}
+      />
     );
   }
 }
 
 const domContainer = document.querySelector("#publish-container");
+
 ReactDOM.render(
-  React.createElement(Publish, {
-    username: domContainer.attributes["data-username"].value,
-    app_name: domContainer.attributes["data-appname"].value
-  }),
+  <BrowserRouter>
+    <Switch>
+      <Route exact path="/publish/" component={CreateApp} />
+      <Route path="/:username/:app_name/detail/" component={AppDetail} />
+    </Switch>
+  </BrowserRouter>,
   domContainer
 );
