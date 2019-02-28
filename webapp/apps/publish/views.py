@@ -80,6 +80,7 @@ class ProjectDetailAPIView(APIView):
         return Response(serializer.data)
 
     def put(self, request, *args, **kwargs):
+        print(kwargs)
         project = self.get_object(**kwargs)
         serializer = PublishSerializer(project, data=request.data)
         if serializer.is_valid():
