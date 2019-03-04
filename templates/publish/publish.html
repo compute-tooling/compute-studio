@@ -2,19 +2,10 @@
 {% load static %}
 
 {% block scripts %}
-<script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
-<script src="https://unpkg.com/react-router-dom/umd/react-router-dom.min.js"></script>
-<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/styles/default.min.css">
-<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
-<script>hljs.initHighlightingOnLoad();</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/remarkable/1.7.1/remarkable.min.js"></script>
 {% endblock %}
 
 {% block content %}
 <div id="publish-container" class="container publish">
 </div>
-<script type="text/jsx" src="{% static 'js/publish.js' %}"></script>
+<script src="{% static 'js/main.js' %}"></script>
 {% endblock %}
