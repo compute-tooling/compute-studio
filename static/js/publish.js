@@ -1,11 +1,13 @@
 "use strict";
 
+import ReactDOM from "react-dom";
+import React from "react";
+import { BrowserRouter, Route } from "react-router-dom";
+import axios from "axios";
+import hljs from "highlight.js";
+
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
-
-var BrowserRouter = ReactRouterDOM.BrowserRouter;
-var Route = ReactRouterDOM.Route;
-var Switch = ReactRouterDOM.Switch;
 
 var md = new Remarkable({
   highlight: function(str, lang) {
@@ -38,17 +40,29 @@ function markdownElement(markdownText) {
   );
 }
 
+function Errors(errors) {
+  var element = "";
+  if (errors.length > 0) {
+    element = (
+      <ul>
+        errors.map(error => <li style={{ color: "red" }}>error</li>)
+      </ul>
+    );
+  }
+  return element;
+}
+
 class TextField extends React.Component {
   constructor(props) {
     super(props);
   }
 
   render() {
-    var element;
+    // var element;
     if (this.props.preview) {
-      element = markdownElement(this.props.value);
+      var element = markdownElement(this.props.value);
     } else {
-      element = (
+      var element = (
         <input
           className="form-control"
           name={this.props.name}
@@ -68,6 +82,7 @@ class TextField extends React.Component {
             {element}
           </label>
         </p>
+        <Errors errors={this.props.errors} />
       </div>
     );
   }
@@ -81,11 +96,10 @@ class Description extends React.Component {
   render() {
     const description = this.props.description;
     const charsLeft = 1000 - description.length;
-    var element;
     if (this.props.preview) {
-      element = markdownElement(description);
+      var element = markdownElement(description);
     } else {
-      element = (
+      var element = (
         <textarea
           className="form-control"
           name="description"
@@ -106,6 +120,7 @@ class Description extends React.Component {
           {element}
         </label>
         <small>{charsLeft}</small>
+        <Errors errors={this.props.errors} />
       </p>
     );
   }
@@ -117,15 +132,14 @@ class CodeSnippet extends React.Component {
   }
 
   render() {
-    var element;
     if (this.props.preview) {
       const ticks = "```";
       const markdownText = `${ticks}${this.props.language}\n${
         this.props.code
       }\n${ticks}`;
-      element = markdownElement(markdownText);
+      var element = markdownElement(markdownText);
     } else {
-      element = (
+      var element = (
         <textarea
           className="form-control"
           name={this.props.name}
@@ -144,6 +158,7 @@ class CodeSnippet extends React.Component {
           <b>{this.props.function_name + ":"}</b> {this.props.description}
           {element}
         </label>
+        <Errors errors={this.props.errors} />
       </p>
     );
   }
@@ -331,7 +346,7 @@ class PublishForm extends React.Component {
         <button className="btn inline-block" onClick={this.togglePreview} value>
           {this.state.preview ? "Edit" : "Preview"}
         </button>
-        <div class="divider" />
+        <div className="divider" />
         <input
           className="btn inline-block go-btn"
           type="submit"
@@ -392,6 +407,19 @@ class AppDetail extends React.Component {
 class CreateApp extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {
+      errors: {
+        name: [],
+        description: [],
+        package_defaults: [],
+        parse_user_adjustments: [],
+        run_simulation: [],
+        installation: [],
+        server_ram: [],
+        server_cpu: [],
+        exp_task_time: []
+      }
+    };
     this.fetch_init_state = this.fetch_init_state.bind(this);
     this.fetch_on_submit = this.fetch_on_submit.bind(this);
   }
@@ -403,7 +431,8 @@ class CreateApp extends React.Component {
       .post("/publish/", data)
       .then(function(response) {
         console.log(response);
-        window.location.replace(response.url);
+        // need to handle errors from the server here!
+        // window.location.replace(response.url);
       })
       .catch(function(error) {
         console.log(error);

@@ -4,343 +4,288 @@ import ReactDOM from "react-dom";
 import React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import axios from "axios";
-import hljs from "highlight.js";
-import "highlight.js/styles/default.css";
-hljs.initHighlightingOnLoad();
-var Remarkable = require("remarkable");
+import { Formik, Field, Form, ErrorMessage } from "formik";
+import * as Yup from "yup";
+import {
+  TextField,
+  DescriptionField,
+  CodeSnippetField,
+  ServerSizeField,
+  Message
+} from "./fields";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
 
-var md = new Remarkable({
-  highlight: function(str, lang) {
-    console.log("try highlight...", lang, hljs.getLanguage(lang));
-    if ((lang && hljs.getLanguage(lang)) || true) {
-      console.log("highlighting: ", str, lang);
-      try {
-        return hljs.highlight(lang, str).value;
-      } catch (err) {}
-    }
+const domContainer = document.querySelector("#publish-container");
+const requiredMessage = "This field is required.";
 
-    try {
-      return hljs.highlightAuto(str).value;
-    } catch (err) {}
-    return ""; // use external default escaping
-  }
+var Schema = Yup.object().shape({
+  name: Yup.string().required(),
+  description: Yup.string()
+    .max(1000, "The description must be less than ${max} characters.")
+    .required(),
+  package_defaults: Yup.string().required(requiredMessage),
+  parse_user_adjustments: Yup.string().required(requiredMessage),
+  run_simulation: Yup.string().required(requiredMessage),
+  installation: Yup.string().required(requiredMessage),
+  // server_size: Yup.mixed().oneOf([[4, 2], [8, 4], [16, 8], [32, 16], [64, 32]]),
+  exp_task_time: Yup.number().min(
+    0,
+    "Expected task time must be greater than ${min}."
+  )
 });
 
-function markdownElement(markdownText) {
-  const marked = {
-    __html: md.render(markdownText)
-  };
-  console.log("marked", marked);
-  return (
-    <div className="markdown-wrapper">
-      <div
-        dangerouslySetInnerHTML={marked}
-        className="content card publish markdown"
-        style={{ width: "50rem" }}
-      />
-    </div>
-  );
-}
-
-class TextField extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    // var element;
-    if (this.props.preview) {
-      var element = markdownElement(this.props.value);
-    } else {
-      var element = (
-        <input
-          className="form-control"
-          name={this.props.name}
-          type={this.props.type}
-          value={this.props.value}
-          placeholder={this.props.placeholder}
-          onChange={this.props.handleChange}
-          required
-        />
-      );
-    }
-    return (
-      <div>
-        <label>
-          <b>{this.props.label}:</b>
-          {element}
-        </label>
-      </div>
-    );
-  }
-}
-
-class Description extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    const description = this.props.description;
-    const charsLeft = 1000 - description.length;
-    if (this.props.preview) {
-      var element = markdownElement(description);
-    } else {
-      var element = (
-        <textarea
-          className="form-control"
-          name="description"
-          type="text"
-          placeholder="What does this app do? Must be less than 1000 characters."
-          value={description}
-          onChange={this.props.handleChange}
-          maxLength="1000"
-          style={{ width: "50rem" }}
-          // required - shows up red before entering text on firefox?
-        />
-      );
-    }
-    return (
-      <div className="description">
-        <label>
-          <b>App overview:</b>
-          {element}
-        </label>
-        <small>{charsLeft}</small>
-      </div>
-    );
-  }
-}
-
-class CodeSnippet extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    if (this.props.preview) {
-      const ticks = "```";
-      const markdownText = `${ticks}${this.props.language}\n${
-        this.props.code
-      }\n${ticks}`;
-      var element = markdownElement(markdownText);
-    } else {
-      var element = (
-        <textarea
-          className="form-control"
-          name={this.props.name}
-          type="text"
-          placeholder="# code snippet here"
-          value={this.props.code}
-          onChange={this.props.handleChange}
-          style={{ width: "50rem" }}
-          // required - shows up red before entering text on firefox?
-        />
-      );
-    }
-    return (
-      <div>
-        <label>
-          <b>{this.props.function_name + ":"}</b> {this.props.description}
-          {element}
-        </label>
-      </div>
-    );
-  }
-}
-
-class ServerSize extends React.Component {
-  constructor(props) {
-    super(props);
-    this.handleChange = this.handleChange.bind(this);
-  }
-
-  handleChange(event) {
-    var [ram, cpu] = event.target.value;
-    this.props.handleServerSizeChange(cpu, ram);
-  }
-
-  render() {
-    return (
-      <p>
-        <label>
-          Choose the server size:
-          <select name="server_size" onChange={this.handleChange}>
-            <option multiple={true} value={[4, 2]}>
-              4 GB 2 vCPUs
-            </option>
-            <option multiple={true} value={[8, 4]}>
-              8 GB 4 vCPUs
-            </option>
-            <option multiple={true} value={[16, 8]}>
-              16 GB 8 vCPUs
-            </option>
-            <option multiple={true} value={[32, 16]}>
-              32 GB 16 vCPUs
-            </option>
-            <option multiple={true} value={[64, 32]}>
-              64 GB 32 vCPUs
-            </option>
-          </select>
-        </label>
-      </p>
-    );
-  }
-}
+const initialValues = {
+  name: "",
+  description: "",
+  package_defaults: "",
+  parse_user_adjustments: "",
+  run_simulation: "",
+  installation: "",
+  server_size: [4, 2],
+  exp_task_time: 0
+};
 
 class PublishForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      name: "",
-      description: "",
-      package_defaults: "",
-      parse_user_adjustments: "",
-      run_simulation: "",
-      installation: "",
-      server_ram: 4,
-      server_cpu: 2,
-      exp_task_time: 0,
-      preview: this.props.preview
+      preview: this.props.preview,
+      initialValues: this.props.initialValues
     };
-
-    this.handleChange = this.handleChange.bind(this);
-    this.handleServerSizeChange = this.handleServerSizeChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
     this.togglePreview = this.togglePreview.bind(this);
-    this.componentDidMount = this.componentDidMount.bind(this);
-  }
-
-  handleChange(event) {
-    this.setState({ [event.target.name]: event.target.value });
-  }
-
-  handleServerSizeChange(ram, cpu) {
-    this.setState({
-      server_ram: ram,
-      server_cpu: cpu
-    });
   }
 
   togglePreview() {
     event.preventDefault();
-    console.log(this.state.preview);
     this.setState({ preview: !this.state.preview });
   }
 
   componentDidMount() {
-    this.props.fetch_init_state().then(data => {
-      this.setState(data);
-    });
-  }
-
-  handleSubmit(event) {
-    event.preventDefault();
-    this.props.fetch_on_submit(this.state);
+    if (this.props.fetchInitialValues) {
+      this.props.fetchInitialValues().then(data => {
+        this.setState({ initialValues: data });
+      });
+    }
   }
 
   render() {
+    if (!this.state.initialValues) {
+      return <p> loading.... </p>;
+    }
     return (
-      <form onSubmit={this.handleSubmit}>
-        <h3>About</h3>
-        <hr className="my-4" />
-        <TextField
-          handleChange={this.handleChange}
-          label="App Name"
-          name="name"
-          value={this.state.name}
-          type="text"
-          placeholder="What's the name of this app?"
-          preview={this.state.preview}
+      <div>
+        <Formik
+          initialValues={this.state.initialValues}
+          onSubmit={(values, actions) => {
+            console.log(values, actions);
+            var formdata = new FormData();
+            for (var field in data) {
+              formdata.append([field], data[field]);
+            }
+            this.props.doSubmit(formdata).then(
+              response => {
+                actions.setSubmitting(false);
+              },
+              error => {
+                actions.setSubmitting(false);
+                actions.setStatus({ msg: "Set some arbitrary status or data" });
+              }
+            );
+          }}
+          validationSchema={Schema}
+          render={({ errors, status, touched, isSubmitting }) => (
+            <Form>
+              <h3>About</h3>
+              <hr className="my-4" />
+              <div>
+                <Field
+                  type="text"
+                  name="name"
+                  component={TextField}
+                  placeholder="What's the name of this app?"
+                  label="App Name"
+                  preview={this.state.preview}
+                />
+                <ErrorMessage
+                  name="name"
+                  render={msg => <Message msg={msg} />}
+                />
+              </div>
+              <div>
+                <Field
+                  type="text"
+                  name="description"
+                  component={DescriptionField}
+                  placeholder="What does this app do? Must be less than 1000 characters."
+                  preview={this.state.preview}
+                />
+                <ErrorMessage
+                  name="description"
+                  render={msg => <Message msg={msg} />}
+                />
+              </div>
+              <h3>Python Functions</h3>
+              <hr className="my-4" />
+              <p>
+                <em>
+                  Insert code snippets satisfying the requirements detailed in
+                  the{" "}
+                  <a href="https://github.com/comp-org/comp/blob/master/docs/ENDPOINTS.md">
+                    functions documentation.
+                  </a>
+                </em>
+              </p>
+              <div>
+                <Field
+                  type="text"
+                  name="package_defaults"
+                  component={CodeSnippetField}
+                  label="Get package defaults"
+                  description="Get the default Model Parameters and their meta data"
+                  preview={false}
+                  language="python"
+                  placeholder="# code snippet here"
+                  preview={this.state.preview}
+                />
+                <ErrorMessage
+                  name="package_defaults"
+                  render={msg => <Message msg={msg} />}
+                />
+              </div>
+              <div>
+                <Field
+                  type="text"
+                  name="parse_user_adjustments"
+                  component={CodeSnippetField}
+                  label="Parse user adjustments"
+                  description="Do model-specific formatting and validation on the user adjustments"
+                  preview={false}
+                  language="python"
+                  placeholder="# code snippet here"
+                  preview={this.state.preview}
+                />
+                <ErrorMessage
+                  name="parse_user_inputs"
+                  render={msg => <Message msg={msg} />}
+                />
+              </div>
+              <div>
+                <Field
+                  type="text"
+                  name="run_simulation"
+                  component={CodeSnippetField}
+                  label="Run simulation"
+                  description="Submit the user adjustments (or none) to the model to run the simulations"
+                  preview={false}
+                  language="python"
+                  placeholder="# code snippet here"
+                  preview={this.state.preview}
+                />
+                <ErrorMessage
+                  name="run_simulation"
+                  render={msg => <Message msg={msg} />}
+                />
+              </div>
+              <h3>Environment</h3>
+              <hr className="my-4" />
+              <p>
+                <em>
+                  Describe how to install this project and its resource
+                  requirements as detailed in{" "}
+                  <a href="/comp-org/comp/blob/master/docs/ENVIRONMENT.md">
+                    the environment documentation.
+                  </a>
+                </em>
+              </p>
+              <div>
+                <Field
+                  type="text"
+                  name="installation"
+                  component={CodeSnippetField}
+                  label="Installation"
+                  description="Bash commands for installing this project"
+                  preview={false}
+                  language="bash"
+                  placeholder="# code snippet here"
+                  preview={this.state.preview}
+                />
+                <ErrorMessage
+                  name="installation"
+                  render={msg => <Message msg={msg} />}
+                />
+              </div>
+              <div>
+                <label>
+                  Expected time in seconds for the simulation to complete
+                </label>
+                <p>
+                  <Field
+                    className="form-control"
+                    type="number"
+                    name="exp_task_time"
+                  />
+                  <ErrorMessage
+                    name="exp_task_time"
+                    render={msg => <Message msg={msg} />}
+                  />
+                </p>
+              </div>
+              <div>
+                <Field name="server_size" component={ServerSizeField} />
+                <ErrorMessage
+                  name="server_size"
+                  render={msg => <Message msg={msg} />}
+                />
+              </div>
+              <button
+                className="btn inline-block"
+                onClick={this.togglePreview}
+                value
+              >
+                {this.state.preview ? "Edit" : "Preview"}
+              </button>
+              <div className="divider" />
+              <input
+                className="btn inline-block go-btn"
+                type="submit"
+                value={this.props.submitType}
+              />
+            </Form>
+          )}
         />
-        <Description
-          handleChange={this.handleChange}
-          description={this.state.description}
-          preview={this.state.preview}
-        />
-        <h3>Python Functions</h3>
-        <hr className="my-4" />
-        <p>
-          <em>
-            Insert code snippets satisfying the requirements detailed in the{" "}
-            <a href="https://github.com/comp-org/comp/blob/master/docs/ENDPOINTS.md">
-              functions documentation.
-            </a>
-          </em>
-        </p>
-        <CodeSnippet
-          handleChange={this.handleChange}
-          function_name="Get package defaults"
-          name="package_defaults"
-          description="Get the default Model Parameters and their meta data"
-          code={this.state.package_defaults}
-          preview={this.state.preview}
-          language="python"
-        />
-        <CodeSnippet
-          handleChange={this.handleChange}
-          function_name="Parse user adjustments"
-          name="parse_user_adjustments"
-          description="Do model-specific formatting and validation on the user adjustments"
-          code={this.state.parse_user_adjustments}
-          preview={this.state.preview}
-          language="python"
-        />
-        <CodeSnippet
-          handleChange={this.handleChange}
-          function_name="Run simulation"
-          name="run_simulation"
-          description="Submit the user adjustments (or none) to the model to run the simulations"
-          code={this.state.run_simulation}
-          preview={this.state.preview}
-          language="python"
-        />
-        <h3>Environment</h3>
-        <hr className="my-4" />
-        <p>
-          <em>
-            Describe how to install this project and its resource requirements
-            as detailed in{" "}
-            <a href="/comp-org/comp/blob/master/docs/ENVIRONMENT.md">
-              the environment documentation.
-            </a>
-          </em>
-        </p>
-        <CodeSnippet
-          handleChange={this.handleChange}
-          function_name="Installation"
-          name="installation"
-          description="Bash commands for installing this project"
-          code={this.state.installation}
-          preview={this.state.preview}
-          language="bash"
-        />
-        <ServerSize
-          handleServerSizeChange={this.handleServerSizeChange}
-          server_ram={this.state.server_ram}
-          server_cpu={this.state.server_cpu}
-        />
-        <TextField
-          handleChange={this.handleChange}
-          label="Expected time in seconds for simulation completion"
-          name="exp_task_time"
-          value={this.state.exp_task_time}
-          type="number"
-          preview={false}
-        />
-        <button className="btn inline-block" onClick={this.togglePreview} value>
-          {this.state.preview ? "Edit" : "Preview"}
-        </button>
-        <div className="divider" />
-        <input
-          className="btn inline-block go-btn"
-          type="submit"
-          value={this.props.submitType}
-        />
-      </form>
+      </div>
+    );
+  }
+}
+
+class CreateApp extends React.Component {
+  constructor(props) {
+    super(props);
+    this.doSubmit = this.doSubmit.bind(this);
+  }
+  doSubmit(data) {
+    axios
+      .post("/publish/", data)
+      .then(function(response) {
+        console.log(response);
+        // need to handle errors from the server here!
+        window.location.replace("/");
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  }
+  render() {
+    return (
+      <PublishForm
+        fetchInitialValues={null}
+        initialValues={initialValues}
+        preview={false}
+        submitType="Publish"
+        doSubmit={this.doSubmit}
+      />
     );
   }
 }
@@ -348,11 +293,11 @@ class PublishForm extends React.Component {
 class AppDetail extends React.Component {
   constructor(props) {
     super(props);
-    this.fetch_init_state = this.fetch_init_state.bind(this);
-    this.fetch_on_submit = this.fetch_on_submit.bind(this);
+    this.doSubmit = this.doSubmit.bind(this);
+    this.fetchInitialValues = this.fetchInitialValues.bind(this);
   }
 
-  fetch_init_state() {
+  fetchInitialValues() {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     return axios
@@ -366,7 +311,7 @@ class AppDetail extends React.Component {
       });
   }
 
-  fetch_on_submit(data) {
+  doSubmit(data) {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     axios
@@ -383,49 +328,15 @@ class AppDetail extends React.Component {
   render() {
     return (
       <PublishForm
-        fetch_init_state={this.fetch_init_state}
-        fetch_on_submit={this.fetch_on_submit}
+        fetchInitialValues={this.fetchInitialValues}
+        initialValues={null}
         preview={true}
         submitType="Update"
+        doSubmit={this.doSubmit}
       />
     );
   }
 }
-
-class CreateApp extends React.Component {
-  constructor(props) {
-    super(props);
-    this.fetch_init_state = this.fetch_init_state.bind(this);
-    this.fetch_on_submit = this.fetch_on_submit.bind(this);
-  }
-  fetch_init_state() {
-    return new Promise(() => {});
-  }
-  fetch_on_submit(data) {
-    axios
-      .post("/publish/", data)
-      .then(function(response) {
-        console.log(response);
-        // need to handle errors from the server here!
-        // window.location.replace(response.url);
-      })
-      .catch(function(error) {
-        console.log(error);
-      });
-  }
-  render() {
-    return (
-      <PublishForm
-        fetch_init_state={this.fetch_init_state}
-        fetch_on_submit={this.fetch_on_submit}
-        preview={false}
-        submitType="Publish"
-      />
-    );
-  }
-}
-
-const domContainer = document.querySelector("#publish-container");
 
 ReactDOM.render(
   <BrowserRouter>

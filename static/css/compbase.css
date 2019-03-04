@@ -198,3 +198,12 @@ input.model:not(:placeholder-shown) {
 .profile-tab-content {
   padding: 25px;
 }
+
+.error {
+  font-size: 80%;
+  color: #dc3545
+}
+
+.description {
+  width: "50rem"
+}
