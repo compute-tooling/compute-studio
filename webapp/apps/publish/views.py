@@ -23,6 +23,7 @@ class ProjectView(View):
     @method_decorator(login_required(login_url="/users/login/"))
     @method_decorator(user_passes_test(is_profile_active, login_url="/users/login/"))
     def post(self, request, *args, **kwargs):
+        print(request.POST)
         serializer = PublishSerializer(data=request.POST)
         is_valid = serializer.is_valid()
         if is_valid:
@@ -51,7 +52,8 @@ class ProjectView(View):
             )
             return redirect(f"/{request.user.username}")
         else:
-            print(request.url)
+            print(request)
+            print(serializer.errors)
             return render(request, self.template_name, {"errors": serializer.errors})
 
 

@@ -12,8 +12,7 @@ class PublishSerializer(serializers.ModelSerializer):
             "package_defaults",
             "parse_user_adjustments",
             "run_simulation",
-            "server_cpu",
-            "server_ram",
+            "server_size",
             "exp_task_time",
             "installation",
         )

@@ -6,6 +6,7 @@ from django.db.models import F, Case, When, Sum
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.urls import reverse
+from django.contrib.postgres.fields import ArrayField
 
 
 def is_profile_active(user):
@@ -93,8 +94,13 @@ class Project(models.Model):
 
     # server resources
     server_cost = models.DecimalField(max_digits=6, decimal_places=3, null=True)
-    server_cpu = models.IntegerField(null=True)
-    server_ram = models.IntegerField(null=True)
+    # ram, vcpus
+    def callabledefault():
+        return [4, 2]
+
+    server_size = ArrayField(
+        models.CharField(max_length=5), default=callabledefault, size=2
+    )
     exp_task_time = models.IntegerField(null=True)
     exp_num_tasks = models.IntegerField(null=True)
 
