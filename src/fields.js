@@ -141,21 +141,26 @@ export const ServerSizeField = ({
 }) => {
   return (
     <div>
-      <label>Choose the server size</label>
-      <select name="server_size" onChange={field.onChange}>
-        <option multiple={true} value={[4, 2]}>
-          4 GB 2 vCPUs
-        </option>
-        <option multiple={true} value={[8, 2]}>
-          8 GB 2 vCPUs
-        </option>
-        <option multiple={true} value={[16, 4]}>
-          16 GB 4 vCPUs
-        </option>
-        <option multiple={true} value={[32, 8]}>
-          32 GB 8 vCPUs
-        </option>
-      </select>
+      <label>
+        <b>Server size: </b>Choose the server size that best meets the
+        requirements of this app
+      </label>
+      <p>
+        <select name="server_size" onChange={field.onChange}>
+          <option multiple={true} value={[4, 2]}>
+            4 GB 2 vCPUs
+          </option>
+          <option multiple={true} value={[8, 2]}>
+            8 GB 2 vCPUs
+          </option>
+          <option multiple={true} value={[16, 4]}>
+            16 GB 4 vCPUs
+          </option>
+          <option multiple={true} value={[32, 8]}>
+            32 GB 8 vCPUs
+          </option>
+        </select>
+      </p>
     </div>
   );
 };

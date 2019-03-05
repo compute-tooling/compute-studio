@@ -194,7 +194,7 @@ class PublishForm extends React.Component {
                 <em>
                   Describe how to install this project and its resource
                   requirements as detailed in{" "}
-                  <a href="/comp-org/comp/blob/master/docs/ENVIRONMENT.md">
+                  <a href="https://github.com/comp-org/comp/blob/master/docs/ENVIRONMENT.md">
                     the environment documentation.
                   </a>
                 </em>
@@ -218,7 +218,8 @@ class PublishForm extends React.Component {
               </div>
               <div>
                 <label>
-                  Expected time in seconds for the simulation to complete
+                  <b>Expected job time:</b> Time in seconds for simulation to
+                  complete
                 </label>
                 <p>
                   <Field
@@ -282,13 +283,16 @@ class CreateApp extends React.Component {
   }
   render() {
     return (
-      <PublishForm
-        fetchInitialValues={null}
-        initialValues={initialValues}
-        preview={false}
-        submitType="Publish"
-        doSubmit={this.doSubmit}
-      />
+      <div>
+        <h1 style={{ "margin-bottom": "2rem" }}>Publish a new app</h1>
+        <PublishForm
+          fetchInitialValues={null}
+          initialValues={initialValues}
+          preview={false}
+          submitType="Publish"
+          doSubmit={this.doSubmit}
+        />
+      </div>
     );
   }
 }
@@ -336,14 +340,22 @@ class AppDetail extends React.Component {
   }
 
   render() {
+    const username = this.props.match.params.username;
+    const app_name = this.props.match.params.app_name;
+    const id = `${username}/${app_name}`;
     return (
-      <PublishForm
-        fetchInitialValues={this.fetchInitialValues}
-        initialValues={null}
-        preview={true}
-        submitType="Update"
-        doSubmit={this.doSubmit}
-      />
+      <div>
+        <h2 style={{ "margin-bottom": "2rem" }}>
+          <a href={`/${id}/`}>{id}</a>
+        </h2>
+        <PublishForm
+          fetchInitialValues={this.fetchInitialValues}
+          initialValues={null}
+          preview={true}
+          submitType="Update"
+          doSubmit={this.doSubmit}
+        />
+      </div>
     );
   }
 }
