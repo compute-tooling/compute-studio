@@ -48,7 +48,23 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
             if project.profile.user == request.user:
                 serializer = PublishSerializer(project, data=request.data)
                 if serializer.is_valid():
-                    serializer.save()
+                    model = serializer.save(status="pending")
+                    status_url = request.build_absolute_uri(
+                        reverse(
+                            "userprofile", kwargs={"username": request.user.username}
+                        )
+                    )
+                    send_mail(
+                        f"{request.user.username} is updating a model on COMP!",
+                        (
+                            f"{model.name} will be updated or you will have feedback within "
+                            f"the next 24 hours. Check the status of the update at "
+                            f"{status_url}."
+                        ),
+                        "henrymdoupe@gmail.com",
+                        list({request.user.email, "henrymdoupe@gmail.com"}),
+                        fail_silently=False,
+                    )
                     return Response(serializer.data)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -79,8 +95,8 @@ class ProjectCreateAPIView(GetProjectMixin, APIView):
                         f"the next 24 hours. Check the status of the submission at "
                         f"{status_url}."
                     ),
-                    "thecompmodels@gmail.com",
-                    ["henrymdoupe@gmail.com", request.user.email],
+                    "henrymdoupe@gmail.com",
+                    list({request.user.email, "henrymdoupe@gmail.com"}),
                     fail_silently=False,
                 )
                 return Response(status=status.HTTP_200_OK)

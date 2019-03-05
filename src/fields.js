@@ -2,7 +2,6 @@ import hljs from "highlight.js";
 import "highlight.js/styles/default.css";
 import React from "react";
 
-var sanitizeHtml = require("sanitize-html");
 var Remarkable = require("remarkable");
 
 hljs.initHighlightingOnLoad();
@@ -32,12 +31,12 @@ function markdownElement(markdownText) {
     markdownText = "&#8203;"; // space character
   }
   const marked = {
-    __html: sanitizeHtml(md.render(markdownText))
+    __html: md.render(markdownText)
   };
   return (
     <div className="markdown-wrapper">
       <div
-        dangerouslySetInnerHTML={marked}
+        dangerouslySetInnerHTML={marked} // needs to be sanitized somehow.
         className="content card publish markdown"
         style={inputStyle}
       />
@@ -147,17 +146,14 @@ export const ServerSizeField = ({
         <option multiple={true} value={[4, 2]}>
           4 GB 2 vCPUs
         </option>
-        <option multiple={true} value={[8, 4]}>
-          8 GB 4 vCPUs
+        <option multiple={true} value={[8, 2]}>
+          8 GB 2 vCPUs
         </option>
-        <option multiple={true} value={[16, 8]}>
-          16 GB 8 vCPUs
+        <option multiple={true} value={[16, 4]}>
+          16 GB 4 vCPUs
         </option>
-        <option multiple={true} value={[32, 16]}>
-          32 GB 16 vCPUs
-        </option>
-        <option multiple={true} value={[64, 32]}>
-          64 GB 32 vCPUs
+        <option multiple={true} value={[32, 8]}>
+          32 GB 8 vCPUs
         </option>
       </select>
     </div>
