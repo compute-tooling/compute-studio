@@ -1,11 +1,15 @@
 import hljs from "highlight.js";
 import "highlight.js/styles/default.css";
 import React from "react";
-import { Field } from "formik";
 
+var sanitizeHtml = require("sanitize-html");
 var Remarkable = require("remarkable");
 
 hljs.initHighlightingOnLoad();
+
+const inputStyle = {
+  width: "50rem"
+};
 
 var md = new Remarkable({
   highlight: function(str, lang) {
@@ -23,15 +27,19 @@ var md = new Remarkable({
 });
 
 function markdownElement(markdownText) {
+  // Box is not displayed if markdownText is an empty string.
+  if (!markdownText) {
+    markdownText = "&#8203;"; // space character
+  }
   const marked = {
-    __html: md.render(markdownText)
+    __html: sanitizeHtml(md.render(markdownText))
   };
   return (
     <div className="markdown-wrapper">
       <div
         dangerouslySetInnerHTML={marked}
         className="content card publish markdown"
-        style={{ width: "50rem" }}
+        style={inputStyle}
       />
     </div>
   );
@@ -42,7 +50,13 @@ export const TextField = ({ field, form: { touched, errors }, ...props }) => {
     var element = markdownElement(field.value);
   } else {
     var element = (
-      <input className="form-control" {...field} {...props} preview="" />
+      <input
+        className="form-control"
+        {...field}
+        {...props}
+        preview=""
+        style={inputStyle}
+      />
     );
   }
   return (
@@ -66,7 +80,7 @@ export const DescriptionField = ({
 }) => {
   const charsLeft = 1000 - field.value.length;
   if (props.preview) {
-    var element = markdownElement(field.value);
+    var element = markdownElement(field.valuu);
   } else {
     var element = (
       <textarea
@@ -74,16 +88,18 @@ export const DescriptionField = ({
         {...field}
         {...props}
         preview=""
+        style={inputStyle}
       />
     );
   }
+  // console.log("desc", elements);
   return (
     <div>
       <label>
         <b>App overview:</b>
         {element}
       </label>
-      <small>{charsLeft}</small>
+      {/* <small>{charsLeft}</small> */}
     </div>
   );
 };
@@ -99,7 +115,13 @@ export const CodeSnippetField = ({
     var element = markdownElement(markdownText);
   } else {
     var element = (
-      <textarea className="form-control" {...field} {...props} preview="" />
+      <textarea
+        className="form-control"
+        {...field}
+        {...props}
+        preview=""
+        style={inputStyle}
+      />
     );
   }
   return (
