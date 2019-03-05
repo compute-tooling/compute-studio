@@ -35,6 +35,7 @@ def billing_data():
 
 @pytest.fixture(scope="session")
 def django_db_setup(django_db_setup, django_db_blocker, billing_data):
+    mock_models = ["Used for testing", "Used for testing sponsored apps"]
     with django_db_blocker.unblock():
         User = get_user_model()
         modeler = User.objects.create_user(
@@ -43,6 +44,10 @@ def django_db_setup(django_db_setup, django_db_blocker, billing_data):
         Profile.objects.create(user=modeler, is_active=True)
         call_command("init_projects", use_stripe=USE_STRIPE, include_mock_data=True)
         for name, proj in billing_data.items():
+            if proj["name"] in mock_models:
+                project = Project.objects.get(name=proj["name"])
+                project.status = "pending"
+                project.save()
             if proj["sponsor"] is None:
                 continue
             else:

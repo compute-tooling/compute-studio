@@ -48,7 +48,7 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
             if project.profile.user == request.user:
                 serializer = PublishSerializer(project, data=request.data)
                 if serializer.is_valid():
-                    model = serializer.save(status="pending")
+                    model = serializer.save(status="updating")
                     status_url = request.build_absolute_uri(
                         reverse(
                             "userprofile", kwargs={"username": request.user.username}

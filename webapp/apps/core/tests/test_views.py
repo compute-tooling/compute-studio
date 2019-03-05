@@ -26,7 +26,7 @@ class CoreAbstractViewsTest:
         """
         Test simple get returns 200 status
         """
-        resp = client.get(reverse(self.app_name))
+        resp = client.get(reverse(self.title))
         assert resp.status_code == 200
 
     def test_logged_in(self, client, profile, password):
@@ -34,13 +34,13 @@ class CoreAbstractViewsTest:
         Test simple get returns AnonymousUser and login returns authenticated
         user
         """
-        resp = client.get(reverse(self.app_name))
+        resp = client.get(reverse(self.title))
         assert resp.status_code == 200
         anon_user = auth.get_user(client)
         assert not anon_user.is_authenticated
 
         assert self.login_client(client, profile.user, password)
-        resp = client.get(reverse(self.app_name))
+        resp = client.get(reverse(self.title))
         assert resp.status_code == 200
         user = auth.get_user(client)
         assert user.is_authenticated
@@ -59,18 +59,18 @@ class CoreAbstractViewsTest:
         monkeypatch.setattr("webapp.apps.core.views.Compute", self.mockcompute)
 
         self.login_client(client, profile.user, password)
-        resp = client.post(reverse(self.app_name), data=self.inputs_ok())
+        resp = client.post(reverse(self.title), data=self.inputs_ok())
         assert resp.status_code == 302  # redirect
         idx = resp.url[:-1].rfind("/")
         slug = resp.url[(idx + 1) : -1]
-        assert resp.url == f"{reverse(self.app_name)}{slug}/"
+        assert resp.url == f"{reverse(self.title)}{slug}/"
 
         # test get ouputs page
         resp = client.get(resp.url)
         assert resp.status_code == 200
 
         # test ouptut download
-        resp = client.get(f"{reverse(self.app_name)}{slug}/download")
+        resp = client.get(f"{reverse(self.title)}{slug}/download")
         assert resp.status_code == 200
         assert resp._headers["content-type"] == ("Content-Type", "application/zip")
 
@@ -93,12 +93,12 @@ class CoreAbstractViewsTest:
         monkeypatch.setattr("webapp.apps.core.views.Compute", self.mockcompute)
 
         self.login_client(client, profile.user, password)
-        resp = client.post(reverse(self.app_name), data=self.inputs_ok())
+        resp = client.post(reverse(self.title), data=self.inputs_ok())
         assert resp.status_code == 302  # redirect
         idx = resp.url[:-1].rfind("/")
         slug = resp.url[(idx + 1) : -1]
         outputs_url = resp.url
-        assert outputs_url == f"{reverse(self.app_name)}{slug}/"
+        assert outputs_url == f"{reverse(self.title)}{slug}/"
 
         # test get ouputs page
         resp = client.get(outputs_url)
@@ -119,11 +119,11 @@ class CoreAbstractViewsTest:
         monkeypatch.setattr("webapp.apps.core.views.Compute", self.mockcompute)
 
         self.login_client(client, profile.user, password)
-        resp = client.post(reverse(self.app_name), data=self.inputs_ok())
+        resp = client.post(reverse(self.title), data=self.inputs_ok())
         assert resp.status_code == 302  # redirect
         idx = resp.url[:-1].rfind("/")
         slug = resp.url[(idx + 1) : -1]
-        assert resp.url == f"{reverse(self.app_name)}{slug}/"
+        assert resp.url == f"{reverse(self.title)}{slug}/"
 
         # test get ouputs page
         resp = client.get(resp.url)
@@ -150,15 +150,15 @@ class CoreAbstractViewsTest:
         )
         monkeypatch.setattr("webapp.apps.core.views.Compute", self.mockcompute)
 
-        resp = client.post(reverse(self.app_name), data=self.inputs_ok())
+        resp = client.post(reverse(self.title), data=self.inputs_ok())
         if self.provided_free:
             assert resp.status_code == 302
             idx = resp.url[:-1].rfind("/")
             slug = resp.url[(idx + 1) : -1]
-            assert resp.url == f"{reverse(self.app_name)}{slug}/"
+            assert resp.url == f"{reverse(self.title)}{slug}/"
         else:
             assert resp.status_code == 302
-            assert resp.url == f"/users/login/?next={reverse(self.app_name)}"
+            assert resp.url == f"/users/login/?next={reverse(self.title)}"
 
     def login_client(self, client, user, password):
         """

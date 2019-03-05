@@ -45,7 +45,7 @@ class Profile(models.Model):
                     agg[month["month"]] += float(month["effective__sum"])
         return {k.strftime("%B %Y"): v for k, v in sorted(agg.items())}
 
-    def runs(self, projects=None):
+    def sims(self, projects=None):
         if projects is None:
             projects = Project.objects.all()
         runs = {}
@@ -78,6 +78,7 @@ class Project(models.Model):
         choices=(
             ("live", "live"),
             ("pending", "pending"),
+            ("updating", "updating"),
             ("requires fixes", "requires fixes"),
         ),
         default="live",
@@ -154,7 +155,7 @@ class Project(models.Model):
 
     @property
     def app_url(self):
-        return reverse(self.app_name)
+        return reverse(self.name)
 
     @property
     def display_sponsor(self):

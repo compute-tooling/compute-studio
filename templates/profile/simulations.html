@@ -1,0 +1,19 @@
+{% for project, queryset in sims.items %}
+  <h4>{{project}}</h4>
+  <table class="table">
+    <tr>
+      <th>Output</th>
+      <th>Simulation time (s)</th>
+      <th>Simulation cost ($)</th>
+      <th>Date (EST)</th>
+    </tr>
+    {% for sim in queryset %}
+      <tr>
+        <td><a href="{{run.get_absolute_url}}">{{sim.get_absolute_url}}</a></td>
+        <td>{{sim.run_time}}</td>
+        <td>{{sim.effective_cost}}</td>
+        <td>{{sim.creation_date}}</td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endfor %}

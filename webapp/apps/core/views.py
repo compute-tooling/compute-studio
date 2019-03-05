@@ -59,12 +59,12 @@ class InputsMixin:
             "project_name": self.project_name,
             "owner": owner,
             "app_description": self.app_description,
-            "redirect_back": self.app_name,
+            "redirect_back": self.project_name,
             "can_run": can_run,
             "exp_cost": f"${exp_cost}",
             "exp_time": f"{exp_time} seconds",
             "provided_free": self.provided_free,
-            "app_url": reverse(self.app_name),
+            "app_url": reverse(self.project_name),
         }
         return context
 

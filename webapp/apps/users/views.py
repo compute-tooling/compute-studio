@@ -29,26 +29,14 @@ class SignUp(generic.CreateView):
 
 
 class UserProfile(View):
-    template_name = "profile/profile_base.html"
-    projects = Project.objects.all()
+    template_name = "profile/profile_visit.html"
 
     def get(self, request, *args, **kwargs):
         username = kwargs["username"]
         print("user", request.user.username, username)
-        if username == request.user.username:
-            profile = request.user.profile
-            return render(
-                request,
-                self.template_name,
-                context={
-                    "username": request.user.username,
-                    "runs": profile.runs(self.projects),
-                    "cost_breakdown": profile.costs(self.projects),
-                },
-            )
         User = get_user_model()
         if User.objects.filter(username=username):
-            raise PermissionDenied()
+            return render(request, self.template_name, {"username": username})
         else:
             raise Http404()
 

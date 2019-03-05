@@ -11,6 +11,7 @@ class MatchupsInputs(CoreInputs):
     meta_parameters defined in this project's meta_parameters module.
     """
 
+
 class MatchupsRun(CoreRun):
     """
     Set run or outputs fields that are specific to this project's application.
@@ -19,28 +20,24 @@ class MatchupsRun(CoreRun):
     on baseball pitchers, this would allow you to toggle a set of tables by
     the pitcher who is being analyzed.
     """
+
     dimension_name = "Batters"
 
-    inputs = models.OneToOneField(MatchupsInputs, on_delete=models.CASCADE,
-                                  related_name='outputs')
+    inputs = models.OneToOneField(
+        MatchupsInputs, on_delete=models.CASCADE, related_name="outputs"
+    )
 
     def get_absolute_url(self):
-        kwargs = {
-            'pk': self.pk
-        }
-        return reverse('matchups_outputs', kwargs=kwargs)
+        kwargs = {"pk": self.pk}
+        return reverse("Matchups_outputs", kwargs=kwargs)
 
     def get_absolute_edit_url(self):
-        kwargs = {
-            'pk': self.pk
-        }
-        return reverse('matchups_edit', kwargs=kwargs)
+        kwargs = {"pk": self.pk}
+        return reverse("Matchups_edit", kwargs=kwargs)
 
     def get_absolute_download_url(self):
-        kwargs = {
-            'pk': self.pk
-        }
-        return reverse('matchups_download', kwargs=kwargs)
+        kwargs = {"pk": self.pk}
+        return reverse("Matchups_download", kwargs=kwargs)
 
     def zip_filename(self):
-        return 'matchups.zip'
+        return "matchups.zip"

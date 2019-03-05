@@ -67,7 +67,7 @@ class TestUsersViews:
 
     def test_get_user_no_access(self, client, profile, password):
         resp = client.get(f"/tester/")
-        assert resp.status_code == 403
+        assert resp.status_code == 200
 
     def test_get_user_does_not_exist(self, client, profile, password):
         resp = client.get(f"/notarealuser/")

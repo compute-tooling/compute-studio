@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid" style="margin:20px;" id="profileTab" role="tablist">
+    {% csrf_token %}
+    <h2>{{username}}</h2>
+    <p>This page is currently under construction!</p>
+</div>
+
+{% endblock %}
