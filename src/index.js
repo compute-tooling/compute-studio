@@ -284,7 +284,7 @@ class CreateApp extends React.Component {
   render() {
     return (
       <div>
-        <h1 style={{ "margin-bottom": "2rem" }}>Publish a new app</h1>
+        <h1 style={{ marginBottom: "2rem" }}>Publish a new app</h1>
         <PublishForm
           fetchInitialValues={null}
           initialValues={initialValues}
@@ -345,7 +345,7 @@ class AppDetail extends React.Component {
     const id = `${username}/${app_name}`;
     return (
       <div>
-        <h2 style={{ "margin-bottom": "2rem" }}>
+        <h2 style={{ marginBottom: "2rem" }}>
           <a href={`/${id}/`}>{id}</a>
         </h2>
         <PublishForm
