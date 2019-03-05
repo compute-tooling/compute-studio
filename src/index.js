@@ -81,8 +81,8 @@ class PublishForm extends React.Component {
           onSubmit={(values, actions) => {
             console.log(values, actions);
             var formdata = new FormData();
-            for (var field in data) {
-              formdata.append([field], data[field]);
+            for (var field in values) {
+              formdata.append([field], values[field]);
             }
             this.props.doSubmit(formdata).then(
               response => {
@@ -247,11 +247,9 @@ class PublishForm extends React.Component {
                 {this.state.preview ? "Edit" : "Preview"}
               </button>
               <div className="divider" />
-              <input
-                className="btn inline-block go-btn"
-                type="submit"
-                value={this.props.submitType}
-              />
+              <button className="btn inline-block go-btn" type="submit">
+                {this.props.submitType}
+              </button>
             </Form>
           )}
         />
@@ -267,14 +265,19 @@ class CreateApp extends React.Component {
   }
   doSubmit(data) {
     axios
-      .post("/publish/", data)
+      .post("/publish/api/", data)
       .then(function(response) {
-        console.log(response);
+        console.log("post", response);
         // need to handle errors from the server here!
         window.location.replace("/");
       })
       .catch(function(error) {
         console.log(error);
+        if (error.response.status == 401) {
+          alert("You must be logged in to publish a model.");
+        } else {
+          alert("An error has occurred.");
+        }
       });
   }
   render() {
@@ -322,6 +325,13 @@ class AppDetail extends React.Component {
       })
       .catch(function(error) {
         console.log(error);
+        if (error.response.status == 401) {
+          alert(
+            `You must be logged in and the author in order to update ${app_name}.`
+          );
+        } else {
+          alert("An error has occurred.");
+        }
       });
   }
 

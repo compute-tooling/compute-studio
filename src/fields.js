@@ -80,7 +80,7 @@ export const DescriptionField = ({
 }) => {
   const charsLeft = 1000 - field.value.length;
   if (props.preview) {
-    var element = markdownElement(field.valuu);
+    var element = markdownElement(field.value);
   } else {
     var element = (
       <textarea
@@ -92,14 +92,15 @@ export const DescriptionField = ({
       />
     );
   }
-  // console.log("desc", elements);
   return (
     <div>
       <label>
         <b>App overview:</b>
         {element}
       </label>
-      {/* <small>{charsLeft}</small> */}
+      <small className="align-bottom" style={{ padding: "2px" }}>
+        {charsLeft}
+      </small>
     </div>
   );
 };
