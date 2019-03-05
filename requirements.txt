@@ -1,4 +1,5 @@
 django>=2.1.2
+djangorestframework
 msgpack
 requests>=2.20
 requests_mock

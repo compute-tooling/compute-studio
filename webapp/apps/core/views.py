@@ -29,6 +29,7 @@ class InputsMixin:
     """
     Define class attributes and common methods for inputs form views.
     """
+
     form_class = None
     displayer_class = Displayer
     submit_class = None
@@ -46,6 +47,7 @@ class InputsMixin:
 
     def project_context(self, request):
         project = Project.objects.get(name=self.project_name)
+        owner = project.profile.user.username
         user = request.user
         can_run = user.is_authenticated and is_profile_active(user)
         can_run = can_run or self.provided_free
@@ -53,20 +55,21 @@ class InputsMixin:
         exp_cost, exp_time = project.exp_job_info(adjust=True)
 
         context = {
-            'rate': f'${rate}/hour',
-            'project_name': self.project_name,
-            'app_description': self.app_description,
-            'redirect_back': self.app_name,
-            'can_run': can_run,
-            'exp_cost': f'${exp_cost}',
-            'exp_time': f'{exp_time} seconds',
-            'provided_free': self.provided_free,
-            'app_url': reverse(self.app_name)}
+            "rate": f"${rate}/hour",
+            "project_name": self.project_name,
+            "owner": owner,
+            "app_description": self.app_description,
+            "redirect_back": self.app_name,
+            "can_run": can_run,
+            "exp_cost": f"${exp_cost}",
+            "exp_time": f"{exp_time} seconds",
+            "provided_free": self.provided_free,
+            "app_url": reverse(self.app_name),
+        }
         return context
 
 
 class UnrestrictedInputsView(InputsMixin, View):
-
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET)
         inputs_form = self.form_class()
@@ -79,7 +82,7 @@ class UnrestrictedInputsView(InputsMixin, View):
     def post(self, request, *args, **kwargs):
         print("method=POST", request.POST)
         compute = Compute()
-        if request.POST.get("reset", ''):
+        if request.POST.get("reset", ""):
             inputs_form = self.form_class(request.POST.dict())
             if inputs_form.is_valid():
                 inputs_form.clean()
@@ -90,9 +93,7 @@ class UnrestrictedInputsView(InputsMixin, View):
             context = self.project_context(request)
             return self._render_inputs_form(request, inputs_form, context)
 
-        result = handle_submission(
-            request, compute, self.submit_class, self.save_class
-        )
+        result = handle_submission(request, compute, self.submit_class, self.save_class)
         # case where validation failed
         if isinstance(result, BadPost):
             return submission.http_response_404
@@ -113,7 +114,7 @@ class UnrestrictedInputsView(InputsMixin, View):
             upstream_version=self.upstream_version,
             webapp_version=self.webapp_version,
             has_errors=self.has_errors,
-            **self.project_context(request)
+            **self.project_context(request),
         )
         return render(request, self.template_name, context)
 
@@ -128,7 +129,7 @@ class UnrestrictedInputsView(InputsMixin, View):
             upstream_version=self.upstream_version,
             webapp_version=self.webapp_version,
             has_errors=self.has_errors,
-            **context
+            **context,
         )
         return render(request, self.template_name, context)
 
@@ -139,8 +140,7 @@ class InputsView(UnrestrictedInputsView):
     """
 
     @method_decorator(login_required)
-    @method_decorator(
-        user_passes_test(is_profile_active, login_url='/users/login/'))
+    @method_decorator(user_passes_test(is_profile_active, login_url="/users/login/"))
     def post(self, request, *args, **kwargs):
         super().post(request, *args, **kwargs)
 
@@ -169,7 +169,7 @@ class EditInputsView(InputsMixin, DetailView):
         return self._render_inputs_form(request, inputs_form, context)
 
     def post(self, request, *args, **kwargs):
-        return HttpResponseNotFound('<h1>Post not allowed to edit page</h1>')
+        return HttpResponseNotFound("<h1>Post not allowed to edit page</h1>")
 
     def _render_inputs_form(self, request, inputs_form, context):
         valid_meta_params = {}
@@ -184,7 +184,7 @@ class EditInputsView(InputsMixin, DetailView):
             upstream_version=self.upstream_version,
             webapp_version=self.webapp_version,
             has_errors=self.has_errors,
-            **context
+            **context,
         )
         return render(request, self.template_name, context)
 
@@ -205,12 +205,17 @@ class SuperclassTemplateNameMixin(object):
         for c in classes_to_check:
             # Adapted from
             # https://github.com/django/django/blob/2e06ff8/django/views/generic/detail.py#L142
-            if (getattr(c, 'model', None) is not None and
-                    issubclass(c.model, models.Model)):
-                names.append("%s/%s%s.html" % (
-                    c.model._meta.app_label,
-                    c.model._meta.model_name,
-                    self.template_name_suffix))
+            if getattr(c, "model", None) is not None and issubclass(
+                c.model, models.Model
+            ):
+                names.append(
+                    "%s/%s%s.html"
+                    % (
+                        c.model._meta.app_label,
+                        c.model._meta.model_name,
+                        self.template_name_suffix,
+                    )
+                )
         return names
 
 
@@ -236,8 +241,9 @@ class OutputsView(ChargeRunMixin, SuperclassTemplateNameMixin, DetailView):
     result_header = "Results"
 
     def fail(self):
-        return render(self.request, 'core/failed.html',
-                      {"error_msg": self.object.error_text})
+        return render(
+            self.request, "core/failed.html", {"error_msg": self.object.error_text}
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -259,18 +265,17 @@ class OutputsView(ChargeRunMixin, SuperclassTemplateNameMixin, DetailView):
                 self.object.error_text = ""
                 self.object.save()
                 return self.fail()
-            if job_ready == 'FAIL':
+            if job_ready == "FAIL":
                 error_msg = compute.get_results(job_id, job_failure=True)
                 if not error_msg:
-                    error_msg = ("Error: stack trace for this error is "
-                                 "unavailable")
+                    error_msg = "Error: stack trace for this error is " "unavailable"
                 val_err_idx = error_msg.rfind("Error")
                 error_contents = error_msg[val_err_idx:].replace(" ", "&nbsp;")
                 self.object.error_text = error_contents
                 self.object.save()
                 return self.fail()
 
-            if job_ready == 'YES':
+            if job_ready == "YES":
                 try:
                     results = compute.get_results(job_id)
                 except Exception as e:
@@ -279,47 +284,40 @@ class OutputsView(ChargeRunMixin, SuperclassTemplateNameMixin, DetailView):
                     return self.fail()
                 self.charge_run(results["meta"], use_stripe=USE_STRIPE)
                 self.object.meta_data = results["meta"]
-                self.object.outputs = results['outputs']
-                self.object.aggr_outputs = results['aggr_outputs']
+                self.object.outputs = results["outputs"]
+                self.object.aggr_outputs = results["aggr_outputs"]
                 self.object.creation_date = timezone.now()
                 self.object.save()
                 return super().get(self, request, *args, **kwargs)
             else:
-                if request.method == 'POST':
+                if request.method == "POST":
                     # if not ready yet, insert number of minutes remaining
                     exp_comp_dt = self.object.exp_comp_datetime
                     utc_now = timezone.now()
                     dt = exp_comp_dt - utc_now
-                    exp_num_minutes = dt.total_seconds() / 60.
+                    exp_num_minutes = dt.total_seconds() / 60.0
                     exp_num_minutes = round(exp_num_minutes, 2)
-                    exp_num_minutes = (exp_num_minutes if exp_num_minutes > 0
-                                       else 0)
+                    exp_num_minutes = exp_num_minutes if exp_num_minutes > 0 else 0
                     if exp_num_minutes > 0:
-                        return JsonResponse({'eta': exp_num_minutes},
-                                            status=202)
+                        return JsonResponse({"eta": exp_num_minutes}, status=202)
                     else:
-                        return JsonResponse({'eta': exp_num_minutes},
-                                            status=200)
+                        return JsonResponse({"eta": exp_num_minutes}, status=200)
 
                 else:
-                    context = {'eta': '100'}
-                    return render(
-                        request,
-                        'core/not_ready.html',
-                        context
-                    )
+                    context = {"eta": "100"}
+                    return render(request, "core/not_ready.html", context)
 
     def is_from_file(self):
-        if hasattr(self.object.inputs, 'raw_gui_field_inputs'):
+        if hasattr(self.object.inputs, "raw_gui_field_inputs"):
             return not self.object.inputs.raw_gui_field_inputs
         else:
             return False
 
     def inputs_to_display(self):
-        if hasattr(self.object.inputs, 'inputs_file'):
+        if hasattr(self.object.inputs, "inputs_file"):
             return json.dumps(self.object.inputs.inputs_file, indent=2)
         else:
-            return ''
+            return ""
 
 
 class OutputsDownloadView(SingleObjectMixin, View):
@@ -328,38 +326,50 @@ class OutputsDownloadView(SingleObjectMixin, View):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
 
-        if (not (self.object.outputs or self.object.aggr_outputs) or
-           self.object.error_text):
+        if (
+            not (self.object.outputs or self.object.aggr_outputs)
+            or self.object.error_text
+        ):
             return redirect(self.object)
 
         # option to download the raw JSON for testing purposes.
         if request.GET.get("raw_json", False):
-            raw_json = json.dumps({
-                "meta": self.object.meta_data,
-                "outputs": self.object.outputs,
-                "aggr_outputs": self.object.aggr_outputs},
-                indent=4)
+            raw_json = json.dumps(
+                {
+                    "meta": self.object.meta_data,
+                    "outputs": self.object.outputs,
+                    "aggr_outputs": self.object.aggr_outputs,
+                },
+                indent=4,
+            )
             resp = HttpResponse(raw_json, content_type="text/plain")
-            resp['Content-Disposition'] = "attachment; filename=outputs.json"
+            resp["Content-Disposition"] = "attachment; filename=outputs.json"
             return resp
 
         try:
-            downloadables = list(itertools.chain.from_iterable(
-                output['downloadable'] for output in self.object.outputs))
-            downloadables += list(itertools.chain.from_iterable(
-                output['downloadable'] for output in self.object.aggr_outputs))
+            downloadables = list(
+                itertools.chain.from_iterable(
+                    output["downloadable"] for output in self.object.outputs
+                )
+            )
+            downloadables += list(
+                itertools.chain.from_iterable(
+                    output["downloadable"] for output in self.object.aggr_outputs
+                )
+            )
         except KeyError:
             raise Http404
         if not downloadables:
             raise Http404
 
         s = BytesIO()
-        z = ZipFile(s, mode='w')
+        z = ZipFile(s, mode="w")
         for i in downloadables:
-            z.writestr(i['filename'], i['text'])
+            z.writestr(i["filename"], i["text"])
         z.close()
         resp = HttpResponse(s.getvalue(), content_type="application/zip")
-        resp['Content-Disposition'] = 'attachment; filename={}'.format(
-            self.object.zip_filename())
+        resp["Content-Disposition"] = "attachment; filename={}".format(
+            self.object.zip_filename()
+        )
         s.close()
         return resp

@@ -5,12 +5,22 @@
 }
 
 p {
-  width:80ch
+  width:80ch;
+}
+
+div.content.card.publish.markdown p, div.content.card.publish.markdown code {
+  border: 1px solid #ced4da;
+
+  border-radius: .25rem;
+
+  transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+  background: rgba(27, 31, 35, 0.05);
+  padding:10px;
 }
 
 code {
   color: inherit;
-  background-color: rgba(27,31,35,0.05);
+  display:block;
 }
 
 /* login */
@@ -68,6 +78,12 @@ code {
 .go-btn {
   color: white;
   background-color: #009900;
+}
+
+.divider{
+  width:5px;
+  height:auto;
+  display:inline-block;
 }
 
 /* used for the profile page--should probably be a the inverse-button-match-nav */
@@ -181,4 +197,13 @@ input.model:not(:placeholder-shown) {
 
 .profile-tab-content {
   padding: 25px;
+}
+
+.error {
+  font-size: 80%;
+  color: #dc3545
+}
+
+.description {
+  width: "50rem"
 }

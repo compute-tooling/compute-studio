@@ -33,6 +33,8 @@ ALLOWED_HOSTS = ["*"]
 SECURE_SSL_REDIRECT = False if os.environ.get("LOCAL", "") else True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+CSRF_COOKIE_NAME = "csrftoken"
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -42,10 +44,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
     "webapp.apps.core",
     "webapp.apps.pages",
     "webapp.apps.users",
     "webapp.apps.billing",
+    "webapp.apps.publish",
     # Append new apps here in the form webapp.apps.projects.{project_name}
     "webapp.apps.projects.matchups",
     # third-party apps

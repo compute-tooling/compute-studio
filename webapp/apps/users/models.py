@@ -6,6 +6,7 @@ from django.db.models import F, Case, When, Sum
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.urls import reverse
+from django.contrib.postgres.fields import ArrayField
 
 
 def is_profile_active(user):
@@ -29,16 +30,19 @@ class Profile(models.Model):
         agg = defaultdict(float)
         for project in projects:
             relation = f"{project.app_name}_{project.app_name}run_runs"
-            res = (
-                getattr(self, relation)
-                .values(month=TruncMonth("creation_date"))
-                .annotate(
-                    effective=Case(When(run_cost=0.0, then=0.01), default=F("run_cost"))
+            if hasattr(self, relation):
+                res = (
+                    getattr(self, relation)
+                    .values(month=TruncMonth("creation_date"))
+                    .annotate(
+                        effective=Case(
+                            When(run_cost=0.0, then=0.01), default=F("run_cost")
+                        )
+                    )
+                    .annotate(Sum("effective"))
                 )
-                .annotate(Sum("effective"))
-            )
-            for month in res:
-                agg[month["month"]] += float(month["effective__sum"])
+                for month in res:
+                    agg[month["month"]] += float(month["effective__sum"])
         return {k.strftime("%B %Y"): v for k, v in sorted(agg.items())}
 
     def runs(self, projects=None):
@@ -47,8 +51,10 @@ class Profile(models.Model):
         runs = {}
         for project in projects:
             relation = f"{project.app_name}_{project.app_name}run_runs"
-            queryset = getattr(self, relation)
-            runs[project.name] = queryset.all()
+            queryset = getattr(self, relation, None)
+            if queryset is not None:
+                runs[project.name] = queryset.all()
+            print(f"skipping {relation}")
         return runs
 
     class Meta:
@@ -60,16 +66,43 @@ class Project(models.Model):
     SECS_IN_HOUR = 3600.0
     name = models.CharField(max_length=255)
     app_name = models.CharField(max_length=30)
+    description = models.CharField(max_length=1000)
     profile = models.ForeignKey(
         Profile, null=True, related_name="projects", on_delete=models.CASCADE
     )
     sponsor = models.ForeignKey(
         Profile, null=True, related_name="sponsored_projects", on_delete=models.SET_NULL
     )
+    is_public = models.BooleanField(default=True)
+    status = models.CharField(
+        choices=(
+            ("live", "live"),
+            ("pending", "pending"),
+            ("requires fixes", "requires fixes"),
+        ),
+        default="live",
+        max_length=32,
+    )
+
+    # functions
+    package_defaults = models.CharField(max_length=1000)
+    parse_user_adjustments = models.CharField(max_length=1000)
+    run_simulation = models.CharField(max_length=1000)
+
+    # install
+    installation = models.CharField(max_length=1000)
+
+    # server resources
     server_cost = models.DecimalField(max_digits=6, decimal_places=3, null=True)
+    # ram, vcpus
+    def callabledefault():
+        return [4, 2]
+
+    server_size = ArrayField(
+        models.CharField(max_length=5), default=callabledefault, size=2
+    )
     exp_task_time = models.IntegerField(null=True)
     exp_num_tasks = models.IntegerField(null=True)
-    is_public = models.BooleanField(default=True)
 
     @staticmethod
     def get_or_none(**kwargs):

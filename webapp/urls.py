@@ -17,13 +17,20 @@ from django.contrib import admin
 from django.urls import path, include
 
 from webapp.apps.users import views as userviews
+from webapp.apps.publish import views as publishviews
 
 urlpatterns = [
     # admin apps
     path("admin/", admin.site.urls),
     path("", include("webapp.apps.pages.urls")),
+    path("publish/", include("webapp.apps.publish.urls")),
+    path(
+        "<str:username>/<str:app_name>/detail/",
+        publishviews.ProjectDetailView.as_view(),
+        name="project_detail",
+    ),
     # add project URL's here
-    path("hdoupe/matchups/", include("webapp.apps.projects.matchups.urls")),
+    path("hdoupe/Matchups/", include("webapp.apps.projects.matchups.urls")),
     # user/billing apps
     path("<str:username>/", userviews.UserProfile.as_view(), name="userprofile"),
     path("users/", include("webapp.apps.users.urls")),

@@ -7,7 +7,7 @@ from webapp.apps.users.models import Project
 
 
 @pytest.mark.django_db
-class CoreAbstractViewsTest():
+class CoreAbstractViewsTest:
     """
     Abstract test class to be used for efficient testing of modeling projects.
     The approach used here goes against conventional wisdom to use simple,
@@ -15,7 +15,8 @@ class CoreAbstractViewsTest():
     that share a "core" functionality. Re-writing and maintaining many copies
     of the same tests would be cumbersome, time-consuming, and error-prone.
     """
-    app_name = 'core'
+
+    app_name = "core"
     title = "Core"
     post_data_ok = {}
     mockcompute = None
@@ -52,26 +53,26 @@ class CoreAbstractViewsTest():
         - test download page returns 200 and zip file content
         - test logged out user can view outputs page
         """
-        monkeypatch.setattr(f'webapp.apps.projects.{self.app_name}.views.Compute',
-                            self.mockcompute)
-        monkeypatch.setattr('webapp.apps.core.views.Compute', self.mockcompute)
+        monkeypatch.setattr(
+            f"webapp.apps.projects.{self.app_name}.views.Compute", self.mockcompute
+        )
+        monkeypatch.setattr("webapp.apps.core.views.Compute", self.mockcompute)
 
         self.login_client(client, profile.user, password)
         resp = client.post(reverse(self.app_name), data=self.inputs_ok())
-        assert resp.status_code == 302 # redirect
-        idx = resp.url[:-1].rfind('/')
-        slug = resp.url[(idx + 1):-1]
-        assert resp.url == f'{reverse(self.app_name)}{slug}/'
+        assert resp.status_code == 302  # redirect
+        idx = resp.url[:-1].rfind("/")
+        slug = resp.url[(idx + 1) : -1]
+        assert resp.url == f"{reverse(self.app_name)}{slug}/"
 
         # test get ouputs page
         resp = client.get(resp.url)
         assert resp.status_code == 200
 
         # test ouptut download
-        resp = client.get(f'{reverse(self.app_name)}{slug}/download')
+        resp = client.get(f"{reverse(self.app_name)}{slug}/download")
         assert resp.status_code == 200
-        assert resp._headers['content-type'] == ('Content-Type',
-                                                 'application/zip')
+        assert resp._headers["content-type"] == ("Content-Type", "application/zip")
 
     def test_edit_page(self, monkeypatch, client, password, profile):
         """
@@ -86,17 +87,18 @@ class CoreAbstractViewsTest():
         in the same way as the browser. For now, ability to get the edit page
         is all that will be tested.
         """
-        monkeypatch.setattr(f'webapp.apps.projects.{self.app_name}.views.Compute',
-                            self.mockcompute)
-        monkeypatch.setattr('webapp.apps.core.views.Compute', self.mockcompute)
+        monkeypatch.setattr(
+            f"webapp.apps.projects.{self.app_name}.views.Compute", self.mockcompute
+        )
+        monkeypatch.setattr("webapp.apps.core.views.Compute", self.mockcompute)
 
         self.login_client(client, profile.user, password)
         resp = client.post(reverse(self.app_name), data=self.inputs_ok())
-        assert resp.status_code == 302 # redirect
-        idx = resp.url[:-1].rfind('/')
-        slug = resp.url[(idx + 1):-1]
+        assert resp.status_code == 302  # redirect
+        idx = resp.url[:-1].rfind("/")
+        slug = resp.url[(idx + 1) : -1]
         outputs_url = resp.url
-        assert outputs_url == f'{reverse(self.app_name)}{slug}/'
+        assert outputs_url == f"{reverse(self.app_name)}{slug}/"
 
         # test get ouputs page
         resp = client.get(outputs_url)
@@ -111,16 +113,17 @@ class CoreAbstractViewsTest():
         Tests:
         - post run
         """
-        monkeypatch.setattr(f'webapp.apps.projects.{self.app_name}.views.Compute',
-                            self.mockcompute)
-        monkeypatch.setattr('webapp.apps.core.views.Compute', self.mockcompute)
+        monkeypatch.setattr(
+            f"webapp.apps.projects.{self.app_name}.views.Compute", self.mockcompute
+        )
+        monkeypatch.setattr("webapp.apps.core.views.Compute", self.mockcompute)
 
         self.login_client(client, profile.user, password)
         resp = client.post(reverse(self.app_name), data=self.inputs_ok())
-        assert resp.status_code == 302 # redirect
-        idx = resp.url[:-1].rfind('/')
-        slug = resp.url[(idx + 1):-1]
-        assert resp.url == f'{reverse(self.app_name)}{slug}/'
+        assert resp.status_code == 302  # redirect
+        idx = resp.url[:-1].rfind("/")
+        slug = resp.url[(idx + 1) : -1]
+        assert resp.url == f"{reverse(self.app_name)}{slug}/"
 
         # test get ouputs page
         resp = client.get(resp.url)
@@ -136,21 +139,26 @@ class CoreAbstractViewsTest():
         if self.provided_free:
             assert output.sponsor is not None
 
-    def test_post_wo_login(self, client):
+    def test_post_wo_login(self, monkeypatch, client):
         """
         Test post without logged-in user:
         - returns 302 status and redirects to login page on non-sponsored model.
         - the post kicks off a run on a sponsored model.
         """
+        monkeypatch.setattr(
+            f"webapp.apps.projects.{self.app_name}.views.Compute", self.mockcompute
+        )
+        monkeypatch.setattr("webapp.apps.core.views.Compute", self.mockcompute)
+
         resp = client.post(reverse(self.app_name), data=self.inputs_ok())
         if self.provided_free:
             assert resp.status_code == 302
-            idx = resp.url[:-1].rfind('/')
-            slug = resp.url[(idx + 1):-1]
-            assert resp.url == f'{reverse(self.app_name)}{slug}/'
+            idx = resp.url[:-1].rfind("/")
+            slug = resp.url[(idx + 1) : -1]
+            assert resp.url == f"{reverse(self.app_name)}{slug}/"
         else:
             assert resp.status_code == 302
-            assert resp.url == f'/users/login/?next={reverse(self.app_name)}'
+            assert resp.url == f"/users/login/?next={reverse(self.app_name)}"
 
     def login_client(self, client, user, password):
         """
