@@ -98,31 +98,11 @@ WSGI_APPLICATION = "webapp.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-
-TEST_DATABASE = {
-    "TEST": {
-        "ENGINE": "django.db.backends.postgresql",
-        "USER": os.environ.get("DATABASE_USER", "postgres"),
-        "NAME": "test_db",
-        "PASSWORD": os.environ.get("DATABASE_PW", ""),
-    }
+DATABASES = {
+    "default": dj_database_url.config(),
+    # override database name for tests.
+    "TEST": dict(dj_database_url.config(), **{"NAME": "testdb"}),
 }
-if os.environ.get("DATABASE_URL", None):  # DATABASE_URL var is set
-    DATABASES = {"default": dj_database_url.config()}
-    DATABASES.update(TEST_DATABASE)
-else:  # DATABASE_URL is not set--try default
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": "taxcalc",
-            "USER": os.environ.get("DATABASE_USER", "postgres"),
-            "PASSWORD": os.environ.get("DATABASE_PW", ""),
-            "HOST": "localhost",
-            "PORT": "5432",
-        }
-    }
-    DATABASES.update(TEST_DATABASE)
-
 
 # Authentication backends--use django and django-allauth
 # AUTHENTICATION_BACKENDS = (
