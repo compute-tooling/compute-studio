@@ -1,0 +1,2270 @@
+Find more information at https://github.com/kubernetes/kubernetes.
+
+Basic Commands (Beginner):
+  create         Create a resource from a file or from stdin.
+  expose         Take a replication controller, service, deployment or pod and expose it as a new Kubernetes Service
+  run            Run a particular image on the cluster
+  set            Set specific features on objects
+  run-container  Run a particular image on the cluster. This command is deprecated, use "run" instead
+
+Basic Commands (Intermediate):
+  get            Display one or many resources
+  explain        Documentation of resources
+  edit           Edit a resource on the server
+  delete         Delete resources by filenames, stdin, resources and names, or by resources and label selector
+
+Deploy Commands:
+  rollout        Manage the rollout of a resource
+  rolling-update Perform a rolling update of the given ReplicationController
+  scale          Set a new size for a Deployment, ReplicaSet, Replication Controller, or Job
+  autoscale      Auto-scale a Deployment, ReplicaSet, or ReplicationController
+
+Cluster Management Commands:
+  certificate    Modify certificate resources.
+  cluster-info   Display cluster info
+  top            Display Resource (CPU/Memory/Storage) usage.
+  cordon         Mark node as unschedulable
+  uncordon       Mark node as schedulable
+  drain          Drain node in preparation for maintenance
+  taint          Update the taints on one or more nodes
+
+Troubleshooting and Debugging Commands:
+  describe       Show details of a specific resource or group of resources
+  logs           Print the logs for a container in a pod
+  attach         Attach to a running container
+  exec           Execute a command in a container
+  port-forward   Forward one or more local ports to a pod
+  proxy          Run a proxy to the Kubernetes API server
+  cp             Copy files and directories to and from containers.
+  auth           Inspect authorization
+
+Advanced Commands:
+  apply          Apply a configuration to a resource by filename or stdin
+  patch          Update field(s) of a resource using strategic merge patch
+  replace        Replace a resource by filename or stdin
+  convert        Convert config files between different API versions
+
+Settings Commands:
+  label          Update the labels on a resource
+  annotate       Update the annotations on a resource
+  completion     Output shell completion code for the specified shell (bash or zsh)
+
+Other Commands:
+  api-versions   Print the supported API versions on the server, in the form of "group/version"
+  config         Modify kubeconfig files
+  help           Help about any command
+  plugin         Runs a command-line plugin
+  version        Print the client and server version information
+
+Use "kubectl <command> --help" for more information about a given command.
+Use "kubectl options" for a list of global command-line options (applies to all commands).
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-hzs85   1/1       Running   0          13m
+flask-77d894d54b-5z8nd   1/1       Running   0          13m
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ clear
+
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-hzs85   1/1       Running   0          13m
+flask-77d894d54b-5z8nd   1/1       Running   0          13m
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get services
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+flask        NodePort    10.101.42.15    <none>        5000:32347/TCP   2h
+kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP          5h
+redis        ClusterIP   10.110.61.191   <none>        6379/TCP         1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl edit deployment flask
+Edit cancelled, no changes made.
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl set image deployment/flask flask=comporg/kube-4
+deployment "flask" image updated
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl set image deployment/flask flask=comporg/flask:kube-4
+deployment "flask" image updated
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl set image deployment/flask flask=comporg/flask
+deployment "flask" image updated
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS         RESTARTS   AGE
+flask-6bf6bb9c94-7tptk   0/1       Terminating    0          <invalid>
+flask-77d894d54b-5z8nd   1/1       Running        0          26m
+flask-7fd568b8bd-wct5m   0/1       ErrImagePull   0          <invalid>
+redis-6d94b86d46-4cdk4   1/1       Running        0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS         RESTARTS   AGE
+flask-6bf6bb9c94-7tptk   0/1       Terminating    0          <invalid>
+flask-77d894d54b-5z8nd   1/1       Running        0          27m
+flask-7fd568b8bd-wct5m   0/1       ErrImagePull   0          <invalid>
+redis-6d94b86d46-4cdk4   1/1       Running        0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS         RESTARTS   AGE
+flask-6bf6bb9c94-7tptk   0/1       Terminating    0          <invalid>
+flask-77d894d54b-5z8nd   1/1       Running        0          27m
+flask-7fd568b8bd-wct5m   0/1       ErrImagePull   0          <invalid>
+redis-6d94b86d46-4cdk4   1/1       Running        0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS         RESTARTS   AGE
+flask-77d894d54b-5z8nd   1/1       Running        0          27m
+flask-7fd568b8bd-wct5m   0/1       ErrImagePull   0          <invalid>
+redis-6d94b86d46-4cdk4   1/1       Running        0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS         RESTARTS   AGE
+flask-77d894d54b-5z8nd   1/1       Running        0          28m
+flask-7fd568b8bd-wct5m   0/1       ErrImagePull   0          50s
+redis-6d94b86d46-4cdk4   1/1       Running        0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS         RESTARTS   AGE
+flask-77d894d54b-5z8nd   1/1       Running        0          28m
+flask-7fd568b8bd-wct5m   0/1       ErrImagePull   0          51s
+redis-6d94b86d46-4cdk4   1/1       Running        0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl set image deployment/flask flask=comporg/flask:kube-4
+deployment "flask" image updated
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-hjzxb   0/1       ContainerCreating   0          <invalid>
+flask-77d894d54b-5z8nd   1/1       Running             0          28m
+flask-7fd568b8bd-wct5m   0/1       Terminating         0          1m
+redis-6d94b86d46-4cdk4   1/1       Running             0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-hjzxb   1/1       Running   0          <invalid>
+flask-77d894d54b-5z8nd   1/1       Running   0          28m
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-hjzxb   1/1       Running   0          <invalid>
+flask-77d894d54b-5z8nd   1/1       Running   0          28m
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-hjzxb   1/1       Running   0          <invalid>
+flask-77d894d54b-5z8nd   1/1       Running   0          28m
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-hjzxb   1/1       Running   0          <invalid>
+flask-77d894d54b-5z8nd   1/1       Running   0          28m
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-hjzxb   1/1       Running   0          <invalid>
+flask-77d894d54b-5z8nd   1/1       Running   0          28m
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-hjzxb   1/1       Running   0          1s
+flask-77d894d54b-5z8nd   1/1       Running   0          28m
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-hjzxb   1/1       Running   0          2s
+flask-77d894d54b-5z8nd   1/1       Running   0          28m
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl exec -it flask-6bf6bb9c94-hjzxb /bin/bash
+(base) root@flask-6bf6bb9c94-hjzxb:/home/distributed/api# python
+Python 3.6.8 |Anaconda, Inc.| (default, Dec 30 2018, 01:22:34)
+[GCC 7.3.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import redis; redis.__version__
+'3.2.0'
+>>>
+(base) root@flask-6bf6bb9c94-hjzxb:/home/distributed/api#
+(base) root@flask-6bf6bb9c94-hjzxb:/home/distributed/api# exit
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl exec -it flask-77d894d54b-5z8nd /bin/bash
+(base) root@flask-77d894d54b-5z8nd:/home/distributed/api# python
+Python 3.6.8 |Anaconda, Inc.| (default, Dec 30 2018, 01:22:34)
+[GCC 7.3.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import redis; redis.__version__
+'2.10.6'
+>>>
+(base) root@flask-77d894d54b-5z8nd:/home/distributed/api#
+(base) root@flask-77d894d54b-5z8nd:/home/distributed/api#
+(base) root@flask-77d894d54b-5z8nd:/home/distributed/api# exit
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl delete pods flask-77d894d54b-5z8nd
+pod "flask-77d894d54b-5z8nd" deleted
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-hjzxb   1/1       Running       0          1m
+flask-77d894d54b-5z8nd   0/1       Terminating   0          29m
+flask-77d894d54b-v6jn7   1/1       Running       0          <invalid>
+redis-6d94b86d46-4cdk4   1/1       Running       0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-hjzxb   1/1       Running       0          1m
+flask-77d894d54b-5z8nd   0/1       Terminating   0          29m
+flask-77d894d54b-v6jn7   1/1       Running       0          <invalid>
+redis-6d94b86d46-4cdk4   1/1       Running       0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-hjzxb   1/1       Running   0          1m
+flask-77d894d54b-v6jn7   1/1       Running   0          <invalid>
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-hjzxb   1/1       Running   0          1m
+flask-77d894d54b-v6jn7   1/1       Running   0          <invalid>
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-hjzxb   1/1       Running   0          1m
+flask-77d894d54b-v6jn7   1/1       Running   0          0s
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-hjzxb   1/1       Running   0          1m
+flask-77d894d54b-v6jn7   1/1       Running   0          3s
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-hjzxb   1/1       Running   0          1m
+flask-77d894d54b-v6jn7   1/1       Running   0          4s
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl exec -it flask-77d894d54b-v6jn7 /bin/bash
+(base) root@flask-77d894d54b-v6jn7:/home/distributed/api# python
+Python 3.6.8 |Anaconda, Inc.| (default, Dec 30 2018, 01:22:34)
+[GCC 7.3.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import redis; redis.__version__
+'2.10.6'
+>>>
+(base) root@flask-77d894d54b-v6jn7:/home/distributed/api#
+(base) root@flask-77d894d54b-v6jn7:/home/distributed/api# exit
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubernetes delete flask
+-bash: kubernetes: command not found
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubernetes delete service flask
+-bash: kubernetes: command not found
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl delete service flask
+service "flask" deleted
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl delete pods -l app=flask
+pod "flask-6bf6bb9c94-hjzxb" deleted
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-7knwm   1/1       Running   0          <invalid>
+flask-77d894d54b-v6jn7   1/1       Running   0          1m
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-7knwm   1/1       Running   0          <invalid>
+flask-77d894d54b-v6jn7   1/1       Running   0          1m
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-7knwm   1/1       Running   0          <invalid>
+flask-77d894d54b-v6jn7   1/1       Running   0          1m
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get services
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP    5h
+redis        ClusterIP   10.110.61.191   <none>        6379/TCP   1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubernetes delete --all
+-bash: kubernetes: command not found
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl delete --all
+error: at least one resource must be specified to use a selector
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl delete deployment flask
+deployment "flask" deleted
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get services
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP    5h
+redis        ClusterIP   10.110.61.191   <none>        6379/TCP   1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-77d894d54b-v6jn7   1/1       Running   0          4m
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl delete pods flask-77d894d54b-v6jn7 -force
+error: the path "orce" does not exist
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl delete pods flask-77d894d54b-v6jn7 --force
+pod "flask-77d894d54b-v6jn7" deleted
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-77d894d54b-5sctz   1/1       Running       0          <invalid>
+flask-77d894d54b-v6jn7   0/1       Terminating   0          4m
+redis-6d94b86d46-4cdk4   1/1       Running       0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-77d894d54b-5sctz   1/1       Running   0          <invalid>
+redis-6d94b86d46-4cdk4   1/1       Running   0          1h
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ history
+  355  ssh ubuntu@104.248.115.113
+  356  ssh root@104.248.115.113
+  357  ssh root@104.248.115
+  358  ssh root@104.248.115.113
+  359  git diff
+  360  git add -u
+  361  git add -u
+  362  git commit -m "Use axios instead of fetch"
+  363  ssh root@104.248.115.113
+  364  ssh root@104.248.115.113
+  365  mkdir webapp/apps/publish/tests
+  366  touch webapp/apps/publish/tests/__init__.py
+  367  py.test webapp/apps/publish/ -v
+  368  py.test webapp/apps/publish/tests/ -v
+  369  py.test webapp/apps/publish/tests/ -v
+  370  py.test webapp/apps/ -v
+  371  pip install pytest pytest-django
+  372  py.test webapp/apps/ -v
+  373  py.test webapp/apps/ -v
+  374  py.test webapp/apps/ -v --last-failed
+  375  py.test webapp/apps/ -v
+  376  py.test webapp/apps/publish/ -v
+  377  py.test webapp/apps/publish/ -v
+  378  python manage.py collectstatic --no-input
+  379  py.test webapp/apps/publish/ -v
+  380  py.test webapp/apps/publish/ -v
+  381  py.test webapp/apps/publish/ -v
+  382  py.test webapp/apps/publish/ -v
+  383  py.test webapp/apps/publish/ -v
+  384  py.test webapp/apps/publish/ -v
+  385  py.test webapp/apps/publish/ -v
+  386  py.test webapp/apps/publish/ -v
+  387  py.test webapp/apps/publish/ -v
+  388  py.test webapp/apps/publish/ -v
+  389  py.test webapp/apps/publish/ -v
+  390  py.test webapp/apps/publish/ -v
+  391  py.test webapp/apps/publish/ -v
+  392  py.test webapp/apps/ -v
+  393  py.test webapp/apps/publish/ -v
+  394  py.test webapp/apps/publish/ -v
+  395  py.test webapp/apps/publish/ -v
+  396  py.test webapp/apps/publish/ -v
+  397  py.test webapp/apps/publish/ -v
+  398  py.test webapp/apps/publish/ -v
+  399  py.test webapp/apps/publish/ -v --last-failed
+  400  py.test webapp/apps/publish/ -v --last-failed
+  401  py.test webapp/apps/publish/ -v --last-failed
+  402  py.test webapp/apps/publish/ -v --last-failed
+  403  py.test webapp/apps/publish/ -v --last-failed
+  404  py.test webapp/apps/publish/ -v --last-failed
+  405  py.test webapp/apps/publish/ -v --last-failed
+  406  git status
+  407  git add -u
+  408  git add webapp/apps/publish/tests/
+  409  git status
+  410  git commit -m "Add some basic tests for the publish app"
+  411  git add -u
+  412  git commit -m "Add some basic tests for the publish app"
+  413  git push origin pub-form
+  414  conda activate paramtools-dev
+  415  pip install -e .
+  416  cat requirements-dev.txt
+  417  pip install requirements-dev.txt
+  418  pip install -r requirements-dev.txt
+  419  py.test -v
+  420  py.test -v
+  421  py.test -v --last-failed
+  422  py.test -v
+  423  py.test -v
+  424  py.test -v
+  425  py.test -v
+  426  py.test -v
+  427  git status
+  428  git add paramtools
+  429  git status
+  430  git commit -m "Remove redundant tests for examples"
+  431  git diff
+  432  git add paramtools
+  433  git status
+  434  git commit -m "Remove redundant tests for examples"
+  435  git add paramtools
+  436  git commit -m "Remove redundant tests for examples"
+  437  git status
+  438  git push origin new-ex
+  439  cp static/js/publish.js static/js/publish-formik.js
+  440  npm init
+  441  npm install -g npm
+  442  sudo npm install -g npm
+  443  npm --version
+  444  npm i react
+  445  npm i react --save
+  446  npm install --save react-router
+  447  npm uninstall react-router
+  448  npm uninstall react-router --save
+  449  npm install --save react-router-dom
+  450  npm install --save axios
+  451  npm install --save highlight.js
+  452  npm install --save remarkable
+  453  npm install --save react-dom
+  454  npm install --save react react-dom
+  455  npm install --save formik
+  456  npm install --save yup
+  457  touch static/js/index.js
+  458  npm list -g
+  459  npm root -g
+  460  npm install --prefix static/js/vendor/
+  461  touch static/js/test.js
+  462  npm install babel-core babel-loader --save
+  463  npm install babel-preset-es2015 --save
+  464  npm install babel-preset-react
+  465  npm install babel-preset-react --save
+  466  npm install babel-polyfill --save
+  467  npm install babel-runtime --save
+  468  npm install babel-plugin-transform-runtime --save-dev
+  469  npm install webpack-dev-server -g
+  470  sudo npm install webpack-dev-server -g
+  471  sudo chown -R $(whoami) ~/.npm
+  472  sudo chown -R $(whoami) /usr/local/lib
+  473  sudo chown -R $(whoami) /usr/local/bin
+  474  npm install -g npm@latest
+  475  npm install webpack-dev-server -g
+  476  npm install webpack-dev-server webpack babel-core babel-loader babel-preset-es2015 babel-polyfill
+  477  webpack-dev-server --content-base static static/js/test.js
+  478  webpack-dev-server --content-base static static/js/test.js
+  479  ls
+  480  mkdir -p assets/js
+  481  touch webpack.config.js
+  482  touch assets/js/index.js
+  483  npm install --save-dev webpack-bundle-tracker
+  484  pip install django-webpack-loader
+  485  pip install django-webpack-loader
+  486  source /Users/henrydoupe/anaconda3/bin/activate
+  487  conda activate comp-dev
+  488  /Users/henrydoupe/anaconda3/envs/comp-dev/bin/python
+  489  source /Users/henrydoupe/anaconda3/bin/activate
+  490  conda activate comp-dev
+  491  /Users/henrydoupe/anaconda3/envs/comp-dev/bin/python
+  492  cd Documents/
+  493  cd comp
+  494  git status
+  495  git checkout master
+  496  git merge origin/master
+  497  cd ..
+  498  git clone https://github.com/testdrivenio/flask-vue-kubernetes
+  499  cd flask-vue-kubernetes/
+  500  docker-compose up -d --build
+  501  docker ps
+  502  docker-compose exec server python manage.py recreate_db
+  503  docker-compose exec server python manage.py seed_db
+  504  curl http://localhost:5001/books/ping
+  505  curl http://localhost:5001/books
+  506  docker-compose down
+  507  vsc .
+  508  brew update minikube
+  509  brew upgrade minikube
+  510  brew install kubectl
+  511  brew install docker-machine-driver-hyperkit
+  512    sudo chown root:wheel /usr/local/opt/docker-machine-driver-hyperkit/bin/docker-machine-driver-hyperkit
+  513    sudo chmod u+s /usr/local/opt/docker-machine-driver-hyperkit/bin/docker-machine-driver-hyperkit
+  514  brew cask install minikube
+  515  rm /usr/local/bin/minikube
+  516  brew cask install minikube
+  517  minikube start --vm-driver=hyperkit
+  518  minikube start --vm-driver=hyperkit
+  519  brew install docker-machine-driver-hyperkit
+  520  brew link docker-machine-driver-hyperkit
+  521  rm '/usr/local/bin/docker-machine-driver-hyperkit'
+  522  brew link docker-machine-driver-hyperkit
+  523  minikube start --vm-driver=hyperkit
+  524  minikube start --vm-driver=hyperkit
+  525  minikube stop; minikube delete
+  526  rm -rf ~/.minikube
+  527  rm /usr/local/bin/minikube
+  528  brew cask install minikube
+  529  brew cask reinstall minikube
+  530  minikube start --vm-driver=hyperkit
+  531  cd ..
+  532  mkdir kube-exper
+  533  cd kube
+  534  cd kube-exper/
+  535  curl -OL https://k8s.io/examples/pods/config/redis-config
+  536  kubectl create configmap example-redis-config --from-file=redis-config
+  537  vsc
+  538  vsc .
+  539  kubectl get configmap example-redis-config -o yaml
+  540  curl https://k8s.io/examples/pods/config/redis-pod.yaml
+  541  touch redis-pod.yaml
+  542  kubectl create -f redis-pod.yaml
+  543  kubectl pods
+  544  kubectl get pods
+  545  kubectl exec
+  546  kubectl exec redis
+  547  kubectl exec -it redis redis-cli
+  548  minkube dashboard
+  549  minikube dashboard
+  550  kubectl get nodes
+  551  kubectl get pods
+  552  kubectl create -f flask-deployment.yml
+  553  kubectl get pods
+  554  kubectl get pods
+  555  kubectl get pods
+  556  kubectl get pods
+  557  kubectl create -f flask-deployment.yml
+  558  kubectl delete flask-5b7875f88d-m2rrd
+  559  kubectl rm flask-5b7875f88d-m2rrd
+  560  kubectl delete flask-5b7875f88d-m2rrd
+  561  kubectl replace --force -f flask-deployment.yml
+  562  kubectl get pods
+  563  kubectl get pods
+  564  kubectl get pods
+  565  kubectl describe pods flask-74779ddfd7-zzlzn
+  566  kubectl replace --force -f flask-deployment.yml
+  567  kubectl describe pods flask-74779ddfd7-zzlzn
+  568  kubectl get pods
+  569  kubectl get pods
+  570  kubectl get pods
+  571  kubectl get pods
+  572  kubectl describe pods flask-76f89594d-kf9mx
+  573  kubectl describe pods flask-76f89594d-kf9mx
+  574  kubectl describe pods flask-76f89594d-kf9mx
+  575  kubectl get pods
+  576  kubectl logs
+  577  kubectl logs flask-76f89594d-kf9mx
+  578  minikube ip
+  579  curl http://192.168.64.11:5050
+  580  touch minikube-ingress.yaml
+  581  minikube addons enable ingress
+  582  kubectl apply -f ./kubernetes/minikube-ingress.yml
+  583  kubectl apply -f minikube-ingress.yml
+  584  kubectl apply -f minikube-ingress.yaml
+  585  echo "$(minikube ip) flask.worker" | sudo tee -a /etc/hosts
+  586  kubectl logs flask-76f89594d-kf9mx
+  587  kubectl replace --force -f flask-deployment.yml
+  588  kubectl replace --force -f minikube-ingress.yaml
+  589  kubectl get pods
+  590  minikube dashboard
+  591  kubectl get pods
+  592  kubectl logs flask-866dcdfdb5-6bjwt
+  593  kubectl get ep -n minikube-ingress
+  594  kubectl get ep -n
+  595  flask-866dcdfdb5-6bjwt
+  596  kubectl get ep -n
+  597  flask-866dcdfdb5-6bjwt
+  598  kubectl get ep -n flask-866dcdfdb5-6bjwt
+  599  kubectl get all
+  600  minikube service
+  601  kubectl get pods
+  602  kubectl expose deployment flask-866dcdfdb5-6bjwt --type=NodePort
+  603  kubectl expose deployment flask --type=NodePort
+  604  kubectl get pods
+  605  minikube service flask
+  606  kubectl replace --force -f minikube-ingress.yaml
+  607  kubectl replace --force -f minikube-ingress.yaml
+  608  kubectl get pods
+  609  kubectl describe ing flask-ingress
+  610  kubectl describe ing flask-ingress
+  611  cat /etc/hosts
+  612  echo "$(minikube ip) flask.worker" | sudo tee -a /etc/hosts
+  613  echo "$(minikube ip) flask.worker"
+  614  kubectl delete -f minikube-ingress
+  615  kubectl delete -f minikube-ingress.yaml
+  616  kubectl describe ing flask-ingress
+  617  kubectl create -f minikube-ingress.yaml
+  618  kubectl replace --force -f minikube-ingress.yaml
+  619  echo "$(minikube ip) flask.worker"
+  620  kubectl describe ing flask-ingress
+  621  kubectl describe ing minikube-ingress
+  622  kubectl get pods
+  623  kubectl logs echo flask
+  624  kubectl logs flask
+  625  kubectl logs flask-866dcdfdb5-6bjwt
+  626  kubectl get flask-866dcdfdb5-6bjwt
+  627  kubectl get services
+  628  kubectl replace --force -f flask-deployment.yml
+  629  kubectl replace --force -f flask-deployment.yml
+  630  kubectl get pods
+  631  kubectl replace --force -f minikube-ingress
+  632  kubectl replace --force -f minikube-ingress.yaml
+  633  kubectl get pods
+  634  kubectl describe ing flask-ingress
+  635  kubectl describe ing minikube-ingress
+  636  minikube ip
+  637  cat /etc/hosts
+  638  kubectl apply -f minikube-ingress.yaml
+  639  kubectl replace --force -f minikube-ingress.yaml
+  640  kubectl exec -n minikube-ingress <ingress pod> -- curl -v flask:8080
+  641  kubectl describe ing minikube-ingress
+  642  kubectl get ing
+  643  kubectl describe ing minikube-ingress
+  644  kubectl edit ing minikube-ingress
+  645  kubectl describe ing minikube-ingress
+  646  kubectl describe ing minikube-ingress
+  647  kubectl expose deployment flask --type=NodePort
+  648  kubectl pods
+  649  kubectl get pods
+  650  kubectl delete flask-8dd9786fd-mxcqk
+  651  kubectl delete -f flask-deployment.yml
+  652  kubectl run flask --image=comporg/flask:kube-0 --port=5000
+  653  kubectl get pods
+  654  kubectl expose deployment flask --type=NodePort
+  655  minikube service flask
+  656  kubectl get pods
+  657  kubectl logs flask-77d894d54b-bnkz2
+  658  kubectl get services
+  659  kube delete services flask
+  660  kubectl delete flask
+  661  kubectl delete pod,service flask
+  662  kubectl delete pod,service flask-77d894d54b-bnkz2
+  663  kubectl run flask --image=comporg/flask:kube-0 --port=5000
+  664  kubectl get pods
+  665  kubectl expose deployment flask --type=NodePort
+  666  minikube service flask
+  667  minikube addons enable ingress
+  668  kubectl get endpoints
+  669  kubectl get services
+  670  kubectl create -f minikube-ingress.yaml
+  671  touch notes
+  672  touch notes.txt
+  673  kubectl get deployment
+  674  kubectl expose redis --port=NodePort
+  675  kubectl expose deployment redis --type=NodePort
+  676  kubectl get pods
+  677  kubectl get services
+  678  kubectl expose redis
+  679  kubectl get pods -o wide
+  680  docker exec -it flask /bin/bash
+  681  kubectl exec -it flask /bin/bash
+  682  kubectl exec -it flask-77d894d54b-r4f67 /bin/bash
+  683  kubectl exec -it redis redis-cli
+  684  kubectl describe pods
+  685  kubectl expose deployment redis
+  686  touch redis-service.yaml
+  687  kubectl delete pods,services redis
+  688  kubectl create -f redis-deployment.yaml
+  689  kubectl create -f redis-deployment.yaml
+  690  kubectl create -f redis-deployment.yaml
+  691  kubectl get pods
+  692  kubectl get pods
+  693  kubectl get pods
+  694  kubectl get pods
+  695  kubectl get pods
+  696  kubectl get pods
+  697  kubectl replace -f redis-deployment.yaml
+  698  kubectl get pods
+  699  kubectl get pods
+  700  kubectl get pods
+  701  kubectl get pods
+  702  kubectl expose deployment -f redis-deployment.yaml
+  703  kubectl expose deployment redis
+  704  kubectl get pods
+  705  kubectl get pods -o
+  706  kubectl get pods
+  707  kubectl get services
+  708  kubectl get services -o wide
+  709  kubectl get pods -o wide
+  710  history
+  711  kubectl exec -it flask-77d894d54b-r4f67 /bin/bash
+  712  kubectl exec -it redis /bin/bash
+  713  kubectl get pods
+  714  kubectl exec -it redis-6d94b86d46-4cdk4 /bin/bash
+  715  kubectl exec -it redis-6d94b86d46-4cdk4 redis-cli
+  716  kubectl exec -it flask-77d894d54b-r4f67 /bin/bash
+  717  kubectl replace -f flask-deployment.yml
+  718  kubectl get pods
+  719  kubectl get pods
+  720  kubectl delete pods,services flask-77d894d54b-r4f67
+  721  kubectl get services
+  722  kubectl exec -it flask-87fdcb5f5-8kjmb /bin/bash
+  723  kubectl get pods
+  724  kubectl get logs -f flask-87fdcb5f5-8kjmb
+  725  kubectl get logs flask-87fdcb5f5-8kjmb
+  726  kubectl logs flask-87fdcb5f5-8kjmb
+  727  kubectl logs flask-87fdcb5f5-8kjmb -f
+  728  kubectl get pods
+  729  kubectl delete flask-87fdcb5f5-8kjmb
+  730  kubectl delete pods flask-87fdcb5f5-8kjmb
+  731  kubectl get services
+  732  kubectl get pods
+  733  kubectl logs flask-77d894d54b-xxflv -f
+  734  touch celery-deployment.yaml
+  735  touch celery-service.yaml
+  736  kubectl replace -f flask-deployment.yml
+  737  kubectl get pods
+  738  kubectl get pods
+  739  kubectl get pods
+  740  kubectl get pods
+  741  kubectl get services
+  742  kubectl delete pods flask-77d894d54b-xxflv flask-87fdcb5f5-8l85x
+  743  kubectl get pods
+  744  kubectl get pods
+  745  kubectl get pods
+  746  kubectl get pods
+  747  kubectl get pods
+  748  kubectl get pods
+  749  kubectl get pods
+  750  kubectl get pods
+  751  kubectl get pods
+  752  kubectl get logs -f flask-77d894d54b-dx4n7
+  753  kubectl get logs flask-77d894d54b-dx4n7 -f
+  754  kubectl get logs flask-77d894d54b-dx4n7
+  755  kubectl logs flask-77d894d54b-dx4n7 -f
+  756  kubectl get pods
+  757  kubectl logs flask-87fdcb5f5-vz424 -f
+  758  kubectl get pods
+  759  kubectl delete pods -l name=flask
+  760  kubectl delete pods -l app=flask
+  761  kubectl get pods
+  762  kubectl get pods
+  763  kubectl get pods
+  764  kubectl get pods
+  765  kubectl delete pods,services -l app=flask
+  766  kubectl get pods
+  767  kubectl get pods
+  768  kubectl get pods
+  769  kubectl get pods
+  770  kubectl get pods
+  771  kubectl delete deployment -f flask-deployment.yml
+  772  kubectl delete deployment flask
+  773  kubectl get pods
+  774  kubectl get pods
+  775  kubectl get pods
+  776  kubectl get pods
+  777  kubectl get pods
+  778  kubectl get pods
+  779  kubectl get pods
+  780  kubectl exec -it flask-77d894d54b-dx4n7 /bin/bash
+  781  kubectl get pods
+  782  kubectl delete pods flask-77d894d54b-dx4n7
+  783  kubectl get pods
+  784  kubectl get pods
+  785  kubectl get pods
+  786  kubectl get pods
+  787  kubectl get pods
+  788  kubectl get services
+  789  kubectl create -f flask-deployment.yml
+  790  kubectl replace -f flask-deployment.yml
+  791  kubectl get pods
+  792  kubectl get pods
+  793  kubectl get pods
+  794  kubectl get pods
+  795  kubectl get pods
+  796  kubectl delete pods flask-77d894d54b-h97cv
+  797  kubectl get pods
+  798  kubectl get pods
+  799  kubectl exec -it flask-77d894d54b-5z8nd
+  800  kubectl exec -it flask-77d894d54b-5z8nd /bin/bash
+  801  kubectl
+  802  kubectl
+  803  kubectl get pods
+  804  clear
+  805  kubectl get pods
+  806  kubectl get services
+  807  kubectl edit deployment flask
+  808  kubectl set image deployment/flask flask=comporg/kube-4
+  809  kubectl set image deployment/flask flask=comporg/flask:kube-4
+  810  kubectl set image deployment/flask flask=comporg/flask
+  811  kubectl get pods
+  812  kubectl get pods
+  813  kubectl get pods
+  814  kubectl get pods
+  815  kubectl get pods
+  816  kubectl get pods
+  817  kubectl set image deployment/flask flask=comporg/flask:kube-4
+  818  kubectl get pods
+  819  kubectl get pods
+  820  kubectl get pods
+  821  kubectl get pods
+  822  kubectl get pods
+  823  kubectl get pods
+  824  kubectl get pods
+  825  kubectl get pods
+  826  kubectl exec -it flask-6bf6bb9c94-hjzxb /bin/bash
+  827  kubectl exec -it flask-77d894d54b-5z8nd /bin/bash
+  828  kubectl delete pods flask-77d894d54b-5z8nd
+  829  kubectl get pods
+  830  kubectl get pods
+  831  kubectl get pods
+  832  kubectl get pods
+  833  kubectl get pods
+  834  kubectl get pods
+  835  kubectl get pods
+  836  kubectl exec -it flask-77d894d54b-v6jn7 /bin/bash
+  837  kubernetes delete flask
+  838  kubernetes delete service flask
+  839  kubectl delete service flask
+  840  kubectl delete pods -l app=flask
+  841  kubectl get pods
+  842  kubectl get pods
+  843  kubectl get pods
+  844  kubectl get services
+  845  kubernetes delete --all
+  846  kubectl delete --all
+  847  kubectl delete deployment flask
+  848  kubectl get services
+  849  kubectl get pods
+  850  kubectl delete pods flask-77d894d54b-v6jn7 -force
+  851  kubectl delete pods flask-77d894d54b-v6jn7 --force
+  852  kubectl get pods
+  853  kubectl get pods
+  854  history
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ minikube stop
+✋  Stopping "minikube" in hyperkit ...
+🛑  "minikube" stopped.
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ minikube delete
+🔥  Deleting "minikube" from hyperkit ...
+💔  The "minikube" cluster has been deleted.
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ minikube start --vm-driver=hyperkit
+😄  minikube v0.35.0 on darwin (amd64)
+🔥  Creating hyperkit VM (CPUs=2, Memory=2048MB, Disk=20000MB) ...
+📶  "minikube" IP address is 192.168.64.12
+🐳  Configuring Docker as the container runtime ...
+✨  Preparing Kubernetes environment ...
+🚜  Pulling images required by Kubernetes v1.13.4 ...
+🚀  Launching Kubernetes v1.13.4 using kubeadm ...
+⌛  Waiting for pods: apiserver proxy etcd scheduler controller addon-manager dns
+🔑  Configuring cluster permissions ...
+🤔  Verifying component health .....
+💗  kubectl is now configured to use "minikube"
+🏄  Done! Thank you for using minikube!
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+No resources found.
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl apply -f minikube-ingress.yaml
+ingress "ingress-tutorial" created
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl create -f redis-deployment.yaml
+deployment "redis" created
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl expose deployment redis --type=NodePort
+service "redis" exposed
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl create -f flask-deployment.yml
+deployment "flask" created
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl expose deployment flask --type=NodePort
+service "flask" exposed
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   0/1       ContainerCreating   0          18s
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          2m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   0/1       ContainerCreating   0          21s
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          2m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   0/1       ContainerCreating   0          25s
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          2m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   0/1       ContainerCreating   0          26s
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          2m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   0/1       ContainerCreating   0          28s
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          2m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   0/1       ContainerCreating   0          30s
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          2m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   0/1       ContainerCreating   0          32s
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          2m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          1m
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          4m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          1m
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          4m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          1m
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          4m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          2m
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          4m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl logs redis-6d94b86d46-nzrmw
+Error from server (BadRequest): container "redis" in pod "redis-6d94b86d46-nzrmw" is waiting to start: ContainerCreating
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl logs redis-6d94b86d46-nzrmw
+Error from server (BadRequest): container "redis" in pod "redis-6d94b86d46-nzrmw" is waiting to start: ContainerCreating
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          3m
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          5m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          3m
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          5m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          3m
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          5m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          3m
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          5m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          3m
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          5m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          8m
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          10m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          8m
+redis-6d94b86d46-nzrmw   0/1       ContainerCreating   0          10m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl replace -f redis-deployment.yaml
+deployment "redis" replaced
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          9m
+redis-6d94b86d46-nzrmw   0/1       Terminating         0          11m
+redis-f4bc5d8bd-r5np6    0/1       ContainerCreating   0          5s
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          9m
+redis-f4bc5d8bd-r5np6    0/1       ContainerCreating   0          7s
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          9m
+redis-f4bc5d8bd-r5np6    0/1       ContainerCreating   0          8s
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          9m
+redis-f4bc5d8bd-r5np6    0/1       ContainerCreating   0          9s
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods -f
+Error: flag needs an argument: 'f' in -f
+
+
+Examples:
+  # List all pods in ps output format.
+  kubectl get pods
+
+  # List all pods in ps output format with more information (such as node name).
+  kubectl get pods -o wide
+
+  # List a single replication controller with specified NAME in ps output format.
+  kubectl get replicationcontroller web
+
+  # List a single pod in JSON output format.
+  kubectl get -o json pod web-pod-13je7
+
+  # List a pod identified by type and name specified in "pod.yaml" in JSON output format.
+  kubectl get -f pod.yaml -o json
+
+  # Return only the phase value of the specified pod.
+  kubectl get -o template pod/web-pod-13je7 --template={{.status.phase}}
+
+  # List all replication controllers and services together in ps output format.
+  kubectl get rc,services
+
+  # List one or more resources by their type and names.
+  kubectl get rc/web service/frontend pods/web-pod-13je7
+
+  # List all resources with different types.
+  kubectl get all
+
+Options:
+      --all-namespaces=false: If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace.
+      --allow-missing-template-keys=true: If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats.
+      --experimental-use-openapi-print-columns=false: If true, use x-kubernetes-print-column metadata (if present) from openapi schema for displaying a resource.
+      --export=false: If true, use 'export' for the resources.  Exported resources are stripped of cluster-specific information.
+  -f, --filename=[]: Filename, directory, or URL to files identifying the resource to get from a server.
+      --ignore-not-found=false: Treat "resource not found" as a successful retrieval.
+      --include-extended-apis=true: If true, include definitions of new APIs via calls to the API server. [default true]
+      --include-uninitialized=false: If true, the kubectl command applies to uninitialized objects. If explicitly set to false, this flag overrides other flags that make the kubectl commands apply to uninitialized objects, e.g., "--all". Objects with empty metadata.initializers are regarded as initialized.
+  -L, --label-columns=[]: Accepts a comma separated list of labels that are going to be presented as columns. Names are case-sensitive. You can also use multiple flag options like -L label1 -L label2...
+      --no-headers=false: When using the default or custom-column output format, don't print headers (default print headers).
+  -o, --output='': Output format. One of: json|yaml|wide|name|custom-columns=...|custom-columns-file=...|go-template=...|go-template-file=...|jsonpath=...|jsonpath-file=... See custom columns [http://kubernetes.io/docs/user-guide/kubectl-overview/#custom-columns], golang template [http://golang.org/pkg/text/template/#pkg-overview] and jsonpath template [http://kubernetes.io/docs/user-guide/jsonpath].
+      --raw='': Raw URI to request from the server.  Uses the transport specified by the kubeconfig file.
+  -R, --recursive=false: Process the directory used in -f, --filename recursively. Useful when you want to manage related manifests organized within the same directory.
+  -l, --selector='': Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
+  -a, --show-all=false: When printing, show all resources (default hide terminated pods.)
+      --show-kind=false: If present, list the resource type for the requested object(s).
+      --show-labels=false: When printing, show all labels as the last column (default hide labels column)
+      --sort-by='': If non-empty, sort list types using this field specification.  The field specification is expressed as a JSONPath expression (e.g. '{.metadata.name}'). The field in the API resource specified by this JSONPath expression must be an integer or a string.
+      --template='': Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
+  -w, --watch=false: After listing/getting the requested object, watch for changes. Uninitialized objects are excluded if no object name is provided.
+      --watch-only=false: Watch for changes to the requested object(s), without listing/getting first.
+
+Usage:
+  kubectl get [(-o|--output=)json|yaml|wide|custom-columns=...|custom-columns-file=...|go-template=...|go-template-file=...|jsonpath=...|jsonpath-file=...] (TYPE [NAME | -l label] | TYPE/NAME ...) [flags] [options]
+
+Use "kubectl options" for a list of global command-line options (applies to all commands).
+
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods -w
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          9m
+redis-f4bc5d8bd-r5np6    0/1       ContainerCreating   0          29s
+^C(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          10m
+redis-f4bc5d8bd-r5np6    0/1       ContainerCreating   0          1m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          11m
+redis-f4bc5d8bd-r5np6    0/1       ContainerCreating   0          2m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          11m
+redis-f4bc5d8bd-r5np6    0/1       ContainerCreating   0          2m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          11m
+redis-f4bc5d8bd-r5np6    0/1       ContainerCreating   0          2m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          12m
+redis-f4bc5d8bd-r5np6    0/1       ContainerCreating   0          2m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          12m
+redis-f4bc5d8bd-r5np6    0/1       ContainerCreating   0          3m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          12m
+redis-f4bc5d8bd-r5np6    0/1       ContainerCreating   0          3m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          12m
+redis-f4bc5d8bd-r5np6    0/1       ContainerCreating   0          3m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          12m
+redis-f4bc5d8bd-r5np6    0/1       ContainerCreating   0          3m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl replace -f redis-deployment.yaml
+deployment "redis" replaced
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          13m
+redis-f4bc5d8bd-r5np6    0/1       ContainerCreating   0          4m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl delete -f redis-f4bc5d8bd-r5np6
+error: the path "redis-f4bc5d8bd-r5np6" does not exist
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl delete deployment redis
+deployment "redis" deleted
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          13m
+redis-f4bc5d8bd-r5np6    0/1       Terminating   0          4m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running   0          13m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running   0          13m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running   0          13m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl create -f redis-deployment.yaml
+deployment "redis" created
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          14m
+redis-f4bc5d8bd-x5nnr    0/1       ContainerCreating   0          2s
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          15m
+redis-f4bc5d8bd-x5nnr    0/1       ContainerCreating   0          1m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          15m
+redis-f4bc5d8bd-x5nnr    0/1       ContainerCreating   0          1m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          15m
+redis-f4bc5d8bd-x5nnr    0/1       ContainerCreating   0          1m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          15m
+redis-f4bc5d8bd-x5nnr    0/1       ContainerCreating   0          1m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl delete deployment redis
+deployment "redis" deleted
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl create configmap example-redis-config --from-file=redis-config
+configmap "example-redis-config" created
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running   0          17m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running   0          17m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running   0          17m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get configmap example-redis-config -o yaml
+apiVersion: v1
+data:
+  redis-config: |
+    maxmemory 2mb
+    maxmemory-policy allkeys-lru
+kind: ConfigMap
+metadata:
+  creationTimestamp: 2019-03-08T21:29:23Z
+  name: example-redis-config
+  namespace: default
+  resourceVersion: "2434"
+  selfLink: /api/v1/namespaces/default/configmaps/example-redis-config
+  uid: 3ddf6177-41e9-11e9-82ee-4271dcae80ac
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl create -f redis-pod.yaml
+pod "redis" created
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          18m
+redis                    0/1       ContainerCreating   0          9s
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          18m
+redis                    0/1       ContainerCreating   0          11s
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          18m
+redis                    0/1       ContainerCreating   0          13s
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running   0          18m
+redis                    1/1       Running   0          14s
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running   0          18m
+redis                    1/1       Running   0          14s
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl exec -it flask-6bf6bb9c94-xln6p /bin/bash
+(base) root@flask-6bf6bb9c94-xln6p:/home/distributed/api# pyhton
+bash: pyhton: command not found
+(base) root@flask-6bf6bb9c94-xln6p:/home/distributed/api# python
+Python 3.6.8 |Anaconda, Inc.| (default, Dec 30 2018, 01:22:34)
+[GCC 7.3.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import redis
+>>> import os
+>>> client = redis.Redis.from_url(os.environ.get("CELERY_BROKER_URL",
+...                                              "redis://redis:6379/0"))
+>>>
+>>>
+>>> client
+Redis<ConnectionPool<Connection<host=redis,port=6379,db=0>>>
+>>> client.set("hello", "world")
+^CTraceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/opt/conda/lib/python3.6/site-packages/redis/client.py", line 1451, in set
+    return self.execute_command('SET', *pieces)
+  File "/opt/conda/lib/python3.6/site-packages/redis/client.py", line 772, in execute_command
+    connection = pool.get_connection(command_name, **options)
+  File "/opt/conda/lib/python3.6/site-packages/redis/connection.py", line 994, in get_connection
+    connection.connect()
+  File "/opt/conda/lib/python3.6/site-packages/redis/connection.py", line 492, in connect
+    sock = self._connect()
+  File "/opt/conda/lib/python3.6/site-packages/redis/connection.py", line 538, in _connect
+    sock.connect(socket_address)
+KeyboardInterrupt
+>>>
+(base) root@flask-6bf6bb9c94-xln6p:/home/distributed/api#
+(base) root@flask-6bf6bb9c94-xln6p:/home/distributed/api# exit
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running   0          19m
+redis                    1/1       Running   0          1m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl expose deployment redis --type=NodePort
+Error from server (NotFound): deployments.extensions "redis" not found
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl
+kubectl controls the Kubernetes cluster manager.
+
+Find more information at https://github.com/kubernetes/kubernetes.
+
+Basic Commands (Beginner):
+  create         Create a resource from a file or from stdin.
+  expose         Take a replication controller, service, deployment or pod and expose it as a new Kubernetes Service
+  run            Run a particular image on the cluster
+  set            Set specific features on objects
+  run-container  Run a particular image on the cluster. This command is deprecated, use "run" instead
+
+Basic Commands (Intermediate):
+  get            Display one or many resources
+  explain        Documentation of resources
+  edit           Edit a resource on the server
+  delete         Delete resources by filenames, stdin, resources and names, or by resources and label selector
+
+Deploy Commands:
+  rollout        Manage the rollout of a resource
+  rolling-update Perform a rolling update of the given ReplicationController
+  scale          Set a new size for a Deployment, ReplicaSet, Replication Controller, or Job
+  autoscale      Auto-scale a Deployment, ReplicaSet, or ReplicationController
+
+Cluster Management Commands:
+  certificate    Modify certificate resources.
+  cluster-info   Display cluster info
+  top            Display Resource (CPU/Memory/Storage) usage.
+  cordon         Mark node as unschedulable
+  uncordon       Mark node as schedulable
+  drain          Drain node in preparation for maintenance
+  taint          Update the taints on one or more nodes
+
+Troubleshooting and Debugging Commands:
+  describe       Show details of a specific resource or group of resources
+  logs           Print the logs for a container in a pod
+  attach         Attach to a running container
+  exec           Execute a command in a container
+  port-forward   Forward one or more local ports to a pod
+  proxy          Run a proxy to the Kubernetes API server
+  cp             Copy files and directories to and from containers.
+  auth           Inspect authorization
+
+Advanced Commands:
+  apply          Apply a configuration to a resource by filename or stdin
+  patch          Update field(s) of a resource using strategic merge patch
+  replace        Replace a resource by filename or stdin
+  convert        Convert config files between different API versions
+
+Settings Commands:
+  label          Update the labels on a resource
+  annotate       Update the annotations on a resource
+  completion     Output shell completion code for the specified shell (bash or zsh)
+
+Other Commands:
+  api-versions   Print the supported API versions on the server, in the form of "group/version"
+  config         Modify kubeconfig files
+  help           Help about any command
+  plugin         Runs a command-line plugin
+  version        Print the client and server version information
+
+Use "kubectl <command> --help" for more information about a given command.
+Use "kubectl options" for a list of global command-line options (applies to all commands).
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running   0          32m
+redis                    1/1       Running   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl delete pods redis
+pod "redis" deleted
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS        RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running       0          32m
+redis                    1/1       Terminating   0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl create -f redis-deployment.yaml
+deployment "redis" created
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running             0          33m
+redis                    0/1       Terminating         0          14m
+redis-5cb87f8d99-mwcrp   0/1       ContainerCreating   0          3s
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running   0          37m
+redis-5cb87f8d99-mwcrp   1/1       Running   0          4m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl exec -it flask-6bf6bb9c94-xln6p /bin/bash
+(base) root@flask-6bf6bb9c94-xln6p:/home/distributed/api# python
+Python 3.6.8 |Anaconda, Inc.| (default, Dec 30 2018, 01:22:34)
+[GCC 7.3.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import redis
+>>> redis.__version__
+'3.2.0'
+>>> import os
+>>> client = redis.Redis.from_url(os.environ.get("CELERY_BROKER_URL"))
+>>> client.set("hello", "world")
+True
+>>>
+(base) root@flask-6bf6bb9c94-xln6p:/home/distributed/api# exit
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl exec -it redis-5cb87f8d99-mwcrp redis-cli
+127.0.0.1:6379> get "hello"
+"world"
+127.0.0.1:6379>
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                     READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-xln6p   1/1       Running   0          38m
+redis-5cb87f8d99-mwcrp   1/1       Running   0          5m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get logs flask-6bf6bb9c94-xln6p -f
+Error: flag needs an argument: 'f' in -f
+
+
+Examples:
+  # List all pods in ps output format.
+  kubectl get pods
+
+  # List all pods in ps output format with more information (such as node name).
+  kubectl get pods -o wide
+
+  # List a single replication controller with specified NAME in ps output format.
+  kubectl get replicationcontroller web
+
+  # List a single pod in JSON output format.
+  kubectl get -o json pod web-pod-13je7
+
+  # List a pod identified by type and name specified in "pod.yaml" in JSON output format.
+  kubectl get -f pod.yaml -o json
+
+  # Return only the phase value of the specified pod.
+  kubectl get -o template pod/web-pod-13je7 --template={{.status.phase}}
+
+  # List all replication controllers and services together in ps output format.
+  kubectl get rc,services
+
+  # List one or more resources by their type and names.
+  kubectl get rc/web service/frontend pods/web-pod-13je7
+
+  # List all resources with different types.
+  kubectl get all
+
+Options:
+      --all-namespaces=false: If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace.
+      --allow-missing-template-keys=true: If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats.
+      --experimental-use-openapi-print-columns=false: If true, use x-kubernetes-print-column metadata (if present) from openapi schema for displaying a resource.
+      --export=false: If true, use 'export' for the resources.  Exported resources are stripped of cluster-specific information.
+  -f, --filename=[]: Filename, directory, or URL to files identifying the resource to get from a server.
+      --ignore-not-found=false: Treat "resource not found" as a successful retrieval.
+      --include-extended-apis=true: If true, include definitions of new APIs via calls to the API server. [default true]
+      --include-uninitialized=false: If true, the kubectl command applies to uninitialized objects. If explicitly set to false, this flag overrides other flags that make the kubectl commands apply to uninitialized objects, e.g., "--all". Objects with empty metadata.initializers are regarded as initialized.
+  -L, --label-columns=[]: Accepts a comma separated list of labels that are going to be presented as columns. Names are case-sensitive. You can also use multiple flag options like -L label1 -L label2...
+      --no-headers=false: When using the default or custom-column output format, don't print headers (default print headers).
+  -o, --output='': Output format. One of: json|yaml|wide|name|custom-columns=...|custom-columns-file=...|go-template=...|go-template-file=...|jsonpath=...|jsonpath-file=... See custom columns [http://kubernetes.io/docs/user-guide/kubectl-overview/#custom-columns], golang template [http://golang.org/pkg/text/template/#pkg-overview] and jsonpath template [http://kubernetes.io/docs/user-guide/jsonpath].
+      --raw='': Raw URI to request from the server.  Uses the transport specified by the kubeconfig file.
+  -R, --recursive=false: Process the directory used in -f, --filename recursively. Useful when you want to manage related manifests organized within the same directory.
+  -l, --selector='': Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
+  -a, --show-all=false: When printing, show all resources (default hide terminated pods.)
+      --show-kind=false: If present, list the resource type for the requested object(s).
+      --show-labels=false: When printing, show all labels as the last column (default hide labels column)
+      --sort-by='': If non-empty, sort list types using this field specification.  The field specification is expressed as a JSONPath expression (e.g. '{.metadata.name}'). The field in the API resource specified by this JSONPath expression must be an integer or a string.
+      --template='': Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
+  -w, --watch=false: After listing/getting the requested object, watch for changes. Uninitialized objects are excluded if no object name is provided.
+      --watch-only=false: Watch for changes to the requested object(s), without listing/getting first.
+
+Usage:
+  kubectl get [(-o|--output=)json|yaml|wide|custom-columns=...|custom-columns-file=...|go-template=...|go-template-file=...|jsonpath=...|jsonpath-file=...] (TYPE [NAME | -l label] | TYPE/NAME ...) [flags] [options]
+
+Use "kubectl options" for a list of global command-line options (applies to all commands).
+
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl logs flask-6bf6bb9c94-xln6p -f
+[2019-03-08 21:13:11 +0000] [6] [INFO] Starting gunicorn 19.9.0
+[2019-03-08 21:13:11 +0000] [6] [INFO] Listening at: http://0.0.0.0:5000 (6)
+[2019-03-08 21:13:11 +0000] [6] [INFO] Using worker: sync
+[2019-03-08 21:13:11 +0000] [9] [INFO] Booting worker with pid: 9
+^C
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ minikube service flask
+🎉  Opening kubernetes service default/flask in default browser...
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ minikube addons enable ingress
+✅  ingress was successfully enabled
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl create -f minikube-ingress.yaml
+Error from server (AlreadyExists): error when creating "minikube-ingress.yaml": ingresses.extensions "ingress-tutorial" already exists
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl delete -f minikube-ingress.yaml
+ingress "ingress-tutorial" deleted
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl create -f minikube-ingress.yaml
+ingress "ingress-tutorial" created
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl describe ing ingress-tutorial
+Name:             ingress-tutorial
+Namespace:        default
+Address:
+Default backend:  default-http-backend:80 (<none>)
+Rules:
+  Host          Path  Backends
+  ----          ----  --------
+  flask.worker
+                /   flask:5000 (172.17.0.7:5000)
+Annotations:
+Events:
+  Type    Reason  Age   From                      Message
+  ----    ------  ----  ----                      -------
+  Normal  CREATE  15s   nginx-ingress-controller  Ingress default/ingress-tutorial
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl describe ing ingress-tutorial
+Name:             ingress-tutorial
+Namespace:        default
+Address:
+Default backend:  default-http-backend:80 (<none>)
+Rules:
+  Host          Path  Backends
+  ----          ----  --------
+  flask.worker
+                /   flask:5000 (172.17.0.7:5000)
+Annotations:
+Events:
+  Type    Reason  Age   From                      Message
+  ----    ------  ----  ----                      -------
+  Normal  CREATE  17s   nginx-ingress-controller  Ingress default/ingress-tutorial
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl describe ing ingress-tutorial
+Name:             ingress-tutorial
+Namespace:        default
+Address:
+Default backend:  default-http-backend:80 (<none>)
+Rules:
+  Host          Path  Backends
+  ----          ----  --------
+  flask.worker
+                /   flask:5000 (172.17.0.7:5000)
+Annotations:
+Events:
+  Type    Reason  Age   From                      Message
+  ----    ------  ----  ----                      -------
+  Normal  CREATE  22s   nginx-ingress-controller  Ingress default/ingress-tutorial
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ cat /etc/hosts
+##
+# Host Database
+#
+# localhost is used to configure the loopback interface
+# when the system is booting.  Do not change this entry.
+##
+127.0.0.1	localhost
+255.255.255.255	broadcasthost
+::1             localhost
+192.168.64.11 flask.worker
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ minikube ip
+192.168.64.12
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ vim /etc/hosts
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ sudo vim /etc/hosts
+Password:
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl logs flask-6bf6bb9c94-xln6p -f
+[2019-03-08 21:13:11 +0000] [6] [INFO] Starting gunicorn 19.9.0
+[2019-03-08 21:13:11 +0000] [6] [INFO] Listening at: http://0.0.0.0:5000 (6)
+[2019-03-08 21:13:11 +0000] [6] [INFO] Using worker: sync
+[2019-03-08 21:13:11 +0000] [9] [INFO] Booting worker with pid: 9
+172.17.0.1 - - [08/Mar/2019:21:51:51 +0000] "GET / HTTP/1.1" 404 233 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:66.0) Gecko/20100101 Firefox/66.0"
+172.17.0.1 - - [08/Mar/2019:21:51:51 +0000] "GET /favicon.ico HTTP/1.1" 404 233 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:66.0) Gecko/20100101 Firefox/66.0"
+172.17.0.1 - - [08/Mar/2019:21:51:55 +0000] "GET /hello HTTP/1.1" 200 13 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:66.0) Gecko/20100101 Firefox/66.0"
+172.17.0.6 - - [08/Mar/2019:21:55:15 +0000] "GET / HTTP/1.1" 404 233 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:66.0) Gecko/20100101 Firefox/66.0"
+172.17.0.6 - - [08/Mar/2019:21:55:15 +0000] "GET /hello HTTP/1.1" 200 13 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:66.0) Gecko/20100101 Firefox/66.0"
+172.17.0.6 - - [08/Mar/2019:21:55:29 +0000] "GET / HTTP/1.1" 404 233 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:66.0) Gecko/20100101 Firefox/66.0"
+aggregating endpoint
+inputs [{'user_mods': {'matchup': {}}, 'use_full_data': True}]
+172.17.0.6 - - [08/Mar/2019:21:55:34 +0000] "POST /matchups HTTP/1.1" 200 64 "-" "python-requests/2.21.0"
+async_result PENDING
+172.17.0.6 - - [08/Mar/2019:21:55:34 +0000] "GET /query_job?job_id=4a811155-1587-44a1-b340-68256b5ed444 HTTP/1.1" 200 2 "-" "python-requests/2.21.0"
+async_result PENDING
+172.17.0.6 - - [08/Mar/2019:21:55:34 +0000] "GET /query_job?job_id=4a811155-1587-44a1-b340-68256b5ed444 HTTP/1.1" 200 2 "-" "python-requests/2.21.0"
+async_result PENDING
+172.17.0.6 - - [08/Mar/2019:21:55:35 +0000] "GET /query_job?job_id=4a811155-1587-44a1-b340-68256b5ed444 HTTP/1.1" 200 2 "-" "python-requests/2.21.0"
+async_result PENDING
+172.17.0.6 - - [08/Mar/2019:21:55:36 +0000] "GET /query_job?job_id=4a811155-1587-44a1-b340-68256b5ed444 HTTP/1.1" 200 2 "-" "python-requests/2.21.0"
+async_result PENDING
+172.17.0.6 - - [08/Mar/2019:21:55:37 +0000] "GET /query_job?job_id=4a811155-1587-44a1-b340-68256b5ed444 HTTP/1.1" 200 2 "-" "python-requests/2.21.0"
+async_result PENDING
+172.17.0.6 - - [08/Mar/2019:21:55:38 +0000] "GET /query_job?job_id=4a811155-1587-44a1-b340-68256b5ed444 HTTP/1.1" 200 2 "-" "python-requests/2.21.0"
+async_result PENDING
+172.17.0.6 - - [08/Mar/2019:21:55:39 +0000] "GET /query_job?job_id=4a811155-1587-44a1-b340-68256b5ed444 HTTP/1.1" 200 2 "-" "python-requests/2.21.0"
+async_result PENDING
+172.17.0.6 - - [08/Mar/2019:21:55:40 +0000] "GET /query_job?job_id=4a811155-1587-44a1-b340-68256b5ed444 HTTP/1.1" 200 2 "-" "python-requests/2.21.0"
+^C
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl create -f matchups-deployment.yaml
+deployment "matchups" created
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                        READY     STATUS         RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running        0          44m
+matchups-77c76f67fb-8f8kr   0/1       ErrImagePull   0          5s
+redis-5cb87f8d99-mwcrp      1/1       Running        0          11m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl delete deployment matchups
+deployment "matchups" deleted
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl create -f matchups-deployment.yaml
+deployment "matchups" created
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                        READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running             0          45m
+matchups-788c958c9c-rp5ln   0/1       ContainerCreating   0          3s
+redis-5cb87f8d99-mwcrp      1/1       Running             0          12m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                        READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running             0          46m
+matchups-788c958c9c-rp5ln   0/1       ContainerCreating   0          31s
+redis-5cb87f8d99-mwcrp      1/1       Running             0          13m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                        READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running             0          46m
+matchups-788c958c9c-rp5ln   0/1       ContainerCreating   0          32s
+redis-5cb87f8d99-mwcrp      1/1       Running             0          13m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                        READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running             0          46m
+matchups-788c958c9c-rp5ln   0/1       ContainerCreating   0          32s
+redis-5cb87f8d99-mwcrp      1/1       Running             0          13m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                        READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running             0          46m
+matchups-788c958c9c-rp5ln   0/1       ContainerCreating   0          33s
+redis-5cb87f8d99-mwcrp      1/1       Running             0          13m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods -w
+NAME                        READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running             0          46m
+matchups-788c958c9c-rp5ln   0/1       ContainerCreating   0          36s
+redis-5cb87f8d99-mwcrp      1/1       Running             0          13m
+^C(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                        READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running             0          47m
+matchups-788c958c9c-rp5ln   0/1       ContainerCreating   0          1m
+redis-5cb87f8d99-mwcrp      1/1       Running             0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                        READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running             0          47m
+matchups-788c958c9c-rp5ln   0/1       ContainerCreating   0          1m
+redis-5cb87f8d99-mwcrp      1/1       Running             0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                        READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running             0          47m
+matchups-788c958c9c-rp5ln   0/1       ContainerCreating   0          1m
+redis-5cb87f8d99-mwcrp      1/1       Running             0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                        READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running             0          47m
+matchups-788c958c9c-rp5ln   0/1       ContainerCreating   0          1m
+redis-5cb87f8d99-mwcrp      1/1       Running             0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                        READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running             0          47m
+matchups-788c958c9c-rp5ln   0/1       ContainerCreating   0          1m
+redis-5cb87f8d99-mwcrp      1/1       Running             0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                        READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running             0          47m
+matchups-788c958c9c-rp5ln   0/1       ContainerCreating   0          1m
+redis-5cb87f8d99-mwcrp      1/1       Running             0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                        READY     STATUS              RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running             0          47m
+matchups-788c958c9c-rp5ln   0/1       ContainerCreating   0          1m
+redis-5cb87f8d99-mwcrp      1/1       Running             0          14m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                        READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running   0          48m
+matchups-788c958c9c-rp5ln   1/1       Running   0          2m
+redis-5cb87f8d99-mwcrp      1/1       Running   0          15m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl get pods
+NAME                        READY     STATUS    RESTARTS   AGE
+flask-6bf6bb9c94-xln6p      1/1       Running   0          48m
+matchups-788c958c9c-rp5ln   1/1       Running   0          2m
+redis-5cb87f8d99-mwcrp      1/1       Running   0          15m
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ kubectl logs matchups-788c958c9c-rp5ln -f
+/opt/conda/lib/python3.6/site-packages/celery/platforms.py:796: RuntimeWarning: You're running the worker with superuser privileges: this is
+absolutely not recommended!
+
+Please specify a different user using the --uid option.
+
+User information: uid=0 euid=0 gid=0 egid=0
+
+  uid=uid, euid=euid, gid=gid, egid=egid,
+[2019-03-08 21:59:57,046: INFO/MainProcess] Connected to redis://redis:6379/0
+[2019-03-08 21:59:57,054: INFO/MainProcess] mingle: searching for neighbors
+[2019-03-08 21:59:58,131: INFO/MainProcess] mingle: all alone
+[2019-03-08 21:59:58,214: INFO/MainProcess] celery@matchups-788c958c9c-rp5ln ready.
+[2019-03-08 21:59:58,412: INFO/MainProcess] Received task: matchups_tasks.matchups_task[3b599d91-ccd3-4218-944a-f0edbc86d4f8]
+/opt/conda/lib/python3.6/site-packages/celery/platforms.py:796: RuntimeWarning: You're running the worker with superuser privileges: this is
+absolutely not recommended!
+
+Please specify a different user using the --uid option.
+
+User information: uid=0 euid=0 gid=0 egid=0
+
+  uid=uid, euid=euid, gid=gid, egid=egid,
+[2019-03-08 21:59:59,137: WARNING/ForkPoolWorker-1] getting data according to:
+[2019-03-08 21:59:59,137: WARNING/ForkPoolWorker-1] True
+[2019-03-08 21:59:59,137: WARNING/ForkPoolWorker-1] OrderedDict([('end_date', [{'use_full_data': True, 'value': datetime.date(2018, 11, 10)}]), ('pitcher', [{'use_full_data': True, 'value': 'Clayton Kershaw'}]), ('batter', [{'use_full_data': True, 'value': ['Freddie Freeman', 'Bryce Harper']}]), ('start_date', [{'use_full_data': True, 'value': datetime.date(2008, 1, 1)}])])
+[2019-03-08 21:59:59,137: WARNING/ForkPoolWorker-1] reading data from https://s3.amazonaws.com/hank-statcast/statcast2018.parquet
+[2019-03-08 22:00:01,943: WARNING/ForkPoolWorker-1] /opt/conda/lib/python3.6/site-packages/pyarrow/pandas_compat.py:708: FutureWarning: .labels was deprecated in version 0.24.0. Use .codes instead.
+  labels = getattr(columns, 'labels', None) or [
+[2019-03-08 22:00:01,944: WARNING/ForkPoolWorker-1] /opt/conda/lib/python3.6/site-packages/pyarrow/pandas_compat.py:735: FutureWarning: the 'labels' keyword is deprecated, use 'codes' instead
+  return pd.MultiIndex(levels=new_levels, labels=labels, names=columns.names)
+[2019-03-08 22:00:01,946: WARNING/ForkPoolWorker-1] /opt/conda/lib/python3.6/site-packages/pyarrow/pandas_compat.py:752: FutureWarning: .labels was deprecated in version 0.24.0. Use .codes instead.
+  labels, = index.labels
+[2019-03-08 22:00:01,955: WARNING/ForkPoolWorker-1] data read
+[2019-03-08 22:00:02,345: WARNING/ForkPoolWorker-1] filtered by date
+[2019-03-08 22:00:02,393: WARNING/ForkPoolWorker-1] pvall
+[2019-03-08 22:00:02,473: WARNING/ForkPoolWorker-1] player_name        batter_name  ... type       date
+6196441  Clayton Kershaw        David Price  ...    X 2018-10-28
+6196442  Clayton Kershaw        David Price  ...    B 2018-10-28
+6196443  Clayton Kershaw        David Price  ...    S 2018-10-28
+6196444  Clayton Kershaw        David Price  ...    B 2018-10-28
+6196445  Clayton Kershaw  Christian Vazquez  ...    S 2018-10-28
+6196446  Clayton Kershaw  Christian Vazquez  ...    S 2018-10-28
+6196447  Clayton Kershaw  Christian Vazquez  ...    S 2018-10-28
+6196448  Clayton Kershaw      Rafael Devers  ...    X 2018-10-28
+6196449  Clayton Kershaw      Rafael Devers  ...    S 2018-10-28
+6196450  Clayton Kershaw      Rafael Devers  ...    S 2018-10-28
+6196451  Clayton Kershaw         Brock Holt  ...    X 2018-10-28
+6196452  Clayton Kershaw         Brock Holt  ...    S 2018-10-28
+6196453  Clayton Kershaw         Brock Holt  ...    B 2018-10-28
+6196454  Clayton Kershaw         Brock Holt  ...    B 2018-10-28
+6196455  Clayton Kershaw    Xander Bogaerts  ...    X 2018-10-28
+6196456  Clayton Kershaw    Xander Bogaerts  ...    S 2018-10-28
+6196457  Clayton Kershaw     J. D. Martinez  ...    X 2018-10-28
+6196458  Clayton Kershaw     J. D. Martinez  ...    S 2018-10-28
+6196459  Clayton Kershaw     J. D. Martinez  ...    B 2018-10-28
+6196469  Clayton Kershaw       Steve Pearce  ...    X 2018-10-28
+6196470  Clayton Kershaw  Andrew Benintendi  ...    X 2018-10-28
+6196471  Clayton Kershaw  Andrew Benintendi  ...    B 2018-10-28
+6196472  Clayton Kershaw       Mookie Betts  ...    X 2018-10-28
+6196473  Clayton Kershaw       Mookie Betts  ...    S 2018-10-28
+6196474  Clayton Kershaw       Mookie Betts  ...    B 2018-10-28
+6196475  Clayton Kershaw       Mookie Betts  ...    B 2018-10-28
+6196476  Clayton Kershaw       Mookie Betts  ...    S 2018-10-28
+6196477  Clayton Kershaw        David Price  ...    X 2018-10-28
+6196489  Clayton Kershaw  Christian Vazquez  ...    X 2018-10-28
+6196490  Clayton Kershaw  Christian Vazquez  ...    S 2018-10-28
+...                  ...                ...  ...  ...        ...
+6924088  Clayton Kershaw          Joe Panik  ...    B 2018-03-29
+6924089  Clayton Kershaw     Austin Jackson  ...    X 2018-03-29
+6924108  Clayton Kershaw           Ty Blach  ...    S 2018-03-29
+6924109  Clayton Kershaw           Ty Blach  ...    S 2018-03-29
+6924110  Clayton Kershaw           Ty Blach  ...    B 2018-03-29
+6924111  Clayton Kershaw           Ty Blach  ...    B 2018-03-29
+6924112  Clayton Kershaw           Ty Blach  ...    S 2018-03-29
+6924113  Clayton Kershaw   Brandon Crawford  ...    X 2018-03-29
+6924114  Clayton Kershaw       Brandon Belt  ...    X 2018-03-29
+6924115  Clayton Kershaw       Brandon Belt  ...    S 2018-03-29
+6924116  Clayton Kershaw       Brandon Belt  ...    B 2018-03-29
+6924117  Clayton Kershaw       Brandon Belt  ...    S 2018-03-29
+6924118  Clayton Kershaw       Brandon Belt  ...    B 2018-03-29
+6924119  Clayton Kershaw       Hunter Pence  ...    X 2018-03-29
+6924120  Clayton Kershaw      Evan Longoria  ...    X 2018-03-29
+6924121  Clayton Kershaw      Evan Longoria  ...    B 2018-03-29
+6924122  Clayton Kershaw      Evan Longoria  ...    S 2018-03-29
+6924148  Clayton Kershaw       Buster Posey  ...    S 2018-03-29
+6924149  Clayton Kershaw       Buster Posey  ...    S 2018-03-29
+6924150  Clayton Kershaw       Buster Posey  ...    B 2018-03-29
+6924151  Clayton Kershaw       Buster Posey  ...    S 2018-03-29
+6924152  Clayton Kershaw   Andrew McCutchen  ...    X 2018-03-29
+6924153  Clayton Kershaw   Andrew McCutchen  ...    B 2018-03-29
+6924154  Clayton Kershaw   Andrew McCutchen  ...    S 2018-03-29
+6924155  Clayton Kershaw          Joe Panik  ...    X 2018-03-29
+6924156  Clayton Kershaw     Austin Jackson  ...    X 2018-03-29
+6924157  Clayton Kershaw     Austin Jackson  ...    S 2018-03-29
+6924158  Clayton Kershaw     Austin Jackson  ...    B 2018-03-29
+6924159  Clayton Kershaw     Austin Jackson  ...    S 2018-03-29
+6924160  Clayton Kershaw     Austin Jackson  ...    S 2018-03-29
+
+[2807 rows x 15 columns]
+[2019-03-08 22:00:02,511: WARNING/ForkPoolWorker-1] Clayton Kershaw
+[2019-03-08 22:00:02,512: WARNING/ForkPoolWorker-1] Freddie Freeman
+[2019-03-08 22:00:02,737: WARNING/ForkPoolWorker-1] Clayton Kershaw
+[2019-03-08 22:00:02,738: WARNING/ForkPoolWorker-1] Bryce Harper
+[2019-03-08 22:00:03,033: WARNING/ForkPoolWorker-1] finished result
+[2019-03-08 22:00:03,103: INFO/ForkPoolWorker-1] Task matchups_tasks.matchups_task[3b599d91-ccd3-4218-944a-f0edbc86d4f8] succeeded in 4.687347155000225s: {'outputs': [{'dimension': 'Freddie Freeman', 'tags': {...}, 'title': 'Normalized pitch outcome by count for Clayton Kershaw v. Freddie Freeman', 'downloadable': [...], 'renderable': '<table class="dataframe">
+  <thead>
+    <tr>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th>Proportion of pitch outcome by count</th>
+    </tr>
+    <tr>
+      <th>Balls</th>
+      <th>Strikes</th>
+      <th>Pitch Outcome</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th rowspan="4" valign="top">0.0</th>
+      <th rowspan="2" valign="top">0.0</th>
+      <th>S</th>
+      <td>0.666667</td>
+    </tr>
+    <tr>
+      <th>B</th>
+      <td>0.333333</td>
+    </tr>
+    <tr>
+      <th rowspan="2" valign="top">1.0</th>
+      <th>B</th>
+      <td>0.750000</td>
+    </tr>
+    <tr>
+      <th>X</th>
+      <td>0.250000</td>
+    </tr>
+    <tr>
+      <th rowspan="6" valign="top">1.0</th>
+      <th rowspan="2" valign="top">0.0</th>
+      <th>B</th>
+      <td>0.500000</td>
+    </tr>
+    <tr>
+      <th>S</th>
+     ...'}, ...]}
+[2019-03-08 22:00:03,105: INFO/MainProcess] Received task: matchups_tasks.matchups_postprocess[4a811155-1587-44a1-b340-68256b5ed444]
+[2019-03-08 22:00:03,110: INFO/ForkPoolWorker-1] Task matchups_tasks.matchups_postprocess[4a811155-1587-44a1-b340-68256b5ed444] succeeded in 0.0019566060000215657s: {'outputs': [{'dimension': 'Freddie Freeman', 'tags': {...}, 'title': 'Normalized pitch outcome by count for Clayton Kershaw v. Freddie Freeman', 'downloadable': [...], 'renderable': '<table class="dataframe">
+  <thead>
+    <tr>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th>Proportion of pitch outcome by count</th>
+    </tr>
+    <tr>
+      <th>Balls</th>
+      <th>Strikes</th>
+      <th>Pitch Outcome</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th rowspan="4" valign="top">0.0</th>
+      <th rowspan="2" valign="top">0.0</th>
+      <th>S</th>
+      <td>0.666667</td>
+    </tr>
+    <tr>
+      <th>B</th>
+      <td>0.333333</td>
+    </tr>
+    <tr>
+      <th rowspan="2" valign="top">1.0</th>
+      <th>B</th>
+      <td>0.750000</td>
+    </tr>
+    <tr>
+      <th>X</th>
+      <td>0.250000</td>
+    </tr>
+    <tr>
+      <th rowspan="6" valign="top">1.0</th>
+      <th rowspan="2" valign="top">0.0</th>
+      <th>B</th>
+      <td>0.500000</td>
+    </tr>
+    <tr>
+      <th>S</th>
+     ...'}, ...]}
+^C
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ minikube stop
+✋  Stopping "minikube" in hyperkit ...
+🛑  "minikube" stopped.
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ minikube delete
+🔥  Deleting "minikube" from hyperkit ...
+💔  The "minikube" cluster has been deleted.
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$ history
+  492  cd Documents/
+  493  cd comp
+  494  git status
+  495  git checkout master
+  496  git merge origin/master
+  497  cd ..
+  498  git clone https://github.com/testdrivenio/flask-vue-kubernetes
+  499  cd flask-vue-kubernetes/
+  500  docker-compose up -d --build
+  501  docker ps
+  502  docker-compose exec server python manage.py recreate_db
+  503  docker-compose exec server python manage.py seed_db
+  504  curl http://localhost:5001/books/ping
+  505  curl http://localhost:5001/books
+  506  docker-compose down
+  507  vsc .
+  508  brew update minikube
+  509  brew upgrade minikube
+  510  brew install kubectl
+  511  brew install docker-machine-driver-hyperkit
+  512    sudo chown root:wheel /usr/local/opt/docker-machine-driver-hyperkit/bin/docker-machine-driver-hyperkit
+  513    sudo chmod u+s /usr/local/opt/docker-machine-driver-hyperkit/bin/docker-machine-driver-hyperkit
+  514  brew cask install minikube
+  515  rm /usr/local/bin/minikube
+  516  brew cask install minikube
+  517  minikube start --vm-driver=hyperkit
+  518  minikube start --vm-driver=hyperkit
+  519  brew install docker-machine-driver-hyperkit
+  520  brew link docker-machine-driver-hyperkit
+  521  rm '/usr/local/bin/docker-machine-driver-hyperkit'
+  522  brew link docker-machine-driver-hyperkit
+  523  minikube start --vm-driver=hyperkit
+  524  minikube start --vm-driver=hyperkit
+  525  minikube stop; minikube delete
+  526  rm -rf ~/.minikube
+  527  rm /usr/local/bin/minikube
+  528  brew cask install minikube
+  529  brew cask reinstall minikube
+  530  minikube start --vm-driver=hyperkit
+  531  cd ..
+  532  mkdir kube-exper
+  533  cd kube
+  534  cd kube-exper/
+  535  curl -OL https://k8s.io/examples/pods/config/redis-config
+  536  kubectl create configmap example-redis-config --from-file=redis-config
+  537  vsc
+  538  vsc .
+  539  kubectl get configmap example-redis-config -o yaml
+  540  curl https://k8s.io/examples/pods/config/redis-pod.yaml
+  541  touch redis-pod.yaml
+  542  kubectl create -f redis-pod.yaml
+  543  kubectl pods
+  544  kubectl get pods
+  545  kubectl exec
+  546  kubectl exec redis
+  547  kubectl exec -it redis redis-cli
+  548  minkube dashboard
+  549  minikube dashboard
+  550  kubectl get nodes
+  551  kubectl get pods
+  552  kubectl create -f flask-deployment.yml
+  553  kubectl get pods
+  554  kubectl get pods
+  555  kubectl get pods
+  556  kubectl get pods
+  557  kubectl create -f flask-deployment.yml
+  558  kubectl delete flask-5b7875f88d-m2rrd
+  559  kubectl rm flask-5b7875f88d-m2rrd
+  560  kubectl delete flask-5b7875f88d-m2rrd
+  561  kubectl replace --force -f flask-deployment.yml
+  562  kubectl get pods
+  563  kubectl get pods
+  564  kubectl get pods
+  565  kubectl describe pods flask-74779ddfd7-zzlzn
+  566  kubectl replace --force -f flask-deployment.yml
+  567  kubectl describe pods flask-74779ddfd7-zzlzn
+  568  kubectl get pods
+  569  kubectl get pods
+  570  kubectl get pods
+  571  kubectl get pods
+  572  kubectl describe pods flask-76f89594d-kf9mx
+  573  kubectl describe pods flask-76f89594d-kf9mx
+  574  kubectl describe pods flask-76f89594d-kf9mx
+  575  kubectl get pods
+  576  kubectl logs
+  577  kubectl logs flask-76f89594d-kf9mx
+  578  minikube ip
+  579  curl http://192.168.64.11:5050
+  580  touch minikube-ingress.yaml
+  581  minikube addons enable ingress
+  582  kubectl apply -f ./kubernetes/minikube-ingress.yml
+  583  kubectl apply -f minikube-ingress.yml
+  584  kubectl apply -f minikube-ingress.yaml
+  585  echo "$(minikube ip) flask.worker" | sudo tee -a /etc/hosts
+  586  kubectl logs flask-76f89594d-kf9mx
+  587  kubectl replace --force -f flask-deployment.yml
+  588  kubectl replace --force -f minikube-ingress.yaml
+  589  kubectl get pods
+  590  minikube dashboard
+  591  kubectl get pods
+  592  kubectl logs flask-866dcdfdb5-6bjwt
+  593  kubectl get ep -n minikube-ingress
+  594  kubectl get ep -n
+  595  flask-866dcdfdb5-6bjwt
+  596  kubectl get ep -n
+  597  flask-866dcdfdb5-6bjwt
+  598  kubectl get ep -n flask-866dcdfdb5-6bjwt
+  599  kubectl get all
+  600  minikube service
+  601  kubectl get pods
+  602  kubectl expose deployment flask-866dcdfdb5-6bjwt --type=NodePort
+  603  kubectl expose deployment flask --type=NodePort
+  604  kubectl get pods
+  605  minikube service flask
+  606  kubectl replace --force -f minikube-ingress.yaml
+  607  kubectl replace --force -f minikube-ingress.yaml
+  608  kubectl get pods
+  609  kubectl describe ing flask-ingress
+  610  kubectl describe ing flask-ingress
+  611  cat /etc/hosts
+  612  echo "$(minikube ip) flask.worker" | sudo tee -a /etc/hosts
+  613  echo "$(minikube ip) flask.worker"
+  614  kubectl delete -f minikube-ingress
+  615  kubectl delete -f minikube-ingress.yaml
+  616  kubectl describe ing flask-ingress
+  617  kubectl create -f minikube-ingress.yaml
+  618  kubectl replace --force -f minikube-ingress.yaml
+  619  echo "$(minikube ip) flask.worker"
+  620  kubectl describe ing flask-ingress
+  621  kubectl describe ing minikube-ingress
+  622  kubectl get pods
+  623  kubectl logs echo flask
+  624  kubectl logs flask
+  625  kubectl logs flask-866dcdfdb5-6bjwt
+  626  kubectl get flask-866dcdfdb5-6bjwt
+  627  kubectl get services
+  628  kubectl replace --force -f flask-deployment.yml
+  629  kubectl replace --force -f flask-deployment.yml
+  630  kubectl get pods
+  631  kubectl replace --force -f minikube-ingress
+  632  kubectl replace --force -f minikube-ingress.yaml
+  633  kubectl get pods
+  634  kubectl describe ing flask-ingress
+  635  kubectl describe ing minikube-ingress
+  636  minikube ip
+  637  cat /etc/hosts
+  638  kubectl apply -f minikube-ingress.yaml
+  639  kubectl replace --force -f minikube-ingress.yaml
+  640  kubectl exec -n minikube-ingress <ingress pod> -- curl -v flask:8080
+  641  kubectl describe ing minikube-ingress
+  642  kubectl get ing
+  643  kubectl describe ing minikube-ingress
+  644  kubectl edit ing minikube-ingress
+  645  kubectl describe ing minikube-ingress
+  646  kubectl describe ing minikube-ingress
+  647  kubectl expose deployment flask --type=NodePort
+  648  kubectl pods
+  649  kubectl get pods
+  650  kubectl delete flask-8dd9786fd-mxcqk
+  651  kubectl delete -f flask-deployment.yml
+  652  kubectl run flask --image=comporg/flask:kube-0 --port=5000
+  653  kubectl get pods
+  654  kubectl expose deployment flask --type=NodePort
+  655  minikube service flask
+  656  kubectl get pods
+  657  kubectl logs flask-77d894d54b-bnkz2
+  658  kubectl get services
+  659  kube delete services flask
+  660  kubectl delete flask
+  661  kubectl delete pod,service flask
+  662  kubectl delete pod,service flask-77d894d54b-bnkz2
+  663  kubectl run flask --image=comporg/flask:kube-0 --port=5000
+  664  kubectl get pods
+  665  kubectl expose deployment flask --type=NodePort
+  666  minikube service flask
+  667  minikube addons enable ingress
+  668  kubectl get endpoints
+  669  kubectl get services
+  670  kubectl create -f minikube-ingress.yaml
+  671  touch notes
+  672  touch notes.txt
+  673  kubectl get deployment
+  674  kubectl expose redis --port=NodePort
+  675  kubectl expose deployment redis --type=NodePort
+  676  kubectl get pods
+  677  kubectl get services
+  678  kubectl expose redis
+  679  kubectl get pods -o wide
+  680  docker exec -it flask /bin/bash
+  681  kubectl exec -it flask /bin/bash
+  682  kubectl exec -it flask-77d894d54b-r4f67 /bin/bash
+  683  kubectl exec -it redis redis-cli
+  684  kubectl describe pods
+  685  kubectl expose deployment redis
+  686  touch redis-service.yaml
+  687  kubectl delete pods,services redis
+  688  kubectl create -f redis-deployment.yaml
+  689  kubectl create -f redis-deployment.yaml
+  690  kubectl create -f redis-deployment.yaml
+  691  kubectl get pods
+  692  kubectl get pods
+  693  kubectl get pods
+  694  kubectl get pods
+  695  kubectl get pods
+  696  kubectl get pods
+  697  kubectl replace -f redis-deployment.yaml
+  698  kubectl get pods
+  699  kubectl get pods
+  700  kubectl get pods
+  701  kubectl get pods
+  702  kubectl expose deployment -f redis-deployment.yaml
+  703  kubectl expose deployment redis
+  704  kubectl get pods
+  705  kubectl get pods -o
+  706  kubectl get pods
+  707  kubectl get services
+  708  kubectl get services -o wide
+  709  kubectl get pods -o wide
+  710  history
+  711  kubectl exec -it flask-77d894d54b-r4f67 /bin/bash
+  712  kubectl exec -it redis /bin/bash
+  713  kubectl get pods
+  714  kubectl exec -it redis-6d94b86d46-4cdk4 /bin/bash
+  715  kubectl exec -it redis-6d94b86d46-4cdk4 redis-cli
+  716  kubectl exec -it flask-77d894d54b-r4f67 /bin/bash
+  717  kubectl replace -f flask-deployment.yml
+  718  kubectl get pods
+  719  kubectl get pods
+  720  kubectl delete pods,services flask-77d894d54b-r4f67
+  721  kubectl get services
+  722  kubectl exec -it flask-87fdcb5f5-8kjmb /bin/bash
+  723  kubectl get pods
+  724  kubectl get logs -f flask-87fdcb5f5-8kjmb
+  725  kubectl get logs flask-87fdcb5f5-8kjmb
+  726  kubectl logs flask-87fdcb5f5-8kjmb
+  727  kubectl logs flask-87fdcb5f5-8kjmb -f
+  728  kubectl get pods
+  729  kubectl delete flask-87fdcb5f5-8kjmb
+  730  kubectl delete pods flask-87fdcb5f5-8kjmb
+  731  kubectl get services
+  732  kubectl get pods
+  733  kubectl logs flask-77d894d54b-xxflv -f
+  734  touch celery-deployment.yaml
+  735  touch celery-service.yaml
+  736  kubectl replace -f flask-deployment.yml
+  737  kubectl get pods
+  738  kubectl get pods
+  739  kubectl get pods
+  740  kubectl get pods
+  741  kubectl get services
+  742  kubectl delete pods flask-77d894d54b-xxflv flask-87fdcb5f5-8l85x
+  743  kubectl get pods
+  744  kubectl get pods
+  745  kubectl get pods
+  746  kubectl get pods
+  747  kubectl get pods
+  748  kubectl get pods
+  749  kubectl get pods
+  750  kubectl get pods
+  751  kubectl get pods
+  752  kubectl get logs -f flask-77d894d54b-dx4n7
+  753  kubectl get logs flask-77d894d54b-dx4n7 -f
+  754  kubectl get logs flask-77d894d54b-dx4n7
+  755  kubectl logs flask-77d894d54b-dx4n7 -f
+  756  kubectl get pods
+  757  kubectl logs flask-87fdcb5f5-vz424 -f
+  758  kubectl get pods
+  759  kubectl delete pods -l name=flask
+  760  kubectl delete pods -l app=flask
+  761  kubectl get pods
+  762  kubectl get pods
+  763  kubectl get pods
+  764  kubectl get pods
+  765  kubectl delete pods,services -l app=flask
+  766  kubectl get pods
+  767  kubectl get pods
+  768  kubectl get pods
+  769  kubectl get pods
+  770  kubectl get pods
+  771  kubectl delete deployment -f flask-deployment.yml
+  772  kubectl delete deployment flask
+  773  kubectl get pods
+  774  kubectl get pods
+  775  kubectl get pods
+  776  kubectl get pods
+  777  kubectl get pods
+  778  kubectl get pods
+  779  kubectl get pods
+  780  kubectl exec -it flask-77d894d54b-dx4n7 /bin/bash
+  781  kubectl get pods
+  782  kubectl delete pods flask-77d894d54b-dx4n7
+  783  kubectl get pods
+  784  kubectl get pods
+  785  kubectl get pods
+  786  kubectl get pods
+  787  kubectl get pods
+  788  kubectl get services
+  789  kubectl create -f flask-deployment.yml
+  790  kubectl replace -f flask-deployment.yml
+  791  kubectl get pods
+  792  kubectl get pods
+  793  kubectl get pods
+  794  kubectl get pods
+  795  kubectl get pods
+  796  kubectl delete pods flask-77d894d54b-h97cv
+  797  kubectl get pods
+  798  kubectl get pods
+  799  kubectl exec -it flask-77d894d54b-5z8nd
+  800  kubectl exec -it flask-77d894d54b-5z8nd /bin/bash
+  801  kubectl
+  802  kubectl
+  803  kubectl get pods
+  804  clear
+  805  kubectl get pods
+  806  kubectl get services
+  807  kubectl edit deployment flask
+  808  kubectl set image deployment/flask flask=comporg/kube-4
+  809  kubectl set image deployment/flask flask=comporg/flask:kube-4
+  810  kubectl set image deployment/flask flask=comporg/flask
+  811  kubectl get pods
+  812  kubectl get pods
+  813  kubectl get pods
+  814  kubectl get pods
+  815  kubectl get pods
+  816  kubectl get pods
+  817  kubectl set image deployment/flask flask=comporg/flask:kube-4
+  818  kubectl get pods
+  819  kubectl get pods
+  820  kubectl get pods
+  821  kubectl get pods
+  822  kubectl get pods
+  823  kubectl get pods
+  824  kubectl get pods
+  825  kubectl get pods
+  826  kubectl exec -it flask-6bf6bb9c94-hjzxb /bin/bash
+  827  kubectl exec -it flask-77d894d54b-5z8nd /bin/bash
+  828  kubectl delete pods flask-77d894d54b-5z8nd
+  829  kubectl get pods
+  830  kubectl get pods
+  831  kubectl get pods
+  832  kubectl get pods
+  833  kubectl get pods
+  834  kubectl get pods
+  835  kubectl get pods
+  836  kubectl exec -it flask-77d894d54b-v6jn7 /bin/bash
+  837  kubernetes delete flask
+  838  kubernetes delete service flask
+  839  kubectl delete service flask
+  840  kubectl delete pods -l app=flask
+  841  kubectl get pods
+  842  kubectl get pods
+  843  kubectl get pods
+  844  kubectl get services
+  845  kubernetes delete --all
+  846  kubectl delete --all
+  847  kubectl delete deployment flask
+  848  kubectl get services
+  849  kubectl get pods
+  850  kubectl delete pods flask-77d894d54b-v6jn7 -force
+  851  kubectl delete pods flask-77d894d54b-v6jn7 --force
+  852  kubectl get pods
+  853  kubectl get pods
+  854  history
+  855  minikube stop
+  856  minikube delete
+  857  minikube start --vm-driver=hyperkit
+  858  kubectl get pods
+  859  kubectl apply -f minikube-ingress.yaml
+  860  kubectl create -f redis-deployment.yaml
+  861  kubectl expose deployment redis --type=NodePort
+  862  kubectl create -f flask-deployment.yml
+  863  kubectl expose deployment flask --type=NodePort
+  864  kubectl get pods
+  865  kubectl get pods
+  866  kubectl get pods
+  867  kubectl get pods
+  868  kubectl get pods
+  869  kubectl get pods
+  870  kubectl get pods
+  871  kubectl get pods
+  872  kubectl get pods
+  873  kubectl get pods
+  874  kubectl get pods
+  875  kubectl logs redis-6d94b86d46-nzrmw
+  876  kubectl logs redis-6d94b86d46-nzrmw
+  877  kubectl get pods
+  878  kubectl get pods
+  879  kubectl get pods
+  880  kubectl get pods
+  881  kubectl get pods
+  882  kubectl get pods
+  883  kubectl get pods
+  884  kubectl replace -f redis-deployment.yaml
+  885  kubectl get pods
+  886  kubectl get pods
+  887  kubectl get pods
+  888  kubectl get pods
+  889  kubectl get pods -f
+  890  kubectl get pods -w
+  891  kubectl get pods
+  892  kubectl get pods
+  893  kubectl get pods
+  894  kubectl get pods
+  895  kubectl get pods
+  896  kubectl get pods
+  897  kubectl get pods
+  898  kubectl get pods
+  899  kubectl get pods
+  900  kubectl replace -f redis-deployment.yaml
+  901  kubectl get pods
+  902  kubectl delete -f redis-f4bc5d8bd-r5np6
+  903  kubectl delete deployment redis
+  904  kubectl get pods
+  905  kubectl get pods
+  906  kubectl get pods
+  907  kubectl get pods
+  908  kubectl create -f redis-deployment.yaml
+  909  kubectl get pods
+  910  kubectl get pods
+  911  kubectl get pods
+  912  kubectl get pods
+  913  kubectl get pods
+  914  kubectl delete deployment redis
+  915  kubectl create configmap example-redis-config --from-file=redis-config
+  916  kubectl get pods
+  917  kubectl get pods
+  918  kubectl get pods
+  919  kubectl get configmap example-redis-config -o yaml
+  920  kubectl create -f redis-pod.yaml
+  921  kubectl get pods
+  922  kubectl get pods
+  923  kubectl get pods
+  924  kubectl get pods
+  925  kubectl get pods
+  926  kubectl exec -it flask-6bf6bb9c94-xln6p /bin/bash
+  927  kubectl get pods
+  928  kubectl expose deployment redis --type=NodePort
+  929  kubectl
+  930  kubectl get pods
+  931  kubectl delete pods redis
+  932  kubectl get pods
+  933  kubectl get pods
+  934  kubectl get pods
+  935  kubectl get pods
+  936  kubectl get pods
+  937  kubectl get pods
+  938  kubectl get pods
+  939  kubectl get pods
+  940  kubectl get pods
+  941  kubectl get pods
+  942  kubectl get pods
+  943  kubectl get pods
+  944  kubectl get pods
+  945  kubectl get pods
+  946  kubectl get pods
+  947  kubectl get pods
+  948  kubectl create -f redis-deployment.yaml
+  949  kubectl get pods
+  950  kubectl get pods
+  951  kubectl exec -it flask-6bf6bb9c94-xln6p /bin/bash
+  952  kubectl exec -it redis-5cb87f8d99-mwcrp redis-cli
+  953  kubectl get pods
+  954  kubectl get logs flask-6bf6bb9c94-xln6p -f
+  955  kubectl logs flask-6bf6bb9c94-xln6p -f
+  956  minikube service flask
+  957  minikube addons enable ingress
+  958  kubectl create -f minikube-ingress.yaml
+  959  kubectl delete -f minikube-ingress.yaml
+  960  kubectl create -f minikube-ingress.yaml
+  961  kubectl describe ing ingress-tutorial
+  962  kubectl describe ing ingress-tutorial
+  963  kubectl describe ing ingress-tutorial
+  964  cat /etc/hosts
+  965  minikube ip
+  966  vim /etc/hosts
+  967  sudo vim /etc/hosts
+  968  kubectl logs flask-6bf6bb9c94-xln6p -f
+  969  kubectl create -f matchups-deployment.yaml
+  970  kubectl get pods
+  971  kubectl delete deployment matchups
+  972  kubectl create -f matchups-deployment.yaml
+  973  kubectl get pods
+  974  kubectl get pods
+  975  kubectl get pods
+  976  kubectl get pods
+  977  kubectl get pods
+  978  kubectl get pods -w
+  979  kubectl get pods
+  980  kubectl get pods
+  981  kubectl get pods
+  982  kubectl get pods
+  983  kubectl get pods
+  984  kubectl get pods
+  985  kubectl get pods
+  986  kubectl get pods
+  987  kubectl get pods
+  988  kubectl logs matchups-788c958c9c-rp5ln -f
+  989  minikube stop
+  990  minikube delete
+  991  history
+(base) HDoupe-MacBook-Pro:kube-exper henrydoupe$
