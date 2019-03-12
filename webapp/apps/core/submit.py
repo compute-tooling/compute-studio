@@ -12,6 +12,7 @@ from webapp.apps.core.constants import OUT_OF_RANGE_ERROR_MSG, WEBAPP_VERSION
 BadPost = namedtuple("BadPost", ["http_response_404", "has_errors"])
 PostResult = namedtuple("PostResult", ["submit", "save"])
 
+
 class Submit:
 
     parser_class = Parser
@@ -56,10 +57,7 @@ class Submit:
         self.is_valid = self.form.is_valid()
         if self.is_valid:
             self.model = self.form.save(commit=False)
-            parser = self.parser_class(
-                self.model.gui_inputs,
-                **self.valid_meta_params
-            )
+            parser = self.parser_class(self.model.gui_inputs, **self.valid_meta_params)
 
             (
                 upstream_parameters,
@@ -95,23 +93,20 @@ class Submit:
             self.form.add_error(None, OUT_OF_RANGE_ERROR_MSG)
 
         def add_errors(param, msg):
-            message = "{param}: {msg}".format(
-                param=param,
-                msg=" ,".join(msg)
-            )
+            message = "{param}: {msg}".format(param=param, msg=" ,".join(msg))
             self.form.add_error(None, message)
 
         if self.warn_msgs or self.error_msgs:
             for input_type in self.model.errors_warnings:
                 self.parser_class.append_errors_warnings(
-                    self.model.errors_warnings[input_type],
-                    add_errors,
+                    self.model.errors_warnings[input_type], add_errors
                 )
 
     def submit(self):
-        data = dict({"user_mods": self.model.deserialized_inputs},
-                    **self.valid_meta_params)
-        print('submit', data)
+        data = dict(
+            {"user_mods": self.model.deserialized_inputs}, **self.valid_meta_params
+        )
+        print("submit", data)
         self.data_list = self.extend_data(data)
         print(self.data_list)
         self.submitted_id, self.max_q_length = self.compute.submit_job(
@@ -119,7 +114,8 @@ class Submit:
         )
 
     def extend_data(self, data):
-        return [data]
+        """Do nothing here."""
+        return data
 
 
 class Save:
@@ -147,14 +143,14 @@ class Save:
         runmodel.webapp_vers = submit.webapp_version
 
         cur_dt = timezone.now()
-        future_offset_seconds = ((2 + submit.max_q_length) *
-                                  runmodel.project.exp_task_time)
+        future_offset_seconds = (
+            2 + submit.max_q_length
+        ) * runmodel.project.exp_task_time
         future_offset = datetime.timedelta(seconds=future_offset_seconds)
         expected_completion = cur_dt + future_offset
         runmodel.exp_comp_datetime = expected_completion
         runmodel.save()
         self.runmodel_instance = runmodel
-
 
 
 def handle_submission(request, compute, submit_class, save_class):

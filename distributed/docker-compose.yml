@@ -1,22 +1,51 @@
 version: '3'
 services:
   flask:
+    build:
+      context: ./
+      dockerfile: dockerfiles/Dockerfile.flask
     image: "comporg/flask:${TAG}"
     ports:
       - 5050:5050
+    container_name: flask
     depends_on:
       - redis
       # Add celery workers here:
       # - {project_name}_tasks
-      - matchups_tasks
+      - hdoupe_matchups_tasks
+      - distributed
+    networks:
+      - comp_comp-net
   # configure celery workers:
   # {project_name}_tasks:
   #   image: "comporg/{project_name}_tasks:${TAG}"
   #   depends_on:
   #     redis
-  matchups_tasks:
-    image: "comporg/matchups_tasks:${TAG}"
+  hdoupe_matchups_tasks:
+    build:
+      context: ./
+      dockerfile: dockerfiles/projects/Dockerfile.hdoupe_matchups_tasks
+    image: "comporg/hdoupe_matchups_tasks:${TAG}"
     depends_on:
       - redis
+      - celerybase
+    networks:
+      - comp_comp-net
+  celerybase:
+    build:
+      context: ./
+      dockerfile: dockerfiles/Dockerfile.celerybase
+    image: "comporg/celerybase"
+  distributed:
+    build:
+      context: ./
+      dockerfile: dockerfiles/Dockerfile
+    image: "comporg/distributed"
   redis:
     image: redis
+    networks:
+      - comp_comp-net
+
+networks:
+  comp_comp-net:
+    external: true
