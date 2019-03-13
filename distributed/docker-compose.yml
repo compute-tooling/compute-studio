@@ -12,16 +12,14 @@ services:
       - redis
       # Add celery workers here:
       # - {project_name}_tasks
-      - hdoupe_matchups_tasks
+      - hdoupe_matchups_sim
+      - hdoupe_matchups_io
       - distributed
     networks:
       - comp_comp-net
-  # configure celery workers:
-  # {project_name}_tasks:
-  #   image: "comporg/{project_name}_tasks:${TAG}"
-  #   depends_on:
-  #     redis
-  hdoupe_matchups_tasks:
+
+####################################################
+  hdoupe_matchups_sim:
     build:
       context: ./
       dockerfile: dockerfiles/projects/Dockerfile.hdoupe_matchups_tasks
@@ -31,6 +29,19 @@ services:
       - celerybase
     networks:
       - comp_comp-net
+  hdoupe_matchups_io:
+    build:
+      context: ./
+      dockerfile: dockerfiles/projects/Dockerfile.hdoupe_matchups_tasks
+    image: "comporg/hdoupe_matchups_tasks:${TAG}"
+    entrypoint: celery -A celery_app.hdoupe_matchups_tasks worker --loglevel=info --concurrency=1 -Q hdoupe_matchups_inputs_queue
+    depends_on:
+      - redis
+      - celerybase
+    networks:
+      - comp_comp-net
+
+####################################################
   celerybase:
     build:
       context: ./
@@ -41,11 +52,14 @@ services:
       context: ./
       dockerfile: dockerfiles/Dockerfile
     image: "comporg/distributed"
+
+####################################################
   redis:
     image: redis
     networks:
       - comp_comp-net
 
+####################################################
 networks:
   comp_comp-net:
     external: true
