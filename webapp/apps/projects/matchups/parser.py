@@ -1,7 +1,8 @@
+from webapp.apps.core.compute import SyncCompute
+from webapp.apps.core import actions
+from webapp.apps.users.models import Project
 from webapp.apps.contrib.ptstyle.parser import ParamToolsParser
 from .displayer import MatchupsDisplayer
-
-import matchups
 
 
 class MatchupsParser(ParamToolsParser):
@@ -10,22 +11,18 @@ class MatchupsParser(ParamToolsParser):
     calls the upstream project's validation functions, and formats the errors
     if they exist.
     """
+
+    project = Project.objects.get(app_name="matchups")
     displayer_class = MatchupsDisplayer
 
     def parse_parameters(self):
         params, jsonparams, errors_warnings = super().parse_parameters()
-
-        ###################################
-        # code snippet
-        # code snippet
-        def parse_user_inputs(params, jsonparams, errors_warnings,
-                              **meta_parameters):
-            # parse the params, jsonparams, and errors_warnings further
-            use_full_data = meta_parameters["use_full_data"]
-            params, jsonparams, errors_warnings = matchups.parse_inputs(
-                params, jsonparams, errors_warnings, use_full_data==use_full_data)
-            return params, jsonparams, errors_warnings
-        ####################################
-
-        return parse_user_inputs(params, jsonparams, errors_warnings,
-                                 **self.valid_meta_params)
+        data = {
+            "params": params,
+            "jsonparams": jsonparams,
+            "errors_warnings": errors_warnings,
+            **self.valid_meta_params,
+        }
+        return SyncCompute().submit_job(
+            data, self.project.worker_ext(action=actions.PARSE)
+        )

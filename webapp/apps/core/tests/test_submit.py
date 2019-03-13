@@ -13,7 +13,6 @@ from .mockclasses import MockModel
 
 
 def test_submit(core_inputs, meta_param, profile):
-
     class MockDisplayer(Displayer):
         param_class = Param
 
@@ -42,19 +41,15 @@ def test_submit(core_inputs, meta_param, profile):
         upstream_version = "0.1.0"
         task_run_time_secs = 10
         meta_parameters = meta_param
+        app_name = "testapp"
 
     class MockSave(Save):
         project_name = "Used for testing"
         runmodel = MockModel
 
-
     factory = RequestFactory()
-    data = {
-        "has_errors": ["False"],
-        "metaparam": ["3"],
-        "intparam": ["1"]
-    }
-    request = factory.post("/mockcore", data)
+    data = {"has_errors": ["False"], "metaparam": ["3"], "intparam": ["1"]}
+    request = factory.post("/modeler/testapp/sim", data)
     request.user = profile.user
     compute = MockCompute()
     submit = MockSubmit(request, compute)
@@ -69,7 +64,6 @@ def test_submit(core_inputs, meta_param, profile):
 
 
 def test_submit_sponsored(core_inputs, meta_param, profile):
-
     class MockDisplayer(Displayer):
         param_class = Param
 
@@ -78,9 +72,6 @@ def test_submit_sponsored(core_inputs, meta_param, profile):
 
     class MockParser(Parser):
         displayer_class = MockDisplayer
-
-        def package_defaults(self):
-            return core_inputs
 
         def parse_parameters(self):
             params, jsonstr, errors_warnings = super().parse_parameters()
@@ -98,19 +89,15 @@ def test_submit_sponsored(core_inputs, meta_param, profile):
         upstream_version = "0.1.0"
         task_run_time_secs = 10
         meta_parameters = meta_param
+        app_name = "testapp"
 
     class MockSave(Save):
         project_name = "Used for testing sponsored apps"
         runmodel = MockModel
 
-
     factory = RequestFactory()
-    data = {
-        "has_errors": ["False"],
-        "metaparam": ["3"],
-        "intparam": ["1"]
-    }
-    request = factory.post("/mockcore", data)
+    data = {"has_errors": ["False"], "metaparam": ["3"], "intparam": ["1"]}
+    request = factory.post("/modeler/testapp/sim", data)
     request.user = profile.user
     compute = MockCompute()
     submit = MockSubmit(request, compute)

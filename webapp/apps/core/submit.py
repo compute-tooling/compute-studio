@@ -5,6 +5,7 @@ from django.utils import timezone
 from django import forms
 
 from webapp.apps.users.models import Project
+from webapp.apps.core import actions
 from webapp.apps.core.parser import Parser
 from webapp.apps.core.forms import InputsForm
 from webapp.apps.core.constants import OUT_OF_RANGE_ERROR_MSG, WEBAPP_VERSION
@@ -28,6 +29,7 @@ class Submit:
         self.model = None
         self.badpost = None
         self.valid_meta_params = {}
+        self.project = Project.objects.get(app_name=self.app_name)
 
         self.get_fields()
         self.create_model()
@@ -109,8 +111,9 @@ class Submit:
         print("submit", data)
         self.data_list = self.extend_data(data)
         print(self.data_list)
+        url = self.project.worker_ext(action=actions.SIM)
         self.submitted_id, self.max_q_length = self.compute.submit_job(
-            self.data_list, self.app_name
+            self.data_list, url
         )
 
     def extend_data(self, data):
