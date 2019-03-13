@@ -14,5 +14,4 @@ pytest
 pytest-django
 django-widget-tweaks
 django-crispy-forms
-matchups>=0.3.6
 psycopg2-binary

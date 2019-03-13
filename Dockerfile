@@ -7,12 +7,11 @@ ENV PYTHONUNBUFFERED 1
 RUN mkdir /code
 WORKDIR /code
 ADD ./requirements.txt /code/requirements.txt
-ADD ./conda-requirements.txt /code/conda-requirements.txt
 ADD ./pytest.ini /code/pytest.ini
 
 # Install dependencies
 RUN conda update conda
-RUN conda install -c anaconda -c conda-forge -c pslmodels --file conda-requirements.txt --yes
+RUN conda install -c pslmodels -c conda-forge pip paramtools --yes
 RUN pip install -r requirements.txt
 
 # Add our code
