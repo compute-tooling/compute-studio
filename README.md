@@ -20,7 +20,7 @@ Planned:
 
 ## Publish
 
-Complete the form hosted at www.compmodels.com/publish.
+Publish at www.compmodels.com/publish.
 
 ## Contributing
 
@@ -34,4 +34,4 @@ COMP is licensed under the open source [GNU Affero General Public License](/Lice
 
 ## Local Installation
 
-The [technical documentation](docs/technical/Install.md) contains a step by step guide that shows how to run COMP locally.
+The [technical documentation](docs/technical/INSTALL.md) contains a step by step guide that shows how to run COMP locally.
