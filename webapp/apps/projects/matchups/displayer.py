@@ -1,9 +1,12 @@
+from webapp.apps.core.compute import SyncCompute
+from webapp.apps.core import actions
+from webapp.apps.users.models import Project
 from webapp.apps.core.displayer import Displayer
 from webapp.apps.contrib.ptstyle.param import ParamToolsParam
 
-import matchups
 
 class MatchupsDisplayer(Displayer):
+    project = Project.objects.get(app_name="matchups")
     param_class = ParamToolsParam
 
     def package_defaults(self):
@@ -13,10 +16,6 @@ class MatchupsDisplayer(Displayer):
         functions to load the project's inputs data. In the future, this will
         be done over the distributed REST API.
         """
-        ####################################
-        # code snippet
-        def package_defaults(**meta_parameters):
-            return matchups.get_inputs(use_full_data=meta_parameters["use_full_data"])
-        ####################################
-
-        return package_defaults(**self.meta_parameters)
+        return SyncCompute().submit_job(
+            self.meta_parameters, self.project.worker_ext(action=actions.INPUTS)
+        )

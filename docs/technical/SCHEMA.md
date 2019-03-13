@@ -1,5 +1,7 @@
 # Database Schema
 
+Warning: Some parts of this document are out of date! They will be updated soon.
+
 Core App Schema
 -------------------
 

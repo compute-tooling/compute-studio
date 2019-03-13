@@ -156,6 +156,9 @@ class Project(models.Model):
     def app_url(self):
         return reverse(self.app_name)
 
+    def worker_ext(self, action):
+        return f"{self.profile.user.username}/{self.app_name}/{action}"
+
     @property
     def display_sponsor(self):
         if self.sponsor is not None:

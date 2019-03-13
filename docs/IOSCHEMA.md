@@ -36,7 +36,7 @@ Example:
 Model Parameters
 ----------------
 
-COMP uses the JSON schema below for documenting Model Parameters and their values under the default sepcification:
+COMP uses the JSON schema below for documenting Model Parameters and their values under the default sepcification. This schema is compliant with the ParamTools specification schema. You can find a [more complete guide][4] for the Model Parameters in the ParamTools documentation.
 
 - "major_section": Broad categories of model parameters. A baseball model may break up its model parameters into Hitting, Pitching, and Fielding major sections.
 - "param_name": The name of the parameter as it is used in the modeling project.
@@ -166,3 +166,4 @@ JSON Objects
 [1]: https://github.com/PSLmodels/Tax-Calculator
 [2]: https://github.com/hdoupe/ParamProject
 [3]: https://github.com/PSLmodels/ParamTools
+[4]: https://paramtools.readthedocs.io/en/latest/spec.html

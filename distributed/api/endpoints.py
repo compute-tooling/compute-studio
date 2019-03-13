@@ -11,65 +11,95 @@ import os
 # from api.celery_app.{project_name}_tasks import (
 #     {project_name}_postprocess,
 #     {project_name}_task)
-from api.celery_app.matchups_tasks import (
-    matchups_postprocess,
-    matchups_task)
+from api.celery_app import hdoupe_matchups_tasks
+
+task_modules = {("hdoupe", "matchups"): hdoupe_matchups_tasks}
 
 
-bp = Blueprint('endpoints', __name__)
+bp = Blueprint("endpoints", __name__)
 
 queue_name = "celery"
-client = redis.StrictRedis.from_url(os.environ.get("CELERY_BROKER_URL",
-                                                   "redis://redis:6379/0"))
+client = redis.StrictRedis.from_url(
+    os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
+)
 
 
-def aggr_endpoint(compute_task, postprocess_task):
-    print('aggregating endpoint')
+def sim_endpoint(compute_task):
+    print("sim endpoint")
     data = request.get_data()
-    inputs = msgpack.loads(data, encoding='utf8',
-                           use_list=True)
-    print('inputs', inputs)
-    result = (chord(compute_task.signature(kwargs=i, serializer='msgpack')
-              for i in inputs))(postprocess_task.signature(
-                serializer='msgpack'))
+    inputs = msgpack.loads(data, encoding="utf8", use_list=True)
+    print("inputs", inputs)
+    result = compute_task.apply_async(kwargs=inputs, serializer="msgpack")
     length = client.llen(queue_name) + 1
-    data = {'job_id': str(result), 'qlength': length}
+    data = {"job_id": str(result), "qlength": length}
     return json.dumps(data)
 
 
-# template for app endpoints:
-# @bp.route("/{project_name}", methods=['POST'])
-# def {project_name}_endpoint():
-#     return aggr_endpoint({project_name}_task, {project_name}_postprocess)
+def sync_endpoint(compute_task):
+    print("sim endpoint")
+    data = request.get_data()
+    inputs = msgpack.loads(data, encoding="utf8", use_list=True)
+    print("inputs", inputs)
+    result = compute_task.apply_async(kwargs=inputs, serializer="msgpack")
+    result = result.get()
+    # length = client.llen(queue_name) + 1
+    # data = {'job_id': str(result), 'qlength': length}
+    return json.dumps(result)
 
 
-@bp.route("/matchups", methods=['POST'])
-def matchups_endpoint():
-    return aggr_endpoint(matchups_task, matchups_postprocess)
+def route_to_task(owner, app_name, endpoint, action):
+    print("getting...", owner, app_name, endpoint, action)
+    module = task_modules.get((owner, app_name), None)
+    print("got module", module)
+    if module is not None:
+        return endpoint(getattr(module, action))
+    else:
+        return json.dumps({"error": "invalid endpoint"}), 404
 
 
-@bp.route("/get_job", methods=['GET'])
+@bp.route("/<owner>/<app_name>/inputs", methods=["POST"])
+def endpoint_inputs(owner, app_name):
+    action = "inputs_get"
+    endpoint = sync_endpoint
+    return route_to_task(owner, app_name, endpoint, action)
+
+
+@bp.route("/<owner>/<app_name>/parse", methods=["POST"])
+def endpoint_parse(owner, app_name):
+    action = "inputs_parse"
+    endpoint = sync_endpoint
+    return route_to_task(owner, app_name, endpoint, action)
+
+
+@bp.route("/<owner>/<app_name>/sim", methods=["POST"])
+def endpoint_sim(owner, app_name):
+    action = "sim"
+    endpoint = sim_endpoint
+    return route_to_task(owner, app_name, endpoint, action)
+
+
+@bp.route("/get_job", methods=["GET"])
 def results():
-    job_id = request.args.get('job_id', '')
+    job_id = request.args.get("job_id", "")
     async_result = AsyncResult(job_id)
     if async_result.ready() and async_result.successful():
         return json.dumps(async_result.result)
     elif async_result.failed():
-        print('traceback', async_result.traceback)
+        print("traceback", async_result.traceback)
         return async_result.traceback
     else:
-        resp = make_response('not ready', 202)
+        resp = make_response("not ready", 202)
         return resp
 
 
-@bp.route("/query_job", methods=['GET'])
+@bp.route("/query_job", methods=["GET"])
 def query_results():
-    job_id = request.args.get('job_id', '')
+    job_id = request.args.get("job_id", "")
     async_result = AsyncResult(job_id)
-    print('async_result', async_result.state)
+    print("async_result", async_result.state)
     if async_result.ready() and async_result.successful():
-        return 'YES'
+        return "YES"
     elif async_result.failed():
-        return 'FAIL'
+        return "FAIL"
     else:
-        return 'NO'
+        return "NO"

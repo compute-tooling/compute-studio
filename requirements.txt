@@ -11,8 +11,7 @@ gunicorn
 stripe
 sendgrid-django
 pytest
+pytest-django
 django-widget-tweaks
 django-crispy-forms
-matchups==0.3.5
-paramtools==0.2.0rc1
 psycopg2-binary

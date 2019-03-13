@@ -1,27 +1,23 @@
 ARG TAG
-FROM comporg/distributed:$TAG
-
-ENV CELERY_BROKER_URL redis://redis:6379/0
-ENV CELERY_RESULT_BACKEND redis://redis:6379/0
-ENV C_FORCE_ROOT true
+FROM comporg/celerybase
 
 # install packages here
 # install packages necessary for celery,
 RUN pip install -r requirements.txt
 # Edit Dockerfile here for installing necessary packages, copying files, etc.
 ######################
-RUN conda install pandas pyarrow bokeh
-RUN pip install pybaseball matchups==0.3.5 paramtools==0.2.0rc1
+RUN conda install pandas pyarrow bokeh paramtools -c pslmodels
+RUN pip install pybaseball matchups==0.3.5
 ######################
 
 
 # copy over necessary files for this project's celery app
 COPY ./api/__init__.py /home/distributed/api/__init__.py
 COPY ./api/celery_app/__init__.py /home/distributed/api/celery_app/__init__.py
-COPY ./api/celery_app/matchups_tasks.py /home/distributed/api/celery_app/matchups_tasks.py
+COPY ./api/celery_app/hdoupe_matchups_tasks.py /home/distributed/api/celery_app/hdoupe_matchups_tasks.py
 COPY ./setup.py /home/distributed
 RUN cd /home/distributed && pip install -e .
 
 WORKDIR /home/distributed/api
 
-ENTRYPOINT celery -A celery_app.matchups_tasks worker --loglevel=info --concurrency=1 -Q matchups_queue
+ENTRYPOINT celery -A celery_app.hdoupe_matchups_tasks worker --loglevel=info --concurrency=1 -Q hdoupe_matchups_queue,hdoupe_matchups_inputs_queue

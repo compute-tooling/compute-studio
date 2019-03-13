@@ -16,18 +16,14 @@ def test_param(core_inputs, valid_meta_params):
         for name, attrs in maj_sect.items():
             param = Param(name, attrs, **valid_meta_params)
             assert param
-            assert all(getattr(param, name)
-                       for name in valid_meta_params.keys())
+            assert all(getattr(param, name) for name in valid_meta_params.keys())
             param.set_fields([1])
             assert param.col_fields
             assert param.fields
 
 
 def test_checkboxfield():
-    checkbox = CheckBox(
-        "test",
-        "label",
-        True)
+    checkbox = CheckBox("test", "label", True)
     assert checkbox
 
 
@@ -35,6 +31,7 @@ def test_paramdisplayer(core_inputs, valid_meta_params):
     """
     Test ParamDisplayer class
     """
+
     class MockDisplayer(Displayer):
         param_class = Param
 
@@ -45,18 +42,25 @@ def test_paramdisplayer(core_inputs, valid_meta_params):
     assert displayer
     flatdict = displayer.defaults(flat=True)
     nesteddict = displayer.defaults(flat=False)
-    assert set(flatdict.keys()) == {"intparam", "boolparam", "floatparam",
-                                    "mj2param", "zerodimparam"}
-    assert all(isinstance(v , Param) for v in flatdict.values())
+    assert set(flatdict.keys()) == {
+        "intparam",
+        "boolparam",
+        "floatparam",
+        "mj2param",
+        "zerodimparam",
+    }
+    assert all(isinstance(v, Param) for v in flatdict.values())
     assert list(nesteddict.keys()) == ["majorsection1", "majorsection2"]
-    assert (len(nesteddict["majorsection1"]) == 2 and
-            len(nesteddict["majorsection2"]) == 1)
+    assert (
+        len(nesteddict["majorsection1"]) == 2 and len(nesteddict["majorsection2"]) == 1
+    )
 
 
 def test_paramparser(core_inputs, valid_meta_params):
     """
 
     """
+
     class MockDisplayer(Displayer):
         param_class = Param
 
@@ -66,17 +70,13 @@ def test_paramparser(core_inputs, valid_meta_params):
     class MockParser(Parser):
         displayer_class = MockDisplayer
 
-        def package_defaults(self):
-            return core_inputs
-
-    clean_inputs = {
-        "intparam": [3],
-        "mj2param": [4.0],
-    }
+    clean_inputs = {"intparam": [3], "mj2param": [4.0]}
     parser = MockParser(clean_inputs, **valid_meta_params)
     res, _, _ = parser.parse_parameters()
-    assert res == {"majorsection1": {"intparam": [3]},
-                   "majorsection2": {"mj2param": [4.0]}}
+    assert res == {
+        "majorsection1": {"intparam": [3]},
+        "majorsection2": {"mj2param": [4.0]},
+    }
 
 
 def test_form(core_inputs, meta_param):

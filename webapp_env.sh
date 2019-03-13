@@ -21,7 +21,6 @@ export USE_STRIPE=False
 
 export NUM_BUDGET_YEARS=10
 export DEBUG=True
-export HTML_MINIFY=True
 
 export WORKERS=127.0.0.1:5050
 
