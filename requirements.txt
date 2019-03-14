@@ -15,3 +15,4 @@ pytest-django
 django-widget-tweaks
 django-crispy-forms
 psycopg2-binary
+ipython
