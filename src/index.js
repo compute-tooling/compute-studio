@@ -20,11 +20,29 @@ axios.defaults.xsrfCookieName = "csrftoken";
 const domContainer = document.querySelector("#publish-container");
 const requiredMessage = "This field is required.";
 
+function isJsonString(str) {
+  try {
+    JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
 var Schema = Yup.object().shape({
-  name: Yup.string().required(),
+  title: Yup.string().required(),
   description: Yup.string()
     .max(1000, "The description must be less than ${max} characters.")
     .required(),
+  input_type: Yup.string().oneOf(
+    ["paramtools", "taxcalc"],
+    "Inputs type must be either paramtools or taxcalc."
+  ),
+  meta_parameters: Yup.string()
+    .required(requiredMessage)
+    .test("valid-json", "Meta parameters is not valid JSON.", value =>
+      isJsonString(value)
+    ),
   package_defaults: Yup.string().required(requiredMessage),
   parse_user_adjustments: Yup.string().required(requiredMessage),
   run_simulation: Yup.string().required(requiredMessage),
@@ -37,7 +55,7 @@ var Schema = Yup.object().shape({
 });
 
 const initialValues = {
-  name: "",
+  title: "",
   description: "",
   package_defaults: "",
   parse_user_adjustments: "",
@@ -102,14 +120,14 @@ class PublishForm extends React.Component {
               <div>
                 <Field
                   type="text"
-                  name="name"
+                  name="title"
                   component={TextField}
                   placeholder="What's the name of this app?"
                   label="App Name"
                   preview={this.state.preview}
                 />
                 <ErrorMessage
-                  name="name"
+                  name="title"
                   render={msg => <Message msg={msg} />}
                 />
               </div>
@@ -123,6 +141,49 @@ class PublishForm extends React.Component {
                 />
                 <ErrorMessage
                   name="description"
+                  render={msg => <Message msg={msg} />}
+                />
+              </div>
+              <h3>Model Parameters</h3>
+              <hr className="my-4" />
+              <p>
+                <em>
+                  Insert code snippets satisfying the requirements detailed in
+                  the{" "}
+                  <a href="https://github.com/comp-org/comp/blob/master/docs/IOSCHEMA.md">
+                    inputs documentation.
+                  </a>
+                </em>
+              </p>
+              <div>
+                <label>
+                  <b>Inputs style:</b> Select the style of inputs that your app
+                  will use
+                </label>
+                <p>
+                  <Field component="select" name="input_type">
+                    <option value="paramtools">ParamTools style</option>
+                    <option value="taxcalc">Tax-Calculator style</option>
+                  </Field>
+                </p>
+                <ErrorMessage
+                  name="input_type"
+                  render={msg => <Message msg={msg} />}
+                />
+              </div>
+              <div>
+                <Field
+                  type="text"
+                  name="meta_parameters"
+                  component={CodeSnippetField}
+                  label="Meta parameters"
+                  description="Controls the default Model Parameters"
+                  language="json"
+                  placeholder="# json snippet here"
+                  preview={this.state.preview}
+                />
+                <ErrorMessage
+                  name="meta_parameters"
                   render={msg => <Message msg={msg} />}
                 />
               </div>
@@ -144,7 +205,6 @@ class PublishForm extends React.Component {
                   component={CodeSnippetField}
                   label="Get package defaults"
                   description="Get the default Model Parameters and their meta data"
-                  preview={false}
                   language="python"
                   placeholder="# code snippet here"
                   preview={this.state.preview}
@@ -161,7 +221,6 @@ class PublishForm extends React.Component {
                   component={CodeSnippetField}
                   label="Parse user adjustments"
                   description="Do model-specific formatting and validation on the user adjustments"
-                  preview={false}
                   language="python"
                   placeholder="# code snippet here"
                   preview={this.state.preview}
@@ -178,7 +237,6 @@ class PublishForm extends React.Component {
                   component={CodeSnippetField}
                   label="Run simulation"
                   description="Submit the user adjustments (or none) to the model to run the simulations"
-                  preview={false}
                   language="python"
                   placeholder="# code snippet here"
                   preview={this.state.preview}
@@ -206,7 +264,6 @@ class PublishForm extends React.Component {
                   component={CodeSnippetField}
                   label="Installation"
                   description="Bash commands for installing this project"
-                  preview={false}
                   language="bash"
                   placeholder="# code snippet here"
                   preview={this.state.preview}
