@@ -1,16 +1,16 @@
-
 def is_wildcard(x):
     if isinstance(x, str):
-        return x in ('*', '*') or x.strip() in ('*', '*')
+        return x in ("*", "*") or x.strip() in ("*", "*")
     else:
         return False
 
 
 def is_reverse(x):
     if isinstance(x, str):
-        return x in ('<', '<') or x.strip() in ('<', '<')
+        return x in ("<", "<") or x.strip() in ("<", "<")
     else:
         return False
+
 
 def json_int_key_encode(rename_dict):
     """
@@ -21,7 +21,7 @@ def json_int_key_encode(rename_dict):
     """
     if isinstance(rename_dict, dict):
         for k in list(rename_dict.keys()):
-            if hasattr(k, 'isdigit') and k.isdigit():
+            if hasattr(k, "isdigit") and k.isdigit():
                 new_label = int(k)
             else:
                 new_label = k

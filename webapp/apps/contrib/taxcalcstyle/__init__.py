@@ -1,4 +1,5 @@
+from ..utils import IOClasses
 from .param import TaxcalcStyleParam
 
 
-register = {}
+register = IOClasses(Displayer=None, Param=TaxcalcStyleParam, Parser=None)

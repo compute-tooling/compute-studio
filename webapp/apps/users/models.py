@@ -7,6 +7,9 @@ from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.urls import reverse
 from django.contrib.postgres.fields import ArrayField, JSONField
+from django.utils.functional import cached_property
+
+from webapp.apps.core.meta_parameters import translate_to_django
 
 
 def is_profile_active(user):
@@ -26,40 +29,34 @@ class Profile(models.Model):
 
     def costs(self, projects=None):
         # TODO:
-        # if projects is None:
-        #     projects = Project.objects.all()
-        # agg = defaultdict(float)
-        # for project in projects:
-        #     relation = f"{project.app_name}_{project.app_name}run_runs"
-        #     if hasattr(self, relation):
-        #         res = (
-        #             getattr(self, relation)
-        #             .values(month=TruncMonth("creation_date"))
-        #             .annotate(
-        #                 effective=Case(
-        #                     When(run_cost=0.0, then=0.01), default=F("run_cost")
-        #                 )
-        #             )
-        #             .annotate(Sum("effective"))
-        #         )
-        #         for month in res:
-        #             agg[month["month"]] += float(month["effective__sum"])
-        # return {k.strftime("%B %Y"): v for k, v in sorted(agg.items())}
-        return {}
+        if projects is None:
+            projects = Project.objects.all()
+        agg = defaultdict(float)
+        for project in projects:
+            if self.sims.filter(project=project).count() > 0:
+                res = (
+                    self.sims.filter(sponsor__in=[self, None])
+                    .values(month=TruncMonth("creation_date"))
+                    .annotate(
+                        effective=Case(
+                            When(run_cost=0.0, then=0.01), default=F("run_cost")
+                        )
+                    )
+                    .annotate(Sum("effective"))
+                )
+                for month in res:
+                    agg[month["month"]] += float(month["effective__sum"])
+        return {k.strftime("%B %Y"): v for k, v in sorted(agg.items())}
 
     def runs(self, projects=None):
-        # TODO:
-        # if projects is None:
-        #     projects = Project.objects.all()
-        # runs = {}
-        # for project in projects:
-        #     relation = f"{project.app_name}_{project.app_name}run_runs"
-        #     queryset = getattr(self, relation, None)
-        #     if queryset is not None:
-        #         runs[project.title] = queryset.all()
-        #     print(f"skipping {relation}")
-        # return runs
-        return {}
+        if projects is None:
+            projects = Project.objects.all()
+        runs = {}
+        for project in projects:
+            queryset = self.sims.filter(project=project)
+            if queryset.count() > 0:
+                runs[project.title] = queryset.all()
+        return runs
 
     class Meta:
         # not in use yet...
@@ -171,7 +168,9 @@ class Project(models.Model):
 
     @property
     def app_url(self):
-        return f"/{self.owner.user.username}/{self.title}/"
+        return reverse(
+            "app", kwargs={"title": self.title, "username": self.owner.user.username}
+        )
 
     def worker_ext(self, action):
         return f"{self.owner.user.username}/{self.title}/{action}"
@@ -185,6 +184,8 @@ class Project(models.Model):
 
     @property
     def number_runs(self):
-        # relation = relation = f"{self.app_name}_{self.app_name}run_runs"
-        # TODO:
-        return 10  # getattr(self, relation).count()
+        return CoreInputs.objects.filter(project=self).count()
+
+    @cached_property
+    def parsed_meta_parameters(self):
+        return translate_to_django(self.meta_parameters)

@@ -1,4 +1,7 @@
 from collections import namedtuple
+
+from webapp.apps.core import actions
+from webapp.apps.core.compute import SyncCompute
 from webapp.apps.core.displayer import Displayer
 
 
@@ -10,14 +13,13 @@ class ParameterLookUpException(Exception):
 
 
 class BaseParser:
-    displayer_class = Displayer
-
-    def __init__(self, clean_inputs, **valid_meta_params):
+    def __init__(self, project, ioclasses, clean_inputs, **valid_meta_params):
+        self.project = project
         self.clean_inputs = clean_inputs
         self.valid_meta_params = valid_meta_params
         for param, value in valid_meta_params.items():
             setattr(self, param, value)
-        displayer = self.displayer_class(**valid_meta_params)
+        displayer = ioclasses.Displayer(project, **valid_meta_params)
         self.grouped_defaults = displayer.package_defaults()
         self.flat_defaults = {
             k: v for _, sect in self.grouped_defaults.items() for k, v in sect.items()

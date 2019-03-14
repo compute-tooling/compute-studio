@@ -5,7 +5,7 @@ from .views import RouterView, EditInputsView, OutputsView, OutputsDownloadView
 
 
 urlpatterns = [
-    path("", RouterView.as_view(), name="inputs"),
+    path("", RouterView.as_view(), name="app"),
     path("<int:pk>/edit/", EditInputsView.as_view(), name="edit"),
     path("<int:pk>/download/", OutputsDownloadView.as_view(), name="download"),
     path("<int:pk>/", OutputsView.as_view(), name="outputs"),

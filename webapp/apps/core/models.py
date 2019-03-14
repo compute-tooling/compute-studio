@@ -47,7 +47,7 @@ class CoreInputs(models.Model):
 
         TODO: should be moved to a function corresponding to the input_type
         """
-        if input_type == "taxcalc":
+        if self.input_type == "taxcalc":
             return utils.json_int_key_encode(self.upstream_parameters)
         else:
             return self.upstream_parameters
@@ -86,19 +86,31 @@ class CoreRun(models.Model):
     webapp_vers = models.CharField(blank=True, default=None, null=True, max_length=50)
 
     def get_absolute_url(self):
-        kwargs = {"pk": self.pk}
-        return reverse(f"{self.app_name}_outputs", kwargs=kwargs)
+        kwargs = {
+            "pk": self.pk,
+            "title": self.project.title,
+            "username": self.project.owner.user.username,
+        }
+        return reverse("outputs", kwargs=kwargs)
 
     def get_absolute_edit_url(self):
-        kwargs = {"pk": self.pk}
-        return reverse(f"{self.app_name}", kwargs=kwargs)
+        kwargs = {
+            "pk": self.pk,
+            "title": self.project.title,
+            "username": self.project.owner.user.username,
+        }
+        return reverse("edit", kwargs=kwargs)
 
     def get_absolute_download_url(self):
-        kwargs = {"pk": self.pk}
-        return reverse(f"{self.app_name}_download", kwargs=kwargs)
+        kwargs = {
+            "pk": self.pk,
+            "title": self.project.title,
+            "username": self.project.owner.user.username,
+        }
+        return reverse("download", kwargs=kwargs)
 
     def zip_filename(self):
-        return f"{self.app_name}_{self.pk}.zip"
+        return f"{self.project.title}_{self.pk}.zip"
 
     @cached_property
     def dimension(self):

@@ -6,6 +6,8 @@ from django import forms
 
 from webapp.apps.users.models import Project
 from webapp.apps.core import actions
+from webapp.apps.core.forms import InputsForm
+from webapp.apps.core.models import CoreInputs, CoreRun
 from webapp.apps.core.parser import Parser
 from webapp.apps.core.forms import InputsForm
 from webapp.apps.core.constants import OUT_OF_RANGE_ERROR_MSG, WEBAPP_VERSION
@@ -16,20 +18,17 @@ PostResult = namedtuple("PostResult", ["submit", "save"])
 
 class Submit:
 
-    parser_class = Parser
-    form_class = InputsForm
     webapp_version = WEBAPP_VERSION
-    app_name = None
-    upstream_version = None
-    meta_parameters = None
 
-    def __init__(self, request, compute):
+    def __init__(self, request, project, ioclasses, compute):
         self.request = request
+        self.project = project
+        self.meta_parameters = self.project.parsed_meta_parameters
+        self.ioclasses = ioclasses
         self.compute = compute
         self.model = None
         self.badpost = None
         self.valid_meta_params = {}
-        self.project = Project.objects.get(app_name=self.app_name)
 
         self.get_fields()
         self.create_model()
@@ -48,7 +47,9 @@ class Submit:
         self.valid_meta_params = self.meta_parameters.validate(self.fields)
 
     def create_model(self):
-        self.form = self.form_class(dict(self.fields, **self.valid_meta_params))
+        self.form = InputsForm(
+            self.project, self.ioclasses, dict(self.fields, **self.valid_meta_params)
+        )
         if self.form.non_field_errors():
             self.badpost = BadPost(
                 http_response_404=HttpResponse("Bad Input!", status=400),
@@ -59,7 +60,12 @@ class Submit:
         self.is_valid = self.form.is_valid()
         if self.is_valid:
             self.model = self.form.save(commit=False)
-            parser = self.parser_class(self.model.gui_inputs, **self.valid_meta_params)
+            parser = self.ioclasses.Parser(
+                self.project,
+                self.ioclasses,
+                self.model.gui_inputs,
+                **self.valid_meta_params
+            )
 
             (
                 upstream_parameters,
@@ -67,8 +73,10 @@ class Submit:
                 errors_warnings,
             ) = parser.parse_parameters()
             self.model.upstream_parameters = upstream_parameters
+            self.model.meta_parameters = self.valid_meta_params
             self.model.inputs_file = upstream_json_files
             self.model.errors_warnings = errors_warnings
+            self.model.input_type = self.project.input_type
             self.model.save()
 
     @property
@@ -100,7 +108,7 @@ class Submit:
 
         if self.warn_msgs or self.error_msgs:
             for input_type in self.model.errors_warnings:
-                self.parser_class.append_errors_warnings(
+                self.ioclasses.Parser.append_errors_warnings(
                     self.model.errors_warnings[input_type], add_errors
                 )
 
@@ -109,23 +117,12 @@ class Submit:
             {"user_mods": self.model.deserialized_inputs}, **self.valid_meta_params
         )
         print("submit", data)
-        self.data_list = self.extend_data(data)
-        print(self.data_list)
-        url = self.project.worker_ext(action=actions.SIM)
         self.submitted_id, self.max_q_length = self.compute.submit_job(
-            self.data_list, url
+            data, self.project.worker_ext(action=actions.SIM)
         )
-
-    def extend_data(self, data):
-        """Do nothing here."""
-        return data
 
 
 class Save:
-
-    project_name = None
-    runmodel = None
-
     def __init__(self, submit):
         """
         Retrieve model run data from instance of `Submit`. Save to `RunModel`
@@ -136,13 +133,19 @@ class Save:
         RunModel
         """
         # create OutputUrl object
-        runmodel = self.runmodel()
+        runmodel = CoreRun()
         runmodel.job_id = submit.submitted_id
         runmodel.inputs = submit.model
-        runmodel.profile = getattr(submit.request.user, "profile", None)
-        runmodel.project = Project.objects.get(name=self.project_name)
+        print(
+            "here: ",
+            getattr(submit.request.user, "profile", None),
+            submit.request.user.username,
+        )
+        runmodel.owner = getattr(submit.request.user, "profile", None)
+        runmodel.project = submit.project
         runmodel.sponsor = runmodel.project.sponsor
-        runmodel.upstream_vers = submit.upstream_version
+        # TODO: collect upstream version
+        runmodel.upstream_vers = None
         runmodel.webapp_vers = submit.webapp_version
 
         cur_dt = timezone.now()
@@ -156,12 +159,12 @@ class Save:
         self.runmodel_instance = runmodel
 
 
-def handle_submission(request, compute, submit_class, save_class):
-    sub = submit_class(request, compute)
+def handle_submission(request, project, ioclasses, compute):
+    sub = Submit(request, project, ioclasses, compute)
     if sub.badpost is not None:
         return sub.badpost
     elif sub.stop_submission:
         return PostResult(sub, None)
     else:
-        save = save_class(sub)
+        save = Save(sub)
         return PostResult(sub, save)

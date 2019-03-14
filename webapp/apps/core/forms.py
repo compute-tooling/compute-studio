@@ -1,18 +1,13 @@
 from django import forms
 
-from .displayer import Displayer
 from .models import CoreInputs
+from .meta_parameters import translate_to_django
 
 
 class InputsForm(forms.Form):
-
-    displayer_class = Displayer
-    meta_parameters = None
-
-    def __init__(self, project, displayer_class, meta_parameters, *args, **kwargs):
-        self.displayer_class = displayer_class or self.displayer_class
-        self.meta_parameters = meta_parameters
+    def __init__(self, project, ioclasses, *args, **kwargs):
         self.project = project
+        self.meta_parameters = self.project.parsed_meta_parameters
 
         fields = args[0] if args else {}
         if fields:
@@ -25,7 +20,7 @@ class InputsForm(forms.Form):
             # GET fresh inputs form
             clean_meta_parameters = self.meta_parameters.validate({})
         fields.update(clean_meta_parameters)
-        pd = self.displayer_class(self.project, **clean_meta_parameters)
+        pd = ioclasses.Displayer(self.project, **clean_meta_parameters)
         default_params = pd.defaults(flat=True)
         update_fields = {}
         for param in list(default_params.values()):

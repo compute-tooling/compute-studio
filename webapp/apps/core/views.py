@@ -17,19 +17,22 @@ from webapp.apps.billing.models import SubscriptionItem, UsageRecord
 from webapp.apps.billing.utils import USE_STRIPE, ChargeRunMixin
 from webapp.apps.users.models import Project, is_profile_active
 
-from webapp.apps.contrib import register
+from webapp.apps.contrib.ioregister import register
 
 from .constants import WEBAPP_VERSION
 from .forms import InputsForm
 from .models import CoreRun
 from .compute import Compute, JobFailError
 from .displayer import Displayer
-from .meta_parameters import translate_to_django
 from .submit import handle_submission, BadPost
 
 
 class RouterView(View):
     def get(self, request, *args, **kwargs):
+        print(request, args, kwargs)
+        return UnrestrictedInputsView.as_view()(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
         print(request, args, kwargs)
         return UnrestrictedInputsView.as_view()(request, *args, **kwargs)
 
@@ -73,36 +76,38 @@ class UnrestrictedInputsView(InputsMixin, View):
         project = self.projects.get(
             owner__user__username=kwargs["username"], title=kwargs["title"]
         )
-        classes = register[project.input_type]
-        meta_parameters = translate_to_django(project.meta_parameters)
-        inputs_form = InputsForm(
-            project=project,
-            meta_parameters=meta_parameters,
-            displayer_class=classes["displayer"],
-        )
+        ioclasses = register[project.input_type]
+        inputs_form = InputsForm(project, ioclasses)
         # set cleaned_data with is_valid call
         inputs_form.is_valid()
         inputs_form.clean()
         context = self.project_context(request, project)
         return self._render_inputs_form(
-            request, project, inputs_form, meta_parameters, classes, context
+            request, project, inputs_form, ioclasses, context
         )
 
     def post(self, request, *args, **kwargs):
         print("method=POST", request.POST)
         compute = Compute()
+        project = self.projects.get(
+            owner__user__username=kwargs["username"], title=kwargs["title"]
+        )
+        ioclasses = register[project.input_type]
+
         if request.POST.get("reset", ""):
-            inputs_form = self.form_class(request.POST.dict())
+            inputs_form = InputsForm(project, ioclasses, request.POST.dict())
             if inputs_form.is_valid():
                 inputs_form.clean()
             else:
-                inputs_form = self.form_class()
+                inputs_form = InputsForm(project, ioclasses)
                 inputs_form.is_valid()
                 inputs_form.clean()
-            context = self.project_context(request)
-            return self._render_inputs_form(request, inputs_form, context)
+            context = self.project_context(request, project)
+            return self._render_inputs_form(
+                request, project, inputs_form, ioclasses, context
+            )
 
-        result = handle_submission(request, compute, self.submit_class, self.save_class)
+        result = handle_submission(request, project, ioclasses, compute)
         # case where validation failed
         if isinstance(result, BadPost):
             return submission.http_response_404
@@ -116,24 +121,21 @@ class UnrestrictedInputsView(InputsMixin, View):
             valid_meta_params = result.submit.valid_meta_params
             has_errors = result.submit.has_errors
 
-        displayer = self.displayer_class(**valid_meta_params)
+        displayer = ioclasses.Displayer(project, **valid_meta_params)
         context = dict(
             form=inputs_form,
             default_form=displayer.defaults(flat=False),
-            upstream_version=self.upstream_version,
             webapp_version=self.webapp_version,
             has_errors=self.has_errors,
-            **self.project_context(request),
+            **self.project_context(request, project),
         )
         return render(request, self.template_name, context)
 
-    def _render_inputs_form(
-        self, request, project, inputs_form, meta_parameters, classes, context
-    ):
+    def _render_inputs_form(self, request, project, inputs_form, ioclasses, context):
         valid_meta_params = {}
-        for mp in meta_parameters.parameters:
+        for mp in project.parsed_meta_parameters.parameters:
             valid_meta_params[mp.name] = inputs_form.cleaned_data[mp.name]
-        displayer = classes["displayer"](project, **valid_meta_params)
+        displayer = ioclasses.Displayer(project, **valid_meta_params)
         context = dict(
             form=inputs_form,
             default_form=displayer.defaults(flat=False),
@@ -155,43 +157,55 @@ class InputsView(UnrestrictedInputsView):
         super().post(request, *args, **kwargs)
 
 
-class EditInputsView(InputsMixin, DetailView):
+class GetOutputsObjectMixin:
+    def get_object(self, pk, username, title):
+        return self.model.objects.get(
+            pk=pk, project__title=title, project__owner__user__username=username
+        )
+
+
+class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
     model = CoreRun
 
     def get(self, request, *args, **kwargs):
         print("edit method=GET", request.GET)
-        model = self.get_object()
+        self.object = self.get_object(kwargs["pk"], kwargs["username"], kwargs["title"])
+        project = self.object.project
+        ioclasses = register[project.input_type]
+
         initial = {}
-        for k, v in model.inputs.raw_gui_inputs.items():
+        for k, v in self.object.inputs.raw_gui_inputs.items():
             if v not in ("", None):
                 initial[k] = v
-        for mp in self.meta_parameters.parameters:
-            mp_val = getattr(model.inputs, mp.name, None)
+        for mp in project.parsed_meta_parameters.parameters:
+            mp_val = getattr(self.object.inputs, mp.name, None)
             if mp_val is not None:
                 initial[mp.name] = mp_val
-        inputs_form = self.form_class(initial=initial)
+
+        inputs_form = InputsForm(project, ioclasses, initial=initial)
         # clean data with is_valid call.
         inputs_form.is_valid()
         # is_bound is turned off so that the `initial` data is displayed.
         # Note that form is validated and cleaned with is_bound call.
         inputs_form.is_bound = False
-        context = self.project_context(request)
-        return self._render_inputs_form(request, inputs_form, context)
+        context = self.project_context(request, project)
+        return self._render_inputs_form(
+            request, project, ioclasses, inputs_form, context
+        )
 
     def post(self, request, *args, **kwargs):
         return HttpResponseNotFound("<h1>Post not allowed to edit page</h1>")
 
-    def _render_inputs_form(self, request, inputs_form, context):
+    def _render_inputs_form(self, request, project, ioclasses, inputs_form, context):
         valid_meta_params = {}
-        for mp in self.meta_parameters.parameters:
+        for mp in project.parsed_meta_parameters.parameters:
             valid_meta_params[mp.name] = (
                 inputs_form.initial.get(mp.name, None) or inputs_form[mp.name].data
             )
-        displayer = self.displayer_class(**valid_meta_params)
+        displayer = ioclasses.Displayer(project, **valid_meta_params)
         context = dict(
             form=inputs_form,
             default_form=displayer.defaults(flat=False),
-            upstream_version=self.upstream_version,
             webapp_version=self.webapp_version,
             has_errors=self.has_errors,
             **context,
@@ -199,37 +213,7 @@ class EditInputsView(InputsMixin, DetailView):
         return render(request, self.template_name, context)
 
 
-class SuperclassTemplateNameMixin(object):
-    """A mixin that adds the templates corresponding to the core as candidates
-    if customized ones aren't found in subclasses."""
-
-    def get_template_names(self):
-        names = super().get_template_names()
-
-        # Look for classes that the view inherits from, and that are directly
-        # inheriting this mixin
-        subclasses = SuperclassTemplateNameMixin.__subclasses__()
-        superclasses = self.__class__.__bases__
-        classes_to_check = set(subclasses).intersection(set(superclasses))
-
-        for c in classes_to_check:
-            # Adapted from
-            # https://github.com/django/django/blob/2e06ff8/django/views/generic/detail.py#L142
-            if getattr(c, "model", None) is not None and issubclass(
-                c.model, models.Model
-            ):
-                names.append(
-                    "%s/%s%s.html"
-                    % (
-                        c.model._meta.app_label,
-                        c.model._meta.model_name,
-                        self.template_name_suffix,
-                    )
-                )
-        return names
-
-
-class OutputsView(ChargeRunMixin, SuperclassTemplateNameMixin, DetailView):
+class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
     """
     This view is the single page of diplaying a progress bar for how
     close the job is to finishing, and then it will also display the
@@ -248,23 +232,21 @@ class OutputsView(ChargeRunMixin, SuperclassTemplateNameMixin, DetailView):
 
     model = CoreRun
     is_editable = True
-    result_header = "Results"
 
     def fail(self):
         return render(
             self.request, "core/failed.html", {"error_msg": self.object.error_text}
         )
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["result_header"] = self.result_header
-        return context
-
     def dispatch(self, request, *args, **kwargs):
         compute = Compute()
-        self.object = self.get_object()
+        self.object = self.get_object(kwargs["pk"], kwargs["username"], kwargs["title"])
         if self.object.outputs or self.object.aggr_outputs:
-            return super().get(self, request, *args, **kwargs)
+            return render(
+                request,
+                "core/corerun_detail.html",
+                {"object": self.object, "result_header": "Results"},
+            )
         elif self.object.error_text is not None:
             return self.fail()
         else:
@@ -298,7 +280,11 @@ class OutputsView(ChargeRunMixin, SuperclassTemplateNameMixin, DetailView):
                 self.object.aggr_outputs = results["aggr_outputs"]
                 self.object.creation_date = timezone.now()
                 self.object.save()
-                return super().get(self, request, *args, **kwargs)
+                return render(
+                    request,
+                    "core/corerun_detail.html",
+                    {"object": self.object, "result_header": "Results"},
+                )
             else:
                 if request.method == "POST":
                     # if not ready yet, insert number of minutes remaining
@@ -330,11 +316,11 @@ class OutputsView(ChargeRunMixin, SuperclassTemplateNameMixin, DetailView):
             return ""
 
 
-class OutputsDownloadView(SingleObjectMixin, View):
+class OutputsDownloadView(GetOutputsObjectMixin, View):
     model = CoreRun
 
     def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
+        self.object = self.get_object(kwargs["pk"], kwargs["username"], kwargs["title"])
 
         if (
             not (self.object.outputs or self.object.aggr_outputs)
