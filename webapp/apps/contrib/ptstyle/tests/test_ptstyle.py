@@ -6,7 +6,7 @@ from django import forms
 
 from paramtools import Parameters, ValidationError
 
-from webapp.apps.core.meta_parameters import meta_parameters, MetaParameter
+from webapp.apps.core.meta_parameters import translate_to_django
 from webapp.apps.core.displayer import Displayer
 from webapp.apps.core.fields import ValueField, SeparatedValueField
 from webapp.apps.contrib.ptstyle.param import ParamToolsParam
@@ -39,14 +39,17 @@ def TestParams(schema_def_path, defaults_spec_path):
 
 @pytest.fixture
 def pt_metaparam(TestParams):
-    meta_parameters.parameters.append(
-        MetaParameter(
-            name="dim0",
-            default="zero",
-            field=forms.ChoiceField(choices=list((i, i) for i in ["zero", "one"])),
-        )
+    return translate_to_django(
+        {
+            "meta_parameters": {
+                "dim0": {
+                    "title": "dim 0",
+                    "default": "zero",
+                    "validators": {"choice": {"choices": ["zero", "one"]}},
+                }
+            }
+        }
     )
-    return meta_parameters
 
 
 def test_make_params(TestParams):
