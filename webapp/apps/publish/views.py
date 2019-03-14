@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.utils.decorators import method_decorator
@@ -15,10 +17,8 @@ from .serializers import PublishSerializer
 
 
 class GetProjectMixin:
-    def get_object(self, username, app_name):
-        return get_object_or_404(
-            Project, name=app_name, profile__user__username=username
-        )
+    def get_object(self, username, title):
+        return get_object_or_404(Project, title=title, owner__user__username=username)
 
 
 class ProjectView(View):
@@ -40,12 +40,15 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
     def get(self, request, *args, **kwargs):
         project = self.get_object(**kwargs)
         serializer = PublishSerializer(project)
-        return Response(serializer.data)
+        data = serializer.data
+        data["meta_parameters"] = json.dumps(data["meta_parameters"], indent=4)
+        return Response(data)
 
     def put(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             project = self.get_object(**kwargs)
-            if project.profile.user == request.user:
+            if project.owner.user == request.user:
+                print(request.data)
                 serializer = PublishSerializer(project, data=request.data)
                 if serializer.is_valid():
                     model = serializer.save(status="pending")
@@ -57,7 +60,7 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
                     send_mail(
                         f"{request.user.username} is updating a model on COMP!",
                         (
-                            f"{model.name} will be updated or you will have feedback within "
+                            f"{model.title} will be updated or you will have feedback within "
                             f"the next 24 hours. Check the status of the update at "
                             f"{status_url}."
                         ),
@@ -66,6 +69,7 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
                         fail_silently=False,
                     )
                     return Response(serializer.data)
+                print(serializer.errors)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_401_UNAUTHORIZED)
 
@@ -76,14 +80,14 @@ class ProjectCreateAPIView(GetProjectMixin, APIView):
             serializer = PublishSerializer(data=request.POST)
             is_valid = serializer.is_valid()
             if is_valid:
-                app_name = (
+                title = (
                     serializer.validated_data["name"]
                     .replace("-", "_")
                     .replace(" ", "")
                     .lower()
                 )
                 model = serializer.save(
-                    profile=request.user.profile, status="pending", app_name=app_name
+                    owner=request.user.profile, status="pending", title=title
                 )
                 status_url = request.build_absolute_uri(
                     reverse("userprofile", kwargs={"username": request.user.username})
@@ -91,7 +95,7 @@ class ProjectCreateAPIView(GetProjectMixin, APIView):
                 send_mail(
                     f"{request.user.username} is publishing a model on COMP!",
                     (
-                        f"{model.name} will be live or you will have feedback within "
+                        f"{model.title} will be live or you will have feedback within "
                         f"the next 24 hours. Check the status of the submission at "
                         f"{status_url}."
                     ),

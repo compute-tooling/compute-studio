@@ -16,13 +16,22 @@ from django.urls import reverse
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
 from webapp.apps.billing.utils import USE_STRIPE, ChargeRunMixin
 from webapp.apps.users.models import Project, is_profile_active
-from .constants import WEBAPP_VERSION
 
+from webapp.apps.contrib import register
+
+from .constants import WEBAPP_VERSION
+from .forms import InputsForm
 from .models import CoreRun
 from .compute import Compute, JobFailError
 from .displayer import Displayer
-from .meta_parameters import meta_parameters
+from .meta_parameters import translate_to_django
 from .submit import handle_submission, BadPost
+
+
+class RouterView(View):
+    def get(self, request, *args, **kwargs):
+        print(request, args, kwargs)
+        return UnrestrictedInputsView.as_view()(request, *args, **kwargs)
 
 
 class InputsMixin:
@@ -30,24 +39,12 @@ class InputsMixin:
     Define class attributes and common methods for inputs form views.
     """
 
-    form_class = None
-    displayer_class = Displayer
-    submit_class = None
-    save_class = None
     template_name = "core/inputs_form.html"
-    project_name = "Inputs"
-    app_name = "core"
-    app_description = "Placeholder description"
-    meta_parameters = meta_parameters
-    meta_options = {}
     has_errors = False
-    upstream_version = None
     webapp_version = WEBAPP_VERSION
     provided_free = False
 
-    def project_context(self, request):
-        project = Project.objects.get(name=self.project_name)
-        owner = project.profile.user.username
+    def project_context(self, request, project):
         user = request.user
         can_run = user.is_authenticated and is_profile_active(user)
         can_run = can_run or self.provided_free
@@ -56,28 +53,40 @@ class InputsMixin:
 
         context = {
             "rate": f"${rate}/hour",
-            "project_name": self.project_name,
-            "owner": owner,
-            "app_description": self.app_description,
-            "redirect_back": self.app_name,
+            "project_name": project.title,
+            "owner": project.owner.user.username,
+            "app_description": project.description,
             "can_run": can_run,
             "exp_cost": f"${exp_cost}",
             "exp_time": f"{exp_time} seconds",
             "provided_free": self.provided_free,
-            "app_url": reverse(self.app_name),
+            "app_url": project.app_url,
         }
         return context
 
 
 class UnrestrictedInputsView(InputsMixin, View):
+    projects = Project.objects.all()
+
     def get(self, request, *args, **kwargs):
-        print("method=GET", request.GET)
-        inputs_form = self.form_class()
+        print("method=GET", request.GET, kwargs)
+        project = self.projects.get(
+            owner__user__username=kwargs["username"], title=kwargs["title"]
+        )
+        classes = register[project.input_type]
+        meta_parameters = translate_to_django(project.meta_parameters)
+        inputs_form = InputsForm(
+            project=project,
+            meta_parameters=meta_parameters,
+            displayer_class=classes["displayer"],
+        )
         # set cleaned_data with is_valid call
         inputs_form.is_valid()
         inputs_form.clean()
-        context = self.project_context(request)
-        return self._render_inputs_form(request, inputs_form, context)
+        context = self.project_context(request, project)
+        return self._render_inputs_form(
+            request, project, inputs_form, meta_parameters, classes, context
+        )
 
     def post(self, request, *args, **kwargs):
         print("method=POST", request.POST)
@@ -118,15 +127,16 @@ class UnrestrictedInputsView(InputsMixin, View):
         )
         return render(request, self.template_name, context)
 
-    def _render_inputs_form(self, request, inputs_form, context):
+    def _render_inputs_form(
+        self, request, project, inputs_form, meta_parameters, classes, context
+    ):
         valid_meta_params = {}
-        for mp in self.meta_parameters.parameters:
+        for mp in meta_parameters.parameters:
             valid_meta_params[mp.name] = inputs_form.cleaned_data[mp.name]
-        displayer = self.displayer_class(**valid_meta_params)
+        displayer = classes["displayer"](project, **valid_meta_params)
         context = dict(
             form=inputs_form,
             default_form=displayer.defaults(flat=False),
-            upstream_version=self.upstream_version,
             webapp_version=self.webapp_version,
             has_errors=self.has_errors,
             **context,

@@ -1,6 +1,6 @@
 from django.db import models
 from django.urls import reverse
-from webapp.apps.core.models import CoreInputs, CoreRun
+from webapp.apps.core.abstract_models import CoreInputs, CoreRun
 
 
 class TestappInputs(CoreInputs):

@@ -25,12 +25,12 @@ urlpatterns = [
     path("", include("webapp.apps.pages.urls")),
     path("publish/", include("webapp.apps.publish.urls")),
     path(
-        "<str:username>/<str:app_name>/detail/",
+        "<str:username>/<str:title>/detail/",
         publishviews.ProjectDetailView.as_view(),
         name="project_detail",
     ),
     # add project URL's here
-    path("hdoupe/Matchups/", include("webapp.apps.projects.matchups.urls")),
+    path("<str:username>/<str:title>/", include("webapp.apps.core.urls")),
     # user/billing apps
     path("<str:username>/", userviews.UserProfile.as_view(), name="userprofile"),
     path("users/", include("webapp.apps.users.urls")),

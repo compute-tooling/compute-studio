@@ -55,3 +55,23 @@ matchups_meta_parameters = MetaParameters(
         )
     ]
 )
+
+# {
+#     "time_of_day": {
+#         "title": "Time of the Day",
+#         "default": 12,
+#         "type": "int",
+#         "validators": {
+#             "range": {"min": 0, "max": 23}
+#         }
+#     }
+# }
+
+# metaparameters = {
+#     "use_full_data": {
+#         "title": "Use full data",
+#         "default": True,
+#         "type": "bool",
+#         "validators": {}
+#     }
+# }

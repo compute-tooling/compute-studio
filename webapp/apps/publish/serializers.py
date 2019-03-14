@@ -7,8 +7,10 @@ class PublishSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = (
-            "name",
+            "title",
             "description",
+            "input_type",
+            "meta_parameters",
             "package_defaults",
             "parse_user_adjustments",
             "run_simulation",

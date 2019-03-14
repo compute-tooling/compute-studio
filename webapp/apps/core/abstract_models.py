@@ -8,13 +8,11 @@ from django.db import models
 from django.utils.functional import cached_property
 from django.contrib.postgres.fields import JSONField
 from django.utils.timezone import make_aware
-from django.urls import reverse
 
 from webapp.apps.users.models import Project, Profile
 
 
 class CoreInputs(models.Model):
-    meta_parameters = JSONField(default=None, blank=True, null=True)
     raw_gui_inputs = JSONField(default=None, blank=True, null=True)
     gui_inputs = JSONField(default=None, blank=True, null=True)
 
@@ -27,14 +25,6 @@ class CoreInputs(models.Model):
     # The parameters that will be used to run the model
     upstream_parameters = JSONField(default=dict, blank=True, null=True)
 
-    # If project changes input type, we still want to know the type of the
-    # previous model runs' inputs.
-    input_type = models.CharField(
-        choices=(("paramtools", "paramtools"), ("taxcalc", "taxcalc")), max_length=32
-    )
-
-    # TODO: should have project???
-
     @property
     def deserialized_inputs(self):
         """
@@ -43,34 +33,38 @@ class CoreInputs(models.Model):
         object is lost during serialization. For example, projects that depend
         on integer keys in a dictionary will run into issues with those keys
         being converted into strings during serialization.
-
-
-        TODO: should be moved to a function corresponding to the input_type
         """
-        if input_type == "taxcalc":
-            return utils.json_int_key_encode(self.upstream_parameters)
-        else:
-            return self.upstream_parameters
+        return self.upstream_parameters
+
+    class Meta:
+        abstract = True
+        # permissions = (('run_model', 'Can run model'),)
 
 
 class CoreRun(models.Model):
-    # TODO: dimension needs to go
-    dimension_name = "Dimension--needs to go"
+    dimension_name = "Dimension"
 
-    inputs = models.OneToOneField(
-        CoreInputs, on_delete=models.CASCADE, related_name="outputs"
-    )
+    # Subclasses must implement:
+    # inputs = models.OneToOneField(CoreInputs)
     meta_data = JSONField(default=None, blank=True, null=True)
     outputs = JSONField(default=None, blank=True, null=True)
     aggr_outputs = JSONField(default=None, blank=True, null=True)
     error_text = models.CharField(null=True, blank=True, default=None, max_length=4000)
-    owner = models.ForeignKey(
-        Profile, on_delete=models.PROTECT, null=True, related_name="sims"
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.PROTECT,
+        null=True,
+        related_name="%(app_label)s_%(class)s_runs",
     )
     sponsor = models.ForeignKey(
-        Profile, on_delete=models.SET_NULL, null=True, related_name="sponsored_sims"
+        Profile,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="%(app_label)s_%(class)s_sponsored_runs",
     )
-    project = models.ForeignKey(Project, on_delete=models.PROTECT, related_name="sims")
+    project = models.ForeignKey(
+        Project, on_delete=models.PROTECT, related_name="%(app_label)s_%(class)s_runs"
+    )
     # run-time in seconds
     run_time = models.IntegerField(default=0)
     # run cost can be very small. ex: 4 sec * ($0.09/hr)/3600
@@ -86,19 +80,16 @@ class CoreRun(models.Model):
     webapp_vers = models.CharField(blank=True, default=None, null=True, max_length=50)
 
     def get_absolute_url(self):
-        kwargs = {"pk": self.pk}
-        return reverse(f"{self.app_name}_outputs", kwargs=kwargs)
+        raise NotImplementedError()
 
     def get_absolute_edit_url(self):
-        kwargs = {"pk": self.pk}
-        return reverse(f"{self.app_name}", kwargs=kwargs)
+        raise NotImplementedError()
 
     def get_absolute_download_url(self):
-        kwargs = {"pk": self.pk}
-        return reverse(f"{self.app_name}_download", kwargs=kwargs)
+        raise NotImplementedError()
 
     def zip_filename(self):
-        return f"{self.app_name}_{self.pk}.zip"
+        return "comp.zip"
 
     @cached_property
     def dimension(self):
@@ -108,6 +99,9 @@ class CoreRun(models.Model):
     @property
     def effective_cost(self):
         return self.project.run_cost(self.run_time, adjust=True)
+
+    class Meta:
+        abstract = True
 
 
 @dataclass

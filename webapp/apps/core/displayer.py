@@ -1,8 +1,13 @@
+from webapp.apps.core.compute import SyncCompute
+from webapp.apps.core import actions
+
+
 class Displayer:
 
     param_class = None
 
-    def __init__(self, **meta_parameters):
+    def __init__(self, project, **meta_parameters):
+        self.project = project
         self.meta_parameters = meta_parameters
 
     def defaults(self, flat=True):
@@ -12,7 +17,15 @@ class Displayer:
             return self._default_form()
 
     def package_defaults(self):
-        raise NotImplementedError()
+        """
+        Get the package defaults from the upstream project. Currently, this is
+        done by importing the project and calling a function or series of
+        functions to load the project's inputs data. In the future, this will
+        be done over the distributed REST API.
+        """
+        return SyncCompute().submit_job(
+            self.meta_parameters, self.project.worker_ext(action=actions.INPUTS)
+        )
 
     def _default_flatdict(self):
         """
@@ -49,9 +62,7 @@ class Displayer:
         for x, y in ordered_dict.items():
             section_name = y.get("section_1")
             if section_name:
-                section = next(
-                    (item for item in output if section_name in item), None
-                )
+                section = next((item for item in output if section_name in item), None)
                 if not section:
                     output.append({section_name: [{x: y}]})
                 else:
@@ -64,14 +75,8 @@ class Displayer:
         for x in field_section:
             for y, z in x.items():
                 section_name = z.get("section_2")
-                new_param = {
-                    y: self.param_class(
-                        y, z, **self.meta_parameters
-                    )
-                }
-                section = next(
-                    (item for item in output if section_name in item), None
-                )
+                new_param = {y: self.param_class(y, z, **self.meta_parameters)}
+                section = next((item for item in output if section_name in item), None)
                 if not section:
                     output.append({section_name: [new_param]})
                 else:

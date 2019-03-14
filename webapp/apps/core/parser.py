@@ -9,7 +9,7 @@ class ParameterLookUpException(Exception):
     pass
 
 
-class Parser:
+class BaseParser:
     displayer_class = Displayer
 
     def __init__(self, clean_inputs, **valid_meta_params):
@@ -17,14 +17,10 @@ class Parser:
         self.valid_meta_params = valid_meta_params
         for param, value in valid_meta_params.items():
             setattr(self, param, value)
-        displayer = self.displayer_class(
-            **valid_meta_params
-        )
+        displayer = self.displayer_class(**valid_meta_params)
         self.grouped_defaults = displayer.package_defaults()
         self.flat_defaults = {
-            k: v
-            for _, sect in self.grouped_defaults.items()
-            for k, v in sect.items()
+            k: v for _, sect in self.grouped_defaults.items() for k, v in sect.items()
         }
 
     def parse_parameters(self):
@@ -44,7 +40,7 @@ class Parser:
 
         inputs_by_section = {sect: {} for sect in self.grouped_defaults}
         for param, value in self.clean_inputs.items():
-            if value in ('', None):
+            if value in ("", None):
                 continue
             for section in order_by_list_len:
                 search_hit = self.get_default_param(
@@ -57,8 +53,9 @@ class Parser:
         unflattened = {}
         for sect, inputs in inputs_by_section.items():
             unflattened[sect] = self.unflatten(inputs)
-        errors_warnings = {sect: {"errors": {}, "warnings": {}}
-                           for sect in inputs_by_section}
+        errors_warnings = {
+            sect: {"errors": {}, "warnings": {}} for sect in inputs_by_section
+        }
         return unflattened, "", errors_warnings
 
     def unflatten(self, parsed_input):
@@ -93,3 +90,17 @@ class Parser:
             for param in errors_warnings[action]:
                 msg = errors_warnings[action][param]
                 append_func(param, msg)
+
+
+class Parser(BaseParser):
+    def parse_parameters(self):
+        params, jsonparams, errors_warnings = super().parse_parameters()
+        data = {
+            "params": params,
+            "jsonparams": jsonparams,
+            "errors_warnings": errors_warnings,
+            **self.valid_meta_params,
+        }
+        return SyncCompute().submit_job(
+            data, self.project.worker_ext(action=actions.PARSE)
+        )

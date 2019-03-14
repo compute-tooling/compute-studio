@@ -6,7 +6,7 @@ from django.db.models import F, Case, When, Sum
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.urls import reverse
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField, JSONField
 
 
 def is_profile_active(user):
@@ -25,37 +25,41 @@ class Profile(models.Model):
     is_active = models.BooleanField(default=False)
 
     def costs(self, projects=None):
-        if projects is None:
-            projects = Project.objects.all()
-        agg = defaultdict(float)
-        for project in projects:
-            relation = f"{project.app_name}_{project.app_name}run_runs"
-            if hasattr(self, relation):
-                res = (
-                    getattr(self, relation)
-                    .values(month=TruncMonth("creation_date"))
-                    .annotate(
-                        effective=Case(
-                            When(run_cost=0.0, then=0.01), default=F("run_cost")
-                        )
-                    )
-                    .annotate(Sum("effective"))
-                )
-                for month in res:
-                    agg[month["month"]] += float(month["effective__sum"])
-        return {k.strftime("%B %Y"): v for k, v in sorted(agg.items())}
+        # TODO:
+        # if projects is None:
+        #     projects = Project.objects.all()
+        # agg = defaultdict(float)
+        # for project in projects:
+        #     relation = f"{project.app_name}_{project.app_name}run_runs"
+        #     if hasattr(self, relation):
+        #         res = (
+        #             getattr(self, relation)
+        #             .values(month=TruncMonth("creation_date"))
+        #             .annotate(
+        #                 effective=Case(
+        #                     When(run_cost=0.0, then=0.01), default=F("run_cost")
+        #                 )
+        #             )
+        #             .annotate(Sum("effective"))
+        #         )
+        #         for month in res:
+        #             agg[month["month"]] += float(month["effective__sum"])
+        # return {k.strftime("%B %Y"): v for k, v in sorted(agg.items())}
+        return {}
 
     def runs(self, projects=None):
-        if projects is None:
-            projects = Project.objects.all()
-        runs = {}
-        for project in projects:
-            relation = f"{project.app_name}_{project.app_name}run_runs"
-            queryset = getattr(self, relation, None)
-            if queryset is not None:
-                runs[project.name] = queryset.all()
-            print(f"skipping {relation}")
-        return runs
+        # TODO:
+        # if projects is None:
+        #     projects = Project.objects.all()
+        # runs = {}
+        # for project in projects:
+        #     relation = f"{project.app_name}_{project.app_name}run_runs"
+        #     queryset = getattr(self, relation, None)
+        #     if queryset is not None:
+        #         runs[project.title] = queryset.all()
+        #     print(f"skipping {relation}")
+        # return runs
+        return {}
 
     class Meta:
         # not in use yet...
@@ -64,10 +68,11 @@ class Profile(models.Model):
 
 class Project(models.Model):
     SECS_IN_HOUR = 3600.0
-    name = models.CharField(max_length=255)
-    app_name = models.CharField(max_length=30)
+    title = models.CharField(max_length=255)
     description = models.CharField(max_length=1000)
-    profile = models.ForeignKey(
+    # TODO: profile --> owner
+    # TODO: profile --> many to many relationship?
+    owner = models.ForeignKey(
         Profile, null=True, related_name="projects", on_delete=models.CASCADE
     )
     sponsor = models.ForeignKey(
@@ -85,6 +90,7 @@ class Project(models.Model):
     )
 
     # functions
+    meta_parameters = JSONField(default=None, blank=True, null=True)
     package_defaults = models.CharField(max_length=1000)
     parse_user_adjustments = models.CharField(max_length=1000)
     run_simulation = models.CharField(max_length=1000)
@@ -103,6 +109,17 @@ class Project(models.Model):
     )
     exp_task_time = models.IntegerField(null=True)
     exp_num_tasks = models.IntegerField(null=True)
+
+    # model parameter type
+    input_type = models.CharField(
+        choices=(("paramtools", "paramtools"), ("taxcalc", "taxcalc")), max_length=32
+    )
+    # permission type of the model
+    permission_type = models.CharField(
+        choices=(("default", "default"), ("sponsored", "sponsored")),
+        default="default",
+        max_length=32,
+    )
 
     @staticmethod
     def get_or_none(**kwargs):
@@ -154,10 +171,10 @@ class Project(models.Model):
 
     @property
     def app_url(self):
-        return reverse(self.app_name)
+        return f"/{self.owner.user.username}/{self.title}/"
 
     def worker_ext(self, action):
-        return f"{self.profile.user.username}/{self.app_name}/{action}"
+        return f"{self.owner.user.username}/{self.title}/{action}"
 
     @property
     def display_sponsor(self):
@@ -168,5 +185,6 @@ class Project(models.Model):
 
     @property
     def number_runs(self):
-        relation = relation = f"{self.app_name}_{self.app_name}run_runs"
-        return getattr(self, relation).count()
+        # relation = relation = f"{self.app_name}_{self.app_name}run_runs"
+        # TODO:
+        return 10  # getattr(self, relation).count()
