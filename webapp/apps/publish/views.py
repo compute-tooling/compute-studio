@@ -1,4 +1,5 @@
 import json
+import re
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
@@ -14,6 +15,7 @@ from rest_framework import status
 from webapp.apps.users.models import Project, is_profile_active
 
 from .serializers import PublishSerializer
+from .utils import title_fixup
 
 
 class GetProjectMixin:
@@ -80,12 +82,7 @@ class ProjectCreateAPIView(GetProjectMixin, APIView):
             serializer = PublishSerializer(data=request.POST)
             is_valid = serializer.is_valid()
             if is_valid:
-                title = (
-                    serializer.validated_data["name"]
-                    .replace("-", "_")
-                    .replace(" ", "")
-                    .lower()
-                )
+                title = title_fixup(serializer.validated_data["title"])
                 model = serializer.save(
                     owner=request.user.profile, status="pending", title=title
                 )

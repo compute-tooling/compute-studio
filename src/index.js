@@ -113,7 +113,7 @@ class PublishForm extends React.Component {
             );
           }}
           validationSchema={Schema}
-          render={({ errors, status, touched, isSubmitting }) => (
+          render={({ onChange }) => (
             <Form>
               <h3>About</h3>
               <hr className="my-4" />
@@ -125,6 +125,7 @@ class PublishForm extends React.Component {
                   placeholder="What's the name of this app?"
                   label="App Name"
                   preview={this.state.preview}
+                  onChange={onChange}
                 />
                 <ErrorMessage
                   name="title"
