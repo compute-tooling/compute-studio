@@ -84,7 +84,10 @@ class ProjectCreateAPIView(GetProjectMixin, APIView):
             if is_valid:
                 title = title_fixup(serializer.validated_data["title"])
                 model = serializer.save(
-                    owner=request.user.profile, status="pending", title=title
+                    owner=request.user.profile,
+                    status="pending",
+                    title=title,
+                    server_cost=0.1,
                 )
                 status_url = request.build_absolute_uri(
                     reverse("userprofile", kwargs={"username": request.user.username})

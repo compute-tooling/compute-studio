@@ -28,13 +28,27 @@ from .submit import handle_submission, BadPost
 
 
 class RouterView(View):
+    projects = Project.objects.all()
+
     def get(self, request, *args, **kwargs):
-        print(request, args, kwargs)
-        return UnrestrictedInputsView.as_view()(request, *args, **kwargs)
+        print("router get", args, kwargs)
+        project = self.projects.get(
+            owner__user__username=kwargs["username"], title=kwargs["title"]
+        )
+        if project.sponsor is None:
+            return InputsView.as_view()(request, *args, **kwargs)
+        else:
+            return UnrestrictedInputsView.as_view()(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        print(request, args, kwargs)
-        return UnrestrictedInputsView.as_view()(request, *args, **kwargs)
+        print("router post", args, kwargs)
+        project = self.projects.get(
+            owner__user__username=kwargs["username"], title=kwargs["title"]
+        )
+        if project.sponsor is None:
+            return InputsView.as_view()(request, *args, **kwargs)
+        else:
+            return UnrestrictedInputsView.as_view()(request, *args, **kwargs)
 
 
 class InputsMixin:
@@ -121,7 +135,7 @@ class UnrestrictedInputsView(InputsMixin, View):
             valid_meta_params = result.submit.valid_meta_params
             has_errors = result.submit.has_errors
 
-        displayer = ioclasses.Displayer(project, **valid_meta_params)
+        displayer = ioclasses.Displayer(project, ioclasses, **valid_meta_params)
         context = dict(
             form=inputs_form,
             default_form=displayer.defaults(flat=False),
@@ -135,7 +149,7 @@ class UnrestrictedInputsView(InputsMixin, View):
         valid_meta_params = {}
         for mp in project.parsed_meta_parameters.parameters:
             valid_meta_params[mp.name] = inputs_form.cleaned_data[mp.name]
-        displayer = ioclasses.Displayer(project, **valid_meta_params)
+        displayer = ioclasses.Displayer(project, ioclasses, **valid_meta_params)
         context = dict(
             form=inputs_form,
             default_form=displayer.defaults(flat=False),
@@ -154,7 +168,7 @@ class InputsView(UnrestrictedInputsView):
     @method_decorator(login_required)
     @method_decorator(user_passes_test(is_profile_active, login_url="/users/login/"))
     def post(self, request, *args, **kwargs):
-        super().post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
 
 class GetOutputsObjectMixin:
@@ -202,7 +216,7 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
             valid_meta_params[mp.name] = (
                 inputs_form.initial.get(mp.name, None) or inputs_form[mp.name].data
             )
-        displayer = ioclasses.Displayer(project, **valid_meta_params)
+        displayer = ioclasses.Displayer(project, ioclasses, **valid_meta_params)
         context = dict(
             form=inputs_form,
             default_form=displayer.defaults(flat=False),
@@ -266,7 +280,6 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                 self.object.error_text = error_contents
                 self.object.save()
                 return self.fail()
-
             if job_ready == "YES":
                 try:
                     results = compute.get_results(job_id)
@@ -339,7 +352,9 @@ class OutputsDownloadView(GetOutputsObjectMixin, View):
                 indent=4,
             )
             resp = HttpResponse(raw_json, content_type="text/plain")
-            resp["Content-Disposition"] = "attachment; filename=outputs.json"
+            resp[
+                "Content-Disposition"
+            ] = f"attachment; filename={self.object.json_filename()}"
             return resp
 
         try:
@@ -364,8 +379,8 @@ class OutputsDownloadView(GetOutputsObjectMixin, View):
             z.writestr(i["filename"], i["text"])
         z.close()
         resp = HttpResponse(s.getvalue(), content_type="application/zip")
-        resp["Content-Disposition"] = "attachment; filename={}".format(
-            self.object.zip_filename()
-        )
+        resp[
+            "Content-Disposition"
+        ] = f"attachment; filename={self.object.zip_filename()}"
         s.close()
         return resp

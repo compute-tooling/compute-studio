@@ -4,6 +4,7 @@ import os
 import pytest
 
 from webapp.apps.core.displayer import Displayer
+from webapp.apps.core.meta_parameters import translate_to_django
 from webapp.apps.contrib.taxcalcstyle.parser import TaxcalcStyleParser
 from webapp.apps.contrib.taxcalcstyle.param import TaxcalcStyleParam
 
@@ -15,7 +16,34 @@ def mockparam():
         return json.loads(f.read())
 
 
-def test_param(mockparam):
+@pytest.fixture
+def meta_parameters():
+    meta_parameters = {
+        "meta_parameters": {
+            "start_year": {
+                "title": "Start Year",
+                "type": "int",
+                "default": 2017,
+                "validators": {"range": {"min": 2013, "max": 2028}},
+            },
+            "data_source": {
+                "title": "Data Source",
+                "type": "str",
+                "default": "PUF",
+                "validators": {"choice": {"choices": ["PUF", "CPS"]}},
+            },
+            "use_full_sample": {
+                "title": "Use full sample",
+                "type": "bool",
+                "default": True,
+                "validators": {},
+            },
+        }
+    }
+    return translate_to_django(meta_parameters)
+
+
+def test_param(mockparam, meta_parameters):
     mp_inst = {mp.name: mp.default for mp in meta_parameters.parameters}
     for name, attrs in mockparam["policy"].items():
         param = TaxcalcStyleParam(name, attrs, **mp_inst)

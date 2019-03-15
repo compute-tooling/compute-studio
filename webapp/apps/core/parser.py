@@ -19,7 +19,7 @@ class BaseParser:
         self.valid_meta_params = valid_meta_params
         for param, value in valid_meta_params.items():
             setattr(self, param, value)
-        displayer = ioclasses.Displayer(project, **valid_meta_params)
+        displayer = ioclasses.Displayer(project, ioclasses, **valid_meta_params)
         self.grouped_defaults = displayer.package_defaults()
         self.flat_defaults = {
             k: v for _, sect in self.grouped_defaults.items() for k, v in sect.items()

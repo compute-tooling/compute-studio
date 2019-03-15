@@ -20,7 +20,7 @@ class InputsForm(forms.Form):
             # GET fresh inputs form
             clean_meta_parameters = self.meta_parameters.validate({})
         fields.update(clean_meta_parameters)
-        pd = ioclasses.Displayer(self.project, **clean_meta_parameters)
+        pd = ioclasses.Displayer(self.project, ioclasses, **clean_meta_parameters)
         default_params = pd.defaults(flat=True)
         update_fields = {}
         for param in list(default_params.values()):
@@ -41,17 +41,19 @@ class InputsForm(forms.Form):
         # tokens
         raw_gui_inputs = {}
         gui_inputs = {}
-        meta_parameters = {}
+        clean_meta_parameters = {}
         for k in self.cleaned_data:
             if k not in meta_parameters:
                 raw_gui_inputs[k] = self.data.get(k, None)
                 gui_inputs[k] = self.cleaned_data[k]
             else:
-                meta_parameters[k] = self.cleaned_data[k]
+                clean_meta_parameters[k] = self.cleaned_data[k]
+
         model = CoreInputs(
-            meta_parameters=meta_parameters,
+            meta_parameters=clean_meta_parameters,
             raw_gui_inputs=raw_gui_inputs,
             gui_inputs=gui_inputs,
+            project=self.project,
         )
         if commit:
             model.save()

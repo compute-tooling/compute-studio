@@ -24,6 +24,9 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("webapp.apps.pages.urls")),
     path("publish/", include("webapp.apps.publish.urls")),
+    path("users/", include("webapp.apps.users.urls")),
+    path("users/", include("django.contrib.auth.urls")),
+    path("billing/", include("webapp.apps.billing.urls")),
     path(
         "<str:username>/<str:title>/detail/",
         publishviews.ProjectDetailView.as_view(),
@@ -33,7 +36,4 @@ urlpatterns = [
     path("<str:username>/<str:title>/", include("webapp.apps.core.urls")),
     # user/billing apps
     path("<str:username>/", userviews.UserProfile.as_view(), name="userprofile"),
-    path("users/", include("webapp.apps.users.urls")),
-    path("users/", include("django.contrib.auth.urls")),
-    path("billing/", include("webapp.apps.billing.urls")),
 ]

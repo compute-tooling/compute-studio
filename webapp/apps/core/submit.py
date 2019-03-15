@@ -136,11 +136,6 @@ class Save:
         runmodel = CoreRun()
         runmodel.job_id = submit.submitted_id
         runmodel.inputs = submit.model
-        print(
-            "here: ",
-            getattr(submit.request.user, "profile", None),
-            submit.request.user.username,
-        )
         runmodel.owner = getattr(submit.request.user, "profile", None)
         runmodel.project = submit.project
         runmodel.sponsor = runmodel.project.sponsor

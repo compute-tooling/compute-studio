@@ -58,7 +58,9 @@ def translate_to_django(meta_parameters):
     parameters = []
     for name, data in meta_parameters["meta_parameters"].items():
         if data["type"] == "str" and "choice" in data["validators"]:
-            field = forms.ChoiceField(choices=data["validators"]["choices"])
+            field = forms.ChoiceField(
+                choices=[(c, c) for c in data["validators"]["choice"]["choices"]]
+            )
         elif data["type"] == "str":
             field = forms.CharField()
         elif data["type"] in ("int", "float"):

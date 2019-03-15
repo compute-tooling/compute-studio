@@ -33,7 +33,9 @@ class CoreInputs(models.Model):
         choices=(("paramtools", "paramtools"), ("taxcalc", "taxcalc")), max_length=32
     )
 
-    # TODO: should have project???
+    project = models.ForeignKey(
+        Project, on_delete=models.PROTECT, related_name="sim_params"
+    )
 
     @property
     def deserialized_inputs(self):
@@ -111,6 +113,9 @@ class CoreRun(models.Model):
 
     def zip_filename(self):
         return f"{self.project.title}_{self.pk}.zip"
+
+    def json_filename(self):
+        return f"{self.project.title}_{self.pk}.json"
 
     @cached_property
     def dimension(self):

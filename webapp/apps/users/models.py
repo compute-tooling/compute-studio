@@ -1,4 +1,5 @@
 from collections import defaultdict
+import json
 
 from django.db import models
 from django.db.models.functions import TruncMonth
@@ -27,35 +28,34 @@ class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=False)
 
-    def costs(self, projects=None):
+    def costs_breakdown(self, projects=None):
         # TODO:
         if projects is None:
             projects = Project.objects.all()
         agg = defaultdict(float)
         for project in projects:
-            if self.sims.filter(project=project).count() > 0:
-                res = (
-                    self.sims.filter(sponsor__in=[self, None])
-                    .values(month=TruncMonth("creation_date"))
-                    .annotate(
-                        effective=Case(
-                            When(run_cost=0.0, then=0.01), default=F("run_cost")
-                        )
-                    )
-                    .annotate(Sum("effective"))
+            sims = (
+                self.sims.filter(sponsor=self) | self.sims.filter(sponsor__isnull=True)
+            ).filter(project=project)
+            res = (
+                sims.values(month=TruncMonth("creation_date"))
+                .annotate(
+                    effective=Case(When(run_cost=0.0, then=0.01), default=F("run_cost"))
                 )
-                for month in res:
-                    agg[month["month"]] += float(month["effective__sum"])
+                .annotate(Sum("effective"))
+            )
+            for month in res:
+                agg[month["month"]] += float(month["effective__sum"])
         return {k.strftime("%B %Y"): v for k, v in sorted(agg.items())}
 
-    def runs(self, projects=None):
+    def sims_breakdown(self, projects=None):
         if projects is None:
             projects = Project.objects.all()
         runs = {}
         for project in projects:
             queryset = self.sims.filter(project=project)
-            if queryset.count() > 0:
-                runs[project.title] = queryset.all()
+            # if queryset.count() > 0:
+            runs[project.title] = queryset.all()
         return runs
 
     class Meta:
@@ -128,7 +128,7 @@ class Project(models.Model):
 
     def exp_job_info(self, adjust=False):
         rate_per_sec = self.server_cost / 3600
-        job_time = self.exp_task_time * self.exp_num_tasks
+        job_time = self.exp_task_time * (self.exp_num_tasks or 1)
         cost = round(rate_per_sec * job_time, 4)
         if adjust:
             return max(cost, 0.01), job_time
@@ -188,4 +188,8 @@ class Project(models.Model):
 
     @cached_property
     def parsed_meta_parameters(self):
-        return translate_to_django(self.meta_parameters)
+        if isinstance(self.meta_parameters, str):
+            meta_params = json.loads(self.meta_parameters)
+        else:
+            meta_params = self.meta_parameters
+        return translate_to_django(meta_params)
