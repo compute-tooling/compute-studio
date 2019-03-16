@@ -1,6 +1,7 @@
 import os
 import json
 import datetime
+import functools
 
 import requests
 import pytest
@@ -76,16 +77,6 @@ def django_db_setup(django_db_setup, django_db_blocker):
             {"title": "Used-for-testing"},
             {"title": "Used-for-testing-sponsored-apps", "sponsor": sponsor.profile},
         ]
-        # if USE_STRIPE:
-        #     for u in [modeler, sponsor, hdoupe]:
-        #         stripe_customer = stripe.Customer.create(
-        #             email=u.email, source="tok_bypassPending"
-        #         )
-        #         customer, _ = Customer.get_or_construct(
-        #             stripe_customer.id, user
-        #         )
-        #         # customer.subscribe_to_public_plans()
-        #         customer_user = customer.user
 
         for project_config in projects:
             project = Project.objects.create(**dict(common, **project_config))
@@ -110,8 +101,30 @@ def django_db_setup(django_db_setup, django_db_blocker):
                     )
                     Plan.construct(stripe_plan_met, product)
 
+        if USE_STRIPE:
+            for u in [modeler, sponsor, hdoupe]:
+                stripe_customer = stripe.Customer.create(
+                    email=u.email, source="tok_bypassPending"
+                )
+                # import pdb; pdb.set_trace()
+                customer, _ = Customer.get_or_construct(stripe_customer.id, u)
+                customer.subscribe_to_public_plans()
+                customer_user = customer.user
+
+
+def use_stripe(func):
+    @functools.wraps(func)
+    def f(*args, **kwargs):
+        if USE_STRIPE:
+            return func(*args, **kwargs)
+        else:
+            return None
+
+    return f
+
 
 @pytest.fixture
+@use_stripe
 def stripe_customer():
     """
     Default stripe.Customer object where token is valid and
@@ -141,12 +154,14 @@ def user(db, password):
 
 
 @pytest.fixture
+@use_stripe
 def basiccustomer(db, stripe_customer, user):
     customer, _ = Customer.get_or_construct(stripe_customer.id, user)
     return customer
 
 
 @pytest.fixture
+@use_stripe
 def customer(db, basiccustomer):
     basiccustomer.subscribe_to_public_plans()
     assert basiccustomer.subscriptions.count() > 0
@@ -154,13 +169,11 @@ def customer(db, basiccustomer):
 
 
 @pytest.fixture
-def profilewcustomer(db, customer):
-    return Profile.objects.create(user=customer.user, is_active=True)
-
-
-@pytest.fixture
-def profile(db, user):
-    return Profile.objects.create(user=user, is_active=True)
+def profile(db, user, customer):
+    if customer:
+        return Profile.objects.create(user=customer.user, is_active=True)
+    else:
+        return Profile.objects.create(user=user, is_active=True)
 
 
 @pytest.fixture

@@ -37,7 +37,7 @@ class ChargeRunMixin:
             if sponsor is not None:
                 customer = sponsor.user.customer
             else:
-                customer = self.object.profile.user.customer
+                customer = self.object.owner.user.customer
             si = SubscriptionItem.objects.get(
                 subscription__customer=customer, plan=plan
             )
