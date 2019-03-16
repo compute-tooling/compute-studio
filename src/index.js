@@ -34,7 +34,7 @@ var Schema = Yup.object().shape({
   description: Yup.string()
     .max(1000, "The description must be less than ${max} characters.")
     .required(),
-  input_type: Yup.string().oneOf(
+  inputs_style: Yup.string().oneOf(
     ["paramtools", "taxcalc"],
     "Inputs type must be either paramtools or taxcalc."
   ),
@@ -162,13 +162,13 @@ class PublishForm extends React.Component {
                   will use
                 </label>
                 <p>
-                  <Field component="select" name="input_type">
+                  <Field component="select" name="inputs_style">
                     <option value="paramtools">ParamTools style</option>
                     <option value="taxcalc">Tax-Calculator style</option>
                   </Field>
                 </p>
                 <ErrorMessage
-                  name="input_type"
+                  name="inputs_style"
                   render={msg => <Message msg={msg} />}
                 />
               </div>

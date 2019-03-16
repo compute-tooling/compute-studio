@@ -3,8 +3,8 @@ import os
 
 import pytest
 
-from webapp.apps.core.displayer import Displayer
-from webapp.apps.core.meta_parameters import translate_to_django
+from webapp.apps.comp.displayer import Displayer
+from webapp.apps.comp.meta_parameters import translate_to_django
 from webapp.apps.contrib.taxcalcstyle.parser import TaxcalcStyleParser
 from webapp.apps.contrib.taxcalcstyle.param import TaxcalcStyleParam
 

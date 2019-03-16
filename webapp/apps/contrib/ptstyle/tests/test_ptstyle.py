@@ -6,10 +6,10 @@ from django import forms
 
 from paramtools import Parameters, ValidationError
 
-from webapp.apps.core.meta_parameters import translate_to_django
-from webapp.apps.core.displayer import Displayer
-from webapp.apps.core.fields import ValueField, SeparatedValueField
-from webapp.apps.core.parser import BaseParser
+from webapp.apps.comp.meta_parameters import translate_to_django
+from webapp.apps.comp.displayer import Displayer
+from webapp.apps.comp.fields import ValueField, SeparatedValueField
+from webapp.apps.comp.parser import BaseParser
 from webapp.apps.users.models import Project
 
 from webapp.apps.contrib.utils import IOClasses

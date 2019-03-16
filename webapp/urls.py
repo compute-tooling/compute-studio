@@ -33,7 +33,7 @@ urlpatterns = [
         name="project_detail",
     ),
     # add project URL's here
-    path("<str:username>/<str:title>/", include("webapp.apps.core.urls")),
+    path("<str:username>/<str:title>/", include("webapp.apps.comp.urls")),
     # user/billing apps
     path("<str:username>/", userviews.UserProfile.as_view(), name="userprofile"),
 ]

@@ -9,7 +9,7 @@ class PublishSerializer(serializers.ModelSerializer):
         fields = (
             "title",
             "description",
-            "input_type",
+            "inputs_style",
             "meta_parameters",
             "package_defaults",
             "parse_user_adjustments",

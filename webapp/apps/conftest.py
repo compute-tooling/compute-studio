@@ -17,8 +17,8 @@ from webapp.apps.billing.utils import USE_STRIPE, get_billing_data
 from webapp.apps.billing.models import Project, Product, Plan
 from webapp.apps.users.models import Profile, Project
 
-from webapp.apps.core.meta_parameters import translate_to_django
-from webapp.apps.core.models import CoreInputs, CoreRun
+from webapp.apps.comp.meta_parameters import translate_to_django
+from webapp.apps.comp.models import Inputs, Simulation
 
 # from webapp.apps.projects.tests.testapp.models import TestappRun, TestappInputs
 # from webapp.apps.projects.tests.sponsoredtestapp.models import (
@@ -60,7 +60,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
         common = {
             "description": "[Matchups](https://github.com/hdoupe/Matchups) provides pitch data on pitcher and batter matchups.. Select a date range using the format YYYY-MM-DD. Keep in mind that Matchups only provides data on matchups going back to 2008. Two datasets are offered to run this model: one that only has the most recent season, 2018, and one that contains data on every single pitch going back to 2008. Next, select your favorite pitcher and some batters who he's faced in the past. Click submit to start analyzing the selected matchups!",
-            "input_type": "paramtools",
+            "inputs_style": "paramtools",
             "meta_parameters": '{\n    "meta_parameters": {\n        "use_full_data": {\n            "type": "bool",\n            "title": "Use full data",\n            "default": true,\n            "validators": {}\n        }\n    }\n}',
             "package_defaults": 'import matchups\r\n\r\ndef package_defaults(**meta_parameters):\r\n    return matchups.get_inputs(use_full_data=meta_parameters["use_full_data"])',
             "parse_user_adjustments": 'import matchups\r\n\r\ndef parse_user_inputs(params, jsonparams, errors_warnings,\r\n                        **meta_parameters):\r\n    # parse the params, jsonparams, and errors_warnings further\r\n    use_full_data = meta_parameters["use_full_data"]\r\n    params, jsonparams, errors_warnings = matchups.parse_inputs(\r\n        params, jsonparams, errors_warnings, use_full_data==use_full_data)\r\n    return params, jsonparams, errors_warnings',
@@ -220,8 +220,8 @@ def subscription(db, customer, licensed_plan, metered_plan):
 @pytest.fixture
 def test_models(db, profile):
     project = Project.objects.get(title="Used-for-testing")
-    inputs = CoreInputs.objects.create(project=project)
-    obj0 = CoreRun.objects.create(
+    inputs = Inputs.objects.create(project=project)
+    obj0 = Simulation.objects.create(
         owner=profile,
         project=project,
         run_time=10,
@@ -232,8 +232,8 @@ def test_models(db, profile):
     assert obj0
 
     project = Project.objects.get(title="Used-for-testing-sponsored-apps")
-    inputs = CoreInputs.objects.create(project=project)
-    obj1 = CoreRun.objects.create(
+    inputs = Inputs.objects.create(project=project)
+    obj1 = Simulation.objects.create(
         owner=profile,
         sponsor=project.sponsor,
         project=project,
@@ -248,9 +248,9 @@ def test_models(db, profile):
 
 ############################Core Fixtures###############################
 @pytest.fixture
-def core_inputs():
+def comp_inputs():
     path = os.path.abspath(os.path.dirname(__file__))
-    with open(os.path.join(path, "core/tests/inputs.json")) as f:
+    with open(os.path.join(path, "comp/tests/inputs.json")) as f:
         return json.loads(f.read())
 
 

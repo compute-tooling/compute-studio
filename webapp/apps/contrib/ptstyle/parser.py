@@ -1,10 +1,10 @@
 from collections import defaultdict
 
-from webapp.apps.core.parser import Parser, ParamData, ParameterLookUpException
+from webapp.apps.comp.parser import Parser, ParamData, ParameterLookUpException
 from .utils import dims_to_dict
 
-class ParamToolsParser(Parser):
 
+class ParamToolsParser(Parser):
     @staticmethod
     def get_default_param(param, defaults, param_get=None, raise_error=True):
         """

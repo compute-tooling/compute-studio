@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.utils.functional import cached_property
 
-from webapp.apps.core.meta_parameters import translate_to_django
+from webapp.apps.comp.meta_parameters import translate_to_django
 
 
 def is_profile_active(user):
@@ -108,7 +108,7 @@ class Project(models.Model):
     exp_num_tasks = models.IntegerField(null=True)
 
     # model parameter type
-    input_type = models.CharField(
+    inputs_style = models.CharField(
         choices=(("paramtools", "paramtools"), ("taxcalc", "taxcalc")), max_length=32
     )
     # permission type of the model
@@ -184,7 +184,7 @@ class Project(models.Model):
 
     @property
     def number_runs(self):
-        return CoreInputs.objects.filter(project=self).count()
+        return Inputs.objects.filter(project=self).count()
 
     @cached_property
     def parsed_meta_parameters(self):

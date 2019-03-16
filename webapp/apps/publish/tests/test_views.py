@@ -25,7 +25,7 @@ class TestPublishViews:
             "run_simulation": "import newmodel",
             "server_size": [4, 8],
             "installation": "install me",
-            "input_type": "paramtools",
+            "inputs_style": "paramtools",
             "meta_parameters": "{}",
         }
         resp = client.post("/publish/api/", post_data)
@@ -51,7 +51,7 @@ class TestPublishViews:
             "server_size": ["4", "2"],
             "exp_task_time": 20,
             "installation": "install me",
-            "input_type": "paramtools",
+            "inputs_style": "paramtools",
             "meta_parameters": {},
             "server_cost": Decimal("0.1"),
         }
@@ -73,7 +73,7 @@ class TestPublishViews:
             "run_simulation": "import test",
             "server_size": [2, 4],
             "installation": "install",
-            "input_type": "paramtools",
+            "inputs_style": "paramtools",
             "meta_parameters": "{}",
         }
         # not logged in --> not authorized

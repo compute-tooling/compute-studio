@@ -1,4 +1,4 @@
-from webapp.apps.core.displayer import Displayer
+from webapp.apps.comp.displayer import Displayer
 from .param import ParamToolsParam
 
 
