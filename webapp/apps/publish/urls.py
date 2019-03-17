@@ -12,7 +12,7 @@ from .views import (
 urlpatterns = [
     url(r"^$", ProjectView.as_view(), name="publish"),
     path(
-        "api/<str:username>/<str:app_name>/detail/",
+        "api/<str:username>/<str:title>/detail/",
         ProjectDetailAPIView.as_view(),
         name="project_detail_api",
     ),

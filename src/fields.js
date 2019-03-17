@@ -44,6 +44,13 @@ function markdownElement(markdownText) {
   );
 }
 
+function titleChange(e, onChange) {
+  if (e.target.name == "title") {
+    e.target.value = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
+  }
+  onChange(e);
+}
+
 export const TextField = ({ field, form: { touched, errors }, ...props }) => {
   if (props.preview) {
     var element = markdownElement(field.value);
@@ -55,9 +62,11 @@ export const TextField = ({ field, form: { touched, errors }, ...props }) => {
         {...props}
         preview=""
         style={inputStyle}
+        onChange={e => titleChange(e, field.onChange)}
       />
     );
   }
+  console.log("change", field.onChange);
   return (
     <div>
       <label>

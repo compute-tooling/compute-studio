@@ -1,28 +1,27 @@
 import pytest
 
+
 @pytest.mark.django_db
 @pytest.mark.requires_stripe
-class TestBillingViews():
-
-    def test_update_payment_info(self, client, profilewcustomer, password):
+class TestBillingViews:
+    def test_update_payment_info(self, client, profile, password):
         """
         Test update payment information
         - change payment
         - make sure of redirect and able to get done page
         - make sure payment info is updated
         """
-        success = client.login(username=profilewcustomer.user.username,
-                               password=password)
+        success = client.login(username=profile.user.username, password=password)
         assert success
 
-        resp = client.get('/billing/update/')
+        resp = client.get("/billing/update/")
         assert resp.status_code == 200
 
-        data = {'stripeToken': ['tok_bypassPending']}
+        data = {"stripeToken": ["tok_bypassPending"]}
 
-        resp = client.post('/billing/update/', data=data)
+        resp = client.post("/billing/update/", data=data)
         assert resp.status_code == 302
-        assert resp.url == '/billing/update/done/'
+        assert resp.url == "/billing/update/done/"
 
         resp = client.get(resp.url)
         assert resp.status_code == 200
@@ -34,14 +33,13 @@ class TestBillingViews():
         - make sure of redirect and able to get done page
         - make sure payment info is updated
         """
-        success = client.login(username=user.username,
-                               password=password)
+        success = client.login(username=user.username, password=password)
         assert success
 
-        resp = client.get('/billing/update/')
+        resp = client.get("/billing/update/")
         assert resp.status_code == 200
 
-        data = {'stripeToken': ['tok_bypassPending']}
+        data = {"stripeToken": ["tok_bypassPending"]}
 
-        resp = client.post('/billing/update/', data=data)
+        resp = client.post("/billing/update/", data=data)
         assert resp.status_code == 404

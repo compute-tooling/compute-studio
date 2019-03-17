@@ -13,7 +13,7 @@ import os
 #     {project_name}_task)
 from api.celery_app import hdoupe_matchups_tasks
 
-task_modules = {("hdoupe", "matchups"): hdoupe_matchups_tasks}
+task_modules = {("hdoupe", "Matchups"): hdoupe_matchups_tasks}
 
 
 bp = Blueprint("endpoints", __name__)

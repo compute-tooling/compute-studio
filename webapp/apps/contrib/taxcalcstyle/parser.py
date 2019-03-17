@@ -6,11 +6,11 @@ try:
 except ModuleNotFoundError:
     pass
 
-from webapp.apps.core.parser import ParamData, Parser
-from webapp.apps.core.utils import is_wildcard, is_reverse
+from webapp.apps.comp.parser import ParamData, Parser
+from webapp.apps.comp.utils import is_wildcard, is_reverse
+
 
 class TaxcalcStyleParser(Parser):
-
     def parse_parameters(self):
         """
         Implement custom parameter parsing logic
@@ -37,17 +37,10 @@ class TaxcalcStyleParser(Parser):
             policy_dict,
             assumptions_dict,
             errors_warnings,
-        ) = self.check_revisions_for_errors(
-            policy_inputs_json,
-            assumption_inputs_json,
-        )
+        ) = self.check_revisions_for_errors(policy_inputs_json, assumption_inputs_json)
         params = {"policy": policy_dict, **assumptions_dict}
         jsonstrs = {"policy": policy_inputs, "assumptions": assumption_inputs}
-        return (
-            params,
-            jsonstrs,
-            errors_warnings,
-        )
+        return (params, jsonstrs, errors_warnings)
 
     def unflatten(self, parsed_input):
         """
@@ -72,9 +65,7 @@ class TaxcalcStyleParser(Parser):
         for param in parsed_input:
             revision[param] = {}
             if not isinstance(parsed_input[param], list):
-                assert isinstance(
-                    parsed_input[param], bool
-                ) and param.endswith("_cpi")
+                assert isinstance(parsed_input[param], bool) and param.endswith("_cpi")
                 revision[param][str(self.start_year)] = parsed_input[param]
                 continue
             i = 0
@@ -102,17 +93,13 @@ class TaxcalcStyleParser(Parser):
                     assert isinstance(
                         parsed_input[param][i], (int, float)
                     ) or isinstance(parsed_input[param][i], bool)
-                    revision[param][str(self.start_year + i)] = [
-                        parsed_input[param][i]
-                    ]
+                    revision[param][str(self.start_year + i)] = [parsed_input[param][i]]
 
                 i += 1
 
         return revision
 
-    def check_revisions_for_errors(
-        self, policy_inputs_json, assumption_inputs_json
-    ):
+    def check_revisions_for_errors(self, policy_inputs_json, assumption_inputs_json):
         """
         Read reform and parse errors
         returns reform and assumption dictionaries that are compatible with
@@ -137,9 +124,7 @@ class TaxcalcStyleParser(Parser):
 
         # separate reform and assumptions
         reform_dict = policy_dict["policy"]
-        assumptions_dict = {
-            k: v for k, v in list(policy_dict.items()) if k != "policy"
-        }
+        assumptions_dict = {k: v for k, v in list(policy_dict.items()) if k != "policy"}
 
         return reform_dict, assumptions_dict, errors_warnings
 
@@ -234,8 +219,7 @@ class TaxcalcStyleParser(Parser):
         for action in ["warnings", "errors"]:
             for param in errors_warnings[action]:
                 for year in sorted(
-                    list(errors_warnings[action][param].keys()),
-                    key=lambda x: int(x),
+                    list(errors_warnings[action][param].keys()), key=lambda x: int(x)
                 ):
                     msg = errors_warnings[action][param][year]
                     append_func(param, msg)

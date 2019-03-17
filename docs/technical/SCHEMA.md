@@ -7,12 +7,12 @@ Core App Schema
 
 This schema is inherited by all modeling projects. They are permitted to extend this schema as needed. The end goal for this schema is for it to be the ideal set-up for a COMP project. Projects that meet all COMP criteria should not have to do much custom work on this schema.
 
-- `CoreRun`: save outputs, run time/costs reporting, upstream project version
+- `Simulation`: save outputs, run time/costs reporting, upstream project version
 and COMP version.
   - Foreign key to `Profile`
   - Foreign key to `Project`
-  - One-to-one relation with `CoreInputs`
-- `CoreInputs`: save inputs data
+  - One-to-one relation with `Inputs`
+- `Inputs`: save inputs data
 
 Users App Schema
 -------------------

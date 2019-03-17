@@ -3,11 +3,10 @@ import os
 
 import pytest
 
-from webapp.apps.core.displayer import Displayer
+from webapp.apps.comp.displayer import Displayer
+from webapp.apps.comp.meta_parameters import translate_to_django
 from webapp.apps.contrib.taxcalcstyle.parser import TaxcalcStyleParser
-from webapp.apps.contrib.taxcalcstyle.meta_parameters import meta_parameters
 from webapp.apps.contrib.taxcalcstyle.param import TaxcalcStyleParam
-
 
 
 @pytest.fixture
@@ -16,7 +15,35 @@ def mockparam():
     with open(os.path.join(path, "mocktaxcalc_inputs.json")) as f:
         return json.loads(f.read())
 
-def test_param(mockparam):
+
+@pytest.fixture
+def meta_parameters():
+    meta_parameters = {
+        "meta_parameters": {
+            "start_year": {
+                "title": "Start Year",
+                "type": "int",
+                "default": 2017,
+                "validators": {"range": {"min": 2013, "max": 2028}},
+            },
+            "data_source": {
+                "title": "Data Source",
+                "type": "str",
+                "default": "PUF",
+                "validators": {"choice": {"choices": ["PUF", "CPS"]}},
+            },
+            "use_full_sample": {
+                "title": "Use full sample",
+                "type": "bool",
+                "default": True,
+                "validators": {},
+            },
+        }
+    }
+    return translate_to_django(meta_parameters)
+
+
+def test_param(mockparam, meta_parameters):
     mp_inst = {mp.name: mp.default for mp in meta_parameters.parameters}
     for name, attrs in mockparam["policy"].items():
         param = TaxcalcStyleParam(name, attrs, **mp_inst)
@@ -28,37 +55,16 @@ def test_param(mockparam):
         if attrs["cpi_inflatable"]:
             assert param.cpi_field
 
-def test_meta_params():
-    # make sure things parse correctly
-    raw_meta_params = {"start_year": "2018", "data_source": "PUF",
-                       "use_full_sample": "False"}
-    valid = meta_parameters.validate(raw_meta_params)
-    assert valid["start_year"] == 2018
-    assert valid["data_source"] == "PUF"
-    assert valid["use_full_sample"] == False
-
-    # test left out parameter is added with default.
-    raw_meta_params = {"start_year": "2018", "data_source": "PUF"}
-    valid = meta_parameters.validate(raw_meta_params)
-    assert valid["start_year"] == 2018
-    assert valid["data_source"] == "PUF"
-    assert valid["use_full_sample"] == True
-
-    # test no errors on bad parameters. those will be dealt with later in the
-    # form clean process
-    raw_meta_params = {"start_year": "2019", "data_source": "not a choice",
-                       "use_full_sample": "not boolean"}
-    valid = meta_parameters.validate(raw_meta_params)
-    assert valid["start_year"] != 2019
-    assert valid["data_source"] != "not a choice"
-    assert valid["use_full_sample"] != "not boolean"
 
 @pytest.mark.requires_taxcalc
 def test_param_parser(mockparam):
 
     # set up test data and classes
-    raw_meta_params = {"start_year": "2018", "data_source": "PUF",
-                       "use_full_sample": "False"}
+    raw_meta_params = {
+        "start_year": "2018",
+        "data_source": "PUF",
+        "use_full_sample": "False",
+    }
     valid_meta_params = meta_parameters.validate(raw_meta_params)
 
     class MockDisplayer(Displayer):
@@ -71,8 +77,7 @@ def test_param_parser(mockparam):
         displayer_class = MockDisplayer
 
     # test good data; make sure there are no warnings/errors
-    parser = MockParser({"_STD_0": [10001], "_BE_sub": [0.2]},
-                         **valid_meta_params)
+    parser = MockParser({"_STD_0": [10001], "_BE_sub": [0.2]}, **valid_meta_params)
     parsed = parser.parse_parameters()
     assert parsed
     params, jsonstrs, errors_warnings = parsed
@@ -83,8 +88,7 @@ def test_param_parser(mockparam):
         assert ew == {"errors": {}, "warnings": {}}
 
     # test bad data; make sure there are warnings/errors
-    parser = MockParser({"_STD_0": [-2], "_BE_sub": [-1]},
-                         **valid_meta_params)
+    parser = MockParser({"_STD_0": [-2], "_BE_sub": [-1]}, **valid_meta_params)
     parsed = parser.parse_parameters()
     assert parsed
     params, jsonstrs, errors_warnings = parsed
@@ -96,17 +100,17 @@ def test_param_parser(mockparam):
 
     # pin down parse_errors_warnings functionality; needs to be updated if
     # upstream error messages change format
-    mockew = {'warnings': '', 'errors': 'ERROR: 2018 _STD_0 value -2.0 < min value 0\n'}
+    mockew = {"warnings": "", "errors": "ERROR: 2018 _STD_0 value -2.0 < min value 0\n"}
     exp = {
-        'errors': {
-            '_STD_0': {
-                '2018': 'ERROR: _STD_0 value -2.0 < min value 0 for 2018'
-            }
+        "errors": {
+            "_STD_0": {"2018": "ERROR: _STD_0 value -2.0 < min value 0 for 2018"}
         },
-        'warnings': {}
+        "warnings": {},
     }
     assert parser.parse_errors_warnings(mockew) == exp
 
     # test param look-up functionality
-    assert parser.get_default_param("_STD_0", parser.flat_defaults).name == "_STD_single"
+    assert (
+        parser.get_default_param("_STD_0", parser.flat_defaults).name == "_STD_single"
+    )
     assert parser.get_default_param("_BE_sub", parser.flat_defaults).name == "_BE_sub"

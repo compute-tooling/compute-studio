@@ -10,7 +10,7 @@ COMP has three essential components:
 
   The webapp is a Django application, and it is the workhorse of COMP. It validates and formats the inputs for each modeling project. It determines whether the data is submitted for a model run with its own validation methods and by running it through the modeling project's validation methods. If the inputs data is not valid, then the warnings and errors will be shown to the user. If the inputs data is valid, then it will be submitted to the model through the distributed API.
 
-  The goal of the `core` app is to provide a framework that can be used with varying levels of customization. The `core` app by itself provides enough functionality to publish the average model on COMP. However, more customized approaches will be added to the `contrib` app. The first example is the `taxcalcstyle` package. This approach is specific for the [Tax-Calculator][3] style of inputs, naming convention, JSON files, and error messages. Other approaches are welcome, too. However, COMP recommends giving the `core` app a try before checking out the custom approaches or building your own.
+  The goal of the `comp` app is to provide a framework that can be used with varying levels of customization. The `comp` app by itself provides enough functionality to publish the average model on COMP. However, more customized approaches will be added to the `contrib` app. The first example is the `taxcalcstyle` package. This approach is specific for the [Tax-Calculator][3] style of inputs, naming convention, JSON files, and error messages. Other approaches are welcome, too. However, COMP recommends giving the `comp` app a try before checking out the custom approaches or building your own.
 
   The Django webapp also handles login and user capabilities.
 
@@ -133,10 +133,10 @@ Working through the installation instructions in the COMP `README.md` document i
 
 12. The project should be able to run locally at this point. Give it a test run by starting the Django webapp in one terminal window: `python manage.py runserver` and starting the backend API in another window: `cd distributed && docker-compose up`. Once you've created a *local* account, you will be able to run the new app.
 
-13. Create test data by doing a model run. Ideally, this should be done in a way that creates a small but representitive dataset. Download this dataset by clicking the "Download Raw Output" option and placing it at `webapp/apps/projects/{project_name}/tests/outputs.json`. Fill in a few raw input fields in the `upstream_parameters` dictionary located in the `inputs_ok` method of the test class. The dictionary should look like this:
+13. Create test data by doing a model run. Ideally, this should be done in a way that creates a small but representitive dataset. Download this dataset by clicking the "Download Raw Output" option and placing it at `webapp/apps/projects/{project_name}/tests/outputs.json`. Fill in a few raw input fields in the `model_parameters` dictionary located in the `inputs_ok` method of the test class. The dictionary should look like this:
 
     ```python
-    upstream_parameters = {
+    model_parameters = {
         # use your own parameters here
         "pitcher": "Max Scherzer",
     }

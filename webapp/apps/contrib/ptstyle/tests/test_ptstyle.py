@@ -6,9 +6,13 @@ from django import forms
 
 from paramtools import Parameters, ValidationError
 
-from webapp.apps.core.meta_parameters import meta_parameters, MetaParameter
-from webapp.apps.core.displayer import Displayer
-from webapp.apps.core.fields import ValueField, SeparatedValueField
+from webapp.apps.comp.meta_parameters import translate_to_django
+from webapp.apps.comp.displayer import Displayer
+from webapp.apps.comp.fields import ValueField, SeparatedValueField
+from webapp.apps.comp.parser import BaseParser
+from webapp.apps.users.models import Project
+
+from webapp.apps.contrib.utils import IOClasses
 from webapp.apps.contrib.ptstyle.param import ParamToolsParam
 from webapp.apps.contrib.ptstyle.parser import ParamToolsParser
 from webapp.apps.contrib.ptstyle.utils import dims_to_dict, dims_to_string
@@ -39,14 +43,18 @@ def TestParams(schema_def_path, defaults_spec_path):
 
 @pytest.fixture
 def pt_metaparam(TestParams):
-    meta_parameters.parameters.append(
-        MetaParameter(
-            name="dim0",
-            default="zero",
-            field=forms.ChoiceField(choices=list((i, i) for i in ["zero", "one"])),
-        )
+    return translate_to_django(
+        {
+            "meta_parameters": {
+                "dim0": {
+                    "title": "dim 0",
+                    "type": "str",
+                    "default": "zero",
+                    "validators": {"choice": {"choices": ["zero", "one"]}},
+                }
+            }
+        }
     )
-    return meta_parameters
 
 
 def test_make_params(TestParams):
@@ -85,7 +93,7 @@ def test_make_field_types(TestParams, pt_metaparam):
 
 def test_param_naming(TestParams, pt_metaparam):
     raw_meta_params = {"dim0": "zero"}
-    mp_inst = meta_parameters.validate(raw_meta_params)
+    mp_inst = pt_metaparam.validate(raw_meta_params)
     params = TestParams()
     spec = params.specification(meta_data=True, **mp_inst)
 
@@ -110,29 +118,30 @@ def test_param_naming(TestParams, pt_metaparam):
     assert newname == pname
 
 
-def test_param_parser(TestParams):
+def test_param_parser(db, TestParams, pt_metaparam):
     # set up test data and classes
     raw_meta_params = {"dim0": "zero"}
-    valid_meta_params = meta_parameters.validate(raw_meta_params)
+    valid_meta_params = pt_metaparam.validate(raw_meta_params)
     test_params = TestParams()
 
     class MockDisplayer(Displayer):
-        param_class = ParamToolsParam
-
         def package_defaults(self):
             return {
                 "test": test_params.specification(meta_data=True, **valid_meta_params)
             }
 
     class MockParser(ParamToolsParser):
-        displayer_class = MockDisplayer
-
         def parse_parameters(self):
-            params, _, errors_warnings = super().parse_parameters()
+            params, _, errors_warnings = BaseParser.parse_parameters(self)
             test_params = TestParams()
             test_params.adjust(params["test"], raise_errors=False)
             errors_warnings["test"]["errors"] = test_params.errors
             return (params, {"test": json.dumps(params["test"])}, errors_warnings)
+
+    ioclasses = IOClasses(
+        Parser=MockParser, Param=ParamToolsParam, Displayer=MockDisplayer
+    )
+    project = Project.objects.get(title="Used-for-testing")
 
     # test good data; make sure there are no warnings/errors
     inputs = {
@@ -140,7 +149,7 @@ def test_param_parser(TestParams):
         "min_int_param____dim0__mp___dim1__2": 2,
         "str_choice_param": "value1",
     }
-    parser = MockParser(inputs, **valid_meta_params)
+    parser = MockParser(project, ioclasses, inputs, **valid_meta_params)
     parsed = parser.parse_parameters()
     assert parsed
     params, jsonstrs, errors_warnings = parsed
@@ -161,7 +170,7 @@ def test_param_parser(TestParams):
         "min_int_param____dim0__mp___dim1__2": -2,
         "str_choice_param": "notachoice",
     }
-    parser = MockParser(inputs, **valid_meta_params)
+    parser = MockParser(project, ioclasses, inputs, **valid_meta_params)
     parsed = parser.parse_parameters()
     assert parsed
     params, jsonstrs, errors_warnings = parsed

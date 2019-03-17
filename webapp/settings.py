@@ -45,13 +45,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    "webapp.apps.core",
+    "webapp.apps.comp",
     "webapp.apps.pages",
     "webapp.apps.users",
     "webapp.apps.billing",
     "webapp.apps.publish",
-    # Append new apps here in the form webapp.apps.projects.{project_name}
-    "webapp.apps.projects.matchups",
     # third-party apps
     "widget_tweaks",
     "crispy_forms",

@@ -1,5 +1,5 @@
-from webapp.apps.core.param import CheckBox, BaseParam
-from webapp.apps.core.fields import coerce_bool, coerce_float, coerce_int
+from webapp.apps.comp.param import CheckBox, BaseParam
+from webapp.apps.comp.fields import coerce_bool, coerce_float, coerce_int
 
 
 class TaxcalcStyleParam(BaseParam):

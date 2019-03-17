@@ -1,6 +1,6 @@
 {
     "mock": {
-        "name": "Used for testing",
+        "name": "Used-for-testing",
         "app_name": "testapp",
         "sponsor": null,
         "username": "modeler",
@@ -15,7 +15,7 @@
         "is_public": false
     },
     "sponsor-mock": {
-        "name": "Used for testing sponsored apps",
+        "name": "Used-for-testing-sponsored-apps",
         "app_name": "sponsoredtestapp",
         "sponsor": "sponsor",
         "username": "modeler",

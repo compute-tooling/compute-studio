@@ -3,6 +3,8 @@ version: '3'
 services:
   db:
     image: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
     networks:
       - comp-net
   web:
@@ -26,3 +28,6 @@ services:
 networks:
   comp-net:
     driver: bridge
+
+volumes:
+  postgres_data:
