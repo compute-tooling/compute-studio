@@ -57,6 +57,8 @@ var Schema = Yup.object().shape({
 const initialValues = {
   title: "",
   description: "",
+  inputs_style: "paramtools",
+  meta_parameters: "",
   package_defaults: "",
   parse_user_adjustments: "",
   run_simulation: "",
