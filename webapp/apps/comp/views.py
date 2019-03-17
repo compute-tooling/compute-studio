@@ -25,6 +25,7 @@ from .models import Simulation
 from .compute import Compute, JobFailError
 from .displayer import Displayer
 from .submit import handle_submission, BadPost
+from .tags import TAGS
 
 
 class RouterView(View):
@@ -259,7 +260,11 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
             return render(
                 request,
                 "comp/sim_detail.html",
-                {"object": self.object, "result_header": "Results"},
+                {
+                    "object": self.object,
+                    "result_header": "Results",
+                    "tags": TAGS[self.object.project.title],
+                },
             )
         elif self.object.error_text is not None:
             return self.fail()
@@ -296,7 +301,11 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                 return render(
                     request,
                     "comp/sim_detail.html",
-                    {"object": self.object, "result_header": "Results"},
+                    {
+                        "object": self.object,
+                        "result_header": "Results",
+                        "tags": TAGS[self.object.project.title],
+                    },
                 )
             else:
                 if request.method == "POST":

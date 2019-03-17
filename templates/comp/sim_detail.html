@@ -102,7 +102,7 @@
           <div class="col-md-12" id="aggr-totals-container">
             <div class="card">
               <div class="card-body">
-                {% include "comp/select_tags.html" with tags=view.aggr_tags only %}
+                {% include "comp/select_tags.html" with tags=tags.aggr_tags only %}
                 {% for x in object.aggr_outputs %}
                 <div class="aggr-output"
                      {% for key, value in x.tags.items %}
@@ -149,7 +149,7 @@
                     </h1>
                   </div>
                 </div>
-                {% include "comp/select_tags.html" with tags=view.tags only %}
+                {% include "comp/select_tags.html" with tags=tags.tags only %}
               </div>
             </div>
           </div>
