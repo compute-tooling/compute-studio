@@ -10,6 +10,7 @@ from django.core.mail import send_mail
 from .models import Profile
 from webapp.apps.billing.models import Customer, Plan, Subscription, SubscriptionItem
 from webapp.apps.billing.utils import USE_STRIPE
+from webapp.apps.users.models import Project
 
 
 User = get_user_model()
@@ -32,7 +33,10 @@ class UserCreationForm(authforms.UserCreationForm):
                 email=user.email, source=self.stripe_token
             )
             customer = Customer.construct(stripe_customer, user=user)
-            customer.subscribe_to_public_plans()
+            if Project.objects.count() > 0:
+                customer.subscribe_to_public_plans()
+            else:
+                print("No projects yet.")
         Profile.objects.create(user=user, is_active=True)
         return user
 
