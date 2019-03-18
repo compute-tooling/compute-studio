@@ -1,6 +1,6 @@
 from django import forms
 
-from webapp.apps.comp.param import Param, Value
+from webapp.apps.comp.param import Param
 from webapp.apps.comp.fields import ValueField, SeparatedValueField
 from .utils import dims_to_string
 
