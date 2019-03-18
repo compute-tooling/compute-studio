@@ -32,13 +32,12 @@ class TaxcalcStyleParam(BaseParam):
                 field_name = f"{self.name}_{dim1}"
             else:
                 field_name = self.name
+            if "col_label" in self.attributes and self.attributes["col_label"]:
+                col = self.attributes["col_label"][dim1]
+            else:
+                col = ""
             field = self.field_class(
-                field_name,
-                self.attributes["col_label"][dim1],
-                value[dim1],
-                self.coerce_func,
-                0,
-                **field_kwargs,
+                field_name, col, value[dim1], self.coerce_func, 0, **field_kwargs
             )
             self.fields[field_name] = field.form_field
             self.col_fields.append(field)
@@ -54,10 +53,13 @@ class TaxcalcStyleParam(BaseParam):
             self.fields[field_name] = self.cpi_field.form_field
 
     def get_coerce_func(self):
-        if self.attributes["boolean_value"]:
-            coerce_func = coerce_bool
-        elif self.attributes["integer_value"]:
-            coerce_func = coerce_int
+        value_types = {
+            "integer": coerce_int,
+            "real": coerce_float,
+            "boolean": coerce_bool,
+            "float": coerce_float,
+        }
+        if "value_type" in self.attributes:
+            return value_types[self.attributes["value_type"]]
         else:
-            coerce_func = coerce_float
-        return coerce_func
+            return value_types[self.attributes["type"]]
