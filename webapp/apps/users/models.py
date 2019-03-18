@@ -12,6 +12,8 @@ from django.utils.functional import cached_property
 
 from webapp.apps.comp.meta_parameters import translate_to_django
 
+from webapp.apps.comp.models import Inputs
+
 
 def is_profile_active(user):
     if getattr(user, "profile", False):

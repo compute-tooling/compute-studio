@@ -80,11 +80,17 @@
             <h1>{{result_header}}</h1>
             <h4> The results were created with the inputs below: </h4>
             <ul>
+            <li>
+              <ul class="list-unstyled">
+              <li><p><i> Inputs for section: </i> <code>meta-parameters</code></p></li>
+              <li><pre><code class="block">{{object.inputs.pretty_meta_parameters}}</code></li></pre>
+              </ul>
+            </li>
             {% for sect, jsonobj in object.inputs.inputs_file.items %}
               <li>
               <ul class="list-unstyled">
               <li><p><i> Inputs for section: </i> <code>{{sect}}</code></p></li>
-              <li><pre><code>{{jsonobj}}</code></li></pre>
+              <li><pre><code class="block">{{jsonobj}}</code></li></pre>
               </ul>
               </li>
             {% endfor %}
@@ -125,9 +131,9 @@
                 <h3 class="card-title">Build Table</h3>
               </div>
               <div class="card-body">
-                <div class="row" {% if not object.dimension %} hidden {% endif %}>
+                <div class="row" {% if not tags.dimension %} hidden {% endif %}>
                   <div class="col-md-6">
-                    <h1 class="text-center">{{object.dimension_name}}: </h1>
+                    <h1 class="text-center">{{tags.dimension}}: </h1>
                   </div>
                   <div class="col-md-6">
                     <h1 class="text-center">

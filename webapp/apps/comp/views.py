@@ -193,7 +193,7 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
             if v not in ("", None):
                 initial[k] = v
         for mp in project.parsed_meta_parameters.parameters:
-            mp_val = getattr(self.object.inputs, mp.name, None)
+            mp_val = self.object.inputs.meta_parameters.get(mp.name, None)
             if mp_val is not None:
                 initial[mp.name] = mp_val
 

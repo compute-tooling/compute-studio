@@ -37,13 +37,14 @@ class UserProfile(View):
         print("user", request.user.username, username)
         if username == request.user.username:
             profile = request.user.profile
+            print("costs", profile.costs_breakdown(self.projects))
             return render(
                 request,
                 self.template_name,
                 context={
                     "username": request.user.username,
                     "runs": profile.sims_breakdown(self.projects),
-                    "cost_breakdown": profile.sims_breakdown(self.projects),
+                    "cost_breakdown": profile.costs_breakdown(self.projects),
                 },
             )
         User = get_user_model()
