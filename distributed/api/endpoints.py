@@ -19,7 +19,7 @@ task_modules = {("hdoupe", "Matchups"): hdoupe_matchups_tasks}
 bp = Blueprint("endpoints", __name__)
 
 queue_name = "celery"
-client = redis.StrictRedis.from_url(
+client = redis.Redis.from_url(
     os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
 )
 

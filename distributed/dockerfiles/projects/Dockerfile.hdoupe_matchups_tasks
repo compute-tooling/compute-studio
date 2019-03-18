@@ -20,4 +20,4 @@ RUN cd /home/distributed && pip install -e .
 
 WORKDIR /home/distributed/api
 
-ENTRYPOINT celery -A celery_app.hdoupe_matchups_tasks worker --loglevel=info --concurrency=1 -Q hdoupe_matchups_queue,hdoupe_matchups_inputs_queue
+ENTRYPOINT celery -A celery_app.hdoupe_matchups_tasks worker --loglevel=info --concurrency=1 -Q hdoupe_matchups_queue -n hdoupe_matchups_sim@%h

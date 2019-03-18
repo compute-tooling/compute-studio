@@ -14,6 +14,8 @@ services:
       # - {project_name}_tasks
       - hdoupe_matchups_sim
       - hdoupe_matchups_io
+      - hdoupe_taxbrain_sim
+      - hdoupe_taxbrain_io
       - distributed
     networks:
       - comp_comp-net
@@ -34,7 +36,7 @@ services:
       context: ./
       dockerfile: dockerfiles/projects/Dockerfile.hdoupe_matchups_tasks
     image: "comporg/hdoupe_matchups_tasks:${TAG}"
-    entrypoint: celery -A celery_app.hdoupe_matchups_tasks worker --loglevel=info --concurrency=1 -Q hdoupe_matchups_inputs_queue
+    entrypoint: celery -A celery_app.hdoupe_matchups_tasks worker --loglevel=info --concurrency=1 -Q hdoupe_matchups_inputs_queue -n hdoupe_matchups_inputs@%h
     depends_on:
       - redis
       - celerybase
