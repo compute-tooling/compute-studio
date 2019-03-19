@@ -108,7 +108,6 @@ class TestPublishViews:
         assert project.package_defaults == put_data["package_defaults"]
 
         # Description can't be empty.
-        # put_data["description"] = None
         resp = client.put(
             "/publish/api/modeler/Used-for-testing/detail/",
             data=dict(put_data, **{"description": None}),
