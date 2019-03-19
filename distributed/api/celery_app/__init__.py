@@ -13,6 +13,8 @@ task_routes = {
     # '{project_name}_tasks.*': {'queue': '{project_name}_queue'},
     "hdoupe_matchups_tasks.sim": {"queue": "hdoupe_matchups_queue"},
     "hdoupe_matchups_tasks.inputs_*": {"queue": "hdoupe_matchups_inputs_queue"},
+    "pslmodels_taxbrain_tasks.sim": {"queue": "pslmodels_taxbrain_queue"},
+    "pslmodels_taxbrain_tasks.inputs_*": {"queue": "pslmodels_taxbrain_inputs_queue"},
 }
 
 

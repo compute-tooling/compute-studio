@@ -14,6 +14,8 @@ services:
       # - {project_name}_tasks
       - hdoupe_matchups_sim
       - hdoupe_matchups_io
+      - pslmodels_taxbrain_sim
+      - pslmodels_taxbrain_io
       - distributed
     networks:
       - comp_comp-net
@@ -35,6 +37,28 @@ services:
       dockerfile: dockerfiles/projects/Dockerfile.hdoupe_matchups_tasks
     image: "comporg/hdoupe_matchups_tasks:${TAG}"
     entrypoint: celery -A celery_app.hdoupe_matchups_tasks worker --loglevel=info --concurrency=1 -Q hdoupe_matchups_inputs_queue -n hdoupe_matchups_inputs@%h
+    depends_on:
+      - redis
+      - celerybase
+    networks:
+      - comp_comp-net
+
+  pslmodels_taxbrain_sim:
+    build:
+      context: ./
+      dockerfile: dockerfiles/projects/Dockerfile.pslmodels_taxbrain_tasks
+    image: "comporg/pslmodels_taxbrain_tasks:${TAG}"
+    depends_on:
+      - redis
+      - celerybase
+    networks:
+      - comp_comp-net
+  pslmodels_taxbrain_io:
+    build:
+      context: ./
+      dockerfile: dockerfiles/projects/Dockerfile.pslmodels_taxbrain_tasks
+    image: "comporg/pslmodels_taxbrain_tasks:${TAG}"
+    entrypoint: celery -A celery_app.pslmodels_taxbrain_tasks worker --loglevel=info --concurrency=1 -Q pslmodels_taxbrain_inputs_queue -n pslmodels_taxbrain_inputs@%h
     depends_on:
       - redis
       - celerybase
