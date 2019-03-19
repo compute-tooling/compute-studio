@@ -406,7 +406,9 @@ class AppDetail extends React.Component {
     return (
       <div>
         <h2 style={{ marginBottom: "2rem" }}>
-          <a href={`/${id}/`}>{id}</a>
+          <a className="primary-text" href={`/${id}/`}>
+            {id}
+          </a>
         </h2>
         <PublishForm
           fetchInitialValues={this.fetchInitialValues}
