@@ -64,7 +64,8 @@ class InputsMixin:
     def project_context(self, request, project):
         user = request.user
         can_run = user.is_authenticated and is_profile_active(user)
-        can_run = can_run or self.provided_free
+        provided_free = project.sponsor is not None
+        can_run = can_run or provided_free
         rate = round(project.server_cost, 2)
         exp_cost, exp_time = project.exp_job_info(adjust=True)
 
@@ -76,7 +77,7 @@ class InputsMixin:
             "can_run": can_run,
             "exp_cost": f"${exp_cost}",
             "exp_time": f"{exp_time} seconds",
-            "provided_free": project.sponsor is not None,
+            "provided_free": provided_free,
             "app_url": project.app_url,
         }
         return context
