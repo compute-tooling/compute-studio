@@ -96,6 +96,11 @@ class PublishForm extends React.Component {
     }
     return (
       <div>
+        <p>
+          Give others write access to this project by emailing their usernames
+          to the COMP admin at
+          <a href="mailto:henrymdoupe@gmail.com"> henrymdoupe@gmail.com</a>.
+        </p>
         <Formik
           initialValues={this.state.initialValues}
           onSubmit={(values, actions) => {

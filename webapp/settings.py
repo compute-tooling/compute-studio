@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     # third-party apps
     "widget_tweaks",
     "crispy_forms",
+    "guardian",
     # 'allauth', # new
     # 'allauth.account', # new
     # 'allauth.socialaccount', # new
@@ -102,12 +103,11 @@ DATABASES = {
     "TEST": dict(dj_database_url.config(), **{"NAME": "testdb"}),
 }
 
-# Authentication backends--use django and django-allauth
-# AUTHENTICATION_BACKENDS = (
-#     "django.contrib.auth.backends.ModelBackend",
-#     # "allauth.account.auth_backends.AuthenticationBackend",
-# )
-#
+AUTHENTICATION_BACKENDS = (
+    "django.contrib.auth.backends.ModelBackend",  # default
+    "guardian.backends.ObjectPermissionBackend",
+)
+
 SITE_ID = 1
 
 # Login routing

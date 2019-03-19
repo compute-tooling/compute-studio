@@ -195,3 +195,6 @@ class Project(models.Model):
         else:
             meta_params = self.meta_parameters
         return translate_to_django(meta_params)
+
+    class Meta:
+        permissions = (("write_project", "Write project"),)
