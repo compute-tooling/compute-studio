@@ -16,7 +16,9 @@ task_routes = {
 }
 
 
-celery_app = Celery("tasks2", broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND)
+celery_app = Celery(
+    "celery_app", broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND
+)
 celery_app.conf.update(
     task_serializer="json", accept_content=["msgpack", "json"], task_routes=task_routes
 )

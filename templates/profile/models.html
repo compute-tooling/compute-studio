@@ -10,7 +10,7 @@
   </tr>
   {% for project in user.profile.projects.all %}
     <tr>
-      {% if project.status == "live" %}
+      {% if project.status == "live" or project.status == "updating" %}
         <td><a href="{{project.app_url}}">{{project.title}}</a></td>
         <td>{{project.exp_task_time}}</td>
         <td>{{project.number_runs}}</td>

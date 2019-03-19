@@ -1,5 +1,6 @@
 import datetime
 import uuid
+import json
 
 from dataclasses import dataclass, field
 from typing import List, Union
@@ -10,7 +11,7 @@ from django.contrib.postgres.fields import JSONField
 from django.utils.timezone import make_aware
 from django.urls import reverse
 
-from webapp.apps.users.models import Project, Profile
+from webapp.apps.comp import utils
 
 
 class Inputs(models.Model):
@@ -34,7 +35,7 @@ class Inputs(models.Model):
     )
 
     project = models.ForeignKey(
-        Project, on_delete=models.PROTECT, related_name="sim_params"
+        "users.Project", on_delete=models.PROTECT, related_name="sim_params"
     )
 
     @property
@@ -54,6 +55,10 @@ class Inputs(models.Model):
         else:
             return self.model_parameters
 
+    @property
+    def pretty_meta_parameters(self):
+        return json.dumps(self.meta_parameters, indent=4)
+
 
 class Simulation(models.Model):
     # TODO: dimension needs to go
@@ -67,12 +72,17 @@ class Simulation(models.Model):
     aggr_outputs = JSONField(default=None, blank=True, null=True)
     error_text = models.CharField(null=True, blank=True, default=None, max_length=4000)
     owner = models.ForeignKey(
-        Profile, on_delete=models.PROTECT, null=True, related_name="sims"
+        "users.Profile", on_delete=models.PROTECT, null=True, related_name="sims"
     )
     sponsor = models.ForeignKey(
-        Profile, on_delete=models.SET_NULL, null=True, related_name="sponsored_sims"
+        "users.Profile",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="sponsored_sims",
     )
-    project = models.ForeignKey(Project, on_delete=models.PROTECT, related_name="sims")
+    project = models.ForeignKey(
+        "users.Project", on_delete=models.PROTECT, related_name="sims"
+    )
     # run-time in seconds
     run_time = models.IntegerField(default=0)
     # run cost can be very small. ex: 4 sec * ($0.09/hr)/3600
