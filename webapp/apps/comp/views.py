@@ -60,7 +60,6 @@ class InputsMixin:
     template_name = "comp/inputs_form.html"
     has_errors = False
     webapp_version = WEBAPP_VERSION
-    provided_free = False
 
     def project_context(self, request, project):
         user = request.user
@@ -77,7 +76,7 @@ class InputsMixin:
             "can_run": can_run,
             "exp_cost": f"${exp_cost}",
             "exp_time": f"{exp_time} seconds",
-            "provided_free": self.provided_free,
+            "provided_free": project.sponsor is not None,
             "app_url": project.app_url,
         }
         return context
