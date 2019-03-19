@@ -1,6 +1,8 @@
 from collections import defaultdict
 import json
 
+import markdown
+
 from django.db import models
 from django.db.models.functions import TruncMonth
 from django.db.models import F, Case, When, Sum
@@ -9,6 +11,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.utils.functional import cached_property
+from django.utils.safestring import mark_safe
 
 from webapp.apps.comp.meta_parameters import translate_to_django
 
@@ -195,3 +198,7 @@ class Project(models.Model):
         else:
             meta_params = self.meta_parameters
         return translate_to_django(meta_params)
+
+    @property
+    def safe_description(self):
+        return mark_safe(markdown.markdown(self.description))

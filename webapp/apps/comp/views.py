@@ -73,7 +73,7 @@ class InputsMixin:
             "rate": f"${rate}/hour",
             "project_name": project.title,
             "owner": project.owner.user.username,
-            "app_description": project.description,
+            "app_description": project.safe_description,
             "can_run": can_run,
             "exp_cost": f"${exp_cost}",
             "exp_time": f"{exp_time} seconds",

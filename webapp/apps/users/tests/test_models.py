@@ -15,7 +15,8 @@ class TestUserModels:
         assert user.email
 
     def test_project(self):
-        p = Project(title="test project", server_cost=36)
+        markdown = "[hello](www.world.com)"
+        p = Project(title="test project", server_cost=36, description=markdown)
         assert p.server_cost_in_secs == 0.01
         assert p.n_secs_per_penny == 1.0
         assert p.run_cost(1) == 0.01
@@ -23,6 +24,7 @@ class TestUserModels:
         assert p.run_cost(0.5, adjust=False) < 0.01
         assert p.run_cost(2) == 0.02
         assert Project.dollar_to_penny(0.01) == 1
+        assert p.safe_description
 
     def test_create_profile(self, user):
         profile = Profile.objects.create(user=user, is_active=True)
