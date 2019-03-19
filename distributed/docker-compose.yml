@@ -14,8 +14,6 @@ services:
       # - {project_name}_tasks
       - hdoupe_matchups_sim
       - hdoupe_matchups_io
-      - hdoupe_taxbrain_sim
-      - hdoupe_taxbrain_io
       - distributed
     networks:
       - comp_comp-net
