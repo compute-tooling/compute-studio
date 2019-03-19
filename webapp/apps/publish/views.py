@@ -49,7 +49,9 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
     def put(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             project = self.get_object(**kwargs)
-            if project.owner.user == request.user:
+            if project.owner.user == request.user or request.user.has_perm(
+                "write_project", project
+            ):
                 print(request.data)
                 serializer = PublishSerializer(project, data=request.data)
                 if serializer.is_valid():

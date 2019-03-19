@@ -17,3 +17,4 @@ django-crispy-forms
 psycopg2-binary
 ipython
 markdown
+django-guardian

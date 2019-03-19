@@ -202,3 +202,6 @@ class Project(models.Model):
     @property
     def safe_description(self):
         return mark_safe(markdown.markdown(self.description))
+
+    class Meta:
+        permissions = (("write_project", "Write project"),)
