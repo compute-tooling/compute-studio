@@ -18,6 +18,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 WEBAPP_VERSION = "0.1.0"
 
+ADMINS = [("Hank", "henrymdoupe@gmail.com")]
+SERVER_EMAIL = "henrymdoupe@gmail.com"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
