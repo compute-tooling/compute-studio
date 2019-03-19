@@ -1,6 +1,7 @@
-from django.contrib.auth import get_user_model
-
 import pytest
+
+from django.contrib.auth import get_user_model
+from guardian.shortcuts import assign_perm, remove_perm
 
 from webapp.apps.users.models import Profile, Project, is_profile_active
 
@@ -60,3 +61,13 @@ class TestUserModels:
         reg, sponsored = test_models
         assert reg.project.display_sponsor == "Not sponsored"
         assert sponsored.project.display_sponsor == "sponsor"
+
+    def test_project_access(self, profile):
+        project = Project.objects.get(
+            title="Used-for-testing", owner__user__username="modeler"
+        )
+        assert not profile.user.has_perm("write_project")
+        assign_perm("write_project", profile.user, project)
+        assert profile.user.has_perm("write_project", project)
+        remove_perm("write_project", profile.user, project)
+        assert not profile.user.has_perm("write_project", project)
