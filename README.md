@@ -11,10 +11,10 @@ Features:
 
 Under development:
 
-- Developers choose to share models privately, for a fee.
 - Developers may share non-tabular output.
 
 Planned:
+- Developers choose to share models privately, for a fee.
 - Users may use a REST API to run simulations and build GUI simulation pages.
 - Users may upload and download simulation input files from the GUI.
 
