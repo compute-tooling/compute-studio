@@ -86,3 +86,32 @@ def test_submit_sponsored(db, comp_inputs, meta_param, profile):
     assert sim.owner
     assert sim.sponsor
     assert sim.project
+
+
+def test_submit_w_errors(db, comp_inputs, meta_param, profile):
+    mock_errors_warnings = {
+        "test": {"errors": {"testing": ["an error"]}, "warnings": {}}
+    }
+
+    class MockDisplayer(Displayer):
+        def package_defaults(self):
+            return comp_inputs
+
+    class MockParser(BaseParser):
+        def parse_parameters(self):
+            params, jsonstr, errors_warnings = super().parse_parameters()
+            jsonstr = json.dumps({"testing": [1, 2, 3]})
+            return params, jsonstr, mock_errors_warnings
+
+    ioclasses = IOClasses(Displayer=MockDisplayer, Parser=MockParser, Param=Param)
+    project = Project.objects.get(title="Used-for-testing")
+
+    factory = RequestFactory()
+    data = {"has_errors": ["False"], "metaparam": ["3"], "intparam": ["1"]}
+    request = factory.post("/modeler/Used-for-testing/sim", data)
+    request.user = profile.user
+    compute = MockCompute()
+    submit = Submit(request, project, ioclasses, compute)
+    assert submit.stop_submission
+    assert submit.model.errors_warnings == mock_errors_warnings
+    assert "<p>testing:</p><ul><li>an error</li></ul>" in submit.form.errors["__all__"]
