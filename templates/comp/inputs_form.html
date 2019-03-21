@@ -43,12 +43,39 @@
               </ul>
             </li>
             <li>
-              <button class="btn btn-block go-btn" type="submit" name="full_calc" value="true" style="margin:10px;margin-left:0px;"><b>Run {% if not provided_free %}({{ exp_cost }}){% endif %}</b></button>
+              <button type="button" class="btn btn-block go-btn" style="margin:10px;margin-left:0px;" data-toggle="modal" data-target="#submitModal">
+                <b>Run {% if not provided_free %}({{ exp_cost }}){% endif %}</b>
+              </button>
             </li>
             <li>
               <a href="{{app_url}}" class="btn btn-block inverse-btn-match-nav" style="margin:10px;margin-left:0px;">Reset</a>
             </li>
-        </ul>
+          </ul>
+
+        <!-- Modal -->
+        <div class="modal fade" id="submitModal" tabindex="-1" role="dialog" aria-labelledby="submitModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="submitModalLabel">Are you sure that you want to run this simulation?</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                {% if provided_free %}
+                  This simulation is free.
+                {% else %}
+                  This simulation will cost {{ exp_cost }}.
+                {% endif %}
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="submit" name="full_calc" value="true" class="btn go-btn">Run simulation</button>
+              </div>
+            </div>
+          </div>
+        </div>
     </nav>
   </div>
   <div id="content" style="width: 60rem;">
