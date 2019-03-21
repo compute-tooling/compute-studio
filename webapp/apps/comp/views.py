@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.db import models
 from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin, DetailView
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, Http404, JsonResponse
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -33,8 +33,10 @@ class RouterView(View):
 
     def get(self, request, *args, **kwargs):
         print("router get", args, kwargs)
-        project = self.projects.get(
-            owner__user__username=kwargs["username"], title=kwargs["title"]
+        project = get_object_or_404(
+            self.projects,
+            owner__user__username=kwargs["username"],
+            title=kwargs["title"],
         )
         if project.sponsor is None:
             return InputsView.as_view()(request, *args, **kwargs)

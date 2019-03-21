@@ -390,7 +390,7 @@ class AppDetail extends React.Component {
       .put(`/publish/api/${username}/${app_name}/detail/`, data)
       .then(function(response) {
         console.log(response);
-        window.location.replace(`/${username}/`);
+        window.location.replace("/");
       })
       .catch(function(error) {
         console.log(error);
