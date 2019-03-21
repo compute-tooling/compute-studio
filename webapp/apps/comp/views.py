@@ -12,6 +12,7 @@ from django.http import HttpResponse, Http404, JsonResponse
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.urls import reverse
+from django.core.exceptions import PermissionDenied
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
 from webapp.apps.billing.utils import USE_STRIPE, ChargeRunMixin
@@ -26,32 +27,6 @@ from .compute import Compute, JobFailError
 from .displayer import Displayer
 from .submit import handle_submission, BadPost
 from .tags import TAGS
-
-
-class RouterView(View):
-    projects = Project.objects.all()
-
-    def get(self, request, *args, **kwargs):
-        print("router get", args, kwargs)
-        project = get_object_or_404(
-            self.projects,
-            owner__user__username=kwargs["username"],
-            title=kwargs["title"],
-        )
-        if project.sponsor is None:
-            return InputsView.as_view()(request, *args, **kwargs)
-        else:
-            return UnrestrictedInputsView.as_view()(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        print("router post", args, kwargs)
-        project = self.projects.get(
-            owner__user__username=kwargs["username"], title=kwargs["title"]
-        )
-        if project.sponsor is None:
-            return InputsView.as_view()(request, *args, **kwargs)
-        else:
-            return UnrestrictedInputsView.as_view()(request, *args, **kwargs)
 
 
 class InputsMixin:
@@ -83,6 +58,36 @@ class InputsMixin:
             "app_url": project.app_url,
         }
         return context
+
+
+class RouterView(InputsMixin, View):
+    projects = Project.objects.all()
+    placeholder_template = "comp/model_placeholder.html"
+
+    def handle(self, request, is_get, *args, **kwargs):
+        print("router handle", args, kwargs)
+        project = get_object_or_404(
+            self.projects,
+            owner__user__username=kwargs["username"],
+            title=kwargs["title"],
+        )
+        if project.status in ["updating", "live"]:
+            if project.sponsor is None:
+                return InputsView.as_view()(request, *args, **kwargs)
+            else:
+                return UnrestrictedInputsView.as_view()(request, *args, **kwargs)
+        else:
+            if is_get:
+                context = self.project_context(request, project)
+                return render(request, self.placeholder_template, context)
+            else:
+                raise PermissionDenied()
+
+    def get(self, request, *args, **kwargs):
+        return self.handle(request, True, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.handle(request, False, *args, **kwargs)
 
 
 class UnrestrictedInputsView(InputsMixin, View):

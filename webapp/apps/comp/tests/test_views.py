@@ -249,3 +249,19 @@ class TestMatchupsSponsored(CoreAbstractViewsTest):
 def test_404_owner_title_view(db, client):
     resp = client.get("/hello/world/")
     assert resp.status_code == 404
+
+
+def test_placeholder_page(db, client):
+    title = "Matchups"
+    owner = "hdoupe"
+    project = Project.objects.get(title=title, owner__user__username=owner)
+    project.status = "pending"
+    project.save()
+    resp = client.get(f"/{owner}/{title}/")
+    assert resp.status_code == 200
+    assert "comp/model_placeholder.html" in [t.name for t in resp.templates]
+    project.status = "live"
+    project.save()
+    resp = client.get(f"/{owner}/{title}/")
+    assert resp.status_code == 200
+    assert "comp/inputs_form.html" in [t.name for t in resp.templates]
