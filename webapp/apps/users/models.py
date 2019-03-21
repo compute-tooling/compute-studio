@@ -34,7 +34,6 @@ class Profile(models.Model):
     is_active = models.BooleanField(default=False)
 
     def costs_breakdown(self, projects=None):
-        # TODO:
         if projects is None:
             projects = Project.objects.all()
         agg = defaultdict(float)
@@ -72,8 +71,6 @@ class Project(models.Model):
     SECS_IN_HOUR = 3600.0
     title = models.CharField(max_length=255)
     description = models.CharField(max_length=1000)
-    # TODO: profile --> owner
-    # TODO: profile --> many to many relationship?
     owner = models.ForeignKey(
         Profile, null=True, related_name="projects", on_delete=models.CASCADE
     )

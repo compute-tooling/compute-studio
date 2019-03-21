@@ -1,7 +1,7 @@
 from django.urls import reverse_lazy
 from django.views import generic, View
 from django.views.generic.edit import FormView
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import PermissionDenied
@@ -29,29 +29,14 @@ class SignUp(generic.CreateView):
 
 
 class UserProfile(View):
-    template_name = "profile/profile_base.html"
+    template_name = "profile/profile_visit.html"
     projects = Project.objects.all()
 
     def get(self, request, *args, **kwargs):
         username = kwargs["username"]
-        print("user", request.user.username, username)
-        if username == request.user.username:
-            profile = request.user.profile
-            print("costs", profile.costs_breakdown(self.projects))
-            return render(
-                request,
-                self.template_name,
-                context={
-                    "username": request.user.username,
-                    "runs": profile.sims_breakdown(self.projects),
-                    "cost_breakdown": profile.costs_breakdown(self.projects),
-                },
-            )
         User = get_user_model()
-        if User.objects.filter(username=username):
-            raise PermissionDenied()
-        else:
-            raise Http404()
+        get_object_or_404(User, username=username)
+        return render(request, self.template_name, {"username": username})
 
 
 class UserSettings(View):

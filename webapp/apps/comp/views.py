@@ -318,6 +318,7 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                     exp_num_minutes = dt.total_seconds() / 60.0
                     exp_num_minutes = round(exp_num_minutes, 2)
                     exp_num_minutes = exp_num_minutes if exp_num_minutes > 0 else 0
+                    print(exp_num_minutes)
                     if exp_num_minutes > 0:
                         return JsonResponse({"eta": exp_num_minutes}, status=202)
                     else:
