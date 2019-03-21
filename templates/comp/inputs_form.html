@@ -13,42 +13,69 @@
   <!-- Sidebar -->
   <div class="container-fluid">
     <nav id="sidebar" class="top-sticky navbar navbar-expand-lg" style="padding:0px;">
-        <ul class="list-unstyled components">
-            <li>
-            <div class="sidebar-header">
-                <h3>Model Parameters</h3>
-            </div>
-            </li>
-            <li>
-              <ul class="list-unstyled components">
-                {% for section, params in default_form.items %}
-                  <li><a class="btn btn-block inverse-btn-match-nav dropdown-toggle"
-                      style="color:inherit;margin-top:10px;margin-bottom:2px;"
-                      href="#{{ section }}-submenu"
-                      data-toggle="collapse"
-                      aria-expanded="false"
-                      role="button"
-                      aria-controls="{{ section }}-submenu">
-                      {{ section.title }}
-                  </a>
-                  </li>
-                  <ul class="collapse list-unstyled" id="{{ section }}-submenu">
-                  {% for param in params %}
-                    {% for key, value in param.items %}
-                      <li><a style="color:inherit;margin-top:2px;margin-bottom:2px;" href="#{{ key|make_id }}">{{ key }}</a></li>
-                    {% endfor %}
+      <ul class="list-unstyled components">
+          <li>
+          <div class="sidebar-header">
+              <h3>Model Parameters</h3>
+          </div>
+          </li>
+          <li>
+            <ul class="list-unstyled components">
+              {% for section, params in default_form.items %}
+                <li><a class="btn btn-block inverse-btn-match-nav dropdown-toggle"
+                    style="color:inherit;margin-top:10px;margin-bottom:2px;"
+                    href="#{{ section }}-submenu"
+                    data-toggle="collapse"
+                    aria-expanded="false"
+                    role="button"
+                    aria-controls="{{ section }}-submenu">
+                    {{ section.title }}
+                </a>
+                </li>
+                <ul class="collapse list-unstyled" id="{{ section }}-submenu">
+                {% for param in params %}
+                  {% for key, value in param.items %}
+                    <li><a style="color:inherit;margin-top:2px;margin-bottom:2px;" href="#{{ key|make_id }}">{{ key }}</a></li>
                   {% endfor %}
-                  </ul>
                 {% endfor %}
-              </ul>
-            </li>
-            <li>
-              <button class="btn btn-block go-btn" type="submit" name="full_calc" value="true" style="margin:10px;margin-left:0px;"><b>Run {% if not provided_free %}({{ exp_cost }}){% endif %}</b></button>
-            </li>
-            <li>
-              <a href="{{app_url}}" class="btn btn-block inverse-btn-match-nav" style="margin:10px;margin-left:0px;">Reset</a>
-            </li>
+                </ul>
+              {% endfor %}
+            </ul>
+          </li>
+          <li>
+            <button type="button" class="btn btn-block go-btn" style="margin:10px;margin-left:0px;" data-toggle="modal" data-target="#submitModal">
+              <b>Run {% if not provided_free %}({{ exp_cost }}){% endif %}</b>
+            </button>
+          </li>
+          <li>
+            <a href="{{app_url}}" class="btn btn-block inverse-btn-match-nav" style="margin:10px;margin-left:0px;">Reset</a>
+          </li>
         </ul>
+
+        <!-- Modal -->
+        <div class="modal fade" id="submitModal" tabindex="-1" role="dialog" aria-labelledby="submitModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="submitModalLabel">Are you sure that you want to run this simulation?</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                {% if provided_free %}
+                  This simulation is free.
+                {% else %}
+                  This simulation will cost {{ exp_cost }}.
+                {% endif %}
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="submit" name="full_calc" value="true" class="btn go-btn">Run simulation</button>
+              </div>
+            </div>
+          </div>
+        </div>
     </nav>
   </div>
   <div id="content" style="width: 60rem;">
