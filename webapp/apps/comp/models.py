@@ -7,6 +7,7 @@ from typing import List, Union
 
 from django.db import models
 from django.utils.functional import cached_property
+from django.utils import timezone
 from django.contrib.postgres.fields import JSONField
 from django.utils.timezone import make_aware
 from django.urls import reverse
@@ -87,12 +88,8 @@ class Simulation(models.Model):
     run_time = models.IntegerField(default=0)
     # run cost can be very small. ex: 4 sec * ($0.09/hr)/3600
     run_cost = models.DecimalField(max_digits=9, decimal_places=4, default=0.0)
-    creation_date = models.DateTimeField(
-        default=make_aware(datetime.datetime(2015, 1, 1))
-    )
-    exp_comp_datetime = models.DateTimeField(
-        default=make_aware(datetime.datetime(2015, 1, 1))
-    )
+    creation_date = models.DateTimeField(default=timezone.now)
+    exp_comp_datetime = models.DateTimeField(default=timezone.now)
     job_id = models.UUIDField(blank=True, default=None, null=True)
     model_vers = models.CharField(blank=True, default=None, null=True, max_length=50)
     webapp_vers = models.CharField(blank=True, default=None, null=True, max_length=50)
