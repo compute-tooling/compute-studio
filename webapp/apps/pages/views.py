@@ -1,16 +1,31 @@
 from django.shortcuts import render
 from django.views import View
-# Create your views here.
 
-class BaseView(View):
-    template_name = 'pages/home.html'
-
-    def get(self, request, *args, **kwargs):
-        return render(request, self.template_name)
+from webapp.apps.users.models import Project
 
 
-class Publish(View):
-    template_name = 'pages/publish.html'
+class HomeView(View):
+    profile_template = "profile/profile_base.html"
+    home_template = "pages/about.html"
+    projects = Project.objects.all()
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name)
+        if request.user.is_authenticated:
+            profile = request.user.profile
+            return render(
+                request,
+                self.profile_template,
+                context={
+                    "username": request.user.username,
+                    "runs": profile.sims_breakdown(self.projects),
+                    "cost_breakdown": profile.costs_breakdown(self.projects),
+                },
+            )
+        return render(request, self.home_template)
+
+
+class AboutView(View):
+    template = "pages/about.html"
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template)

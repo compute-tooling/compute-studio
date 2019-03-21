@@ -146,9 +146,7 @@ class Save:
         runmodel.webapp_vers = submit.webapp_version
 
         cur_dt = timezone.now()
-        future_offset_seconds = (
-            2 + submit.max_q_length
-        ) * runmodel.project.exp_task_time
+        future_offset_seconds = (submit.max_q_length) * runmodel.project.exp_task_time
         future_offset = datetime.timedelta(seconds=future_offset_seconds)
         expected_completion = cur_dt + future_offset
         runmodel.exp_comp_datetime = expected_completion

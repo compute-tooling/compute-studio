@@ -18,12 +18,12 @@
         <td>{{project.status}}</td>
         <td><a href="{{project.app_url}}detail">Detail</a></td>
       {% else %}
-        <td>{{project.title}}</td>
+        <td><a href="{{project.app_url}}">{{project.title}}</a></td>
         <td>{{project.exp_task_time}}</td>
         <td>NA</td>
         <td>{{project.display_sponsor}}</td>
         <td>{{project.status}}</td>
-        <td><a href="/{{project.owner.user.username}}/{{project.title}}/detail/">Detail</a></td>
+        <td><a href="{{project.app_url}}detail">Detail</a></td>
       {% endif %}
   </tr>
   {% endfor %}

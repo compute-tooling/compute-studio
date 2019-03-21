@@ -59,15 +59,12 @@ class TestUsersViews:
     def test_get_user_profile(
         self, monkeypatch, client, profile, password, test_models
     ):
-        monkeypatch.setattr("webapp.apps.users.models.reverse", lambda x: "/url/")
-        success = client.login(username=profile.user.username, password=password)
-        assert success
         resp = client.get(f"/{profile.user.username}/")
         assert resp.status_code == 200
 
-    def test_get_user_no_access(self, client, profile, password):
+    def test_get_other_user_profile(self, client, profile, password):
         resp = client.get(f"/tester/")
-        assert resp.status_code == 403
+        assert resp.status_code == 200
 
     def test_get_user_does_not_exist(self, client, profile, password):
         resp = client.get(f"/notarealuser/")

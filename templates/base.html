@@ -23,17 +23,21 @@
             <a href="{% url 'home' %}" class="navbar-brand">COMP</a>
         </div>
         <ul class="navbar-nav">
-            <li class="nav-item"><a href="{% url 'publish' %}" class="nav-link">Publish</a></li>
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   Models
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                   <!-- Add new projects to the dropdown menu here! -->
-                  <a class="dropdown-item" href="/hdoupe/Matchups">hdoupe/Matchups</a>
-                  <a class="dropdown-item" href="/PSLmodels/Tax-Brain">PSLmodels/Tax-Brain</a>
+                  {% for owner, project, url in project_list %}
+                    <a class="dropdown-item" href="{{url}}">{{owner}}/{{project}}</a>
+                  {% endfor %}
                 </div>
             </li>
+            <li class="nav-item"><a href="{% url 'publish' %}" class="nav-link">Publish</a></li>
+            {% if user.is_authenticated %}
+              <li class="nav-item"><a href="{% url 'about' %}" class="nav-link">About</a></li>
+            {% endif %}
             <li>
               <div class="login-status float-right" >
                 {% if user.is_authenticated %}
