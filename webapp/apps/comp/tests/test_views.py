@@ -244,3 +244,8 @@ class TestMatchupsSponsored(CoreAbstractViewsTest):
     @property
     def provided_free(self):
         return True
+
+
+def test_404_owner_title_view(db, client):
+    resp = client.get("/hello/world/")
+    assert resp.status_code == 404
