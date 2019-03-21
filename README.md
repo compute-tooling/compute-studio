@@ -5,17 +5,17 @@
 To see COMP in action, visit [compmodels.com](https://www.compmodels.com).
 
 Features:
-- Developers share their public models for free.
+- Developers may share their public models for free.
 - Users pay for their own compute, at cost.
+- Developers or their sponsors may also pay for users' compute.
 
 Under development:
-- Developers choose to pay for their users' compute.
-- Developers coose to share models privately, for a fee.
+
+- Developers choose to share models privately, for a fee.
 - Developers may share non-tabular output.
 
 Planned:
 - Users may use a REST API to run simulations and build GUI simulation pages.
-- Developers may charge a model subscription, for a fee.
 - Users may upload and download simulation input files from the GUI.
 
 ## Publish
