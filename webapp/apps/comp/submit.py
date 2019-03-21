@@ -3,6 +3,7 @@ from collections import namedtuple
 
 from django.utils import timezone
 from django import forms
+from django.utils.safestring import mark_safe
 
 from webapp.apps.users.models import Project
 from webapp.apps.comp import actions
@@ -64,7 +65,7 @@ class Submit:
                 self.project,
                 self.ioclasses,
                 self.model.gui_inputs,
-                **self.valid_meta_params
+                **self.valid_meta_params,
             )
 
             (
@@ -102,8 +103,9 @@ class Submit:
         if self.warn_msgs or self.error_msgs or self.form.errors:
             self.form.add_error(None, OUT_OF_RANGE_ERROR_MSG)
 
-        def add_errors(param, msg):
-            message = "{param}: {msg}".format(param=param, msg=" ,".join(msg))
+        def add_errors(param, msgs):
+            msg_html = "".join([f"<li>{msg}</li>" for msg in msgs])
+            message = mark_safe(f"<p>{param}:</p><ul>{msg_html}</ul>")
             self.form.add_error(None, message)
 
         if self.warn_msgs or self.error_msgs:

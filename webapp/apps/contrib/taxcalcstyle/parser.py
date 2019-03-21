@@ -134,8 +134,9 @@ class TaxcalcStyleParser(Parser):
         """
         for action in ["warnings", "errors"]:
             for param in errors_warnings[action]:
+                msgs = []
                 for year in sorted(
                     list(errors_warnings[action][param].keys()), key=lambda x: int(x)
                 ):
-                    msg = errors_warnings[action][param][year]
-                    append_func(param, msg)
+                    msgs.append(errors_warnings[action][param][year])
+                append_func(param, msgs)
