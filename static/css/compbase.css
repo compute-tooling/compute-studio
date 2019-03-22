@@ -179,8 +179,8 @@ input.model:not(:placeholder-shown) {
   opacity: 0.5;
 }
 
-.form-group.edited .form-control {
-  background-color: #e5e5e5;
+input.edited {
+  background-color: rgba(102, 175, 233, 0.2);;
 }
 
 /* thicken hr-4 input divider */
