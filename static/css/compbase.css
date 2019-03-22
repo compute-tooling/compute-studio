@@ -179,6 +179,7 @@ input.model:not(:placeholder-shown) {
   opacity: 0.5;
 }
 
+/* dimmer version of the bootstrap glow */
 input.edited {
   background-color: rgba(102, 175, 233, 0.2);;
 }
