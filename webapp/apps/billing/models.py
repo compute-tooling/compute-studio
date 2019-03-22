@@ -30,6 +30,7 @@ class RequiredLocalInstances(Exception):
 class CustomerManager(models.Manager):
     def sync_subscriptions(self):
         for customer in self.all():
+            print("user", customer.user.username)
             customer.sync_subscriptions()
 
 
@@ -70,28 +71,39 @@ class Customer(models.Model):
 
     def sync_subscriptions(self):
         public_plans = Plan.get_public_plans(usage_type="metered")
+        do_update = True
         try:
             sub = self.subscriptions.get(subscription_type="primary")
             curr_plans = [plan.id for plan in sub.plans.all()]
             not_subscribed = public_plans.filter(
                 ~Q(id__in=curr_plans), usage_type="metered"
             )
-            stripe_sub = stripe.Subscription.modify(
-                sub.stripe_id,
-                items=[{"plan": plan.stripe_id} for plan in not_subscribed],
-            )
-            sub.plans.add(*not_subscribed)
-            sub.save()
+            # Don't call stripe api with empty list of plans!
+            if not_subscribed:
+                print(
+                    "adding plans: ",
+                    self.user.username,
+                    [ns.nickname for ns in not_subscribed],
+                )
+                stripe_sub = stripe.Subscription.modify(
+                    sub.stripe_id,
+                    items=[{"plan": plan.stripe_id} for plan in not_subscribed],
+                )
+                sub.plans.add(*not_subscribed)
+                sub.save()
+            else:
+                # no need to update.
+                do_update = False
         except Subscription.DoesNotExist:
             stripe_sub = Subscription.create_stripe_object(self, public_plans)
             sub = Subscription.construct(
                 stripe_sub, self, public_plans, subscription_type="primary"
             )
-
-        for raw_si in stripe_sub["items"]["data"]:
-            stripe_si = SubscriptionItem.get_stripe_object(raw_si["id"])
-            plan = public_plans.get(stripe_id=raw_si["plan"]["id"])
-            si, created = SubscriptionItem.get_or_construct(stripe_si.id, plan, sub)
+        if do_update:
+            for raw_si in stripe_sub["items"]["data"]:
+                stripe_si = SubscriptionItem.get_stripe_object(raw_si["id"])
+                plan = public_plans.get(stripe_id=raw_si["plan"]["id"])
+                si, created = SubscriptionItem.get_or_construct(stripe_si.id, plan, sub)
 
     @staticmethod
     def get_stripe_object(stripe_id):
@@ -371,7 +383,7 @@ class SubscriptionItem(models.Model):
     livemode = models.BooleanField(default=False)
     created = models.DateTimeField()
     plan = models.ForeignKey(
-        Plan, on_delete=models.PROTECT, related_name="subscription_items"
+        Plan, on_delete=models.CASCADE, related_name="subscription_items", null=True
     )
     subscription = models.ForeignKey(
         Subscription, on_delete=models.CASCADE, related_name="subscription_items"
@@ -497,9 +509,12 @@ class Event(models.Model):
 
 
 def create_billing_objects(project):
-    if Product.objects.filter(name=project.title).count() == 0:
-        print("creating billing objects for ", project.title)
-        stripe_product = Product.create_stripe_object(project.title)
+    if not hasattr(project, "product") or project.product is None:
+        owner = project.owner.user.username
+        title = project.title
+        name = f"{owner}/{title}"
+        print("creating billing objects for ", name)
+        stripe_product = Product.create_stripe_object(name)
         product = Product.construct(stripe_product, project)
         stripe_plan_lic = Plan.create_stripe_object(
             amount=0,

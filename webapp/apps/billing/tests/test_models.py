@@ -42,9 +42,14 @@ class TestStripeModels:
         assert not customer.livemode
 
     def test_construct(self):
-        product = Product.objects.get(name="Used-for-testing")
-        assert product.project.title == product.name
-        assert Plan.objects.filter(product__name="Used-for-testing").count() == 2
+        product = Product.objects.get(name="modeler/Used-for-testing")
+        assert (
+            f"{product.project.owner.user.username}/{product.project.title}"
+            == product.name
+        )
+        assert (
+            Plan.objects.filter(product__name="modeler/Used-for-testing").count() == 2
+        )
 
     def test_construct_subscription(self, basiccustomer, licensed_plan, metered_plan):
         stripe_subscription = Subscription.create_stripe_object(
@@ -166,3 +171,5 @@ class TestStripeModels:
         assert set(curr_plans) == set(
             pp.id for pp in Plan.get_public_plans(usage_type="metered")
         )
+
+        Customer.objects.sync_subscriptions()

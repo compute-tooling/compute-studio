@@ -84,8 +84,8 @@ class CancelSubscriptionForm(ConfirmUsernameForm):
                 f"you unsubscribed and how we can win you back in the future."
             ),
             "henrymdoupe@gmail.com",
-            [user.email, "henrymdoupe@gmail.com"],
-            fail_silently=False,
+            set([user.email, "henrymdoupe@gmail.com"]),
+            fail_silently=True,
         )
         return user
 
@@ -107,7 +107,7 @@ class DeleteUserForm(CancelSubscriptionForm):
                 f"and how we can win you back in the future."
             ),
             "henrymdoupe@gmail.com",
-            [user.email, "henrymdoupe@gmail.com"],
-            fail_silently=False,
+            set([user.email, "henrymdoupe@gmail.com"]),
+            fail_silently=True,
         )
         return user

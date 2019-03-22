@@ -151,7 +151,7 @@ def profile(db, user, customer):
 
 @pytest.fixture
 def plans(db):
-    plans = Plan.objects.filter(product__name="Used-for-testing")
+    plans = Plan.objects.filter(product__name="modeler/Used-for-testing")
     return plans
 
 
