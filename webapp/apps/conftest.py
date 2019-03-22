@@ -12,30 +12,24 @@ from django.core.management import call_command
 from django.contrib.auth import get_user_model
 from django.utils.timezone import make_aware
 
-from webapp.apps.billing.models import Customer, Plan, Subscription, SubscriptionItem
-from webapp.apps.billing.utils import USE_STRIPE, get_billing_data
-from webapp.apps.billing.models import Project, Product, Plan
+from webapp.apps.billing.models import (
+    Customer,
+    Product,
+    Plan,
+    Subscription,
+    SubscriptionItem,
+)
+from webapp.apps.billing.utils import USE_STRIPE
 from webapp.apps.users.models import Profile, Project
 
 from webapp.apps.comp.meta_parameters import translate_to_django
 from webapp.apps.comp.models import Inputs, Simulation
-
-# from webapp.apps.projects.tests.testapp.models import TestappRun, TestappInputs
-# from webapp.apps.projects.tests.sponsoredtestapp.models import (
-#     SponsoredtestappRun,
-#     SponsoredtestappInputs,
-# )
 
 
 stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 ###########################User/Billing Fixtures###############################
 from django.conf import settings
-
-
-@pytest.fixture(scope="session")
-def billing_data():
-    return get_billing_data(include_mock_data=True)
 
 
 @pytest.fixture(scope="session")
@@ -80,36 +74,15 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
         for project_config in projects:
             project = Project.objects.create(**dict(common, **project_config))
-            if USE_STRIPE:
-                if Product.objects.filter(name=project.title).count() == 0:
-                    stripe_product = Product.create_stripe_object(project.title)
-                    product = Product.construct(stripe_product, project)
-                    stripe_plan_lic = Plan.create_stripe_object(
-                        amount=0,
-                        product=product,
-                        usage_type="licensed",
-                        interval="month",
-                        currency="usd",
-                    )
-                    Plan.construct(stripe_plan_lic, product)
-                    stripe_plan_met = Plan.create_stripe_object(
-                        amount=1,
-                        product=product,
-                        usage_type="metered",
-                        interval="month",
-                        currency="usd",
-                    )
-                    Plan.construct(stripe_plan_met, product)
 
         if USE_STRIPE:
+            Project.objects.sync_products()
             for u in [modeler, sponsor, hdoupe]:
                 stripe_customer = stripe.Customer.create(
                     email=u.email, source="tok_bypassPending"
                 )
-                # import pdb; pdb.set_trace()
                 customer, _ = Customer.get_or_construct(stripe_customer.id, u)
-                customer.subscribe_to_public_plans()
-                customer_user = customer.user
+            Customer.objects.sync_subscriptions()
 
 
 def use_stripe(func):
@@ -163,7 +136,7 @@ def basiccustomer(db, stripe_customer, user):
 @pytest.fixture
 @use_stripe
 def customer(db, basiccustomer):
-    basiccustomer.subscribe_to_public_plans()
+    basiccustomer.sync_subscriptions()
     assert basiccustomer.subscriptions.count() > 0
     return basiccustomer
 

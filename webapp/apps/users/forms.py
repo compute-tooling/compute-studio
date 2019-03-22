@@ -34,7 +34,7 @@ class UserCreationForm(authforms.UserCreationForm):
             )
             customer = Customer.construct(stripe_customer, user=user)
             if Project.objects.count() > 0:
-                customer.subscribe_to_public_plans()
+                customer.sync_subscriptions()
             else:
                 print("No projects yet.")
         Profile.objects.create(user=user, is_active=True)

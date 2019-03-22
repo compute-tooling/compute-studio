@@ -1,10 +1,13 @@
 import math
+import os
 from datetime import datetime
 
 from django.contrib.auth import get_user_model
 
 import pytest
+import stripe
 
+from webapp.apps.users.models import Profile, Project
 from webapp.apps.billing.models import (
     Customer,
     Plan,
@@ -13,9 +16,9 @@ from webapp.apps.billing.models import (
     SubscriptionItem,
     UsageRecord,
 )
-from webapp.apps.billing.utils import get_billing_data
 
 User = get_user_model()
+stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 
 @pytest.mark.django_db
@@ -39,14 +42,9 @@ class TestStripeModels:
         assert not customer.livemode
 
     def test_construct(self):
-        billing = get_billing_data(include_mock_data=True)
-        assert "mock" in billing
-        products = Product.objects.all()
-        assert len(products) == len(billing)
-        name = billing["mock"]["name"]
-        product = Product.objects.get(name=name)
+        product = Product.objects.get(name="Used-for-testing")
         assert product.project.title == product.name
-        assert Plan.objects.filter(product__name=name).count() == 2
+        assert Plan.objects.filter(product__name="Used-for-testing").count() == 2
 
     def test_construct_subscription(self, basiccustomer, licensed_plan, metered_plan):
         stripe_subscription = Subscription.create_stripe_object(
@@ -111,21 +109,6 @@ class TestStripeModels:
         assert usage_record.action == "increment"
         assert usage_record.quantity == 10
         assert usage_record.subscription_item == si
-        # TODO: identify second usage_record problem
-        # ts = math.floor(datetime.now().timestamp())
-        # stripe_usage_record = UsageRecord.create_stripe_object(
-        #     quantity=10,
-        #     timestamp=ts,
-        #     subscription_item=si,
-        #     action='increment')
-
-        # usage_record = UsageRecord.construct(
-        #     stripe_usage_record,
-        #     si)
-
-        # assert usage_record
-        # assert usage_record.stripe_id == stripe_usage_record.id
-        # assert usage_record.quantity == 10
 
     def test_update_customer(self, customer):
         tok = "tok_bypassPending"
@@ -139,3 +122,47 @@ class TestStripeModels:
         customer.cancel_subscriptions()
         for sub in customer.subscriptions.all():
             assert sub.cancel_at_period_end
+
+    def test_customer_sync_subscriptions(self, db, client):
+        u = User.objects.create_user(
+            username="synctest", email="synctest@email.com", password="syncer2222"
+        )
+        p = Profile.objects.create(user=u, is_active=True)
+        stripe_customer = stripe.Customer.create(
+            email=u.email, source="tok_bypassPending"
+        )
+        c, _ = Customer.get_or_construct(stripe_customer.id, u)
+        assert c.subscriptions.count() == 0
+
+        # test new customer gets all subscriptions.
+        c.sync_subscriptions()
+        primary_sub = c.subscriptions.get(subscription_type="primary")
+        curr_plans = [plan.id for plan in primary_sub.plans.all()]
+        assert set(curr_plans) == set(
+            pp.id for pp in Plan.get_public_plans(usage_type="metered")
+        )
+
+        # create new product and test that customer gets subscribed to it.
+        client.login(username=u.username, password="syncer2222")
+        post_data = {
+            "title": "New-Model",
+            "description": "**Super** new!",
+            "package_defaults": "import newmodel",
+            "parse_user_adjustments": "import newmodel",
+            "run_simulation": "import newmodel",
+            "server_size": [4, 8],
+            "installation": "install me",
+            "inputs_style": "paramtools",
+            "meta_parameters": "{}",
+        }
+        resp = client.post("/publish/api/", post_data)
+        assert resp.status_code == 200
+        Project.objects.sync_products()
+        Customer.objects.sync_subscriptions()
+
+        c = Customer.objects.get(user__username="synctest")
+        primary_sub = c.subscriptions.get(subscription_type="primary")
+        curr_plans = [plan.id for plan in primary_sub.plans.all()]
+        assert set(curr_plans) == set(
+            pp.id for pp in Plan.get_public_plans(usage_type="metered")
+        )

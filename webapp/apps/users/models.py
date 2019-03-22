@@ -13,8 +13,8 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
+from webapp.apps.billing.models import create_billing_objects
 from webapp.apps.comp.meta_parameters import translate_to_django
-
 from webapp.apps.comp.models import Inputs
 
 
@@ -65,6 +65,12 @@ class Profile(models.Model):
     class Meta:
         # not in use yet...
         permissions = (("access_public", "Has access to public projects"),)
+
+
+class ProjectManager(models.Manager):
+    def sync_products(self):
+        for project in self.all():
+            create_billing_objects(project)
 
 
 class Project(models.Model):
@@ -119,6 +125,8 @@ class Project(models.Model):
         default="default",
         max_length=32,
     )
+
+    objects = ProjectManager()
 
     @staticmethod
     def get_or_none(**kwargs):
