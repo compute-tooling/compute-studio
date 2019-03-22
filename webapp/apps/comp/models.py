@@ -36,7 +36,7 @@ class Inputs(models.Model):
     )
 
     project = models.ForeignKey(
-        "users.Project", on_delete=models.PROTECT, related_name="sim_params"
+        "users.Project", on_delete=models.SET_NULL, related_name="sim_params", null=True
     )
 
     @property
@@ -73,7 +73,7 @@ class Simulation(models.Model):
     aggr_outputs = JSONField(default=None, blank=True, null=True)
     error_text = models.CharField(null=True, blank=True, default=None, max_length=4000)
     owner = models.ForeignKey(
-        "users.Profile", on_delete=models.PROTECT, null=True, related_name="sims"
+        "users.Profile", on_delete=models.CASCADE, null=True, related_name="sims"
     )
     sponsor = models.ForeignKey(
         "users.Profile",
@@ -82,7 +82,7 @@ class Simulation(models.Model):
         related_name="sponsored_sims",
     )
     project = models.ForeignKey(
-        "users.Project", on_delete=models.PROTECT, related_name="sims"
+        "users.Project", on_delete=models.SET_NULL, related_name="sims", null=True
     )
     # run-time in seconds
     run_time = models.IntegerField(default=0)
