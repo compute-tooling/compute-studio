@@ -34,7 +34,7 @@ class UserCreationForm(authforms.UserCreationForm):
             )
             customer = Customer.construct(stripe_customer, user=user)
             if Project.objects.count() > 0:
-                customer.subscribe_to_public_plans()
+                customer.sync_subscriptions()
             else:
                 print("No projects yet.")
         Profile.objects.create(user=user, is_active=True)
@@ -84,8 +84,8 @@ class CancelSubscriptionForm(ConfirmUsernameForm):
                 f"you unsubscribed and how we can win you back in the future."
             ),
             "henrymdoupe@gmail.com",
-            [user.email, "henrymdoupe@gmail.com"],
-            fail_silently=False,
+            set([user.email, "henrymdoupe@gmail.com"]),
+            fail_silently=True,
         )
         return user
 
@@ -107,7 +107,7 @@ class DeleteUserForm(CancelSubscriptionForm):
                 f"and how we can win you back in the future."
             ),
             "henrymdoupe@gmail.com",
-            [user.email, "henrymdoupe@gmail.com"],
-            fail_silently=False,
+            set([user.email, "henrymdoupe@gmail.com"]),
+            fail_silently=True,
         )
         return user

@@ -41,7 +41,7 @@ class TestUserModels:
         """See conftest for initial values in test_models"""
         assert profile.costs_breakdown() == {"February 2019": 1.0}
 
-    def test_profile_sims(self, profile, test_models, billing_data):
+    def test_profile_sims(self, profile, test_models):
         sims = profile.sims_breakdown()
 
         # check that all apps are queried.
