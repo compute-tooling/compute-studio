@@ -4,6 +4,7 @@
 {% with form|dict_get:field.name as form_field %}
 <div style="padding:0px">
   {{form_field|as_crispy_field}}
+  <span class="default-value hide-default" id="default-{{form_field.name}}"><small>Default: {{field.default_value}}</small></span>
 </div>
 
 {% endwith %}

@@ -5,11 +5,14 @@ $(document).ready(function() {
     value = input.val();
     value_default = input.prop("placeholder");
     value_changed = value != "" && value != value_default;
+    default_value = $(`#default-${input.attr("name")}`);
     if (value_changed) {
       input.addClass("edited");
+      default_value.removeClass("hide-default");
     } else {
       input.val(""); // show placeholder instead of value entered that = default
       input.removeClass("edited");
+      default_value.addClass("hide-default");
     }
   };
 
