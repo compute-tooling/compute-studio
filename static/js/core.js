@@ -16,24 +16,24 @@ $(document).ready(function() {
     }
   };
 
-  $("input.form-control").blur(function() {
+  $("input.form-control.model-param").blur(function() {
     // add edited class to be used for graying out edited fields.
     input = $(this);
     toggleEdited(input);
   });
 
-  $("input.form-control").each(function() {
+  $("input.form-control.model-param").each(function() {
     // add edited class to be used for graying out edited fields.
     input = $(this);
     toggleEdited(input);
   });
 
-  $("select.form-control").change(function(e) {
+  $("select.form-control.model-param").change(function(e) {
     console.log($(this));
     $(this).removeClass("unedited");
   });
 
-  $("#inputs-form").submit(function(e) {
+  $("#inputs-form.model-param").submit(function(e) {
     $(".unedited.select.form-control").each(function() {
       select = $(this);
       select.prop("disabled", true);

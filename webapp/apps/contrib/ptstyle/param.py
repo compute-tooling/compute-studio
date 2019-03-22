@@ -32,7 +32,7 @@ class Value:
             choices = None
         if isinstance(self.default_value, list):
             self.default_value = ", ".join([str(v) for v in self.default_value])
-        attrs = {"placeholder": self.default_value}
+        attrs = {"placeholder": self.default_value, "class": "model-param"}
         if self.number_dims == 0:
             if choices is not None:
                 attrs["class"] = "unedited"

@@ -5,7 +5,7 @@ provide label users will click to toggle the CPI on and off -->
 <input type="text"
   id="{{ checkbox.id_for_label }}"
   name="{{ checkbox.name }}"
-  class="form-control model"
+  class="form-control model model-param"
   style="display:none;"
   placeholder="{{checkbox.field.widget.attrs.placeholder}}"
   value="{% if checkbox.value %}{{checkbox.value}}{%else%}{% endif %}">

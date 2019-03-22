@@ -21,7 +21,7 @@ class Value:
         self.number_dims = number_dims
         if isinstance(self.default_value, list):
             self.default_value = ", ".join([str(v) for v in self.default_value])
-        attrs = {"placeholder": str(self.default_value)}
+        attrs = {"placeholder": str(self.default_value), "class": "model-param"}
         if self.number_dims == 0:
             self.form_field = ValueField(
                 label=self.label,
@@ -47,7 +47,7 @@ class CheckBox:
         self.name = name
         self.label = label
         self.default_value = default_value
-        attrs = {"placeholder": str(self.default_value)}
+        attrs = {"placeholder": str(self.default_value), "class": "model-param"}
         self.form_field = forms.NullBooleanField(
             label=self.label,
             widget=forms.TextInput(attrs=attrs),
