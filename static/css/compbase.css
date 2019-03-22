@@ -118,6 +118,11 @@ input.model:not(:placeholder-shown) {
   background-color:  #e5e5e5!important;
 }
 
+/* drop margin-bottom on form group. */
+.form-group {
+  margin-bottom:0rem;
+}
+
 /* fade auxillary button on toggle */
 .fader {
   opacity: 0.5;
@@ -179,9 +184,19 @@ input.model:not(:placeholder-shown) {
   opacity: 0.5;
 }
 
-.form-group.edited .form-control {
-  background-color: #e5e5e5;
+/* dimmer version of the bootstrap glow */
+input.edited {
+  background-color: rgba(102, 175, 233, 0.2);;
 }
+
+span.default-value.hide-default {
+  visibility: hidden;
+}
+
+span.default-value {
+  color: #869191;
+}
+
 
 /* thicken hr-4 input divider */
 .input-divider {

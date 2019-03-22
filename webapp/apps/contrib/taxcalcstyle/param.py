@@ -37,7 +37,7 @@ class TaxcalcStyleParam(BaseParam):
             else:
                 col = ""
             field = self.field_class(
-                field_name, col, value[dim1], self.coerce_func, 0, **field_kwargs
+                field_name, col, value[dim1], self.coerce_func, 1, **field_kwargs
             )
             self.fields[field_name] = field.form_field
             self.col_fields.append(field)

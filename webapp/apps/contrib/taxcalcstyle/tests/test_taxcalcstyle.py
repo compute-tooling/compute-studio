@@ -56,6 +56,7 @@ def test_param(mockparam, meta_parameters):
         value = attrs["value"]
         if isinstance(value[0], list):
             assert len(param.col_fields) == len(value[0])
+            assert param.col_fields[0].form_field.clean("<,*")
         if attrs["cpi_inflatable"]:
             assert param.cpi_field
 
