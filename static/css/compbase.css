@@ -28,9 +28,6 @@ code {
 
 /* login */
 .login-status {
-  position:absolute;
-  top:0px;
-  right:0px;
   color:#e5e5e5;
 }
 
