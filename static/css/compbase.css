@@ -52,12 +52,12 @@ code {
 /* change the brand and text color */
 .navbar-custom .navbar-brand,
 .navbar-custom .navbar-text {
-  color: #e5e5e5;
+  color: #ffffff;
 }
 
 /* change the link color */
 .navbar-custom .navbar-nav .nav-link {
-  color: #cccc;
+  color: #ffffff;
 }
 
 /* change the color of active or hovered links */
