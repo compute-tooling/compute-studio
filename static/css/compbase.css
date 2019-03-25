@@ -168,6 +168,11 @@ input.model:not(:placeholder-shown) {
   border-bottom-right-radius: 3px;
   border-bottom-left-radius: 3px;
 }
+/* remove card border */
+.card-inner {
+  box-shadow: 0 1px 1px white;
+  border:0px;
+}
 
 /* remove asterisk on crispy-form-fields */
 .asteriskField {

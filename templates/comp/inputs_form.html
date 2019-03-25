@@ -82,27 +82,29 @@
   </div>
   <div id="content" style="width: 60rem;">
     <div class="container-fluid">
-      <h1><a class="primary-text" href="{{ app_url }}">{{ owner }}/{{ project_name }}</a> <a href="{{app_url}}detail/" class="btn inverse-btn-match-nav"><small>config</small></a></h1>
-      <div>{{app_description}}</div>
-      {% include 'comp/project_info.html' %}
-      {% block project_context %}
-      {% endblock %}
+      <div class="card card-body">
+        <h1><a class="primary-text" href="{{ app_url }}">{{ owner }}/{{ project_name }}</a> <a href="{{app_url}}detail/" class="btn btn-sm inverse-btn-match-nav">publish</a></h1>
+        <div>{{app_description}}</div>
+        {% block project_context %}
+        {% endblock %}
+      </div>
     </div>
     <div class="container-fluid">
-        <div class="inputs-main">
-          {% for error in form.non_field_errors %}
-              <div class="alert alert-danger text-center lert-dismissible" role="alert">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-                {{ error }}
-              </div>
-          {% endfor %}
-          <hr class="my-4 input-divider">
-          {% for section, params in default_form.items %}
-              {% include 'comp/inputs/major_section.html' with title=section.title params=params %}
-          {% endfor %}
-        </div> <!-- main -->
+        <div class="card card-body">
+          <div class="inputs-main">
+            {% for error in form.non_field_errors %}
+                <div class="alert alert-danger text-center lert-dismissible" role="alert">
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                  {{ error }}
+                </div>
+            {% endfor %}
+            {% for section, params in default_form.items %}
+                {% include 'comp/inputs/major_section.html' with title=section.title params=params %}
+            {% endfor %}
+          </div>
+        </div>
       </div>
   </div>
 </div>

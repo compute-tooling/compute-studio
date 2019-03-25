@@ -15,15 +15,14 @@
             aria-expanded="false"
             aria-controls="{{ title|make_id }}-collapse"
             style="margin-left:20px;">
-            <i class="far fa-plus-square" style="size:5x;" ></i>
+            <i class="far fa-minus-square" style="size:5x;" ></i>
           </button>
         </div>
       </h1>
     </div>
-    <hr class="my-4 input-divider">
     <div class="container">
       <div class="collapse show" id="{{ title|make_id }}-collapse">
-        <div class="card card-body" style="width: 50rem;">
+        <div class="card card-body card-inner" style="width:50rem;">
           {% for param in params %}
             {% for key, value in param.items %}
               {% if key != "ubi" %}
