@@ -3,47 +3,15 @@
 {% load utility %}
 {% load crispy_forms_tags %}
 
-<fieldset id="{{ title|make_id }}" class="inputs-block">
-    <div class="container">
-      <h1>
-        {{ title }}
-        <label>
-          {% include 'comp/inputs/fields/tooltip.html' with text="These are the parameters upon which the Model Parameters below depend. Changing the value of one of the meta parameters may change the default value(s) of some of the Model Parameters." %}
-        </label>
-        <div class="float-right">
-          <button
-            class="btn collapse-button"
-            type="button"
-            data-toggle="collapse"
-            data-target="#{{ title|make_id }}-collapse"
-            aria-expanded="false"
-            aria-controls="{{ title|make_id }}-collapse"
-            style="margin-left:20px;">
-            <i class="far fa-plus-square" style="size:5x;" ></i>
-          </button>
-        </div>
-      </h1>
-    </div>
-    <div class="container">
-      <div class="collapse show" id="{{ title|make_id }}-collapse">
-        <div class="card card-body" style="width: 50rem;">
-            <ul class="list-unstyled components">
-                {% for param in form.meta_parameters.parameters %}
-                    <li>
-                        {{form|dict_get:param.name|as_crispy_field}}
-                    </li>
-                {% endfor %}
-                <li>
-                    <button class="btn btn-block inverse-btn-match-nav"
-                      type="submit"
-                      name="reset"
-                      value="true"
-                      style="margin:10px;margin-left:0px;">Reset with updated meta parameters
-                    </button>
-                </li>
-            </ul>
-        </div>
-      </div>
-      {% block section_warnings %}{% endblock %}
-    </div>
+<fieldset class="inputs-block">
+  <div class="container">
+    <ul class="list-unstyled components">
+      {% for param in form.meta_parameters.parameters %}
+      <li>
+          {{form|dict_get:param.name|as_crispy_field}}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% block section_warnings %}{% endblock %}
 </fieldset>

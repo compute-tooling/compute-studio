@@ -15,32 +15,34 @@
     <nav id="sidebar" class="top-sticky navbar navbar-expand-lg" style="padding:0px;">
       <ul class="list-unstyled components">
           <li>
-          <div class="sidebar-header">
-              <h3>Model Parameters</h3>
-          </div>
+            <div class="card card-body" style="margin-bottom:0.3rem">
+              {% include 'comp/inputs/metaparameters.html' with form=form title="Meta Parameters" %}
+            </div>
           </li>
           <li>
-            <ul class="list-unstyled components">
-              {% for section, params in default_form.items %}
-                <li><a class="btn btn-block inverse-btn-match-nav dropdown-toggle"
-                    style="color:inherit;margin-top:10px;margin-bottom:2px;"
-                    href="#{{ section }}-submenu"
-                    data-toggle="collapse"
-                    aria-expanded="false"
-                    role="button"
-                    aria-controls="{{ section }}-submenu">
-                    {{ section.title }}
-                </a>
-                </li>
-                <ul class="collapse list-unstyled" id="{{ section }}-submenu">
-                {% for param in params %}
-                  {% for key, value in param.items %}
-                    <li><a style="color:inherit;margin-top:2px;margin-bottom:2px;" href="#{{ key|make_id }}">{{ key }}</a></li>
+            <div class="card card-body">
+              <ul class="list-unstyled components">
+                {% for section, params in default_form.items %}
+                  <li><a class="btn btn-block inverse-btn-match-nav dropdown-toggle"
+                      style="color:inherit;margin-top:10px;margin-bottom:2px;"
+                      href="#{{ section }}-submenu"
+                      data-toggle="collapse"
+                      aria-expanded="false"
+                      role="button"
+                      aria-controls="{{ section }}-submenu">
+                      {{ section.title }}
+                  </a>
+                  </li>
+                  <ul class="collapse list-unstyled" id="{{ section }}-submenu">
+                  {% for param in params %}
+                    {% for key, value in param.items %}
+                      <li><a style="color:inherit;margin-top:2px;margin-bottom:2px;" href="#{{ key|make_id }}">{{ key }}</a></li>
+                    {% endfor %}
                   {% endfor %}
+                  </ul>
                 {% endfor %}
-                </ul>
-              {% endfor %}
-            </ul>
+              </ul>
+            </div>
           </li>
           <li>
             <button type="button" class="btn btn-block go-btn" style="margin:10px;margin-left:0px;" data-toggle="modal" data-target="#submitModal">
@@ -96,7 +98,6 @@
                 {{ error }}
               </div>
           {% endfor %}
-          {% include 'comp/inputs/metaparameters.html' with form=form title="Meta Parameters" %}
           <hr class="my-4 input-divider">
           {% for section, params in default_form.items %}
               {% include 'comp/inputs/major_section.html' with title=section.title params=params %}

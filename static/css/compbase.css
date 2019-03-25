@@ -11,6 +11,10 @@ body {
   color: #212121;
 }
 
+.main-content {
+  background: rgb(238, 238, 238);
+}
+
 div.content.card.publish.markdown p, div.content.card.publish.markdown code {
   border: 1px solid #ced4da;
 
@@ -42,7 +46,7 @@ code {
 
 /* navbar */
 .navbar-custom {
-  background-color: #212121;
+  background-color: #2b2c2d;
 }
 
 /* change the brand and text color */
@@ -123,7 +127,7 @@ input.model:not(:placeholder-shown) {
 }
 
 /* format card objects */
-.card {
+/* .card {
   margin-bottom: 20px;
   background-color: #fff;
   border: 1px solid transparent;
@@ -163,10 +167,6 @@ input.model:not(:placeholder-shown) {
   border-top: 1px solid #ddd;
   border-bottom-right-radius: 3px;
   border-bottom-left-radius: 3px;
-}
-/* remove card border */
-.card {
-  box-shadow: 0 1px 1px white;
 }
 
 /* remove asterisk on crispy-form-fields */
