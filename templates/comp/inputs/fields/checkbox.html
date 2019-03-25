@@ -5,7 +5,7 @@ provide label users will click to toggle the CPI on and off -->
 <input type="text"
   id="{{ checkbox.id_for_label }}"
   name="{{ checkbox.name }}"
-  class="form-control model model-param"
+  class="form-control model-param"
   style="display:none;"
   placeholder="{{checkbox.field.widget.attrs.placeholder}}"
   value="{% if checkbox.value %}{{checkbox.value}}{%else%}{% endif %}">
@@ -20,10 +20,12 @@ provide label users will click to toggle the CPI on and off -->
 $("#label-{{ checkbox.id_for_label }}").click(function(){
   $(this).toggleClass("fader");
   var checkbox = $("#{{ checkbox.id_for_label }}");
-  if (checkbox.prop("value") == "True" || checkbox.prop("placeholder") == "True"){
-    checkbox.attr("value", "False");
+  if (checkbox.prop("value") == "" && checkbox.prop("placeholder") == "True"){
+    checkbox.prop("value", "False");
+  } else if (checkbox.prop("value") == "True") {
+    checkbox.prop("value", "False");
   } else {
-    checkbox.attr("value", "True");
+    checkbox.prop("value", "True");
   }
 });
 </script>
