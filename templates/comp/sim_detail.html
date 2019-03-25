@@ -31,13 +31,6 @@
   .single-line {
     white-space: nowrap;
   }
-  .param-text {
-      margin-left: 80px;
-      margin-right: 80px;
-      margin-top: 40px;
-      margin-bottom: 40px;
-      text-align: left;
-  }
   .file-contents{
       font-family: "Courier New", Courier, monospace;
       font-weight: bold;
@@ -46,9 +39,6 @@
       margin-top: 40px;
       margin-bottom: 40px;
       text-align: left;
-  }
-  .container {
-    width: 95%;
   }
   .output, .aggr-output {
     display: none;
@@ -71,12 +61,12 @@
 </style>
 {% endblock %}
 {% block content %}
-<div class="wrapper">
+<div class="wrapper container">
   <br>
   <div id="table-drilldown-container">
     <div>
-      <div class="container" style="padding:20px;">
-          <div class="container" style="padding:15px;">
+      <div class="container" style="padding:.2rem;">
+          <div class="container" style="padding:.15rem;">
             <h1>{{result_header}}</h1>
             <h4> The results were created with the inputs below: </h4>
             <ul>
@@ -97,10 +87,10 @@
             <ul>
           </div>
           <div class="container">
-            <div style="padding:10px;">
+            <div style="padding:.1rem;">
               <a href="{{ object.get_absolute_edit_url }}" class="btn inverse-btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Edit inputs</a>
             </div>
-            <div style="padding:10px;">
+            <div style="padding:.1rem;">
               <a href="{{ object.get_absolute_download_url }}" class="btn inverse-btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Download results</a>
             </div>
           <div class="row">
@@ -115,7 +105,9 @@
                        data-tag-{{ key }}="{{ value }}"
                      {% endfor %}>
                   <h1 class="text-center">{{ x.title }}</h1>
+                  <div class="table-responsive">
                   {{ x.renderable | safe }}
+                  </div>
                 </div>
                 {% endfor %}
               </div>
@@ -173,7 +165,9 @@
                          data-tag-{{ key }}="{{ value }}"
                        {% endfor %}>
                     <h1 class="text-center">{{ x.title }}</h1>
+                    <div class="table-responsive">
                     {{ x.renderable | safe }}
+                    </div>
                   </div>
                   {% endfor %}
                 </div>
@@ -182,10 +176,10 @@
         {% endif %}
         </div>
         <div class="container">
-          <div style="padding:10px;">
+          <div style="padding:.1rem;">
             <a href="{{ object.get_absolute_download_url }}" class="btn btn-lg btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Download Results</a>
           </div>
-          <div style="padding:10px;">
+          <div style="padding:.1rem;">
             <a href="{{ object.get_absolute_download_url }}?raw_json=True" class="btn btn-sm inverse-btn-match-nav w-50 mx-auto" style="display:block;">Download raw JSON</a>
           </div>
         </div>
@@ -288,7 +282,7 @@ var activateAggrTablesBySelectedTags = function () {
 };
 
 $(document).ready(function () {
-  $('table').addClass('table').addClass('table-bordered');
+  $('table').addClass('table').addClass('table-bordered').addClass('table-hover');
   activateAggrTablesBySelectedTags();
   initVisibleAggrTable();
   activateYearTablesBySelectedTags();
