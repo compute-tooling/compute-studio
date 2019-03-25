@@ -3,15 +3,12 @@
 
 body {
   font-family: 'Roboto', sans-serif;
+  font-size: 17px;
 }
 
 
 .explainer {
   color: #212121;
-}
-
-p {
-  width:80ch;
 }
 
 div.content.card.publish.markdown p, div.content.card.publish.markdown code {
