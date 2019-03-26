@@ -64,8 +64,28 @@
   <br>
   <div id="table-drilldown-container">
     <div>
-      <div class="card card-body card-outer">
-          <h1>{{result_header}}</h1>
+        <div class="jumbotron shadow" style="background-color:white;">
+          <h1 class="display-4">{{result_header}}</h1>
+          <div class="row">
+            {% if object.aggr_outputs %}
+            <div class="col-md-12" id="aggr-totals-container">
+              <div class="card card-body card-inner">
+                {% include "comp/select_tags.html" with tags=tags.aggr_tags only %}
+                {% for x in object.aggr_outputs %}
+                <div class="aggr-output"
+                      {% for key, value in x.tags.items %}
+                        data-tag-{{ key }}="{{ value }}"
+                      {% endfor %}>
+                  <h1 class="text-center">{{ x.title }}</h1>
+                  <div class="table-responsive">
+                  {{ x.renderable | safe }}
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+          </div>
           <div class="container">
             <h1>
               View inputs
@@ -75,18 +95,17 @@
                   type="button"
                   data-toggle="collapse"
                   data-target="#results-collapse"
-                  aria-expanded="false"
+                  aria-expanded="true"
                   aria-controls="results-collapse"
                   style="margin-left:20px;">
-                  <i class="far fa-minus-square" style="size:5x;" ></i>
+                  <i class="far fa-plus-square" style="size:5x;" ></i>
                 </button>
               </div>
             </h1>
           </div>
           <div class="container">
-            <div class="collapse show" id="results-collapse">
+            <div class="collapse" id="results-collapse">
               <div class="card card-body card-inner">
-                <h4> The results were created with the inputs below: </h4>
                   <ul>
                   <li>
                     <ul class="list-unstyled">
@@ -115,26 +134,6 @@
             </div>
           </div>
       </div>
-          <div class="row">
-          {% if object.aggr_outputs %}
-          <div class="col-md-12" id="aggr-totals-container">
-            <div class="card card-body card-outer">
-              {% include "comp/select_tags.html" with tags=tags.aggr_tags only %}
-              {% for x in object.aggr_outputs %}
-              <div class="aggr-output"
-                    {% for key, value in x.tags.items %}
-                      data-tag-{{ key }}="{{ value }}"
-                    {% endfor %}>
-                <h1 class="text-center">{{ x.title }}</h1>
-                <div class="table-responsive">
-                {{ x.renderable | safe }}
-                </div>
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-          {% endif %}
-        </div>
         <div class="card card-body card-outer">
         <div class="row">
           {% if object.outputs %}
