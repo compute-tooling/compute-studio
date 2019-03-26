@@ -9,87 +9,89 @@
 <form class="inputs-form" id="inputs-form" method="post" action="{{app_url}}">
 {% csrf_token %}
 <input type="hidden" name="has_errors" value="{{ has_errors }}" />
-<div class="container-fluid">
-<div class="jumbotron shadow" style="background-color:white;">
-    <h1 class="display-4"><a class="primary-text" href="{{ app_url }}">{{ owner }}/{{ project_name }}</a> <a href="{{app_url}}detail/" class="btn btn-sm inverse-btn-match-nav">publish</a></h1>
-    <hr class="my-4">
-    <div>{{app_description}}</div>
-    {% block project_context %}
-    {% endblock %}
-</div>
-<div class="wrapper">
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <div class="jumbotron shadow" style="background-color:white;">
+          <h1 class="display-4"><a class="primary-text" href="{{ app_url }}">{{ owner }}/{{ project_name }}</a> <a href="{{app_url}}detail/" class="btn btn-sm inverse-btn-match-nav">publish</a></h1>
+          <hr class="my-4">
+          <div>{{app_description}}</div>
+          {% block project_context %}
+          {% endblock %}
+      </div>
+    </div>
+  </div>
   <!-- Sidebar -->
-  <div class="container-fluid">
-    <nav id="sidebar" class="top-sticky navbar navbar-expand-lg" style="padding:0px;">
+  <div class="row">
+    <div class="col-4">
       <ul class="list-unstyled components">
-          <li>
-            <div class="card card-body card-outer">
-              {% include 'comp/inputs/metaparameters.html' with form=form title="Meta Parameters" %}
-              <button type="submit" name="reset" value="true" class="btn btn-block btn-outline-secondary" style="margin:10px;margin-left:0px;">Reset</a>
-            </div>
-          </li>
-          <li>
-            <div class="card card-body card-outer">
-              <ul class="list-unstyled components">
-                {% for section, params in default_form.items %}
-                  <li><a class="btn btn-block inverse-btn-match-nav dropdown-toggle"
-                      style="color:inherit;margin-top:10px;margin-bottom:2px;"
-                      href="#{{ section }}-submenu"
-                      data-toggle="collapse"
-                      aria-expanded="false"
-                      role="button"
-                      aria-controls="{{ section }}-submenu">
-                      {{ section.title }}
-                  </a>
-                  </li>
-                  <ul class="collapse list-unstyled" id="{{ section }}-submenu">
-                  {% for param in params %}
-                    {% for key, value in param.items %}
-                      <li><a style="color:inherit;margin-top:2px;margin-bottom:2px;" href="#{{ key|make_id }}">{{ key }}</a></li>
-                    {% endfor %}
+        <li>
+          <div class="card card-body card-outer">
+            {% include 'comp/inputs/metaparameters.html' with form=form title="Meta Parameters" %}
+            <button type="submit" name="reset" value="true" class="btn btn-block btn-outline-secondary" style="margin:10px;margin-left:0px;">Reset</a>
+          </div>
+        </li>
+        <li>
+          <div class="card card-body card-outer">
+            <ul class="list-unstyled components">
+              {% for section, params in default_form.items %}
+                <li><a class="btn btn-block inverse-btn-match-nav dropdown-toggle"
+                    style="color:inherit;margin-top:10px;margin-bottom:2px;"
+                    href="#{{ section }}-submenu"
+                    data-toggle="collapse"
+                    aria-expanded="false"
+                    role="button"
+                    aria-controls="{{ section }}-submenu">
+                    {{ section.title }}
+                </a>
+                </li>
+                <ul class="collapse list-unstyled" id="{{ section }}-submenu">
+                {% for param in params %}
+                  {% for key, value in param.items %}
+                    <li><a style="color:inherit;margin-top:2px;margin-bottom:2px;" href="#{{ key|make_id }}">{{ key }}</a></li>
                   {% endfor %}
-                  </ul>
                 {% endfor %}
-              </ul>
-            </div>
-          </li>
-          <li>
-            <div class="card card-body card-outer">
-              <button type="button" class="btn btn-block btn-outline-success" style="margin:10px;margin-left:0px;" data-toggle="modal" data-target="#submitModal">
-                <b>Run {% if not provided_free %}({{ exp_cost }}){% endif %}</b>
+                </ul>
+              {% endfor %}
+            </ul>
+          </div>
+        </li>
+        <li>
+          <div class="card card-body card-outer">
+            <button type="button" class="btn btn-block btn-outline-success" style="margin:10px;margin-left:0px;" data-toggle="modal" data-target="#submitModal">
+              <b>Run {% if not provided_free %}({{ exp_cost }}){% endif %}</b>
+            </button>
+          </div>
+        </li>
+      </ul>
+      <!-- Modal -->
+      <div class="modal fade" id="submitModal" tabindex="-1" role="dialog" aria-labelledby="submitModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="submitModalLabel">Are you sure that you want to run this simulation?</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
               </button>
             </div>
-          </li>
-        </ul>
-
-        <!-- Modal -->
-        <div class="modal fade" id="submitModal" tabindex="-1" role="dialog" aria-labelledby="submitModalLabel" aria-hidden="true">
-          <div class="modal-dialog" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="submitModalLabel">Are you sure that you want to run this simulation?</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                {% if provided_free %}
-                  This simulation is free.
-                {% else %}
-                  This simulation will cost {{ exp_cost }}.
-                {% endif %}
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="submit" name="full_calc" value="true" class="btn go-btn">Run simulation</button>
-              </div>
+            <div class="modal-body">
+              {% if provided_free %}
+                This simulation is free.
+              {% else %}
+                This simulation will cost {{ exp_cost }}.
+              {% endif %}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="submit" name="full_calc" value="true" class="btn go-btn">Run simulation</button>
             </div>
           </div>
         </div>
-    </nav>
-  </div>
-  <div id="content">
-    <div class="container-fluid" style="min-width: 50rem; max-width: 50rem;">
+      </div>
+    </div>
+    <div class="col-8">
+      <div id="content">
+        <!-- <div class="container-fluid" style="min-width: 50rem; max-width: 50rem;"> -->
           <div class="inputs-main">
             {% if form.non_field_errors %}
             <div class="card card-body card-outer">
@@ -109,8 +111,9 @@
               </div>
             {% endfor %}
           </div>
-        </div>
+        <!-- </div> -->
       </div>
+    </div>
   </div>
 </div>
 </form>
