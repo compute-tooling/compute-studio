@@ -3,27 +3,27 @@
 
 {% block content %}
 
-<div class="container-fluid" style="margin:20px;">
+<div class="card card-body card-outer">
     {% csrf_token %}
     <h4>{{ username }}</h4>
     <div style="margin:10px;">
         <form action="{% url 'password_change' %}" method="GET">
-                <input class="btn btn-comp" type="submit" value="Change password">
+                <input class="btn btn-light" type="submit" value="Change password">
         </form>
     </div>
     <div style="margin:10px;">
     <form action="{% url 'update_payment' %}" method="GET">
-            <input class="btn btn-comp" type="submit" value="Update payment information">
+            <input class="btn btn-light" type="submit" value="Update payment information">
     </form>
     </div>
     <div style="margin:10px;">
         <form action="{% url 'cancel_subscription' %}" method="GET">
-            <input class="btn btn-comp" type="submit" value="Cancel subscription">
+            <input class="btn btn-danger" type="submit" value="Cancel subscription">
         </form>
     </div>
     <div style="margin:10px;">
         <form action="{% url 'delete_user' %}" method="GET">
-            <input class="btn btn-comp" type="submit" value="Delete account">
+            <input class="btn btn-danger" type="submit" value="Delete account">
         </form>
     </div>
 

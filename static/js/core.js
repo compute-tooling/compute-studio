@@ -39,4 +39,13 @@ $(document).ready(function() {
       select.prop("disabled", true);
     });
   });
+
+  $(".collapse").on("hidden.bs.collapse", function() {
+    btn = $(`[data-target="#${$(this).attr("id")}"]`);
+    btn.html('<i class="far fa-plus-square" style="size:5x;" ></i>');
+  });
+  $(".collapse").on("show.bs.collapse", function() {
+    btn = $(`[data-target="#${$(this).attr("id")}"]`);
+    btn.html('<i class="far fa-minus-square" style="size:5x;" ></i>');
+  });
 });

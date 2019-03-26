@@ -4,8 +4,8 @@
 {% block title %}Sign Up{% endblock %}
 
 {% block content %}
-
-  <h2>Sign up</h2>
+  <div class="card card-body card-outer">
+  <h2 class="card-title">Sign up</h2>
   <form method="post" id="payment-form">
     {% csrf_token %}
     {% include 'includes/prettyform.html' with form=form %}
@@ -14,6 +14,7 @@
         {% include 'billing/base.html' %}
       </div>
     {% endif %}
-    <button style="margin: 10px;" type="submit" class="btn btn-comp">Sign up</button>
+    <button type="submit" class="btn btn-success mt-4">Sign up</button>
   </form>
+  </div>
 {% endblock %}

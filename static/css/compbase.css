@@ -11,6 +11,10 @@ body {
   color: #212121;
 }
 
+.main-content {
+  background: rgb(238, 238, 238);
+}
+
 div.content.card.publish.markdown p, div.content.card.publish.markdown code {
   border: 1px solid #ced4da;
 
@@ -42,18 +46,18 @@ code {
 
 /* navbar */
 .navbar-custom {
-  background-color: #212121;
+  background-color: #2b2c2d;
 }
 
 /* change the brand and text color */
 .navbar-custom .navbar-brand,
 .navbar-custom .navbar-text {
-  color: #e5e5e5;
+  color: #ffffff;
 }
 
 /* change the link color */
 .navbar-custom .navbar-nav .nav-link {
-  color: #cccc;
+  color: #ffffff;
 }
 
 /* change the color of active or hovered links */
@@ -119,54 +123,17 @@ input.model:not(:placeholder-shown) {
 
 /* fade auxillary button on toggle */
 .fader {
-  opacity: 0.5;
+  background-color: rgb(231, 241, 252) !important;
+  color: rgba(10, 102, 194, 1) !important;
 }
 
-/* format card objects */
-.card {
-  margin-bottom: 20px;
-  background-color: #fff;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
-  -moz-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
-}
-.card-body {
-  padding: 15px;
-}
-.card-header {
-  padding: 10px 15px;
-  border-bottom: 1px solid transparent;
-  border-top-right-radius: 3px;
-  border-top-left-radius: 3px;
-}
-.card-header > .dropdown .dropdown-toggle {
-  color: inherit;
-}
-.card-title {
-  margin-top: 0;
-  margin-bottom: 0;
-  font-size: 16px;
-  color: inherit;
-}
-.card-title > a,
-.card-title > small,
-.card-title > .small,
-.card-title > small > a,
-.card-title > .small > a {
-  color: inherit;
-}
-.card-footer {
-  padding: 10px 15px;
-  background-color: #f5f5f5;
-  border-top: 1px solid #ddd;
-  border-bottom-right-radius: 3px;
-  border-bottom-left-radius: 3px;
-}
-/* remove card border */
-.card {
+.card-inner {
   box-shadow: 0 1px 1px white;
+  border:0px;
+}
+
+.card-outer {
+  box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
 }
 
 /* remove asterisk on crispy-form-fields */
@@ -221,4 +188,17 @@ span.default-value {
 
 .description {
   width: "50rem"
+}
+
+
+.btn-checkbox {
+  padding: .25rem .5rem;
+  font-size: .68rem;
+  line-height: 0.9;
+  border-radius: .2rem;
+  background-color: rgba(10, 102, 194, 1);
+
+  color: rgb(231, 241, 252);
+  /* font-size: 11px; */
+  font-weight: 700;
 }

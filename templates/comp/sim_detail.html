@@ -31,13 +31,6 @@
   .single-line {
     white-space: nowrap;
   }
-  .param-text {
-      margin-left: 80px;
-      margin-right: 80px;
-      margin-top: 40px;
-      margin-bottom: 40px;
-      text-align: left;
-  }
   .file-contents{
       font-family: "Courier New", Courier, monospace;
       font-weight: bold;
@@ -46,9 +39,6 @@
       margin-top: 40px;
       margin-bottom: 40px;
       text-align: left;
-  }
-  .container {
-    width: 95%;
   }
   .output, .aggr-output {
     display: none;
@@ -71,58 +61,80 @@
 </style>
 {% endblock %}
 {% block content %}
-<div class="wrapper">
   <br>
   <div id="table-drilldown-container">
     <div>
-      <div class="container" style="padding:20px;">
-          <div class="container" style="padding:15px;">
-            <h1>{{result_header}}</h1>
-            <h4> The results were created with the inputs below: </h4>
-            <ul>
-            <li>
-              <ul class="list-unstyled">
-              <li><p><i> Inputs for section: </i> <code>meta-parameters</code></p></li>
-              <li><pre><code class="block">{{object.inputs.pretty_meta_parameters}}</code></li></pre>
-              </ul>
-            </li>
-            {% for sect, jsonobj in object.inputs.inputs_file.items %}
-              <li>
-              <ul class="list-unstyled">
-              <li><p><i> Inputs for section: </i> <code>{{sect}}</code></p></li>
-              <li><pre><code class="block">{{jsonobj}}</code></li></pre>
-              </ul>
-              </li>
-            {% endfor %}
-            <ul>
-          </div>
-          <div class="container">
-            <div style="padding:10px;">
-              <a href="{{ object.get_absolute_edit_url }}" class="btn inverse-btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Edit inputs</a>
-            </div>
-            <div style="padding:10px;">
-              <a href="{{ object.get_absolute_download_url }}" class="btn inverse-btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Download results</a>
-            </div>
+        <div class="jumbotron shadow" style="background-color:white;">
+          <h1 class="card-title">{{result_header}}</h1>
           <div class="row">
-          {% if object.aggr_outputs %}
-          <div class="col-md-12" id="aggr-totals-container">
-            <div class="card">
-              <div class="card-body">
+            {% if object.aggr_outputs %}
+            <div class="col-md-12" id="aggr-totals-container">
+              <div class="card card-body card-inner">
                 {% include "comp/select_tags.html" with tags=tags.aggr_tags only %}
                 {% for x in object.aggr_outputs %}
                 <div class="aggr-output"
-                     {% for key, value in x.tags.items %}
-                       data-tag-{{ key }}="{{ value }}"
-                     {% endfor %}>
+                      {% for key, value in x.tags.items %}
+                        data-tag-{{ key }}="{{ value }}"
+                      {% endfor %}>
                   <h1 class="text-center">{{ x.title }}</h1>
+                  <div class="table-responsive">
                   {{ x.renderable | safe }}
+                  </div>
                 </div>
                 {% endfor %}
               </div>
             </div>
+            {% endif %}
           </div>
-          {% endif %}
-        </div>
+          <div class="container">
+            <h1>
+              View inputs
+              <div class="float-right">
+                <button
+                  class="btn collapse-button"
+                  type="button"
+                  data-toggle="collapse"
+                  data-target="#results-collapse"
+                  aria-expanded="true"
+                  aria-controls="results-collapse"
+                  style="margin-left:20px;">
+                  <i class="far fa-plus-square" style="size:5x;" ></i>
+                </button>
+              </div>
+            </h1>
+          </div>
+          <div class="container">
+            <div class="collapse" id="results-collapse">
+              <div class="card card-body card-inner">
+                  <ul>
+                  <li>
+                    <ul class="list-unstyled">
+                    <li><p><i> Inputs for section: </i> <code>meta-parameters</code></p></li>
+                    <li><pre><code class="block">{{object.inputs.pretty_meta_parameters}}</code></li></pre>
+                    </ul>
+                  </li>
+                  {% for sect, jsonobj in object.inputs.inputs_file.items %}
+                    <li>
+                    <ul class="list-unstyled">
+                    <li><p><i> Inputs for section: </i> <code>{{sect}}</code></p></li>
+                    <li><pre><code class="block">{{jsonobj}}</code></li></pre>
+                    </ul>
+                    </li>
+                  {% endfor %}
+                  <ul>
+              </div>
+            </div>
+          </div>
+          <div class="card card-body card-inner">
+            <div style="padding:.1rem;">
+              <a href="{{ object.get_absolute_edit_url }}" class="btn inverse-btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Edit inputs</a>
+            </div>
+            <div style="padding:.1rem;">
+              <a href="{{ object.get_absolute_download_url }}" class="btn inverse-btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Download results</a>
+            </div>
+          </div>
+      </div>
+        <div class="card card-body card-outer">
         <div class="row">
           {% if object.outputs %}
           <div class="col-md-8 col-md-push-2" id="table-select-container">
@@ -173,7 +185,9 @@
                          data-tag-{{ key }}="{{ value }}"
                        {% endfor %}>
                     <h1 class="text-center">{{ x.title }}</h1>
+                    <div class="table-responsive">
                     {{ x.renderable | safe }}
+                    </div>
                   </div>
                   {% endfor %}
                 </div>
@@ -181,12 +195,13 @@
           </div>
         {% endif %}
         </div>
-        <div class="container">
-          <div style="padding:10px;">
-            <a href="{{ object.get_absolute_download_url }}" class="btn btn-lg btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Download Results</a>
+      </div>
+        <div class="card card-body card-outer">
+          <div style="padding:.1rem;">
+            <a href="{{ object.get_absolute_download_url }}" class="btn btn-lg btn-match-nav w-50 mx-auto" style="display:block; margin:0.5rem;">Download Results</a>
           </div>
-          <div style="padding:10px;">
-            <a href="{{ object.get_absolute_download_url }}?raw_json=True" class="btn btn-sm inverse-btn-match-nav w-50 mx-auto" style="display:block;">Download raw JSON</a>
+          <div style="padding:.1rem;">
+            <a href="{{ object.get_absolute_download_url }}?raw_json=True" class="btn btn-sm inverse-btn-match-nav w-50 mx-auto" style="display:block;margin:0.5rem;">Download raw JSON</a>
           </div>
         </div>
     </div>
@@ -197,7 +212,6 @@
     value="true"
     style="margin:10px;margin-left:0px;">Reset default parameters
   </a> -->
-</div>
 
 {% endblock %}
 
@@ -213,6 +227,7 @@
 <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.print.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.2/js/dataTables.responsive.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.2/js/responsive.bootstrap.min.js"></script>
+<script src="{% static 'js/core.js' %}"></script>
 <script>
 
 
@@ -288,7 +303,7 @@ var activateAggrTablesBySelectedTags = function () {
 };
 
 $(document).ready(function () {
-  $('table').addClass('table').addClass('table-bordered');
+  $('table').addClass('table').addClass('table-bordered').addClass('table-hover');
   activateAggrTablesBySelectedTags();
   initVisibleAggrTable();
   activateYearTablesBySelectedTags();
