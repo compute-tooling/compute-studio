@@ -10,13 +10,11 @@
 {% csrf_token %}
 <input type="hidden" name="has_errors" value="{{ has_errors }}" />
 <div class="container-fluid">
-<div class="jumbotron jumbotron-fluid" style="background-color:white;">
-  <div class="container">
+<div class="jumbotron" style="background-color:white;">
     <h1 class="display-4"><a class="primary-text" href="{{ app_url }}">{{ owner }}/{{ project_name }}</a> <a href="{{app_url}}detail/" class="btn btn-sm inverse-btn-match-nav">publish</a></h1>
     <div>{{app_description}}</div>
     {% block project_context %}
     {% endblock %}
-</div>
 </div>
 <div class="wrapper">
   <!-- Sidebar -->
