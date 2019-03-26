@@ -4,14 +4,15 @@
 
 {% block content %}
 
-<h2>Cancel subscription</h2>
-<form method="post" action="{% url 'cancel_subscription' %}">
-  {% csrf_token %}
-  <p>Are you sure that you would like to cancel your subscription? You will still be able to view your previous simulation results, but you will not be able to submit any simulations.</p>
-  <p>If you have a minute, we'd really appreciate an <a href="mailto:admin@compmodels.com">email</a> from you telling us how we can make COMP a better site and win you back in the future.</p>
-  <p>Enter your username below to confirm that you would like to cancel your subscription.</p>
-  {% include 'includes/prettyform.html' with form=form %}
-  <button type="submit" class="btn btn-comp">Cancel subscription</button>
-</form>
-
+<div class="card card-body card-outer">
+  <h2 class="card-title">Cancel subscription</h2>
+  <form method="post" action="{% url 'cancel_subscription' %}">
+    {% csrf_token %}
+    <p>Are you sure that you would like to cancel your subscription? You will still be able to view your previous simulation results, but you will not be able to submit any simulations.</p>
+    <p>If you have a minute, we'd really appreciate an <a href="mailto:admin@compmodels.com">email</a> from you telling us how we can make COMP a better site and win you back in the future.</p>
+    <p>Enter your username below to confirm that you would like to cancel your subscription.</p>
+    {% include 'includes/prettyform.html' with form=form %}
+    <button type="submit" class="btn btn-danger" style="margin-top:2rem">Cancel subscription</button>
+  </form>
+</div>
 {% endblock %}

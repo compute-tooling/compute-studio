@@ -4,14 +4,14 @@
 {% block title %}Update payment information{% endblock %}
 
 {% block content %}
-
-  <h2>Update payment information</h2>
+<div class="card card-body card-outer">
+  <h2 class="card-title">Update payment information</h2>
   <form method="post" id="payment-form" action="{% url 'update_payment' %}">
     {% csrf_token %}
     <div class='stripe-input'>
       {% include 'billing/base.html' %}
     </div>
-    <button style="margin: 10px;" type="submit" class="btn btn-light">Update</button>
+    <button style="margin-top: 2rem;" type="submit" class="btn btn-comp">Update</button>
   </form>
-
+</div>
 {% endblock %}
