@@ -8,8 +8,8 @@
 <form method="post">
   {% csrf_token %}
   {% include 'includes/prettyform.html' with form=form %}
-  <button type="submit" class="btn btn-success" style="margin-top:2rem">Login</button>
+  <button type="submit" class="btn btn-success mt-4">Login</button>
 </form>
-<a style="color:inherit; margin-top:2rem;" href="{% url 'password_reset' %}">Forgot password?</a>
+<a class="mt-4" style="color:inherit" href="{% url 'password_reset' %}">Forgot password?</a>
 </div>
 {% endblock %}
