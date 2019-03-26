@@ -61,60 +61,81 @@
 </style>
 {% endblock %}
 {% block content %}
-<div class="wrapper container">
   <br>
   <div id="table-drilldown-container">
     <div>
-      <div class="container" style="padding:.2rem;">
-          <div class="container" style="padding:.15rem;">
-            <h1>{{result_header}}</h1>
-            <h4> The results were created with the inputs below: </h4>
-            <ul>
-            <li>
-              <ul class="list-unstyled">
-              <li><p><i> Inputs for section: </i> <code>meta-parameters</code></p></li>
-              <li><pre><code class="block">{{object.inputs.pretty_meta_parameters}}</code></li></pre>
-              </ul>
-            </li>
-            {% for sect, jsonobj in object.inputs.inputs_file.items %}
-              <li>
-              <ul class="list-unstyled">
-              <li><p><i> Inputs for section: </i> <code>{{sect}}</code></p></li>
-              <li><pre><code class="block">{{jsonobj}}</code></li></pre>
-              </ul>
-              </li>
-            {% endfor %}
-            <ul>
+      <div class="card card-body card-outer">
+          <h1>{{result_header}}</h1>
+          <div class="container">
+            <h1>
+              View inputs
+              <div class="float-right">
+                <button
+                  class="btn collapse-button"
+                  type="button"
+                  data-toggle="collapse"
+                  data-target="#results-collapse"
+                  aria-expanded="false"
+                  aria-controls="results-collapse"
+                  style="margin-left:20px;">
+                  <i class="far fa-minus-square" style="size:5x;" ></i>
+                </button>
+              </div>
+            </h1>
           </div>
           <div class="container">
+            <div class="collapse show" id="results-collapse">
+              <div class="card card-body card-inner">
+                <h4> The results were created with the inputs below: </h4>
+                  <ul>
+                  <li>
+                    <ul class="list-unstyled">
+                    <li><p><i> Inputs for section: </i> <code>meta-parameters</code></p></li>
+                    <li><pre><code class="block">{{object.inputs.pretty_meta_parameters}}</code></li></pre>
+                    </ul>
+                  </li>
+                  {% for sect, jsonobj in object.inputs.inputs_file.items %}
+                    <li>
+                    <ul class="list-unstyled">
+                    <li><p><i> Inputs for section: </i> <code>{{sect}}</code></p></li>
+                    <li><pre><code class="block">{{jsonobj}}</code></li></pre>
+                    </ul>
+                    </li>
+                  {% endfor %}
+                  <ul>
+              </div>
+            </div>
+          </div>
+          <div class="card card-body card-inner">
             <div style="padding:.1rem;">
               <a href="{{ object.get_absolute_edit_url }}" class="btn inverse-btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Edit inputs</a>
             </div>
             <div style="padding:.1rem;">
               <a href="{{ object.get_absolute_download_url }}" class="btn inverse-btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Download results</a>
             </div>
+          </div>
+      </div>
           <div class="row">
           {% if object.aggr_outputs %}
           <div class="col-md-12" id="aggr-totals-container">
-            <div class="card">
-              <div class="card-body">
-                {% include "comp/select_tags.html" with tags=tags.aggr_tags only %}
-                {% for x in object.aggr_outputs %}
-                <div class="aggr-output"
-                     {% for key, value in x.tags.items %}
-                       data-tag-{{ key }}="{{ value }}"
-                     {% endfor %}>
-                  <h1 class="text-center">{{ x.title }}</h1>
-                  <div class="table-responsive">
-                  {{ x.renderable | safe }}
-                  </div>
+            <div class="card card-body card-outer">
+              {% include "comp/select_tags.html" with tags=tags.aggr_tags only %}
+              {% for x in object.aggr_outputs %}
+              <div class="aggr-output"
+                    {% for key, value in x.tags.items %}
+                      data-tag-{{ key }}="{{ value }}"
+                    {% endfor %}>
+                <h1 class="text-center">{{ x.title }}</h1>
+                <div class="table-responsive">
+                {{ x.renderable | safe }}
                 </div>
-                {% endfor %}
               </div>
+              {% endfor %}
             </div>
           </div>
           {% endif %}
         </div>
+        <div class="card card-body card-outer">
         <div class="row">
           {% if object.outputs %}
           <div class="col-md-8 col-md-push-2" id="table-select-container">
@@ -175,12 +196,13 @@
           </div>
         {% endif %}
         </div>
-        <div class="container">
+      </div>
+        <div class="card card-body card-outer">
           <div style="padding:.1rem;">
-            <a href="{{ object.get_absolute_download_url }}" class="btn btn-lg btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Download Results</a>
+            <a href="{{ object.get_absolute_download_url }}" class="btn btn-lg btn-match-nav w-50 mx-auto" style="display:block; margin:0.5rem;">Download Results</a>
           </div>
           <div style="padding:.1rem;">
-            <a href="{{ object.get_absolute_download_url }}?raw_json=True" class="btn btn-sm inverse-btn-match-nav w-50 mx-auto" style="display:block;">Download raw JSON</a>
+            <a href="{{ object.get_absolute_download_url }}?raw_json=True" class="btn btn-sm inverse-btn-match-nav w-50 mx-auto" style="display:block;margin:0.5rem;">Download raw JSON</a>
           </div>
         </div>
     </div>
@@ -191,7 +213,6 @@
     value="true"
     style="margin:10px;margin-left:0px;">Reset default parameters
   </a> -->
-</div>
 
 {% endblock %}
 
