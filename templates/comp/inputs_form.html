@@ -9,18 +9,28 @@
 <form class="inputs-form" id="inputs-form" method="post" action="{{app_url}}">
 {% csrf_token %}
 <input type="hidden" name="has_errors" value="{{ has_errors }}" />
+<div class="container-fluid">
+<div class="jumbotron jumbotron-fluid" style="background-color:white;">
+  <div class="container">
+    <h1 class="display-4"><a class="primary-text" href="{{ app_url }}">{{ owner }}/{{ project_name }}</a> <a href="{{app_url}}detail/" class="btn btn-sm inverse-btn-match-nav">publish</a></h1>
+    <div>{{app_description}}</div>
+    {% block project_context %}
+    {% endblock %}
+</div>
+</div>
 <div class="wrapper">
   <!-- Sidebar -->
   <div class="container-fluid">
     <nav id="sidebar" class="top-sticky navbar navbar-expand-lg" style="padding:0px;">
       <ul class="list-unstyled components">
           <li>
-            <div class="card card-body" style="margin-bottom:0.3rem">
+            <div class="card card-body">
               {% include 'comp/inputs/metaparameters.html' with form=form title="Meta Parameters" %}
+              <button type="submit" name="reset" value="true" class="btn btn-block btn-outline-secondary" style="margin:10px;margin-left:0px;">Reset</a>
             </div>
           </li>
           <li>
-            <div class="card card-body">
+            <div class="card card-body card-outer">
               <ul class="list-unstyled components">
                 {% for section, params in default_form.items %}
                   <li><a class="btn btn-block inverse-btn-match-nav dropdown-toggle"
@@ -45,12 +55,11 @@
             </div>
           </li>
           <li>
-            <button type="button" class="btn btn-block go-btn" style="margin:10px;margin-left:0px;" data-toggle="modal" data-target="#submitModal">
-              <b>Run {% if not provided_free %}({{ exp_cost }}){% endif %}</b>
-            </button>
-          </li>
-          <li>
-            <a href="{{app_url}}" class="btn btn-block inverse-btn-match-nav" style="margin:10px;margin-left:0px;">Reset</a>
+            <div class="card card-body card-outer">
+              <button type="button" class="btn btn-block btn-outline-success" style="margin:10px;margin-left:0px;" data-toggle="modal" data-target="#submitModal">
+                <b>Run {% if not provided_free %}({{ exp_cost }}){% endif %}</b>
+              </button>
+            </div>
           </li>
         </ul>
 
@@ -82,15 +91,7 @@
   </div>
   <div id="content" style="width: 60rem;">
     <div class="container-fluid">
-      <div class="card card-body">
-        <h1><a class="primary-text" href="{{ app_url }}">{{ owner }}/{{ project_name }}</a> <a href="{{app_url}}detail/" class="btn btn-sm inverse-btn-match-nav">publish</a></h1>
-        <div>{{app_description}}</div>
-        {% block project_context %}
-        {% endblock %}
-      </div>
-    </div>
-    <div class="container-fluid">
-        <div class="card card-body">
+        <div class="card card-body card-outer">
           <div class="inputs-main">
             {% for error in form.non_field_errors %}
                 <div class="alert alert-danger text-center lert-dismissible" role="alert">
