@@ -10,7 +10,7 @@
 {% csrf_token %}
 <input type="hidden" name="has_errors" value="{{ has_errors }}" />
 <div class="container-fluid">
-<div class="jumbotron" style="background-color:white;">
+<div class="jumbotron shadow" style="background-color:white;">
     <h1 class="display-4"><a class="primary-text" href="{{ app_url }}">{{ owner }}/{{ project_name }}</a> <a href="{{app_url}}detail/" class="btn btn-sm inverse-btn-match-nav">publish</a></h1>
     <div>{{app_description}}</div>
     {% block project_context %}
@@ -22,7 +22,7 @@
     <nav id="sidebar" class="top-sticky navbar navbar-expand-lg" style="padding:0px;">
       <ul class="list-unstyled components">
           <li>
-            <div class="card card-body">
+            <div class="card card-body card-outer">
               {% include 'comp/inputs/metaparameters.html' with form=form title="Meta Parameters" %}
               <button type="submit" name="reset" value="true" class="btn btn-block btn-outline-secondary" style="margin:10px;margin-left:0px;">Reset</a>
             </div>
