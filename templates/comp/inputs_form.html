@@ -89,10 +89,11 @@
         </div>
     </nav>
   </div>
-  <div id="content" style="width: 60rem;">
-    <div class="container-fluid">
-        <div class="card card-body card-outer">
+  <div id="content">
+    <div class="container-fluid" style="min-width: 50rem; max-width: 50rem;">
           <div class="inputs-main">
+            {% if form.non_field_errors %}
+            <div class="card card-body card-outer">
             {% for error in form.non_field_errors %}
                 <div class="alert alert-danger text-center lert-dismissible" role="alert">
                   <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -101,8 +102,12 @@
                   {{ error }}
                 </div>
             {% endfor %}
+            </div>
+            {% endif %}
             {% for section, params in default_form.items %}
+              <div class="card card-body card-outer">
                 {% include 'comp/inputs/major_section.html' with title=section.title params=params %}
+              </div>
             {% endfor %}
           </div>
         </div>
