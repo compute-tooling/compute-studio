@@ -4,14 +4,12 @@
 {% load crispy_forms_tags %}
 
 <fieldset class="inputs-block">
-  <div class="container">
-    <ul class="list-unstyled components">
-      {% for param in form.meta_parameters.parameters %}
-      <li>
-          {{form|dict_get:param.name|as_crispy_field}}
-      </li>
-      {% endfor %}
-    </ul>
-  </div>
+  <ul class="list-unstyled components">
+    {% for param in form.meta_parameters.parameters %}
+    <li>
+        {{form|dict_get:param.name|as_crispy_field}}
+    </li>
+    {% endfor %}
+  </ul>
   {% block section_warnings %}{% endblock %}
 </fieldset>
