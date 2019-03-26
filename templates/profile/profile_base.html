@@ -2,37 +2,38 @@
 {% load static %}
 
 {% block content %}
-
-<div class="container-fluid" style="margin:20px;" id="profileTab" role="tablist">
-    {% csrf_token %}
-    <ul class="nav nav-tabs" id="myTab" role="tablist">
-      <li class="nav-item">
-        <a class="nav-link active" id="models-tab" data-toggle="tab" href="#models" role="tab" aria-controls="models" aria-selected="false">Models</a>
-      </li>
-      <li class="nav-item">
-          <a class="nav-link" id="simulations-tab" data-toggle="tab" href="#simulations" role="tab" aria-controls="simulations" aria-selected="true">Simulations</a>
+<div class="card card-body card-outer">
+  <div class="container-fluid" style="margin:20px;" id="profileTab" role="tablist">
+      {% csrf_token %}
+      <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link active" id="models-tab" data-toggle="tab" href="#models" role="tab" aria-controls="models" aria-selected="false">Models</a>
         </li>
-      <li class="nav-item">
-        <a class="nav-link" id="costs-tab" data-toggle="tab" href="#costs" role="tab" aria-controls="costs" aria-selected="false">Costs</a>
-      </li>
-    </ul>
-    <div class="tab-content" id="profileTab">
-      <div class="tab-pane fade show active" id="models" role="tabpanel" aria-labelledby="models-tab">
-        <div class="profile-tab-content">
-            {% include 'profile/models.html' %}
+        <li class="nav-item">
+            <a class="nav-link" id="simulations-tab" data-toggle="tab" href="#simulations" role="tab" aria-controls="simulations" aria-selected="true">Simulations</a>
+          </li>
+        <li class="nav-item">
+          <a class="nav-link" id="costs-tab" data-toggle="tab" href="#costs" role="tab" aria-controls="costs" aria-selected="false">Costs</a>
+        </li>
+      </ul>
+      <div class="tab-content" id="profileTab">
+        <div class="tab-pane fade show active" id="models" role="tabpanel" aria-labelledby="models-tab">
+          <div class="profile-tab-content">
+              {% include 'profile/models.html' %}
+          </div>
+        </div>
+        <div class="tab-pane fade" id="simulations" role="tabpanel" aria-labelledby="simulations-tab">
+          <div class="profile-tab-content">
+            {% include 'profile/simulations.html' %}
+          </div>
+        </div>
+        <div class="tab-pane fade" id="costs" role="tabpanel" aria-labelledby="costs-tab">
+          <div class="profile-tab-content">
+            {% include 'profile/costs.html' %}
+          </div>
         </div>
       </div>
-      <div class="tab-pane fade" id="simulations" role="tabpanel" aria-labelledby="simulations-tab">
-        <div class="profile-tab-content">
-          {% include 'profile/simulations.html' %}
-        </div>
-      </div>
-      <div class="tab-pane fade" id="costs" role="tabpanel" aria-labelledby="costs-tab">
-        <div class="profile-tab-content">
-          {% include 'profile/costs.html' %}
-        </div>
-      </div>
-    </div>
+  </div>
 </div>
 
 {% endblock %}
