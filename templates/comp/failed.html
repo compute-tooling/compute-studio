@@ -17,13 +17,9 @@
 
 {% block content %}
 
-<div class="container">
-    <div class="row">
-        <div class="columns medium-6 medium-offset-3 end text-center">
-            <h1>Sorry! Your calculation failed. Please re-enter parameters and try again :(.</h1>
-        </div>
-    </div>
-
+<div class="card card-body card-outer">
+    <h1 class="card-title text-center">Your calculation failed. You may re-enter your parameters and try again.</h1>
+    <p class="lead">COMP developers have already been notified about this failure. You are welcome to email me at <a href="mailto:henrymdoupe@gmail.com">henrymdoupe@gmail.com</a> if you would like to get in touch about this error.</p>
     <div class="file-contents">
           {%autoescape off %}
           {{error_msg | linebreaks | safe }}

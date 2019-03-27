@@ -13,6 +13,9 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.urls import reverse
 from django.core.exceptions import PermissionDenied
+from django.core.mail import send_mail
+
+from webapp.settings import DEBUG
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
 from webapp.apps.billing.utils import USE_STRIPE, ChargeRunMixin
@@ -255,14 +258,27 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
     model = Simulation
     is_editable = True
 
-    def fail(self):
+    def fail(self, pk, username, title):
+        try:
+            send_mail(
+                f"COMP Sim fail",
+                f"An error has occurred at {username}/{title}/{pk}",
+                "henrymdoupe@gmail.com",
+                ["henrymdoupe@gmail.com"],
+                fail_silently=True,
+            )
+        # Http 401 exception if mail credentials are not set up.
+        except Exception as e:
+            if not DEBUG:
+                raise e
         return render(
             self.request, "comp/failed.html", {"error_msg": self.object.error_text}
         )
 
     def dispatch(self, request, *args, **kwargs):
         compute = Compute()
-        self.object = self.get_object(kwargs["pk"], kwargs["username"], kwargs["title"])
+        pk, username, title = kwargs["pk"], kwargs["username"], kwargs["title"]
+        self.object = self.get_object(pk, username, title)
         if self.object.outputs or self.object.aggr_outputs:
             return render(
                 request,
@@ -274,7 +290,7 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                 },
             )
         elif self.object.error_text is not None:
-            return self.fail()
+            return self.fail(pk, username, title)
         else:
             job_id = str(self.object.job_id)
             try:
@@ -282,7 +298,7 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
             except JobFailError as jfe:
                 self.object.error_text = ""
                 self.object.save()
-                return self.fail()
+                return self.fail(pk, username, title)
             if job_ready == "FAIL":
                 error_msg = compute.get_results(job_id, job_failure=True)
                 if not error_msg:
@@ -291,14 +307,14 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                 error_contents = error_msg[val_err_idx:].replace(" ", "&nbsp;")
                 self.object.error_text = error_contents
                 self.object.save()
-                return self.fail()
+                return self.fail(pk, username, title)
             if job_ready == "YES":
                 try:
                     results = compute.get_results(job_id)
                 except Exception as e:
                     self.object.error_text = str(e)
                     self.object.save()
-                    return self.fail()
+                    return self.fail(pk, username, title)
                 self.charge_run(results["meta"], use_stripe=USE_STRIPE)
                 self.object.meta_data = results["meta"]
                 self.object.outputs = results["outputs"]
@@ -316,19 +332,13 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
             else:
                 if request.method == "POST":
                     # if not ready yet, insert number of minutes remaining
-                    exp_comp_dt = self.object.exp_comp_datetime
-                    utc_now = timezone.now()
-                    dt = exp_comp_dt - utc_now
-                    exp_num_minutes = dt.total_seconds() / 60.0
-                    exp_num_minutes = round(exp_num_minutes, 2)
-                    exp_num_minutes = exp_num_minutes if exp_num_minutes > 0 else 0
-                    if exp_num_minutes > 0:
-                        return JsonResponse({"eta": exp_num_minutes}, status=202)
-                    else:
-                        return JsonResponse({"eta": exp_num_minutes}, status=200)
-
+                    exp_num_minutes = self.compute_eta(timezone.now())
+                    orig_eta = self.compute_eta(self.object.creation_date)
+                    return JsonResponse(
+                        {"eta": exp_num_minutes, "origEta": orig_eta}, status=202
+                    )
                 else:
-                    context = {"eta": "100"}
+                    context = {"eta": "100", "origEta": "0"}
                     return render(request, "comp/not_ready.html", context)
 
     def is_from_file(self):
@@ -342,6 +352,14 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
             return json.dumps(self.object.inputs.inputs_file, indent=2)
         else:
             return ""
+
+    def compute_eta(self, reference_time):
+        exp_comp_dt = self.object.exp_comp_datetime
+        dt = exp_comp_dt - reference_time
+        exp_num_minutes = dt.total_seconds() / 60.0
+        exp_num_minutes = round(exp_num_minutes, 2)
+        exp_num_minutes = exp_num_minutes if exp_num_minutes > 0 else 0
+        return exp_num_minutes
 
 
 class OutputsDownloadView(GetOutputsObjectMixin, View):

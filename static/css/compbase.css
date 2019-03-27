@@ -164,19 +164,6 @@ span.default-value {
   border-top: 3px solid #e5e5e5;
 }
 
-/* format the progress bar */
-.progress-bar {
-  float: left;
-  width: 10%;
-  height: 100%;
-  font-size: 12px;
-  line-height: 20px;
-  color: #212121;
-  text-align: center;
-  background-color: #212121;
-}
-
-
 .profile-tab-content {
   padding: 25px;
 }
