@@ -34,10 +34,10 @@ function markdownElement(markdownText) {
     __html: md.render(markdownText)
   };
   return (
-    <div className="markdown-wrapper">
+    <div className="markdown-wrapper mt-2 mb-2">
       <div
         dangerouslySetInnerHTML={marked} // needs to be sanitized somehow.
-        className="content card publish markdown"
+        className="card publish markdown"
         style={inputStyle}
       />
     </div>
