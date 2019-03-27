@@ -37,3 +37,7 @@ class ChargeRunMixin:
                 subscription_item=si,
             )
             UsageRecord.construct(stripe_ur, si)
+
+
+def has_payment_method(user):
+    return hasattr(user, "customer") and user.customer is not None

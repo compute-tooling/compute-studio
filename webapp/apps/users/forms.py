@@ -7,10 +7,7 @@ from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail
 
-from .models import Profile
-from webapp.apps.billing.models import Customer, Plan, Subscription, SubscriptionItem
-from webapp.apps.billing.utils import USE_STRIPE
-from webapp.apps.users.models import Project
+from .models import Profile, Project
 
 
 User = get_user_model()
@@ -19,24 +16,8 @@ stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 
 class UserCreationForm(authforms.UserCreationForm):
-
-    # stripe_token = forms.CharField(widget=forms.HiddenInput())
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.stripe_token = kwargs.get("stripeToken")
-
     def save(self, commit=False):
         user = super().save()
-        if USE_STRIPE:
-            stripe_customer = stripe.Customer.create(
-                email=user.email, source=self.stripe_token
-            )
-            customer = Customer.construct(stripe_customer, user=user)
-            if Project.objects.count() > 0:
-                customer.sync_subscriptions()
-            else:
-                print("No projects yet.")
         Profile.objects.create(user=user, is_active=True)
         return user
 

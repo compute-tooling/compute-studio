@@ -12,6 +12,9 @@ from webapp.apps.comp.models import Simulation
 from .compute import MockCompute
 
 
+User = auth.get_user_model()
+
+
 @pytest.mark.django_db
 class CoreAbstractViewsTest:
     """
@@ -138,20 +141,42 @@ class CoreAbstractViewsTest:
     def test_post_wo_login(self, monkeypatch, client):
         """
         Test post without logged-in user:
-        - returns 302 status and redirects to login page on non-sponsored model.
-        - the post kicks off a run on a sponsored model.
+        - returns 302 status and redirects to login page.
         """
         monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
 
         resp = client.post(self.project.app_url, data=self.inputs_ok())
+        assert resp.status_code == 302
+        assert resp.url == f"/users/login/?next={self.project.app_url}"
+
+    def test_post_wo_payment_info(self, monkeypatch, client):
+        """
+        Test post without logged-in user:
+        - returns 302 status and redirects to update payment method on
+          non-sponsored model.
+        - the post kicks off a run on a sponsored model.
+        """
+        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
+
+        u = User.objects.create_user(
+            username="test-no-pmt",
+            email="test-no-pmt@email.com",
+            password="testtest2222",
+        )
+        prof = Profile.objects.create(user=u, is_active=True)
+        assert self.login_client(client, u, "testtest2222")
+        assert not hasattr(u, "customer")
+
+        resp = client.post(self.project.app_url, data=self.inputs_ok())
         if self.provided_free:
+            # kick off run
             assert resp.status_code == 302
             idx = resp.url[:-1].rfind("/")
             slug = resp.url[(idx + 1) : -1]
             assert resp.url == f"{self.project.app_url}{slug}/"
         else:
             assert resp.status_code == 302
-            assert resp.url == f"/users/login/?next={self.project.app_url}"
+            assert resp.url == f"/billing/update/?next={self.project.app_url}"
 
     def login_client(self, client, user, password):
         """
@@ -202,6 +227,7 @@ def sponsored_matchups(db):
     matchups.save()
 
 
+@pytest.mark.requires_stripe
 @pytest.mark.usefixtures("unsponsored_matchups")
 class TestMatchups(CoreAbstractViewsTest):
     class MatchupsMockCompute(MockCompute):

@@ -18,7 +18,7 @@ from django.core.mail import send_mail
 from webapp.settings import DEBUG
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
-from webapp.apps.billing.utils import USE_STRIPE, ChargeRunMixin
+from webapp.apps.billing.utils import USE_STRIPE, ChargeRunMixin, has_payment_method
 from webapp.apps.users.models import Project, is_profile_active
 
 from webapp.apps.contrib.ioregister import register
@@ -76,9 +76,9 @@ class RouterView(InputsMixin, View):
         )
         if project.status in ["updating", "live"]:
             if project.sponsor is None:
-                return InputsView.as_view()(request, *args, **kwargs)
+                return RequiresPmtInputsView.as_view()(request, *args, **kwargs)
             else:
-                return UnrestrictedInputsView.as_view()(request, *args, **kwargs)
+                return RequiresLoginInputsView.as_view()(request, *args, **kwargs)
         else:
             if is_get:
                 context = self.project_context(request, project)
@@ -93,7 +93,7 @@ class RouterView(InputsMixin, View):
         return self.handle(request, False, *args, **kwargs)
 
 
-class UnrestrictedInputsView(InputsMixin, View):
+class InputsView(InputsMixin, View):
     projects = Project.objects.all()
 
     def get(self, request, *args, **kwargs):
@@ -171,13 +171,23 @@ class UnrestrictedInputsView(InputsMixin, View):
         return render(request, self.template_name, context)
 
 
-class InputsView(UnrestrictedInputsView):
+class RequiresLoginInputsView(InputsView):
+    @method_decorator(login_required)
+    @method_decorator(user_passes_test(is_profile_active, login_url="/users/login/"))
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
+
+class RequiresPmtInputsView(InputsView):
     """
     This class adds a paywall to the _InputsView class.
     """
 
     @method_decorator(login_required)
     @method_decorator(user_passes_test(is_profile_active, login_url="/users/login/"))
+    @method_decorator(
+        user_passes_test(has_payment_method, login_url="/billing/update/")
+    )
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 
