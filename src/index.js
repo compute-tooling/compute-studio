@@ -313,7 +313,7 @@ class PublishForm extends React.Component {
                 {this.state.preview ? "Edit" : "Preview"}
               </button>
               <div className="divider" />
-              <button className="btn inline-block go-btn" type="submit">
+              <button className="btn inline-block btn-success" type="submit">
                 {this.props.submitType}
               </button>
             </Form>

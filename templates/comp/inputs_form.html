@@ -28,7 +28,7 @@
         <li>
           <div class="card card-body card-outer">
             {% include 'comp/inputs/metaparameters.html' with form=form title="Meta Parameters" %}
-            <button type="submit" name="reset" value="true" class="btn btn-block btn-outline-secondary" style="margin:10px;margin-left:0px;">Reset</a>
+            <button type="submit" name="reset" value="true" class="btn btn-block btn-outline-dark" style="margin:10px;margin-left:0px;">Reset</a>
           </div>
         </li>
         <li>
@@ -58,7 +58,7 @@
         </li>
         <li>
           <div class="card card-body card-outer">
-            <button type="button" class="btn btn-block btn-outline-success" style="margin:10px;margin-left:0px;" data-toggle="modal" data-target="#submitModal">
+            <button type="button" class="btn btn-block btn-success" style="margin:10px;margin-left:0px;" data-toggle="modal" data-target="#submitModal">
               <b>Run {% if not provided_free %}({{ exp_cost }}){% endif %}</b>
             </button>
           </div>
@@ -83,7 +83,7 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              <button type="submit" name="full_calc" value="true" class="btn go-btn">Run simulation</button>
+              <button type="submit" name="full_calc" value="true" class="btn btn-success">Run simulation</button>
             </div>
           </div>
         </div>
