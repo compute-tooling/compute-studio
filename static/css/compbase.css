@@ -165,7 +165,7 @@ span.default-value {
 }
 
 /* format the progress bar */
-.progress-bar {
+/* .progress-bar {
   float: left;
   width: 10%;
   height: 100%;
@@ -174,7 +174,7 @@ span.default-value {
   color: #212121;
   text-align: center;
   background-color: #212121;
-}
+} */
 
 
 .profile-tab-content {

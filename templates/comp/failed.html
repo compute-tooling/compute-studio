@@ -17,12 +17,8 @@
 
 {% block content %}
 
-<div class="container">
-    <div class="row">
-        <div class="columns medium-6 medium-offset-3 end text-center">
-            <h1>Sorry! Your calculation failed. Please re-enter parameters and try again :(.</h1>
-        </div>
-    </div>
+<div class="card card-body card-outer">
+    <h1 class="card-title text-center">Sorry! Your calculation failed. Please re-enter parameters and try again.</h1>
 
     <div class="file-contents">
           {%autoescape off %}

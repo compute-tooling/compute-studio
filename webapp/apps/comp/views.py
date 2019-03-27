@@ -316,19 +316,17 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
             else:
                 if request.method == "POST":
                     # if not ready yet, insert number of minutes remaining
-                    exp_comp_dt = self.object.exp_comp_datetime
-                    utc_now = timezone.now()
-                    dt = exp_comp_dt - utc_now
-                    exp_num_minutes = dt.total_seconds() / 60.0
-                    exp_num_minutes = round(exp_num_minutes, 2)
-                    exp_num_minutes = exp_num_minutes if exp_num_minutes > 0 else 0
-                    if exp_num_minutes > 0:
-                        return JsonResponse({"eta": exp_num_minutes}, status=202)
-                    else:
-                        return JsonResponse({"eta": exp_num_minutes}, status=200)
+                    exp_num_minutes = self.compute_eta(timezone.now())
+                    orig_eta = self.compute_eta(self.object.creation_date)
+                    # if exp_num_minutes > 0:
+                    return JsonResponse(
+                        {"eta": exp_num_minutes, "origEta": orig_eta}, status=202
+                    )
+                    # else:
+                    # return JsonResponse({"eta": exp_num_minutes, "origEta": orig_eta}, status=200)
 
                 else:
-                    context = {"eta": "100"}
+                    context = {"eta": "100", "origEta": "0"}
                     return render(request, "comp/not_ready.html", context)
 
     def is_from_file(self):
@@ -342,6 +340,14 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
             return json.dumps(self.object.inputs.inputs_file, indent=2)
         else:
             return ""
+
+    def compute_eta(self, reference_time):
+        exp_comp_dt = self.object.exp_comp_datetime
+        dt = exp_comp_dt - reference_time
+        exp_num_minutes = dt.total_seconds() / 60.0
+        exp_num_minutes = round(exp_num_minutes, 2)
+        exp_num_minutes = exp_num_minutes if exp_num_minutes > 0 else 0
+        return exp_num_minutes
 
 
 class OutputsDownloadView(GetOutputsObjectMixin, View):
