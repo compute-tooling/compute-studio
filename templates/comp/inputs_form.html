@@ -28,37 +28,33 @@
         <li>
           <div class="card card-body card-outer">
             {% include 'comp/inputs/metaparameters.html' with form=form title="Meta Parameters" %}
-            <button type="submit" name="reset" value="true" class="btn btn-block btn-outline-secondary" style="margin:10px;margin-left:0px;">Reset</a>
+            <button type="submit" name="reset" value="true" class="btn btn-block btn-outline-dark" style="margin:10px;margin-left:0px;">Reset</a>
           </div>
         </li>
         <li>
           <div class="card card-body card-outer">
-            <ul class="list-unstyled components">
+            <!-- <ul class="list-unstyled components"> -->
               {% for section, params in default_form.items %}
-                <li><a class="btn btn-block inverse-btn-match-nav dropdown-toggle"
-                    style="color:inherit;margin-top:10px;margin-bottom:2px;"
-                    href="#{{ section }}-submenu"
-                    data-toggle="collapse"
-                    aria-expanded="false"
-                    role="button"
-                    aria-controls="{{ section }}-submenu">
-                    {{ section.title }}
+              <div class="dropdown show">
+                <a class="btn btn-light btn-block dropdown-toggle mb-2" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  {{ section.title }}
                 </a>
-                </li>
-                <ul class="collapse list-unstyled" id="{{ section }}-submenu">
-                {% for param in params %}
-                  {% for key, value in param.items %}
-                    <li><a style="color:inherit;margin-top:2px;margin-bottom:2px;" href="#{{ key|make_id }}">{{ key }}</a></li>
+
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                  {% for param in params %}
+                    {% for key, value in param.items %}
+                      <a class="dropdown-item" href="#{{ key|make_id }}">{{ key }}</a>
+                    {% endfor %}
                   {% endfor %}
-                {% endfor %}
-                </ul>
+                </div>
+              </div>
               {% endfor %}
-            </ul>
+              <!-- </ul> -->
           </div>
         </li>
         <li>
           <div class="card card-body card-outer">
-            <button type="button" class="btn btn-block btn-outline-success" style="margin:10px;margin-left:0px;" data-toggle="modal" data-target="#submitModal">
+            <button type="button" class="btn btn-block btn-success" style="margin:10px;margin-left:0px;" data-toggle="modal" data-target="#submitModal">
               <b>Run {% if not provided_free %}({{ exp_cost }}){% endif %}</b>
             </button>
           </div>
@@ -83,7 +79,7 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              <button type="submit" name="full_calc" value="true" class="btn go-btn">Run simulation</button>
+              <button type="submit" name="full_calc" value="true" class="btn btn-success">Run simulation</button>
             </div>
           </div>
         </div>

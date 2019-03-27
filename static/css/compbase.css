@@ -78,12 +78,6 @@ code {
   background-color: #e5e5e5 !important;
 }
 
-/*  go button! used for submitting things/important buttons on page */
-.go-btn {
-  color: white;
-  background-color: #009900;
-}
-
 .divider{
   width:5px;
   height:auto;
