@@ -65,21 +65,48 @@
         <div class="modal-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="submitModalLabel">Are you sure that you want to run this simulation?</h5>
+              <h5 class="modal-title" id="submitModalLabel">
+                {% if can_run %}
+                  Are you sure that you want to run this simulation?
+                {% else %}
+                  {% if not user.is_authenticated %}
+                    Sign up
+                  {% else %}
+                    Add a payment method
+                  {% endif %}
+                {% endif %}
+              </h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
             <div class="modal-body">
-              {% if provided_free %}
-                This simulation is free.
+              {% if can_run %}
+                {% if provided_free %}
+                  This model's simulations are sponsored and thus, are free for you.
+                {% else %}
+                  This simulation will cost {{ exp_cost }}. You will be billed at the end of the monthly billing period.
+                {% endif %}
               {% else %}
-                This simulation will cost {{ exp_cost }}.
+                {% if not user.is_authenticated %}
+                  You must be logged in to run simulations.
+                {% else %}
+                  You must submit a payment method to run paid simulations.
+                {% endif %}
               {% endif %}
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              <button type="submit" name="full_calc" value="true" class="btn btn-success">Run simulation</button>
+              <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+              {% if can_run %}
+                <button type="submit" name="full_calc" value="true" class="btn btn-success">Run simulation</button>
+              {% else %}
+                {% if not user.is_authenticated %}
+                  <a href="{% url 'login' %}" class="btn btn-secondary">Log in</a>
+                  <a href="{% url 'signup' %}" class="btn btn-success">Sign up</a>
+                {% else %}
+                  <a href="{% url 'update_payment' %}" class="btn btn-success">Add payment method</a>
+                {% endif %}
+              {% endif %}
             </div>
           </div>
         </div>
