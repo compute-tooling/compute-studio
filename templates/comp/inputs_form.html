@@ -33,27 +33,23 @@
         </li>
         <li>
           <div class="card card-body card-outer">
-            <ul class="list-unstyled components">
+            <!-- <ul class="list-unstyled components"> -->
               {% for section, params in default_form.items %}
-                <li><a class="btn btn-block inverse-btn-match-nav dropdown-toggle"
-                    style="color:inherit;margin-top:10px;margin-bottom:2px;"
-                    href="#{{ section }}-submenu"
-                    data-toggle="collapse"
-                    aria-expanded="false"
-                    role="button"
-                    aria-controls="{{ section }}-submenu">
-                    {{ section.title }}
+              <div class="dropdown show">
+                <a class="btn btn-light btn-block dropdown-toggle mb-2" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  {{ section.title }}
                 </a>
-                </li>
-                <ul class="collapse list-unstyled" id="{{ section }}-submenu">
-                {% for param in params %}
-                  {% for key, value in param.items %}
-                    <li><a style="color:inherit;margin-top:2px;margin-bottom:2px;" href="#{{ key|make_id }}">{{ key }}</a></li>
+
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                  {% for param in params %}
+                    {% for key, value in param.items %}
+                      <a class="dropdown-item" href="#{{ key|make_id }}">{{ key }}</a>
+                    {% endfor %}
                   {% endfor %}
-                {% endfor %}
-                </ul>
+                </div>
+              </div>
               {% endfor %}
-            </ul>
+              <!-- </ul> -->
           </div>
         </li>
         <li>
