@@ -124,7 +124,7 @@ class PublishForm extends React.Component {
             <Form>
               <h3>About</h3>
               <hr className="my-4" />
-              <div>
+              <div class="mt-1 mb-1">
                 <Field
                   type="text"
                   name="title"
@@ -139,7 +139,7 @@ class PublishForm extends React.Component {
                   render={msg => <Message msg={msg} />}
                 />
               </div>
-              <div>
+              <div class="mt-1 mb-1">
                 <Field
                   type="text"
                   name="description"
@@ -163,7 +163,7 @@ class PublishForm extends React.Component {
                   </a>
                 </em>
               </p>
-              <div>
+              <div class="mt-1 mb-1">
                 <label>
                   <b>Inputs style:</b> Select the style of inputs that your app
                   will use
@@ -179,7 +179,7 @@ class PublishForm extends React.Component {
                   render={msg => <Message msg={msg} />}
                 />
               </div>
-              <div>
+              <div class="mt-1 mb-1">
                 <Field
                   type="text"
                   name="meta_parameters"
@@ -206,7 +206,7 @@ class PublishForm extends React.Component {
                   </a>
                 </em>
               </p>
-              <div>
+              <div class="mt-1 mb-1">
                 <Field
                   type="text"
                   name="package_defaults"
@@ -222,7 +222,7 @@ class PublishForm extends React.Component {
                   render={msg => <Message msg={msg} />}
                 />
               </div>
-              <div>
+              <div class="mt-1 mb-1">
                 <Field
                   type="text"
                   name="parse_user_adjustments"
@@ -238,7 +238,7 @@ class PublishForm extends React.Component {
                   render={msg => <Message msg={msg} />}
                 />
               </div>
-              <div>
+              <div class="mt-1 mb-1">
                 <Field
                   type="text"
                   name="run_simulation"
@@ -265,7 +265,7 @@ class PublishForm extends React.Component {
                   </a>
                 </em>
               </p>
-              <div>
+              <div class="mt-1 mb-1">
                 <Field
                   type="text"
                   name="installation"
@@ -281,14 +281,14 @@ class PublishForm extends React.Component {
                   render={msg => <Message msg={msg} />}
                 />
               </div>
-              <div>
+              <div class="mt-1 mb-1">
                 <label>
                   <b>Expected job time:</b> Time in seconds for simulation to
                   complete
                 </label>
-                <p>
+                <p class="mt-1 mb-1">
                   <Field
-                    className="form-control"
+                    className="form-control w-50rem"
                     type="number"
                     name="exp_task_time"
                   />
@@ -298,7 +298,7 @@ class PublishForm extends React.Component {
                   />
                 </p>
               </div>
-              <div>
+              <div class="mt-1 mb-1">
                 <Field name="server_size" component={ServerSizeField} />
                 <ErrorMessage
                   name="server_size"

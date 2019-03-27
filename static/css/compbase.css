@@ -15,14 +15,9 @@ body {
   background: rgb(238, 238, 238);
 }
 
-div.content.card.publish.markdown p, div.content.card.publish.markdown code {
-  border: 1px solid #ced4da;
-
-  border-radius: .25rem;
-
-  transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-  background: rgba(27, 31, 35, 0.05);
-  padding:10px;
+div.card.publish.markdown {
+  background-color: rgba(27, 31, 35, 0.05);
+  padding: 0.8rem;
 }
 
 code {
@@ -182,4 +177,8 @@ span.default-value {
   color: rgb(231, 241, 252);
   /* font-size: 11px; */
   font-weight: 700;
+}
+
+.w-50rem {
+  width: 50rem;
 }
