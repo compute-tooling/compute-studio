@@ -318,13 +318,9 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                     # if not ready yet, insert number of minutes remaining
                     exp_num_minutes = self.compute_eta(timezone.now())
                     orig_eta = self.compute_eta(self.object.creation_date)
-                    # if exp_num_minutes > 0:
                     return JsonResponse(
                         {"eta": exp_num_minutes, "origEta": orig_eta}, status=202
                     )
-                    # else:
-                    # return JsonResponse({"eta": exp_num_minutes, "origEta": orig_eta}, status=200)
-
                 else:
                     context = {"eta": "100", "origEta": "0"}
                     return render(request, "comp/not_ready.html", context)
