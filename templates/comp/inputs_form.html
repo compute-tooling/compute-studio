@@ -35,21 +35,18 @@
           <div class="card card-body card-outer">
             <!-- <ul class="list-unstyled components"> -->
               {% for section, params in default_form.items %}
-              <div class="dropdown show">
-                <a class="btn btn-light btn-block dropdown-toggle mb-2" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  {{ section.title }}
-                </a>
+              <div class="card card-body card-inner">
 
-                <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                <div class="list-group">
+                  <a class="list-group-item list-group-item-action mt-0" href="#{{ section.title }}" style="border:0px; padding:0rem; color:inherit;"><h3 style="color:inherit;">{{ section.title }}</h3></a>
                   {% for param in params %}
                     {% for key, value in param.items %}
-                      <a class="dropdown-item" href="#{{ key|make_id }}">{{ key }}</a>
+                      <a class="list-group-item list-group-item-action" href="#{{ key|make_id }}" style="padding: .3rem 0.5rem; border:0px; color:inherit;">{{ key }}</a>
                     {% endfor %}
                   {% endfor %}
                 </div>
               </div>
               {% endfor %}
-              <!-- </ul> -->
           </div>
         </li>
         <li>
