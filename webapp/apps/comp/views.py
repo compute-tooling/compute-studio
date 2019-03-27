@@ -43,9 +43,8 @@ class InputsMixin:
 
     def project_context(self, request, project):
         user = request.user
-        can_run = user.is_authenticated and is_profile_active(user)
         provided_free = project.sponsor is not None
-        can_run = can_run or provided_free
+        can_run = self.can_run(user)
         rate = round(project.server_cost, 2)
         exp_cost, exp_time = project.exp_job_info(adjust=True)
 
@@ -170,12 +169,21 @@ class InputsView(InputsMixin, View):
         )
         return render(request, self.template_name, context)
 
+    def can_run(self, user):
+        raise NotImplementedError()
+
 
 class RequiresLoginInputsView(InputsView):
     @method_decorator(login_required)
     @method_decorator(user_passes_test(is_profile_active, login_url="/users/login/"))
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
+
+    def can_run(self, user):
+        """
+        Test if user can run a given model.
+        """
+        return user.is_authenticated and is_profile_active(user)
 
 
 class RequiresPmtInputsView(InputsView):
@@ -190,6 +198,13 @@ class RequiresPmtInputsView(InputsView):
     )
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
+
+    def can_run(self, user):
+        return (
+            user.is_authenticated
+            and is_profile_active(user)
+            and has_payment_method(user)
+        )
 
 
 class GetOutputsObjectMixin:
