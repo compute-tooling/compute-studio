@@ -17,7 +17,7 @@
     </div>
   </h1>
   <hr class="mb-3"/>
-  <div class="collapse show" id="{{ title|make_id }}-collapse">
+  <div class="collapse show collapse-plus-minus" id="{{ title|make_id }}-collapse">
     <div class="card card-body card-inner" style="padding:0rem;">
     {% for field in param %}
       {% for name, param_object in field.items %}

@@ -8,7 +8,6 @@
       <label>
         {{ param.title }}
         {% include 'comp/inputs/fields/tooltip.html' with text=param.info %}
-      </label>
 
       <!-- TODO: add auxillary block for optional checkbox parameter. -->
       {% if param.inflatable %}
@@ -16,6 +15,7 @@
           {% include 'comp/inputs/fields/checkbox.html' with checkbox=cpi_field %}
         {% endwith %}
       {% endif %}
+      </label>
     </div>
   </div>
   <div class="form-row has-statuses">

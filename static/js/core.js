@@ -40,11 +40,11 @@ $(document).ready(function() {
     });
   });
 
-  $(".collapse").on("hidden.bs.collapse", function() {
+  $(".collapse-plus-minus").on("hidden.bs.collapse", function() {
     btn = $(`[data-target="#${$(this).attr("id")}"]`);
     btn.html('<i class="far fa-plus-square" style="size:5x;" ></i>');
   });
-  $(".collapse").on("show.bs.collapse", function() {
+  $(".collapse-plus-minus").on("show.bs.collapse", function() {
     btn = $(`[data-target="#${$(this).attr("id")}"]`);
     btn.html('<i class="far fa-minus-square" style="size:5x;" ></i>');
   });
