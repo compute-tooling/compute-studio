@@ -44,7 +44,7 @@ class InputsMixin:
     def project_context(self, request, project):
         user = request.user
         provided_free = project.sponsor is not None
-        can_run = self.can_run(user)
+        user_can_run = self.user_can_run(user, project)
         rate = round(project.server_cost, 2)
         exp_cost, exp_time = project.exp_job_info(adjust=True)
 
@@ -53,13 +53,32 @@ class InputsMixin:
             "project_name": project.title,
             "owner": project.owner.user.username,
             "app_description": project.safe_description,
-            "can_run": can_run,
+            "user_can_run": user_can_run,
             "exp_cost": f"${exp_cost}",
             "exp_time": f"{exp_time} seconds",
             "provided_free": provided_free,
             "app_url": project.app_url,
         }
         return context
+
+    def user_can_run(self, user, project):
+        """
+        The user_can_run method determines if the user has sufficient
+        credentials for running this model. The result of this method is
+        used to determine which buttons and information is displayed to the
+        user regarding their credential status (not logged in v. logged in
+        without payment v. logged in with payment). Note that this is actually
+        enforced by RequiresLoginInputsView and RequiresPmtView.
+        """
+        # only requires login and active account.
+        if project.sponsor is not None:
+            return user.is_authenticated and is_profile_active(user)
+        else:  # requires payment method too.
+            return (
+                user.is_authenticated
+                and is_profile_active(user)
+                and has_payment_method(user)
+            )
 
 
 class RouterView(InputsMixin, View):
@@ -169,21 +188,12 @@ class InputsView(InputsMixin, View):
         )
         return render(request, self.template_name, context)
 
-    def can_run(self, user):
-        raise NotImplementedError()
-
 
 class RequiresLoginInputsView(InputsView):
     @method_decorator(login_required)
     @method_decorator(user_passes_test(is_profile_active, login_url="/users/login/"))
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
-
-    def can_run(self, user):
-        """
-        Test if user can run a given model.
-        """
-        return user.is_authenticated and is_profile_active(user)
 
 
 class RequiresPmtInputsView(InputsView):
@@ -198,13 +208,6 @@ class RequiresPmtInputsView(InputsView):
     )
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
-
-    def can_run(self, user):
-        return (
-            user.is_authenticated
-            and is_profile_active(user)
-            and has_payment_method(user)
-        )
 
 
 class GetOutputsObjectMixin:
