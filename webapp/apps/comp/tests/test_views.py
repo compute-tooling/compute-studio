@@ -178,6 +178,13 @@ class CoreAbstractViewsTest:
             assert resp.status_code == 302
             assert resp.url == f"/billing/update/?next={self.project.app_url}"
 
+    def test_sim_doesnt_exist_gives_404(self, db, client):
+        """
+        Test get sim results that don't exist throws a 404.
+        """
+        resp = client.get(f"{self.project.app_url}/100000/")
+        assert resp.status_code == 404
+
     def login_client(self, client, user, password):
         """
         Helper method to login client

@@ -14,7 +14,7 @@
       {% if provided_free %}
         <p> This model is provided for free. The developers of this model or some other party are paying for this model's compute.</p>
       {% else %}
-        <p> {% if not can_run %}You must sign-up to run models on this platform.{% endif %} The models are offered for free, but you pay for the computational resources used to run them. The prices are equal to AWS compute pricing, subject to costing at least one penny for a single run.  </p>
+        <p> The models are offered for free, but you pay for the computational resources used to run them. The prices are equal to AWS compute pricing, subject to costing at least one penny for a single run.  </p>
           <ul>
             <li>The price per hour of a server running this model is: {{ rate }}</li>
             <li>The expected time required for a single run of this model is: {{exp_time}}</li>

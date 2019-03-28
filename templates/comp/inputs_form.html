@@ -63,7 +63,7 @@
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="submitModalLabel">
-                {% if can_run %}
+                {% if user_can_run %}
                   Are you sure that you want to run this simulation?
                 {% else %}
                   {% if not user.is_authenticated %}
@@ -78,7 +78,7 @@
               </button>
             </div>
             <div class="modal-body">
-              {% if can_run %}
+              {% if user_can_run %}
                 {% if provided_free %}
                   This model's simulations are sponsored and thus, are free for you.
                 {% else %}
@@ -100,7 +100,7 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
-              {% if can_run %}
+              {% if user_can_run %}
                 <button type="submit" name="full_calc" value="true" class="btn btn-success">Run simulation</button>
               {% else %}
                 {% if not user.is_authenticated %}
