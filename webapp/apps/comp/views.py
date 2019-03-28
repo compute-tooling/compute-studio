@@ -209,8 +209,11 @@ class RequiresPmtInputsView(InputsView):
 
 class GetOutputsObjectMixin:
     def get_object(self, pk, username, title):
-        return self.model.objects.get(
-            pk=pk, project__title=title, project__owner__user__username=username
+        return get_object_or_404(
+            self.model,
+            pk=pk,
+            project__title=title,
+            project__owner__user__username=username,
         )
 
 
