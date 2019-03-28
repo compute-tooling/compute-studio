@@ -92,6 +92,11 @@
                   You must submit a payment method to run paid simulations.
                 {% endif %}
               {% endif %}
+              {% if not provided_free %}
+              <div class="mt-3">
+              {% include 'comp/pricing_collapse.html' with button_name="Pricing"%}
+              </div>
+              {% endif %}
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
