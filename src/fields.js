@@ -66,7 +66,6 @@ export const TextField = ({ field, form: { touched, errors }, ...props }) => {
       />
     );
   }
-  console.log("change", field.onChange);
   return (
     <div>
       <label>
@@ -80,38 +79,6 @@ export const TextField = ({ field, form: { touched, errors }, ...props }) => {
 export const Message = ({ msg }) => (
   <small className="form-text text-muted">{msg}</small>
 );
-
-export const DescriptionField = ({
-  field,
-  form: { touched, errors },
-  ...props
-}) => {
-  const charsLeft = 1000 - field.value.length;
-  if (props.preview) {
-    var element = markdownElement(field.value);
-  } else {
-    var element = (
-      <textarea
-        className="form-control description"
-        {...field}
-        {...props}
-        preview=""
-        style={inputStyle}
-      />
-    );
-  }
-  return (
-    <div>
-      <label>
-        <b>App overview:</b>
-        {element}
-      </label>
-      <small className="align-bottom" style={{ padding: "2px" }}>
-        {charsLeft}
-      </small>
-    </div>
-  );
-};
 
 export const CodeSnippetField = ({
   field,

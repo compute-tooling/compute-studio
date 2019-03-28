@@ -8,7 +8,6 @@ import { Formik, Field, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import {
   TextField,
-  DescriptionField,
   CodeSnippetField,
   ServerSizeField,
   Message
@@ -30,10 +29,8 @@ function isJsonString(str) {
 }
 
 var Schema = Yup.object().shape({
-  title: Yup.string().required(),
-  description: Yup.string()
-    .max(1000, "The description must be less than ${max} characters.")
-    .required(),
+  title: Yup.string().required(requiredMessage),
+  description: Yup.string().required(requiredMessage),
   inputs_style: Yup.string().oneOf(
     ["paramtools", "taxcalc"],
     "Inputs type must be either paramtools or taxcalc."
@@ -143,9 +140,11 @@ class PublishForm extends React.Component {
                 <Field
                   type="text"
                   name="description"
-                  component={DescriptionField}
-                  placeholder="What does this app do? Must be less than 1000 characters."
+                  component={TextField}
+                  placeholder="What does this app do?"
+                  label="App README"
                   preview={this.state.preview}
+                  onChange={onChange}
                 />
                 <ErrorMessage
                   name="description"
