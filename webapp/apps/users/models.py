@@ -76,6 +76,7 @@ class ProjectManager(models.Manager):
 class Project(models.Model):
     SECS_IN_HOUR = 3600.0
     title = models.CharField(max_length=255)
+    oneliner = models.CharField(max_length=10000)
     description = models.CharField(max_length=10000)
     owner = models.ForeignKey(
         Profile, null=True, related_name="projects", on_delete=models.CASCADE
@@ -207,6 +208,10 @@ class Project(models.Model):
     @property
     def safe_description(self):
         return mark_safe(markdown.markdown(self.description))
+
+    @property
+    def safe_oneliner(self):
+        return mark_safe(markdown.markdown(self.oneliner))
 
     class Meta:
         permissions = (("write_project", "Write project"),)
