@@ -7,8 +7,9 @@
 {% block content %}
 
 <div class="jumbotron shadow" style="background-color:white;">
+    <p><b>{{project_name}} is not live right now. It will be up soon!</b></p>
     <h1 class="display-4"><a class="primary-text" href="{{ app_url }}">{{ owner }}/{{ project_name }}</a> <a href="{{app_url}}detail/" class="btn btn-sm inverse-btn-match-nav">publish</a></h1>
-    <h3 class="lead">{{project_name}} is not live right now. It will be up soon!</h3>
+    <p class="lead">{{app_oneliner}}</p>
     <hr class="my-4">
     <div>{{app_description}}</div>
     {% block project_context %}
