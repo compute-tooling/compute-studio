@@ -209,9 +209,5 @@ class Project(models.Model):
     def safe_description(self):
         return mark_safe(markdown.markdown(self.description))
 
-    @property
-    def safe_oneliner(self):
-        return mark_safe(markdown.markdown(self.oneliner))
-
     class Meta:
         permissions = (("write_project", "Write project"),)
