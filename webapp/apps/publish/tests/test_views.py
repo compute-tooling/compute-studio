@@ -109,6 +109,7 @@ class TestPublishViews:
             title="Used-for-testing", owner__user__username="modeler"
         )
         assert project.package_defaults == put_data["package_defaults"]
+        assert project.status == "updating"
 
         # Description can't be empty.
         resp = client.put(
