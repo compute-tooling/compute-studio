@@ -13,7 +13,8 @@
   <div class="row">
     <div class="col">
       <div class="jumbotron shadow" style="background-color:white;">
-          <h1 class="display-4"><a class="primary-text" href="{{ app_url }}">{{ owner }}/{{ project_name }}</a> <a href="{{app_url}}detail/" class="btn btn-sm inverse-btn-match-nav">publish</a></h1>
+          <h1 class="display-5"><a class="primary-text" href="{{ app_url }}">{{ owner }}/{{ project_name }}</a> <a href="{{app_url}}detail/" class="btn btn-sm btn-outline-primary">publish details</a></h1>
+          <p class="lead">{{app_oneliner}}</p>
           <hr class="my-4">
           <div>{{app_description}}</div>
           {% block project_context %}

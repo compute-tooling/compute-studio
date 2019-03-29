@@ -8,6 +8,7 @@ class PublishSerializer(serializers.ModelSerializer):
         model = Project
         fields = (
             "title",
+            "oneliner",
             "description",
             "inputs_style",
             "meta_parameters",

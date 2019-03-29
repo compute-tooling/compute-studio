@@ -20,6 +20,7 @@ class TestPublishViews:
     def test_post(self, client):
         post_data = {
             "title": "New-Model",
+            "oneliner": "oneliner",
             "description": "**Super** new!",
             "package_defaults": "import newmodel",
             "parse_user_adjustments": "import newmodel",
@@ -45,6 +46,7 @@ class TestPublishViews:
     def test_get_detail_api(self, client, test_models):
         exp = {
             "title": "Detail-Test",
+            "oneliner": "oneliner",
             "description": "desc",
             "package_defaults": "import me",
             "parse_user_adjustments": "import me",
@@ -68,6 +70,7 @@ class TestPublishViews:
     def test_put_detail_api(self, client, test_models, profile, password):
         put_data = {
             "title": "Used-for-testing",
+            "oneliner": "oneliner",
             "description": "hello world",
             "package_defaults": "import test",
             "parse_user_adjustments": "import test",
@@ -106,6 +109,7 @@ class TestPublishViews:
             title="Used-for-testing", owner__user__username="modeler"
         )
         assert project.package_defaults == put_data["package_defaults"]
+        assert project.status == "updating"
 
         # Description can't be empty.
         resp = client.put(

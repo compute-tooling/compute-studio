@@ -8,7 +8,6 @@ import { Formik, Field, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import {
   TextField,
-  DescriptionField,
   CodeSnippetField,
   ServerSizeField,
   Message
@@ -30,10 +29,9 @@ function isJsonString(str) {
 }
 
 var Schema = Yup.object().shape({
-  title: Yup.string().required(),
-  description: Yup.string()
-    .max(1000, "The description must be less than ${max} characters.")
-    .required(),
+  title: Yup.string().required(requiredMessage),
+  oneliner: Yup.string().required(requiredMessage),
+  description: Yup.string().required(requiredMessage),
   inputs_style: Yup.string().oneOf(
     ["paramtools", "taxcalc"],
     "Inputs type must be either paramtools or taxcalc."
@@ -57,6 +55,7 @@ var Schema = Yup.object().shape({
 const initialValues = {
   title: "",
   description: "",
+  oneliner: "",
   inputs_style: "paramtools",
   meta_parameters: "",
   package_defaults: "",
@@ -66,6 +65,19 @@ const initialValues = {
   server_size: [4, 2],
   exp_task_time: 0
 };
+
+const specialRequests = (
+  <p>
+    You may contact the COMP admin at
+    <a href="mailto:henrymdoupe@gmail.com"> henrymdoupe@gmail.com</a> to
+    discuss:
+    <ul>
+      <li>giving collaborators write-access to this app's publish details.</li>
+      <li>special accomodations that need to be made for this model.</li>
+      <li>any questions or feedback about the publish process.</li>
+    </ul>
+  </p>
+);
 
 class PublishForm extends React.Component {
   constructor(props) {
@@ -96,11 +108,6 @@ class PublishForm extends React.Component {
     }
     return (
       <div>
-        <p>
-          Give others write access to this project by emailing their usernames
-          to the COMP admin at
-          <a href="mailto:henrymdoupe@gmail.com"> henrymdoupe@gmail.com</a>.
-        </p>
         <Formik
           initialValues={this.state.initialValues}
           onSubmit={(values, actions) => {
@@ -122,189 +129,215 @@ class PublishForm extends React.Component {
           validationSchema={Schema}
           render={({ onChange }) => (
             <Form>
-              <h3>About</h3>
-              <hr className="my-4" />
-              <div class="mt-1 mb-1">
-                <Field
-                  type="text"
-                  name="title"
-                  component={TextField}
-                  placeholder="What's the name of this app?"
-                  label="App Name"
-                  preview={this.state.preview}
-                  onChange={onChange}
-                />
-                <ErrorMessage
-                  name="title"
-                  render={msg => <Message msg={msg} />}
-                />
-              </div>
-              <div class="mt-1 mb-1">
-                <Field
-                  type="text"
-                  name="description"
-                  component={DescriptionField}
-                  placeholder="What does this app do? Must be less than 1000 characters."
-                  preview={this.state.preview}
-                />
-                <ErrorMessage
-                  name="description"
-                  render={msg => <Message msg={msg} />}
-                />
-              </div>
-              <h3>Model Parameters</h3>
-              <hr className="my-4" />
-              <p>
-                <em>
-                  Insert code snippets satisfying the requirements detailed in
-                  the{" "}
-                  <a href="https://github.com/comp-org/comp/blob/master/docs/IOSCHEMA.md">
-                    inputs documentation.
-                  </a>
-                </em>
-              </p>
-              <div class="mt-1 mb-1">
-                <label>
-                  <b>Inputs style:</b> Select the style of inputs that your app
-                  will use
-                </label>
-                <p>
-                  <Field component="select" name="inputs_style">
-                    <option value="paramtools">ParamTools style</option>
-                    <option value="taxcalc">Tax-Calculator style</option>
-                  </Field>
-                </p>
-                <ErrorMessage
-                  name="inputs_style"
-                  render={msg => <Message msg={msg} />}
-                />
-              </div>
-              <div class="mt-1 mb-1">
-                <Field
-                  type="text"
-                  name="meta_parameters"
-                  component={CodeSnippetField}
-                  label="Meta parameters"
-                  description="Controls the default Model Parameters"
-                  language="json"
-                  placeholder="# json snippet here"
-                  preview={this.state.preview}
-                />
-                <ErrorMessage
-                  name="meta_parameters"
-                  render={msg => <Message msg={msg} />}
-                />
-              </div>
-              <h3>Python Functions</h3>
-              <hr className="my-4" />
-              <p>
-                <em>
-                  Insert code snippets satisfying the requirements detailed in
-                  the{" "}
-                  <a href="https://github.com/comp-org/comp/blob/master/docs/ENDPOINTS.md">
-                    functions documentation.
-                  </a>
-                </em>
-              </p>
-              <div class="mt-1 mb-1">
-                <Field
-                  type="text"
-                  name="package_defaults"
-                  component={CodeSnippetField}
-                  label="Get package defaults"
-                  description="Get the default Model Parameters and their meta data"
-                  language="python"
-                  placeholder="# code snippet here"
-                  preview={this.state.preview}
-                />
-                <ErrorMessage
-                  name="package_defaults"
-                  render={msg => <Message msg={msg} />}
-                />
-              </div>
-              <div class="mt-1 mb-1">
-                <Field
-                  type="text"
-                  name="parse_user_adjustments"
-                  component={CodeSnippetField}
-                  label="Parse user adjustments"
-                  description="Do model-specific formatting and validation on the user adjustments"
-                  language="python"
-                  placeholder="# code snippet here"
-                  preview={this.state.preview}
-                />
-                <ErrorMessage
-                  name="parse_user_inputs"
-                  render={msg => <Message msg={msg} />}
-                />
-              </div>
-              <div class="mt-1 mb-1">
-                <Field
-                  type="text"
-                  name="run_simulation"
-                  component={CodeSnippetField}
-                  label="Run simulation"
-                  description="Submit the user adjustments (or none) to the model to run the simulations"
-                  language="python"
-                  placeholder="# code snippet here"
-                  preview={this.state.preview}
-                />
-                <ErrorMessage
-                  name="run_simulation"
-                  render={msg => <Message msg={msg} />}
-                />
-              </div>
-              <h3>Environment</h3>
-              <hr className="my-4" />
-              <p>
-                <em>
-                  Describe how to install this project and its resource
-                  requirements as detailed in{" "}
-                  <a href="https://github.com/comp-org/comp/blob/master/docs/ENVIRONMENT.md">
-                    the environment documentation.
-                  </a>
-                </em>
-              </p>
-              <div class="mt-1 mb-1">
-                <Field
-                  type="text"
-                  name="installation"
-                  component={CodeSnippetField}
-                  label="Installation"
-                  description="Bash commands for installing this project"
-                  language="bash"
-                  placeholder="# code snippet here"
-                  preview={this.state.preview}
-                />
-                <ErrorMessage
-                  name="installation"
-                  render={msg => <Message msg={msg} />}
-                />
-              </div>
-              <div class="mt-1 mb-1">
-                <label>
-                  <b>Expected job time:</b> Time in seconds for simulation to
-                  complete
-                </label>
-                <p class="mt-1 mb-1">
+              <div class="mt-5">
+                <h3>About</h3>
+                <hr className="my-3" />
+                <div class="mt-1 mb-1">
                   <Field
-                    className="form-control w-50rem"
-                    type="number"
-                    name="exp_task_time"
+                    type="text"
+                    name="title"
+                    component={TextField}
+                    placeholder="Name of the app"
+                    label="App Name"
+                    preview={this.state.preview}
+                    onChange={onChange}
                   />
                   <ErrorMessage
-                    name="exp_task_time"
+                    name="title"
                     render={msg => <Message msg={msg} />}
                   />
+                </div>
+                <div class="mt-1 mb-1">
+                  <Field
+                    type="text"
+                    name="oneliner"
+                    component={TextField}
+                    placeholder="Short description of this app"
+                    label="One-Liner"
+                    preview={this.state.preview}
+                    onChange={onChange}
+                  />
+                  <ErrorMessage
+                    name="oneliner"
+                    render={msg => <Message msg={msg} />}
+                  />
+                </div>
+                <div class="mt-1 mb-1">
+                  <Field
+                    type="text"
+                    name="description"
+                    component={TextField}
+                    placeholder="Description of this app"
+                    label="README"
+                    preview={this.state.preview}
+                    onChange={onChange}
+                  />
+                  <ErrorMessage
+                    name="description"
+                    render={msg => <Message msg={msg} />}
+                  />
+                </div>
+              </div>
+              <div class="mt-5">
+                <h3>Model Parameters</h3>
+                <hr className="my-3" />
+                <p>
+                  <em>
+                    Insert code snippets satisfying the requirements detailed in
+                    the{" "}
+                    <a href="https://github.com/comp-org/comp/blob/master/docs/IOSCHEMA.md">
+                      inputs documentation.
+                    </a>
+                  </em>
                 </p>
+                <div class="mt-1 mb-1">
+                  <label>
+                    <b>Inputs style:</b> Select the style of inputs that your
+                    app will use
+                  </label>
+                  <p>
+                    <Field component="select" name="inputs_style">
+                      <option value="paramtools">ParamTools style</option>
+                      <option value="taxcalc">Tax-Calculator style</option>
+                    </Field>
+                  </p>
+                  <ErrorMessage
+                    name="inputs_style"
+                    render={msg => <Message msg={msg} />}
+                  />
+                </div>
+                <div class="mt-1 mb-1">
+                  <Field
+                    type="text"
+                    name="meta_parameters"
+                    component={CodeSnippetField}
+                    label="Meta parameters"
+                    description="Controls the default Model Parameters"
+                    language="json"
+                    placeholder="# json snippet here"
+                    preview={this.state.preview}
+                  />
+                  <ErrorMessage
+                    name="meta_parameters"
+                    render={msg => <Message msg={msg} />}
+                  />
+                </div>
               </div>
-              <div class="mt-1 mb-1">
-                <Field name="server_size" component={ServerSizeField} />
-                <ErrorMessage
-                  name="server_size"
-                  render={msg => <Message msg={msg} />}
-                />
+              <div class="mt-5">
+                <h3>Python Functions</h3>
+                <hr className="my-3" />
+                <p>
+                  <em>
+                    Insert code snippets satisfying the requirements detailed in
+                    the{" "}
+                    <a href="https://github.com/comp-org/comp/blob/master/docs/ENDPOINTS.md">
+                      functions documentation.
+                    </a>
+                  </em>
+                </p>
+                <div class="mt-1 mb-1">
+                  <Field
+                    type="text"
+                    name="package_defaults"
+                    component={CodeSnippetField}
+                    label="Get package defaults"
+                    description="Get the default Model Parameters and their meta data"
+                    language="python"
+                    placeholder="# code snippet here"
+                    preview={this.state.preview}
+                  />
+                  <ErrorMessage
+                    name="package_defaults"
+                    render={msg => <Message msg={msg} />}
+                  />
+                </div>
+                <div class="mt-1 mb-1">
+                  <Field
+                    type="text"
+                    name="parse_user_adjustments"
+                    component={CodeSnippetField}
+                    label="Parse user adjustments"
+                    description="Do model-specific formatting and validation on the user adjustments"
+                    language="python"
+                    placeholder="# code snippet here"
+                    preview={this.state.preview}
+                  />
+                  <ErrorMessage
+                    name="parse_user_inputs"
+                    render={msg => <Message msg={msg} />}
+                  />
+                </div>
+                <div class="mt-1 mb-1">
+                  <Field
+                    type="text"
+                    name="run_simulation"
+                    component={CodeSnippetField}
+                    label="Run simulation"
+                    description="Submit the user adjustments (or none) to the model to run the simulations"
+                    language="python"
+                    placeholder="# code snippet here"
+                    preview={this.state.preview}
+                  />
+                  <ErrorMessage
+                    name="run_simulation"
+                    render={msg => <Message msg={msg} />}
+                  />
+                </div>
               </div>
+              <div class="mt-5">
+                <h3>Environment</h3>
+                <hr className="my-3" />
+                <p>
+                  <em>
+                    Describe how to install this project and its resource
+                    requirements as detailed in{" "}
+                    <a href="https://github.com/comp-org/comp/blob/master/docs/ENVIRONMENT.md">
+                      the environment documentation.
+                    </a>
+                  </em>
+                </p>
+                <div class="mt-1 mb-1">
+                  <Field
+                    type="text"
+                    name="installation"
+                    component={CodeSnippetField}
+                    label="Installation"
+                    description="Bash commands for installing this project"
+                    language="bash"
+                    placeholder="# code snippet here"
+                    preview={this.state.preview}
+                  />
+                  <ErrorMessage
+                    name="installation"
+                    render={msg => <Message msg={msg} />}
+                  />
+                </div>
+                <div class="mt-1 mb-1">
+                  <label>
+                    <b>Expected job time:</b> Time in seconds for simulation to
+                    complete
+                  </label>
+                  <p class="mt-1 mb-1">
+                    <Field
+                      className="form-control w-50rem"
+                      type="number"
+                      name="exp_task_time"
+                    />
+                    <ErrorMessage
+                      name="exp_task_time"
+                      render={msg => <Message msg={msg} />}
+                    />
+                  </p>
+                </div>
+                <div class="mt-1 mb-1">
+                  <Field name="server_size" component={ServerSizeField} />
+                  <ErrorMessage
+                    name="server_size"
+                    render={msg => <Message msg={msg} />}
+                  />
+                </div>
+              </div>
+              {specialRequests}
               <button
                 className="btn inline-block"
                 onClick={this.togglePreview}
@@ -349,7 +382,7 @@ class CreateApp extends React.Component {
   render() {
     return (
       <div>
-        <h1 style={{ marginBottom: "2rem" }}>Publish a new app</h1>
+        <h1 style={{ marginBottom: "2rem" }}>Publish</h1>
         <PublishForm
           fetchInitialValues={null}
           initialValues={initialValues}

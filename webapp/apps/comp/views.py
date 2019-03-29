@@ -53,6 +53,7 @@ class InputsMixin:
             "project_name": project.title,
             "owner": project.owner.user.username,
             "app_description": project.safe_description,
+            "app_oneliner": project.oneliner,
             "user_can_run": user_can_run,
             "exp_cost": f"${exp_cost}",
             "exp_time": f"{exp_time} seconds",
