@@ -76,6 +76,35 @@ export const TextField = ({ field, form: { touched, errors }, ...props }) => {
   );
 };
 
+export const TextAreaField = ({
+  field,
+  form: { touched, errors },
+  ...props
+}) => {
+  if (props.preview) {
+    var element = markdownElement(field.value);
+  } else {
+    var element = (
+      <textarea
+        className="form-control"
+        {...field}
+        {...props}
+        preview=""
+        style={inputStyle}
+        onChange={e => titleChange(e, field.onChange)}
+      />
+    );
+  }
+  return (
+    <div>
+      <label>
+        <b>{props.label}:</b>
+        {element}
+      </label>
+    </div>
+  );
+};
+
 export const Message = ({ msg }) => (
   <small className="form-text text-muted">{msg}</small>
 );

@@ -8,6 +8,7 @@ import { Formik, Field, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import {
   TextField,
+  TextAreaField,
   CodeSnippetField,
   ServerSizeField,
   Message
@@ -166,7 +167,7 @@ class PublishForm extends React.Component {
                   <Field
                     type="text"
                     name="description"
-                    component={TextField}
+                    component={TextAreaField}
                     placeholder="Description of this app"
                     label="README"
                     preview={this.state.preview}
