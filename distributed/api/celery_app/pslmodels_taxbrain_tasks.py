@@ -1,6 +1,13 @@
 import time
+import os
+import gzip
+from collections import defaultdict
 
 from api.celery_app import celery_app
+
+
+AWS_ACCESS_KEY_ID = os.environ.pop("AWS_ACCESS_KEY_ID", "")
+AWS_SECRET_ACCESS_KEY = os.environ.pop("AWS_SECRET_ACCESS_KEY", "")
 
 
 @celery_app.task(name="pslmodels_taxbrain_tasks.inputs_get", soft_time_limit=10)
@@ -13,12 +20,7 @@ def inputs_get(**kwargs):
     import numpy as np
 
     def package_defaults(**meta_parameters):
-        defaults = get_defaults(**meta_parameters)
-        seri = {}
-        for param, data in defaults["policy"].items():
-            seri[param] = dict(data, **{"value": np.array(data["value"]).tolist()})
-        defaults["policy"] = seri
-        return defaults
+        return get_defaults(**meta_parameters)
 
     #######################################
 
@@ -43,9 +45,24 @@ def inputs_parse(**kwargs):
     return parse_user_inputs(**kwargs)
 
 
-@celery_app.task(name="pslmodels_taxbrain_tasks.sim", soft_time_limit=300)
+@celery_app.task(name="pslmodels_taxbrain_tasks.sim", soft_time_limit=400)
 def sim(**kwargs):
     start = time.time()
+    import boto3
+    import pandas as pd
+
+    has_credentials = AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+    if kwargs["data_source"] == "PUF" and has_credentials:
+        client = boto3.client(
+            "s3",
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        )
+        obj = client.get_object(Bucket="ospc-data-files", Key="puf.csv.gz")
+        gz = gzip.GzipFile(fileobj=obj["Body"])
+        puf_df = pd.read_csv(gz)
+    else:
+        puf_df = None
 
     #######################################
     # code snippet
@@ -53,7 +70,7 @@ def sim(**kwargs):
 
     def run(start_year, data_source, use_full_sample, user_mods):
         return taxbrain.tbi.run_tbi_model(
-            start_year, data_source, use_full_sample, user_mods
+            start_year, data_source, use_full_sample, user_mods, puf_df
         )
 
     #######################################

@@ -48,6 +48,9 @@ services:
       context: ./
       dockerfile: dockerfiles/projects/Dockerfile.pslmodels_taxbrain_tasks
     image: "comporg/pslmodels_taxbrain_tasks:${TAG}"
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     depends_on:
       - redis
       - celerybase
