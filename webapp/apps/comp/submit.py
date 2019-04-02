@@ -132,7 +132,7 @@ class Save:
 
         Returns:
         --------
-        RunModel
+        Simulation
         """
         # create OutputUrl object
         runmodel = Simulation()
@@ -144,6 +144,7 @@ class Save:
         # TODO: collect upstream version
         runmodel.model_vers = None
         runmodel.webapp_vers = submit.webapp_version
+        runmodel.model_pk = Simulation.objects.next_model_pk(runmodel.project)
 
         cur_dt = timezone.now()
         future_offset_seconds = (submit.max_q_length) * runmodel.project.exp_task_time

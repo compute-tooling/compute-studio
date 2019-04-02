@@ -59,7 +59,7 @@ class Profile(models.Model):
         for project in projects:
             queryset = self.sims.filter(project=project)
             # if queryset.count() > 0:
-            runs[project.title] = queryset.all()
+            runs[project.title] = queryset.all().order_by("-pk")
         return runs
 
     class Meta:

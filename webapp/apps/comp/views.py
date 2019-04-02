@@ -212,10 +212,10 @@ class RequiresPmtInputsView(InputsView):
 
 
 class GetOutputsObjectMixin:
-    def get_object(self, pk, username, title):
+    def get_object(self, model_pk, username, title):
         return get_object_or_404(
             self.model,
-            pk=pk,
+            model_pk=model_pk,
             project__title=title,
             project__owner__user__username=username,
         )
@@ -226,7 +226,9 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
 
     def get(self, request, *args, **kwargs):
         print("edit method=GET", request.GET)
-        self.object = self.get_object(kwargs["pk"], kwargs["username"], kwargs["title"])
+        self.object = self.get_object(
+            kwargs["model_pk"], kwargs["username"], kwargs["title"]
+        )
         project = self.object.project
         ioclasses = register[project.inputs_style]
 
@@ -290,11 +292,11 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
     model = Simulation
     is_editable = True
 
-    def fail(self, pk, username, title):
+    def fail(self, model_pk, username, title):
         try:
             send_mail(
                 f"COMP Sim fail",
-                f"An error has occurred at {username}/{title}/{pk}",
+                f"An error has occurred at {username}/{title}/{model_pk}",
                 "henrymdoupe@gmail.com",
                 ["henrymdoupe@gmail.com"],
                 fail_silently=True,
@@ -309,8 +311,12 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
 
     def dispatch(self, request, *args, **kwargs):
         compute = Compute()
-        pk, username, title = kwargs["pk"], kwargs["username"], kwargs["title"]
-        self.object = self.get_object(pk, username, title)
+        model_pk, username, title = (
+            kwargs["model_pk"],
+            kwargs["username"],
+            kwargs["title"],
+        )
+        self.object = self.get_object(model_pk, username, title)
         if self.object.outputs or self.object.aggr_outputs:
             return render(
                 request,
@@ -322,7 +328,7 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                 },
             )
         elif self.object.error_text is not None:
-            return self.fail(pk, username, title)
+            return self.fail(model_pk, username, title)
         else:
             job_id = str(self.object.job_id)
             try:
@@ -330,7 +336,7 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
             except JobFailError as jfe:
                 self.object.error_text = ""
                 self.object.save()
-                return self.fail(pk, username, title)
+                return self.fail(model_pk, username, title)
             if job_ready == "FAIL":
                 error_msg = compute.get_results(job_id, job_failure=True)
                 if not error_msg:
@@ -339,14 +345,14 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                 error_contents = error_msg[val_err_idx:].replace(" ", "&nbsp;")
                 self.object.error_text = error_contents
                 self.object.save()
-                return self.fail(pk, username, title)
+                return self.fail(model_pk, username, title)
             if job_ready == "YES":
                 try:
                     results = compute.get_results(job_id)
                 except Exception as e:
                     self.object.error_text = str(e)
                     self.object.save()
-                    return self.fail(pk, username, title)
+                    return self.fail(model_pk, username, title)
                 self.charge_run(results["meta"], use_stripe=USE_STRIPE)
                 self.object.meta_data = results["meta"]
                 self.object.outputs = results["outputs"]
@@ -398,7 +404,9 @@ class OutputsDownloadView(GetOutputsObjectMixin, View):
     model = Simulation
 
     def get(self, request, *args, **kwargs):
-        self.object = self.get_object(kwargs["pk"], kwargs["username"], kwargs["title"])
+        self.object = self.get_object(
+            kwargs["model_pk"], kwargs["username"], kwargs["title"]
+        )
 
         if (
             not (self.object.outputs or self.object.aggr_outputs)

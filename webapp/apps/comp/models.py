@@ -61,6 +61,17 @@ class Inputs(models.Model):
         return json.dumps(self.meta_parameters, indent=4)
 
 
+class SimulationManager(models.Manager):
+    def next_model_pk(self, project):
+        curr_max = Simulation.objects.filter(project=project).aggregate(
+            models.Max("model_pk")
+        )["model_pk__max"]
+        if curr_max == -1 or curr_max is None:
+            return 1
+        else:
+            return curr_max + 1
+
+
 class Simulation(models.Model):
     # TODO: dimension needs to go
     dimension_name = "Dimension--needs to go"
@@ -93,10 +104,13 @@ class Simulation(models.Model):
     job_id = models.UUIDField(blank=True, default=None, null=True)
     model_vers = models.CharField(blank=True, default=None, null=True, max_length=50)
     webapp_vers = models.CharField(blank=True, default=None, null=True, max_length=50)
+    model_pk = models.IntegerField()
+
+    objects = SimulationManager()
 
     def get_absolute_url(self):
         kwargs = {
-            "pk": self.pk,
+            "model_pk": self.model_pk,
             "title": self.project.title,
             "username": self.project.owner.user.username,
         }
@@ -104,7 +118,7 @@ class Simulation(models.Model):
 
     def get_absolute_edit_url(self):
         kwargs = {
-            "pk": self.pk,
+            "model_pk": self.model_pk,
             "title": self.project.title,
             "username": self.project.owner.user.username,
         }
@@ -112,17 +126,17 @@ class Simulation(models.Model):
 
     def get_absolute_download_url(self):
         kwargs = {
-            "pk": self.pk,
+            "model_pk": self.model_pk,
             "title": self.project.title,
             "username": self.project.owner.user.username,
         }
         return reverse("download", kwargs=kwargs)
 
     def zip_filename(self):
-        return f"{self.project.title}_{self.pk}.zip"
+        return f"{self.project.title}_{self.model_pk}.zip"
 
     def json_filename(self):
-        return f"{self.project.title}_{self.pk}.json"
+        return f"{self.project.title}_{self.model_pk}.json"
 
     @cached_property
     def dimension(self):

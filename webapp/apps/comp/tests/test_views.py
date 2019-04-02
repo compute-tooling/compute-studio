@@ -128,7 +128,7 @@ class CoreAbstractViewsTest:
         resp = client.get(resp.url)
         assert resp.status_code == 200
 
-        output = self.RunModel.objects.get(pk=slug)
+        output = self.RunModel.objects.get(model_pk=slug, project=self.project)
         assert output.owner
         assert output.project
         assert output.project.server_cost

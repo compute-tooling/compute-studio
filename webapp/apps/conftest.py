@@ -202,6 +202,7 @@ def test_models(db, profile):
         run_cost=1,
         inputs=inputs,
         creation_date=make_aware(datetime.datetime(2019, 2, 1)),
+        model_pk=Simulation.objects.next_model_pk(project),
     )
     assert obj0
 
@@ -215,6 +216,7 @@ def test_models(db, profile):
         run_cost=1,
         inputs=inputs,
         creation_date=make_aware(datetime.datetime(2019, 1, 1)),
+        model_pk=Simulation.objects.next_model_pk(project),
     )
     assert obj1
     return obj0, obj1
