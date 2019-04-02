@@ -50,6 +50,7 @@ def test_submit(db, comp_inputs, meta_param, profile):
     assert sim.owner
     assert sim.sponsor is None
     assert sim.project
+    assert sim.model_pk == Simulation.objects.next_model_pk(sim.project) - 1
 
 
 def test_submit_sponsored(db, comp_inputs, meta_param, profile):
@@ -86,6 +87,7 @@ def test_submit_sponsored(db, comp_inputs, meta_param, profile):
     assert sim.owner
     assert sim.sponsor
     assert sim.project
+    assert sim.model_pk == Simulation.objects.next_model_pk(sim.project) - 1
 
 
 def test_submit_w_errors(db, comp_inputs, meta_param, profile):
