@@ -9,7 +9,7 @@
 <form class="inputs-form" id="inputs-form" method="post" action="{{app_url}}">
 {% csrf_token %}
 <input type="hidden" name="has_errors" value="{{ has_errors }}" />
-<div class="container">
+<div class="container-fluid">
   <div class="row">
     <div class="col">
       <div class="jumbotron shadow" style="background-color:white;">
@@ -24,7 +24,7 @@
   </div>
   <!-- Sidebar -->
   <div class="row">
-    <div class="col-4">
+    <div class="col-4" id="section-col">
       <ul class="list-unstyled components">
         <li>
           <div class="card card-body card-outer">
@@ -42,7 +42,7 @@
                   <a class="list-group-item list-group-item-action mt-0" href="#{{ section.title }}" style="border:0px; padding:0rem; color:inherit;"><h3 style="color:inherit;">{{ section.title }}</h3></a>
                   {% for param in params %}
                     {% for key, value in param.items %}
-                      <a class="list-group-item list-group-item-action" href="#{{ key|make_id }}" style="padding: .3rem 0.5rem; border:0px; color:inherit;">{{ key }}</a>
+                      <a class="list-group-item list-group-item-action" href="#{{ key|make_id }}" style="padding: .3rem 0.5rem; border:0px; color:inherit;"><p style="margin: 0px;font-size: 18px;">{{key}}</p></a>
                     {% endfor %}
                   {% endfor %}
                 </div>
@@ -116,7 +116,7 @@
         </div>
       </div>
     </div>
-    <div class="col-8">
+    <div class="col-8" id="inputs-col">
       <div id="content">
         <!-- <div class="container-fluid" style="min-width: 50rem; max-width: 50rem;"> -->
           <div class="inputs-main">
@@ -153,6 +153,8 @@
   };
   $(document).ready(function() {
     if (mobilecheck()) {
+      $("#inputs-col").removeClass("col-8").addClass("col-7");
+      $("#section-col").removeClass("col-4").addClass("col-5");
       alert("Our mobile site is a work in progress. You may have a better experience if you use a landscape view for this page.");
     }
   });
