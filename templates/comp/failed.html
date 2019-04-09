@@ -1,30 +1,11 @@
 {% extends 'base.html' %}
 
-{% block style %}
-{{block.super}}
-<style>
-  .file-contents{
-      font-family: "Courier New", Courier, monospace;
-      font-weight: bold;
-      margin-left: 80px;
-      margin-right: 80px;
-      margin-top: 40px;
-      margin-bottom: 40px;
-      text-align: left;
-  }
-</style>
-{% endblock %}
-
 {% block content %}
 
 <div class="card card-body card-outer">
     <h1 class="card-title text-center">Your calculation failed. You may re-enter your parameters and try again.</h1>
     <p class="lead">COMP developers have already been notified about this failure. You are welcome to email me at <a href="mailto:henrymdoupe@gmail.com">henrymdoupe@gmail.com</a> if you would like to get in touch about this error.</p>
-    <div class="file-contents">
-          {%autoescape off %}
-          {{traceback | linebreaks | safe }}
-          {%endautoescape %}
-    </div>
+    {% include 'comp/diagnostic_collapse.html' %}
 </div>
 
 {% endblock %}

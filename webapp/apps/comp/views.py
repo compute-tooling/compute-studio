@@ -30,6 +30,7 @@ from .compute import Compute, JobFailError
 from .displayer import Displayer
 from .submit import handle_submission, BadPost
 from .tags import TAGS
+from .exceptions import AppError
 
 
 class InputsMixin:
@@ -151,7 +152,27 @@ class InputsView(InputsMixin, View):
                 request, project, inputs_form, ioclasses, context
             )
 
-        result = handle_submission(request, project, ioclasses, compute)
+        try:
+            result = handle_submission(request, project, ioclasses, compute)
+        except AppError as ae:
+            try:
+                send_mail(
+                    f"COMP AppError",
+                    f"An error has occurred:\n {ae.parameters}\n causing: {ae.traceback}.",
+                    "henrymdoupe@gmail.com",
+                    ["henrymdoupe@gmail.com"],
+                    fail_silently=True,
+                )
+            # Http 401 exception if mail credentials are not set up.
+            except Exception as e:
+                if not DEBUG:
+                    raise e
+            return render(
+                request,
+                "comp/app_error.html",
+                context={"params": ae.parameters, "traceback": ae.traceback},
+            )
+
         # case where validation failed
         if isinstance(result, BadPost):
             return submission.http_response_404
@@ -363,9 +384,9 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                     self.object.save()
                 # failed run, exception is caught
                 else:
-                    self.object.traceback = result["traceback"]
+                    self.object.traceback = results["traceback"]
                     self.object.save()
-                    self.fail(model_pk, username, title)
+                    return self.fail(model_pk, username, title)
                 return render(
                     request,
                     "comp/sim_detail.html",
