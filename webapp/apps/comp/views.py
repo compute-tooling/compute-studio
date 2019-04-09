@@ -448,8 +448,11 @@ class OutputsDownloadView(GetOutputsObjectMixin, View):
             raw_json = json.dumps(
                 {
                     "meta": self.object.meta_data,
-                    "outputs": self.object.outputs,
-                    "aggr_outputs": self.object.aggr_outputs,
+                    "result": {
+                        "outputs": self.object.outputs,
+                        "aggr_outputs": self.object.aggr_outputs,
+                    },
+                    "status": "SUCCESS",  # keep success hardcoded for now.
                 },
                 indent=4,
             )
