@@ -82,7 +82,7 @@ class Simulation(models.Model):
     meta_data = JSONField(default=None, blank=True, null=True)
     outputs = JSONField(default=None, blank=True, null=True)
     aggr_outputs = JSONField(default=None, blank=True, null=True)
-    error_text = models.CharField(null=True, blank=True, default=None, max_length=4000)
+    traceback = models.CharField(null=True, blank=True, default=None, max_length=4000)
     owner = models.ForeignKey(
         "users.Profile", on_delete=models.CASCADE, null=True, related_name="sims"
     )

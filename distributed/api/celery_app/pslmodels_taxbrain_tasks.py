@@ -3,7 +3,7 @@ import os
 import gzip
 from collections import defaultdict
 
-from api.celery_app import celery_app
+from api.celery_app import celery_app, task_wrapper
 
 
 AWS_ACCESS_KEY_ID = os.environ.pop("AWS_ACCESS_KEY_ID", "")
@@ -11,8 +11,8 @@ AWS_SECRET_ACCESS_KEY = os.environ.pop("AWS_SECRET_ACCESS_KEY", "")
 
 
 @celery_app.task(name="pslmodels_taxbrain_tasks.inputs_get", soft_time_limit=10)
+@task_wrapper
 def inputs_get(**kwargs):
-    start = time.time()
 
     #######################################
     # code snippet
@@ -28,8 +28,8 @@ def inputs_get(**kwargs):
 
 
 @celery_app.task(name="pslmodels_taxbrain_tasks.inputs_parse", soft_time_limit=10)
+@task_wrapper
 def inputs_parse(**kwargs):
-    start = time.time()
 
     #######################################
     # code snippet
@@ -46,8 +46,8 @@ def inputs_parse(**kwargs):
 
 
 @celery_app.task(name="pslmodels_taxbrain_tasks.sim", soft_time_limit=400)
+@task_wrapper
 def sim(**kwargs):
-    start = time.time()
     import boto3
     import pandas as pd
 
@@ -75,11 +75,4 @@ def sim(**kwargs):
 
     #######################################
 
-    result = run(**kwargs)
-
-    finish = time.time()
-    if "meta" not in result:
-        result["meta"] = {}
-    result["meta"]["task_times"] = [finish - start]
-    print("finished result")
-    return result
+    return run(**kwargs)

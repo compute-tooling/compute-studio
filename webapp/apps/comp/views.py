@@ -30,6 +30,7 @@ from .compute import Compute, JobFailError
 from .displayer import Displayer
 from .submit import handle_submission, BadPost
 from .tags import TAGS
+from .exceptions import AppError
 
 
 class InputsMixin:
@@ -151,7 +152,27 @@ class InputsView(InputsMixin, View):
                 request, project, inputs_form, ioclasses, context
             )
 
-        result = handle_submission(request, project, ioclasses, compute)
+        try:
+            result = handle_submission(request, project, ioclasses, compute)
+        except AppError as ae:
+            try:
+                send_mail(
+                    f"COMP AppError",
+                    f"An error has occurred:\n {ae.parameters}\n causing: {ae.traceback}.",
+                    "henrymdoupe@gmail.com",
+                    ["henrymdoupe@gmail.com"],
+                    fail_silently=True,
+                )
+            # Http 401 exception if mail credentials are not set up.
+            except Exception as e:
+                if not DEBUG:
+                    raise e
+            return render(
+                request,
+                "comp/app_error.html",
+                context={"params": ae.parameters, "traceback": ae.traceback},
+            )
+
         # case where validation failed
         if isinstance(result, BadPost):
             return submission.http_response_404
@@ -306,7 +327,7 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
             if not DEBUG:
                 raise e
         return render(
-            self.request, "comp/failed.html", {"error_msg": self.object.error_text}
+            self.request, "comp/failed.html", {"traceback": self.object.traceback}
         )
 
     def dispatch(self, request, *args, **kwargs):
@@ -327,37 +348,45 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                     "tags": TAGS[self.object.project.title],
                 },
             )
-        elif self.object.error_text is not None:
+        elif self.object.traceback is not None:
             return self.fail(model_pk, username, title)
         else:
             job_id = str(self.object.job_id)
             try:
                 job_ready = compute.results_ready(job_id)
             except JobFailError as jfe:
-                self.object.error_text = ""
+                self.object.traceback = ""
                 self.object.save()
                 return self.fail(model_pk, username, title)
+            # something happened and the exception was not caught
             if job_ready == "FAIL":
-                error_msg = compute.get_results(job_id, job_failure=True)
-                if not error_msg:
+                result = compute.get_results(job_id, job_failure=True)
+                if not result["traceback"]:
                     error_msg = "Error: stack trace for this error is " "unavailable"
                 val_err_idx = error_msg.rfind("Error")
                 error_contents = error_msg[val_err_idx:].replace(" ", "&nbsp;")
-                self.object.error_text = error_contents
+                self.object.traceback = error_contents
                 self.object.save()
                 return self.fail(model_pk, username, title)
-            if job_ready == "YES":
+            elif job_ready == "YES":
                 try:
                     results = compute.get_results(job_id)
                 except Exception as e:
-                    self.object.error_text = str(e)
+                    self.object.traceback = str(e)
                     self.object.save()
                     return self.fail(model_pk, username, title)
                 self.charge_run(results["meta"], use_stripe=USE_STRIPE)
                 self.object.meta_data = results["meta"]
-                self.object.outputs = results["outputs"]
-                self.object.aggr_outputs = results["aggr_outputs"]
-                self.object.save()
+                # successful run
+                if results["status"] == "SUCCESS":
+                    self.object.outputs = results["result"]["outputs"]
+                    self.object.aggr_outputs = results["result"]["aggr_outputs"]
+                    self.object.save()
+                # failed run, exception is caught
+                else:
+                    self.object.traceback = results["traceback"]
+                    self.object.save()
+                    return self.fail(model_pk, username, title)
                 return render(
                     request,
                     "comp/sim_detail.html",
@@ -410,7 +439,7 @@ class OutputsDownloadView(GetOutputsObjectMixin, View):
 
         if (
             not (self.object.outputs or self.object.aggr_outputs)
-            or self.object.error_text
+            or self.object.traceback
         ):
             return redirect(self.object)
 
@@ -419,8 +448,11 @@ class OutputsDownloadView(GetOutputsObjectMixin, View):
             raw_json = json.dumps(
                 {
                     "meta": self.object.meta_data,
-                    "outputs": self.object.outputs,
-                    "aggr_outputs": self.object.aggr_outputs,
+                    "result": {
+                        "outputs": self.object.outputs,
+                        "aggr_outputs": self.object.aggr_outputs,
+                    },
+                    "status": "SUCCESS",  # keep success hardcoded for now.
                 },
                 indent=4,
             )

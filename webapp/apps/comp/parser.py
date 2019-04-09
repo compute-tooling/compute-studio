@@ -3,7 +3,7 @@ from collections import namedtuple
 from webapp.apps.comp import actions
 from webapp.apps.comp.compute import SyncCompute
 from webapp.apps.comp.displayer import Displayer
-
+from webapp.apps.comp.exceptions import AppError
 
 ParamData = namedtuple("ParamData", ["name", "data"])
 
@@ -103,6 +103,9 @@ class Parser(BaseParser):
             "errors_warnings": errors_warnings,
             **self.valid_meta_params,
         }
-        return SyncCompute().submit_job(
+        success, result = SyncCompute().submit_job(
             data, self.project.worker_ext(action=actions.PARSE)
         )
+        if not success:
+            raise AppError(params, result)
+        return result

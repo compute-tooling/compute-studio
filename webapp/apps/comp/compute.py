@@ -86,29 +86,18 @@ class Compute(object):
             print("did not expect response with status_code", job_response.status_code)
             raise JobFailError(msg)
 
-    def _get_results_base(self, job_id, job_failure=False):
+    def get_results(self, job_id):
         result_url = f"http://{WORKER_HN}/get_job"
         job_response = self.remote_get_job(result_url, params={"job_id": job_id})
         if job_response.status_code == 200:  # Valid response
             try:
-                if job_failure:
-                    return job_response.text
-                else:
-                    return job_response.json()
+                return job_response.json()
             except ValueError:
                 # Got back a bad response. Get the text and re-raise
                 msg = "PROBLEM WITH RESPONSE. TEXT RECEIVED: {}"
                 raise ValueError(msg)
         else:
-            raise IOError()
-
-    def get_results(self, job_id, job_failure=False):
-        if job_failure:
-            return self._get_results_base(job_id, job_failure=job_failure)
-
-        ans = self._get_results_base(job_id, job_failure=job_failure)
-
-        return ans
+            raise WorkersUnreachableError()
 
 
 class SyncCompute(Compute):
@@ -139,4 +128,8 @@ class SyncCompute(Compute):
                 print("Exceeded max attempts. Bailing out.")
                 raise WorkersUnreachableError()
 
-        return data
+        success = data["status"] == "SUCCESS"
+        if success:
+            return success, data["result"]
+        else:
+            return success, data["traceback"]
