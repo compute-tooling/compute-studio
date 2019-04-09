@@ -1,4 +1,4 @@
-from webapp.apps.comp.compute import SyncCompute
+from webapp.apps.comp.compute import SyncCompute, JobFailError
 from webapp.apps.comp import actions
 
 
@@ -21,9 +21,10 @@ class Displayer:
         functions to load the project's inputs data. In the future, this will
         be done over the distributed REST API.
         """
-        return SyncCompute().submit_job(
+        _, result = SyncCompute().submit_job(
             self.meta_parameters, self.project.worker_ext(action=actions.INPUTS)
         )
+        return result
 
     def _default_flatdict(self):
         """

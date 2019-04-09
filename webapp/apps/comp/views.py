@@ -337,16 +337,17 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                 self.object.error_text = ""
                 self.object.save()
                 return self.fail(model_pk, username, title)
+            # something happened and the exception was not caught
             if job_ready == "FAIL":
-                error_msg = compute.get_results(job_id, job_failure=True)
-                if not error_msg:
+                result = compute.get_results(job_id, job_failure=True)
+                if not result["traceback"]:
                     error_msg = "Error: stack trace for this error is " "unavailable"
                 val_err_idx = error_msg.rfind("Error")
                 error_contents = error_msg[val_err_idx:].replace(" ", "&nbsp;")
                 self.object.error_text = error_contents
                 self.object.save()
                 return self.fail(model_pk, username, title)
-            if job_ready == "YES":
+            elif job_ready == "YES":
                 try:
                     results = compute.get_results(job_id)
                 except Exception as e:
@@ -355,9 +356,16 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                     return self.fail(model_pk, username, title)
                 self.charge_run(results["meta"], use_stripe=USE_STRIPE)
                 self.object.meta_data = results["meta"]
-                self.object.outputs = results["outputs"]
-                self.object.aggr_outputs = results["aggr_outputs"]
-                self.object.save()
+                # successful run
+                if results["status"] == "SUCCESS":
+                    self.object.outputs = results["result"]["outputs"]
+                    self.object.aggr_outputs = results["result"]["aggr_outputs"]
+                    self.object.save()
+                # failed run, exception is caught
+                else:
+                    self.object.error_text = result["traceback"]
+                    self.object.save()
+                    self.fail(model_pk, username, title)
                 return render(
                     request,
                     "comp/sim_detail.html",

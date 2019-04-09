@@ -103,6 +103,7 @@ class Parser(BaseParser):
             "errors_warnings": errors_warnings,
             **self.valid_meta_params,
         }
-        return SyncCompute().submit_job(
+        _, result = SyncCompute().submit_job(
             data, self.project.worker_ext(action=actions.PARSE)
         )
+        return result
