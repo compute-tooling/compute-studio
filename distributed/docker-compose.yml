@@ -7,6 +7,8 @@ services:
     image: "comporg/flask:${TAG}"
     ports:
       - 5050:5050
+    environment:
+      - DEVELOP=${DEVELOP}
     container_name: flask
     depends_on:
       - redis
@@ -16,9 +18,13 @@ services:
       - hdoupe_matchups_io
       - pslmodels_taxbrain_sim
       - pslmodels_taxbrain_io
+      - error_app_sim
+      - error_app_io
       - distributed
     networks:
       - comp_comp-net
+    volumes:
+      - .:/home/distributed
 
 ####################################################
   hdoupe_matchups_sim:
@@ -69,6 +75,29 @@ services:
       - comp_comp-net
 
 ####################################################
+  error_app_sim:
+    build:
+      context: ./
+      dockerfile: dockerfiles/projects/Dockerfile.error_app_tasks
+    image: "comporg/error_app_tasks:${TAG}"
+    depends_on:
+      - redis
+      - celerybase
+    networks:
+      - comp_comp-net
+  error_app_io:
+    build:
+      context: ./
+      dockerfile: dockerfiles/projects/Dockerfile.error_app_tasks
+    image: "comporg/error_app_tasks:${TAG}"
+    entrypoint: celery -A celery_app.error_app_tasks worker --loglevel=info --concurrency=1 -Q error_app_inputs_queue -n error_app_inputs@%h
+    depends_on:
+      - redis
+      - celerybase
+    networks:
+      - comp_comp-net
+
+####################################################
   celerybase:
     build:
       context: ./
@@ -90,3 +119,6 @@ services:
 networks:
   comp_comp-net:
     external: true
+
+volumes:
+  flask_code:

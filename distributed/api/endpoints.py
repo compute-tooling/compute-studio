@@ -7,17 +7,18 @@ import json
 import msgpack
 import os
 
-# import celery tasks here using the template:
-# from api.celery_app.{project_name}_tasks import (
-#     {project_name}_postprocess,
-#     {project_name}_task)
 from api.celery_app import hdoupe_matchups_tasks, pslmodels_taxbrain_tasks
 
 task_modules = {
     ("hdoupe", "Matchups"): hdoupe_matchups_tasks,
     ("PSLmodels", "Tax-Brain"): pslmodels_taxbrain_tasks,
+    # ("error", "app"): error_app_tasks
 }
 
+if os.environ.get("DEVELOP", ""):
+    from api.celery_app import error_app_tasks
+
+    task_modules[("error", "app")] = error_app_tasks
 
 bp = Blueprint("endpoints", __name__)
 
@@ -39,12 +40,16 @@ def sim_endpoint(compute_task):
 
 
 def sync_endpoint(compute_task):
-    print("sim endpoint")
+    print("io endpoint")
     data = request.get_data()
     inputs = msgpack.loads(data, encoding="utf8", use_list=True)
     print("inputs", inputs)
     result = compute_task.apply_async(kwargs=inputs, serializer="msgpack")
+    # try:
+    print("getting...")
     result = result.get()
+    # except Exception as e:
+
     # length = client.llen(queue_name) + 1
     # data = {'job_id': str(result), 'qlength': length}
     return json.dumps(result)
@@ -89,7 +94,7 @@ def results():
         return json.dumps(async_result.result)
     elif async_result.failed():
         print("traceback", async_result.traceback)
-        return async_result.traceback
+        return {"status": "UNHANDLED FAIL", "traceback": async_result.traceback}
     else:
         resp = make_response("not ready", 202)
         return resp
