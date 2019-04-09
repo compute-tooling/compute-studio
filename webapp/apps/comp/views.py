@@ -306,7 +306,7 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
             if not DEBUG:
                 raise e
         return render(
-            self.request, "comp/failed.html", {"error_msg": self.object.error_text}
+            self.request, "comp/failed.html", {"traceback": self.object.traceback}
         )
 
     def dispatch(self, request, *args, **kwargs):
@@ -327,14 +327,14 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                     "tags": TAGS[self.object.project.title],
                 },
             )
-        elif self.object.error_text is not None:
+        elif self.object.traceback is not None:
             return self.fail(model_pk, username, title)
         else:
             job_id = str(self.object.job_id)
             try:
                 job_ready = compute.results_ready(job_id)
             except JobFailError as jfe:
-                self.object.error_text = ""
+                self.object.traceback = ""
                 self.object.save()
                 return self.fail(model_pk, username, title)
             # something happened and the exception was not caught
@@ -344,14 +344,14 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                     error_msg = "Error: stack trace for this error is " "unavailable"
                 val_err_idx = error_msg.rfind("Error")
                 error_contents = error_msg[val_err_idx:].replace(" ", "&nbsp;")
-                self.object.error_text = error_contents
+                self.object.traceback = error_contents
                 self.object.save()
                 return self.fail(model_pk, username, title)
             elif job_ready == "YES":
                 try:
                     results = compute.get_results(job_id)
                 except Exception as e:
-                    self.object.error_text = str(e)
+                    self.object.traceback = str(e)
                     self.object.save()
                     return self.fail(model_pk, username, title)
                 self.charge_run(results["meta"], use_stripe=USE_STRIPE)
@@ -363,7 +363,7 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                     self.object.save()
                 # failed run, exception is caught
                 else:
-                    self.object.error_text = result["traceback"]
+                    self.object.traceback = result["traceback"]
                     self.object.save()
                     self.fail(model_pk, username, title)
                 return render(
@@ -418,7 +418,7 @@ class OutputsDownloadView(GetOutputsObjectMixin, View):
 
         if (
             not (self.object.outputs or self.object.aggr_outputs)
-            or self.object.error_text
+            or self.object.traceback
         ):
             return redirect(self.object)
 

@@ -22,7 +22,7 @@
     <p class="lead">COMP developers have already been notified about this failure. You are welcome to email me at <a href="mailto:henrymdoupe@gmail.com">henrymdoupe@gmail.com</a> if you would like to get in touch about this error.</p>
     <div class="file-contents">
           {%autoescape off %}
-          {{error_msg | linebreaks | safe }}
+          {{traceback | linebreaks | safe }}
           {%endautoescape %}
     </div>
 </div>
