@@ -1,6 +1,7 @@
 import os
 import time
 import functools
+import traceback
 from collections import defaultdict
 
 from celery import Celery
@@ -35,21 +36,21 @@ def task_wrapper(func):
     @functools.wraps(func)
     def f(*args, **kwargs):
         start = time.time()
-        traceback = None
+        traceback_str = None
         res = defaultdict(dict)
         try:
             res["result"] = func(*args, **kwargs)
         except Exception as e:
-            traceback = str(e)
+            traceback_str = traceback.format_exc()
         finish = time.time()
         if "meta" not in res:
             res["meta"] = {}
         res["meta"]["task_times"] = [finish - start]
-        if traceback is None:
+        if traceback_str is None:
             res["status"] = "SUCCESS"
         else:
             res["status"] = "FAIL"
-            res["traceback"] = traceback
+            res["traceback"] = traceback_str
         return res
 
     return f
