@@ -1,0 +1,28 @@
+<div>
+  <button
+      class="btn collapse-button btn-outline-primary"
+      type="button"
+      data-toggle="collapse"
+      data-target="#diagnostic-collapse"
+      aria-expanded="true"
+      aria-controls="diagnostic-collapse"
+      style="display:block;padding:10px;">
+      Diagnostic data
+  </button>
+  <div class="collapse" id="diagnostic-collapse">
+      <div class="card card-body card-inner">
+      {% if params %}
+      <h2>Parameters:</h2>
+      <pre>
+          <code>{{params}}</code>
+      </pre>
+      {% endif %}
+      {% if traceback %}
+      <h2>Traceback:</h2>
+      <pre>
+          <code>{{traceback}}</code>
+      </pre>
+      {% endif %}
+      </div>
+  </div>
+</div>
