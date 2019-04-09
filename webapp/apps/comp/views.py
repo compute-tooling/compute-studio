@@ -158,7 +158,7 @@ class InputsView(InputsMixin, View):
             try:
                 send_mail(
                     f"COMP AppError",
-                    f"An error has occurred:\n {ae.parameters}\n causing: {ae.traceback}.",
+                    f"An error has occurred:\n {ae.parameters}\n causing: {ae.traceback}\n user:{request.user.username}\n project: {project.app_url}.",
                     "henrymdoupe@gmail.com",
                     ["henrymdoupe@gmail.com"],
                     fail_silently=True,
