@@ -16,8 +16,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from webapp.apps.users import views as userviews
+from webapp.apps.comp import views as compviews
 from webapp.apps.publish import views as publishviews
+from webapp.apps.users import views as userviews
+
 
 urlpatterns = [
     # admin apps
@@ -27,6 +29,7 @@ urlpatterns = [
     path("users/", include("webapp.apps.users.urls")),
     path("users/", include("django.contrib.auth.urls")),
     path("billing/", include("webapp.apps.billing.urls")),
+    path("outputs/api/", compviews.OutputsAPIView.as_view(), name="outputs_api"),
     path(
         "<str:username>/<str:title>/detail/",
         publishviews.ProjectDetailView.as_view(),

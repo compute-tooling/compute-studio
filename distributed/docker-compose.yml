@@ -35,6 +35,8 @@ services:
     depends_on:
       - redis
       - celerybase
+    environment:
+      - COMP_URL=${COMP_URL}
     networks:
       - comp_comp-net
   hdoupe_matchups_io:
@@ -46,6 +48,8 @@ services:
     depends_on:
       - redis
       - celerybase
+    environment:
+      - COMP_URL=${COMP_URL}
     networks:
       - comp_comp-net
 
@@ -60,6 +64,8 @@ services:
     depends_on:
       - redis
       - celerybase
+    environment:
+      - COMP_URL=${COMP_URL}
     networks:
       - comp_comp-net
   pslmodels_taxbrain_io:
@@ -71,6 +77,8 @@ services:
     depends_on:
       - redis
       - celerybase
+    environment:
+      - COMP_URL=${COMP_URL}
     networks:
       - comp_comp-net
 
@@ -83,6 +91,8 @@ services:
     depends_on:
       - redis
       - celerybase
+    environment:
+      - COMP_URL=${COMP_URL}
     networks:
       - comp_comp-net
   error_app_io:
@@ -94,6 +104,8 @@ services:
     depends_on:
       - redis
       - celerybase
+    environment:
+      - COMP_URL=${COMP_URL}
     networks:
       - comp_comp-net
 
