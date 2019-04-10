@@ -182,3 +182,8 @@ span.default-value {
 .w-50rem {
   width: 50rem;
 }
+
+.scroll-y {
+  overflow-y: auto;
+  height: 100vh;
+}
