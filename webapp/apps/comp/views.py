@@ -324,7 +324,7 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
             ser = OutputsSerializer(data=request.data)
             if ser.is_valid():
                 data = ser.validated_data
-                sim = Simulation.objects.get(job_id=data["job_id"])
+                sim = get_object_or_404(Simulation, job_id=data["job_id"])
                 self.record_outputs(sim, data)
                 return Response(status=status.HTTP_200_OK)
             else:
