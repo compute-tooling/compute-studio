@@ -1,7 +1,7 @@
 {% load inputs %}
 {% load utility %}
 
-<div class="container">
+<div class="container" style="padding: left 0;">
   <div class="row has-statuses">
 
     <div class="col-xs-12">
@@ -18,7 +18,7 @@
       </label>
     </div>
   </div>
-  <div class="form-row has-statuses">
+  <div class="form-row has-statuses" style="margin-left: -20px;">
     {% for field in param.col_fields %}
       <div class="{{ param|col_input_class }}">
         {% include 'comp/inputs/fields/field.html' with field=field %}

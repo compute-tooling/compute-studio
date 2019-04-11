@@ -1,6 +1,7 @@
 {% load strings %}
 
 <fieldset id="{{ title|make_id }}" class="inputs-block">
+  <div class="card card-body card-outer mb-3 shadow" style="padding:1rem;">
   <h2>
     {{ title }}
     <div class="float-right">
@@ -15,8 +16,8 @@
         <i class="far fa-minus-square" style="size:5x;" ></i>
       </button>
     </div>
-  </h1>
-  <hr class="mb-3"/>
+  </h2>
+  <div class="mb-3"/>
   <div class="collapse show collapse-plus-minus" id="{{ title|make_id }}-collapse">
     <div class="card card-body card-inner" style="padding:0rem;">
     {% for field in param %}
@@ -37,4 +38,5 @@
     </div>
   </div>
   {% block section_warnings %}{% endblock %}
+  </div>
 </fieldset>
