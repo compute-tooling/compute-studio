@@ -151,6 +151,7 @@ class TestStripeModels:
         client.login(username=u.username, password="syncer2222")
         post_data = {
             "title": "New-Model",
+            "oneliner": "one liner",
             "description": "**Super** new!",
             "package_defaults": "import newmodel",
             "parse_user_adjustments": "import newmodel",
