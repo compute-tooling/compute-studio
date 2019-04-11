@@ -1,11 +1,9 @@
 import os
 import requests_mock
 import json
+import uuid
 
 from webapp.apps.comp.compute import Compute
-
-
-dummy_uuid = "42424200-0000-0000-0000-000000000000"
 
 
 class MockCompute(Compute):
@@ -17,7 +15,7 @@ class MockCompute(Compute):
 
     def remote_submit_job(self, url, data, timeout, headers=None):
         with requests_mock.Mocker() as mock:
-            resp = {"job_id": dummy_uuid, "qlength": 2}
+            resp = {"job_id": str(uuid.uuid4()), "qlength": 2}
             resp = json.dumps(resp)
             mock.register_uri("POST", url, text=resp)
             self.last_posted = data
@@ -47,25 +45,27 @@ class MockCompute(Compute):
 
 
 class MockPushCompute(MockCompute):
+    """
+    Simulates a query to the celery workers where the result is not ready.
+    Then, does a PUT to set the outputs on the simulation objects. The
+    necessary parameters are passed via the class attributes below.
+    """
+
     client = None
-    # user = "comp-api-user"
-    # password = "heyhey2222"
-    auth = {
-        "HTTP_AUTHORIZATION": (
-            "Basic " + base64.b64encode(b"comp-api-user:heyhey2222").decode("ascii")
-        )
-    }
+    sim = None
+    user = "comp-api-user"
+    password = "heyhey2222"
 
     def remote_query_job(self, url, params):
+        # Need to login as the comp-api-user
+        self.client.login(username=self.user, password=self.password)
+        resp = self.client.put(
+            "/outputs/api/",
+            data=dict(json.loads(self.outputs), **{"job_id": self.sim.job_id}),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
         with requests_mock.Mocker() as mock:
             text = "NO"
             mock.register_uri("GET", url, text=text)
-            self.num_times_to_wait -= 1
-            resp = self.client.put(
-                "outputs/api/",
-                data=self.outputs,
-                content_type="application/json",
-                **self.auth,
-            )
-            assert resp.status == 200
             return Compute.remote_query_job(self, url, params)
