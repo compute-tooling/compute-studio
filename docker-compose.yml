@@ -20,6 +20,7 @@ services:
       - LOCAL=True
     ports:
       - "8000:8000"
+    container_name: web
     depends_on:
       - db
     networks:

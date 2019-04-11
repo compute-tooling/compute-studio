@@ -9,14 +9,42 @@ from django.urls import reverse
 from webapp.apps.users.models import Project, Profile
 
 from webapp.apps.comp.models import Simulation
-from .compute import MockCompute
+from .compute import MockCompute, MockPushCompute
 
 
 User = auth.get_user_model()
 
 
+class CoreTestMixin:
+    def login_client(self, client, user, password):
+        """
+        Helper function to login client
+        """
+        success = client.login(username=user.username, password=password)
+        assert success
+        return success
+
+    @property
+    def provided_free(self):
+        raise NotImplementedError()
+
+    def inputs_ok(self):
+        return {"has_errors": False}
+
+    def outputs_ok(self):
+        raise NotImplementedError()
+
+    @property
+    def project(self):
+        if getattr(self, "_project", None) is None:
+            self._project = Project.objects.get(
+                owner__user__username=self.owner, title=self.title
+            )
+        return self._project
+
+
 @pytest.mark.django_db
-class CoreAbstractViewsTest:
+class CoreAbstractViewsTest(CoreTestMixin):
     """
     Abstract test class to be used for efficient testing of modeling projects.
     The approach used here goes against conventional wisdom to use simple,
@@ -28,7 +56,6 @@ class CoreAbstractViewsTest:
     title = "Core"
     post_data_ok = {}
     mockcompute = None
-    RunModel = Simulation
 
     def test_get(self, monkeypatch, client):
         """
@@ -128,7 +155,7 @@ class CoreAbstractViewsTest:
         resp = client.get(resp.url)
         assert resp.status_code == 200
 
-        output = self.RunModel.objects.get(model_pk=slug, project=self.project)
+        output = Simulation.objects.get(model_pk=slug, project=self.project)
         assert output.owner
         assert output.project
         assert output.project.server_cost
@@ -184,32 +211,6 @@ class CoreAbstractViewsTest:
         """
         resp = client.get(f"{self.project.app_url}/100000/")
         assert resp.status_code == 404
-
-    def login_client(self, client, user, password):
-        """
-        Helper method to login client
-        """
-        success = client.login(username=user.username, password=password)
-        assert success
-        return success
-
-    @property
-    def provided_free(self):
-        raise NotImplementedError()
-
-    def inputs_ok(self):
-        return {"has_errors": False}
-
-    def outputs_ok(self):
-        raise NotImplementedError()
-
-    @property
-    def project(self):
-        if getattr(self, "_project", None) is None:
-            self._project = Project.objects.get(
-                owner__user__username=self.owner, title=self.title
-            )
-        return self._project
 
 
 def read_outputs(outputs_name):
@@ -279,6 +280,75 @@ class TestMatchupsSponsored(CoreAbstractViewsTest):
         return True
 
 
+@pytest.mark.usefixtures("sponsored_matchups")
+class TestPush(CoreTestMixin):
+    class MatchupsMockPushCompute(MockPushCompute):
+        outputs = read_outputs("Matchups_1")
+
+    owner = "hdoupe"
+    title = "Matchups"
+    mockcompute = MatchupsMockPushCompute
+
+    def inputs_ok(self):
+        inputs = super().inputs_ok()
+        upstream_inputs = {"pitcher": "Max Scherzer"}
+        return dict(inputs, **upstream_inputs)
+
+    def outputs_ok(self):
+        return read_outputs("Matchups_1")
+
+    @property
+    def provided_free(self):
+        return True
+
+    def test_post(self, monkeypatch, client, password, profile):
+        """
+        Tests:
+        1. POST with logged-in user returns 302 redirect which means the sim
+           was kicked off.
+        2. Retrieve the simulation object and pass that to the mockcompute
+           class as a class attribute. (I know it's hacky.)
+        3. Do a POST to simulate an AJAX request from the loading page.
+           MockPushCompute mocks the request to the celery workers with
+           response indicating that the results are not ready, and pushes the
+           outputs via a PUT on the /outputs/api endpoint. The OutputsView
+           returns a 202 indicating that the results are not yet ready.
+        4. Check to make sure that the PUT was successful.
+        5. Do another AJAX like POST and make sure the outputs are found on the
+           simulation object and a 200 is returned.
+        """
+        # Set client as a class attribute.
+        self.mockcompute.client = client
+        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
+
+        self.login_client(client, profile.user, password)
+        resp = client.post(self.project.app_url, data=self.inputs_ok())
+        assert resp.status_code == 302  # redirect
+        idx = resp.url[:-1].rfind("/")
+        slug = resp.url[(idx + 1) : -1]
+        sim_url = resp.url
+        assert sim_url == f"{self.project.app_url}{slug}/"
+
+        # Pass the sim object to the Compute instance via a class attribute.
+        sim = Simulation.objects.get(project=self.project, model_pk=slug)
+        self.mockcompute.sim = sim
+
+        # test get ouputs page
+        resp = client.post(resp.url)
+        # redirect since the outputs have only just been set.
+        assert resp.status_code == 202
+
+        # output should now be set!
+        sim = Simulation.objects.get(project=self.project, model_pk=slug)
+        assert sim.outputs
+        assert sim.aggr_outputs
+        assert sim.run_time
+        assert sim.project.run_cost(sim.run_time, adjust=True) > 0
+
+        resp = client.post(sim_url)
+        assert resp.status_code == 200
+
+
 def test_404_owner_title_view(db, client):
     resp = client.get("/hello/world/")
     assert resp.status_code == 404
@@ -298,3 +368,22 @@ def test_placeholder_page(db, client):
     resp = client.get(f"/{owner}/{title}/")
     assert resp.status_code == 200
     assert "comp/inputs_form.html" in [t.name for t in resp.templates]
+
+
+def test_outputs_api(db, client, profile, password):
+    # Test auth errors return 401.
+    anon_user = auth.get_user(client)
+    assert not anon_user.is_authenticated
+    assert client.put("/outputs/api/").status_code == 401
+    client.login(username=profile.user.username, password=password)
+    assert client.put("/outputs/api/").status_code == 401
+
+    # Test data errors return 400
+    user = User.objects.get(username="comp-api-user")
+    client.login(username=user.username, password="heyhey2222")
+    assert (
+        client.put(
+            "/outputs/api/", data={"bad": "data"}, content_type="application/json"
+        ).status_code
+        == 400
+    )

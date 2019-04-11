@@ -4,9 +4,15 @@ import functools
 import traceback
 from collections import defaultdict
 
+import requests
+
 from celery import Celery
 from celery.signals import task_postrun
 from celery.result import AsyncResult
+
+COMP_URL = os.environ.get("COMP_URL")
+COMP_API_USER = os.environ.get("COMP_API_USER")
+COMP_API_USER_PASS = os.environ.get("COMP_API_USER_PASS")
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
 CELERY_RESULT_BACKEND = os.environ.get(
@@ -54,3 +60,22 @@ def task_wrapper(func):
         return res
 
     return f
+
+
+@task_postrun.connect
+def post_results(sender=None, headers=None, body=None, **kwargs):
+    print(f'task_id: {kwargs["task_id"]}')
+    print(f'task: {kwargs["task"]} {kwargs["task"].name}')
+    print(f'is sim: {kwargs["task"].name.endswith("sim")}')
+    print(f'state: {kwargs["state"]}')
+    kwargs["retval"]["job_id"] = kwargs["task_id"]
+    if kwargs["task"].name.endswith("sim"):
+        print(f"posting data to {COMP_URL}/outputs/api/")
+        resp = requests.put(
+            f"{COMP_URL}/outputs/api/",
+            json=kwargs["retval"],
+            auth=(COMP_API_USER, COMP_API_USER_PASS),
+        )
+        print("resp", resp.status_code)
+        if resp.status_code == 400:
+            print("errors", resp.json())

@@ -35,6 +35,8 @@ services:
     depends_on:
       - redis
       - celerybase
+    env_file:
+      - ./dockerfiles/dev.env
     networks:
       - comp_comp-net
   hdoupe_matchups_io:
@@ -46,6 +48,8 @@ services:
     depends_on:
       - redis
       - celerybase
+    env_file:
+      - ./dockerfiles/dev.env
     networks:
       - comp_comp-net
 
@@ -57,6 +61,8 @@ services:
     environment:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    env_file:
+      - ./dockerfiles/dev.env
     depends_on:
       - redis
       - celerybase
@@ -71,6 +77,8 @@ services:
     depends_on:
       - redis
       - celerybase
+    env_file:
+      - ./dockerfiles/dev.env
     networks:
       - comp_comp-net
 
@@ -83,6 +91,8 @@ services:
     depends_on:
       - redis
       - celerybase
+    env_file:
+      - ./dockerfiles/dev.env
     networks:
       - comp_comp-net
   error_app_io:
@@ -94,6 +104,8 @@ services:
     depends_on:
       - redis
       - celerybase
+    env_file:
+      - ./dockerfiles/dev.env
     networks:
       - comp_comp-net
 

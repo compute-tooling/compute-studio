@@ -52,6 +52,14 @@ def django_db_setup(django_db_setup, django_db_blocker):
         Profile.objects.create(user=sponsor, is_active=True)
         Profile.objects.create(user=hdoupe, is_active=True)
 
+        # User for pushing outputs from the workers to the webapp.
+        comp_api_user = User.objects.create_user(
+            username="comp-api-user",
+            email="comp-api-user@email.com",
+            password="heyhey2222",
+        )
+        Profile.objects.create(user=comp_api_user, is_active=True)
+
         common = {
             "description": "[Matchups](https://github.com/hdoupe/Matchups) provides pitch data on pitcher and batter matchups.. Select a date range using the format YYYY-MM-DD. Keep in mind that Matchups only provides data on matchups going back to 2008. Two datasets are offered to run this model: one that only has the most recent season, 2018, and one that contains data on every single pitch going back to 2008. Next, select your favorite pitcher and some batters who he's faced in the past. Click submit to start analyzing the selected matchups!",
             "oneliner": "oneliner",

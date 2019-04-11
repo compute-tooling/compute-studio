@@ -15,6 +15,10 @@ from django.urls import reverse
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
 from webapp.settings import DEBUG
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
@@ -31,6 +35,7 @@ from .displayer import Displayer
 from .submit import handle_submission, BadPost
 from .tags import TAGS
 from .exceptions import AppError
+from .serializers import OutputsSerializer
 
 
 class InputsMixin:
@@ -293,7 +298,42 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
         return render(request, self.template_name, context)
 
 
-class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
+class RecordOutputsMixin(ChargeRunMixin):
+    def record_outputs(self, sim, data):
+        self.charge_run(sim, data["meta"], use_stripe=USE_STRIPE)
+        sim.meta_data = data["meta"]
+        # successful run
+        if data["status"] == "SUCCESS":
+            sim.outputs = data["result"]["outputs"]
+            sim.aggr_outputs = data["result"]["aggr_outputs"]
+            sim.save()
+        # failed run, exception is caught
+        else:
+            sim.traceback = data["traceback"]
+            sim.save()
+
+
+class OutputsAPIView(RecordOutputsMixin, APIView):
+    """
+    API endpoint used by the workers to update the Simulation object with the
+    simulation results.
+    """
+
+    def put(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user.username == "comp-api-user":
+            ser = OutputsSerializer(data=request.data)
+            if ser.is_valid():
+                data = ser.validated_data
+                sim = get_object_or_404(Simulation, job_id=data["job_id"])
+                self.record_outputs(sim, data)
+                return Response(status=status.HTTP_200_OK)
+            else:
+                return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
     """
     This view is the single page of diplaying a progress bar for how
     close the job is to finishing, and then it will also display the
@@ -375,27 +415,19 @@ class OutputsView(GetOutputsObjectMixin, ChargeRunMixin, DetailView):
                     self.object.traceback = str(e)
                     self.object.save()
                     return self.fail(model_pk, username, title)
-                self.charge_run(results["meta"], use_stripe=USE_STRIPE)
-                self.object.meta_data = results["meta"]
-                # successful run
-                if results["status"] == "SUCCESS":
-                    self.object.outputs = results["result"]["outputs"]
-                    self.object.aggr_outputs = results["result"]["aggr_outputs"]
-                    self.object.save()
-                # failed run, exception is caught
-                else:
-                    self.object.traceback = results["traceback"]
-                    self.object.save()
+                self.record_outputs(self.object, results)
+                if results["status"] != "SUCCESS":
                     return self.fail(model_pk, username, title)
-                return render(
-                    request,
-                    "comp/sim_detail.html",
-                    {
-                        "object": self.object,
-                        "result_header": "Results",
-                        "tags": TAGS[self.object.project.title],
-                    },
-                )
+                else:
+                    return render(
+                        request,
+                        "comp/sim_detail.html",
+                        {
+                            "object": self.object,
+                            "result_header": "Results",
+                            "tags": TAGS[self.object.project.title],
+                        },
+                    )
             else:
                 if request.method == "POST":
                     # if not ready yet, insert number of minutes remaining
