@@ -9,7 +9,7 @@ from django.urls import reverse
 from webapp.apps.users.models import Project, Profile
 
 from webapp.apps.comp.models import Simulation
-from .compute import MockCompute
+from .compute import MockCompute, MockPushCompute
 
 
 User = auth.get_user_model()

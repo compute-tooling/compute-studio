@@ -320,7 +320,7 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
     """
 
     def put(self, request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.username == "comp-api":
+        if request.user.is_authenticated and request.user.username == "comp-api-user":
             ser = OutputsSerializer(data=request.data)
             if ser.is_valid():
                 data = ser.validated_data

@@ -44,3 +44,28 @@ class MockCompute(Compute):
         reset worker node count
         """
         self.count = 0
+
+
+class MockPushCompute(MockCompute):
+    client = None
+    # user = "comp-api-user"
+    # password = "heyhey2222"
+    auth = {
+        "HTTP_AUTHORIZATION": (
+            "Basic " + base64.b64encode(b"comp-api-user:heyhey2222").decode("ascii")
+        )
+    }
+
+    def remote_query_job(self, url, params):
+        with requests_mock.Mocker() as mock:
+            text = "NO"
+            mock.register_uri("GET", url, text=text)
+            self.num_times_to_wait -= 1
+            resp = self.client.put(
+                "outputs/api/",
+                data=self.outputs,
+                content_type="application/json",
+                **self.auth,
+            )
+            assert resp.status == 200
+            return Compute.remote_query_job(self, url, params)
