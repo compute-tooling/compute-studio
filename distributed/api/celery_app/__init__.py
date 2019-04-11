@@ -11,6 +11,8 @@ from celery.signals import task_postrun
 from celery.result import AsyncResult
 
 COMP_URL = os.environ.get("COMP_URL")
+COMP_API_USER = os.environ.get("COMP_API_USER")
+COMP_API_USER_PASS = os.environ.get("COMP_API_USER_PASS")
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
 CELERY_RESULT_BACKEND = os.environ.get(
@@ -72,7 +74,7 @@ def post_results(sender=None, headers=None, body=None, **kwargs):
         resp = requests.put(
             f"{COMP_URL}/outputs/api/",
             json=kwargs["retval"],
-            auth=("comp-api", "heyhey2222"),
+            auth=(COMP_API_USER, COMP_API_USER_PASS),
         )
         print("resp", resp.status_code)
         if resp.status_code == 400:

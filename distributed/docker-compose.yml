@@ -35,8 +35,8 @@ services:
     depends_on:
       - redis
       - celerybase
-    environment:
-      - COMP_URL=${COMP_URL}
+    env_file:
+      - ./dockerfiles/dev.env
     networks:
       - comp_comp-net
   hdoupe_matchups_io:
@@ -48,8 +48,8 @@ services:
     depends_on:
       - redis
       - celerybase
-    environment:
-      - COMP_URL=${COMP_URL}
+    env_file:
+      - ./dockerfiles/dev.env
     networks:
       - comp_comp-net
 
@@ -61,11 +61,11 @@ services:
     environment:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    env_file:
+      - ./dockerfiles/dev.env
     depends_on:
       - redis
       - celerybase
-    environment:
-      - COMP_URL=${COMP_URL}
     networks:
       - comp_comp-net
   pslmodels_taxbrain_io:
@@ -77,8 +77,8 @@ services:
     depends_on:
       - redis
       - celerybase
-    environment:
-      - COMP_URL=${COMP_URL}
+    env_file:
+      - ./dockerfiles/dev.env
     networks:
       - comp_comp-net
 
@@ -91,8 +91,8 @@ services:
     depends_on:
       - redis
       - celerybase
-    environment:
-      - COMP_URL=${COMP_URL}
+    env_file:
+      - ./dockerfiles/dev.env
     networks:
       - comp_comp-net
   error_app_io:
@@ -104,8 +104,8 @@ services:
     depends_on:
       - redis
       - celerybase
-    environment:
-      - COMP_URL=${COMP_URL}
+    env_file:
+      - ./dockerfiles/dev.env
     networks:
       - comp_comp-net
 
