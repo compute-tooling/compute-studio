@@ -65,6 +65,8 @@ class MockPushCompute(MockCompute):
             content_type="application/json",
         )
         assert resp.status_code == 200
+        self.client = None
+        self.sim = None
         with requests_mock.Mocker() as mock:
             text = "NO"
             mock.register_uri("GET", url, text=text)
