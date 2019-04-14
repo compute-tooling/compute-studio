@@ -32,8 +32,8 @@ class TaxcalcStyleParam(BaseParam):
                 field_name = f"{self.name}_{dim1}"
             else:
                 field_name = self.name
-            if "col_label" in self.attributes and self.attributes["col_label"]:
-                col = self.attributes["col_label"][dim1]
+            if "vi_vals" in self.attributes and self.attributes["vi_vals"]:
+                col = self.attributes["vi_vals"][dim1]
             else:
                 col = ""
             field = self.field_class(
@@ -43,12 +43,12 @@ class TaxcalcStyleParam(BaseParam):
             self.col_fields.append(field)
 
         # get attribute indicating whether parameter is cpi inflatable.
-        self.inflatable = self.attributes.get("cpi_inflatable", False)
+        self.inflatable = self.attributes.get("indexable", False)
         field_kwargs.pop("disabled", None)
         if self.inflatable:
             field_name = f"{self.name}_cpi"
             self.cpi_field = CheckBox(
-                field_name, "CPI", self.attributes["cpi_inflated"], **field_kwargs
+                field_name, "CPI", self.attributes["indexed"], **field_kwargs
             )
             self.fields[field_name] = self.cpi_field.form_field
 

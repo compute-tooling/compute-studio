@@ -6,7 +6,7 @@ try:
 except ModuleNotFoundError:
     pass
 
-from webapp.apps.comp.parser import ParamData, Parser
+from webapp.apps.comp.parser import ParamData, Parser, ParameterLookUpException
 from webapp.apps.comp.utils import is_wildcard, is_reverse
 
 
@@ -35,7 +35,7 @@ class TaxcalcStyleParser(Parser):
             revision[param] = {}
             if not isinstance(parsed_input[param], list):
                 if not (
-                    isinstance(parsed_input[param], bool) and param.endswith("_cpi")
+                    isinstance(parsed_input[param], bool) and param.endswith("-indexed")
                 ):
                     print(param, parsed_input[param])
                     parsed_input[param] = [parsed_input[param]]
@@ -54,8 +54,8 @@ class TaxcalcStyleParser(Parser):
                     assert isinstance(
                         parsed_input[param][i + 1], (int, float)
                     ) or isinstance(parsed_input[param][i + 1], bool)
-                    revision[param][str(self.start_year - 1)] = [
-                        parsed_input[param][i + 1]
+                    revision[param][str(self.start_year - 1)] = parsed_input[param][
+                        i + 1
                     ]
 
                     # realign year and parameter indices
@@ -66,7 +66,7 @@ class TaxcalcStyleParser(Parser):
                     assert isinstance(
                         parsed_input[param][i], (int, float)
                     ) or isinstance(parsed_input[param][i], bool)
-                    revision[param][str(self.start_year + i)] = [parsed_input[param][i]]
+                    revision[param][str(self.start_year + i)] = parsed_input[param][i]
 
                 i += 1
 
@@ -82,7 +82,7 @@ class TaxcalcStyleParser(Parser):
         3. it is not simply a function because inheriting classes may want to
             override it.
 
-        For example: STD_0 maps to _STD_single
+        For example: STD_0 maps to STD_single
 
         returns: named tuple with taxcalc param name and metadata
         """
@@ -90,10 +90,10 @@ class TaxcalcStyleParser(Parser):
             param_get = lambda d, k: d[k] if k is not None else d
         if param in defaults:  # ex. EITC_indiv --> _EITC_indiv
             return ParamData(param, param_get(defaults[param], None))
-        param_pieces = param.split("_")
-        end_piece = param_pieces[-1]
-        no_suffix = "_".join(param_pieces[:-1])
-        if end_piece == "cpi":  # ex. SS_Earnings_c_cpi --> _SS_Earnings_c_cpi
+        if param.endswith(
+            "-indexed"
+        ):  # ex. SS_Earnings_c-indexed --> SS_Earnings_c-indexed
+            no_suffix = param.split("-")[0]
             if no_suffix in defaults:
                 return ParamData(param, param_get(defaults[no_suffix], None))
             else:
@@ -101,15 +101,17 @@ class TaxcalcStyleParser(Parser):
                     msg = "Received unexpected parameter: {}"
                     raise ParameterLookUpException(msg.format(param))
                 return None
-        if no_suffix in defaults:  # ex. STD_0 --> _STD_single
+        param_pieces = param.split("_")
+        no_suffix = "_".join(param_pieces[:-1])
+        if no_suffix in defaults:  # ex. STD_0 --> STD_single
             try:
-                ix = int(end_piece)
+                ix = int(param_pieces[-1])
             except ValueError:
                 if raise_error:
                     msg = "Parsing {}: Expected integer for index but got {}"
                     raise ParameterLookUpException(msg.format(param, end_piece))
                 return None
-            num_columns = len(param_get(defaults[no_suffix], "col_label"))
+            num_columns = len(param_get(defaults[no_suffix], "vi_vals"))
             if ix < 0 or ix >= num_columns:
                 if raise_error:
                     msg = "Parsing {}: Index {} not in range ({}, {})"
@@ -117,13 +119,13 @@ class TaxcalcStyleParser(Parser):
                         msg.format(param, ix, 0, num_columns)
                     )
                 return None
-            col_label = param_get(defaults[no_suffix], "col_label")[ix]
+            col_label = param_get(defaults[no_suffix], "vi_vals")[ix]
             return ParamData(
                 no_suffix + "_" + col_label, param_get(defaults[no_suffix], None)
             )
         if raise_error:
-            msg = "Received unexpected parameter: {}"
-            raise ParameterLookUpException(msg.format(param))
+            msg = f"Received unexpected parameter: {param}"
+            raise ParameterLookUpException(msg)
         return None
 
     @staticmethod

@@ -2,9 +2,10 @@ import json
 import os
 
 import pytest
+import numpy as np
 
 from webapp.apps.comp.displayer import Displayer
-from webapp.apps.comp.parser import BaseParser
+from webapp.apps.comp.parser import BaseParser, ParameterLookUpException
 from webapp.apps.comp.meta_parameters import translate_to_django
 from webapp.apps.users.models import Project
 
@@ -57,7 +58,7 @@ def test_param(mockparam, meta_parameters):
         if isinstance(value[0], list):
             assert len(param.col_fields) == len(value[0])
             assert param.col_fields[0].form_field.clean("<,*")
-        if attrs["cpi_inflatable"]:
+        if attrs["indexable"]:
             assert param.cpi_field
 
 
@@ -90,28 +91,31 @@ def test_param_parser(db, mockparam, meta_parameters):
     parser = MockParser(
         project,
         ioclasses,
-        {"_STD_0": ["<", 10001, "*", 10002], "_BE_sub": [0.2]},
+        {"STD_0": ["<", 10001, "*", 10002], "BE_sub": [0.2], "STD-indexed": [True]},
         **valid_meta_params
     )
 
     params, jsonstr, errors_warnings = parser.parse_parameters()
     assert params == {
-        "policy": {"_STD_single": {"2017": [10001], "2019": [10002]}},
-        "behavior": {"_BE_sub": {"2018": [0.2]}},
+        "policy": {
+            "STD_single": {"2017": 10001, "2019": 10002},
+            "STD-indexed": {"2018": True},
+        },
+        "behavior": {"BE_sub": {"2018": 0.2}},
     }
     mock_errors_warnings = {
         "errors": {
-            "_STD_0": {
-                "2019": "ERROR: _STD_0 value -1.0 < min value 0 for 2019",
-                "2020": "ERROR: _STD_0 value -1.0 < min value 0 for 2020",
+            "STD_0": {
+                "2019": "ERROR: STD_0 value -1.0 < min value 0 for 2019",
+                "2020": "ERROR: STD_0 value -1.0 < min value 0 for 2020",
             }
         },
         "warnings": {},
     }
     exp = {
-        "_STD_0": [
-            "ERROR: _STD_0 value -1.0 < min value 0 for 2019",
-            "ERROR: _STD_0 value -1.0 < min value 0 for 2020",
+        "STD_0": [
+            "ERROR: STD_0 value -1.0 < min value 0 for 2019",
+            "ERROR: STD_0 value -1.0 < min value 0 for 2020",
         ]
     }
     container = {}
@@ -123,7 +127,15 @@ def test_param_parser(db, mockparam, meta_parameters):
     assert container == exp
 
     # test param look-up functionality
+    assert parser.get_default_param("STD_0", parser.flat_defaults).name == "STD_single"
+    assert parser.get_default_param("BE_sub", parser.flat_defaults).name == "BE_sub"
     assert (
-        parser.get_default_param("_STD_0", parser.flat_defaults).name == "_STD_single"
+        parser.get_default_param("STD-indexed", parser.flat_defaults).name
+        == "STD-indexed"
     )
-    assert parser.get_default_param("_BE_sub", parser.flat_defaults).name == "_BE_sub"
+    with pytest.raises(ParameterLookUpException):
+        parser.get_default_param("STD-notanindex", parser.flat_defaults)
+    with pytest.raises(ParameterLookUpException):
+        parser.get_default_param("doesntexist", parser.flat_defaults)
+    with pytest.raises(ParameterLookUpException):
+        parser.get_default_param("doesnt_exist", parser.flat_defaults)
