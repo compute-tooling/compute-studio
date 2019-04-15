@@ -1,5 +1,14 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block style %}
+<link rel='stylesheet' href={{bokeh_scripts.cdn_css|safe}}>
+<script type="text/javascript" src={{bokeh_scripts.cdn_js|safe}}></script>
+<link
+  href={{bokeh_scripts.widget_css|safe}}
+  rel="stylesheet">
+<script type="text/javascript" src={{bokeh_scripts.widget_js|safe}}></script>
+{% endblock %}
+
 {% block content %}
   <br>
   <div id="table-drilldown-container">
@@ -9,9 +18,15 @@
           <div class="row">
             {% if object.outputs %}
             <div class="col-md-12" id="aggr-totals-container">
-              <div class="card card-body card-inner">
-                {% for x in object.outputs.renderable %}
-                  <p>{{x.title}}</p>
+                {% for output in object.outputs.renderable %}
+                <div class="card card-body card-inner text-center">
+                  <h4>{{output.title}}</h4>
+                  {% if output.media_type == 'bokeh' %}
+                    {% include 'comp/outputs/bokeh.html' with output=output %}
+                  {% elif output.media_type == 'table' %}
+                    {% include 'comp/outputs/table.html' with output=output %}
+                  {% endif %}
+                </div>
                 {% endfor %}
               </div>
             </div>
