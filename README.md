@@ -1,36 +1,34 @@
-# COMP
+# COMP Community Edition (CE)
 
-**COMP** is an open-source utility for sharing computational models.
+**COMP CE** is an open-source utility for sharing computational models.
 
-To see COMP in action, visit [compmodels.org](https://www.compmodels.org).
+To see COMP CE in action, visit [compmodels.org](https://www.compmodels.org).
 
 Features:
-- Developers may share their public models for free.
-- Users pay for their own compute, at cost.
-- Developers or their sponsors may also pay for users' compute.
+- Share public models and simulations for free.
+- Pay for your own compute at cost.
+- Sponsor compute for others if you'd like.
 
 Under development:
 
-- Developers may share non-tabular output.
+- Share non-tabular output.
 
 Planned:
-- Developers choose to share models privately, for a fee.
-- Users may use a REST API to run simulations and build GUI simulation pages.
-- Users may upload and download simulation input files from the GUI.
+- REST API to run simulations and build GUI simulation pages.
 
 ## Publish
 
-Publish at www.compmodels.org/publish.
+Publish models to the public at www.compmodels.org/publish.
 
 ## Contributing
 
-COMP is an open source project and anyone can contribute code or suggestions.
+COMP CE is an open source project and anyone can contribute code or suggestions.
 
 You can reach COMP developers to discuss how to get started by opening an issue or joining the COMP Community [chat room](https://matrix.to/#/!WQWxPnwidsSToqkeLk:matrix.org).
 
 ## License
 
-COMP is licensed under the open source [GNU Affero General Public License](/License.txt) to Compute Tooling, LLC.
+COMP Community Edition is licensed under the open source [GNU Affero General Public License](/License.txt) to Compute Tooling, LLC.
 
 ## Local Installation
 
