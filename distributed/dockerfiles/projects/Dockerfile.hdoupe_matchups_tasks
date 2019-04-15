@@ -6,8 +6,11 @@ FROM comporg/celerybase
 RUN pip install -r requirements.txt
 # Edit Dockerfile here for installing necessary packages, copying files, etc.
 ######################
-RUN conda install pandas pyarrow bokeh paramtools -c pslmodels
-RUN pip install pybaseball matchups>=0.4.0
+RUN conda install pandas pyarrow bokeh paramtools fastparquet python-snappy -c pslmodels
+RUN mkdir /home/distributed/Matchups
+ADD Matchups /home/distributed/Matchups/
+RUN ls /home/distributed/Matchups
+RUN pip install -e /home/distributed/Matchups
 ######################
 
 

@@ -11,7 +11,7 @@ ADD ./pytest.ini /code/pytest.ini
 
 # Install dependencies
 RUN conda update conda
-RUN conda install -c pslmodels -c conda-forge pip paramtools --yes
+RUN conda install -c pslmodels -c conda-forge pip paramtools bokeh --yes
 RUN pip install -r requirements.txt
 
 # Add our code

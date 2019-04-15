@@ -3,6 +3,8 @@ from io import BytesIO
 from zipfile import ZipFile
 import json
 
+from bokeh.resources import CDN
+
 from django.utils import timezone
 from django.db import models
 from django.views.generic.base import View
@@ -304,8 +306,7 @@ class RecordOutputsMixin(ChargeRunMixin):
         sim.meta_data = data["meta"]
         # successful run
         if data["status"] == "SUCCESS":
-            sim.outputs = data["result"]["outputs"]
-            sim.aggr_outputs = data["result"]["aggr_outputs"]
+            sim.outputs = data["result"]
             sim.save()
         # failed run, exception is caught
         else:
@@ -385,7 +386,12 @@ class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
                 {
                     "object": self.object,
                     "result_header": "Results",
-                    "tags": TAGS[self.object.project.title],
+                    "bokeh_scripts": {
+                        "cdn_js": CDN.js_files[0],
+                        "cdn_css": CDN.css_files[0],
+                        "widget_js": CDN.js_files[1],
+                        "widget_css": CDN.css_files[1],
+                    },
                 },
             )
         elif self.object.traceback is not None:
