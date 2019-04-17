@@ -30,3 +30,5 @@ __pycache__/
 
 secret.sh
 secret-docker-compose.yml
+
+*credentials.sh
