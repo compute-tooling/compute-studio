@@ -9,7 +9,7 @@ from django.urls import reverse
 from webapp.apps.users.models import Project, Profile
 
 from webapp.apps.comp.models import Simulation
-from .compute import MockCompute, MockPushCompute
+from .compute import MockCompute
 
 
 User = auth.get_user_model()
@@ -80,7 +80,7 @@ class CoreAbstractViewsTest(CoreTestMixin):
         user = auth.get_user(client)
         assert user.is_authenticated
 
-    def test_post(self, monkeypatch, client, password, profile):
+    def test_post(self, monkeypatch, client, profile, password):
         """
         Tests:
         - post with logged-in user returns 302 redirect
@@ -88,25 +88,22 @@ class CoreAbstractViewsTest(CoreTestMixin):
         - test download page returns 200 and zip file content
         - test logged out user can view outputs page
         """
-        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
-
-        self.login_client(client, profile.user, password)
-        resp = client.post(self.project.app_url, data=self.inputs_ok())
-        assert resp.status_code == 302  # redirect
-        idx = resp.url[:-1].rfind("/")
-        slug = resp.url[(idx + 1) : -1]
-        assert resp.url == f"{self.project.app_url}{slug}/"
-
-        # test get ouputs page
-        resp = client.get(resp.url)
-        assert resp.status_code == 200
+        slug = self.post_data(monkeypatch, client, self.inputs_ok(), profile, password)
 
         # test ouptut download
+        resp = client.get(f"{self.project.app_url}{slug}/")
+        assert resp.status_code == 200
+
+    def test_download_results(self, monkeypatch, client, profile, password):
+        slug = self.post_data(monkeypatch, client, self.inputs_ok(), profile, password)
         resp = client.get(f"{self.project.app_url}{slug}/download/")
         assert resp.status_code == 200
         assert resp._headers["content-type"] == ("Content-Type", "application/zip")
+        resp = client.get(f"{self.project.app_url}{slug}/download/?raw_json=True")
+        assert resp.status_code == 200
+        assert resp._headers["content-type"] == ("Content-Type", "text/plain")
 
-    def test_edit_page(self, monkeypatch, client, password, profile):
+    def test_edit_page(self, monkeypatch, client, profile, password):
         """
         Tests:
         - post with logged-in user returns 302 redirect
@@ -119,41 +116,17 @@ class CoreAbstractViewsTest(CoreTestMixin):
         in the same way as the browser. For now, ability to get the edit page
         is all that will be tested.
         """
-        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
-
-        self.login_client(client, profile.user, password)
-        resp = client.post(self.project.app_url, data=self.inputs_ok())
-        assert resp.status_code == 302  # redirect
-        idx = resp.url[:-1].rfind("/")
-        slug = resp.url[(idx + 1) : -1]
-        outputs_url = resp.url
-        assert outputs_url == f"{self.project.app_url}{slug}/"
-
-        # test get ouputs page
-        resp = client.get(outputs_url)
-        assert resp.status_code == 200
-
+        slug = self.post_data(monkeypatch, client, self.inputs_ok(), profile, password)
         # test get edit page
-        edit_resp = client.get(f"{outputs_url}edit/")
+        edit_resp = client.get(f"{self.project.app_url}{slug}/edit/")
         assert edit_resp.status_code == 200
 
-    def test_run_reporting(self, monkeypatch, client, password, profile):
+    def test_run_reporting(self, monkeypatch, client, profile, password):
         """
         Tests:
         - post run
         """
-        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
-
-        self.login_client(client, profile.user, password)
-        resp = client.post(self.project.app_url, data=self.inputs_ok())
-        assert resp.status_code == 302  # redirect
-        idx = resp.url[:-1].rfind("/")
-        slug = resp.url[(idx + 1) : -1]
-        assert resp.url == f"{self.project.app_url}{slug}/"
-
-        # test get ouputs page
-        resp = client.get(resp.url)
-        assert resp.status_code == 200
+        slug = self.post_data(monkeypatch, client, self.inputs_ok(), profile, password)
 
         output = Simulation.objects.get(model_pk=slug, project=self.project)
         assert output.owner
@@ -205,12 +178,64 @@ class CoreAbstractViewsTest(CoreTestMixin):
             assert resp.status_code == 302
             assert resp.url == f"/billing/update/?next={self.project.app_url}"
 
+    def test_push_in_detail(self, monkeypatch, client, profile, password):
+        """
+        Tests:
+        1. POST with logged-in user returns 302 redirect which means the sim
+           was kicked off.
+        2. Retrieve the simulation object and pass that to the mockcompute
+           class as a class attribute. (I know it's hacky.)
+        3. Do a POST to simulate an AJAX request from the loading page.
+           MockPushCompute mocks the request to the celery workers with
+           response indicating that the results are not ready, and pushes the
+           outputs via a PUT on the /outputs/api endpoint. The OutputsView
+           returns a 202 indicating that the results are not yet ready.
+        4. Check to make sure that the PUT was successful.
+        5. Do another AJAX like POST and make sure the outputs are found on the
+           simulation object and a 200 is returned.
+        """
+        slug = self.post_data(monkeypatch, client, self.inputs_ok(), profile, password)
+
+        # output should now be set!
+        sim = Simulation.objects.get(project=self.project, model_pk=slug)
+        assert sim.outputs["version"]
+        assert sim.outputs["outputs"]
+        assert sim.run_time
+        assert sim.project.run_cost(sim.run_time, adjust=True) > 0
+
+        sim_url = f"{self.project.app_url}{slug}/"
+        resp = client.post(sim_url)
+        assert resp.status_code == 200
+
     def test_sim_doesnt_exist_gives_404(self, db, client):
         """
         Test get sim results that don't exist throws a 404.
         """
         resp = client.get(f"{self.project.app_url}/100000/")
         assert resp.status_code == 404
+
+    def post_data(self, monkeypatch, client, inputs, profile, password):
+        self.mockcompute.client = client
+        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
+
+        self.login_client(client, profile.user, password)
+        resp = client.post(self.project.app_url, data=inputs)
+        assert resp.status_code == 302  # redirect
+        idx = resp.url[:-1].rfind("/")
+        slug = resp.url[(idx + 1) : -1]
+        sim_url = resp.url
+        assert sim_url == f"{self.project.app_url}{slug}/"
+
+        # Pass the sim object to the Compute instance via a class attribute.
+        sim = Simulation.objects.get(project=self.project, model_pk=slug)
+        self.mockcompute.sim = sim
+
+        # test get ouputs page
+        resp = client.post(resp.url)
+        # redirect since the outputs have only just been set.
+        assert resp.status_code == 202
+
+        return slug
 
 
 def read_outputs(outputs_name):
@@ -235,11 +260,33 @@ def sponsored_matchups(db):
     matchups.save()
 
 
+@pytest.mark.usefixtures("sponsored_matchups")
+class TestMatchupsV0Sponsored(CoreAbstractViewsTest):
+    class MatchupsMockCompute(MockCompute):
+        outputs = read_outputs("Matchups_v0")
+
+    owner = "hdoupe"
+    title = "Matchups"
+    mockcompute = MatchupsMockCompute
+
+    def inputs_ok(self):
+        inputs = super().inputs_ok()
+        upstream_inputs = {"pitcher": "Max Scherzer"}
+        return dict(inputs, **upstream_inputs)
+
+    def outputs_ok(self):
+        return read_outputs("Matchups_1")
+
+    @property
+    def provided_free(self):
+        return True
+
+
 @pytest.mark.requires_stripe
 @pytest.mark.usefixtures("unsponsored_matchups")
-class TestMatchups(CoreAbstractViewsTest):
+class TestMatchupsV1(CoreAbstractViewsTest):
     class MatchupsMockCompute(MockCompute):
-        outputs = read_outputs("Matchups_1")
+        outputs = read_outputs("Matchups_v1")
 
     owner = "hdoupe"
     title = "Matchups"
@@ -259,9 +306,9 @@ class TestMatchups(CoreAbstractViewsTest):
 
 
 @pytest.mark.usefixtures("sponsored_matchups")
-class TestMatchupsSponsored(CoreAbstractViewsTest):
+class TestMatchupsV1Sponsored(CoreAbstractViewsTest):
     class MatchupsMockCompute(MockCompute):
-        outputs = read_outputs("Matchups_1")
+        outputs = read_outputs("Matchups_v1")
 
     owner = "hdoupe"
     title = "Matchups"
@@ -278,75 +325,6 @@ class TestMatchupsSponsored(CoreAbstractViewsTest):
     @property
     def provided_free(self):
         return True
-
-
-@pytest.mark.usefixtures("sponsored_matchups")
-class TestPush(CoreTestMixin):
-    class MatchupsMockPushCompute(MockPushCompute):
-        outputs = read_outputs("Matchups_1")
-
-    owner = "hdoupe"
-    title = "Matchups"
-    mockcompute = MatchupsMockPushCompute
-
-    def inputs_ok(self):
-        inputs = super().inputs_ok()
-        upstream_inputs = {"pitcher": "Max Scherzer"}
-        return dict(inputs, **upstream_inputs)
-
-    def outputs_ok(self):
-        return read_outputs("Matchups_1")
-
-    @property
-    def provided_free(self):
-        return True
-
-    def test_post(self, monkeypatch, client, password, profile):
-        """
-        Tests:
-        1. POST with logged-in user returns 302 redirect which means the sim
-           was kicked off.
-        2. Retrieve the simulation object and pass that to the mockcompute
-           class as a class attribute. (I know it's hacky.)
-        3. Do a POST to simulate an AJAX request from the loading page.
-           MockPushCompute mocks the request to the celery workers with
-           response indicating that the results are not ready, and pushes the
-           outputs via a PUT on the /outputs/api endpoint. The OutputsView
-           returns a 202 indicating that the results are not yet ready.
-        4. Check to make sure that the PUT was successful.
-        5. Do another AJAX like POST and make sure the outputs are found on the
-           simulation object and a 200 is returned.
-        """
-        # Set client as a class attribute.
-        self.mockcompute.client = client
-        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
-
-        self.login_client(client, profile.user, password)
-        resp = client.post(self.project.app_url, data=self.inputs_ok())
-        assert resp.status_code == 302  # redirect
-        idx = resp.url[:-1].rfind("/")
-        slug = resp.url[(idx + 1) : -1]
-        sim_url = resp.url
-        assert sim_url == f"{self.project.app_url}{slug}/"
-
-        # Pass the sim object to the Compute instance via a class attribute.
-        sim = Simulation.objects.get(project=self.project, model_pk=slug)
-        self.mockcompute.sim = sim
-
-        # test get ouputs page
-        resp = client.post(resp.url)
-        # redirect since the outputs have only just been set.
-        assert resp.status_code == 202
-
-        # output should now be set!
-        sim = Simulation.objects.get(project=self.project, model_pk=slug)
-        assert sim.outputs
-        assert sim.aggr_outputs
-        assert sim.run_time
-        assert sim.project.run_cost(sim.run_time, adjust=True) > 0
-
-        resp = client.post(sim_url)
-        assert resp.status_code == 200
 
 
 def test_404_owner_title_view(db, client):

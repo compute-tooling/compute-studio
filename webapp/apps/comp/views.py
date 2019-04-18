@@ -314,8 +314,8 @@ class RecordOutputsMixin(ChargeRunMixin):
         sim.meta_data = data["meta"]
         # successful run
         if data["status"] == "SUCCESS":
-            print(data["result"].keys())
             sim.outputs = data["result"]
+            print(sim.outputs["version"], sim.outputs.keys())
             sim.save()
         # failed run, exception is caught
         else:
@@ -388,7 +388,6 @@ class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
             kwargs["title"],
         )
         self.object = self.get_object(model_pk, username, title)
-        print(self.object.outputs)
         if self.object.outputs or self.object.aggr_outputs:
             return self.render_outputs(request)
         elif self.object.traceback is not None:
@@ -488,48 +487,26 @@ class OutputsDownloadView(GetOutputsObjectMixin, View):
         self.object = self.get_object(
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
+        if not self.object.outputs:
+            raise Http404
+        return {"v0": self.render_v0, "v1": self.render_v1}[
+            self.object.outputs["version"]
+        ](request)
 
-        if (
-            not (self.object.outputs or self.object.aggr_outputs)
-            or self.object.traceback
-        ):
-            return redirect(self.object)
-
+    def render_v0(self, request):
         # option to download the raw JSON for testing purposes.
         if request.GET.get("raw_json", False):
-            raw_json = json.dumps(
-                {
-                    "meta": self.object.meta_data,
-                    "result": {
-                        "outputs": self.object.outputs,
-                        "aggr_outputs": self.object.aggr_outputs,
-                    },
-                    "status": "SUCCESS",  # keep success hardcoded for now.
-                },
-                indent=4,
+            return self.render_json()
+        downloadables = list(
+            itertools.chain.from_iterable(
+                output["downloadable"] for output in self.object.outputs["outputs"]
             )
-            resp = HttpResponse(raw_json, content_type="text/plain")
-            resp[
-                "Content-Disposition"
-            ] = f"attachment; filename={self.object.json_filename()}"
-            return resp
-
-        try:
-            downloadables = list(
-                itertools.chain.from_iterable(
-                    output["downloadable"] for output in self.object.outputs
-                )
+        )
+        downloadables += list(
+            itertools.chain.from_iterable(
+                output["downloadable"] for output in self.object.outputs["aggr_outputs"]
             )
-            downloadables += list(
-                itertools.chain.from_iterable(
-                    output["downloadable"] for output in self.object.aggr_outputs
-                )
-            )
-        except KeyError:
-            raise Http404
-        if not downloadables:
-            raise Http404
-
+        )
         s = BytesIO()
         z = ZipFile(s, mode="w")
         for i in downloadables:
@@ -539,5 +516,33 @@ class OutputsDownloadView(GetOutputsObjectMixin, View):
         resp[
             "Content-Disposition"
         ] = f"attachment; filename={self.object.zip_filename()}"
-        s.close()
+        return resp
+
+    def render_v1(self, request):
+        if request.GET.get("raw_json", False):
+            return self.render_json()
+        zip_loc = self.object.outputs["outputs"]["downloadable"]["ziplocation"]
+        endpoint = s3like.OBJ_STORAGE_EDGE.replace("https://", "")
+        url = f"https://{s3like.OBJ_STORAGE_BUCKET}.{endpoint}/{zip_loc}"
+        zip_resp = requests.get(url)
+        zip_data = BytesIO(zip_resp.content)
+        resp = HttpResponse(zip_data.getvalue(), content_type="application/zip")
+        resp[
+            "Content-Disposition"
+        ] = f"attachment; filename={self.object.zip_filename()}"
+        return resp
+
+    def render_json(self):
+        raw_json = json.dumps(
+            {
+                "meta": self.object.meta_data,
+                "result": self.object.outputs,
+                "status": "SUCCESS",  # keep success hardcoded for now.
+            },
+            indent=4,
+        )
+        resp = HttpResponse(raw_json, content_type="text/plain")
+        resp[
+            "Content-Disposition"
+        ] = f"attachment; filename={self.object.json_filename()}"
         return resp
