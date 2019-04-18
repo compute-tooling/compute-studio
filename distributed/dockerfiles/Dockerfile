@@ -9,6 +9,6 @@ COPY requirements.txt home/distributed
 
 RUN conda update conda
 RUN conda config --append channels conda-forge
-RUN conda install python=3.6
+RUN conda install python=3.6 pip
 
 WORKDIR /home/distributed

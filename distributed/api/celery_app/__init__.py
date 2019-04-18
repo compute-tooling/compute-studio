@@ -5,10 +5,12 @@ import traceback
 from collections import defaultdict
 
 import requests
-
 from celery import Celery
 from celery.signals import task_postrun
 from celery.result import AsyncResult
+
+import s3like
+
 
 COMP_URL = os.environ.get("COMP_URL")
 COMP_API_USER = os.environ.get("COMP_API_USER")
@@ -18,6 +20,8 @@ CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379"
 CELERY_RESULT_BACKEND = os.environ.get(
     "CELERY_RESULT_BACKEND", "redis://localhost:6379"
 )
+
+OUTPUTS_VERSION = os.environ.get("OUTPUTS_VERSION")
 
 task_routes = {
     # '{project_name}_tasks.*': {'queue': '{project_name}_queue'},
@@ -41,11 +45,20 @@ celery_app.conf.update(
 def task_wrapper(func):
     @functools.wraps(func)
     def f(*args, **kwargs):
+        task = args[0]
+        task_id = task.request.id
         start = time.time()
         traceback_str = None
         res = defaultdict(dict)
         try:
-            res["result"] = func(*args, **kwargs)
+            outputs = func(*args, **kwargs)
+            if task.name.endswith("sim"):
+                version = outputs.pop("version", OUTPUTS_VERSION)
+                if version != "v0":
+                    outputs = s3like.write_to_s3like(task_id, outputs)
+                res["result"] = {"outputs": outputs, "version": version}
+            else:
+                res["result"] = outputs
         except Exception as e:
             traceback_str = traceback.format_exc()
         finish = time.time()

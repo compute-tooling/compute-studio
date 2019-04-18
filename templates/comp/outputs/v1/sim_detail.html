@@ -16,9 +16,10 @@
         <div class="jumbotron shadow" style="background-color:white;">
           <h1 class="card-title">{{result_header}}</h1>
           <div class="row">
-            {% if object.outputs %}
+
+            {% if outputs %}
             <div class="col-md-12" id="aggr-totals-container">
-                {% for output in object.outputs.renderable %}
+                {% for output in outputs.renderable %}
                 <div class="card card-body card-inner text-center">
                   <h4>{{output.title}}</h4>
                   {% if output.media_type == 'bokeh' %}
@@ -86,5 +87,13 @@
   </div>
 <script src="{% static 'js/core.js' %}"></script>
 
+{% endblock %}
 
+{% block below_body %}
+<script>
+  // Placeholder for loading graphics.
+	$(document).ready(function() {
+    $(".loading").remove();
+  });
+</script>
 {% endblock %}

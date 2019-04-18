@@ -2,8 +2,11 @@ import itertools
 from io import BytesIO
 from zipfile import ZipFile
 import json
+import time
+import os
 
 from bokeh.resources import CDN
+import requests
 
 from django.utils import timezone
 from django.db import models
@@ -20,6 +23,8 @@ from django.core.mail import send_mail
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+
+import s3like
 
 from webapp.settings import DEBUG
 
@@ -38,6 +43,9 @@ from .submit import handle_submission, BadPost
 from .tags import TAGS
 from .exceptions import AppError
 from .serializers import OutputsSerializer
+
+
+OBJ_STORAGE_URL = os.environ.get("OBJ_STORAGE_URL")
 
 
 class InputsMixin:
@@ -306,6 +314,7 @@ class RecordOutputsMixin(ChargeRunMixin):
         sim.meta_data = data["meta"]
         # successful run
         if data["status"] == "SUCCESS":
+            print(data["result"].keys())
             sim.outputs = data["result"]
             sim.save()
         # failed run, exception is caught
@@ -379,21 +388,9 @@ class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
             kwargs["title"],
         )
         self.object = self.get_object(model_pk, username, title)
+        print(self.object.outputs)
         if self.object.outputs or self.object.aggr_outputs:
-            return render(
-                request,
-                "comp/sim_detail.html",
-                {
-                    "object": self.object,
-                    "result_header": "Results",
-                    "bokeh_scripts": {
-                        "cdn_js": CDN.js_files[0],
-                        "cdn_css": CDN.css_files[0],
-                        "widget_js": CDN.js_files[1],
-                        "widget_css": CDN.css_files[1],
-                    },
-                },
-            )
+            return self.render_outputs(request)
         elif self.object.traceback is not None:
             return self.fail(model_pk, username, title)
         else:
@@ -414,26 +411,6 @@ class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
                 self.object.traceback = error_contents
                 self.object.save()
                 return self.fail(model_pk, username, title)
-            elif job_ready == "YES":
-                try:
-                    results = compute.get_results(job_id)
-                except Exception as e:
-                    self.object.traceback = str(e)
-                    self.object.save()
-                    return self.fail(model_pk, username, title)
-                self.record_outputs(self.object, results)
-                if results["status"] != "SUCCESS":
-                    return self.fail(model_pk, username, title)
-                else:
-                    return render(
-                        request,
-                        "comp/sim_detail.html",
-                        {
-                            "object": self.object,
-                            "result_header": "Results",
-                            "tags": TAGS[self.object.project.title],
-                        },
-                    )
             else:
                 if request.method == "POST":
                     # if not ready yet, insert number of minutes remaining
@@ -445,6 +422,43 @@ class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
                 else:
                     context = {"eta": "100", "origEta": "0"}
                     return render(request, "comp/not_ready.html", context)
+
+    def render_outputs(self, request):
+        return {"v0": self.render_v0, "v1": self.render_v1}[
+            self.object.outputs["version"]
+        ](request)
+
+    def render_v0(self, request):
+        return render(
+            request,
+            "comp/outputs/v0/sim_detail.html",
+            {
+                "object": self.object,
+                "result_header": "Results",
+                "tags": TAGS[self.object.project.title],
+            },
+        )
+
+    def render_v1(self, request):
+        s = time.time()
+        rem_outputs = {}
+        outputs = s3like.read_from_s3like(self.object.outputs["outputs"])
+        f = time.time()
+        return render(
+            request,
+            "comp/outputs/v1/sim_detail.html",
+            {
+                "outputs": outputs,
+                "object": self.object,
+                "result_header": "Results",
+                "bokeh_scripts": {
+                    "cdn_js": CDN.js_files[0],
+                    "cdn_css": CDN.css_files[0],
+                    "widget_js": CDN.js_files[1],
+                    "widget_css": CDN.css_files[1],
+                },
+            },
+        )
 
     def is_from_file(self):
         if hasattr(self.object.inputs, "raw_gui_field_inputs"):

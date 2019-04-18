@@ -35,6 +35,9 @@ services:
     depends_on:
       - redis
       - celerybase
+    environment:
+      - OBJ_STORAGE_ACCESS=${OBJ_STORAGE_ACCESS}
+      - OBJ_STORAGE_SECRET=${OBJ_STORAGE_SECRET}
     env_file:
       - ./dockerfiles/dev.env
     networks:
@@ -115,6 +118,8 @@ services:
       context: ./
       dockerfile: dockerfiles/Dockerfile.celerybase
     image: "comporg/celerybase"
+    depends_on:
+      - distributed
   distributed:
     build:
       context: ./

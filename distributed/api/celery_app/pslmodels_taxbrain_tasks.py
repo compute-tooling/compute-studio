@@ -75,4 +75,4 @@ def sim(**kwargs):
 
     #######################################
 
-    return run(**kwargs)
+    return {"outputs": run(**kwargs), "version": "v0"}
