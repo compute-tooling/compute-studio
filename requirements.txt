@@ -17,4 +17,4 @@ psycopg2-binary
 ipython
 markdown
 django-guardian
-s3like==1.0.2
+s3like==1.2.0

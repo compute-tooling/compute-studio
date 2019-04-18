@@ -7,4 +7,4 @@ flask
 toolz
 gunicorn
 boto3
-s3like==1.0.2
+s3like==1.2.0
