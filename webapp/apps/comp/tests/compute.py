@@ -8,6 +8,10 @@ from webapp.apps.comp.compute import Compute
 
 class MockCompute(Compute):
     outputs = None
+    client = None
+    sim = None
+    user = "comp-api-user"
+    password = "heyhey2222"
 
     def __init__(self, num_times_to_wait=0):
         self.count = 0
@@ -20,41 +24,6 @@ class MockCompute(Compute):
             mock.register_uri("POST", url, text=resp)
             self.last_posted = data
             return Compute.remote_submit_job(self, url, data, timeout)
-
-    def remote_query_job(self, url, params):
-        with requests_mock.Mocker() as mock:
-            if self.num_times_to_wait > 0:
-                text = "NO"
-            else:
-                text = "YES"
-            mock.register_uri("GET", url, text=text)
-            self.num_times_to_wait -= 1
-            return Compute.remote_query_job(self, url, params)
-
-    def remote_get_job(self, url, params):
-        self.count += 1
-        with requests_mock.Mocker() as mock:
-            mock.register_uri("GET", url, text=self.outputs)
-            return Compute.remote_get_job(self, url, params)
-
-    def reset_count(self):
-        """
-        reset worker node count
-        """
-        self.count = 0
-
-
-class MockPushCompute(MockCompute):
-    """
-    Simulates a query to the celery workers where the result is not ready.
-    Then, does a PUT to set the outputs on the simulation objects. The
-    necessary parameters are passed via the class attributes below.
-    """
-
-    client = None
-    sim = None
-    user = "comp-api-user"
-    password = "heyhey2222"
 
     def remote_query_job(self, url, params):
         # Need to login as the comp-api-user
@@ -71,3 +40,15 @@ class MockPushCompute(MockCompute):
             text = "NO"
             mock.register_uri("GET", url, text=text)
             return Compute.remote_query_job(self, url, params)
+
+    def remote_get_job(self, url, params):
+        self.count += 1
+        with requests_mock.Mocker() as mock:
+            mock.register_uri("GET", url, text=self.outputs)
+            return Compute.remote_get_job(self, url, params)
+
+    def reset_count(self):
+        """
+        reset worker node count
+        """
+        self.count = 0

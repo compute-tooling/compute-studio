@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<link rel='stylesheet' href={{bokeh_scripts.cdn_css|safe}}>
+<script type="text/javascript" src={{bokeh_scripts.cdn_js|safe}}></script>
+<link
+  href={{bokeh_scripts.widget_css|safe}}
+  rel="stylesheet">
+<script type="text/javascript" src={{bokeh_scripts.widget_js|safe}}></script>
+{% endblock %}
+
+{% block content %}
+  <br>
+  <div id="table-drilldown-container">
+    <div>
+        <div class="jumbotron shadow" style="background-color:white;">
+          <h1 class="card-title">{{result_header}}</h1>
+          <div class="row">
+
+            {% if outputs %}
+            <div class="col-md-12" id="aggr-totals-container">
+                {% for output in outputs.renderable %}
+                <div class="card card-body card-inner text-center">
+                  <h4>{{output.title}}</h4>
+                  {% if output.media_type == 'bokeh' %}
+                    {% include 'comp/outputs/bokeh.html' with output=output %}
+                  {% elif output.media_type == 'table' %}
+                    {% include 'comp/outputs/table.html' with output=output %}
+                  {% endif %}
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+          <div class="card card-body card-inner">
+              <div style="padding:.1rem">
+                <button
+                  class="btn collapse-button inverse-btn-match-nav w-50 mx-auto"
+                  type="button"
+                  data-toggle="collapse"
+                  data-target="#results-collapse"
+                  aria-expanded="true"
+                  aria-controls="results-collapse"
+                  style="display:block;padding:10px;">
+                  View inputs
+                </button>
+                <div class="collapse" id="results-collapse">
+                  <div class="card card-body card-inner">
+                      <ul>
+                      <li>
+                        <ul class="list-unstyled">
+                        <li><p><i> Inputs for section: </i> <code>meta-parameters</code></p></li>
+                        <li><pre><code class="block">{{object.inputs.pretty_meta_parameters}}</code></li></pre>
+                        </ul>
+                      </li>
+                      {% for sect, jsonobj in object.inputs.inputs_file.items %}
+                        <li>
+                        <ul class="list-unstyled">
+                        <li><p><i> Inputs for section: </i> <code>{{sect}}</code></p></li>
+                        <li><pre><code class="block">{{jsonobj}}</code></li></pre>
+                        </ul>
+                        </li>
+                      {% endfor %}
+                      <ul>
+                  </div>
+                </div>
+              </div>
+              <div style="padding:.1rem;">
+                <a href="{{ object.get_absolute_edit_url }}" class="btn inverse-btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Edit inputs</a>
+              </div>
+              <div style="padding:.1rem;">
+                <a href="{{ object.get_absolute_download_url }}" class="btn inverse-btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Download results</a>
+              </div>
+          </div>
+      </div>
+      </div>
+        <div class="card card-body card-outer">
+          <div style="padding:.1rem;">
+            <a href="{{ object.get_absolute_download_url }}" class="btn btn-lg btn-match-nav w-50 mx-auto" style="display:block; margin:0.5rem;">Download Results</a>
+          </div>
+          <div style="padding:.1rem;">
+            <a href="{{ object.get_absolute_download_url }}?raw_json=True" class="btn btn-sm inverse-btn-match-nav w-50 mx-auto" style="display:block;margin:0.5rem;">Download raw JSON</a>
+          </div>
+        </div>
+    </div>
+  </div>
+<script src="{% static 'js/core.js' %}"></script>
+
+{% endblock %}
+
+{% block below_body %}
+<script>
+  // Placeholder for loading graphics.
+	$(document).ready(function() {
+    $(".loading").remove();
+  });
+</script>
+{% endblock %}

@@ -6,8 +6,7 @@ FROM comporg/celerybase
 RUN pip install -r requirements.txt
 # Edit Dockerfile here for installing necessary packages, copying files, etc.
 ######################
-RUN conda install -c pslmodels "taxbrain>=0.2.2" pip
-RUN pip install boto3
+RUN conda install -c pslmodels taxbrain "taxcalc==1.2.0"
 ######################
 
 

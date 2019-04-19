@@ -67,11 +67,11 @@
         <div class="jumbotron shadow" style="background-color:white;">
           <h1 class="card-title">{{result_header}}</h1>
           <div class="row">
-            {% if object.aggr_outputs %}
+            {% if object.outputs.aggr_outputs %}
             <div class="col-md-12" id="aggr-totals-container">
               <div class="card card-body card-inner">
                 {% include "comp/select_tags.html" with tags=tags.aggr_tags only %}
-                {% for x in object.aggr_outputs %}
+                {% for x in object.outputs.aggr_outputs %}
                 <div class="aggr-output"
                       {% for key, value in x.tags.items %}
                         data-tag-{{ key }}="{{ value }}"
@@ -129,7 +129,7 @@
       </div>
         <div class="card card-body card-outer">
         <div class="row">
-          {% if object.outputs %}
+          {% if object.outputs.outputs %}
           <div class="col-md-8 col-md-push-2" id="table-select-container">
             <div class="card">
               <div class="card-header">
@@ -167,11 +167,11 @@
         {% endif %}
         </div>
         <div class="row">
-          {% if object.outputs %}
+          {% if object.outputs.outputs %}
           <div class="col-md-12" id="table-container">
             <div class="card">
                 <div class="card-body" style="overflow: scroll">
-                  {% for x in object.outputs %}
+                  {% for x in object.outputs.outputs %}
                   <div class="output"
                        data-dimension="{{ x.dimension }}"
                        {% for key, value in x.tags.items %}

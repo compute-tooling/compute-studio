@@ -141,7 +141,9 @@ class Simulation(models.Model):
     @cached_property
     def dimension(self):
         # return unique values set at the dimension level.
-        return list({item["dimension"] for item in self.outputs if item["dimension"]})
+        return list(
+            {item["dimension"] for item in self.outputs["outputs"] if item["dimension"]}
+        )
 
     @property
     def effective_cost(self):

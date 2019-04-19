@@ -3,9 +3,9 @@ import time
 from api.celery_app import celery_app, task_wrapper
 
 
-@celery_app.task(name="hdoupe_matchups_tasks.inputs_get", soft_time_limit=10)
+@celery_app.task(name="hdoupe_matchups_tasks.inputs_get", soft_time_limit=10, bind=True)
 @task_wrapper
-def inputs_get(**kwargs):
+def inputs_get(self, **kwargs):
 
     #######################################
     # code snippet
@@ -19,9 +19,11 @@ def inputs_get(**kwargs):
     return package_defaults(**kwargs)
 
 
-@celery_app.task(name="hdoupe_matchups_tasks.inputs_parse", soft_time_limit=10)
+@celery_app.task(
+    name="hdoupe_matchups_tasks.inputs_parse", soft_time_limit=10, bind=True
+)
 @task_wrapper
-def inputs_parse(**kwargs):
+def inputs_parse(self, **kwargs):
 
     #######################################
     # code snippet
@@ -40,9 +42,9 @@ def inputs_parse(**kwargs):
     return parse_user_inputs(**kwargs)
 
 
-@celery_app.task(name="hdoupe_matchups_tasks.sim", soft_time_limit=60)
+@celery_app.task(name="hdoupe_matchups_tasks.sim", soft_time_limit=60, bind=True)
 @task_wrapper
-def sim(**kwargs):
+def sim(self, **kwargs):
 
     #######################################
     # code snippet
