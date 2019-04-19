@@ -314,11 +314,12 @@ class RecordOutputsMixin(ChargeRunMixin):
         sim.meta_data = data["meta"]
         # successful run
         if data["status"] == "SUCCESS":
+            sim.status = "SUCCESS"
             sim.outputs = data["result"]
-            print(sim.outputs["version"], sim.outputs.keys())
             sim.save()
         # failed run, exception is caught
         else:
+            sim.status = "FAIL"
             sim.traceback = data["traceback"]
             sim.save()
 
@@ -335,7 +336,8 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
             if ser.is_valid():
                 data = ser.validated_data
                 sim = get_object_or_404(Simulation, job_id=data["job_id"])
-                self.record_outputs(sim, data)
+                if sim.status == "PENDING":
+                    self.record_outputs(sim, data)
                 return Response(status=status.HTTP_200_OK)
             else:
                 return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -402,12 +404,13 @@ class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
                 return self.fail(model_pk, username, title)
             # something happened and the exception was not caught
             if job_ready == "FAIL":
-                result = compute.get_results(job_id, job_failure=True)
-                if not result["traceback"]:
-                    error_msg = "Error: stack trace for this error is " "unavailable"
-                val_err_idx = error_msg.rfind("Error")
-                error_contents = error_msg[val_err_idx:].replace(" ", "&nbsp;")
-                self.object.traceback = error_contents
+                result = compute.get_results(job_id)
+                if result["traceback"]:
+                    traceback_ = result["traceback"]
+                else:
+                    traceback_ = "Error: The traceback for this error is unavailable."
+                self.object.traceback = traceback_
+                self.object.status = "WORKER_FAILURE"
                 self.object.save()
                 return self.fail(model_pk, username, title)
             else:
@@ -441,7 +444,8 @@ class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
     def render_v1(self, request):
         s = time.time()
         rem_outputs = {}
-        outputs = s3like.read_from_s3like(self.object.outputs["outputs"])
+        renderable = {"renderable": self.object.outputs["outputs"]["renderable"]}
+        outputs = s3like.read_from_s3like(renderable)
         f = time.time()
         return render(
             request,

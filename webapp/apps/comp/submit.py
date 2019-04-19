@@ -136,6 +136,7 @@ class Save:
         """
         # create OutputUrl object
         runmodel = Simulation()
+        runmodel.status = "PENDING"
         runmodel.job_id = submit.submitted_id
         runmodel.inputs = submit.model
         runmodel.owner = getattr(submit.request.user, "profile", None)

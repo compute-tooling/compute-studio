@@ -6,10 +6,11 @@ import pytest
 from django.contrib import auth
 from django.urls import reverse
 
+from webapp.apps.billing.models import UsageRecord
 from webapp.apps.users.models import Project, Profile
 
 from webapp.apps.comp.models import Simulation
-from .compute import MockCompute
+from .compute import MockCompute, MockComputeWorkerFailure
 
 
 User = auth.get_user_model()
@@ -31,9 +32,6 @@ class CoreTestMixin:
     def inputs_ok(self):
         return {"has_errors": False}
 
-    def outputs_ok(self):
-        raise NotImplementedError()
-
     @property
     def project(self):
         if getattr(self, "_project", None) is None:
@@ -41,6 +39,31 @@ class CoreTestMixin:
                 owner__user__username=self.owner, title=self.title
             )
         return self._project
+
+    def post_data(self, monkeypatch, client, inputs, profile, password, do_checks=True):
+        self.mockcompute.client = client
+        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
+
+        self.login_client(client, profile.user, password)
+        resp = client.post(self.project.app_url, data=inputs)
+        assert resp.status_code == 302  # redirect
+        idx = resp.url[:-1].rfind("/")
+        slug = resp.url[(idx + 1) : -1]
+        sim_url = resp.url
+        assert sim_url == f"{self.project.app_url}{slug}/"
+
+        if do_checks:
+            # Pass the sim object to the Compute instance via a class attribute.
+            sim = Simulation.objects.get(project=self.project, model_pk=slug)
+            self.mockcompute.sim = sim
+            assert sim.status == "PENDING"
+
+            # test get ouputs page
+            resp = client.post(resp.url)
+            # redirect since the outputs have only just been set.
+            assert resp.status_code == 202
+
+        return slug
 
 
 @pytest.mark.django_db
@@ -93,6 +116,8 @@ class CoreAbstractViewsTest(CoreTestMixin):
         # test ouptut download
         resp = client.get(f"{self.project.app_url}{slug}/")
         assert resp.status_code == 200
+        sim = Simulation.objects.get(project=self.project, model_pk=slug)
+        assert sim.status == "SUCCESS"
 
     def test_download_results(self, monkeypatch, client, profile, password):
         slug = self.post_data(monkeypatch, client, self.inputs_ok(), profile, password)
@@ -127,16 +152,34 @@ class CoreAbstractViewsTest(CoreTestMixin):
         - post run
         """
         slug = self.post_data(monkeypatch, client, self.inputs_ok(), profile, password)
-
-        output = Simulation.objects.get(model_pk=slug, project=self.project)
-        assert output.owner
-        assert output.project
-        assert output.project.server_cost
-        assert output.project.run_cost(output.run_time, adjust=True) > 0
-        assert output.run_time > 0
+        sim = Simulation.objects.get(model_pk=slug, project=self.project)
+        assert sim.owner
+        assert sim.project
+        assert sim.project.server_cost
+        assert sim.project.run_cost(sim.run_time, adjust=True) > 0
+        assert sim.run_time > 0
 
         if self.provided_free:
-            assert output.sponsor is not None
+            assert sim.sponsor is not None
+
+        usage_record_count = UsageRecord.objects.count()
+        curr_output = sim.outputs
+        client.login(username="comp-api-user", password="heyhey2222")
+        new_outputs = dict(
+            json.loads(self.mockcompute.outputs),
+            **{
+                "job_id": sim.job_id,
+                "result": {"version": "v1", "outputs": {"hello": "world"}},
+            },
+        )
+        resp = client.put(
+            "/outputs/api/", data=new_outputs, content_type="application/json"
+        )
+        assert resp.status_code == 200
+        sim = Simulation.objects.get(model_pk=slug, project=self.project)
+        assert sim.outputs == curr_output
+        # make sure that usage records are not added with duplicate PUT
+        assert usage_record_count == UsageRecord.objects.count()
 
     def test_post_wo_login(self, monkeypatch, client):
         """
@@ -214,29 +257,6 @@ class CoreAbstractViewsTest(CoreTestMixin):
         resp = client.get(f"{self.project.app_url}/100000/")
         assert resp.status_code == 404
 
-    def post_data(self, monkeypatch, client, inputs, profile, password):
-        self.mockcompute.client = client
-        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
-
-        self.login_client(client, profile.user, password)
-        resp = client.post(self.project.app_url, data=inputs)
-        assert resp.status_code == 302  # redirect
-        idx = resp.url[:-1].rfind("/")
-        slug = resp.url[(idx + 1) : -1]
-        sim_url = resp.url
-        assert sim_url == f"{self.project.app_url}{slug}/"
-
-        # Pass the sim object to the Compute instance via a class attribute.
-        sim = Simulation.objects.get(project=self.project, model_pk=slug)
-        self.mockcompute.sim = sim
-
-        # test get ouputs page
-        resp = client.post(resp.url)
-        # redirect since the outputs have only just been set.
-        assert resp.status_code == 202
-
-        return slug
-
 
 def read_outputs(outputs_name):
     curr = os.path.abspath(os.path.dirname(__file__))
@@ -274,9 +294,6 @@ class TestMatchupsV0Sponsored(CoreAbstractViewsTest):
         upstream_inputs = {"pitcher": "Max Scherzer"}
         return dict(inputs, **upstream_inputs)
 
-    def outputs_ok(self):
-        return read_outputs("Matchups_1")
-
     @property
     def provided_free(self):
         return True
@@ -297,9 +314,6 @@ class TestMatchupsV1(CoreAbstractViewsTest):
         upstream_inputs = {"pitcher": "Max Scherzer"}
         return dict(inputs, **upstream_inputs)
 
-    def outputs_ok(self):
-        return read_outputs("Matchups_1")
-
     @property
     def provided_free(self):
         return False
@@ -319,8 +333,78 @@ class TestMatchupsV1Sponsored(CoreAbstractViewsTest):
         upstream_inputs = {"pitcher": "Max Scherzer"}
         return dict(inputs, **upstream_inputs)
 
-    def outputs_ok(self):
-        return read_outputs("Matchups_1")
+    @property
+    def provided_free(self):
+        return True
+
+
+@pytest.mark.usefixtures("sponsored_matchups")
+class TestMatchupsV1Fail(CoreTestMixin):
+    class MatchupsMockCompute(MockCompute):
+        outputs = read_outputs("Matchups_v1_fail")
+
+    owner = "hdoupe"
+    title = "Matchups"
+    mockcompute = MatchupsMockCompute
+
+    def test_post(self, monkeypatch, client, profile, password):
+        """
+        Tests:
+        - post with logged-in user returns 302 redirect
+        - test render results page returns 200
+        - test download page returns 200 and zip file content
+        - test logged out user can view outputs page
+        """
+        slug = self.post_data(monkeypatch, client, self.inputs_ok(), profile, password)
+
+        # test ouptut download
+        resp = client.get(f"{self.project.app_url}{slug}/")
+        assert resp.status_code == 200
+        sim = Simulation.objects.get(project=self.project, model_pk=slug)
+        assert sim.status == "FAIL"
+        assert sim.run_time > 0
+
+    def inputs_ok(self):
+        inputs = super().inputs_ok()
+        upstream_inputs = {"pitcher": "Max Scherzer"}
+        return dict(inputs, **upstream_inputs)
+
+    @property
+    def provided_free(self):
+        return True
+
+
+@pytest.mark.usefixtures("sponsored_matchups")
+class TestMatchupsV1WorkerFailure(CoreTestMixin):
+    class MatchupsMockCompute(MockComputeWorkerFailure):
+        pass
+
+    owner = "hdoupe"
+    title = "Matchups"
+    mockcompute = MatchupsMockCompute
+
+    def test_post(self, monkeypatch, client, profile, password):
+        """
+        Tests:
+        - Do POST where the worker fails and a PUT that updates the outputs
+          is not completed.
+        - Check that status is `WORKER_FAILURE`.
+        """
+        slug = self.post_data(
+            monkeypatch, client, self.inputs_ok(), profile, password, do_checks=False
+        )
+
+        # test ouptut download
+        resp = client.get(f"{self.project.app_url}{slug}/")
+        assert resp.status_code == 200
+        sim = Simulation.objects.get(project=self.project, model_pk=slug)
+        assert sim.status == "WORKER_FAILURE"
+        assert sim.run_time == 0
+
+    def inputs_ok(self):
+        inputs = super().inputs_ok()
+        upstream_inputs = {"pitcher": "Max Scherzer"}
+        return dict(inputs, **upstream_inputs)
 
     @property
     def provided_free(self):

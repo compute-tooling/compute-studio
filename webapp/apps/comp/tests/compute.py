@@ -52,3 +52,16 @@ class MockCompute(Compute):
         reset worker node count
         """
         self.count = 0
+
+
+class MockComputeWorkerFailure(MockCompute):
+    next_response = None
+    outputs = json.dumps({"status": "WORKER_FAILURE", "traceback": "Error: whoops"})
+
+    def remote_query_job(self, url, params):
+        self.client = None
+        self.sim = None
+        with requests_mock.Mocker() as mock:
+            text = "FAIL"
+            mock.register_uri("GET", url, text=text)
+            return Compute.remote_query_job(self, url, params)
