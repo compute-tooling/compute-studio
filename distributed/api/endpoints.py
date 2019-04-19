@@ -94,7 +94,7 @@ def results():
         return json.dumps(async_result.result)
     elif async_result.failed():
         print("traceback", async_result.traceback)
-        return {"status": "UNHANDLED FAIL", "traceback": async_result.traceback}
+        return {"status": "WORKER_FAILURE", "traceback": async_result.traceback}
     else:
         resp = make_response("not ready", 202)
         return resp

@@ -106,6 +106,16 @@ class Simulation(models.Model):
     webapp_vers = models.CharField(blank=True, default=None, null=True, max_length=50)
     model_pk = models.IntegerField()
 
+    status = models.CharField(
+        choices=(
+            ("PENDING", "Pending"),
+            ("SUCCESS", "Success"),
+            ("FAIL", "Fail"),
+            ("WORKER_FAILURE", "Worker Failure"),
+        ),
+        max_length=20,
+    )
+
     objects = SimulationManager()
 
     def get_absolute_url(self):
