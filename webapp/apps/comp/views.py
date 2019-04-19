@@ -444,7 +444,8 @@ class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
     def render_v1(self, request):
         s = time.time()
         rem_outputs = {}
-        outputs = s3like.read_from_s3like(self.object.outputs["outputs"])
+        renderable = {"renderable": self.object.outputs["outputs"]["renderable"]}
+        outputs = s3like.read_from_s3like(renderable)
         f = time.time()
         return render(
             request,
