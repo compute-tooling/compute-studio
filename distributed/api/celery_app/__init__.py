@@ -2,7 +2,6 @@ import os
 import time
 import functools
 import traceback
-from collections import defaultdict
 
 import requests
 from celery import Celery
@@ -49,14 +48,16 @@ def task_wrapper(func):
         task_id = task.request.id
         start = time.time()
         traceback_str = None
-        res = defaultdict(dict)
+        res = {}
         try:
             outputs = func(*args, **kwargs)
             if task.name.endswith("sim"):
                 version = outputs.pop("version", OUTPUTS_VERSION)
-                if version != "v0":
+                if version == "v0":
+                    res["result"] = dict(outputs, **{"version": version})
+                else:
                     outputs = s3like.write_to_s3like(task_id, outputs)
-                res["result"] = {"outputs": outputs, "version": version}
+                    res["result"] = {"outputs": outputs, "version": version}
             else:
                 res["result"] = outputs
         except Exception as e:

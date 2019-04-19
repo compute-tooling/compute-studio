@@ -10,9 +10,11 @@ AWS_ACCESS_KEY_ID = os.environ.pop("AWS_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.environ.pop("AWS_SECRET_ACCESS_KEY", "")
 
 
-@celery_app.task(name="pslmodels_taxbrain_tasks.inputs_get", soft_time_limit=10)
+@celery_app.task(
+    name="pslmodels_taxbrain_tasks.inputs_get", soft_time_limit=10, bind=True
+)
 @task_wrapper
-def inputs_get(**kwargs):
+def inputs_get(self, **kwargs):
 
     #######################################
     # code snippet
@@ -27,9 +29,11 @@ def inputs_get(**kwargs):
     return package_defaults(**kwargs)
 
 
-@celery_app.task(name="pslmodels_taxbrain_tasks.inputs_parse", soft_time_limit=10)
+@celery_app.task(
+    name="pslmodels_taxbrain_tasks.inputs_parse", soft_time_limit=10, bind=True
+)
 @task_wrapper
-def inputs_parse(**kwargs):
+def inputs_parse(self, **kwargs):
 
     #######################################
     # code snippet
@@ -45,9 +49,9 @@ def inputs_parse(**kwargs):
     return parse_user_inputs(**kwargs)
 
 
-@celery_app.task(name="pslmodels_taxbrain_tasks.sim", soft_time_limit=400)
+@celery_app.task(name="pslmodels_taxbrain_tasks.sim", soft_time_limit=400, bind=True)
 @task_wrapper
-def sim(**kwargs):
+def sim(self, **kwargs):
     import boto3
     import pandas as pd
 
@@ -75,4 +79,4 @@ def sim(**kwargs):
 
     #######################################
 
-    return {"outputs": run(**kwargs), "version": "v0"}
+    return dict(run(**kwargs), **{"version": "v0"})
