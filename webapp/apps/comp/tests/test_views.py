@@ -386,10 +386,9 @@ class TestMatchupsV1WorkerFailure(CoreTestMixin):
     def test_post(self, monkeypatch, client, profile, password):
         """
         Tests:
-        - post with logged-in user returns 302 redirect
-        - test render results page returns 200
-        - test download page returns 200 and zip file content
-        - test logged out user can view outputs page
+        - Do POST where the worker fails and a PUT that updates the outputs
+          is not completed.
+        - Check that status is `WORKER_FAILURE`.
         """
         slug = self.post_data(
             monkeypatch, client, self.inputs_ok(), profile, password, do_checks=False
