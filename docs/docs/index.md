@@ -1,6 +1,6 @@
-# COMP Docs
+# Developer Documentation
 
-Welcome to COMP CE's development documentation!
+Welcome to **COMP CE's** developer documentation!
 
 ## Publish
 
