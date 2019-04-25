@@ -8,3 +8,6 @@ pages:
     - Ouptuts: 'publish/outputs.md'
     - Endpoints: 'publish/endpoints.md'
     - Environment: 'publish/environment.md'
+
+highlightjs: true
+hljs_style: github

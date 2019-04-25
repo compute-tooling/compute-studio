@@ -42,11 +42,11 @@ For example, the meta parameters for [PSLmodels/Tax-Brain](https://www.compmodel
 
 COMP uses this information to build a set of controls that dictate which values of the default model parameters are shown:
 
-![alt text](https://user-images.githubusercontent.com/9206065/56739962-eee28780-673d-11e9-836c-21efdced5f3b.png)
+[![alt text](https://user-images.githubusercontent.com/9206065/56739962-eee28780-673d-11e9-836c-21efdced5f3b.png)](https://www.compmodels.org/PSLmodels/Tax-Brain/)
 
 ### Default Parameters
 
-The GUI is built directly from the default parameters. Here's an example using a subset of the inputs from the [hdoupe/Matchups](https://www.compmodels.org/hdoupe/Matchups/) app:
+The GUI is built directly from the default parameters. Here's an example using a subset of the inputs from [hdoupe/Matchups](https://www.compmodels.org/hdoupe/Matchups/):
 
 
 
@@ -94,4 +94,4 @@ The GUI is built directly from the default parameters. Here's an example using a
 
 COMP builds the model parameter GUI directly from this data:
 
-![alt text](https://user-images.githubusercontent.com/9206065/56739963-eee28780-673d-11e9-8692-59f58af2b5ff.png)
+[![alt text](https://user-images.githubusercontent.com/9206065/56739963-eee28780-673d-11e9-8692-59f58af2b5ff.png)](https://www.compmodels.org/hdoupe/Matchups/)
