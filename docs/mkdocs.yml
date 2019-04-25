@@ -1,0 +1,10 @@
+site_name: COMP
+
+pages:
+  - Home: 'index.md'
+  - Publish:
+    - Guide: 'publish/guide.md'
+    - Inputs: 'publish/inputs.md'
+    - Ouptuts: 'publish/outputs.md'
+    - Endpoints: 'publish/endpoints.md'
+    - Environment: 'publish/environment.md'
