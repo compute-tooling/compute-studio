@@ -109,10 +109,12 @@
                 <div class="col-md-9" role="main">
 
 <h1 id="python-functions">Python functions</h1>
-<p>The modeling project must provide a Python function for each of the following tasks:
-- <strong>Model Parameters</strong>: Get the default Model Parameters and their meta data.
-- <strong>Parse user adjustments</strong>: Do model-specific formatting and validation on user adjustments.
-- <strong>Run simulation</strong>: Submit the user adjustments (or none) to the model to run the simulation.</p>
+<p>The modeling project must provide a Python function for each of the following tasks:</p>
+<ul>
+<li><strong>Model Parameters</strong>: Get the default Model Parameters and their meta data.</li>
+<li><strong>Parse user adjustments</strong>: Do model-specific formatting and validation on user adjustments.</li>
+<li><strong>Run simulation</strong>: Submit the user adjustments (or none) to the model to run the simulation.</li>
+</ul>
 <h2 id="model-parameters">Model Parameters</h2>
 <p>Accepts Meta Parameters, if they are being utilized. Returns data in the form specified in the <a href="/publish/inputs/">inputs page</a>.</p>
 <ul>
@@ -121,12 +123,12 @@
 <pre><code class="python">import matchups
 
 
-def package_defaults(**meta_parameters):
-    metaparams = matchups.MetaParams(array_first=True)
-    metaparams.adjust(meta_parameters)
+def package_defaults(meta_params):
+    metaparams = matchups.MetaParams()
+    metaparams.adjust(meta_params)
     params = matchups.MatchupsParams()
     params.set_state(use_full_data=metaparams.use_full_data)
-    return params.specification(meta_data=True)
+    return {&quot;matchup&quot;: params.specification(meta_data=True)}
 </code></pre>
 
 <p>Here's what you get after filling in this function:
@@ -145,10 +147,10 @@ def package_defaults(**meta_parameters):
 
 <p>The function should return:</p>
 <p>Warnings/Errors:</p>
-<pre><code class="json">    {
+<pre><code class="python">    {
         &quot;matchup&quot;: {
             &quot;errors&quot;: {
-                &quot;pitcher&quot;: [&quot;Pitcher \&quot;Not a Real Pitcher\&quot; not allowed&quot;]
+                &quot;pitcher&quot;: ['Pitcher &quot;Not a Real Pitcher&quot; not allowed']
             },
             &quot;warnings&quot;: {}
         }
@@ -160,7 +162,7 @@ def package_defaults(**meta_parameters):
 </ul>
 <pre><code class="python">import matchups
 
-def validate_user_inputs(params, errors_warnings, **meta_parameters):
+def validate_user_inputs(meta_params, model_params, errors_warnings):
     # validate the parameters.
     adjustments = params[&quot;matchup&quot;]
     params = MatchupsParams()
@@ -174,20 +176,13 @@ def validate_user_inputs(params, errors_warnings, **meta_parameters):
 <h2 id="run-simulation">Run simulation</h2>
 <p>Accepts Meta Parameters values and model parameters. Returns outputs as specified in the <a href="/publish/outputs/">outputs page</a></p>
 <p>COMP submits the model's meta parameters and the parsed and formatted user adjustments:</p>
-<pre><code>    {
-        &quot;meta_parameter1&quot;: value,
-        &quot;meta_parameter2&quot;: value,
-        ...
-        &quot;user_mods&quot;: {
-            &quot;major_section1&quot;: {
-            ...
-            },
-            &quot;major_section2&quot;: {
-            ...
-            },
-            ...
-        }
+<pre><code>{
+    &quot;meta_params&quot;: {},
+    &quot;model_params&quot;: {
+        &quot;some_major_section&quot;: {},
+        &quot;another_major_section&quot;: {}
     }
+}
 </code></pre>
 
 <ul>
@@ -195,15 +190,13 @@ def validate_user_inputs(params, errors_warnings, **meta_parameters):
 </ul>
 <pre><code class="python">import matchups
 
-def run(**run_args):
-    meta_data = run_args[&quot;meta_params&quot;]
-    model_parameters = run_args[&quot;model_parameters&quot;]
-    result = matchups.get_matchup(meta_data, model_parameters)
+def run(meta_params, model_params):
+    result = matchups.get_matchup(meta_params, model_params)
     return result
 </code></pre>
 
 <p>Here's what you get after filling in this function:</p>
-<p><img alt="alt text" src="https://user-images.githubusercontent.com/9206065/56739963-eee28780-673d-11e9-8692-59f58af2b5ff.png" /></p></div>
+<p><a href="https://www.compmodels.org/hdoupe/Matchups/16/"><img alt="alt text" src="https://user-images.githubusercontent.com/9206065/56739964-ef7b1e00-673d-11e9-9d91-2f7227d09897.png" /></a></p></div>
         </div>
 
         <footer class="col-md-12">

@@ -117,7 +117,7 @@
       &quot;media_type&quot;: &quot;PNG&quot;,
       &quot;title&quot;: &quot;My PNG&quot;,
       &quot;data&quot;: &quot;picture bytes here...&quot;
-        }
+    }
   ],
   &quot;downloadable&quot;: [
     {
@@ -251,9 +251,9 @@ output = {
 <li><strong>JSON format:</strong></li>
 </ul>
 <pre><code class="json">{
-  &quot;media_type&quot;: &quot;table&quot;,
-  &quot;title&quot;: &quot;My Table&quot;,
-  &quot;data&quot;: &quot;&lt;table&gt;...&lt;/table&gt;&quot;
+  &quot;media_type&quot;: &quot;CSV&quot;,
+  &quot;title&quot;: &quot;My CSV&quot;,
+  &quot;data&quot;: &quot;comma,sep,values\n&quot;
 }
 </code></pre>
 
@@ -266,8 +266,8 @@ df = pd.DataFrame({&quot;a&quot;: [1, 2, 3], &quot;b&quot;: [4, 5, 6]})
 csv = df.to_csv()
 
 output = {
-    &quot;media_type&quot;: &quot;table&quot;,
-    &quot;title&quot;: &quot;My Table&quot;,
+    &quot;media_type&quot;: &quot;CSV&quot;,
+    &quot;title&quot;: &quot;My CSV&quot;,
     &quot;data&quot;: csv
 }
 </code></pre></div>
