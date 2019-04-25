@@ -16,8 +16,8 @@ For example, the meta parameters for [PSLmodels/Tax-Brain](https://www.compmodel
         "labels": {},
         "additional_members": {}
     },
-    "year": {
-        "title": "Year",
+    "start_year": {
+        "title": "Start Year",
         "description": "Year for parameters.",
         "type": "int",
         "value": 2019,
@@ -42,7 +42,7 @@ For example, the meta parameters for [PSLmodels/Tax-Brain](https://www.compmodel
 
 COMP uses this information to build a set of controls that dictate which values of the default model parameters are shown:
 
-![Screen Shot 2019-04-24 at 3.59.28 PM](/Users/henrydoupe/Desktop/Screenshots/Screen Shot 2019-04-24 at 3.59.28 PM.png)
+![alt text](https://user-images.githubusercontent.com/9206065/56739962-eee28780-673d-11e9-836c-21efdced5f3b.png)
 
 ### Default Parameters
 
@@ -94,4 +94,4 @@ The GUI is built directly from the default parameters. Here's an example using a
 
 COMP builds the model parameter GUI directly from this data:
 
-![Screen Shot 2019-04-24 at 4.10.18 PM](/Users/henrydoupe/Desktop/Screenshots/Screen Shot 2019-04-24 at 4.10.18 PM.png)
+![alt text](https://user-images.githubusercontent.com/9206065/56739963-eee28780-673d-11e9-8692-59f58af2b5ff.png)

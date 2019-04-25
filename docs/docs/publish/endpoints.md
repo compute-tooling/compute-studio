@@ -25,7 +25,7 @@ def package_defaults(**meta_parameters):
 ```
 
 Here's what you get after filling in this function:
-![alt text](https://user-images.githubusercontent.com/9206065/51710288-a3152a80-1ff6-11e9-8dcb-16f39f7e9e66.png)
+![alt text](https://user-images.githubusercontent.com/9206065/56739963-eee28780-673d-11e9-8692-59f58af2b5ff.png)
 
 Validate user adjustments
 --------------------------
@@ -73,7 +73,7 @@ def validate_user_inputs(params, errors_warnings, **meta_parameters):
 ```
 
 Here's what you get after filling in this function:
-![alt text](https://user-images.githubusercontent.com/9206065/51710289-a3152a80-1ff6-11e9-975d-ba3dfc2b35e9.png)
+![alt text](https://user-images.githubusercontent.com/9206065/56741151-48e44c80-6740-11e9-88a8-dcc5887a3187.png)
 
 
 Run simulation
@@ -100,10 +100,6 @@ COMP submits the model's meta parameters and the parsed and formatted user adjus
     }
 ```
 
-The function returns the results of the simulation:
-
-[Outputs schema](IOSCHEMA.md)
-
 - **Python Example**:
 
 ```python
@@ -118,4 +114,4 @@ def run(**run_args):
 
 Here's what you get after filling in this function:
 
-screenshot goes here...
+![alt text](https://user-images.githubusercontent.com/9206065/56739963-eee28780-673d-11e9-8692-59f58af2b5ff.png)
