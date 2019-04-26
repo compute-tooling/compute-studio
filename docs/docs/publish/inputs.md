@@ -12,10 +12,6 @@ For example, the meta parameters for [PSLmodels/Tax-Brain](https://www.compmodel
 
 ```json
 {
-    "schema": {
-        "labels": {},
-        "additional_members": {}
-    },
     "start_year": {
         "title": "Start Year",
         "description": "Year for parameters.",
@@ -35,7 +31,6 @@ For example, the meta parameters for [PSLmodels/Tax-Brain](https://www.compmodel
         "description": "Use entire data set or a 2% sample.",
         "type": "str",
         "value": true,
-        "validators": {}
     }
 }
 ```

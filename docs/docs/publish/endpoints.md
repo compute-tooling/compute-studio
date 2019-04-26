@@ -26,7 +26,7 @@ def package_defaults(meta_params):
 ```
 
 Here's what you get after filling in this function:
-![alt text](https://user-images.githubusercontent.com/9206065/56739963-eee28780-673d-11e9-8692-59f58af2b5ff.png)
+[![alt text](https://user-images.githubusercontent.com/9206065/56739963-eee28780-673d-11e9-8692-59f58af2b5ff.png)](https://www.compmodels.org/hdoupe/Matchups/)
 
 Validate user adjustments
 --------------------------
