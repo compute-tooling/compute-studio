@@ -6,8 +6,8 @@ from collections import defaultdict
 from api.celery_app import celery_app, task_wrapper
 
 
-AWS_ACCESS_KEY_ID = os.environ.pop("AWS_ACCESS_KEY_ID", "")
-AWS_SECRET_ACCESS_KEY = os.environ.pop("AWS_SECRET_ACCESS_KEY", "")
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
 
 
 @celery_app.task(
