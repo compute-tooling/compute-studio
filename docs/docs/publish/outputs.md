@@ -13,7 +13,7 @@ Projects should return outputs that are in the following format:
       "media_type": "PNG",
       "title": "My PNG",
       "data": "picture bytes here..."
-		}
+    }
   ],
   "downloadable": [
     {
@@ -162,9 +162,9 @@ output = {
 
 ```json
 {
-  "media_type": "table",
-  "title": "My Table",
-  "data": "<table>...</table>"
+  "media_type": "CSV",
+  "title": "My CSV",
+  "data": "comma,sep,values\n"
 }
 ```
 
@@ -177,9 +177,8 @@ df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 csv = df.to_csv()
 
 output = {
-    "media_type": "table",
-    "title": "My Table",
+    "media_type": "CSV",
+    "title": "My CSV",
     "data": csv
 }
 ```
-
