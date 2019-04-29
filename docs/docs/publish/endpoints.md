@@ -6,6 +6,8 @@ The modeling project must provide a Python function for each of the following ta
 - **Parse user adjustments**: Do model-specific formatting and validation on user adjustments.
 - **Run simulation**: Submit the user adjustments (or none) to the model to run the simulation.
 
+Once you've skimmed the criteria below, you can develop your functions against the [`compdevkit`](https://github.com/comp-org/Developer-Tools/) automated testing suite.
+
 Model Parameters
 ----------------------
 
