@@ -1,0 +1,27 @@
+{
+    "schema": {
+        "labels": {},
+        "additional_members": {}
+    },
+    "year": {
+        "title": "Year",
+        "description": "Year for parameters.",
+        "type": "int",
+        "value": 2019,
+        "validators": {"range": {"min": 2019, "max": 2027}}
+    },
+    "data_source": {
+        "title": "Data Source",
+        "description": "Data source can be PUF or CPS",
+        "type": "str",
+        "value": "PUF",
+        "validators": {"choice": {"choices": ["PUF", "CPS"]}}
+    },
+    "use_full_sample": {
+        "title": "Use Full Sample",
+        "description": "Use entire data set or a 2% sample.",
+        "type": "str",
+        "value": true,
+        "validators": {}
+    }
+}

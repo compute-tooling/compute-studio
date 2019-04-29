@@ -1,0 +1,38 @@
+{
+    "schema": {
+        "labels": {
+            "use_full_data": {"type": "bool", "validators": {}}
+        },
+        "additional_parameters": {
+            "section_1": {"type": "str", "number_dims": 0},
+            "section_2": {"type": "str", "number_dims": 0}
+        }
+    },
+    "start_date": {
+        "title": "Start Date",
+        "description": "Date to start pulling statcast information",
+        "section_1": "Date",
+        "section_2": "",
+        "notes": "If using the 2018 dataset, only use dates in 2018.",
+        "type": "date",
+        "value": [
+            {"use_full_data": true, "value": "2008-01-01"},
+            {"use_full_data": false, "value": "2018-01-01"}
+        ],
+        "validators": {"date_range": {"min": "2008-01-01", "max": "end_date"}}
+    },
+    "pitcher": {
+        "title": "Pitcher Name",
+        "description": "Name of pitcher to pull data on",
+        "section_1": "Parameters",
+        "section_2": "Pitcher",
+        "type": "str",
+        "value": "Clayton Kershaw",
+        "validators": {
+            "choice": {
+                "choices": ["Clayton Kershaw", "Jacob deGrom", "Justin Verlander"]
+            }
+        }
+    }
+}
+

@@ -1,0 +1,41 @@
+{
+    "media": [
+        {
+            "media_type": "bokeh",
+            "title": "some title",
+            "data": {
+                "javascript": "...",
+                "div": "..."
+            }
+        },
+        {
+            "media_type": "picture/video",
+            "title": "some title",
+            "data": {
+                "data": "picture/video data or s3 link"
+            }
+        }
+    ],
+    "top-level-table": [
+        {
+            "title": "Title to be displayed",
+            "data": "HTML table to render",
+            "downloadable": [
+                {
+                    "filename": "name of file",
+                    "data": "data here"
+                }
+            ]
+        }
+    ],
+    "downloadable": [
+        {
+            "filename": "name of file",
+            "data": "data here"
+        },
+        {
+            "filename": "name of another file",
+            "data": "other data here"
+        }
+    ]
+}

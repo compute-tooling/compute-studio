@@ -123,12 +123,16 @@
 <pre><code class="python">import matchups
 
 
-def package_defaults(meta_params):
-    metaparams = matchups.MetaParams()
-    metaparams.adjust(meta_params)
-    params = matchups.MatchupsParams()
-    params.set_state(use_full_data=metaparams.use_full_data)
-    return {&quot;matchup&quot;: params.specification(meta_data=True)}
+def get_inputs(meta_params_dict):
+    meta_params = MetaParams()
+    meta_params.adjust(meta_params_dict)
+    params = MatchupsParams()
+    spec = params.specification(
+        meta_data=True,
+        use_full_data=meta_params.use_full_data.tolist()
+    )
+    return meta_params.specification(meta_data=True), {&quot;matchup&quot;: spec}
+
 </code></pre>
 
 <p>Here's what you get after filling in this function:
@@ -162,11 +166,10 @@ def package_defaults(meta_params):
 </ul>
 <pre><code class="python">import matchups
 
-def validate_user_inputs(meta_params, model_params, errors_warnings):
-    # validate the parameters.
-    adjustments = params[&quot;matchup&quot;]
+def validate_inputs(meta_param_dict, adjustment, errors_warnings):
+    # matchups doesn't look at meta_param_dict for validating inputs.
     params = MatchupsParams()
-    params.adjust(adjustments, raise_errors=False)
+    params.adjust(adjustment[&quot;matchup&quot;], raise_errors=False)
     errors_warnings[&quot;matchup&quot;][&quot;errors&quot;].update(params.errors)
     return errors_warnings
 </code></pre>
@@ -190,8 +193,8 @@ def validate_user_inputs(meta_params, model_params, errors_warnings):
 </ul>
 <pre><code class="python">import matchups
 
-def run(meta_params, model_params):
-    result = matchups.get_matchup(meta_params, model_params)
+def get_matchup(meta_param_dict, adjustment):
+    result = matchups.get_matchup(meta_param_dict, adjustment)
     return result
 </code></pre>
 
