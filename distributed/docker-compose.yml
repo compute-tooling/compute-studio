@@ -22,7 +22,7 @@ services:
       - error_app_io
       - distributed
     networks:
-      - comp_comp-net
+      - comp-ce_comp-net
     volumes:
       - .:/home/distributed
 
@@ -38,7 +38,7 @@ services:
     env_file:
       - ./dockerfiles/dev.env
     networks:
-      - comp_comp-net
+      - comp-ce_comp-net
   hdoupe_matchups_io:
     build:
       context: ./
@@ -51,7 +51,7 @@ services:
     env_file:
       - ./dockerfiles/dev.env
     networks:
-      - comp_comp-net
+      - comp-ce_comp-net
 
   pslmodels_taxbrain_sim:
     build:
@@ -64,7 +64,7 @@ services:
       - redis
       - celerybase
     networks:
-      - comp_comp-net
+      - comp-ce_comp-net
   pslmodels_taxbrain_io:
     build:
       context: ./
@@ -77,7 +77,7 @@ services:
     env_file:
       - ./dockerfiles/dev.env
     networks:
-      - comp_comp-net
+      - comp-ce_comp-net
 
 ####################################################
   error_app_sim:
@@ -91,7 +91,7 @@ services:
     env_file:
       - ./dockerfiles/dev.env
     networks:
-      - comp_comp-net
+      - comp-ce_comp-net
   error_app_io:
     build:
       context: ./
@@ -104,7 +104,7 @@ services:
     env_file:
       - ./dockerfiles/dev.env
     networks:
-      - comp_comp-net
+      - comp-ce_comp-net
 
 ####################################################
   celerybase:
@@ -124,11 +124,11 @@ services:
   redis:
     image: redis
     networks:
-      - comp_comp-net
+      - comp-ce_comp-net
 
 ####################################################
 networks:
-  comp_comp-net:
+  comp-ce_comp-net:
     external: true
 
 volumes:
