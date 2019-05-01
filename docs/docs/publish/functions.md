@@ -6,6 +6,8 @@ The modeling project must provide a Python function for each of the following ta
 - **Parse user adjustments**: Do model-specific formatting and validation on user adjustments.
 - **Run simulation**: Submit the user adjustments (or none) to the model to run the simulation.
 
+Once you've skimmed the criteria below, you can develop your functions against the [`compdevkit`](https://github.com/comp-org/Developer-Tools/) automated testing suite.
+
 Model Parameters
 ----------------------
 
@@ -17,12 +19,16 @@ Accepts Meta Parameters, if they are being utilized. Returns data in the form sp
 import matchups
 
 
-def package_defaults(meta_params):
-    metaparams = matchups.MetaParams()
-    metaparams.adjust(meta_params)
-    params = matchups.MatchupsParams()
-    params.set_state(use_full_data=metaparams.use_full_data)
-    return {"matchup": params.specification(meta_data=True)}
+def get_inputs(meta_params_dict):
+    meta_params = MetaParams()
+    meta_params.adjust(meta_params_dict)
+    params = MatchupsParams()
+    spec = params.specification(
+        meta_data=True,
+        use_full_data=meta_params.use_full_data.tolist()
+    )
+    return meta_params.specification(meta_data=True), {"matchup": spec}
+
 ```
 
 Here's what you get after filling in this function:
@@ -64,11 +70,10 @@ Warnings/Errors:
 ```python
 import matchups
 
-def validate_user_inputs(meta_params, model_params, errors_warnings):
-    # validate the parameters.
-    adjustments = params["matchup"]
+def validate_inputs(meta_param_dict, adjustment, errors_warnings):
+    # matchups doesn't look at meta_param_dict for validating inputs.
     params = MatchupsParams()
-    params.adjust(adjustments, raise_errors=False)
+    params.adjust(adjustment["matchup"], raise_errors=False)
     errors_warnings["matchup"]["errors"].update(params.errors)
     return errors_warnings
 ```
@@ -99,8 +104,8 @@ COMP submits the model's meta parameters and the parsed and formatted user adjus
 ```python
 import matchups
 
-def run(meta_params, model_params):
-    result = matchups.get_matchup(meta_params, model_params)
+def get_matchup(meta_param_dict, adjustment):
+    result = matchups.get_matchup(meta_param_dict, adjustment)
     return result
 ```
 

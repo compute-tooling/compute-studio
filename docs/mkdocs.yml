@@ -6,7 +6,7 @@ pages:
     - Guide: 'publish/guide.md'
     - Inputs: 'publish/inputs.md'
     - Ouptuts: 'publish/outputs.md'
-    - Endpoints: 'publish/endpoints.md'
+    - Functions: 'publish/functions.md'
     - Environment: 'publish/environment.md'
 
 highlightjs: true
