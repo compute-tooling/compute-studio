@@ -21,12 +21,6 @@ CURRENT_PATH = os.path.abspath(os.path.dirname(__file__))
 
 
 @pytest.fixture
-def schema_def_path():
-    pwd = os.path.abspath(os.path.dirname(__file__))
-    return os.path.join(pwd, "schema.json")
-
-
-@pytest.fixture
 def defaults_spec_path():
     pwd = os.path.abspath(os.path.dirname(__file__))
     return os.path.join(pwd, "defaults.json")
@@ -35,7 +29,6 @@ def defaults_spec_path():
 @pytest.fixture
 def TestParams(schema_def_path, defaults_spec_path):
     class _TestParams(Parameters):
-        schema = schema_def_path
         defaults = defaults_spec_path
 
     return _TestParams
@@ -47,6 +40,7 @@ def pt_metaparam(TestParams):
         {
             "dim0": {
                 "title": "dim 0",
+                "description": "ex metaparam",
                 "type": "str",
                 "default": "zero",
                 "validators": {"choice": {"choices": ["zero", "one"]}},
@@ -62,7 +56,7 @@ def test_make_params(TestParams):
 
 def test_param(TestParams, pt_metaparam):
     params = TestParams()
-    mp_inst = {mp.name: mp.default for mp in pt_metaparam.parameters}
+    mp_inst = pt_metaparam.validate({})
     spec = params.specification(meta_data=True, **mp_inst)
     for param, attrs in spec.items():
         param = ParamToolsParam(param, attrs, **mp_inst)
@@ -74,7 +68,7 @@ def test_param(TestParams, pt_metaparam):
 
 def test_make_field_types(TestParams, pt_metaparam):
     params = TestParams()
-    mp_inst = {mp.name: mp.default for mp in pt_metaparam.parameters}
+    mp_inst = pt_metaparam.validate({})
     spec = params.specification(meta_data=True, **mp_inst)
 
     param = ParamToolsParam("str_choice_param", spec["str_choice_param"])

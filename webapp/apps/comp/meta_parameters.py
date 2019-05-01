@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import Dict
 from django import forms
 
 from marshmallow import Schema, fields, validate, exceptions
@@ -10,33 +10,33 @@ from webapp.apps.comp.fields import coerce_bool
 
 @dataclass
 class MetaParameters:
-    parameters: List["MetaParameter"] = field(default_factory=list)
+    parameters: Dict[str, "MetaParameter"] = field(default_factory=dict)
 
-    def validate(self, fields):
+    def validate(self, fields: dict) -> dict:
         validated = {}
         if not self.parameters:
             return validated
-        for param in self.parameters:
+        for param_name, param_data in self.parameters.items():
             try:
-                cleaned = param.field.clean(fields.get(param.name))
+                cleaned = param_data.field.clean(fields.get(param_name))
             except (forms.ValidationError, KeyError) as e:
                 # fall back on default. deal with bad data in full validation.
-                cleaned = param.field.clean(param.default)
-            validated[param.name] = cleaned
+                cleaned = param_data.field.clean(param_data.value)
+            validated[param_name] = cleaned
         return validated
 
 
 @dataclass
 class MetaParameter:
-    name: str
     title: str
-    default: str
+    description: str
+    value: str
     field: forms.Field
 
 
-def translate_to_django(meta_parameters):
+def translate_to_django(meta_parameters: dict) -> MetaParameters:
     new_mp = {}
-    for name, data in meta_parameters["meta_parameters"].items():
+    for name, data in meta_parameters.items():
         if data["type"] == "str" and "choice" in data["validators"]:
             field = forms.ChoiceField(
                 choices=[(c, c) for c in data["validators"]["choice"]["choices"]]
@@ -55,5 +55,10 @@ def translate_to_django(meta_parameters):
             field = forms.TypedChoiceField(
                 coerce=coerce_bool, choices=list((i, i) for i in (True, False))
             )
-        new_mp[name] = dict(data, **{"djangofield": field})
-    return new_mp
+        new_mp[name] = MetaParameter(
+            title=data["title"],
+            description=data["description"],
+            value=data["value"],
+            field=field,
+        )
+    return MetaParameters(parameters=new_mp)
