@@ -45,13 +45,11 @@ def TestParams(schema_def_path, defaults_spec_path):
 def pt_metaparam(TestParams):
     return translate_to_django(
         {
-            "meta_parameters": {
-                "dim0": {
-                    "title": "dim 0",
-                    "type": "str",
-                    "default": "zero",
-                    "validators": {"choice": {"choices": ["zero", "one"]}},
-                }
+            "dim0": {
+                "title": "dim 0",
+                "type": "str",
+                "default": "zero",
+                "validators": {"choice": {"choices": ["zero", "one"]}},
             }
         }
     )

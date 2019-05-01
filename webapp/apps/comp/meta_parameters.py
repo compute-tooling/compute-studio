@@ -34,28 +34,8 @@ class MetaParameter:
     field: forms.Field
 
 
-class MetaParameterSchema(Schema):
-    title = fields.Str()
-    default = fields.Field()
-    _type = fields.Str(
-        required=True,
-        validate=validate.OneOf(choices=["str", "float", "int", "bool"]),
-        attribute="type",
-        data_key="type",
-    )
-    validators = fields.Nested(ValueValidatorSchema(), required=True)
-
-
-class MetaParametersSchema(Schema):
-    meta_parameters = fields.Dict(
-        keys=fields.Str(), values=fields.Nested(MetaParameterSchema)
-    )
-
-
 def translate_to_django(meta_parameters):
-    mpschema = MetaParametersSchema()
-    mpschema.load(meta_parameters)
-    parameters = []
+    new_mp = {}
     for name, data in meta_parameters["meta_parameters"].items():
         if data["type"] == "str" and "choice" in data["validators"]:
             field = forms.ChoiceField(
@@ -75,9 +55,5 @@ def translate_to_django(meta_parameters):
             field = forms.TypedChoiceField(
                 coerce=coerce_bool, choices=list((i, i) for i in (True, False))
             )
-        parameters.append(
-            MetaParameter(
-                name=name, title=data["title"], field=field, default=data["default"]
-            )
-        )
-    return MetaParameters(parameters=parameters)
+        new_mp[name] = dict(data, **{"djangofield": field})
+    return new_mp
