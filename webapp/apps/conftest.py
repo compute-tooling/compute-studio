@@ -63,14 +63,8 @@ def django_db_setup(django_db_setup, django_db_blocker):
         common = {
             "description": "[Matchups](https://github.com/hdoupe/Matchups) provides pitch data on pitcher and batter matchups.. Select a date range using the format YYYY-MM-DD. Keep in mind that Matchups only provides data on matchups going back to 2008. Two datasets are offered to run this model: one that only has the most recent season, 2018, and one that contains data on every single pitch going back to 2008. Next, select your favorite pitcher and some batters who he's faced in the past. Click submit to start analyzing the selected matchups!",
             "oneliner": "oneliner",
-            "inputs_style": "paramtools",
-            "meta_parameters": '{\n    "meta_parameters": {\n        "use_full_data": {\n            "type": "bool",\n            "title": "Use full data",\n            "default": true,\n            "validators": {}\n        }\n    }\n}',
-            "package_defaults": 'import matchups\r\n\r\ndef package_defaults(**meta_parameters):\r\n    return matchups.get_inputs(use_full_data=meta_parameters["use_full_data"])',
-            "parse_user_adjustments": 'import matchups\r\n\r\ndef parse_user_inputs(params, jsonparams, errors_warnings,\r\n                        **meta_parameters):\r\n    # parse the params, jsonparams, and errors_warnings further\r\n    use_full_data = meta_parameters["use_full_data"]\r\n    params, jsonparams, errors_warnings = matchups.parse_inputs(\r\n        params, jsonparams, errors_warnings, use_full_data==use_full_data)\r\n    return params, jsonparams, errors_warnings',
-            "run_simulation": 'import matchups\r\n\r\ndef run(**kwargs):\r\n    result = matchups.get_matchup(kwargs["use_full_data"], kwargs["user_mods"])\r\n    return result',
             "server_size": ["8,2"],
             "exp_task_time": 10,
-            "installation": "conda install pandas pyarrow bokeh paramtools -c pslmodels\r\npip install pybaseball matchups==0.3.5",
             "owner": modeler.profile,
             "server_cost": 0.1,
         }
@@ -231,6 +225,22 @@ def test_models(db, profile):
 
 
 ############################Core Fixtures###############################
+
+
+@pytest.fixture
+def meta_param_dict():
+    return {
+        "meta_parameters": {
+            "metaparam": {
+                "title": "Meta-Param",
+                "type": "int",
+                "default": 1,
+                "validators": {},
+            }
+        }
+    }
+
+
 @pytest.fixture
 def comp_inputs():
     path = os.path.abspath(os.path.dirname(__file__))
@@ -239,19 +249,8 @@ def comp_inputs():
 
 
 @pytest.fixture
-def meta_param():
-    return translate_to_django(
-        {
-            "meta_parameters": {
-                "metaparam": {
-                    "title": "Meta-Param",
-                    "type": "int",
-                    "default": 1,
-                    "validators": {},
-                }
-            }
-        }
-    )
+def meta_param(meta_param_dict):
+    return translate_to_django(meta_param_dict)
 
 
 @pytest.fixture

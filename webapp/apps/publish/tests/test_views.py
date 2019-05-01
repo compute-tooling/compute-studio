@@ -22,13 +22,7 @@ class TestPublishViews:
             "title": "New-Model",
             "oneliner": "oneliner",
             "description": "**Super** new!",
-            "package_defaults": "import newmodel",
-            "parse_user_adjustments": "import newmodel",
-            "run_simulation": "import newmodel",
             "server_size": [4, 8],
-            "installation": "install me",
-            "inputs_style": "paramtools",
-            "meta_parameters": "{}",
         }
         resp = client.post("/publish/api/", post_data)
         assert resp.status_code == 401
@@ -48,14 +42,8 @@ class TestPublishViews:
             "title": "Detail-Test",
             "oneliner": "oneliner",
             "description": "desc",
-            "package_defaults": "import me",
-            "parse_user_adjustments": "import me",
-            "run_simulation": "import me",
             "server_size": ["4", "2"],
             "exp_task_time": 20,
-            "installation": "install me",
-            "inputs_style": "paramtools",
-            "meta_parameters": {},
             "server_cost": Decimal("0.1"),
         }
         owner = Profile.objects.get(user__username="modeler")
@@ -72,13 +60,7 @@ class TestPublishViews:
             "title": "Used-for-testing",
             "oneliner": "oneliner",
             "description": "hello world",
-            "package_defaults": "import test",
-            "parse_user_adjustments": "import test",
-            "run_simulation": "import test",
             "server_size": [2, 4],
-            "installation": "install",
-            "inputs_style": "paramtools",
-            "meta_parameters": "{}",
         }
         # not logged in --> not authorized
         resp = client.put(

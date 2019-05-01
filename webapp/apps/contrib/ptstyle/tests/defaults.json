@@ -1,4 +1,26 @@
 {
+    "schema": {
+        "labels": {
+            "dim0": {
+                "type": "str",
+                "validators": {"choice": {"choices": ["zero",
+                                                    "one"]}}
+            },
+            "dim1": {
+                "type": "int",
+                "validators": {"range": {"min": 0, "max": 5}}
+            },
+            "dim2": {
+                "type": "int",
+                "validators": {"range": {"min": 0, "max": 2}}
+            }
+        },
+        "additional_members": {
+            "opt0": {"type": "str"},
+            "section_1": {"type": "str"},
+            "section_2": {"type": "str"}
+        }
+    },
     "min_int_param": {
         "title": "min integer parameter",
         "description": "Serves as minimum reference variable.",
@@ -7,16 +29,12 @@
         "section_2": "",
         "opt0": "an option",
         "type": "int",
-        "number_dims": 0,
         "value": [
             {"dim0": "zero", "dim1": 1, "value": 1},
             {"dim0": "zero", "dim1": 2, "value": 3},
             {"dim0": "one", "dim1": 2, "value": 2}
         ],
-        "validators": {"range": {"min": 0, "max": "max_int_param"}},
-        "out_of_range_minmsg": "",
-        "out_of_range_maxmsg": "",
-        "out_of_range_action": "stop"
+        "validators": {"range": {"min": 0, "max": "max_int_param"}}
     },
     "max_int_param": {
         "title": "max integer parameter",
@@ -26,16 +44,12 @@
         "section_2": "",
         "opt0": "an option",
         "type": "int",
-        "number_dims": 0,
         "value": [
             {"dim0": "zero", "dim1": 1, "value": 3},
             {"dim0": "zero", "dim1": 2, "value": 5},
             {"dim0": "one", "dim1": 2, "value": 4}
         ],
-        "validators": {"range": {"min": "min_int_param", "max": 10}},
-        "out_of_range_minmsg": "",
-        "out_of_range_maxmsg": "",
-        "out_of_range_action": "stop"
+        "validators": {"range": {"min": "min_int_param", "max": 10}}
     },
     "str_choice_param": {
         "title": "String Choice Param",
@@ -45,14 +59,10 @@
         "section_2": "",
         "opt0": "another option",
         "type": "str",
-        "number_dims": 0,
         "value": [
             {"value": "value0"}
         ],
-        "validators": {"choice": {"choices": ["value0", "value1"]}},
-        "out_of_range_minmsg": "",
-        "out_of_range_maxmsg": "",
-        "out_of_range_action": "stop"
+        "validators": {"choice": {"choices": ["value0", "value1"]}}
     },
     "date_param": {
         "title": "Date parameter",
@@ -62,14 +72,10 @@
         "section_2": "",
         "opt0": "another option",
         "type": "date",
-        "number_dims": 0,
         "value": [
             {"dim0": "zero", "dim1": 1, "value": "2018-01-15"}
         ],
-        "validators": {"range": {"min": "2018-01-01", "max": "2018-12-31"}},
-        "out_of_range_minmsg": "",
-        "out_of_range_maxmsg": "",
-        "out_of_range_action": "stop"
+        "validators": {"range": {"min": "2018-01-01", "max": "2018-12-31"}}
     },
     "date_min_param": {
         "title": "Date Min Param",
@@ -79,14 +85,10 @@
         "section_2": "",
         "opt0": "an option",
         "type": "date",
-        "number_dims": 0,
         "value": [
             {"dim0": "zero", "dim1": 1, "value": "2018-01-15"}
         ],
-        "validators": {"range": {"min": "2018-01-01", "max": "date_max_param"}},
-        "out_of_range_minmsg": "",
-        "out_of_range_maxmsg": "",
-        "out_of_range_action": "stop"
+        "validators": {"range": {"min": "2018-01-01", "max": "date_max_param"}}
     },
     "date_max_param": {
         "title": "Date max parameter",
@@ -96,14 +98,10 @@
         "section_2": "",
         "opt0": "an option",
         "type": "date",
-        "number_dims": 0,
         "value": [
             {"dim0": "zero", "dim1": 1, "value": "2018-01-15"}
         ],
-        "validators": {"range": {"min": "date_min_param", "max": "2018-12-31"}},
-        "out_of_range_minmsg": "",
-        "out_of_range_maxmsg": "",
-        "out_of_range_action": "stop"
+        "validators": {"range": {"min": "date_min_param", "max": "2018-12-31"}}
     },
     "int_array_param": {
         "title": "integer array parameter",
@@ -117,9 +115,6 @@
         "value": [
             {"dim0": "zero", "dim1": 1, "value": [1, 2, 3]}
         ],
-        "validators": {"range": {"min": 0, "max": 10}},
-        "out_of_range_minmsg": "",
-        "out_of_range_maxmsg": "",
-        "out_of_range_action": "stop"
+        "validators": {"range": {"min": 0, "max": 10}}
     }
 }

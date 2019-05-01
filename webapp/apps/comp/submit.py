@@ -77,7 +77,6 @@ class Submit:
             self.model.meta_parameters = self.valid_meta_params
             self.model.inputs_file = upstream_json_files
             self.model.errors_warnings = errors_warnings
-            self.model.inputs_style = self.project.inputs_style
             self.model.save()
 
     @property

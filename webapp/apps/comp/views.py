@@ -136,7 +136,7 @@ class InputsView(InputsMixin, View):
         project = self.projects.get(
             owner__user__username=kwargs["username"], title=kwargs["title"]
         )
-        ioclasses = register[project.inputs_style]
+        ioclasses = register["paramtools"]
         inputs_form = InputsForm(project, ioclasses)
         # set cleaned_data with is_valid call
         inputs_form.is_valid()
@@ -152,7 +152,7 @@ class InputsView(InputsMixin, View):
         project = self.projects.get(
             owner__user__username=kwargs["username"], title=kwargs["title"]
         )
-        ioclasses = register[project.inputs_style]
+        ioclasses = register["paramtools"]
 
         if request.POST.get("reset", ""):
             inputs_form = InputsForm(project, ioclasses, request.POST.dict())
@@ -266,7 +266,7 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
         project = self.object.project
-        ioclasses = register[project.inputs_style]
+        ioclasses = register["paramtools"]
 
         initial = {}
         for k, v in self.object.inputs.raw_gui_inputs.items():

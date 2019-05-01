@@ -43,7 +43,6 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
         project = self.get_object(**kwargs)
         serializer = PublishSerializer(project)
         data = serializer.data
-        data["meta_parameters"] = json.dumps(data["meta_parameters"], indent=4)
         return Response(data)
 
     def put(self, request, *args, **kwargs):

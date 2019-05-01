@@ -27,7 +27,7 @@ def defaults_spec_path():
 
 
 @pytest.fixture
-def TestParams(schema_def_path, defaults_spec_path):
+def TestParams(defaults_spec_path):
     class _TestParams(Parameters):
         defaults = defaults_spec_path
 
@@ -42,7 +42,7 @@ def pt_metaparam(TestParams):
                 "title": "dim 0",
                 "description": "ex metaparam",
                 "type": "str",
-                "default": "zero",
+                "value": "zero",
                 "validators": {"choice": {"choices": ["zero", "one"]}},
             }
         }
