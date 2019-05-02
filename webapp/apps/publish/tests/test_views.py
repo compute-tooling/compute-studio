@@ -53,13 +53,13 @@ class TestPublishViews:
         data = resp.json()
         serializer = PublishSerializer(project, data=data)
         assert serializer.is_valid()
-        assert serializer.validated_data == dict(exp, **{"meta_parameters": "{}"})
+        assert serializer.validated_data == exp
 
     def test_put_detail_api(self, client, test_models, profile, password):
         put_data = {
             "title": "Used-for-testing",
             "oneliner": "oneliner",
-            "description": "hello world",
+            "description": "hello world!",
             "server_size": [2, 4],
         }
         # not logged in --> not authorized
@@ -90,7 +90,7 @@ class TestPublishViews:
         project = Project.objects.get(
             title="Used-for-testing", owner__user__username="modeler"
         )
-        assert project.package_defaults == put_data["package_defaults"]
+        assert project.description == put_data["description"]
         assert project.status == "updating"
 
         # Description can't be empty.
@@ -102,7 +102,7 @@ class TestPublishViews:
         assert resp.status_code == 400
 
         # test add write_project permission allows update
-        put_data["package_defaults"] = "import helloworld"
+        put_data["description"] = "hello world!!"
         client.login(username=profile.user.username, password=password)
         resp = client.put(
             "/publish/api/modeler/Used-for-testing/detail/",
@@ -125,7 +125,7 @@ class TestPublishViews:
         project = Project.objects.get(
             title="Used-for-testing", owner__user__username="modeler"
         )
-        assert project.package_defaults == put_data["package_defaults"]
+        assert project.description == put_data["description"]
         remove_perm("write_project", profile.user, project)
         assert not profile.user.has_perm("write_project", project)
 

@@ -12,6 +12,5 @@ class PublishSerializer(serializers.ModelSerializer):
             "description",
             "server_size",
             "exp_task_time",
-            "installation",
             "server_cost",
         )
