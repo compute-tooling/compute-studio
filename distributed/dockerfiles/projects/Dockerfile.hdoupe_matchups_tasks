@@ -4,11 +4,20 @@ FROM comporg/celerybase
 # install packages here
 # install packages necessary for celery,
 RUN pip install -r requirements.txt
+
 # Edit Dockerfile here for installing necessary packages, copying files, etc.
 ######################
-RUN conda install pandas pyarrow bokeh paramtools==0.4.1 fastparquet python-snappy pip
-RUN pip install git+https://github.com/hdoupe/Matchups.git@1.0.0
+ENV arg 2
+ADD https://raw.githubusercontent.com/hdoupe/Matchups/master/compconfig/install.sh /home
+RUN bash /home/install.sh
+RUN pip install "git+https://github.com/hdoupe/Matchups.git#egg=compconfig&subdirectory=compconfig"
+ADD https://raw.githubusercontent.com/hdoupe/Matchups/master/compconfig/compconfig/tests/test_functions.py /home
+RUN pip install compdevkit
+RUN py.test /home/test_functions.py -v
 ######################
+
+ENV APP_NAME hdoupe_matchups_tasks
+ENV SIM_TIME_LIMIT 60
 
 
 # copy over necessary files for this project's celery app

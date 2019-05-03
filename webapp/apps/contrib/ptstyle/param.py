@@ -81,7 +81,7 @@ class ParamToolsParam(Param):
 
         """
         for value_object in value:
-            field_name, suffix = dims_to_string(
+            field_name, _ = dims_to_string(
                 self.name, value_object, self.meta_parameters
             )
             label = self.format_label(value_object)

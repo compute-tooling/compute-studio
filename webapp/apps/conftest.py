@@ -230,13 +230,12 @@ def test_models(db, profile):
 @pytest.fixture
 def meta_param_dict():
     return {
-        "meta_parameters": {
-            "metaparam": {
-                "title": "Meta-Param",
-                "type": "int",
-                "default": 1,
-                "validators": {},
-            }
+        "metaparam": {
+            "title": "Meta-Param",
+            "description": "meta param used for testing",
+            "type": "int",
+            "value": 1,
+            "validators": {},
         }
     }
 

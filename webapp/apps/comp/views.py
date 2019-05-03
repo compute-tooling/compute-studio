@@ -32,13 +32,11 @@ from webapp.apps.billing.models import SubscriptionItem, UsageRecord
 from webapp.apps.billing.utils import USE_STRIPE, ChargeRunMixin, has_payment_method
 from webapp.apps.users.models import Project, is_profile_active
 
-from webapp.apps.contrib.ioregister import register
-
 from .constants import WEBAPP_VERSION
 from .forms import InputsForm
 from .models import Simulation
 from .compute import Compute, JobFailError
-from .displayer import Displayer
+from .ioutils import get_ioutils
 from .submit import handle_submission, BadPost
 from .tags import TAGS
 from .exceptions import AppError
@@ -136,15 +134,13 @@ class InputsView(InputsMixin, View):
         project = self.projects.get(
             owner__user__username=kwargs["username"], title=kwargs["title"]
         )
-        ioclasses = register["paramtools"]
-        inputs_form = InputsForm(project, ioclasses)
+        ioutils = get_ioutils(project)
+        inputs_form = InputsForm(project, ioutils.displayer)
         # set cleaned_data with is_valid call
         inputs_form.is_valid()
         inputs_form.clean()
         context = self.project_context(request, project)
-        return self._render_inputs_form(
-            request, project, inputs_form, ioclasses, context
-        )
+        return self._render_inputs_form(request, project, inputs_form, ioutils, context)
 
     def post(self, request, *args, **kwargs):
         print("method=POST", request.POST)
@@ -152,23 +148,22 @@ class InputsView(InputsMixin, View):
         project = self.projects.get(
             owner__user__username=kwargs["username"], title=kwargs["title"]
         )
-        ioclasses = register["paramtools"]
-
+        ioutils = get_ioutils(project)
         if request.POST.get("reset", ""):
-            inputs_form = InputsForm(project, ioclasses, request.POST.dict())
+            inputs_form = InputsForm(project, ioutils.displayer, request.POST.dict())
             if inputs_form.is_valid():
                 inputs_form.clean()
             else:
-                inputs_form = InputsForm(project, ioclasses)
+                inputs_form = InputsForm(project, ioutils.displayer)
                 inputs_form.is_valid()
                 inputs_form.clean()
             context = self.project_context(request, project)
             return self._render_inputs_form(
-                request, project, inputs_form, ioclasses, context
+                request, project, inputs_form, ioutils, context
             )
 
         try:
-            result = handle_submission(request, project, ioclasses, compute)
+            result = handle_submission(request, project, ioutils, compute)
         except AppError as ae:
             try:
                 send_mail(
@@ -201,24 +196,25 @@ class InputsView(InputsMixin, View):
             valid_meta_params = result.submit.valid_meta_params
             has_errors = result.submit.has_errors
 
-        displayer = ioclasses.Displayer(project, ioclasses, **valid_meta_params)
+        ioutils.displayer.meta_parameters = valid_meta_params
         context = dict(
             form=inputs_form,
-            default_form=displayer.defaults(flat=False),
+            default_form=ioutils.displayer.defaults(flat=False),
             webapp_version=self.webapp_version,
             has_errors=self.has_errors,
             **self.project_context(request, project),
         )
         return render(request, self.template_name, context)
 
-    def _render_inputs_form(self, request, project, inputs_form, ioclasses, context):
+    def _render_inputs_form(self, request, project, inputs_form, ioutils, context):
         valid_meta_params = {}
-        for mp in project.parsed_meta_parameters.parameters:
-            valid_meta_params[mp.name] = inputs_form.cleaned_data[mp.name]
-        displayer = ioclasses.Displayer(project, ioclasses, **valid_meta_params)
+        parsed_meta_parameters = ioutils.displayer.parsed_meta_parameters()
+        for mp_name in parsed_meta_parameters.parameters:
+            valid_meta_params[mp_name] = inputs_form.cleaned_data[mp_name]
+        ioutils.displayer.meta_parameters = valid_meta_params
         context = dict(
             form=inputs_form,
-            default_form=displayer.defaults(flat=False),
+            default_form=ioutils.displayer.defaults(flat=False),
             webapp_version=self.webapp_version,
             has_errors=self.has_errors,
             **context,
@@ -266,41 +262,40 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
         project = self.object.project
-        ioclasses = register["paramtools"]
-
+        ioutils = get_ioutils(project)
+        parsed_meta_parameters = ioutils.displayer.parsed_meta_parameters()
         initial = {}
         for k, v in self.object.inputs.raw_gui_inputs.items():
             if v not in ("", None):
                 initial[k] = v
-        for mp in project.parsed_meta_parameters.parameters:
-            mp_val = self.object.inputs.meta_parameters.get(mp.name, None)
+        for mp_name in parsed_meta_parameters.parameters:
+            mp_val = self.object.inputs.meta_parameters.get(mp_name, None)
             if mp_val is not None:
-                initial[mp.name] = mp_val
+                initial[mp_name] = mp_val
 
-        inputs_form = InputsForm(project, ioclasses, initial=initial)
+        inputs_form = InputsForm(project, ioutils.displayer, initial=initial)
         # clean data with is_valid call.
         inputs_form.is_valid()
         # is_bound is turned off so that the `initial` data is displayed.
         # Note that form is validated and cleaned with is_bound call.
         inputs_form.is_bound = False
         context = self.project_context(request, project)
-        return self._render_inputs_form(
-            request, project, ioclasses, inputs_form, context
-        )
+        return self._render_inputs_form(request, project, ioutils, inputs_form, context)
 
     def post(self, request, *args, **kwargs):
         return HttpResponseNotFound("<h1>Post not allowed to edit page</h1>")
 
-    def _render_inputs_form(self, request, project, ioclasses, inputs_form, context):
+    def _render_inputs_form(self, request, project, ioutils, inputs_form, context):
         valid_meta_params = {}
-        for mp in project.parsed_meta_parameters.parameters:
-            valid_meta_params[mp.name] = (
-                inputs_form.initial.get(mp.name, None) or inputs_form[mp.name].data
+        parsed_meta_parameters = ioutils.displayer.parsed_meta_parameters()
+        for mp_name in parsed_meta_parameters.parameters:
+            valid_meta_params[mp_name] = (
+                inputs_form.initial.get(mp_name, None) or inputs_form[mp_name].data
             )
-        displayer = ioclasses.Displayer(project, ioclasses, **valid_meta_params)
+        ioutils.displayer.meta_parameters = valid_meta_params
         context = dict(
             form=inputs_form,
-            default_form=displayer.defaults(flat=False),
+            default_form=ioutils.displayer.defaults(flat=False),
             webapp_version=self.webapp_version,
             has_errors=self.has_errors,
             **context,

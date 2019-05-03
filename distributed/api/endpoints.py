@@ -12,7 +12,6 @@ from api.celery_app import hdoupe_matchups_tasks, pslmodels_taxbrain_tasks
 task_modules = {
     ("hdoupe", "Matchups"): hdoupe_matchups_tasks,
     ("PSLmodels", "Tax-Brain"): pslmodels_taxbrain_tasks,
-    # ("error", "app"): error_app_tasks
 }
 
 if os.environ.get("DEVELOP", ""):
@@ -29,7 +28,7 @@ client = redis.Redis.from_url(
 
 
 def sim_endpoint(compute_task):
-    print("sim endpoint")
+    print(f"sim endpoint {compute_task}")
     data = request.get_data()
     inputs = msgpack.loads(data, encoding="utf8", use_list=True)
     print("inputs", inputs)
@@ -40,7 +39,7 @@ def sim_endpoint(compute_task):
 
 
 def sync_endpoint(compute_task):
-    print("io endpoint")
+    print(f"io endpoint {compute_task}")
     data = request.get_data()
     inputs = msgpack.loads(data, encoding="utf8", use_list=True)
     print("inputs", inputs)

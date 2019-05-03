@@ -5,9 +5,9 @@
 
 <fieldset class="inputs-block">
   <ul class="list-unstyled components">
-    {% for param in form.meta_parameters.parameters %}
+    {% for param_name in form.meta_parameters.parameters %}
     <li>
-        {{form|dict_get:param.name|as_crispy_field}}
+        {{form|dict_get:param_name|as_crispy_field}}
     </li>
     {% endfor %}
   </ul>

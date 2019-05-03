@@ -4,6 +4,7 @@ from collections import namedtuple
 from django.utils import timezone
 from django import forms
 from django.utils.safestring import mark_safe
+from django.http import HttpResponse
 
 from webapp.apps.users.models import Project
 from webapp.apps.comp import actions
@@ -21,11 +22,11 @@ class Submit:
 
     webapp_version = WEBAPP_VERSION
 
-    def __init__(self, request, project, ioclasses, compute):
+    def __init__(self, request, project, ioutils, compute):
         self.request = request
         self.project = project
-        self.meta_parameters = self.project.parsed_meta_parameters
-        self.ioclasses = ioclasses
+        self.meta_parameters = ioutils.displayer.parsed_meta_parameters()
+        self.ioutils = ioutils
         self.compute = compute
         self.model = None
         self.badpost = None
@@ -49,7 +50,9 @@ class Submit:
 
     def create_model(self):
         self.form = InputsForm(
-            self.project, self.ioclasses, dict(self.fields, **self.valid_meta_params)
+            self.project,
+            self.ioutils.displayer,
+            dict(self.fields, **self.valid_meta_params),
         )
         if self.form.non_field_errors():
             self.badpost = BadPost(
@@ -61,21 +64,16 @@ class Submit:
         self.is_valid = self.form.is_valid()
         if self.is_valid:
             self.model = self.form.save(commit=False)
-            parser = self.ioclasses.Parser(
+            parser = self.ioutils.Parser(
                 self.project,
-                self.ioclasses,
+                self.ioutils.displayer,
                 self.model.gui_inputs,
                 **self.valid_meta_params,
             )
 
-            (
-                model_parameters,
-                upstream_json_files,
-                errors_warnings,
-            ) = parser.parse_parameters()
+            model_parameters, errors_warnings = parser.parse_parameters()
             self.model.model_parameters = model_parameters
             self.model.meta_parameters = self.valid_meta_params
-            self.model.inputs_file = upstream_json_files
             self.model.errors_warnings = errors_warnings
             self.model.save()
 
@@ -109,7 +107,7 @@ class Submit:
 
         if self.warn_msgs or self.error_msgs:
             for inputs_style in self.model.errors_warnings:
-                self.ioclasses.Parser.append_errors_warnings(
+                self.ioutils.Parser.append_errors_warnings(
                     self.model.errors_warnings[inputs_style], add_errors
                 )
 
@@ -155,8 +153,8 @@ class Save:
         self.runmodel_instance = runmodel
 
 
-def handle_submission(request, project, ioclasses, compute):
-    sub = Submit(request, project, ioclasses, compute)
+def handle_submission(request, project, ioutils, compute):
+    sub = Submit(request, project, ioutils, compute)
     if sub.badpost is not None:
         return sub.badpost
     elif sub.stop_submission:

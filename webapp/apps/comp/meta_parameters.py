@@ -55,10 +55,11 @@ def translate_to_django(meta_parameters: dict) -> MetaParameters:
             field = forms.TypedChoiceField(
                 coerce=coerce_bool, choices=list((i, i) for i in (True, False))
             )
+        if isinstance(data["value"], list):
+            val = data["value"][0]["value"]
+        else:
+            val = data["value"]
         new_mp[name] = MetaParameter(
-            title=data["title"],
-            description=data["description"],
-            value=data["value"],
-            field=field,
+            title=data["title"], description=data["description"], value=val, field=field
         )
     return MetaParameters(parameters=new_mp)

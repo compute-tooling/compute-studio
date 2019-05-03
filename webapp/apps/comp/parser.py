@@ -13,14 +13,13 @@ class ParameterLookUpException(Exception):
 
 
 class BaseParser:
-    def __init__(self, project, ioclasses, clean_inputs, **valid_meta_params):
+    def __init__(self, project, displayer, clean_inputs, **valid_meta_params):
         self.project = project
         self.clean_inputs = clean_inputs
         self.valid_meta_params = valid_meta_params
         for param, value in valid_meta_params.items():
             setattr(self, param, value)
-        displayer = ioclasses.Displayer(project, ioclasses, **valid_meta_params)
-        self.grouped_defaults = displayer.package_defaults()
+        _, self.grouped_defaults = displayer.package_defaults()
         self.flat_defaults = {
             k: v for _, sect in self.grouped_defaults.items() for k, v in sect.items()
         }
@@ -58,7 +57,7 @@ class BaseParser:
         errors_warnings = {
             sect: {"errors": {}, "warnings": {}} for sect in inputs_by_section
         }
-        return unflattened, "", errors_warnings
+        return unflattened, errors_warnings
 
     def unflatten(self, parsed_input):
         """
@@ -96,16 +95,15 @@ class BaseParser:
 
 class Parser(BaseParser):
     def parse_parameters(self):
-        params, jsonparams, errors_warnings = super().parse_parameters()
+        params, errors_warnings = super().parse_parameters()
         data = {
-            "params": params,
-            "jsonparams": jsonparams,
+            "meta_param_dict": self.valid_meta_params,
+            "adjustment": params,
             "errors_warnings": errors_warnings,
-            **self.valid_meta_params,
         }
         success, result = SyncCompute().submit_job(
             data, self.project.worker_ext(action=actions.PARSE)
         )
         if not success:
             raise AppError(params, result)
-        return result
+        return params, result
