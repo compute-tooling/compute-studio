@@ -63,6 +63,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
         common = {
             "description": "[Matchups](https://github.com/hdoupe/Matchups) provides pitch data on pitcher and batter matchups.. Select a date range using the format YYYY-MM-DD. Keep in mind that Matchups only provides data on matchups going back to 2008. Two datasets are offered to run this model: one that only has the most recent season, 2018, and one that contains data on every single pitch going back to 2008. Next, select your favorite pitcher and some batters who he's faced in the past. Click submit to start analyzing the selected matchups!",
             "oneliner": "oneliner",
+            "repo_url": "https://github.com/hdoupe/Matchups",
             "server_size": ["8,2"],
             "exp_task_time": 10,
             "owner": modeler.profile,

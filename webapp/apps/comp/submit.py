@@ -112,9 +112,10 @@ class Submit:
                 )
 
     def submit(self):
-        data = dict(
-            {"user_mods": self.model.deserialized_inputs}, **self.valid_meta_params
-        )
+        data = {
+            "meta_param_dict": self.valid_meta_params,
+            "adjustment": self.model.deserialized_inputs,
+        }
         print("submit", data)
         self.submitted_id, self.max_q_length = self.compute.submit_job(
             data, self.project.worker_ext(action=actions.SIM)

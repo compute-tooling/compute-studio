@@ -77,6 +77,7 @@ class Project(models.Model):
     title = models.CharField(max_length=255)
     oneliner = models.CharField(max_length=10000)
     description = models.CharField(max_length=10000)
+    repo_url = models.URLField()
     owner = models.ForeignKey(
         Profile, null=True, related_name="projects", on_delete=models.CASCADE
     )

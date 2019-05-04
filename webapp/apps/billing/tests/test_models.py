@@ -153,6 +153,7 @@ class TestStripeModels:
             "title": "New-Model",
             "oneliner": "one liner",
             "description": "**Super** new!",
+            "repo_url": "https://github.com/comp-org/comp-ce",
             "server_size": [4, 8],
         }
         resp = client.post("/publish/api/", post_data)

@@ -175,8 +175,7 @@ class InputsView(InputsMixin, View):
                 )
             # Http 401 exception if mail credentials are not set up.
             except Exception as e:
-                if not DEBUG:
-                    raise e
+                pass
             return render(
                 request,
                 "comp/app_error.html",
@@ -282,9 +281,6 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
         context = self.project_context(request, project)
         return self._render_inputs_form(request, project, ioutils, inputs_form, context)
 
-    def post(self, request, *args, **kwargs):
-        return HttpResponseNotFound("<h1>Post not allowed to edit page</h1>")
-
     def _render_inputs_form(self, request, project, ioutils, inputs_form, context):
         valid_meta_params = {}
         parsed_meta_parameters = ioutils.displayer.parsed_meta_parameters()
@@ -371,8 +367,9 @@ class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
             )
         # Http 401 exception if mail credentials are not set up.
         except Exception as e:
-            if not DEBUG:
-                raise e
+            pass
+            # if DEBUG:
+            #     raise e
         return render(
             self.request, "comp/failed.html", {"traceback": self.object.traceback}
         )

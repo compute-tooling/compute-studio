@@ -20,32 +20,11 @@ axios.defaults.xsrfCookieName = "csrftoken";
 const domContainer = document.querySelector("#publish-container");
 const requiredMessage = "This field is required.";
 
-function isJsonString(str) {
-  try {
-    JSON.parse(str);
-  } catch (e) {
-    return false;
-  }
-  return true;
-}
-
 var Schema = Yup.object().shape({
   title: Yup.string().required(requiredMessage),
   oneliner: Yup.string().required(requiredMessage),
   description: Yup.string().required(requiredMessage),
-  inputs_style: Yup.string().oneOf(
-    ["paramtools", "taxcalc"],
-    "Inputs type must be either paramtools or taxcalc."
-  ),
-  meta_parameters: Yup.string()
-    .required(requiredMessage)
-    .test("valid-json", "Meta parameters is not valid JSON.", value =>
-      isJsonString(value)
-    ),
-  package_defaults: Yup.string().required(requiredMessage),
-  parse_user_adjustments: Yup.string().required(requiredMessage),
-  run_simulation: Yup.string().required(requiredMessage),
-  installation: Yup.string().required(requiredMessage),
+  repo_url: Yup.string().url(),
   // server_size: Yup.mixed().oneOf([[4, 2], [8, 4], [16, 8], [32, 16], [64, 32]]),
   exp_task_time: Yup.number().min(
     0,
@@ -57,12 +36,7 @@ const initialValues = {
   title: "",
   description: "",
   oneliner: "",
-  inputs_style: "paramtools",
-  meta_parameters: "",
-  package_defaults: "",
-  parse_user_adjustments: "",
-  run_simulation: "",
-  installation: "",
+  repo_url: "",
   server_size: [4, 2],
   exp_task_time: 0
 };
@@ -117,19 +91,41 @@ class PublishForm extends React.Component {
             for (var field in values) {
               formdata.append([field], values[field]);
             }
-            this.props.doSubmit(formdata).then(
-              response => {
+            this.props
+              .doSubmit(formdata)
+              .then(response => {
                 actions.setSubmitting(false);
-              },
-              error => {
+              })
+              .catch(error => {
+                console.log("error", error);
+                console.log(error.response.data);
                 actions.setSubmitting(false);
-                actions.setStatus({ msg: "Set some arbitrary status or data" });
-              }
-            );
+                if (error.response.status == 400) {
+                  actions.setStatus(error.response.data);
+                } else if (error.response.status == 401) {
+                  actions.setStatus({
+                    auth: "You must be logged in to publish a model."
+                  });
+                }
+              });
           }}
           validationSchema={Schema}
-          render={({ onChange }) => (
+          render={({ onChange, status, errors }) => (
             <Form>
+              {status && status.project_exists ? (
+                <div class="alert alert-danger" role="alert">
+                  {status.project_exists}
+                </div>
+              ) : (
+                <div />
+              )}
+              {status && status.auth ? (
+                <div class="alert alert-danger" role="alert">
+                  {status.auth}
+                </div>
+              ) : (
+                <div />
+              )}
               <div class="mt-5">
                 <h3>About</h3>
                 <hr className="my-3" />
@@ -178,111 +174,22 @@ class PublishForm extends React.Component {
                     render={msg => <Message msg={msg} />}
                   />
                 </div>
-              </div>
-              <div class="mt-5">
-                <h3>Model Parameters</h3>
-                <hr className="my-3" />
-                <p>
-                  <em>
-                    Insert code snippets satisfying the requirements detailed in
-                    the{" "}
-                    <a href="https://github.com/comp-org/comp/blob/master/docs/IOSCHEMA.md">
-                      inputs documentation.
-                    </a>
-                  </em>
-                </p>
                 <div class="mt-1 mb-1">
                   <label>
-                    <b>Inputs style:</b> Select the style of inputs that your
-                    app will use
+                    <b>Repo URL:</b>
                   </label>
-                  <p>
-                    <Field component="select" name="inputs_style">
-                      <option value="paramtools">ParamTools style</option>
-                      <option value="taxcalc">Tax-Calculator style</option>
-                    </Field>
+                  <p class="mt-1 mb-1">
+                    <Field
+                      className="form-control w-50rem"
+                      type="url"
+                      name="repo_url"
+                      placeholder="Link to the model's code repository"
+                    />
+                    <ErrorMessage
+                      name="repo_url"
+                      render={msg => <Message msg={msg} />}
+                    />
                   </p>
-                  <ErrorMessage
-                    name="inputs_style"
-                    render={msg => <Message msg={msg} />}
-                  />
-                </div>
-                <div class="mt-1 mb-1">
-                  <Field
-                    type="text"
-                    name="meta_parameters"
-                    component={CodeSnippetField}
-                    label="Meta parameters"
-                    description="Controls the default Model Parameters"
-                    language="json"
-                    placeholder="# json snippet here"
-                    preview={this.state.preview}
-                  />
-                  <ErrorMessage
-                    name="meta_parameters"
-                    render={msg => <Message msg={msg} />}
-                  />
-                </div>
-              </div>
-              <div class="mt-5">
-                <h3>Python Functions</h3>
-                <hr className="my-3" />
-                <p>
-                  <em>
-                    Insert code snippets satisfying the requirements detailed in
-                    the{" "}
-                    <a href="https://github.com/comp-org/comp/blob/master/docs/ENDPOINTS.md">
-                      functions documentation.
-                    </a>
-                  </em>
-                </p>
-                <div class="mt-1 mb-1">
-                  <Field
-                    type="text"
-                    name="package_defaults"
-                    component={CodeSnippetField}
-                    label="Get package defaults"
-                    description="Get the default Model Parameters and their meta data"
-                    language="python"
-                    placeholder="# code snippet here"
-                    preview={this.state.preview}
-                  />
-                  <ErrorMessage
-                    name="package_defaults"
-                    render={msg => <Message msg={msg} />}
-                  />
-                </div>
-                <div class="mt-1 mb-1">
-                  <Field
-                    type="text"
-                    name="parse_user_adjustments"
-                    component={CodeSnippetField}
-                    label="Parse user adjustments"
-                    description="Do model-specific formatting and validation on the user adjustments"
-                    language="python"
-                    placeholder="# code snippet here"
-                    preview={this.state.preview}
-                  />
-                  <ErrorMessage
-                    name="parse_user_inputs"
-                    render={msg => <Message msg={msg} />}
-                  />
-                </div>
-                <div class="mt-1 mb-1">
-                  <Field
-                    type="text"
-                    name="run_simulation"
-                    component={CodeSnippetField}
-                    label="Run simulation"
-                    description="Submit the user adjustments (or none) to the model to run the simulations"
-                    language="python"
-                    placeholder="# code snippet here"
-                    preview={this.state.preview}
-                  />
-                  <ErrorMessage
-                    name="run_simulation"
-                    render={msg => <Message msg={msg} />}
-                  />
                 </div>
               </div>
               <div class="mt-5">
@@ -297,22 +204,6 @@ class PublishForm extends React.Component {
                     </a>
                   </em>
                 </p>
-                <div class="mt-1 mb-1">
-                  <Field
-                    type="text"
-                    name="installation"
-                    component={CodeSnippetField}
-                    label="Installation"
-                    description="Bash commands for installing this project"
-                    language="bash"
-                    placeholder="# code snippet here"
-                    preview={this.state.preview}
-                  />
-                  <ErrorMessage
-                    name="installation"
-                    render={msg => <Message msg={msg} />}
-                  />
-                </div>
                 <div class="mt-1 mb-1">
                   <label>
                     <b>Expected job time:</b> Time in seconds for simulation to
@@ -364,21 +255,10 @@ class CreateApp extends React.Component {
     this.doSubmit = this.doSubmit.bind(this);
   }
   doSubmit(data) {
-    axios
-      .post("/publish/api/", data)
-      .then(function(response) {
-        console.log("post", response);
-        // need to handle errors from the server here!
-        window.location.replace("/");
-      })
-      .catch(function(error) {
-        console.log(error);
-        if (error.response.status == 401) {
-          alert("You must be logged in to publish a model.");
-        } else {
-          alert("An error has occurred.");
-        }
-      });
+    return axios.post("/publish/api/", data).then(function(response) {
+      console.log("post", response);
+      window.location.replace("/");
+    });
   }
   render() {
     return (
@@ -420,21 +300,11 @@ class AppDetail extends React.Component {
   doSubmit(data) {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
-    axios
+    return axios
       .put(`/publish/api/${username}/${app_name}/detail/`, data)
       .then(function(response) {
         console.log(response);
         window.location.replace("/");
-      })
-      .catch(function(error) {
-        console.log(error);
-        if (error.response.status == 401) {
-          alert(
-            `You must be logged in and the author in order to update ${app_name}.`
-          );
-        } else {
-          alert("An error has occurred.");
-        }
       });
   }
 

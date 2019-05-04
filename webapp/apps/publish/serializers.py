@@ -10,6 +10,7 @@ class PublishSerializer(serializers.ModelSerializer):
             "title",
             "oneliner",
             "description",
+            "repo_url",
             "server_size",
             "exp_task_time",
             "server_cost",

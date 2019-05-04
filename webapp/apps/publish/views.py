@@ -12,6 +12,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
+# from webapp.settings import DEBUG
+
 from webapp.apps.users.models import Project, is_profile_active
 
 from .serializers import PublishSerializer
@@ -60,17 +62,21 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
                             "userprofile", kwargs={"username": request.user.username}
                         )
                     )
-                    send_mail(
-                        f"{request.user.username} is updating a model on COMP!",
-                        (
-                            f"{model.title} will be updated or you will have feedback within "
-                            f"the next 24 hours. Check the status of the update at "
-                            f"{status_url}."
-                        ),
-                        "henrymdoupe@gmail.com",
-                        list({request.user.email, "henrymdoupe@gmail.com"}),
-                        fail_silently=False,
-                    )
+                    try:
+                        send_mail(
+                            f"{request.user.username} is updating a model on COMP!",
+                            (
+                                f"{model.title} will be updated or you will have feedback within "
+                                f"the next 24 hours. Check the status of the update at "
+                                f"{status_url}."
+                            ),
+                            "henrymdoupe@gmail.com",
+                            list({request.user.email, "henrymdoupe@gmail.com"}),
+                            fail_silently=False,
+                        )
+                    # Http 401 exception if mail credentials are not set up.
+                    except Exception:
+                        pass
                     return Response(serializer.data)
                 print(serializer.errors)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -84,6 +90,18 @@ class ProjectCreateAPIView(GetProjectMixin, APIView):
             is_valid = serializer.is_valid()
             if is_valid:
                 title = title_fixup(serializer.validated_data["title"])
+                username = request.user.username
+                if (
+                    Project.objects.filter(
+                        owner__user__username=username, title=title
+                    ).count()
+                    > 0
+                ):
+                    print("EXISTS")
+                    return Response(
+                        {"project_exists": f"{username}/{title} already exists."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
                 model = serializer.save(
                     owner=request.user.profile,
                     status="pending",
@@ -93,17 +111,21 @@ class ProjectCreateAPIView(GetProjectMixin, APIView):
                 status_url = request.build_absolute_uri(
                     reverse("userprofile", kwargs={"username": request.user.username})
                 )
-                send_mail(
-                    f"{request.user.username} is publishing a model on COMP!",
-                    (
-                        f"{model.title} will be live or you will have feedback within "
-                        f"the next 24 hours. Check the status of the submission at "
-                        f"{status_url}."
-                    ),
-                    "henrymdoupe@gmail.com",
-                    list({request.user.email, "henrymdoupe@gmail.com"}),
-                    fail_silently=False,
-                )
+                try:
+                    send_mail(
+                        f"{request.user.username} is publishing a model on COMP!",
+                        (
+                            f"{model.title} will be live or you will have feedback within "
+                            f"the next 24 hours. Check the status of the submission at "
+                            f"{status_url}."
+                        ),
+                        "henrymdoupe@gmail.com",
+                        list({request.user.email, "henrymdoupe@gmail.com"}),
+                        fail_silently=False,
+                    )
+                # Http 401 exception if mail credentials are not set up.
+                except Exception:
+                    pass
                 return Response(status=status.HTTP_200_OK)
             else:
                 print("error", request, serializer.errors)
