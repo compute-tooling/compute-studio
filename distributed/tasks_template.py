@@ -12,21 +12,19 @@ except ImportError as ie:
         raise ie
 
 
-@celery_app.task(name="hdoupe_matchups_tasks.inputs_get", soft_time_limit=10, bind=True)
+@celery_app.task(name="{{APP_NAME}}.inputs_get", soft_time_limit=10, bind=True)
 @task_wrapper
 def inputs_get(self, meta_param_dict):
     return compconfig.get_inputs(meta_param_dict)
 
 
-@celery_app.task(
-    name="hdoupe_matchups_tasks.inputs_parse", soft_time_limit=10, bind=True
-)
+@celery_app.task(name="{{APP_NAME}}.inputs_parse", soft_time_limit=10, bind=True)
 @task_wrapper
 def inputs_parse(self, meta_param_dict, adjustment, errors_warnings):
     return compconfig.validate_inputs(meta_param_dict, adjustment, errors_warnings)
 
 
-@celery_app.task(name="hdoupe_matchups_tasks.sim", soft_time_limit=60, bind=True)
+@celery_app.task(name="{{APP_NAME}}.sim", soft_time_limit={{SIM_TIME_LIMIT}}, bind=True)
 @task_wrapper
 def sim(self, meta_param_dict, adjustment):
     return compconfig.run_model(meta_param_dict, adjustment)

@@ -7,17 +7,9 @@ import json
 import msgpack
 import os
 
-from api.celery_app import hdoupe_matchups_tasks, pslmodels_taxbrain_tasks
+from api.celery_app import hdoupe_matchups_tasks
 
-task_modules = {
-    ("hdoupe", "Matchups"): hdoupe_matchups_tasks,
-    ("PSLmodels", "Tax-Brain"): pslmodels_taxbrain_tasks,
-}
-
-if os.environ.get("DEVELOP", ""):
-    from api.celery_app import error_app_tasks
-
-    task_modules[("error", "app")] = error_app_tasks
+task_modules = {("hdoupe", "Matchups"): hdoupe_matchups_tasks}
 
 bp = Blueprint("endpoints", __name__)
 

@@ -12,14 +12,6 @@ services:
     container_name: flask
     depends_on:
       - redis
-      # Add celery workers here:
-      # - {project_name}_tasks
-      - hdoupe_matchups_sim
-      - hdoupe_matchups_io
-      - pslmodels_taxbrain_sim
-      - pslmodels_taxbrain_io
-      - error_app_sim
-      - error_app_io
       - distributed
     networks:
       - comp-ce_comp-net
@@ -30,8 +22,14 @@ services:
   hdoupe_matchups_sim:
     build:
       context: ./
-      dockerfile: dockerfiles/projects/Dockerfile.hdoupe_matchups_tasks
+      dockerfile: dockerfiles/Dockerfile.tasks
+      args:
+        TITLE: "Matchups"
+        OWNER: "hdoupe"
+        ETA: "60"
+        BRANCH: "master"
     image: "comporg/hdoupe_matchups_tasks:${TAG}"
+    entrypoint: ./celery_sim.sh hdoupe Matchups
     depends_on:
       - redis
       - celerybase
@@ -42,9 +40,14 @@ services:
   hdoupe_matchups_io:
     build:
       context: ./
-      dockerfile: dockerfiles/projects/Dockerfile.hdoupe_matchups_tasks
+      dockerfile: dockerfiles/Dockerfile.tasks
+      args:
+        TITLE: "Matchups"
+        OWNER: "hdoupe"
+        ETA: "60"
+        BRANCH: "master"
     image: "comporg/hdoupe_matchups_tasks:${TAG}"
-    entrypoint: celery -A celery_app.hdoupe_matchups_tasks worker --loglevel=info --concurrency=1 -Q hdoupe_matchups_inputs_queue -n hdoupe_matchups_inputs@%h
+    entrypoint: ./celery_io.sh hdoupe Matchups
     depends_on:
       - redis
       - celerybase
@@ -53,58 +56,6 @@ services:
     networks:
       - comp-ce_comp-net
 
-  pslmodels_taxbrain_sim:
-    build:
-      context: ./
-      dockerfile: dockerfiles/projects/Dockerfile.pslmodels_taxbrain_tasks
-    image: "comporg/pslmodels_taxbrain_tasks:${TAG}"
-    env_file:
-      - ./dockerfiles/dev.env
-    depends_on:
-      - redis
-      - celerybase
-    networks:
-      - comp-ce_comp-net
-  pslmodels_taxbrain_io:
-    build:
-      context: ./
-      dockerfile: dockerfiles/projects/Dockerfile.pslmodels_taxbrain_tasks
-    image: "comporg/pslmodels_taxbrain_tasks:${TAG}"
-    entrypoint: celery -A celery_app.pslmodels_taxbrain_tasks worker --loglevel=info --concurrency=1 -Q pslmodels_taxbrain_inputs_queue -n pslmodels_taxbrain_inputs@%h
-    depends_on:
-      - redis
-      - celerybase
-    env_file:
-      - ./dockerfiles/dev.env
-    networks:
-      - comp-ce_comp-net
-
-####################################################
-  error_app_sim:
-    build:
-      context: ./
-      dockerfile: dockerfiles/projects/Dockerfile.error_app_tasks
-    image: "comporg/error_app_tasks:${TAG}"
-    depends_on:
-      - redis
-      - celerybase
-    env_file:
-      - ./dockerfiles/dev.env
-    networks:
-      - comp-ce_comp-net
-  error_app_io:
-    build:
-      context: ./
-      dockerfile: dockerfiles/projects/Dockerfile.error_app_tasks
-    image: "comporg/error_app_tasks:${TAG}"
-    entrypoint: celery -A celery_app.error_app_tasks worker --loglevel=info --concurrency=1 -Q error_app_inputs_queue -n error_app_inputs@%h
-    depends_on:
-      - redis
-      - celerybase
-    env_file:
-      - ./dockerfiles/dev.env
-    networks:
-      - comp-ce_comp-net
 
 ####################################################
   celerybase:

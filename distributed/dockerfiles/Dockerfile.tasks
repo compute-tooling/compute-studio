@@ -5,28 +5,33 @@ FROM comporg/celerybase
 # install packages necessary for celery,
 RUN pip install -r requirements.txt
 
+ARG TITLE
+ARG OWNER
+ARG ETA
+ARG BRANCH=master
+
 # Edit Dockerfile here for installing necessary packages, copying files, etc.
 ######################
-ENV arg 2
-ADD https://raw.githubusercontent.com/hdoupe/Matchups/master/compconfig/install.sh /home
+ADD https://raw.githubusercontent.com/${OWNER}/${TITLE}/master/compconfig/install.sh /home
 RUN bash /home/install.sh
-RUN pip install "git+https://github.com/hdoupe/Matchups.git#egg=compconfig&subdirectory=compconfig"
-ADD https://raw.githubusercontent.com/hdoupe/Matchups/master/compconfig/compconfig/tests/test_functions.py /home
+RUN pip install "git+https://github.com/${OWNER}/${TITLE}.git#egg=compconfig&subdirectory=compconfig"
+ADD https://raw.githubusercontent.com/${OWNER}/${TITLE}/master/compconfig/compconfig/tests/test_functions.py /home
 RUN pip install compdevkit
 RUN py.test /home/test_functions.py -v
 ######################
 
-ENV APP_NAME hdoupe_matchups_tasks
-ENV SIM_TIME_LIMIT 60
-
+COPY tasks_template.py tasks_template.py
+COPY tasks_writer.py tasks_writer.py
+RUN mkdir /home/distributed/api/celery_app
+RUN python tasks_writer.py --owner ${OWNER} --title ${TITLE} --eta ${ETA} --out /home/distributed/api/celery_app
 
 # copy over necessary files for this project's celery app
 COPY ./api/__init__.py /home/distributed/api/__init__.py
 COPY ./api/celery_app/__init__.py /home/distributed/api/celery_app/__init__.py
-COPY ./api/celery_app/hdoupe_matchups_tasks.py /home/distributed/api/celery_app/hdoupe_matchups_tasks.py
 COPY ./setup.py /home/distributed
 RUN cd /home/distributed && pip install -e .
 
 WORKDIR /home/distributed/api
 
-ENTRYPOINT celery -A celery_app.hdoupe_matchups_tasks worker --loglevel=info --concurrency=1 -Q hdoupe_matchups_queue -n hdoupe_matchups_sim@%h
+COPY celery_sim.sh celery_sim.sh
+COPY celery_io.sh celery_io.sh
