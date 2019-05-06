@@ -1,0 +1,41 @@
+version: '3'
+services:
+  hdoupe_matchups_sim:
+    build:
+      context: ./
+      dockerfile: dockerfiles/Dockerfile.tasks
+      args:
+        TITLE: "Matchups"
+        OWNER: "hdoupe"
+        SIM_TIME_LIMIT: "60"
+        BRANCH: ""
+    image: "comporg/hdoupe_matchups_tasks:${TAG}"
+    entrypoint: ./celery_sim.sh hdoupe Matchups
+    environment:
+      - AWS_ACCESS_KEY_ID=
+      - AWS_SECRET_ACCESS_KEY=
+    depends_on:
+      - redis
+      - celerybase
+    env_file:
+      - ./dockerfiles/dev.env
+    networks:
+      - comp-ce_comp-net
+  hdoupe_matchups_io:
+    build:
+      context: ./
+      dockerfile: dockerfiles/Dockerfile.tasks
+      args:
+        TITLE: "Matchups"
+        OWNER: "hdoupe"
+        SIM_TIME_LIMIT: "60"
+        BRANCH: ""
+    image: "comporg/hdoupe_matchups_tasks:${TAG}"
+    entrypoint: ./celery_io.sh hdoupe Matchups
+    depends_on:
+      - redis
+      - celerybase
+    env_file:
+      - ./dockerfiles/dev.env
+    networks:
+      - comp-ce_comp-net

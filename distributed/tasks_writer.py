@@ -10,7 +10,7 @@ def clean(word):
     return re.sub("[^0-9a-zA-Z]+", "*", word).lower()
 
 
-def template(owner, title, time_limit, out):
+def template(owner, title, sim_time_limit, out):
     owner = clean(owner)
     title = clean(title)
     print(owner, title)
@@ -19,7 +19,7 @@ def template(owner, title, time_limit, out):
 
     t = Template(text)
 
-    r = t.render(APP_NAME=f"{owner}_{title}_tasks", SIM_TIME_LIMIT=time_limit)
+    r = t.render(APP_NAME=f"{owner}_{title}_tasks", SIM_TIME_LIMIT=sim_time_limit)
 
     with open(os.path.join(out, f"{owner}_{title}_tasks.py"), "w") as f:
         f.write(r)
@@ -29,17 +29,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Write tasks modules from template.")
     parser.add_argument("--owner")
     parser.add_argument("--title")
-    parser.add_argument("--eta", type=int)
-    parser.add_argument("--json")
+    parser.add_argument("--sim-time-limit", dest="sim_time_limit", type=int)
+    parser.add_argument("--config")
     parser.add_argument("--out", "-o", default="api/celery_app")
     args = parser.parse_args()
 
-    if args.json:
-        with open(args.json) as f:
+    if args.config:
+        with open(args.config) as f:
             config = json.loads(f.read())
         for obj in config:
-            template(obj["owner"], obj["title"], obj["eta"], args.out)
-    elif args.owner and args.title and args.eta:
-        template(args.owner, args.title, args.eta, args.out)
+            template(obj["owner"], obj["title"], obj["sim_time_limit"], args.out)
+    elif args.owner and args.title and args.sim_time_limit:
+        template(args.owner, args.title, args.sim_time_limit, args.out)
     else:
         print("No arguments received.")

@@ -1,0 +1,41 @@
+version: '3'
+services:
+  {{SAFEOWNER}}_{{SAFETITLE}}_sim:
+    build:
+      context: ./
+      dockerfile: dockerfiles/Dockerfile.tasks
+      args:
+        TITLE: "{{TITLE}}"
+        OWNER: "{{OWNER}}"
+        SIM_TIME_LIMIT: "{{SIM_TIME_LIMIT}}"
+        BRANCH: "{{BRANCH}}"
+    image: "comporg/{{SAFEOWNER}}_{{SAFETITLE}}_tasks:${TAG}"
+    entrypoint: ./celery_sim.sh {{OWNER}} {{TITLE}}
+    environment:
+      - AWS_ACCESS_KEY_ID={{AWS_ACCESS_KEY_ID}}
+      - AWS_SECRET_ACCESS_KEY={{AWS_SECRET_ACCESS_KEY}}
+    depends_on:
+      - redis
+      - celerybase
+    env_file:
+      - ./dockerfiles/dev.env
+    networks:
+      - comp-ce_comp-net
+  hdoupe_matchups_io:
+    build:
+      context: ./
+      dockerfile: dockerfiles/Dockerfile.tasks
+      args:
+        TITLE: "{{TITLE}}"
+        OWNER: "{{OWNER}}"
+        SIM_TIME_LIMIT: "{{SIM_TIME_LIMIT}}"
+        BRANCH: "{{BRANCH}}"
+    image: "comporg/{{SAFEOWNER}}_{{SAFETITLE}}_tasks:${TAG}"
+    entrypoint: ./celery_io.sh {{OWNER}} {{TITLE}}
+    depends_on:
+      - redis
+      - celerybase
+    env_file:
+      - ./dockerfiles/dev.env
+    networks:
+      - comp-ce_comp-net

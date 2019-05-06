@@ -25,7 +25,8 @@ OUTPUTS_VERSION = os.environ.get("OUTPUTS_VERSION")
 task_routes = {
     # '{project_name}_tasks.*': {'queue': '{project_name}_queue'},
     "hdoupe_matchups_tasks.sim": {"queue": "hdoupe_matchups_queue"},
-    "hdoupe_matchups_tasks.inputs_*": {"queue": "hdoupe_matchups_inputs_queue"},
+    "hdoupe_matchups_tasks.inputs_get": {"queue": "hdoupe_matchups_inputs_queue"},
+    "hdoupe_matchups_tasks.inputs_parse": {"queue": "hdoupe_matchups_inputs_queue"},
 }
 
 

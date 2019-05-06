@@ -1,6 +1,6 @@
 import os
 import requests
-import msgpack
+import json
 from requests.exceptions import RequestException, Timeout
 import requests_mock
 
@@ -9,7 +9,6 @@ requests_mock.Mocker.TEST_PREFIX = "test"
 WORKER_HN = os.environ.get("WORKERS")
 TIMEOUT_IN_SECONDS = 1.0
 MAX_ATTEMPTS_SUBMIT_JOB = 20
-BYTES_HEADER = {"Content-Type": "application/octet-stream"}
 
 
 class JobFailError(Exception):
@@ -25,11 +24,7 @@ class WorkersUnreachableError(Exception):
 
 class Compute(object):
     def remote_submit_job(self, url, data, timeout=TIMEOUT_IN_SECONDS, headers=None):
-        # print(theurl, data)
-        if headers is not None:
-            response = requests.post(url, data=data, timeout=timeout, headers=headers)
-        else:
-            response = requests.post(url, data=data, timeout=timeout)
+        response = requests.post(url, data=data, timeout=timeout)
         return response
 
     def remote_query_job(self, theurl, params):
@@ -50,10 +45,10 @@ class Compute(object):
         submitted = False
         attempts = 0
         while not submitted:
-            packed = msgpack.dumps(tasks, use_bin_type=True)
+            packed = json.dumps(tasks)
             try:
                 response = self.remote_submit_job(
-                    url, data=packed, timeout=TIMEOUT_IN_SECONDS, headers=BYTES_HEADER
+                    url, data=packed, timeout=TIMEOUT_IN_SECONDS
                 )
                 if response.status_code == 200:
                     print("submitted: ", url)
@@ -106,10 +101,10 @@ class SyncCompute(Compute):
         submitted = False
         attempts = 0
         while not submitted:
-            packed = msgpack.dumps(tasks, use_bin_type=True)
+            packed = json.dumps(tasks)
             try:
                 response = self.remote_submit_job(
-                    url, data=packed, timeout=TIMEOUT_IN_SECONDS, headers=BYTES_HEADER
+                    url, data=packed, timeout=TIMEOUT_IN_SECONDS
                 )
                 if response.status_code == 200:
                     print("submitted: ", url)
