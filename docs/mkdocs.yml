@@ -1,0 +1,13 @@
+site_name: COMP Models
+
+pages:
+  - Home: 'index.md'
+  - Publish:
+    - Guide: 'publish/guide.md'
+    - Inputs: 'publish/inputs.md'
+    - Ouptuts: 'publish/outputs.md'
+    - Functions: 'publish/functions.md'
+    - Environment: 'publish/environment.md'
+
+highlightjs: true
+hljs_style: github
