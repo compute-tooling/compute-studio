@@ -32,3 +32,5 @@ secret.sh
 secret-docker-compose.yml
 
 *credentials.sh
+
+*worker_config.prod.sh

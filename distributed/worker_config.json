@@ -3,6 +3,16 @@
         "owner": "hdoupe",
         "title": "Matchups",
         "sim_time_limit": 60,
+        "repo_url": "https://github.com/hdoupe/Matchups",
+        "branch": "master",
+        "environment": {}
+    },
+    {
+        "owner": "PSLmodels",
+        "title": "Tax-Brain",
+        "sim_time_limit": 500,
+        "repo_url": "https://github.com/andersonfrailey/Tax-Brain",
+        "branch": "compconfig",
         "environment": {}
     }
 ]

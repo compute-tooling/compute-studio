@@ -8,14 +8,18 @@ RUN pip install -r requirements.txt
 ARG TITLE
 ARG OWNER
 ARG SIM_TIME_LIMIT
+ARG REPO_URL
+ARG RAW_REPO_URL
+ARG AWS_ACCESS_KEY_ID=""
+ARG AWS_SECRET_ACCESS_KEY=""
 ARG BRANCH=master
 
 # Edit Dockerfile here for installing necessary packages, copying files, etc.
 ######################
-ADD https://raw.githubusercontent.com/${OWNER}/${TITLE}/master/compconfig/install.sh /home
+ADD ${RAW_REPO_URL}/${BRANCH}/compconfig/install.sh /home
 RUN bash /home/install.sh
-RUN pip install "git+https://github.com/${OWNER}/${TITLE}.git#egg=compconfig&subdirectory=compconfig"
-ADD https://raw.githubusercontent.com/${OWNER}/${TITLE}/master/compconfig/compconfig/tests/test_functions.py /home
+RUN pip install "git+${REPO_URL}.git@${BRANCH}#egg=compconfig&subdirectory=compconfig"
+ADD ${RAW_REPO_URL}/${BRANCH}/compconfig/compconfig/tests/test_functions.py /home
 RUN pip install compdevkit
 RUN py.test /home/test_functions.py -v
 ######################

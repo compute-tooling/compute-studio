@@ -8,7 +8,11 @@ services:
         TITLE: "Matchups"
         OWNER: "hdoupe"
         SIM_TIME_LIMIT: "60"
-        BRANCH: ""
+        BRANCH: "master"
+        REPO_URL: "https://github.com/hdoupe/Matchups"
+        RAW_REPO_URL: "https://raw.githubusercontent.com/hdoupe/Matchups"
+        AWS_ACCESS_KEY_ID: 
+        AWS_SECRET_ACCESS_KEY: 
     image: "comporg/hdoupe_matchups_tasks:${TAG}"
     entrypoint: ./celery_sim.sh hdoupe Matchups
     environment:
@@ -29,7 +33,12 @@ services:
         TITLE: "Matchups"
         OWNER: "hdoupe"
         SIM_TIME_LIMIT: "60"
-        BRANCH: ""
+        BRANCH: "master"
+        REPO_URL: "https://github.com/hdoupe/Matchups"
+        RAW_REPO_URL: "https://raw.githubusercontent.com/hdoupe/Matchups"
+        AWS_ACCESS_KEY_ID: 
+        AWS_SECRET_ACCESS_KEY: 
+
     image: "comporg/hdoupe_matchups_tasks:${TAG}"
     entrypoint: ./celery_io.sh hdoupe Matchups
     depends_on:

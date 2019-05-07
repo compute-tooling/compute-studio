@@ -9,6 +9,10 @@ services:
         OWNER: "{{OWNER}}"
         SIM_TIME_LIMIT: "{{SIM_TIME_LIMIT}}"
         BRANCH: "{{BRANCH}}"
+        REPO_URL: "{{REPO_URL}}"
+        RAW_REPO_URL: "{{RAW_REPO_URL}}"
+        AWS_ACCESS_KEY_ID: {{AWS_ACCESS_KEY_ID}}
+        AWS_SECRET_ACCESS_KEY: {{AWS_SECRET_ACCESS_KEY}}
     image: "comporg/{{SAFEOWNER}}_{{SAFETITLE}}_tasks:${TAG}"
     entrypoint: ./celery_sim.sh {{OWNER}} {{TITLE}}
     environment:
@@ -21,7 +25,7 @@ services:
       - ./dockerfiles/dev.env
     networks:
       - comp-ce_comp-net
-  hdoupe_matchups_io:
+  {{SAFEOWNER}}_{{SAFETITLE}}_io:
     build:
       context: ./
       dockerfile: dockerfiles/Dockerfile.tasks
@@ -30,6 +34,11 @@ services:
         OWNER: "{{OWNER}}"
         SIM_TIME_LIMIT: "{{SIM_TIME_LIMIT}}"
         BRANCH: "{{BRANCH}}"
+        REPO_URL: "{{REPO_URL}}"
+        RAW_REPO_URL: "{{RAW_REPO_URL}}"
+        AWS_ACCESS_KEY_ID: {{AWS_ACCESS_KEY_ID}}
+        AWS_SECRET_ACCESS_KEY: {{AWS_SECRET_ACCESS_KEY}}
+
     image: "comporg/{{SAFEOWNER}}_{{SAFETITLE}}_tasks:${TAG}"
     entrypoint: ./celery_io.sh {{OWNER}} {{TITLE}}
     depends_on:
