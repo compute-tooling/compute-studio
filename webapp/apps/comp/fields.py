@@ -74,29 +74,56 @@ class ValueField(forms.Field):
     def to_python(self, value):
         if not value:
             return value
-        python_value = []
-        value = value.strip()
-        python_value = self._coerce(value)
-        return python_value
-
-
-class SeparatedValueField(ValueField):
-    def to_python(self, value):
-        if not value:
-            return value
         raw_values = value.split(",")
         python_values = []
+        num_ops = 0
+        import pdb
+
+        pdb.set_trace()
         for raw_value in raw_values:
             stripped = raw_value.strip()
             if is_reverse(stripped) or is_wildcard(stripped):
                 python_values.append(stripped)
+                num_ops += 1
             else:
                 python_values.append(self._coerce(stripped))
         if self.number_dims == 0:
-            if len(python_values) > 1:
+            if (len(python_values) - num_ops) > 1:
                 raise forms.ValidationError(
                     self.error_messages["invalid_type"], code="invalid"
                 )
             else:
-                python_values = python_values[0]
+                if not num_ops:
+                    python_values = python_values[0]
+        import pdb
+
+        pdb.set_trace()
         return python_values
+
+
+class SeparatedValueField(ValueField):
+    pass
+    # def to_python(self, value):
+    #     if not value:
+    #         return value
+    #     raw_values = value.split(",")
+    #     python_values = []
+    #     num_ops = 0
+    #     import pdb; pdb.set_trace()
+    #     for raw_value in raw_values:
+    #         stripped = raw_value.strip()
+    #         if is_reverse(stripped) or is_wildcard(stripped):
+    #             python_values.append(stripped)
+    #             num_ops += 1
+    #         else:
+    #             python_values.append(self._coerce(stripped))
+    #     if self.number_dims == 0:
+    #         if (len(python_values) - num_ops) > 1:
+    #             raise forms.ValidationError(
+    #                 self.error_messages["invalid_type"], code="invalid"
+    #             )
+    #         else:
+    #             if not num_ops:
+    #                 python_values = python_values[0]
+    #     import pdb; pdb.set_trace()
+    #     return python_values
