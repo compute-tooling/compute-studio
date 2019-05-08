@@ -24,7 +24,7 @@ Publish models to the public at www.compmodels.org/publish.
 
 COMP CE is an open source project and anyone can contribute code or suggestions.
 
-You can reach COMP developers to discuss how to get started by opening an issue or joining the COMP Community [chat room](https://matrix.to/#/!WQWxPnwidsSToqkeLk:matrix.org).
+You can reach COMP developers to discuss how to get started by opening an issue or joining the COMP Community [chat room](https://riot.im/app/#/room/!WQWxPnwidsSToqkeLk:matrix.org).
 
 ## License
 
@@ -32,4 +32,4 @@ COMP Community Edition is licensed under the open source [GNU Affero General Pub
 
 ## Local Installation
 
-The [technical documentation](docs/technical/INSTALL.md) contains a step by step guide that shows how to run COMP locally.
+The technical documentation is out of date and will be updated once [#127](https://github.com/comp-org/comp-ce/pull/127) has been merged.
