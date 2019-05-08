@@ -24,7 +24,7 @@ Publish models to the public at www.compmodels.org/publish.
 
 COMP CE is an open source project and anyone can contribute code or suggestions.
 
-You can reach COMP developers to discuss how to get started by opening an issue or joining the COMP Community [chat room](https://matrix.to/#/!WQWxPnwidsSToqkeLk:matrix.org).
+You can reach COMP developers to discuss how to get started by opening an issue or joining the COMP Community [chat room](https://riot.im/app/#/room/!WQWxPnwidsSToqkeLk:matrix.org).
 
 ## License
 
