@@ -18,7 +18,7 @@ client = redis.Redis.from_url(
 
 
 def clean(word):
-    return re.sub("[^0-9a-zA-Z]+", "*", word).lower()
+    return re.sub("[^0-9a-zA-Z]+", "", word).lower()
 
 
 def sim_endpoint(compute_task):

@@ -11,7 +11,7 @@
         "owner": "PSLmodels",
         "title": "Tax-Brain",
         "sim_time_limit": 500,
-        "repo_url": "https://github.com/andersonfrailey/Tax-Brain",
+        "repo_url": "https://github.com/hdoupe/Tax-Brain",
         "branch": "compconfig",
         "environment": {}
     }

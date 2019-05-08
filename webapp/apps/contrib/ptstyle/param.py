@@ -1,6 +1,6 @@
 from django import forms
 
-from webapp.apps.comp.param import Param
+from webapp.apps.comp.param import Param, CheckBox
 from webapp.apps.comp.fields import ValueField, SeparatedValueField
 from .utils import dims_to_string
 
@@ -32,7 +32,12 @@ class Value:
             choices = None
         if isinstance(self.default_value, list):
             self.default_value = ", ".join([str(v) for v in self.default_value])
+        if isinstance(self.default_value, bool):
+            self.default_value = str(self.default_value)
         attrs = {"placeholder": self.default_value, "class": "model-param"}
+        attrs.update(field_kwargs)
+        if field_kwargs:
+            print(self.name, attrs, field_kwargs)
         if self.number_dims == 0:
             if choices is not None:
                 attrs["class"] = "unedited"
@@ -80,6 +85,13 @@ class ParamToolsParam(Param):
         -
 
         """
+        if not value:
+            print(f"disableing: {self.name}")
+            value = [{"value": "disabled"}]
+            field_kwargs["disabled"] = True
+            coerce_func = str
+        else:
+            coerce_func = self.coerce_func
         for value_object in value:
             field_name, _ = dims_to_string(
                 self.name, value_object, self.meta_parameters
@@ -96,10 +108,23 @@ class ParamToolsParam(Param):
             )
             self.fields[field_name] = field.form_field
             self.col_fields.append(field)
+        # get attribute indicating whether parameter uses a checkbox.
+        self.has_checkbox = "checkbox" in self.attributes
+        if self.has_checkbox:
+            field_name = f"{self.name}_checkbox"
+            # TODO: Projects should use checkbox label instead of "CPI".
+            self.checkbox_field = CheckBox(
+                field_name, "CPI", self.attributes["checkbox"], **field_kwargs
+            )
+            self.fields[field_name] = self.checkbox_field.form_field
 
     def format_label(self, value_object):
-        label = ""
+        label = []
         for dim_name, dim_value in value_object.items():
             if dim_name != "value" and dim_name not in self.meta_parameters:
-                label += f"{dim_name.replace('_', ' ').title()}: {dim_value} "
-        return label
+                label.append((f"{dim_name.replace('_', ' ').upper()}", dim_value))
+        if len(label) == 1:
+            # just return the value in this case.
+            return label[0][1]
+        else:
+            return " ".join([f"{name}: {val}" for name, val in label])

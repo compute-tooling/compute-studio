@@ -73,6 +73,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
         projects = [
             {"title": "Matchups", "owner": hdoupe.profile},
             {"title": "Used-for-testing"},
+            {"title": "Tax-Brain"},
             {"title": "Used-for-testing-sponsored-apps", "sponsor": sponsor.profile},
         ]
 

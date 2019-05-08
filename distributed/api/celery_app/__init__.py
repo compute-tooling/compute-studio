@@ -27,6 +27,11 @@ task_routes = {
     "hdoupe_matchups_tasks.sim": {"queue": "hdoupe_matchups_queue"},
     "hdoupe_matchups_tasks.inputs_get": {"queue": "hdoupe_matchups_inputs_queue"},
     "hdoupe_matchups_tasks.inputs_parse": {"queue": "hdoupe_matchups_inputs_queue"},
+    "pslmodels_taxbrain_tasks.sim": {"queue": "pslmodels_taxbrain_queue"},
+    "pslmodels_taxbrain_tasks.inputs_get": {"queue": "pslmodels_taxbrain_inputs_queue"},
+    "pslmodels_taxbrain_tasks.inputs_parse": {
+        "queue": "pslmodels_taxbrain_inputs_queue"
+    },
 }
 
 
