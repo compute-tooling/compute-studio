@@ -5,6 +5,7 @@ from webapp.apps.comp.compute import SyncCompute
 from webapp.apps.comp.displayer import Displayer
 from webapp.apps.comp.exceptions import AppError
 
+
 ParamData = namedtuple("ParamData", ["name", "data"])
 
 
@@ -51,12 +52,16 @@ class BaseParser:
                     inputs_by_section[section][search_hit.name] = value
                     break
 
-        unflattened = {}
-        for sect, inputs in inputs_by_section.items():
-            unflattened[sect] = self.unflatten(inputs)
         errors_warnings = {
             sect: {"errors": {}, "warnings": {}} for sect in inputs_by_section
         }
+        errors_warnings["GUI"] = {"errors": {}, "warnings": {}}
+        unflattened = {}
+        for sect, inputs in inputs_by_section.items():
+            uf, errors = self.unflatten(inputs)
+            if errors["errors"]:
+                errors_warnings["GUI"].update(errors)
+            unflattened[sect] = uf
         return unflattened, errors_warnings
 
     def unflatten(self, parsed_input):
@@ -82,7 +87,7 @@ class BaseParser:
         return None
 
     @staticmethod
-    def append_errors_warnings(errors_warnings, append_func):
+    def append_errors_warnings(errors_warnings, append_func, defaults=None):
         """
         Appends warning/error messages to some object, append_obj, according to
         the provided function, append_func
@@ -90,7 +95,7 @@ class BaseParser:
         for action in ["warnings", "errors"]:
             for param in errors_warnings[action]:
                 msg = errors_warnings[action][param]
-                append_func(param, msg)
+                append_func(param, msg, defaults)
 
 
 class Parser(BaseParser):
@@ -106,4 +111,5 @@ class Parser(BaseParser):
         )
         if not success:
             raise AppError(params, result)
+        result["GUI"].update(errors_warnings["GUI"])
         return params, result

@@ -99,16 +99,28 @@ class Submit:
     def handle_errors(self):
         if self.warn_msgs or self.error_msgs or self.form.errors:
             self.form.add_error(None, OUT_OF_RANGE_ERROR_MSG)
+        _, defaults = self.ioutils.displayer.package_defaults()
 
-        def add_errors(param, msgs):
+        def add_errors(param, msgs, _defaults):
+            if _defaults:
+                param_data = _defaults.get(param, None)
+                if param_data:
+                    title = param_data["title"]
+                else:
+                    title = param
+            else:
+                title = param
             msg_html = "".join([f"<li>{msg}</li>" for msg in msgs])
-            message = mark_safe(f"<p>{param}:</p><ul>{msg_html}</ul>")
+            message = mark_safe(f"<p>{title}:</p><ul>{msg_html}</ul>")
             self.form.add_error(None, message)
 
         if self.warn_msgs or self.error_msgs:
+            print(self.model.errors_warnings)
             for inputs_style in self.model.errors_warnings:
                 self.ioutils.Parser.append_errors_warnings(
-                    self.model.errors_warnings[inputs_style], add_errors
+                    self.model.errors_warnings[inputs_style],
+                    add_errors,
+                    defaults[inputs_style],
                 )
 
     def submit(self):

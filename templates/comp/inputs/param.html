@@ -10,9 +10,9 @@
         {% include 'comp/inputs/fields/tooltip.html' with text=param.info %}
 
       <!-- TODO: add auxillary block for optional checkbox parameter. -->
-      {% if param.inflatable %}
-        {% with form|dict_get:param.cpi_field.name as cpi_field %}
-          {% include 'comp/inputs/fields/checkbox.html' with checkbox=cpi_field %}
+      {% if param.has_checkbox %}
+        {% with form|dict_get:param.checkbox_field.name as checkbox_field %}
+          {% include 'comp/inputs/fields/checkbox.html' with checkbox=checkbox_field %}
         {% endwith %}
       {% endif %}
       </label>

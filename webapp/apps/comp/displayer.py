@@ -36,6 +36,7 @@ class Displayer:
             {"meta_param_dict": self.meta_parameters},
             self.project.worker_ext(action=actions.INPUTS),
         )
+        print("SUCCESS", success)
         if not success:
             raise AppError(self.meta_parameters, result)
         if cache_result:

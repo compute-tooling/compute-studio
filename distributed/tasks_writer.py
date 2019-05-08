@@ -7,7 +7,7 @@ from jinja2 import Template
 
 
 def clean(word):
-    return re.sub("[^0-9a-zA-Z]+", "*", word).lower()
+    return re.sub("[^0-9a-zA-Z]+", "", word).lower()
 
 
 def template(owner, title, sim_time_limit, out):
