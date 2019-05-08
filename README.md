@@ -32,4 +32,4 @@ COMP Community Edition is licensed under the open source [GNU Affero General Pub
 
 ## Local Installation
 
-The [technical documentation](docs/technical/INSTALL.md) contains a step by step guide that shows how to run COMP locally.
+The technical documentation is out of date and will be updated once [#127](https://github.com/comp-org/comp-ce/pull/127) has been merged.
