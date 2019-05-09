@@ -12,16 +12,17 @@ from webapp.apps.comp.forms import InputsForm
 from .mockclasses import MockModel
 
 
-def test_param(comp_inputs, valid_meta_params):
+def test_param(get_inputs, valid_meta_params):
     """
     Test load valid data with comp Param class.
     """
-    for maj_sect in comp_inputs.values():
+    model_params = get_inputs[1]
+    for maj_sect in model_params.values():
         for name, attrs in maj_sect.items():
             param = Param(name, attrs, **valid_meta_params)
             assert param
             assert all(getattr(param, name) for name in valid_meta_params.keys())
-            param.set_fields([1])
+            param.set_fields([{"value": 1}])
             assert param.col_fields
             assert param.fields
 
@@ -34,19 +35,19 @@ def test_checkboxfield():
 @pytest.fixture
 def mockproject(meta_param):
     class MockProject:
-        pass
+        title = "mock"
 
     return MockProject()
 
 
-def test_paramdisplayer(comp_inputs, mockproject, valid_meta_params, meta_param_dict):
+def test_paramdisplayer(get_inputs, mockproject, valid_meta_params):
     """
     Test ParamDisplayer class
     """
 
     class MockDisplayer(Displayer):
         def package_defaults(self):
-            return meta_param_dict, comp_inputs
+            return get_inputs
 
     ioutils = get_ioutils(mockproject, Displayer=MockDisplayer, Param=Param)
     ioutils.displayer.meta_parameters = valid_meta_params
@@ -68,38 +69,38 @@ def test_paramdisplayer(comp_inputs, mockproject, valid_meta_params, meta_param_
     )
 
 
-def test_paramparser(comp_inputs, valid_meta_params, mockproject, meta_param_dict):
+def test_paramparser(get_inputs, valid_meta_params, mockproject, meta_param_dict):
     """
 
     """
 
     class MockDisplayer(Displayer):
         def package_defaults(self):
-            return meta_param_dict, comp_inputs
-
-    class MockParser(BaseParser):
-        pass
+            return get_inputs
 
     ioutils = get_ioutils(
-        mockproject, Displayer=MockDisplayer, Parser=Parser, Param=Param
+        mockproject, Displayer=MockDisplayer, Parser=BaseParser, Param=Param
     )
     ioutils.displayer.meta_parameters = valid_meta_params
 
-    clean_inputs = {"intparam": [3], "mj2param": [4.0]}
-    parser = MockParser(
+    clean_inputs = {"intparam": 3, "mj2param": 4.0}
+    parser = BaseParser(
         mockproject, ioutils.displayer, clean_inputs, **valid_meta_params
     )
-    res, _ = parser.parse_parameters()
+    ew, res = parser.parse_parameters()
     assert res == {
-        "majorsection1": {"intparam": [3]},
-        "majorsection2": {"mj2param": [4.0]},
+        "majorsection1": {"intparam": [{"value": 3}]},
+        "majorsection2": {"mj2param": [{"value": 4.0}]},
     }
+    errors_warnings = {"errors": {}, "warnings": {}}
+    assert ew["majorsection1"] == errors_warnings
+    assert ew["majorsection2"] == errors_warnings
 
 
-def test_form(db, comp_inputs, meta_param_dict):
+def test_form(db, get_inputs, meta_param_dict):
     class MockDisplayer(Displayer):
         def package_defaults(self):
-            return meta_param_dict, comp_inputs
+            return get_inputs
 
     project = Project.objects.get(title="Used-for-testing")
     ioutils = get_ioutils(project, Displayer=MockDisplayer, Param=Param)
@@ -108,10 +109,10 @@ def test_form(db, comp_inputs, meta_param_dict):
     assert form
 
     # case with good data
-    raw_inputs = {"intparam": "3,5", "mj2param": "4.0", "boolparam": "True"}
+    raw_inputs = {"intparam": "3", "mj2param": "4.0", "boolparam": "True"}
     form = InputsForm(project, ioutils.displayer, raw_inputs)
     assert form.is_valid()
-    exp = {"intparam": [3, 5], "mj2param": [4.0], "boolparam": [True]}
+    exp = {"intparam": 3, "mj2param": 4.0, "boolparam": True}
     for k, v in exp.items():
         assert form.cleaned_data[k] == v
     model = form.save()

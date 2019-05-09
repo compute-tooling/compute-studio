@@ -53,7 +53,6 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
             if project.owner.user == request.user or request.user.has_perm(
                 "write_project", project
             ):
-                print(request.data)
                 serializer = PublishSerializer(project, data=request.data)
                 if serializer.is_valid():
                     model = serializer.save(status="updating")
@@ -78,7 +77,6 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
                     except Exception:
                         pass
                     return Response(serializer.data)
-                print(serializer.errors)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_401_UNAUTHORIZED)
 
@@ -97,7 +95,6 @@ class ProjectCreateAPIView(GetProjectMixin, APIView):
                     ).count()
                     > 0
                 ):
-                    print("EXISTS")
                     return Response(
                         {"project_exists": f"{username}/{title} already exists."},
                         status=status.HTTP_400_BAD_REQUEST,

@@ -6,6 +6,7 @@ import functools
 import requests
 import pytest
 import stripe
+import paramtools
 
 from django import forms
 from django.core.management import call_command
@@ -230,23 +231,15 @@ def test_models(db, profile):
 
 
 @pytest.fixture
-def meta_param_dict():
-    return {
-        "metaparam": {
-            "title": "Meta-Param",
-            "description": "meta param used for testing",
-            "type": "int",
-            "value": 1,
-            "validators": {},
-        }
-    }
-
-
-@pytest.fixture
-def comp_inputs():
+def comp_inputs_json():
     path = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(path, "comp/tests/inputs.json")) as f:
         return json.loads(f.read())
+
+
+@pytest.fixture
+def meta_param_dict(comp_inputs_json):
+    return comp_inputs_json["meta_param_dict"]
 
 
 @pytest.fixture
@@ -257,3 +250,30 @@ def meta_param(meta_param_dict):
 @pytest.fixture
 def valid_meta_params(meta_param):
     return meta_param.validate({})
+
+
+@pytest.fixture
+def get_inputs(comp_inputs_json):
+    schema = {
+        "schema": {
+            "additional_members": {
+                "section_1": {"type": "str"},
+                "section_2": {"type": "str"},
+            }
+        }
+    }
+
+    class Params1(paramtools.Parameters):
+        defaults = dict(comp_inputs_json["model_params"]["majorsection1"], **schema)
+
+    class Params2(paramtools.Parameters):
+        defaults = dict(comp_inputs_json["model_params"]["majorsection2"], **schema)
+
+    class MetaParams(paramtools.Parameters):
+        array_first = True
+        defaults = comp_inputs_json["meta_param_dict"]
+
+    p1 = Params1().specification(serializable=True, meta_data=True)
+    p2 = Params2().specification(serializable=True, meta_data=True)
+    mp = MetaParams().specification(serializable=True, meta_data=True)
+    return mp, {"majorsection1": p1, "majorsection2": p2}

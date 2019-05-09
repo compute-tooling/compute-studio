@@ -36,7 +36,6 @@ class Displayer:
             {"meta_param_dict": self.meta_parameters},
             self.project.worker_ext(action=actions.INPUTS),
         )
-        print("SUCCESS", success)
         if not success:
             raise AppError(self.meta_parameters, result)
         if cache_result:
@@ -55,7 +54,7 @@ class Displayer:
         """
         _, raw_defaults = self.package_defaults()
         default_params = {}
-        for inputs_style, defaults in raw_defaults.items():
+        for defaults in raw_defaults.values():
             for k, v in defaults.items():
                 param = self.Param(k, v, **self.meta_parameters)
                 default_params[param.name] = param
@@ -79,7 +78,7 @@ class Displayer:
     def _parse_top_level(self, ordered_dict):
         output = []
         for x, y in ordered_dict.items():
-            section_name = y.get("section_1")
+            section_name = y.get("section_1", " ")
             if section_name:
                 section = next((item for item in output if section_name in item), None)
                 if not section:
@@ -93,7 +92,7 @@ class Displayer:
         free_fields = []
         for x in field_section:
             for y, z in x.items():
-                section_name = z.get("section_2")
+                section_name = z.get("section_2", " ")
                 new_param = {y: self.Param(y, z, **self.meta_parameters)}
                 section = next((item for item in output if section_name in item), None)
                 if not section:

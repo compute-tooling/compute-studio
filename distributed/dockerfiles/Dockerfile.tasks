@@ -13,6 +13,7 @@ ARG RAW_REPO_URL
 ARG AWS_ACCESS_KEY_ID=""
 ARG AWS_SECRET_ACCESS_KEY=""
 ARG BRANCH=master
+ARG BUILD_NUM=0
 
 # Edit Dockerfile here for installing necessary packages, copying files, etc.
 ######################

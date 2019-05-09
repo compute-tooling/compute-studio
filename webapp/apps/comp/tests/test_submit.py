@@ -15,15 +15,15 @@ from .compute import MockCompute
 from .mockclasses import MockModel
 
 
-def test_submit(db, comp_inputs, meta_param_dict, profile):
+def test_submit(db, get_inputs, meta_param_dict, profile):
     class MockDisplayer(Displayer):
         def package_defaults(self):
-            return meta_param_dict, comp_inputs
+            return get_inputs
 
     class MockParser(BaseParser):
         def parse_parameters(self):
-            params, errors_warnings = super().parse_parameters()
-            return params, errors_warnings
+            errors_warnings, params = super().parse_parameters()
+            return errors_warnings, params
 
     project = Project.objects.get(title="Used-for-testing")
     ioutils = get_ioutils(
@@ -51,15 +51,15 @@ def test_submit(db, comp_inputs, meta_param_dict, profile):
     assert sim.model_pk == Simulation.objects.next_model_pk(sim.project) - 1
 
 
-def test_submit_sponsored(db, comp_inputs, meta_param_dict, profile):
+def test_submit_sponsored(db, get_inputs, meta_param_dict, profile):
     class MockDisplayer(Displayer):
         def package_defaults(self):
-            return meta_param_dict, comp_inputs
+            return get_inputs
 
     class MockParser(BaseParser):
         def parse_parameters(self):
-            params, errors_warnings = super().parse_parameters()
-            return params, errors_warnings
+            errors_warnings, params = super().parse_parameters()
+            return errors_warnings, params
 
     project = Project.objects.get(title="Used-for-testing-sponsored-apps")
     ioutils = get_ioutils(
@@ -87,19 +87,19 @@ def test_submit_sponsored(db, comp_inputs, meta_param_dict, profile):
     assert sim.model_pk == Simulation.objects.next_model_pk(sim.project) - 1
 
 
-def test_submit_w_errors(db, comp_inputs, meta_param_dict, profile):
+def test_submit_w_errors(db, get_inputs, meta_param_dict, profile):
     mock_errors_warnings = {
-        "test": {"errors": {"testing": ["an error"]}, "warnings": {}}
+        "majorsection1": {"errors": {"intparam": ["an error"]}, "warnings": {}}
     }
 
     class MockDisplayer(Displayer):
         def package_defaults(self):
-            return meta_param_dict, comp_inputs
+            return get_inputs
 
     class MockParser(BaseParser):
         def parse_parameters(self):
-            params, _ = super().parse_parameters()
-            return params, mock_errors_warnings
+            _, params = super().parse_parameters()
+            return mock_errors_warnings, params
 
     project = Project.objects.get(title="Used-for-testing")
     ioutils = get_ioutils(
@@ -114,4 +114,7 @@ def test_submit_w_errors(db, comp_inputs, meta_param_dict, profile):
     submit = Submit(request, project, ioutils, compute)
     assert submit.stop_submission
     assert submit.model.errors_warnings == mock_errors_warnings
-    assert "<p>testing:</p><ul><li>an error</li></ul>" in submit.form.errors["__all__"]
+    assert (
+        "<p>Integer parameter:</p><ul><li>an error</li></ul>"
+        in submit.form.errors["__all__"]
+    )

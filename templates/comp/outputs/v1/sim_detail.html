@@ -51,14 +51,14 @@
                       <li>
                         <ul class="list-unstyled">
                         <li><p><i> Inputs for section: </i> <code>meta-parameters</code></p></li>
-                        <li><pre><code class="block">{{object.inputs.pretty_meta_parameters}}</code></li></pre>
+                        <li><pre><code class="block">{{object.inputs.meta_parameters|pprint}}</code></li></pre>
                         </ul>
                       </li>
-                      {% for sect, jsonobj in object.inputs.inputs_file.items %}
+                      {% for sect, jsonobj in object.inputs.model_parameters.items %}
                         <li>
                         <ul class="list-unstyled">
                         <li><p><i> Inputs for section: </i> <code>{{sect}}</code></p></li>
-                        <li><pre><code class="block">{{jsonobj}}</code></li></pre>
+                        <li><pre><code class="block">{{jsonobj|pprint}}</code></li></pre>
                         </ul>
                         </li>
                       {% endfor %}

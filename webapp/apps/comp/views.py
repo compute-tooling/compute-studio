@@ -271,10 +271,12 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
             mp_val = self.object.inputs.meta_parameters.get(mp_name, None)
             if mp_val is not None:
                 initial[mp_name] = mp_val
-
         inputs_form = InputsForm(project, ioutils.displayer, initial=initial)
         # clean data with is_valid call.
         inputs_form.is_valid()
+
+        for field, val in inputs_form.initial.items():
+            inputs_form.fields[field].initial = val
         # is_bound is turned off so that the `initial` data is displayed.
         # Note that form is validated and cleaned with is_bound call.
         inputs_form.is_bound = False

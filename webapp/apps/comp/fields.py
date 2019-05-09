@@ -77,9 +77,6 @@ class ValueField(forms.Field):
         raw_values = value.split(",")
         python_values = []
         num_ops = 0
-        import pdb
-
-        pdb.set_trace()
         for raw_value in raw_values:
             stripped = raw_value.strip()
             if is_reverse(stripped) or is_wildcard(stripped):
@@ -87,43 +84,10 @@ class ValueField(forms.Field):
                 num_ops += 1
             else:
                 python_values.append(self._coerce(stripped))
-        if self.number_dims == 0:
-            if (len(python_values) - num_ops) > 1:
-                raise forms.ValidationError(
-                    self.error_messages["invalid_type"], code="invalid"
-                )
-            else:
-                if not num_ops:
-                    python_values = python_values[0]
-        import pdb
-
-        pdb.set_trace()
+        # Some projects like Tax-Brain extend their parameters
+        # along some dimension. For those projects, the entire
+        # list is kept even though it should just be a single
+        # value.
+        if self.number_dims == 0 and len(python_values) == 1 and num_ops == 0:
+            python_values = python_values[0]
         return python_values
-
-
-class SeparatedValueField(ValueField):
-    pass
-    # def to_python(self, value):
-    #     if not value:
-    #         return value
-    #     raw_values = value.split(",")
-    #     python_values = []
-    #     num_ops = 0
-    #     import pdb; pdb.set_trace()
-    #     for raw_value in raw_values:
-    #         stripped = raw_value.strip()
-    #         if is_reverse(stripped) or is_wildcard(stripped):
-    #             python_values.append(stripped)
-    #             num_ops += 1
-    #         else:
-    #             python_values.append(self._coerce(stripped))
-    #     if self.number_dims == 0:
-    #         if (len(python_values) - num_ops) > 1:
-    #             raise forms.ValidationError(
-    #                 self.error_messages["invalid_type"], code="invalid"
-    #             )
-    #         else:
-    #             if not num_ops:
-    #                 python_values = python_values[0]
-    #     import pdb; pdb.set_trace()
-    #     return python_values

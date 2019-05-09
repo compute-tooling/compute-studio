@@ -39,21 +39,24 @@ def translate_to_django(meta_parameters: dict) -> MetaParameters:
     for name, data in meta_parameters.items():
         if data["type"] == "str" and "choice" in data["validators"]:
             field = forms.ChoiceField(
-                choices=[(c, c) for c in data["validators"]["choice"]["choices"]]
+                label="",
+                choices=[(c, c) for c in data["validators"]["choice"]["choices"]],
             )
         elif data["type"] == "str":
-            field = forms.CharField()
+            field = forms.CharField(label="")
         elif data["type"] in ("int", "float"):
             field = forms.IntegerField if data["type"] == "int" else forms.FloatField
             if "range" in data["validators"]:
                 min_value = data["validators"]["range"]["min"]
                 max_value = data["validators"]["range"]["max"]
-                field = field(min_value=min_value, max_value=max_value)
+                field = field(label="", min_value=min_value, max_value=max_value)
             else:
-                field = field()
+                field = field(label="")
         else:  # bool
             field = forms.TypedChoiceField(
-                coerce=coerce_bool, choices=list((i, i) for i in (True, False))
+                label="",
+                coerce=coerce_bool,
+                choices=list((i, i) for i in (True, False)),
             )
         if isinstance(data["value"], list):
             val = data["value"][0]["value"]

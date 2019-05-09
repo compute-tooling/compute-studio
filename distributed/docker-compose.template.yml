@@ -13,6 +13,7 @@ services:
         RAW_REPO_URL: "{{RAW_REPO_URL}}"
         AWS_ACCESS_KEY_ID: {{AWS_ACCESS_KEY_ID}}
         AWS_SECRET_ACCESS_KEY: {{AWS_SECRET_ACCESS_KEY}}
+        BUILD_NUM: {{BUILD_NUM}}
     image: "comporg/{{SAFEOWNER}}_{{SAFETITLE}}_tasks:${TAG}"
     depends_on:
       - celerybase

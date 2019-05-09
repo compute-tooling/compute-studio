@@ -71,7 +71,7 @@ class Submit:
                 **self.valid_meta_params,
             )
 
-            model_parameters, errors_warnings = parser.parse_parameters()
+            errors_warnings, model_parameters = parser.parse_parameters()
             self.model.model_parameters = model_parameters
             self.model.meta_parameters = self.valid_meta_params
             self.model.errors_warnings = errors_warnings
@@ -115,12 +115,11 @@ class Submit:
             self.form.add_error(None, message)
 
         if self.warn_msgs or self.error_msgs:
-            print(self.model.errors_warnings)
             for inputs_style in self.model.errors_warnings:
                 self.ioutils.Parser.append_errors_warnings(
                     self.model.errors_warnings[inputs_style],
                     add_errors,
-                    defaults[inputs_style],
+                    {} if inputs_style == "GUI" else defaults[inputs_style],
                 )
 
     def submit(self):

@@ -32,6 +32,15 @@ task_routes = {
     "pslmodels_taxbrain_tasks.inputs_parse": {
         "queue": "pslmodels_taxbrain_inputs_queue"
     },
+    "pslmodels_costofcapitalcalculator_tasks.sim": {
+        "queue": "pslmodels_costofcapitalcalculator_queue"
+    },
+    "pslmodels_costofcapitalcalculator_tasks.inputs_get": {
+        "queue": "pslmodels_costofcapitalcalculator_inputs_queue"
+    },
+    "pslmodels_costofcapitalcalculator_tasks.inputs_parse": {
+        "queue": "pslmodels_costofcapitalcalculator_inputs_queue"
+    },
 }
 
 

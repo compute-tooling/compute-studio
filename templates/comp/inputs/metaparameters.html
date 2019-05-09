@@ -5,9 +5,13 @@
 
 <fieldset class="inputs-block">
   <ul class="list-unstyled components">
-    {% for param_name in form.meta_parameters.parameters %}
+    {% for param_name, param_data in form.meta_parameters.parameters.items %}
     <li>
-        {{form|dict_get:param_name|as_crispy_field}}
+        <label>
+          {{ param_data.title }}
+          {% include 'comp/inputs/fields/tooltip.html' with text=param_data.description size="fa-sm" %}        
+          {{form|dict_get:param_name|as_crispy_field}}
+        </label>
     </li>
     {% endfor %}
   </ul>
