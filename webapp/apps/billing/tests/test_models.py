@@ -153,13 +153,8 @@ class TestStripeModels:
             "title": "New-Model",
             "oneliner": "one liner",
             "description": "**Super** new!",
-            "package_defaults": "import newmodel",
-            "parse_user_adjustments": "import newmodel",
-            "run_simulation": "import newmodel",
+            "repo_url": "https://github.com/comp-org/comp-ce",
             "server_size": [4, 8],
-            "installation": "install me",
-            "inputs_style": "paramtools",
-            "meta_parameters": "{}",
         }
         resp = client.post("/publish/api/", post_data)
         assert resp.status_code == 200

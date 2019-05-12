@@ -11,22 +11,25 @@ from webapp.apps.comp.meta_parameters import (
 def test_meta_parameters_instance():
     meta_parameters = MetaParameters()
     assert meta_parameters
-    assert meta_parameters.parameters == []
+    assert meta_parameters.parameters == {}
 
 
 def test_meta_parameters():
     meta_parameters = MetaParameters(
-        [
-            MetaParameter(
-                name="inttest", title="Int test", default=1, field=forms.IntegerField()
+        parameters={
+            "inttest": MetaParameter(
+                title="Int test",
+                description="An int test",
+                value=1,
+                field=forms.IntegerField(),
             ),
-            MetaParameter(
-                name="booltest",
-                title="bool test",
-                default=True,
+            "booltest": MetaParameter(
+                description="a bool test",
+                title="A bool test",
+                value=True,
                 field=forms.BooleanField(required=False),
             ),
-        ]
+        }
     )
     valid = meta_parameters.validate({"inttest": "2", "booltest": False})
     assert valid["inttest"] == 2
@@ -38,19 +41,18 @@ def test_meta_parameters():
 
 def test_translate():
     metaparameters = {
-        "meta_parameters": {
-            "use_full_data": {
-                "title": "Use full data",
-                "default": True,
-                "type": "bool",
-                "validators": {},
-            }
+        "use_full_data": {
+            "title": "Use full data",
+            "description": "use full data...",
+            "value": True,
+            "type": "bool",
+            "validators": {},
         }
     }
     result = translate_to_django(metaparameters)
 
-    mp = result.parameters[0]
+    mp = next(v for v in result.parameters.values())
     assert mp.title == "Use full data"
-    assert mp.name == "use_full_data"
-    assert mp.default == True
+    assert next(k for k in result.parameters.keys()) == "use_full_data"
+    assert mp.value == True
     assert isinstance(mp.field, forms.TypedChoiceField)

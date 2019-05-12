@@ -5,14 +5,32 @@ $(document).ready(function() {
     value = input.val();
     value_default = input.prop("placeholder");
     value_changed = value != "" && value != value_default;
-    default_value = $(`#default-${input.attr("name")}`);
+    default_node = $(`#default-${input.attr("name")}`);
     if (value_changed) {
       input.addClass("edited");
-      default_value.removeClass("hide-default");
+      default_node.removeClass("hide-default");
     } else {
       input.val(""); // show placeholder instead of value entered that = default
       input.removeClass("edited");
-      default_value.addClass("hide-default");
+      default_node.addClass("hide-default");
+    }
+  };
+
+  var toggleSelectEdited = function(select) {
+    option = $("option:selected", select);
+    value = option.val();
+    value_default = select.attr("placeholder");
+    value_changed = value != "" && value != value_default;
+    console.log(value_default, value, select.attr("placeholder"));
+    default_node = $(`#default-${select.attr("name")}`);
+    if (value_changed) {
+      select.removeClass("unedited");
+      select.addClass("edited");
+      default_node.removeClass("hide-default");
+    } else {
+      select.addClass("unedited");
+      select.removeClass("edited");
+      default_node.addClass("hide-default");
     }
   };
 
@@ -30,11 +48,12 @@ $(document).ready(function() {
 
   $("select.form-control.model-param").change(function(e) {
     console.log($(this));
-    $(this).removeClass("unedited");
+    select = $(this);
+    toggleSelectEdited(select, this);
   });
 
   $("#inputs-form.model-param").submit(function(e) {
-    $(".unedited.select.form-control").each(function() {
+    $("select.form-control.model-param.unedited").each(function() {
       select = $(this);
       select.prop("disabled", true);
     });

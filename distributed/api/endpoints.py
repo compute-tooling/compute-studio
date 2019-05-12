@@ -1,24 +1,13 @@
+import json
+import os
+import re
+
 from flask import Blueprint, request, make_response
 from celery.result import AsyncResult
 from celery import chord
-
 import redis
-import json
-import msgpack
-import os
 
-from api.celery_app import hdoupe_matchups_tasks, pslmodels_taxbrain_tasks
-
-task_modules = {
-    ("hdoupe", "Matchups"): hdoupe_matchups_tasks,
-    ("PSLmodels", "Tax-Brain"): pslmodels_taxbrain_tasks,
-    # ("error", "app"): error_app_tasks
-}
-
-if os.environ.get("DEVELOP", ""):
-    from api.celery_app import error_app_tasks
-
-    task_modules[("error", "app")] = error_app_tasks
+from api.celery_app import celery_app
 
 bp = Blueprint("endpoints", __name__)
 
@@ -28,39 +17,39 @@ client = redis.Redis.from_url(
 )
 
 
+def clean(word):
+    return re.sub("[^0-9a-zA-Z]+", "", word).lower()
+
+
 def sim_endpoint(compute_task):
-    print("sim endpoint")
+    print(f"sim endpoint {compute_task}")
     data = request.get_data()
-    inputs = msgpack.loads(data, encoding="utf8", use_list=True)
+    inputs = json.loads(data)
     print("inputs", inputs)
-    result = compute_task.apply_async(kwargs=inputs, serializer="msgpack")
+    result = celery_app.signature(compute_task, kwargs=inputs).delay()
     length = client.llen(queue_name) + 1
     data = {"job_id": str(result), "qlength": length}
     return json.dumps(data)
 
 
 def sync_endpoint(compute_task):
-    print("io endpoint")
+    print(f"io endpoint {compute_task}")
     data = request.get_data()
-    inputs = msgpack.loads(data, encoding="utf8", use_list=True)
+    inputs = json.loads(data)
     print("inputs", inputs)
-    result = compute_task.apply_async(kwargs=inputs, serializer="msgpack")
-    # try:
+    result = celery_app.signature(compute_task, kwargs=inputs).delay()
     print("getting...")
     result = result.get()
-    # except Exception as e:
-
-    # length = client.llen(queue_name) + 1
-    # data = {'job_id': str(result), 'qlength': length}
     return json.dumps(result)
 
 
 def route_to_task(owner, app_name, endpoint, action):
+    owner, app_name = clean(owner), clean(app_name)
     print("getting...", owner, app_name, endpoint, action)
-    module = task_modules.get((owner, app_name), None)
-    print("got module", module)
-    if module is not None:
-        return endpoint(getattr(module, action))
+    task_name = f"{owner}_{app_name}_tasks.{action}"
+    print("got task_name", task_name)
+    if task_name in celery_app.amqp.routes[0].map:
+        return endpoint(task_name)
     else:
         return json.dumps({"error": "invalid endpoint"}), 404
 

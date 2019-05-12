@@ -40,12 +40,12 @@
     "remarkable": "^1.7.1",
     "sass-loader": "^7.1.0",
     "style-loader": "^0.23.1",
-    "webpack": "^4.29.6",
     "webpack-dev-server": "^3.2.1",
     "yup": "^0.26.10"
   },
   "devDependencies": {
     "babel-plugin-transform-runtime": "^6.23.0",
+    "webpack": "^4.30.0",
     "webpack-bundle-tracker": "^0.4.2-beta",
     "webpack-cli": "^3.2.3"
   }

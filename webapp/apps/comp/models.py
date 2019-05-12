@@ -57,6 +57,10 @@ class Inputs(models.Model):
             return self.model_parameters
 
     @property
+    def display_params(self):
+        return self.inputs_file or self.model_parameters
+
+    @property
     def pretty_meta_parameters(self):
         return json.dumps(self.meta_parameters, indent=4)
 

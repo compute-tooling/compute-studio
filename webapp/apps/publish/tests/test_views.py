@@ -22,13 +22,8 @@ class TestPublishViews:
             "title": "New-Model",
             "oneliner": "oneliner",
             "description": "**Super** new!",
-            "package_defaults": "import newmodel",
-            "parse_user_adjustments": "import newmodel",
-            "run_simulation": "import newmodel",
+            "repo_url": "https://github.com/comp-org/comp-ce",
             "server_size": [4, 8],
-            "installation": "install me",
-            "inputs_style": "paramtools",
-            "meta_parameters": "{}",
         }
         resp = client.post("/publish/api/", post_data)
         assert resp.status_code == 401
@@ -48,14 +43,9 @@ class TestPublishViews:
             "title": "Detail-Test",
             "oneliner": "oneliner",
             "description": "desc",
-            "package_defaults": "import me",
-            "parse_user_adjustments": "import me",
-            "run_simulation": "import me",
+            "repo_url": "https://github.com/comp-org/comp-ce",
             "server_size": ["4", "2"],
             "exp_task_time": 20,
-            "installation": "install me",
-            "inputs_style": "paramtools",
-            "meta_parameters": {},
             "server_cost": Decimal("0.1"),
         }
         owner = Profile.objects.get(user__username="modeler")
@@ -65,20 +55,15 @@ class TestPublishViews:
         data = resp.json()
         serializer = PublishSerializer(project, data=data)
         assert serializer.is_valid()
-        assert serializer.validated_data == dict(exp, **{"meta_parameters": "{}"})
+        assert serializer.validated_data == exp
 
     def test_put_detail_api(self, client, test_models, profile, password):
         put_data = {
             "title": "Used-for-testing",
             "oneliner": "oneliner",
-            "description": "hello world",
-            "package_defaults": "import test",
-            "parse_user_adjustments": "import test",
-            "run_simulation": "import test",
+            "description": "hello world!",
+            "repo_url": "https://github.com/comp-org/comp-ce",
             "server_size": [2, 4],
-            "installation": "install",
-            "inputs_style": "paramtools",
-            "meta_parameters": "{}",
         }
         # not logged in --> not authorized
         resp = client.put(
@@ -108,7 +93,7 @@ class TestPublishViews:
         project = Project.objects.get(
             title="Used-for-testing", owner__user__username="modeler"
         )
-        assert project.package_defaults == put_data["package_defaults"]
+        assert project.description == put_data["description"]
         assert project.status == "updating"
 
         # Description can't be empty.
@@ -120,7 +105,7 @@ class TestPublishViews:
         assert resp.status_code == 400
 
         # test add write_project permission allows update
-        put_data["package_defaults"] = "import helloworld"
+        put_data["description"] = "hello world!!"
         client.login(username=profile.user.username, password=password)
         resp = client.put(
             "/publish/api/modeler/Used-for-testing/detail/",
@@ -143,7 +128,7 @@ class TestPublishViews:
         project = Project.objects.get(
             title="Used-for-testing", owner__user__username="modeler"
         )
-        assert project.package_defaults == put_data["package_defaults"]
+        assert project.description == put_data["description"]
         remove_perm("write_project", profile.user, project)
         assert not profile.user.has_perm("write_project", project)
 

@@ -135,8 +135,8 @@ input.model:not(:placeholder-shown) {
 }
 
 /* dimmer version of the bootstrap glow */
-input.edited {
-  background-color: rgba(102, 175, 233, 0.2);;
+input.edited, select.form-control.model-param.edited {
+  background-color: rgba(102, 175, 233, 0.2);
 }
 
 span.default-value.hide-default {

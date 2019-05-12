@@ -14,7 +14,6 @@ from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
 from webapp.apps.billing.models import create_billing_objects
-from webapp.apps.comp.meta_parameters import translate_to_django
 from webapp.apps.comp.models import Inputs
 
 
@@ -78,6 +77,7 @@ class Project(models.Model):
     title = models.CharField(max_length=255)
     oneliner = models.CharField(max_length=10000)
     description = models.CharField(max_length=10000)
+    repo_url = models.URLField()
     owner = models.ForeignKey(
         Profile, null=True, related_name="projects", on_delete=models.CASCADE
     )
@@ -95,15 +95,6 @@ class Project(models.Model):
         max_length=32,
     )
 
-    # functions
-    meta_parameters = JSONField(default=None, blank=True, null=True)
-    package_defaults = models.CharField(max_length=1000)
-    parse_user_adjustments = models.CharField(max_length=1000)
-    run_simulation = models.CharField(max_length=1000)
-
-    # install
-    installation = models.CharField(max_length=1000)
-
     # server resources
     server_cost = models.DecimalField(max_digits=6, decimal_places=3, null=True)
     # ram, vcpus
@@ -116,10 +107,6 @@ class Project(models.Model):
     exp_task_time = models.IntegerField(null=True)
     exp_num_tasks = models.IntegerField(null=True)
 
-    # model parameter type
-    inputs_style = models.CharField(
-        choices=(("paramtools", "paramtools"), ("taxcalc", "taxcalc")), max_length=32
-    )
     # permission type of the model
     permission_type = models.CharField(
         choices=(("default", "default"), ("sponsored", "sponsored")),
@@ -196,14 +183,6 @@ class Project(models.Model):
     @property
     def number_runs(self):
         return Inputs.objects.filter(project=self).count()
-
-    @cached_property
-    def parsed_meta_parameters(self):
-        if isinstance(self.meta_parameters, str):
-            meta_params = json.loads(self.meta_parameters)
-        else:
-            meta_params = self.meta_parameters
-        return translate_to_django(meta_params)
 
     @property
     def safe_description(self):

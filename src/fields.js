@@ -1,4 +1,9 @@
-import hljs from "highlight.js";
+import hljs from "highlight.js/lib/highlight";
+import python from "highlight.js/lib/languages/python";
+import json from "highlight.js/lib/languages/json";
+hljs.registerLanguage("python", python);
+hljs.registerLanguage("json", json);
+
 import "highlight.js/styles/default.css";
 import React from "react";
 
@@ -105,8 +110,8 @@ export const TextAreaField = ({
   );
 };
 
-export const Message = ({ msg }) => (
-  <small className="form-text text-muted">{msg}</small>
+export const Message = ({ msg, props }) => (
+  <small className={`form-text text-muted ${props}`}>{msg}</small>
 );
 
 export const CodeSnippetField = ({

@@ -1,13 +1,12 @@
 from django import forms
 
 from .models import Inputs
-from .meta_parameters import translate_to_django
 
 
 class InputsForm(forms.Form):
-    def __init__(self, project, ioclasses, *args, **kwargs):
+    def __init__(self, project, displayer, *args, **kwargs):
         self.project = project
-        self.meta_parameters = self.project.parsed_meta_parameters
+        self.meta_parameters = displayer.parsed_meta_parameters()
 
         fields = args[0] if args else {}
         if fields:
@@ -20,20 +19,23 @@ class InputsForm(forms.Form):
             # GET fresh inputs form
             clean_meta_parameters = self.meta_parameters.validate({})
         fields.update(clean_meta_parameters)
-        pd = ioclasses.Displayer(self.project, ioclasses, **clean_meta_parameters)
-        default_params = pd.defaults(flat=True)
+        displayer.meta_parameters = clean_meta_parameters
+        default_params = displayer.defaults(flat=True)
         update_fields = {}
         for param in list(default_params.values()):
             update_fields.update(param.fields)
         update_fields.update(
-            {mp.name: mp.field for mp in self.meta_parameters.parameters}
+            {
+                mp_name: mp.field
+                for mp_name, mp in self.meta_parameters.parameters.items()
+            }
         )
         super().__init__(data=fields, **kwargs)
         # funky things happen when dict is not copied
         self.fields.update(update_fields.copy())
 
     def save(self, commit=True):
-        meta_parameters = [mp.name for mp in self.meta_parameters.parameters]
+        meta_parameters = list(self.meta_parameters.parameters.keys())
         clean_meta_parameters = {
             name: self.cleaned_data[name] for name in meta_parameters
         }

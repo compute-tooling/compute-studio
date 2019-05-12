@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load utility %}
 {% load static %}
 {% block style %}
 <link rel='stylesheet' href={{bokeh_scripts.cdn_css|safe}}>
@@ -47,21 +48,11 @@
                 </button>
                 <div class="collapse" id="results-collapse">
                   <div class="card card-body card-inner">
-                      <ul>
-                      <li>
-                        <ul class="list-unstyled">
-                        <li><p><i> Inputs for section: </i> <code>meta-parameters</code></p></li>
-                        <li><pre><code class="block">{{object.inputs.pretty_meta_parameters}}</code></li></pre>
-                        </ul>
-                      </li>
-                      {% for sect, jsonobj in object.inputs.inputs_file.items %}
-                        <li>
-                        <ul class="list-unstyled">
-                        <li><p><i> Inputs for section: </i> <code>{{sect}}</code></p></li>
-                        <li><pre><code class="block">{{jsonobj}}</code></li></pre>
-                        </ul>
-                        </li>
-                      {% endfor %}
+                      <ul class="list-unstyled">
+                      <li><p><i> Meta Parameters:</i></p></li>
+                      <li><pre><code class="block">{{object.inputs.meta_parameters|pprint_json}}</code></pre></li>
+                      <li><p><i> Model Parameters: </i></p></li>
+                      <li><pre><code class="block">{{object.inputs.display_params|pprint_json}}</code></li></pre>
                       <ul>
                   </div>
                 </div>
