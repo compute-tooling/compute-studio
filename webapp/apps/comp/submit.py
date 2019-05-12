@@ -71,9 +71,10 @@ class Submit:
                 **self.valid_meta_params,
             )
 
-            errors_warnings, model_parameters = parser.parse_parameters()
+            errors_warnings, model_parameters, inputs_file = parser.parse_parameters()
             self.model.model_parameters = model_parameters
             self.model.meta_parameters = self.valid_meta_params
+            self.model.inputs_file = inputs_file
             self.model.errors_warnings = errors_warnings
             self.model.save()
 

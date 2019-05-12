@@ -185,8 +185,10 @@ class Parser(BaseParser):
         )
         if not success:
             raise AppError(params, result)
-        if isinstance(result, tuple):
-            result, *params_res = result
-            params = params_res[0] if params_res else params
+        if isinstance(result, (tuple, list)):
+            result, *inputs_file = result
+            inputs_file = inputs_file[0]
+        else:
+            inputs_file = None
         result["GUI"].update(errors_warnings["GUI"])
-        return result, params
+        return result, params, inputs_file
