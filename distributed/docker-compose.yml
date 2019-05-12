@@ -1,4 +1,4 @@
-version: '3'
+version: '3.7'
 services:
   flask:
     build:
@@ -14,7 +14,7 @@ services:
       - redis
       - distributed
     networks:
-      - comp-ce_comp-net
+      worker_net:
 
 ####################################################
   celerybase:
@@ -34,9 +34,11 @@ services:
   redis:
     image: redis
     networks:
-      - comp-ce_comp-net
+      worker_net:
+        aliases:
+          - redis
 
 ####################################################
+
 networks:
-  comp-ce_comp-net:
-    external: true
+  worker_net:

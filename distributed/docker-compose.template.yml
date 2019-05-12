@@ -1,4 +1,4 @@
-version: '3'
+version: '3.7'
 services:
   {{SAFEOWNER}}_{{SAFETITLE}}_tasks:
     build:
@@ -31,7 +31,7 @@ services:
     env_file:
       - ./dockerfiles/dev.env
     networks:
-      - comp-ce_comp-net
+      worker_net:
   
   {{SAFEOWNER}}_{{SAFETITLE}}_io:
     image: "comporg/{{SAFEOWNER}}_{{SAFETITLE}}_tasks:${TAG}"
@@ -41,4 +41,4 @@ services:
     env_file:
       - ./dockerfiles/dev.env
     networks:
-      - comp-ce_comp-net
+      worker_net:
