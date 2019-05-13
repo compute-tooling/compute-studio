@@ -10,3 +10,7 @@ class AppError(COMPError):
         self.parameters = json.dumps(parameters, indent=4)
         self.traceback = traceback
         super().__init__(traceback)
+
+
+class MatchFailedError(COMPError):
+    pass
