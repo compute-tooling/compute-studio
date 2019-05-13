@@ -6,7 +6,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     networks:
-      - comp-net
+      - distributed_worker_net
   web:
     build: .
     command: python manage.py runserver 0.0.0.0:8000
@@ -27,11 +27,11 @@ services:
     depends_on:
       - db
     networks:
-      - comp-net
+      - distributed_worker_net
 
 networks:
-  comp-net:
-    driver: bridge
+  distributed_worker_net:
+    external: true
 
 volumes:
   postgres_data:
