@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from .models import Inputs, Simulation
+
 
 class ResultSerializer(serializers.Serializer):
     outputs = serializers.JSONField()
@@ -14,3 +16,18 @@ class OutputsSerializer(serializers.Serializer):
     traceback = serializers.CharField(required=False)
     result = ResultSerializer(required=False)
     meta = serializers.JSONField()
+
+
+class InputsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Inputs
+        fields = ("meta_parameters", "model_parameters")
+
+
+class SimulationSerializer(serializers.ModelSerializer):
+    inputs = InputsSerializer(required=False)
+    outputs = serializers.JSONField(required=False, read_only=True)
+
+    class Meta:
+        model = Simulation
+        fields = ("inputs", "outputs")

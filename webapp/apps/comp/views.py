@@ -32,6 +32,7 @@ from webapp.apps.billing.models import SubscriptionItem, UsageRecord
 from webapp.apps.billing.utils import USE_STRIPE, ChargeRunMixin, has_payment_method
 from webapp.apps.users.models import Project, is_profile_active
 
+from .abstractrouter import AbstractRouterView
 from .constants import WEBAPP_VERSION
 from .forms import InputsForm
 from .models import Simulation
@@ -40,7 +41,7 @@ from .ioutils import get_ioutils
 from .submit import handle_submission, BadPost
 from .tags import TAGS
 from .exceptions import AppError
-from .serializers import OutputsSerializer
+from .serializers import OutputsSerializer, SimulationSerializer
 
 
 OBJ_STORAGE_URL = os.environ.get("OBJ_STORAGE_URL")
@@ -94,36 +95,6 @@ class InputsMixin:
                 and is_profile_active(user)
                 and has_payment_method(user)
             )
-
-
-class RouterView(InputsMixin, View):
-    projects = Project.objects.all()
-    placeholder_template = "comp/model_placeholder.html"
-
-    def handle(self, request, is_get, *args, **kwargs):
-        print("router handle", args, kwargs)
-        project = get_object_or_404(
-            self.projects,
-            owner__user__username=kwargs["username"],
-            title=kwargs["title"],
-        )
-        if project.status in ["updating", "live"]:
-            if project.sponsor is None:
-                return RequiresPmtInputsView.as_view()(request, *args, **kwargs)
-            else:
-                return RequiresLoginInputsView.as_view()(request, *args, **kwargs)
-        else:
-            if is_get:
-                context = self.project_context(request, project)
-                return render(request, self.placeholder_template, context)
-            else:
-                raise PermissionDenied()
-
-    def get(self, request, *args, **kwargs):
-        return self.handle(request, True, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        return self.handle(request, False, *args, **kwargs)
 
 
 class InputsView(InputsMixin, View):
@@ -240,6 +211,23 @@ class RequiresPmtInputsView(InputsView):
     )
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
+
+
+class RouterView(InputsMixin, AbstractRouterView):
+    projects = Project.objects.all()
+    placeholder_template = "comp/model_placeholder.html"
+    payment_view = RequiresPmtInputsView
+    login_view = RequiresLoginInputsView
+
+    def unauthorized_get(self, request, project):
+        context = self.project_context(request, project)
+        return render(request, self.placeholder_template, context)
+
+    def get(self, request, *args, **kwargs):
+        return self.handle(request, True, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.handle(request, False, *args, **kwargs)
 
 
 class GetOutputsObjectMixin:
@@ -544,3 +532,28 @@ class OutputsDownloadView(GetOutputsObjectMixin, View):
             "Content-Disposition"
         ] = f"attachment; filename={self.object.json_filename()}"
         return resp
+
+
+class SimCreateAPIView(APIView):
+    queryset = Project.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        print("sim api method=GET", request.GET, kwargs)
+        project = self.queryset.get(
+            owner__user__username=kwargs["username"], title=kwargs["title"]
+        )
+        ioutils = get_ioutils(project)
+        ser = SimulationSerializer(data=request.data)
+        if ser.is_valid():
+            print(f"data: {ser.data}")
+        else:
+            print(f"not valid: {ser.errors}")
+        meta_parameters, model_parameters = ioutils.displayer.package_defaults()
+        return Response(
+            {
+                "inputs": {
+                    "meta_parameters": meta_parameters,
+                    "model_parameters": model_parameters,
+                }
+            }
+        )
