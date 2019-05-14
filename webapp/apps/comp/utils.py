@@ -1,8 +1,6 @@
 import difflib
 from typing import Tuple
 
-from .exceptions import MatchFailedError
-
 
 def is_wildcard(x):
     if isinstance(x, str):
@@ -104,28 +102,3 @@ def dims_to_string(param_name, value_object, meta_parameters):
         return param_name + "____" + suffix, suffix
     else:
         return param_name, suffix
-
-
-def match_unknown_field(
-    field: str, flat_defaults: dict, form_fields: dict
-) -> Tuple[str, str]:
-    """
-    Try to match an unknown field to an existing field. This is helpful when 
-    variables have been renamed. This may also be helpful for finding a similar
-    parameter after a parameter has been removed.
-    """
-    # cpi is no longer used.
-    field = field.replace("cpi", "checkbox")
-    matches = difflib.get_close_matches(field, form_fields, n=1, cutoff=0.60)
-    if matches:
-        firstmatch = matches[0]
-        if firstmatch.endswith("_checkbox"):
-            firstmatch = firstmatch.replace("_checkbox", "")
-            cid = firstmatch.split("____")[0] + "_checkbox"
-            anchor_id = f"#label-id_{cid}"
-        else:
-            anchor_id = f"#id_{firstmatch}"
-        param_name = firstmatch.split("____")[0]
-        title = flat_defaults[param_name]["title"]
-        return anchor_id, title
-    raise MatchFailedError(f"Failed to find a match for {field}")
