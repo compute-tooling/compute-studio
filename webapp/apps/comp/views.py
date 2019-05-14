@@ -332,6 +332,7 @@ class RecordOutputsMixin(ChargeRunMixin):
     def record_outputs(self, sim, data):
         self.charge_run(sim, data["meta"], use_stripe=USE_STRIPE)
         sim.meta_data = data["meta"]
+        sim.model_version = data.get("model_version", "NA")
         # successful run
         if data["status"] == "SUCCESS":
             sim.status = "SUCCESS"

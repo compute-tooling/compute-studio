@@ -1,6 +1,7 @@
 {
     "job_id": "d8b340ef-b3e0-4e49-bb17-ffe0e6cb6711",
     "status": "FAIL",
+    "model_version": "v1.0.0",
     "traceback": "Traceback (most recent call last):\n  File \"/home/distributed/api/celery_app/__init__.py\", line 53, in f\n    outputs = func(*args, **kwargs)\n  File \"/home/distributed/api/celery_app/hdoupe_matchups_tasks.py\", line 60, in sim\n    return run(**kwargs)\n  File \"/home/distributed/api/celery_app/hdoupe_matchups_tasks.py\", line 55, in run\n    raise ValueError()\nValueError",
     "meta": {
         "task_times": [
