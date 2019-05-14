@@ -11,9 +11,9 @@ class Displayer:
         self.meta_parameters = meta_parameters
         self._cache = {}
 
-    def defaults(self, flat=True):
+    def defaults(self, flat=True, use_param_cls=True):
         if flat:
-            return self._default_flatdict()
+            return self._default_flatdict(use_param_cls=use_param_cls)
         else:
             return self._default_form()
 
@@ -45,7 +45,7 @@ class Displayer:
             }
         return result
 
-    def _default_flatdict(self):
+    def _default_flatdict(self, use_param_cls=True):
         """
         Get _flat_ dictionary of default parameters, i.e. major section types
         are collapsed. This is used to specify the default inputs on the Django
@@ -56,8 +56,11 @@ class Displayer:
         default_params = {}
         for defaults in raw_defaults.values():
             for k, v in defaults.items():
-                param = self.Param(k, v, **self.meta_parameters)
-                default_params[param.name] = param
+                if use_param_cls:
+                    param = self.Param(k, v, **self.meta_parameters)
+                    default_params[param.name] = param
+                else:
+                    default_params[k] = v
         return default_params
 
     def _default_form(self):
