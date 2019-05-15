@@ -1,0 +1,23 @@
+
+
+<div class="card card-body card-outer">
+  <div class="alert alert-danger lert-dismissible" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <p>
+      This simulation was run with {{object.project.title}} version {{object.model_version}}. on {{object.creation_date|date:"Y-m-d"}}. 
+      One or more {{object.project.title}} parameters have been renamed or removed since then. 
+      You can review the outputs to this simulation, but you will not be able to modify it.
+    </p>
+    
+    <p>Use the latest version of {{object.project.title}} to:</p>
+    <ul>
+    <li>Create a simulation from the remaining parameter adjustments on this page.</li>
+    <li>Create a new <a href="{{object.project.app_url}}">default simulation</a>.</li>
+    
+    </ul>
+    
+    <p>Use a <a href="{{object.project.repo_url}}">local version of {{object.project.title}}</a> to replicate and edit this simulation using the earlier version and its full set of parameter adjustments.</p>
+  </div>
+</div>
