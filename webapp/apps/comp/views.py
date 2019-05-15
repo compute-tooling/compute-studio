@@ -42,7 +42,7 @@ from .compute import Compute, JobFailError
 from .ioutils import get_ioutils
 from .submit import handle_submission, BadPost
 from .tags import TAGS
-from .exceptions import AppError
+from .exceptions import AppError, ValidationError
 from .serializers import OutputsSerializer, SimulationSerializer
 
 
@@ -549,20 +549,22 @@ class OutputsDownloadView(GetOutputsObjectMixin, View):
         return resp
 
 
-class SimCreateAPIView(APIView):
+class InputsAPIView(APIView):
     queryset = Project.objects.all()
 
-    def get(self, request, *args, **kwargs):
-        print("sim api method=GET", request.GET, kwargs)
+    def get_inputs(self, kwargs, meta_parameters=None):
         project = self.queryset.get(
             owner__user__username=kwargs["username"], title=kwargs["title"]
         )
         ioutils = get_ioutils(project)
-        ser = SimulationSerializer(data=request.data)
-        if ser.is_valid():
-            print(f"data: {ser.data}")
-        else:
-            print(f"not valid: {ser.errors}")
+        if meta_parameters is not None:
+            try:
+                parsed_mp = ioutils.displayer.parsed_meta_parameters()
+                ioutils.displayer.meta_parameters = parsed_mp.validate(
+                    meta_parameters, throw_errors=True
+                )
+            except ValidationError as e:
+                return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
         meta_parameters, model_parameters = ioutils.displayer.package_defaults()
         return Response(
             {
@@ -572,3 +574,30 @@ class SimCreateAPIView(APIView):
                 }
             }
         )
+
+    def get(self, request, *args, **kwargs):
+        print("sim api method=GET", request.GET, kwargs)
+        return self.get_inputs(kwargs)
+
+    def post(self, request, *args, **kwargs):
+        print("sim api method=GET", request.GET, kwargs)
+        ser = SimulationSerializer(data=request.data)
+        if ser.is_valid():
+            data = ser.validated_data
+            if "inputs" in data and "meta_parameters" in data["inputs"]:
+                meta_parameters = data["inputs"]["meta_parameters"]
+            else:
+                meta_parameters = {}
+            return self.get_inputs(kwargs, meta_parameters)
+        else:
+            return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CreateAPIView(APIView):
+    def post(self, request, *args, **kwargs):
+        # project = self.queryset.get(
+        #     owner__user__username=kwargs["username"], title=kwargs["title"]
+        # )
+        # ioutils = get_ioutils(project)
+        # coming soon.
+        pass

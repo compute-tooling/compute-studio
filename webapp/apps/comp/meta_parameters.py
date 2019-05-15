@@ -6,23 +6,29 @@ from marshmallow import Schema, fields, validate, exceptions
 from paramtools import ValueValidatorSchema
 
 from webapp.apps.comp.fields import coerce_bool
+from webapp.apps.comp.exceptions import ValidationError
 
 
 @dataclass
 class MetaParameters:
     parameters: Dict[str, "MetaParameter"] = field(default_factory=dict)
 
-    def validate(self, fields: dict) -> dict:
+    def validate(self, fields: dict, throw_errors: bool = False) -> dict:
         validated = {}
+        errors = {}
+        print("got fields", fields)
         if not self.parameters:
             return validated
         for param_name, param_data in self.parameters.items():
             try:
                 cleaned = param_data.field.clean(fields.get(param_name))
-            except (forms.ValidationError, KeyError) as e:
+            except (forms.ValidationError, KeyError):
+                errors[param_name] = "Invalid."
                 # fall back on default. deal with bad data in full validation.
                 cleaned = param_data.field.clean(param_data.value)
             validated[param_name] = cleaned
+        if errors and throw_errors:
+            raise ValidationError(errors)
         return validated
 
 

@@ -10,6 +10,7 @@ from webapp.apps.billing.models import UsageRecord
 from webapp.apps.users.models import Project, Profile
 
 from webapp.apps.comp.models import Simulation
+from webapp.apps.comp.ioutils import get_ioutils
 from .compute import MockCompute, MockComputeWorkerFailure
 
 
@@ -449,3 +450,55 @@ def test_outputs_api(db, client, profile, password):
         ).status_code
         == 400
     )
+
+
+@pytest.mark.usefixtures("sponsored_matchups")
+class TestMatchupsAPI(CoreTestMixin):
+    class MatchupsMockCompute(MockCompute):
+        outputs = read_outputs("Matchups_v1")
+
+    owner = "hdoupe"
+    title = "Matchups"
+    mockcompute = MatchupsMockCompute
+
+    def test_get_inputs(self, client):
+        resp = client.get(f"/{self.owner}/{self.title}/api/v1/inputs/")
+        assert resp.status_code == 200
+
+        ioutils = get_ioutils(self.project)
+        mp, defaults = ioutils.displayer.package_defaults()
+        exp = {"meta_parameters": mp, "model_parameters": defaults}
+        assert exp == resp.data["inputs"]
+
+    def test_post_inputs(self, client):
+        payload = {"inputs": {"meta_parameters": {"use_full_data": False}}}
+        resp = client.post(
+            f"/{self.owner}/{self.title}/api/v1/inputs/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+
+        ioutils = get_ioutils(self.project)
+        ioutils.displayer.meta_parameters = payload["inputs"]["meta_parameters"]
+        mp, defaults = ioutils.displayer.package_defaults()
+        exp = {"meta_parameters": mp, "model_parameters": defaults}
+        assert exp == resp.data["inputs"]
+
+    def test_post_bad_inputs(self, client):
+        payload = {"inputs": {"meta_parameters": {"use_full_data": "Hello world"}}}
+        resp = client.post(
+            f"/{self.owner}/{self.title}/api/v1/inputs/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+
+    def inputs_ok(self):
+        inputs = super().inputs_ok()
+        upstream_inputs = {"pitcher": "Max Scherzer"}
+        return dict(inputs, **upstream_inputs)
+
+    @property
+    def provided_free(self):
+        return True
