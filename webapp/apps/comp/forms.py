@@ -14,7 +14,8 @@ class InputsForm(forms.Form):
             clean_meta_parameters = self.meta_parameters.validate(fields)
         elif kwargs.get("initial", None) is not None:
             # GET edit inputs form
-            clean_meta_parameters = self.meta_parameters.validate(kwargs.get("initial"))
+            clean_meta_parameters = self.meta_parameters.validate(kwargs["initial"])
+            kwargs["initial"].update(clean_meta_parameters)
         else:
             # GET fresh inputs form
             clean_meta_parameters = self.meta_parameters.validate({})

@@ -19,6 +19,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.urls import reverse
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
+from django.utils.safestring import mark_safe
+
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -262,13 +264,25 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
         inputs_form = InputsForm(project, ioutils.displayer, initial=initial)
         # clean data with is_valid call.
         inputs_form.is_valid()
-
+        unknown_fields = False
         for field, val in inputs_form.initial.items():
-            inputs_form.fields[field].initial = val
+            if val not in (None, ""):
+                try:
+                    inputs_form.fields[field].initial = val
+                except KeyError:
+                    unknown_fields = True
+        unknown_fields = mark_safe(unknown_fields)
         # is_bound is turned off so that the `initial` data is displayed.
         # Note that form is validated and cleaned with is_bound call.
         inputs_form.is_bound = False
         context = self.project_context(request, project)
+        context.update(
+            {
+                "object": self.object,
+                "unknown_fields": unknown_fields,
+                "model_parameters": self.object.inputs.display_params,
+            }
+        )
         return self._render_inputs_form(request, project, ioutils, inputs_form, context)
 
     def _render_inputs_form(self, request, project, ioutils, inputs_form, context):
@@ -293,6 +307,7 @@ class RecordOutputsMixin(ChargeRunMixin):
     def record_outputs(self, sim, data):
         self.charge_run(sim, data["meta"], use_stripe=USE_STRIPE)
         sim.meta_data = data["meta"]
+        sim.model_version = data.get("model_version", "NA")
         # successful run
         if data["status"] == "SUCCESS":
             sim.status = "SUCCESS"

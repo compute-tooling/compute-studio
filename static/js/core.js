@@ -67,4 +67,9 @@ $(document).ready(function() {
     btn = $(`[data-target="#${$(this).attr("id")}"]`);
     btn.html('<i class="far fa-minus-square" style="size:5x;" ></i>');
   });
+
+  // Show help message on 'change' events.
+  $(".metaparam-field").change(function() {
+    $("#metaparam-msg").removeClass("d-none");
+  });
 });

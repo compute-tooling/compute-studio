@@ -65,8 +65,10 @@ def task_wrapper(func):
             if task.name.endswith("sim"):
                 version = outputs.pop("version", OUTPUTS_VERSION)
                 if version == "v0":
+                    res["model_version"] = "NA"
                     res["result"] = dict(outputs, **{"version": version})
                 else:
+                    res["model_version"] = outputs.pop("model_version")
                     outputs = s3like.write_to_s3like(task_id, outputs)
                     res["result"] = {"outputs": outputs, "version": version}
             else:

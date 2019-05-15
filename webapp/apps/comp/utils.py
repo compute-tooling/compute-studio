@@ -1,3 +1,7 @@
+import difflib
+from typing import Tuple
+
+
 def is_wildcard(x):
     if isinstance(x, str):
         return x in ("*", "*") or x.strip() in ("*", "*")

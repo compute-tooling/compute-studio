@@ -23,7 +23,7 @@ def test_submit(db, get_inputs, meta_param_dict, profile):
     class MockParser(BaseParser):
         def parse_parameters(self):
             errors_warnings, params = super().parse_parameters()
-            return errors_warnings, params
+            return errors_warnings, params, None
 
     project = Project.objects.get(title="Used-for-testing")
     ioutils = get_ioutils(
@@ -59,7 +59,7 @@ def test_submit_sponsored(db, get_inputs, meta_param_dict, profile):
     class MockParser(BaseParser):
         def parse_parameters(self):
             errors_warnings, params = super().parse_parameters()
-            return errors_warnings, params
+            return errors_warnings, params, None
 
     project = Project.objects.get(title="Used-for-testing-sponsored-apps")
     ioutils = get_ioutils(
@@ -99,7 +99,7 @@ def test_submit_w_errors(db, get_inputs, meta_param_dict, profile):
     class MockParser(BaseParser):
         def parse_parameters(self):
             _, params = super().parse_parameters()
-            return mock_errors_warnings, params
+            return mock_errors_warnings, params, None
 
     project = Project.objects.get(title="Used-for-testing")
     ioutils = get_ioutils(

@@ -15,6 +15,7 @@ class OutputsSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=(("SUCCESS", "Success"), ("FAIL", "Fail")))
     traceback = serializers.CharField(required=False)
     result = ResultSerializer(required=False)
+    model_version = serializers.CharField()
     meta = serializers.JSONField()
 
 
