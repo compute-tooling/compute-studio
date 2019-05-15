@@ -106,7 +106,7 @@ class Simulation(models.Model):
     creation_date = models.DateTimeField(default=timezone.now)
     exp_comp_datetime = models.DateTimeField(default=timezone.now)
     job_id = models.UUIDField(blank=True, default=None, null=True)
-    model_vers = models.CharField(blank=True, default=None, null=True, max_length=50)
+    model_version = models.CharField(blank=True, default=None, null=True, max_length=50)
     webapp_vers = models.CharField(blank=True, default=None, null=True, max_length=50)
     model_pk = models.IntegerField()
 

@@ -135,15 +135,7 @@
             </div>
             {% endif %}
             {% if unknown_fields %}
-            <div class="card card-body card-outer">
-              <div class="alert alert-danger text-center lert-dismissible" role="alert">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-                <p><b>The following parameter(s) may have been renamed or removed from {{project_name}}:</b></p>
-                {{ unknown_fields }}
-              </div>
-            </div>
+            {% include 'comp/inputs/unknown_fields.html' %}
             {% endif %}
             {% if model_parameters %}
             <div class="card card-body card-outer">

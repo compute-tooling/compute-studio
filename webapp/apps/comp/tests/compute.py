@@ -56,7 +56,13 @@ class MockCompute(Compute):
 
 class MockComputeWorkerFailure(MockCompute):
     next_response = None
-    outputs = json.dumps({"status": "WORKER_FAILURE", "traceback": "Error: whoops"})
+    outputs = json.dumps(
+        {
+            "status": "WORKER_FAILURE",
+            "model_version": "v1.0.0",
+            "traceback": "Error: whoops",
+        }
+    )
 
     def remote_query_job(self, url, params):
         self.client = None

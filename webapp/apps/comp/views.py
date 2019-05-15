@@ -35,7 +35,6 @@ from webapp.apps.billing.utils import USE_STRIPE, ChargeRunMixin, has_payment_me
 from webapp.apps.users.models import Project, is_profile_active
 
 from .constants import WEBAPP_VERSION
-from .exceptions import MatchFailedError
 from .forms import InputsForm
 from .models import Simulation
 from .compute import Compute, JobFailError
@@ -44,7 +43,6 @@ from .submit import handle_submission, BadPost
 from .tags import TAGS
 from .exceptions import AppError
 from .serializers import OutputsSerializer
-from .utils import match_unknown_field
 
 
 OBJ_STORAGE_URL = os.environ.get("OBJ_STORAGE_URL")
@@ -278,36 +276,25 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
         inputs_form = InputsForm(project, ioutils.displayer, initial=initial)
         # clean data with is_valid call.
         inputs_form.is_valid()
-        unknown_fields = ""
-        flat_defaults = None
+        unknown_fields = False
         for field, val in inputs_form.initial.items():
             if val not in (None, ""):
                 try:
                     inputs_form.fields[field].initial = val
                 except KeyError:
-                    if flat_defaults is None:
-                        flat_defaults = ioutils.displayer.defaults(use_param_cls=False)
-                    msg = f"{field} (user value=<b>{val}</b>) is unknown."
-                    if field.endswith("checkbox") or field.endswith("cpi"):
-                        msg += " This parameter is associated with another parameter as a blue box."
-                    try:
-                        anchor_id, title = match_unknown_field(
-                            field, flat_defaults, inputs_form.fields
-                        )
-                        msg += (
-                            f" A similar parameter: <a href='{anchor_id}'>{title}</a>"
-                        )
-                    except MatchFailedError:
-                        pass
-                    unknown_fields += f" <p>{msg}</p> "
-
+                    unknown_fields = True
         unknown_fields = mark_safe(unknown_fields)
         # is_bound is turned off so that the `initial` data is displayed.
         # Note that form is validated and cleaned with is_bound call.
         inputs_form.is_bound = False
         context = self.project_context(request, project)
-        context.update({"unknown_fields": unknown_fields})
-        context.update({"model_parameters": self.object.inputs.display_params})
+        context.update(
+            {
+                "object": self.object,
+                "unknown_fields": unknown_fields,
+                "model_parameters": self.object.inputs.display_params,
+            }
+        )
         return self._render_inputs_form(request, project, ioutils, inputs_form, context)
 
     def _render_inputs_form(self, request, project, ioutils, inputs_form, context):
@@ -332,6 +319,7 @@ class RecordOutputsMixin(ChargeRunMixin):
     def record_outputs(self, sim, data):
         self.charge_run(sim, data["meta"], use_stripe=USE_STRIPE)
         sim.meta_data = data["meta"]
+        sim.model_version = data.get("model_version", "NA")
         # successful run
         if data["status"] == "SUCCESS":
             sim.status = "SUCCESS"

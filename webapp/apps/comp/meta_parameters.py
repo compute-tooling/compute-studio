@@ -62,6 +62,8 @@ def translate_to_django(meta_parameters: dict) -> MetaParameters:
             val = data["value"][0]["value"]
         else:
             val = data["value"]
+        # Class used to provide a help message on 'change' events.
+        field.widget.attrs["class"] = "metaparam-field"
         new_mp[name] = MetaParameter(
             title=data["title"], description=data["description"], value=val, field=field
         )
