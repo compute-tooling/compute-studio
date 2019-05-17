@@ -40,7 +40,8 @@ from .forms import InputsForm
 from .models import Simulation
 from .compute import Compute, JobFailError
 from .ioutils import get_ioutils
-from .submit import handle_submission, BadPost
+from .parser import APIParser
+from .submit import handle_submission, BadPost, APISubmit
 from .tags import TAGS
 from .exceptions import AppError, ValidationError
 from .serializers import OutputsSerializer, SimulationSerializer
@@ -157,7 +158,7 @@ class InputsView(InputsMixin, View):
 
         # case where validation failed
         if isinstance(result, BadPost):
-            return submission.http_response_404
+            return result.http_response
 
         # No errors--submit to model
         if result.save is not None:
@@ -553,8 +554,10 @@ class InputsAPIView(APIView):
     queryset = Project.objects.all()
 
     def get_inputs(self, kwargs, meta_parameters=None):
-        project = self.queryset.get(
-            owner__user__username=kwargs["username"], title=kwargs["title"]
+        project = get_object_or_404(
+            self.queryset,
+            owner__user__username=kwargs["username"],
+            title=kwargs["title"],
         )
         ioutils = get_ioutils(project)
         if meta_parameters is not None:
@@ -595,9 +598,51 @@ class InputsAPIView(APIView):
 
 class CreateAPIView(APIView):
     def post(self, request, *args, **kwargs):
-        # project = self.queryset.get(
-        #     owner__user__username=kwargs["username"], title=kwargs["title"]
-        # )
-        # ioutils = get_ioutils(project)
-        # coming soon.
-        pass
+        compute = Compute()
+        project = get_object_or_404(
+            self.queryset,
+            owner__user__username=kwargs["username"],
+            title=kwargs["title"],
+        )
+        ioutils = get_ioutils(project, Parser=APIParser)
+
+        try:
+            result = handle_submission(
+                request, project, ioutils, compute, submit_class=APISubmit
+            )
+        except AppError as ae:
+            try:
+                send_mail(
+                    f"COMP AppError",
+                    (
+                        f"An error has occurred:\n {ae.parameters}\n causing: "
+                        f"{ae.traceback}\n user:{request.user.username}\n "
+                        f"project: {project.app_url}."
+                    ),
+                    "henrymdoupe@gmail.com",
+                    ["henrymdoupe@gmail.com"],
+                    fail_silently=True,
+                )
+            # Http 401 exception if mail credentials are not set up.
+            except Exception as e:
+                pass
+
+            return Response(ae.traceback, status=status.HTTP_400_BAD_REQUEST)
+
+        # case where validation failed
+        if isinstance(result, BadPost):
+            return result.http_response
+
+        # No errors--submit to model
+        if result.save is not None:
+            print("redirecting...", result.save.runmodel_instance.get_absolute_url())
+            data = {
+                "model_parameters": result.submit.model.model_parameters,
+                "inputs_file": result.submit.model.inputs_file,
+                "outputs_url": result.save.runmodel_instance.get_absolute_url(),
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                result.submit.model.errors_warnings, status=status.HTTP_400_BAD_REQUEST
+            )

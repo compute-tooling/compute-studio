@@ -22,7 +22,12 @@ class OutputsSerializer(serializers.Serializer):
 class InputsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inputs
-        fields = ("meta_parameters", "model_parameters")
+        fields = (
+            "meta_parameters",
+            "model_parameters",
+            "inputs_file",
+            "errors_warnings",
+        )
 
 
 class SimulationSerializer(serializers.ModelSerializer):

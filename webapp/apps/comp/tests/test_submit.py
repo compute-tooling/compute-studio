@@ -4,12 +4,12 @@ from django.test import RequestFactory
 
 from webapp.apps.users.models import Project
 
-from webapp.apps.comp.submit import Submit, Save
+from webapp.apps.comp.submit import Submit, APISubmit, Save
 from webapp.apps.comp.displayer import Displayer
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.models import Inputs, Simulation
 from webapp.apps.comp.param import Param
-from webapp.apps.comp.parser import BaseParser
+from webapp.apps.comp.tests.parser import LocalParser, LocalAPIParser
 from .compute import MockCompute
 
 from .mockclasses import MockModel
@@ -20,14 +20,9 @@ def test_submit(db, get_inputs, meta_param_dict, profile):
         def package_defaults(self):
             return get_inputs
 
-    class MockParser(BaseParser):
-        def parse_parameters(self):
-            errors_warnings, params = super().parse_parameters()
-            return errors_warnings, params, None
-
     project = Project.objects.get(title="Used-for-testing")
     ioutils = get_ioutils(
-        project, Displayer=MockDisplayer, Parser=MockParser, Param=Param
+        project, Displayer=MockDisplayer, Parser=LocalParser, Param=Param
     )
 
     factory = RequestFactory()
@@ -56,14 +51,9 @@ def test_submit_sponsored(db, get_inputs, meta_param_dict, profile):
         def package_defaults(self):
             return get_inputs
 
-    class MockParser(BaseParser):
-        def parse_parameters(self):
-            errors_warnings, params = super().parse_parameters()
-            return errors_warnings, params, None
-
     project = Project.objects.get(title="Used-for-testing-sponsored-apps")
     ioutils = get_ioutils(
-        project, Displayer=MockDisplayer, Parser=MockParser, Param=Param
+        project, Displayer=MockDisplayer, Parser=LocalParser, Param=Param
     )
 
     factory = RequestFactory()
@@ -96,9 +86,9 @@ def test_submit_w_errors(db, get_inputs, meta_param_dict, profile):
         def package_defaults(self):
             return get_inputs
 
-    class MockParser(BaseParser):
+    class MockParser(LocalParser):
         def parse_parameters(self):
-            _, params = super().parse_parameters()
+            _, params, _ = super().parse_parameters()
             return mock_errors_warnings, params, None
 
     project = Project.objects.get(title="Used-for-testing")
@@ -118,3 +108,40 @@ def test_submit_w_errors(db, get_inputs, meta_param_dict, profile):
         "<p>Integer parameter:</p><ul><li>an error</li></ul>"
         in submit.form.errors["__all__"]
     )
+
+
+def test_api_submit(db, get_inputs, meta_param_dict, profile):
+    class MockDisplayer(Displayer):
+        def package_defaults(self):
+            return get_inputs
+
+    project = Project.objects.get(title="Used-for-testing")
+    ioutils = get_ioutils(
+        project, Displayer=MockDisplayer, Parser=LocalAPIParser, Param=Param
+    )
+
+    factory = RequestFactory()
+    data = {
+        "inputs": {
+            "meta_parameters": {"metaparam": 3},
+            "model_parameters": {"majorsection1": {"intparam": 2}},
+        }
+    }
+    request = factory.post(
+        "/modeler/Used-for-testing/api/v1/", data=data, content_type="application/json"
+    )
+    request.user = profile.user
+    request.data = data
+    compute = MockCompute()
+    submit = APISubmit(request, project, ioutils, compute)
+    assert not submit.stop_submission
+    inputs = Inputs.objects.get(pk=submit.model.pk)
+    assert inputs.meta_parameters
+    assert inputs.model_parameters
+    assert inputs.project
+    save = Save(submit)
+    sim = Simulation.objects.get(pk=save.runmodel_instance.pk)
+    assert sim.owner
+    assert sim.sponsor is None
+    assert sim.project
+    assert sim.model_pk == Simulation.objects.next_model_pk(sim.project) - 1

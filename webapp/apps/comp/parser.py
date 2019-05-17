@@ -26,6 +26,49 @@ class BaseParser:
             k: v for _, sect in self.grouped_defaults.items() for k, v in sect.items()
         }
 
+    @staticmethod
+    def append_errors_warnings(errors_warnings, append_func, defaults=None):
+        """
+        Appends warning/error messages to some object, append_obj, according to
+        the provided function, append_func
+        """
+        for action in ["warnings", "errors"]:
+            for param in errors_warnings[action]:
+                msg = errors_warnings[action][param]
+                append_func(param, msg, defaults)
+
+    def parse_parameters(self):
+        errors_warnings = {
+            sect: {"errors": {}, "warnings": {}}
+            for sect in list(self.grouped_defaults) + ["GUI", "API"]
+        }
+        model_parameters = {sect: {} for sect in self.grouped_defaults}
+        return errors_warnings, model_parameters
+
+    def post(self, errors_warnings, params):
+        data = {
+            "meta_param_dict": self.valid_meta_params,
+            "adjustment": params,
+            "errors_warnings": errors_warnings,
+        }
+        success, result = SyncCompute().submit_job(
+            data, self.project.worker_ext(action=actions.PARSE)
+        )
+        if not success:
+            raise AppError(params, result)
+        if isinstance(result, (tuple, list)):
+            result, *inputs_file = result
+            inputs_file = inputs_file[0]
+        else:
+            inputs_file = None
+        if "GUI" in errors_warnings:
+            result["GUI"] = errors_warnings["GUI"]
+        if "API" in errors_warnings:
+            result["API"] = errors_warnings["API"]
+        return result, params, inputs_file
+
+
+class Parser(BaseParser):
     def parse_parameters(self):
         """
         Parse request and model objects and collect revisions and warnings
@@ -35,13 +78,13 @@ class BaseParser:
         returns cleaned_inputs (grouped by major section), empty JSON string,
             empty errors/warnings dictionary
         """
+        errors_warnings, model_parameters = super().parse_parameters()
         order_by_list_len = sorted(
             self.grouped_defaults,
             key=lambda k: len(self.grouped_defaults[k]),
             reverse=True,
         )
 
-        inputs_by_section = {sect: {} for sect in self.grouped_defaults}
         for param, value in self.clean_inputs.items():
             if value in ("", None):
                 continue
@@ -50,18 +93,14 @@ class BaseParser:
                     param, self.grouped_defaults[section], raise_error=False
                 )
                 if search_hit is not None:
-                    inputs_by_section[section][search_hit.name] = value
+                    model_parameters[section][search_hit.name] = value
                     break
 
-        errors_warnings = {
-            sect: {"errors": {}, "warnings": {}} for sect in inputs_by_section
-        }
-        errors_warnings["GUI"] = {"errors": {}, "warnings": {}}
         unflattened = {}
-        for sect, inputs in inputs_by_section.items():
+        for sect, inputs in model_parameters.items():
             uf = self.unflatten(inputs, errors_warnings)
             unflattened[sect] = uf
-        return errors_warnings, unflattened
+        return self.post(errors_warnings, unflattened)
 
     def unflatten(self, parsed_input, errors_warnings):
         params = defaultdict(list)
@@ -160,35 +199,17 @@ class BaseParser:
             raise ParameterLookUpException(msg.format(param))
         return None
 
-    @staticmethod
-    def append_errors_warnings(errors_warnings, append_func, defaults=None):
-        """
-        Appends warning/error messages to some object, append_obj, according to
-        the provided function, append_func
-        """
-        for action in ["warnings", "errors"]:
-            for param in errors_warnings[action]:
-                msg = errors_warnings[action][param]
-                append_func(param, msg, defaults)
 
-
-class Parser(BaseParser):
+class APIParser(BaseParser):
     def parse_parameters(self):
-        errors_warnings, params = super().parse_parameters()
-        data = {
-            "meta_param_dict": self.valid_meta_params,
-            "adjustment": params,
-            "errors_warnings": errors_warnings,
-        }
-        success, result = SyncCompute().submit_job(
-            data, self.project.worker_ext(action=actions.PARSE)
-        )
-        if not success:
-            raise AppError(params, result)
-        if isinstance(result, (tuple, list)):
-            result, *inputs_file = result
-            inputs_file = inputs_file[0]
-        else:
-            inputs_file = None
-        result["GUI"].update(errors_warnings["GUI"])
-        return result, params, inputs_file
+        errors_warnings, model_parameters = super().parse_parameters()
+        extra_keys = set(self.clean_inputs.keys() - self.grouped_defaults.keys())
+        if extra_keys:
+            errors_warnings["API"]["errors"] = {
+                "extra_keys": [f"Has extra sections: {' ,'.join(extra_keys)}"]
+            }
+
+        for sect in model_parameters:
+            model_parameters[sect].update(self.clean_inputs.get(sect, {}))
+
+        return self.post(errors_warnings, model_parameters)
