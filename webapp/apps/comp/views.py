@@ -620,9 +620,8 @@ class CreateAPIView(APIView):
 
         # No errors--submit to model
         if result.save is not None:
-            print("redirecting...", result.save.runmodel_instance.get_absolute_url())
             sim = SimulationSerializer(result.save.runmodel_instance)
-            return Response(sim.data, status=status.HTTP_200_OK)
+            return Response(sim.data, status=status.HTTP_201_CREATED)
         else:
             return Response(
                 result.submit.model.errors_warnings, status=status.HTTP_400_BAD_REQUEST
@@ -639,11 +638,9 @@ class DetailAPIView(GetOutputsObjectMixin, APIView):
         sim = SimulationSerializer(self.object)
         if self.object.outputs:
             data = sim.data
-            downloadable = {"downloadable": data["outputs"]["downloadable"]}
-            data["outputs"] = s3like.read_from_s3like(downloadable)
-            return Response(
-                {"outputs": outputs, "inputs": inputs.data}, status=status.HTTP_200_OK
-            )
+            outputs = {"downloadable": data["outputs"]["outputs"]["downloadable"]}
+            data["outputs"] = s3like.read_from_s3like(outputs)
+            return Response(data, status=status.HTTP_200_OK)
         elif self.object.traceback is not None:
             return Response(sim.data, status=status.HTTP_200_OK)
 
@@ -671,4 +668,4 @@ class DetailAPIView(GetOutputsObjectMixin, APIView):
                 {"error": "model error"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        return Response(sim.data, status=status.HTTP_200_OK)
+        return Response(sim.data, status=status.HTTP_202_ACCEPTED)
