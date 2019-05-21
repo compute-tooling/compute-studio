@@ -453,6 +453,7 @@ def test_outputs_api(db, client, profile, password):
 
 
 @pytest.mark.usefixtures("sponsored_matchups")
+@pytest.mark.django_db
 class TestMatchupsAPI(CoreTestMixin):
     class MatchupsMockCompute(MockCompute):
         outputs = read_outputs("Matchups_v1")
@@ -468,10 +469,10 @@ class TestMatchupsAPI(CoreTestMixin):
         ioutils = get_ioutils(self.project)
         mp, defaults = ioutils.displayer.package_defaults()
         exp = {"meta_parameters": mp, "model_parameters": defaults}
-        assert exp == resp.data["inputs"]
+        assert exp == resp.data
 
     def test_post_inputs(self, client):
-        payload = {"inputs": {"meta_parameters": {"use_full_data": False}}}
+        payload = {"meta_parameters": {"use_full_data": False}}
         resp = client.post(
             f"/{self.owner}/{self.title}/api/v1/inputs/",
             data=payload,
@@ -480,19 +481,37 @@ class TestMatchupsAPI(CoreTestMixin):
         assert resp.status_code == 200
 
         ioutils = get_ioutils(self.project)
-        ioutils.displayer.meta_parameters = payload["inputs"]["meta_parameters"]
+        ioutils.displayer.meta_parameters.update(payload["meta_parameters"])
         mp, defaults = ioutils.displayer.package_defaults()
         exp = {"meta_parameters": mp, "model_parameters": defaults}
-        assert exp == resp.data["inputs"]
+        assert exp == resp.data
 
     def test_post_bad_inputs(self, client):
-        payload = {"inputs": {"meta_parameters": {"use_full_data": "Hello world"}}}
+        payload = {"meta_parameters": {"use_full_data": "Hello world"}}
         resp = client.post(
             f"/{self.owner}/{self.title}/api/v1/inputs/",
             data=payload,
             content_type="application/json",
         )
         assert resp.status_code == 400
+
+    def test_runmodel(self, client):
+        payload = {
+            "meta_parameters": {"use_full_data": False},
+            "model_parameters": {"matchup": {"pitcher": "Max Scherzer"}},
+        }
+        resp = client.post(
+            f"/{self.owner}/{self.title}/api/v1/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        assert resp.data
+        resp = client.get(resp.data["outputs_url"])
+        assert resp.status_code == 200
+        import pdb
+
+        pdb.set_trace()
 
     def inputs_ok(self):
         inputs = super().inputs_ok()

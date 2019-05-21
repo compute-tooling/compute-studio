@@ -5,7 +5,8 @@ from django.utils import timezone
 from django import forms
 from django.utils.safestring import mark_safe
 from django.http import HttpResponse, HttpRequest
-import rest_framework as rf
+from rest_framework import status
+from rest_framework.response import Response
 
 from webapp.apps.users.models import Project
 from webapp.apps.comp import actions
@@ -15,7 +16,7 @@ from webapp.apps.comp.forms import InputsForm
 from webapp.apps.comp.ioutils import IOClasses
 from webapp.apps.comp.models import Inputs, Simulation
 from webapp.apps.comp.parser import Parser
-from webapp.apps.comp.serializers import SimulationSerializer
+from webapp.apps.comp.serializers import InputsSerializer
 from webapp.apps.comp.forms import InputsForm
 from webapp.apps.comp.constants import OUT_OF_RANGE_ERROR_MSG, WEBAPP_VERSION
 
@@ -146,16 +147,15 @@ class Submit:
 
 class APISubmit(Submit):
     def get_fields(self):
-        pass
+        self.has_errors = False
 
     def create_model(self):
-        self.ser = SimulationSerializer(data=self.request.data)
+        self.ser = InputsSerializer(data=self.request.data)
         self.is_valid = self.ser.is_valid()
         if self.is_valid:
             validated_data = self.ser.validated_data
-            inputs = validated_data.get("inputs", {})
-            meta_parameters = inputs.get("meta_parameters", {})
-            model_parameters = inputs.get("model_parameters", {})
+            meta_parameters = validated_data.get("meta_parameters", {})
+            model_parameters = validated_data.get("model_parameters", {})
             try:
                 self.valid_meta_params = self.meta_parameters.validate(meta_parameters)
                 errors = None
@@ -164,9 +164,7 @@ class APISubmit(Submit):
 
             if errors:
                 self.badpost = BadPost(
-                    http_response=rf.Response(
-                        errors, status=rf.status.HTTP_400_BAD_REQUEST
-                    ),
+                    http_response=Response(errors, status=status.HTTP_400_BAD_REQUEST),
                     has_errors=True,
                 )
                 return
@@ -175,24 +173,22 @@ class APISubmit(Submit):
             parser = self.ioutils.Parser(
                 self.project,
                 self.ioutils.displayer,
-                self.ser.validated_data["inputs"]["model_parameters"]
-                ** self.valid_meta_params,
+                self.ser.validated_data["model_parameters"],
+                **self.valid_meta_params,
             )
 
             errors_warnings, model_parameters, inputs_file = parser.parse_parameters()
             self.model = self.ser.save(
-                inputs={
-                    "meta_parameters": self.valid_meta_params,
-                    "model_parameters": model_parameters,
-                    "errors_warnings": errors_warnings,
-                    "inputs_file": inputs_file,
-                }
+                meta_parameters=self.valid_meta_params,
+                model_parameters=model_parameters,
+                errors_warnings=errors_warnings,
+                inputs_file=inputs_file,
             )
 
         else:
             self.badpost = BadPost(
-                http_response=rf.Response(
-                    self.ser.errors, status=rf.status.HTTP_400_BAD_REQUEST
+                http_response=Response(
+                    self.ser.errors, status=status.HTTP_400_BAD_REQUEST
                 ),
                 has_errors=True,
             )
@@ -203,7 +199,7 @@ class APISubmit(Submit):
 
 
 class Save:
-    def __init__(self, submit):
+    def __init__(self, submit, runmodel=None):
         """
         Retrieve model run data from instance of `Submit`. Save to `RunModel`
         instance. Return that instance.
@@ -213,7 +209,8 @@ class Save:
         Simulation
         """
         # create OutputUrl object
-        runmodel = Simulation()
+        if runmodel is None:
+            runmodel = Simulation()
         runmodel.status = "PENDING"
         runmodel.job_id = submit.submitted_id
         runmodel.inputs = submit.model

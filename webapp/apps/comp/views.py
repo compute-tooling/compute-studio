@@ -44,7 +44,7 @@ from .parser import APIParser
 from .submit import handle_submission, BadPost, APISubmit
 from .tags import TAGS
 from .exceptions import AppError, ValidationError
-from .serializers import OutputsSerializer, SimulationSerializer
+from .serializers import OutputsSerializer, InputsSerializer
 
 
 OBJ_STORAGE_URL = os.environ.get("OBJ_STORAGE_URL")
@@ -342,7 +342,17 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
-class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
+class ETAMixin:
+    def compute_eta(self, reference_time):
+        exp_comp_dt = self.object.exp_comp_datetime
+        dt = exp_comp_dt - reference_time
+        exp_num_minutes = dt.total_seconds() / 60.0
+        exp_num_minutes = round(exp_num_minutes, 2)
+        exp_num_minutes = exp_num_minutes if exp_num_minutes > 0 else 0
+        return exp_num_minutes
+
+
+class OutputsView(ETAMixin, GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
     """
     This view is the single page of diplaying a progress bar for how
     close the job is to finishing, and then it will also display the
@@ -440,11 +450,8 @@ class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
         )
 
     def render_v1(self, request):
-        s = time.time()
-        rem_outputs = {}
         renderable = {"renderable": self.object.outputs["outputs"]["renderable"]}
         outputs = s3like.read_from_s3like(renderable)
-        f = time.time()
         return render(
             request,
             "comp/outputs/v1/sim_detail.html",
@@ -472,14 +479,6 @@ class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
             return json.dumps(self.object.inputs.inputs_file, indent=2)
         else:
             return ""
-
-    def compute_eta(self, reference_time):
-        exp_comp_dt = self.object.exp_comp_datetime
-        dt = exp_comp_dt - reference_time
-        exp_num_minutes = dt.total_seconds() / 60.0
-        exp_num_minutes = round(exp_num_minutes, 2)
-        exp_num_minutes = exp_num_minutes if exp_num_minutes > 0 else 0
-        return exp_num_minutes
 
 
 class OutputsDownloadView(GetOutputsObjectMixin, View):
@@ -570,12 +569,7 @@ class InputsAPIView(APIView):
                 return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
         meta_parameters, model_parameters = ioutils.displayer.package_defaults()
         return Response(
-            {
-                "inputs": {
-                    "meta_parameters": meta_parameters,
-                    "model_parameters": model_parameters,
-                }
-            }
+            {"meta_parameters": meta_parameters, "model_parameters": model_parameters}
         )
 
     def get(self, request, *args, **kwargs):
@@ -584,11 +578,11 @@ class InputsAPIView(APIView):
 
     def post(self, request, *args, **kwargs):
         print("sim api method=GET", request.GET, kwargs)
-        ser = SimulationSerializer(data=request.data)
+        ser = InputsSerializer(data=request.data)
         if ser.is_valid():
             data = ser.validated_data
-            if "inputs" in data and "meta_parameters" in data["inputs"]:
-                meta_parameters = data["inputs"]["meta_parameters"]
+            if "meta_parameters" in data:
+                meta_parameters = data["meta_parameters"]
             else:
                 meta_parameters = {}
             return self.get_inputs(kwargs, meta_parameters)
@@ -597,6 +591,8 @@ class InputsAPIView(APIView):
 
 
 class CreateAPIView(APIView):
+    queryset = Project.objects.all()
+
     def post(self, request, *args, **kwargs):
         compute = Compute()
         project = get_object_or_404(
@@ -637,12 +633,68 @@ class CreateAPIView(APIView):
         if result.save is not None:
             print("redirecting...", result.save.runmodel_instance.get_absolute_url())
             data = {
+                "meta_parameters": result.submit.model.meta_parameters,
                 "model_parameters": result.submit.model.model_parameters,
                 "inputs_file": result.submit.model.inputs_file,
-                "outputs_url": result.save.runmodel_instance.get_absolute_url(),
+                "outputs_url": result.save.runmodel_instance.get_absolute_api_url(),
             }
             return Response(data, status=status.HTTP_200_OK)
         else:
             return Response(
                 result.submit.model.errors_warnings, status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class DetailAPIView(ETAMixin, GetOutputsObjectMixin, APIView):
+    model = Simulation
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object(
+            kwargs["model_pk"], kwargs["username"], kwargs["title"]
+        )
+        inputs = InputsSerializer(self.object.inputs)
+        if self.object.outputs:
+            downloadable = {
+                "downloadable": self.object.outputs["outputs"]["downloadable"]
+            }
+            outputs = s3like.read_from_s3like(downloadable)
+            return Response(
+                {"outputs": outputs, "inputs": inputs.data}, status=status.HTTP_200_OK
+            )
+        elif self.object.traceback is not None:
+            return Response(
+                {"traceback": self.object.traceback, "inputs": inputs.data},
+                status=status.HTTP_200_OK,
+            )
+        job_id = str(self.object.job_id)
+        compute = Compute()
+        try:
+            job_ready = compute.results_ready(job_id)
+        except JobFailError as jfe:
+            self.object.traceback = ""
+            self.object.save()
+            return Response(
+                {"error": "model error"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        # something happened and the exception was not caught
+        if job_ready == "FAIL":
+            result = compute.get_results(job_id)
+            if result["traceback"]:
+                traceback_ = result["traceback"]
+            else:
+                traceback_ = "Error: The traceback for this error is unavailable."
+            self.object.traceback = traceback_
+            self.object.status = "WORKER_FAILURE"
+            self.object.save()
+            return Response(
+                {"error": "model error"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response(
+            {
+                "eta": self.compute_eta(timezone.now()),
+                "inputs": inputs.data,
+                "outputs": None,
+            },
+            status=status.HTTP_200_OK,
+        )

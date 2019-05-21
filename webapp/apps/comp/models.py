@@ -24,7 +24,7 @@ class Inputs(models.Model):
     # or JSON reform uploaded as file
     inputs_file = JSONField(default=dict, blank=True, null=True)
 
-    errors_warnings_text = JSONField(default=None, blank=True, null=True)
+    errors_warnings = JSONField(default=None, blank=True, null=True)
 
     # The parameters that will be used to run the model
     model_parameters = JSONField(default=dict, blank=True, null=True)
@@ -87,7 +87,6 @@ class Simulation(models.Model):
     outputs = JSONField(default=None, blank=True, null=True)
     aggr_outputs = JSONField(default=None, blank=True, null=True)
     traceback = models.CharField(null=True, blank=True, default=None, max_length=4000)
-    errors_warnings = JSONField(default=None, blank=True, null=True)
     owner = models.ForeignKey(
         "users.Profile", on_delete=models.CASCADE, null=True, related_name="sims"
     )
@@ -137,7 +136,7 @@ class Simulation(models.Model):
             "title": self.project.title,
             "username": self.project.owner.user.username,
         }
-        return reverse("outputs_api", kwargs=kwargs)
+        return reverse("detail_api", kwargs=kwargs)
 
     def get_absolute_edit_url(self):
         kwargs = {

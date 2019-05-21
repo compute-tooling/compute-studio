@@ -28,6 +28,7 @@ class MockCompute(Compute):
     def remote_query_job(self, url, params):
         # Need to login as the comp-api-user
         self.client.login(username=self.user, password=self.password)
+        print("putting!!!")
         resp = self.client.put(
             "/outputs/api/",
             data=dict(json.loads(self.outputs), **{"job_id": self.sim.job_id}),
