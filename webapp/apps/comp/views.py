@@ -8,7 +8,6 @@ import os
 from bokeh.resources import CDN
 import requests
 
-from django.utils import timezone
 from django.db import models
 from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin, DetailView
@@ -44,7 +43,7 @@ from .parser import APIParser
 from .submit import handle_submission, BadPost, APISubmit
 from .tags import TAGS
 from .exceptions import AppError, ValidationError
-from .serializers import OutputsSerializer, InputsSerializer
+from .serializers import OutputsSerializer, InputsSerializer, SimulationSerializer
 
 
 OBJ_STORAGE_URL = os.environ.get("OBJ_STORAGE_URL")
@@ -342,17 +341,7 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
-class ETAMixin:
-    def compute_eta(self, reference_time):
-        exp_comp_dt = self.object.exp_comp_datetime
-        dt = exp_comp_dt - reference_time
-        exp_num_minutes = dt.total_seconds() / 60.0
-        exp_num_minutes = round(exp_num_minutes, 2)
-        exp_num_minutes = exp_num_minutes if exp_num_minutes > 0 else 0
-        return exp_num_minutes
-
-
-class OutputsView(ETAMixin, GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
+class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
     """
     This view is the single page of diplaying a progress bar for how
     close the job is to finishing, and then it will also display the
@@ -424,8 +413,8 @@ class OutputsView(ETAMixin, GetOutputsObjectMixin, RecordOutputsMixin, DetailVie
             else:
                 if request.method == "POST":
                     # if not ready yet, insert number of minutes remaining
-                    exp_num_minutes = self.compute_eta(timezone.now())
-                    orig_eta = self.compute_eta(self.object.creation_date)
+                    exp_num_minutes = self.object.compute_eta()
+                    orig_eta = self.object.compute_eta(self.object.creation_date)
                     return JsonResponse(
                         {"eta": exp_num_minutes, "origEta": orig_eta}, status=202
                     )
@@ -632,40 +621,32 @@ class CreateAPIView(APIView):
         # No errors--submit to model
         if result.save is not None:
             print("redirecting...", result.save.runmodel_instance.get_absolute_url())
-            data = {
-                "meta_parameters": result.submit.model.meta_parameters,
-                "model_parameters": result.submit.model.model_parameters,
-                "inputs_file": result.submit.model.inputs_file,
-                "outputs_url": result.save.runmodel_instance.get_absolute_api_url(),
-            }
-            return Response(data, status=status.HTTP_200_OK)
+            sim = SimulationSerializer(result.save.runmodel_instance)
+            return Response(sim.data, status=status.HTTP_200_OK)
         else:
             return Response(
                 result.submit.model.errors_warnings, status=status.HTTP_400_BAD_REQUEST
             )
 
 
-class DetailAPIView(ETAMixin, GetOutputsObjectMixin, APIView):
+class DetailAPIView(GetOutputsObjectMixin, APIView):
     model = Simulation
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object(
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
-        inputs = InputsSerializer(self.object.inputs)
+        sim = SimulationSerializer(self.object)
         if self.object.outputs:
-            downloadable = {
-                "downloadable": self.object.outputs["outputs"]["downloadable"]
-            }
-            outputs = s3like.read_from_s3like(downloadable)
+            data = sim.data
+            downloadable = {"downloadable": data["outputs"]["downloadable"]}
+            data["outputs"] = s3like.read_from_s3like(downloadable)
             return Response(
                 {"outputs": outputs, "inputs": inputs.data}, status=status.HTTP_200_OK
             )
         elif self.object.traceback is not None:
-            return Response(
-                {"traceback": self.object.traceback, "inputs": inputs.data},
-                status=status.HTTP_200_OK,
-            )
+            return Response(sim.data, status=status.HTTP_200_OK)
+
         job_id = str(self.object.job_id)
         compute = Compute()
         try:
@@ -690,11 +671,4 @@ class DetailAPIView(ETAMixin, GetOutputsObjectMixin, APIView):
                 {"error": "model error"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        return Response(
-            {
-                "eta": self.compute_eta(timezone.now()),
-                "inputs": inputs.data,
-                "outputs": None,
-            },
-            status=status.HTTP_200_OK,
-        )
+        return Response(sim.data, status=status.HTTP_200_OK)

@@ -66,6 +66,36 @@ class CoreTestMixin:
 
         return slug
 
+    def post_api_data(
+        self, monkeypatch, client, inputs, profile, password, do_checks=True
+    ):
+        self.mockcompute.client = client
+        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
+
+        self.login_client(client, profile.user, password)
+        resp = client.post(
+            f"/{self.owner}/{self.title}/api/v1/",
+            data=inputs,
+            content_type="application/json",
+        )
+
+        assert resp.status_code == 200
+        detail_url = resp.data["api_url"]
+        slug = resp.data["model_pk"]
+
+        if do_checks:
+            # Pass the sim object to the Compute instance via a class attribute.
+            sim = Simulation.objects.get(project=self.project, model_pk=slug)
+            self.mockcompute.sim = sim
+            assert sim.status == "PENDING"
+
+            # # test get ouputs page
+            # resp = client.get(detail_url)
+            # # redirect since the outputs have only just been set.
+            # assert resp.status_code == 202
+
+        return resp
+
 
 @pytest.mark.django_db
 class CoreAbstractViewsTest(CoreTestMixin):
@@ -472,46 +502,41 @@ class TestMatchupsAPI(CoreTestMixin):
         assert exp == resp.data
 
     def test_post_inputs(self, client):
-        payload = {"meta_parameters": {"use_full_data": False}}
+        inputs = {"meta_parameters": {"use_full_data": False}}
         resp = client.post(
             f"/{self.owner}/{self.title}/api/v1/inputs/",
-            data=payload,
+            data=inputs,
             content_type="application/json",
         )
         assert resp.status_code == 200
 
         ioutils = get_ioutils(self.project)
-        ioutils.displayer.meta_parameters.update(payload["meta_parameters"])
+        ioutils.displayer.meta_parameters.update(inputs["meta_parameters"])
         mp, defaults = ioutils.displayer.package_defaults()
         exp = {"meta_parameters": mp, "model_parameters": defaults}
         assert exp == resp.data
 
     def test_post_bad_inputs(self, client):
-        payload = {"meta_parameters": {"use_full_data": "Hello world"}}
+        inputs = {"meta_parameters": {"use_full_data": "Hello world"}}
         resp = client.post(
             f"/{self.owner}/{self.title}/api/v1/inputs/",
-            data=payload,
+            data=inputs,
             content_type="application/json",
         )
         assert resp.status_code == 400
 
-    def test_runmodel(self, client):
-        payload = {
+    def test_runmodel(self, monkeypatch, client, profile, password):
+        inputs = {
             "meta_parameters": {"use_full_data": False},
             "model_parameters": {"matchup": {"pitcher": "Max Scherzer"}},
         }
-        resp = client.post(
-            f"/{self.owner}/{self.title}/api/v1/",
-            data=payload,
-            content_type="application/json",
-        )
+        resp = self.post_api_data(monkeypatch, client, inputs, profile, password)
         assert resp.status_code == 200
         assert resp.data
-        resp = client.get(resp.data["outputs_url"])
+        resp = client.get(resp.data["api_url"])
         assert resp.status_code == 200
-        import pdb
 
-        pdb.set_trace()
+        # TODO: need to check that results were set!
 
     def inputs_ok(self):
         inputs = super().inputs_ok()

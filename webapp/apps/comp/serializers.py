@@ -32,8 +32,21 @@ class InputsSerializer(serializers.ModelSerializer):
 
 class SimulationSerializer(serializers.ModelSerializer):
     inputs = InputsSerializer(required=False)
-    outputs = serializers.JSONField(required=False, read_only=True)
+    # outputs = serializers.ModelField(required=False)
+    # traceback = serializers.ModelField(required=False)
+    api_url = serializers.CharField(source="get_absolute_api_url")
+    gui_url = serializers.CharField(source="get_absolute_url")
+    eta = serializers.FloatField(source="compute_eta")
 
     class Meta:
         model = Simulation
-        fields = ("inputs", "outputs")
+        fields = (
+            "inputs",
+            "outputs",
+            "traceback",
+            "creation_date",
+            "api_url",
+            "gui_url",
+            "eta",
+            "model_pk",
+        )

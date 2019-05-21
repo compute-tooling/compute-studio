@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.contrib.postgres.fields import JSONField
 from django.utils.timezone import make_aware
 from django.urls import reverse
+from django.utils import timezone
 
 from webapp.apps.comp import utils
 
@@ -159,6 +160,14 @@ class Simulation(models.Model):
 
     def json_filename(self):
         return f"{self.project.title}_{self.model_pk}.json"
+
+    def compute_eta(self, reference_time=timezone.now()):
+        exp_comp_dt = self.exp_comp_datetime
+        dt = exp_comp_dt - reference_time
+        exp_num_minutes = dt.total_seconds() / 60.0
+        exp_num_minutes = round(exp_num_minutes, 2)
+        exp_num_minutes = exp_num_minutes if exp_num_minutes > 0 else 0
+        return exp_num_minutes
 
     @cached_property
     def dimension(self):
