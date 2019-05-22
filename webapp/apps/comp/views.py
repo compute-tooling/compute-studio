@@ -280,7 +280,7 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
             {
                 "object": self.object,
                 "unknown_fields": unknown_fields,
-                "model_parameters": self.object.inputs.display_params,
+                "adjustment": self.object.inputs.display_params,
             }
         )
         return self._render_inputs_form(request, project, ioutils, inputs_form, context)
