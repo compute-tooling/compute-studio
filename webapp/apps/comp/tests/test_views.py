@@ -528,7 +528,7 @@ class TestMatchupsAPI(CoreTestMixin):
     def test_runmodel(self, monkeypatch, client, profile, password):
         inputs = {
             "meta_parameters": {"use_full_data": False},
-            "model_parameters": {"matchup": {"pitcher": "Max Scherzer"}},
+            "adjustment": {"matchup": {"pitcher": "Max Scherzer"}},
         }
         resp = self.post_api_data(monkeypatch, client, inputs, profile, password)
         assert resp.status_code == 200

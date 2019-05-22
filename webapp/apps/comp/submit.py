@@ -82,8 +82,8 @@ class Submit:
                 **self.valid_meta_params,
             )
 
-            errors_warnings, model_parameters, inputs_file = parser.parse_parameters()
-            self.model.model_parameters = model_parameters
+            errors_warnings, adjustment, inputs_file = parser.parse_parameters()
+            self.model.adjustment = adjustment
             self.model.meta_parameters = self.valid_meta_params
             self.model.inputs_file = inputs_file
             self.model.errors_warnings = errors_warnings
@@ -155,7 +155,7 @@ class APISubmit(Submit):
         if self.is_valid:
             validated_data = self.ser.validated_data
             meta_parameters = validated_data.get("meta_parameters", {})
-            model_parameters = validated_data.get("model_parameters", {})
+            adjustment = validated_data.get("adjustment", {})
             try:
                 self.valid_meta_params = self.meta_parameters.validate(meta_parameters)
                 errors = None
@@ -173,14 +173,14 @@ class APISubmit(Submit):
             parser = self.ioutils.Parser(
                 self.project,
                 self.ioutils.displayer,
-                self.ser.validated_data["model_parameters"],
+                self.ser.validated_data["adjustment"],
                 **self.valid_meta_params,
             )
 
-            errors_warnings, model_parameters, inputs_file = parser.parse_parameters()
+            errors_warnings, adjustment, inputs_file = parser.parse_parameters()
             self.model = self.ser.save(
                 meta_parameters=self.valid_meta_params,
-                model_parameters=model_parameters,
+                adjustment=adjustment,
                 errors_warnings=errors_warnings,
                 inputs_file=inputs_file,
             )

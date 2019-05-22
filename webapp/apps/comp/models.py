@@ -28,7 +28,7 @@ class Inputs(models.Model):
     errors_warnings = JSONField(default=None, blank=True, null=True)
 
     # The parameters that will be used to run the model
-    model_parameters = JSONField(default=dict, blank=True, null=True)
+    adjustment = JSONField(default=dict, blank=True, null=True)
 
     # If project changes input type, we still want to know the type of the
     # previous model runs' inputs.
@@ -53,9 +53,9 @@ class Inputs(models.Model):
         TODO: should be moved to a function corresponding to the inputs_style
         """
         if self.inputs_style == "taxcalc":
-            return utils.json_int_key_encode(self.model_parameters)
+            return utils.json_int_key_encode(self.adjustment)
         else:
-            return self.model_parameters
+            return self.adjustment
 
     @property
     def display_params(self):

@@ -36,7 +36,7 @@ def test_submit(db, get_inputs, meta_param_dict, profile):
     assert inputs.meta_parameters
     assert inputs.raw_gui_inputs
     assert inputs.gui_inputs
-    assert inputs.model_parameters
+    assert inputs.adjustment
     assert inputs.project
     save = Save(submit)
     sim = Simulation.objects.get(pk=save.runmodel_instance.pk)
@@ -67,7 +67,7 @@ def test_submit_sponsored(db, get_inputs, meta_param_dict, profile):
     assert inputs.meta_parameters
     assert inputs.raw_gui_inputs
     assert inputs.gui_inputs
-    assert inputs.model_parameters
+    assert inputs.adjustment
     assert inputs.project
     save = Save(submit)
     sim = Simulation.objects.get(pk=save.runmodel_instance.pk)
@@ -124,7 +124,7 @@ def test_api_submit(db, get_inputs, meta_param_dict, profile):
     data = {
         "inputs": {
             "meta_parameters": {"metaparam": 3},
-            "model_parameters": {"majorsection1": {"intparam": 2}},
+            "adjustment": {"majorsection1": {"intparam": 2}},
         }
     }
     request = factory.post(
@@ -137,7 +137,7 @@ def test_api_submit(db, get_inputs, meta_param_dict, profile):
     assert not submit.stop_submission
     inputs = Inputs.objects.get(pk=submit.model.pk)
     assert inputs.meta_parameters
-    assert inputs.model_parameters
+    assert inputs.adjustment
     assert inputs.project
     save = Save(submit)
     sim = Simulation.objects.get(pk=save.runmodel_instance.pk)

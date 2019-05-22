@@ -42,8 +42,8 @@ class BaseParser:
             sect: {"errors": {}, "warnings": {}}
             for sect in list(self.grouped_defaults) + ["GUI", "API"]
         }
-        model_parameters = {sect: {} for sect in self.grouped_defaults}
-        return errors_warnings, model_parameters
+        adjustment = {sect: {} for sect in self.grouped_defaults}
+        return errors_warnings, adjustment
 
     def post(self, errors_warnings, params):
         data = {
@@ -78,7 +78,7 @@ class Parser(BaseParser):
         returns cleaned_inputs (grouped by major section), empty JSON string,
             empty errors/warnings dictionary
         """
-        errors_warnings, model_parameters = super().parse_parameters()
+        errors_warnings, adjustment = super().parse_parameters()
         order_by_list_len = sorted(
             self.grouped_defaults,
             key=lambda k: len(self.grouped_defaults[k]),
@@ -93,11 +93,11 @@ class Parser(BaseParser):
                     param, self.grouped_defaults[section], raise_error=False
                 )
                 if search_hit is not None:
-                    model_parameters[section][search_hit.name] = value
+                    adjustment[section][search_hit.name] = value
                     break
 
         unflattened = {}
-        for sect, inputs in model_parameters.items():
+        for sect, inputs in adjustment.items():
             uf = self.unflatten(inputs, errors_warnings)
             unflattened[sect] = uf
         return self.post(errors_warnings, unflattened)
@@ -202,14 +202,14 @@ class Parser(BaseParser):
 
 class APIParser(BaseParser):
     def parse_parameters(self):
-        errors_warnings, model_parameters = super().parse_parameters()
+        errors_warnings, adjustment = super().parse_parameters()
         extra_keys = set(self.clean_inputs.keys() - self.grouped_defaults.keys())
         if extra_keys:
             errors_warnings["API"]["errors"] = {
                 "extra_keys": [f"Has extra sections: {' ,'.join(extra_keys)}"]
             }
 
-        for sect in model_parameters:
-            model_parameters[sect].update(self.clean_inputs.get(sect, {}))
+        for sect in adjustment:
+            adjustment[sect].update(self.clean_inputs.get(sect, {}))
 
-        return self.post(errors_warnings, model_parameters)
+        return self.post(errors_warnings, adjustment)
