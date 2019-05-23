@@ -59,7 +59,7 @@ class Inputs(models.Model):
 
     @property
     def display_params(self):
-        return self.inputs_file or self.model_parameters
+        return self.inputs_file or self.adjustment
 
     @property
     def pretty_meta_parameters(self):

@@ -43,7 +43,7 @@ class CoreTestMixin:
 
     def post_data(self, monkeypatch, client, inputs, profile, password, do_checks=True):
         self.mockcompute.client = client
-        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
+        monkeypatch.setattr("webapp.apps.comp.views.views.Compute", self.mockcompute)
 
         self.login_client(client, profile.user, password)
         resp = client.post(self.project.app_url, data=inputs)
@@ -70,7 +70,7 @@ class CoreTestMixin:
         self, monkeypatch, client, inputs, profile, password, do_checks=True
     ):
         self.mockcompute.client = client
-        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
+        monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
 
         self.login_client(client, profile.user, password)
         resp = client.post(
@@ -79,7 +79,7 @@ class CoreTestMixin:
             content_type="application/json",
         )
 
-        assert resp.status_code == 200
+        assert resp.status_code == 201
         detail_url = resp.data["api_url"]
         slug = resp.data["model_pk"]
 
@@ -88,11 +88,6 @@ class CoreTestMixin:
             sim = Simulation.objects.get(project=self.project, model_pk=slug)
             self.mockcompute.sim = sim
             assert sim.status == "PENDING"
-
-            # # test get ouputs page
-            # resp = client.get(detail_url)
-            # # redirect since the outputs have only just been set.
-            # assert resp.status_code == 202
 
         return resp
 
@@ -217,7 +212,7 @@ class CoreAbstractViewsTest(CoreTestMixin):
         Test post without logged-in user:
         - returns 302 status and redirects to login page.
         """
-        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
+        monkeypatch.setattr("webapp.apps.comp.views.views.Compute", self.mockcompute)
 
         resp = client.post(self.project.app_url, data=self.inputs_ok())
         assert resp.status_code == 302
@@ -230,7 +225,7 @@ class CoreAbstractViewsTest(CoreTestMixin):
           non-sponsored model.
         - the post kicks off a run on a sponsored model.
         """
-        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
+        monkeypatch.setattr("webapp.apps.comp.views.views.Compute", self.mockcompute)
 
         u = User.objects.create_user(
             username="test-no-pmt",
@@ -531,8 +526,10 @@ class TestMatchupsAPI(CoreTestMixin):
             "adjustment": {"matchup": {"pitcher": "Max Scherzer"}},
         }
         resp = self.post_api_data(monkeypatch, client, inputs, profile, password)
-        assert resp.status_code == 200
+        assert resp.status_code == 201
         assert resp.data
+        resp = client.get(resp.data["api_url"])
+        assert resp.status_code == 202
         resp = client.get(resp.data["api_url"])
         assert resp.status_code == 200
 

@@ -122,10 +122,8 @@ def test_api_submit(db, get_inputs, meta_param_dict, profile):
 
     factory = RequestFactory()
     data = {
-        "inputs": {
-            "meta_parameters": {"metaparam": 3},
-            "adjustment": {"majorsection1": {"intparam": 2}},
-        }
+        "meta_parameters": {"metaparam": 3},
+        "adjustment": {"majorsection1": {"intparam": 2}},
     }
     request = factory.post(
         "/modeler/Used-for-testing/api/v1/", data=data, content_type="application/json"

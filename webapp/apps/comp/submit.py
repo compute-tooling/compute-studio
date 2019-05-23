@@ -169,7 +169,6 @@ class APISubmit(Submit):
                 )
                 return
 
-            # self.model = self.ser.save(commit=False)
             parser = self.ioutils.Parser(
                 self.project,
                 self.ioutils.displayer,
@@ -183,6 +182,7 @@ class APISubmit(Submit):
                 adjustment=adjustment,
                 errors_warnings=errors_warnings,
                 inputs_file=inputs_file,
+                project=self.project,
             )
 
         else:
