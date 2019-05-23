@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -13,6 +14,7 @@ from webapp.apps.comp.exceptions import AppError, ValidationError
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.models import Simulation
 from webapp.apps.comp.parser import APIParser
+from webapp.apps.comp.permissions import RequiresActive, RequiresPayment
 from webapp.apps.comp.serializers import (
     SimulationSerializer,
     InputsSerializer,
@@ -64,7 +66,7 @@ class InputsAPIView(APIView):
             return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CreateAPIView(APIView):
+class BaseCreateAPIView(APIView):
     queryset = Project.objects.all()
 
     def post(self, request, *args, **kwargs):
@@ -111,6 +113,19 @@ class CreateAPIView(APIView):
             return Response(
                 result.submit.model.errors_warnings, status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class RequiresLoginAPIView(BaseCreateAPIView):
+    permission_classes = (IsAuthenticatedOrReadOnly & RequiresActive,)
+
+
+class RequiresPmtAPIView(BaseCreateAPIView):
+    permission_classes = (IsAuthenticatedOrReadOnly & RequiresActive & RequiresPayment,)
+
+
+class APIRouterView(AbstractRouterView):
+    payment_view = RequiresPmtAPIView
+    login_view = RequiresLoginAPIView
 
 
 class DetailAPIView(GetOutputsObjectMixin, APIView):
