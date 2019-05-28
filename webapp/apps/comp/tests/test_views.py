@@ -5,6 +5,8 @@ import pytest
 
 from django.contrib import auth
 from django.urls import reverse
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient
 
 from webapp.apps.billing.models import UsageRecord
 from webapp.apps.users.models import Project, Profile
@@ -25,6 +27,9 @@ class CoreTestMixin:
         success = client.login(username=user.username, password=password)
         assert success
         return success
+
+    def set_auth_token(self, api_client: APIClient, user: User):
+        api_client.credentials(HTTP_AUTHORIZATION=f"Token {user.auth_token.key}")
 
     @property
     def provided_free(self):
@@ -66,20 +71,16 @@ class CoreTestMixin:
 
         return slug
 
-    def post_api_data(
-        self, monkeypatch, client, inputs, profile, password, do_checks=True
-    ):
-        self.mockcompute.client = client
+    def post_api_data(self, monkeypatch, api_client, inputs, profile, do_checks=True):
+        self.mockcompute.client = api_client
         monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
 
-        self.login_client(client, profile.user, password)
-        resp = client.post(
-            f"/{self.owner}/{self.title}/api/v1/",
-            data=inputs,
-            content_type="application/json",
+        self.set_auth_token(api_client, profile.user)
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/", data=inputs, format="json"
         )
 
-        assert resp.status_code == 201
+        assert resp.status_code == 201, resp.data
         detail_url = resp.data["api_url"]
         slug = resp.data["model_pk"]
 
@@ -458,21 +459,19 @@ def test_placeholder_page(db, client):
     assert "comp/inputs_form.html" in [t.name for t in resp.templates]
 
 
-def test_outputs_api(db, client, profile, password):
+def test_outputs_api(db, api_client, profile, password):
     # Test auth errors return 401.
-    anon_user = auth.get_user(client)
+    anon_user = auth.get_user(api_client)
     assert not anon_user.is_authenticated
-    assert client.put("/outputs/api/").status_code == 401
-    client.login(username=profile.user.username, password=password)
-    assert client.put("/outputs/api/").status_code == 401
+    assert api_client.put("/outputs/api/").status_code == 401
+    api_client.login(username=profile.user.username, password=password)
+    assert api_client.put("/outputs/api/").status_code == 401
 
     # Test data errors return 400
     user = User.objects.get(username="comp-api-user")
-    client.login(username=user.username, password="heyhey2222")
+    api_client.login(username=user.username, password="heyhey2222")
     assert (
-        client.put(
-            "/outputs/api/", data={"bad": "data"}, content_type="application/json"
-        ).status_code
+        api_client.put("/outputs/api/", data={"bad": "data"}, format="json").status_code
         == 400
     )
 
@@ -487,8 +486,8 @@ class CoreAbstractAPITest(CoreTestMixin):
     post_data_ok = {}
     mockcompute = None
 
-    def test_get_inputs(self, client):
-        resp = client.get(f"/{self.owner}/{self.title}/api/v1/inputs/")
+    def test_get_inputs(self, api_client):
+        resp = api_client.get(f"/{self.owner}/{self.title}/api/v1/inputs/")
         assert resp.status_code == 200
 
         ioutils = get_ioutils(self.project)
@@ -496,13 +495,11 @@ class CoreAbstractAPITest(CoreTestMixin):
         exp = {"meta_parameters": mp, "model_parameters": defaults}
         assert exp == resp.data
 
-    def test_post_inputs(self, client):
+    def test_post_inputs(self, api_client):
         inputs = self.inputs_ok()
         inputs.pop("adjustment")
-        resp = client.post(
-            f"/{self.owner}/{self.title}/api/v1/inputs/",
-            data=inputs,
-            content_type="application/json",
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/inputs/", data=inputs, format="json"
         )
         assert resp.status_code == 200
 
@@ -512,25 +509,27 @@ class CoreAbstractAPITest(CoreTestMixin):
         exp = {"meta_parameters": mp, "model_parameters": defaults}
         assert exp == resp.data
 
-    def test_post_bad_inputs(self, client):
+    def test_post_bad_inputs(self, api_client):
         inputs = self.inputs_bad()
         inputs.pop("adjustment")
-        resp = client.post(
-            f"/{self.owner}/{self.title}/api/v1/inputs/",
-            data=inputs,
-            content_type="application/json",
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/inputs/", data=inputs, format="json"
         )
         assert resp.status_code == 400
 
-    def test_runmodel(self, monkeypatch, client, profile, password):
-        resp = self.post_api_data(
-            monkeypatch, client, self.inputs_ok(), profile, password
-        )
+    def test_runmodel(self, monkeypatch, api_client, profile):
+        resp = self.post_api_data(monkeypatch, api_client, self.inputs_ok(), profile)
         assert resp.status_code == 201
         assert resp.data
-        resp = client.get(resp.data["api_url"])
+        api_url = resp.data["api_url"]
+        resp = api_client.get(resp.data["api_url"])
         assert resp.status_code == 202
-        resp = client.get(resp.data["api_url"])
+        resp = api_client.get(resp.data["api_url"])
+        assert resp.status_code == 200
+
+        # clear out credentials and make sure results are public.
+        api_client.credentials()
+        resp = api_client.get(api_url)
         assert resp.status_code == 200
 
         model_pk = resp.data["model_pk"]
@@ -538,32 +537,28 @@ class CoreAbstractAPITest(CoreTestMixin):
         assert sim.outputs
         assert sim.traceback is None
 
-    def test_runmodel_bad_inputs(self, monkeypatch, client, profile, password):
-        self.mockcompute.client = client
+    def test_runmodel_bad_inputs(self, monkeypatch, api_client, profile):
+        self.mockcompute.client = api_client
         monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
-        self.login_client(client, profile.user, password)
-        resp = client.post(
-            f"/{self.owner}/{self.title}/api/v1/",
-            data=self.inputs_bad(),
-            content_type="application/json",
+        self.set_auth_token(api_client, profile.user)
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/", data=self.inputs_bad(), format="json"
         )
         assert resp.status_code == 400
 
-    def test_post_wo_login(self, monkeypatch, client):
+    def test_post_wo_login(self, monkeypatch, api_client):
         """
         Test post without logged-in user:
         - return 403 (forbidden).
         """
         monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
 
-        resp = client.post(
-            f"/{self.owner}/{self.title}/api/v1/",
-            data=self.inputs_ok(),
-            content_type="application/json",
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/", data=self.inputs_ok(), format="json"
         )
         assert resp.status_code == 403
 
-    def test_post_wo_payment_info(self, monkeypatch, client):
+    def test_post_wo_payment_info(self, monkeypatch, api_client):
         """
         Test post with logged-in user that has not provided a pmt method:
         - return 403 (forbidden).
@@ -576,14 +571,13 @@ class CoreAbstractAPITest(CoreTestMixin):
             email="test-no-pmt@email.com",
             password="testtest2222",
         )
+        Token.objects.create(user=u)
         prof = Profile.objects.create(user=u, is_active=True)
-        assert self.login_client(client, u, "testtest2222")
         assert not hasattr(u, "customer")
 
-        resp = client.post(
-            f"/{self.owner}/{self.title}/api/v1/",
-            data=self.inputs_ok(),
-            content_type="application/json",
+        self.set_auth_token(api_client, u)
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/", data=self.inputs_ok(), format="json"
         )
         if self.provided_free:
             # kick off run
@@ -629,6 +623,7 @@ class TestMatchupsAPISponsored(CoreAbstractAPITest):
         return True
 
 
+@pytest.mark.requires_stripe
 @pytest.mark.usefixtures("unsponsored_matchups")
 @pytest.mark.django_db
 class TestMatchupsAPI(CoreAbstractAPITest):

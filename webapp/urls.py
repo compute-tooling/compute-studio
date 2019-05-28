@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework.authtoken import views as rf_views
 
 from webapp.apps.comp import views as compviews
 from webapp.apps.publish import views as publishviews
@@ -24,6 +25,7 @@ from webapp.apps.users import views as userviews
 urlpatterns = [
     # admin apps
     path("admin/", admin.site.urls),
+    path("api-token-auth/", rf_views.obtain_auth_token),
     path("", include("webapp.apps.pages.urls")),
     path("publish/", include("webapp.apps.publish.urls")),
     path("users/", include("webapp.apps.users.urls")),

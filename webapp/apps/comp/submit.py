@@ -172,7 +172,7 @@ class APISubmit(Submit):
             parser = self.ioutils.Parser(
                 self.project,
                 self.ioutils.displayer,
-                self.ser.validated_data["adjustment"],
+                adjustment,
                 **self.valid_meta_params,
             )
 

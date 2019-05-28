@@ -3,6 +3,8 @@ import requests_mock
 import json
 import uuid
 
+from rest_framework.test import APIClient
+
 from webapp.apps.comp.compute import Compute
 
 
@@ -28,11 +30,14 @@ class MockCompute(Compute):
     def remote_query_job(self, url, params):
         # Need to login as the comp-api-user
         self.client.login(username=self.user, password=self.password)
-        print("putting!!!")
+        if isinstance(self.client, APIClient):
+            format_kwarg = {"format": "json"}
+        else:
+            format_kwarg = {"content_type": "application/json"}
         resp = self.client.put(
             "/outputs/api/",
             data=dict(json.loads(self.outputs), **{"job_id": self.sim.job_id}),
-            content_type="application/json",
+            **format_kwarg
         )
         assert resp.status_code == 200
         self.client = None

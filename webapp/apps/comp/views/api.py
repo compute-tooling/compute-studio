@@ -1,5 +1,10 @@
 from django.shortcuts import get_object_or_404
 
+from rest_framework.authentication import (
+    BasicAuthentication,
+    SessionAuthentication,
+    TokenAuthentication,
+)
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -9,7 +14,7 @@ import s3like
 
 from webapp.apps.users.models import Project
 
-from webapp.apps.comp.compute import Compute
+from webapp.apps.comp.compute import Compute, JobFailError
 from webapp.apps.comp.exceptions import AppError, ValidationError
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.models import Simulation
@@ -22,7 +27,7 @@ from webapp.apps.comp.serializers import (
 )
 from webapp.apps.comp.submit import handle_submission, BadPost, APISubmit
 
-from .core import GetOutputsObjectMixin, RecordOutputsMixin, AbstractRouterView
+from .core import GetOutputsObjectMixin, RecordOutputsMixin, AbstractRouterAPIView
 
 
 class InputsAPIView(APIView):
@@ -67,6 +72,11 @@ class InputsAPIView(APIView):
 
 
 class BaseCreateAPIView(APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
     queryset = Project.objects.all()
 
     def post(self, request, *args, **kwargs):
@@ -123,7 +133,7 @@ class RequiresPmtAPIView(BaseCreateAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly & RequiresActive & RequiresPayment,)
 
 
-class APIRouterView(AbstractRouterView):
+class APIRouterView(AbstractRouterAPIView):
     payment_view = RequiresPmtAPIView
     login_view = RequiresLoginAPIView
     projects = Project.objects.all()
@@ -139,7 +149,7 @@ class DetailAPIView(GetOutputsObjectMixin, APIView):
         sim = SimulationSerializer(self.object)
         if self.object.outputs:
             data = sim.data
-            outputs = {"downloadable": data["outputs"]["outputs"]["downloadable"]}
+            outputs = data["outputs"]["outputs"]
             data["outputs"] = s3like.read_from_s3like(outputs)
             return Response(data, status=status.HTTP_200_OK)
         elif self.object.traceback is not None:

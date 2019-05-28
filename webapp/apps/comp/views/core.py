@@ -1,6 +1,8 @@
 from django.views.generic.base import View
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.views import APIView
 
 from webapp.apps.billing.utils import has_payment_method, ChargeRunMixin, USE_STRIPE
 from webapp.apps.users.models import is_profile_active
@@ -56,7 +58,7 @@ class InputsMixin:
             )
 
 
-class AbstractRouterView(View):
+class AbstractRouter:
     projects = None
     payment_view = None
     login_view = None
@@ -87,6 +89,18 @@ class AbstractRouterView(View):
 
     def post(self, request, *args, **kwargs):
         return self.handle(request, False, *args, **kwargs)
+
+
+class AbstractRouterView(AbstractRouter, View):
+    pass
+
+
+class AbstractRouterAPIView(AbstractRouter, APIView):
+    def get(self, request, *args, **kwargs):
+        return AbstractRouter.get(self, request._request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return AbstractRouter.post(self, request._request, *args, **kwargs)
 
 
 class GetOutputsObjectMixin:
