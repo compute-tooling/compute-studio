@@ -102,7 +102,7 @@ class CoreAbstractViewsTest(CoreTestMixin):
     of the same tests would be cumbersome, time-consuming, and error-prone.
     """
 
-    title = "Core"
+    title = None
     post_data_ok = {}
     mockcompute = None
 
@@ -477,15 +477,15 @@ def test_outputs_api(db, client, profile, password):
     )
 
 
-@pytest.mark.usefixtures("sponsored_matchups")
 @pytest.mark.django_db
-class TestMatchupsAPI(CoreTestMixin):
-    class MatchupsMockCompute(MockCompute):
-        outputs = read_outputs("Matchups_v1")
+class CoreAbstractAPITest(CoreTestMixin):
+    """
+    Abstract test class to be used for testing api endpoints.
+    """
 
-    owner = "hdoupe"
-    title = "Matchups"
-    mockcompute = MatchupsMockCompute
+    title = None
+    post_data_ok = {}
+    mockcompute = None
 
     def test_get_inputs(self, client):
         resp = client.get(f"/{self.owner}/{self.title}/api/v1/inputs/")
@@ -497,7 +497,8 @@ class TestMatchupsAPI(CoreTestMixin):
         assert exp == resp.data
 
     def test_post_inputs(self, client):
-        inputs = {"meta_parameters": {"use_full_data": False}}
+        inputs = self.inputs_ok()
+        inputs.pop("adjustment")
         resp = client.post(
             f"/{self.owner}/{self.title}/api/v1/inputs/",
             data=inputs,
@@ -512,7 +513,8 @@ class TestMatchupsAPI(CoreTestMixin):
         assert exp == resp.data
 
     def test_post_bad_inputs(self, client):
-        inputs = {"meta_parameters": {"use_full_data": "Hello world"}}
+        inputs = self.inputs_bad()
+        inputs.pop("adjustment")
         resp = client.post(
             f"/{self.owner}/{self.title}/api/v1/inputs/",
             data=inputs,
@@ -521,11 +523,9 @@ class TestMatchupsAPI(CoreTestMixin):
         assert resp.status_code == 400
 
     def test_runmodel(self, monkeypatch, client, profile, password):
-        inputs = {
-            "meta_parameters": {"use_full_data": False},
-            "adjustment": {"matchup": {"pitcher": "Max Scherzer"}},
-        }
-        resp = self.post_api_data(monkeypatch, client, inputs, profile, password)
+        resp = self.post_api_data(
+            monkeypatch, client, self.inputs_ok(), profile, password
+        )
         assert resp.status_code == 201
         assert resp.data
         resp = client.get(resp.data["api_url"])
@@ -533,13 +533,124 @@ class TestMatchupsAPI(CoreTestMixin):
         resp = client.get(resp.data["api_url"])
         assert resp.status_code == 200
 
-        # TODO: need to check that results were set!
+        model_pk = resp.data["model_pk"]
+        sim = Simulation.objects.get(project=self.project, model_pk=model_pk)
+        assert sim.outputs
+        assert sim.traceback is None
+
+    def test_runmodel_bad_inputs(self, monkeypatch, client, profile, password):
+        self.mockcompute.client = client
+        monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
+        self.login_client(client, profile.user, password)
+        resp = client.post(
+            f"/{self.owner}/{self.title}/api/v1/",
+            data=self.inputs_bad(),
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+
+    def test_post_wo_login(self, monkeypatch, client):
+        """
+        Test post without logged-in user:
+        - return 403 (forbidden).
+        """
+        monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
+
+        resp = client.post(
+            f"/{self.owner}/{self.title}/api/v1/",
+            data=self.inputs_ok(),
+            content_type="application/json",
+        )
+        assert resp.status_code == 403
+
+    def test_post_wo_payment_info(self, monkeypatch, client):
+        """
+        Test post with logged-in user that has not provided a pmt method:
+        - return 403 (forbidden).
+        - sponsored model returns 201 (resource created).
+        """
+        monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
+
+        u = User.objects.create_user(
+            username="test-no-pmt",
+            email="test-no-pmt@email.com",
+            password="testtest2222",
+        )
+        prof = Profile.objects.create(user=u, is_active=True)
+        assert self.login_client(client, u, "testtest2222")
+        assert not hasattr(u, "customer")
+
+        resp = client.post(
+            f"/{self.owner}/{self.title}/api/v1/",
+            data=self.inputs_ok(),
+            content_type="application/json",
+        )
+        if self.provided_free:
+            # kick off run
+            assert resp.status_code == 201
+        else:
+            assert resp.status_code == 403
 
     def inputs_ok(self):
-        inputs = super().inputs_ok()
-        upstream_inputs = {"pitcher": "Max Scherzer"}
-        return dict(inputs, **upstream_inputs)
+        raise NotImplementedError()
+
+    def inputs_bad(self):
+        raise NotImplementedError()
+
+    @property
+    def provided_free(self):
+        raise NotImplementedError()
+
+
+@pytest.mark.usefixtures("sponsored_matchups")
+@pytest.mark.django_db
+class TestMatchupsAPISponsored(CoreAbstractAPITest):
+    class MatchupsMockCompute(MockCompute):
+        outputs = read_outputs("Matchups_v1")
+
+    owner = "hdoupe"
+    title = "Matchups"
+    mockcompute = MatchupsMockCompute
+
+    def inputs_ok(self):
+        return {
+            "meta_parameters": {"use_full_data": False},
+            "adjustment": {"matchup": {"pitcher": "Max Scherzer"}},
+        }
+
+    def inputs_bad(self):
+        return {
+            "meta_parameters": {"use_full_data": "Hello, world!"},
+            "adjustment": {"matchup": {"pitcher": "not a pitcher"}},
+        }
 
     @property
     def provided_free(self):
         return True
+
+
+@pytest.mark.usefixtures("unsponsored_matchups")
+@pytest.mark.django_db
+class TestMatchupsAPI(CoreAbstractAPITest):
+    class MatchupsMockCompute(MockCompute):
+        outputs = read_outputs("Matchups_v1")
+
+    owner = "hdoupe"
+    title = "Matchups"
+    mockcompute = MatchupsMockCompute
+
+    def inputs_ok(self):
+        return {
+            "meta_parameters": {"use_full_data": False},
+            "adjustment": {"matchup": {"pitcher": "Max Scherzer"}},
+        }
+
+    def inputs_bad(self):
+        return {
+            "meta_parameters": {"use_full_data": "Hello, world!"},
+            "adjustment": {"matchup": {"pitcher": "not a pitcher"}},
+        }
+
+    @property
+    def provided_free(self):
+        return False

@@ -22,7 +22,7 @@ from webapp.apps.comp.serializers import (
 )
 from webapp.apps.comp.submit import handle_submission, BadPost, APISubmit
 
-from .core import GetOutputsObjectMixin, RecordOutputsMixin
+from .core import GetOutputsObjectMixin, RecordOutputsMixin, AbstractRouterView
 
 
 class InputsAPIView(APIView):
@@ -126,6 +126,7 @@ class RequiresPmtAPIView(BaseCreateAPIView):
 class APIRouterView(AbstractRouterView):
     payment_view = RequiresPmtAPIView
     login_view = RequiresLoginAPIView
+    projects = Project.objects.all()
 
 
 class DetailAPIView(GetOutputsObjectMixin, APIView):
