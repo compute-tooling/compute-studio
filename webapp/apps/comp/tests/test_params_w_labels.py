@@ -10,7 +10,7 @@ from paramtools import Parameters, ValidationError
 from webapp.apps.comp.meta_parameters import translate_to_django, MetaParameters
 from webapp.apps.comp.displayer import Displayer
 from webapp.apps.comp.fields import ValueField
-from webapp.apps.comp.parser import BaseParser
+from webapp.apps.comp.tests.parser import LocalParser
 from webapp.apps.users.models import Project
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.param import Param
@@ -129,13 +129,13 @@ def test_paramparser(
                 },
             )
 
-    class MockParser(BaseParser):
+    class MockParser(LocalParser):
         def parse_parameters(self):
-            errors_warnings, params = super().parse_parameters()
+            errors_warnings, params, _ = super().parse_parameters()
             test_params = TestParams()
             test_params.adjust(params["test"], raise_errors=False)
             errors_warnings["test"]["errors"] = test_params.errors
-            return (errors_warnings, params)
+            return (errors_warnings, params, None)
 
     project = Project.objects.get(title="Used-for-testing")
     ioutils = get_ioutils(project=project, Parser=MockParser, Displayer=MockDisplayer)
@@ -147,7 +147,7 @@ def test_paramparser(
         "str_choice_param": "value1",
     }
     parser = MockParser(project, ioutils.displayer, inputs, **valid_meta_params)
-    errors_warnings, params = parser.parse_parameters()
+    errors_warnings, params, _ = parser.parse_parameters()
     assert errors_warnings
     assert params
     exp = {
@@ -167,7 +167,7 @@ def test_paramparser(
         "str_choice_param": "notachoice",
     }
     parser = MockParser(project, ioutils.displayer, inputs, **valid_meta_params)
-    errors_warnings, params = parser.parse_parameters()
+    errors_warnings, params, _ = parser.parse_parameters()
     assert errors_warnings
     assert params
     exp = {

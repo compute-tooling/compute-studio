@@ -12,6 +12,8 @@ from django import forms
 from django.core.management import call_command
 from django.contrib.auth import get_user_model
 from django.utils.timezone import make_aware
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient
 
 from webapp.apps.billing.models import (
     Customer,
@@ -49,9 +51,9 @@ def django_db_setup(django_db_setup, django_db_blocker):
             username="hdoupe", email="hdoupe@email.com", password="hdoupe2222"
         )
 
-        Profile.objects.create(user=modeler, is_active=True)
-        Profile.objects.create(user=sponsor, is_active=True)
-        Profile.objects.create(user=hdoupe, is_active=True)
+        for u in [modeler, sponsor, hdoupe]:
+            Token.objects.create(user=u)
+            Profile.objects.create(user=u, is_active=True)
 
         # User for pushing outputs from the workers to the webapp.
         comp_api_user = User.objects.create_user(
@@ -91,6 +93,11 @@ def django_db_setup(django_db_setup, django_db_blocker):
             Customer.objects.sync_subscriptions()
 
 
+@pytest.fixture
+def api_client():
+    return APIClient()
+
+
 def use_stripe(func):
     @functools.wraps(func)
     def f(*args, **kwargs):
@@ -126,9 +133,11 @@ def user(db, password):
     user = User.objects.create_user(
         username="tester", email="tester@email.com", password=password
     )
+    Token.objects.create(user=user)
     assert user.username
     assert user.email
     assert user.password
+    assert user.auth_token
     return user
 
 

@@ -11,7 +11,7 @@ from webapp.apps.comp.meta_parameters import translate_to_django, MetaParameters
 from webapp.apps.comp.displayer import Displayer
 from webapp.apps.comp.fields import ValueField
 from webapp.apps.comp.forms import InputsForm
-from webapp.apps.comp.parser import BaseParser
+from webapp.apps.comp.tests.parser import LocalParser
 from webapp.apps.users.models import Project
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.param import Param
@@ -89,13 +89,13 @@ def test_param_parser(
                 },
             )
 
-    class MockParser(BaseParser):
+    class MockParser(LocalParser):
         def parse_parameters(self):
-            errors_warnings, params = super().parse_parameters()
+            errors_warnings, params, _ = super().parse_parameters()
             test_params = ExtParams()
             test_params.adjust(params["policy"], raise_errors=False)
             errors_warnings["policy"]["errors"] = test_params.errors
-            return (errors_warnings, params)
+            return (errors_warnings, params, None)
 
     project = Project.objects.get(title="Tax-Brain")
     ioutils = get_ioutils(project=project, Parser=MockParser, Displayer=MockDisplayer)
@@ -113,7 +113,7 @@ def test_param_parser(
     inputs = form.cleaned_data
 
     parser = MockParser(project, ioutils.displayer, inputs, **valid_meta_params)
-    errors_warnings, params = parser.parse_parameters()
+    errors_warnings, params, _ = parser.parse_parameters()
     assert errors_warnings
     assert params
 
@@ -149,13 +149,13 @@ def test_param_parser_error(
                 },
             )
 
-    class MockParser(BaseParser):
+    class MockParser(LocalParser):
         def parse_parameters(self):
-            errors_warnings, params = super().parse_parameters()
+            errors_warnings, params, _ = super().parse_parameters()
             test_params = ExtParams()
             test_params.adjust(params["policy"], raise_errors=False)
             errors_warnings["policy"]["errors"] = test_params.errors
-            return (errors_warnings, params)
+            return (errors_warnings, params, None)
 
     project = Project.objects.get(title="Tax-Brain")
     ioutils = get_ioutils(project=project, Parser=MockParser, Displayer=MockDisplayer)
@@ -167,7 +167,7 @@ def test_param_parser_error(
     inputs = form.cleaned_data
 
     parser = MockParser(project, ioutils.displayer, inputs, **valid_meta_params)
-    errors_warnings, params = parser.parse_parameters()
+    errors_warnings, params, _ = parser.parse_parameters()
     assert errors_warnings
     assert params
 
@@ -184,7 +184,7 @@ def test_param_parser_error(
     inputs = form.cleaned_data
 
     parser = MockParser(project, ioutils.displayer, inputs, **valid_meta_params)
-    errors_warnings, params = parser.parse_parameters()
+    errors_warnings, params, _ = parser.parse_parameters()
     assert params["policy"] == exp
     assert errors_warnings["GUI"]["errors"]["CPI_offset"] == [
         "Reverse operator can only be used in the first position."
@@ -196,7 +196,7 @@ def test_param_parser_error(
     inputs = form.cleaned_data
 
     parser = MockParser(project, ioutils.displayer, inputs, **valid_meta_params)
-    errors_warnings, params = parser.parse_parameters()
+    errors_warnings, params, _ = parser.parse_parameters()
     assert params["policy"] == exp
     assert errors_warnings["GUI"]["errors"]["CPI_offset"] == [
         "Reverse operator can only be used in the first position."

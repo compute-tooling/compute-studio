@@ -27,7 +27,7 @@
             {% if outputs %}
             <div class="col-md-12" id="aggr-totals-container">
                 {% for output in outputs.renderable %}
-                <div class="card card-body card-inner text-center">
+                <div class="card card-body card-inner text-center" style="overflow:auto">
                   <h4>{{output.title}}</h4>
                   {% if output.media_type == 'bokeh' %}
                     {% include 'comp/outputs/bokeh.html' with output=output %}

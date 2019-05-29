@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.contrib.postgres.fields import JSONField
 from django.utils.timezone import make_aware
 from django.urls import reverse
+from django.utils import timezone
 
 from webapp.apps.comp import utils
 
@@ -24,10 +25,10 @@ class Inputs(models.Model):
     # or JSON reform uploaded as file
     inputs_file = JSONField(default=dict, blank=True, null=True)
 
-    errors_warnings_text = JSONField(default=None, blank=True, null=True)
+    errors_warnings = JSONField(default=None, blank=True, null=True)
 
     # The parameters that will be used to run the model
-    model_parameters = JSONField(default=dict, blank=True, null=True)
+    adjustment = JSONField(default=dict, blank=True, null=True)
 
     # If project changes input type, we still want to know the type of the
     # previous model runs' inputs.
@@ -52,13 +53,13 @@ class Inputs(models.Model):
         TODO: should be moved to a function corresponding to the inputs_style
         """
         if self.inputs_style == "taxcalc":
-            return utils.json_int_key_encode(self.model_parameters)
+            return utils.json_int_key_encode(self.adjustment)
         else:
-            return self.model_parameters
+            return self.adjustment
 
     @property
     def display_params(self):
-        return self.inputs_file or self.model_parameters
+        return self.inputs_file or self.adjustment
 
     @property
     def pretty_meta_parameters(self):
@@ -130,6 +131,14 @@ class Simulation(models.Model):
         }
         return reverse("outputs", kwargs=kwargs)
 
+    def get_absolute_api_url(self):
+        kwargs = {
+            "model_pk": self.model_pk,
+            "title": self.project.title,
+            "username": self.project.owner.user.username,
+        }
+        return reverse("detail_api", kwargs=kwargs)
+
     def get_absolute_edit_url(self):
         kwargs = {
             "model_pk": self.model_pk,
@@ -151,6 +160,14 @@ class Simulation(models.Model):
 
     def json_filename(self):
         return f"{self.project.title}_{self.model_pk}.json"
+
+    def compute_eta(self, reference_time=timezone.now()):
+        exp_comp_dt = self.exp_comp_datetime
+        dt = exp_comp_dt - reference_time
+        exp_num_minutes = dt.total_seconds() / 60.0
+        exp_num_minutes = round(exp_num_minutes, 2)
+        exp_num_minutes = exp_num_minutes if exp_num_minutes > 0 else 0
+        return exp_num_minutes
 
     @cached_property
     def dimension(self):

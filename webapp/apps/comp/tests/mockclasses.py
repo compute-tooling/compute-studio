@@ -7,7 +7,7 @@ class MockModel:
 
     @property
     def deserialized_inputs(self):
-        return self.model_parameters
+        return self.adjustment
 
     def save(self, commit=True):
         return self

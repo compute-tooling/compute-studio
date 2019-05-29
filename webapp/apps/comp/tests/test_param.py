@@ -6,7 +6,7 @@ from webapp.apps.users.models import Project
 from webapp.apps.comp.param import Param, CheckBox
 from webapp.apps.comp.displayer import Displayer
 from webapp.apps.comp.ioutils import get_ioutils
-from webapp.apps.comp.parser import BaseParser, Parser
+from webapp.apps.comp.tests.parser import LocalParser
 from webapp.apps.comp.forms import InputsForm
 
 from .mockclasses import MockModel
@@ -70,24 +70,20 @@ def test_paramdisplayer(get_inputs, mockproject, valid_meta_params):
 
 
 def test_paramparser(get_inputs, valid_meta_params, mockproject, meta_param_dict):
-    """
-
-    """
-
     class MockDisplayer(Displayer):
         def package_defaults(self):
             return get_inputs
 
     ioutils = get_ioutils(
-        mockproject, Displayer=MockDisplayer, Parser=BaseParser, Param=Param
+        mockproject, Displayer=MockDisplayer, Parser=LocalParser, Param=Param
     )
     ioutils.displayer.meta_parameters = valid_meta_params
 
     clean_inputs = {"intparam": 3, "mj2param": 4.0}
-    parser = BaseParser(
+    parser = LocalParser(
         mockproject, ioutils.displayer, clean_inputs, **valid_meta_params
     )
-    ew, res = parser.parse_parameters()
+    ew, res, _ = parser.parse_parameters()
     assert res == {
         "majorsection1": {"intparam": [{"value": 3}]},
         "majorsection2": {"mj2param": [{"value": 4.0}]},

@@ -8,7 +8,6 @@ import os
 from bokeh.resources import CDN
 import requests
 
-from django.utils import timezone
 from django.db import models
 from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin, DetailView
@@ -31,19 +30,21 @@ import s3like
 from webapp.settings import DEBUG
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
-from webapp.apps.billing.utils import USE_STRIPE, ChargeRunMixin, has_payment_method
+from webapp.apps.billing.utils import has_payment_method
 from webapp.apps.users.models import Project, is_profile_active
 
-from .constants import WEBAPP_VERSION
-from .forms import InputsForm
-from .models import Simulation
-from .compute import Compute, JobFailError
-from .ioutils import get_ioutils
-from .submit import handle_submission, BadPost
-from .tags import TAGS
-from .exceptions import AppError
-from .serializers import OutputsSerializer
+from webapp.apps.comp.constants import WEBAPP_VERSION
+from webapp.apps.comp.forms import InputsForm
+from webapp.apps.comp.models import Simulation
+from webapp.apps.comp.compute import Compute, JobFailError
+from webapp.apps.comp.ioutils import get_ioutils
+from webapp.apps.comp.submit import handle_submission, BadPost
+from webapp.apps.comp.tags import TAGS
+from webapp.apps.comp.exceptions import AppError, ValidationError
+from webapp.apps.comp.serializers import OutputsSerializer
 
+
+from .core import AbstractRouterView, InputsMixin, GetOutputsObjectMixin
 
 OBJ_STORAGE_URL = os.environ.get("OBJ_STORAGE_URL")
 
@@ -96,36 +97,6 @@ class InputsMixin:
                 and is_profile_active(user)
                 and has_payment_method(user)
             )
-
-
-class RouterView(InputsMixin, View):
-    projects = Project.objects.all()
-    placeholder_template = "comp/model_placeholder.html"
-
-    def handle(self, request, is_get, *args, **kwargs):
-        print("router handle", args, kwargs)
-        project = get_object_or_404(
-            self.projects,
-            owner__user__username=kwargs["username"],
-            title=kwargs["title"],
-        )
-        if project.status in ["updating", "live"]:
-            if project.sponsor is None:
-                return RequiresPmtInputsView.as_view()(request, *args, **kwargs)
-            else:
-                return RequiresLoginInputsView.as_view()(request, *args, **kwargs)
-        else:
-            if is_get:
-                context = self.project_context(request, project)
-                return render(request, self.placeholder_template, context)
-            else:
-                raise PermissionDenied()
-
-    def get(self, request, *args, **kwargs):
-        return self.handle(request, True, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        return self.handle(request, False, *args, **kwargs)
 
 
 class InputsView(InputsMixin, View):
@@ -186,7 +157,7 @@ class InputsView(InputsMixin, View):
 
         # case where validation failed
         if isinstance(result, BadPost):
-            return submission.http_response_404
+            return result.http_response
 
         # No errors--submit to model
         if result.save is not None:
@@ -244,14 +215,21 @@ class RequiresPmtInputsView(InputsView):
         return super().post(request, *args, **kwargs)
 
 
-class GetOutputsObjectMixin:
-    def get_object(self, model_pk, username, title):
-        return get_object_or_404(
-            self.model,
-            model_pk=model_pk,
-            project__title=title,
-            project__owner__user__username=username,
-        )
+class RouterView(InputsMixin, AbstractRouterView):
+    projects = Project.objects.all()
+    placeholder_template = "comp/model_placeholder.html"
+    payment_view = RequiresPmtInputsView
+    login_view = RequiresLoginInputsView
+
+    def unauthorized_get(self, request, project):
+        context = self.project_context(request, project)
+        return render(request, self.placeholder_template, context)
+
+    def get(self, request, *args, **kwargs):
+        return self.handle(request, True, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.handle(request, False, *args, **kwargs)
 
 
 class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
@@ -292,7 +270,7 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
             {
                 "object": self.object,
                 "unknown_fields": unknown_fields,
-                "model_parameters": self.object.inputs.display_params,
+                "adjustment": self.object.inputs.display_params,
             }
         )
         return self._render_inputs_form(request, project, ioutils, inputs_form, context)
@@ -315,45 +293,7 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
         return render(request, self.template_name, context)
 
 
-class RecordOutputsMixin(ChargeRunMixin):
-    def record_outputs(self, sim, data):
-        self.charge_run(sim, data["meta"], use_stripe=USE_STRIPE)
-        sim.meta_data = data["meta"]
-        sim.model_version = data.get("model_version", "NA")
-        # successful run
-        if data["status"] == "SUCCESS":
-            sim.status = "SUCCESS"
-            sim.outputs = data["result"]
-            sim.save()
-        # failed run, exception is caught
-        else:
-            sim.status = "FAIL"
-            sim.traceback = data["traceback"]
-            sim.save()
-
-
-class OutputsAPIView(RecordOutputsMixin, APIView):
-    """
-    API endpoint used by the workers to update the Simulation object with the
-    simulation results.
-    """
-
-    def put(self, request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.username == "comp-api-user":
-            ser = OutputsSerializer(data=request.data)
-            if ser.is_valid():
-                data = ser.validated_data
-                sim = get_object_or_404(Simulation, job_id=data["job_id"])
-                if sim.status == "PENDING":
-                    self.record_outputs(sim, data)
-                return Response(status=status.HTTP_200_OK)
-            else:
-                return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-
-class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
+class OutputsView(GetOutputsObjectMixin, DetailView):
     """
     This view is the single page of diplaying a progress bar for how
     close the job is to finishing, and then it will also display the
@@ -425,8 +365,8 @@ class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
             else:
                 if request.method == "POST":
                     # if not ready yet, insert number of minutes remaining
-                    exp_num_minutes = self.compute_eta(timezone.now())
-                    orig_eta = self.compute_eta(self.object.creation_date)
+                    exp_num_minutes = self.object.compute_eta()
+                    orig_eta = self.object.compute_eta(self.object.creation_date)
                     return JsonResponse(
                         {"eta": exp_num_minutes, "origEta": orig_eta}, status=202
                     )
@@ -451,11 +391,8 @@ class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
         )
 
     def render_v1(self, request):
-        s = time.time()
-        rem_outputs = {}
         renderable = {"renderable": self.object.outputs["outputs"]["renderable"]}
         outputs = s3like.read_from_s3like(renderable)
-        f = time.time()
         return render(
             request,
             "comp/outputs/v1/sim_detail.html",
@@ -483,14 +420,6 @@ class OutputsView(GetOutputsObjectMixin, RecordOutputsMixin, DetailView):
             return json.dumps(self.object.inputs.inputs_file, indent=2)
         else:
             return ""
-
-    def compute_eta(self, reference_time):
-        exp_comp_dt = self.object.exp_comp_datetime
-        dt = exp_comp_dt - reference_time
-        exp_num_minutes = dt.total_seconds() / 60.0
-        exp_num_minutes = round(exp_num_minutes, 2)
-        exp_num_minutes = exp_num_minutes if exp_num_minutes > 0 else 0
-        return exp_num_minutes
 
 
 class OutputsDownloadView(GetOutputsObjectMixin, View):

@@ -5,11 +5,14 @@ import pytest
 
 from django.contrib import auth
 from django.urls import reverse
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient
 
 from webapp.apps.billing.models import UsageRecord
 from webapp.apps.users.models import Project, Profile
 
 from webapp.apps.comp.models import Simulation
+from webapp.apps.comp.ioutils import get_ioutils
 from .compute import MockCompute, MockComputeWorkerFailure
 
 
@@ -24,6 +27,9 @@ class CoreTestMixin:
         success = client.login(username=user.username, password=password)
         assert success
         return success
+
+    def set_auth_token(self, api_client: APIClient, user: User):
+        api_client.credentials(HTTP_AUTHORIZATION=f"Token {user.auth_token.key}")
 
     @property
     def provided_free(self):
@@ -42,7 +48,7 @@ class CoreTestMixin:
 
     def post_data(self, monkeypatch, client, inputs, profile, password, do_checks=True):
         self.mockcompute.client = client
-        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
+        monkeypatch.setattr("webapp.apps.comp.views.views.Compute", self.mockcompute)
 
         self.login_client(client, profile.user, password)
         resp = client.post(self.project.app_url, data=inputs)
@@ -65,6 +71,27 @@ class CoreTestMixin:
 
         return slug
 
+    def post_api_data(self, monkeypatch, api_client, inputs, profile, do_checks=True):
+        self.mockcompute.client = api_client
+        monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
+
+        self.set_auth_token(api_client, profile.user)
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/", data=inputs, format="json"
+        )
+
+        assert resp.status_code == 201, resp.data
+        detail_url = resp.data["api_url"]
+        slug = resp.data["model_pk"]
+
+        if do_checks:
+            # Pass the sim object to the Compute instance via a class attribute.
+            sim = Simulation.objects.get(project=self.project, model_pk=slug)
+            self.mockcompute.sim = sim
+            assert sim.status == "PENDING"
+
+        return resp
+
 
 @pytest.mark.django_db
 class CoreAbstractViewsTest(CoreTestMixin):
@@ -76,7 +103,7 @@ class CoreAbstractViewsTest(CoreTestMixin):
     of the same tests would be cumbersome, time-consuming, and error-prone.
     """
 
-    title = "Core"
+    title = None
     post_data_ok = {}
     mockcompute = None
 
@@ -186,7 +213,7 @@ class CoreAbstractViewsTest(CoreTestMixin):
         Test post without logged-in user:
         - returns 302 status and redirects to login page.
         """
-        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
+        monkeypatch.setattr("webapp.apps.comp.views.views.Compute", self.mockcompute)
 
         resp = client.post(self.project.app_url, data=self.inputs_ok())
         assert resp.status_code == 302
@@ -199,7 +226,7 @@ class CoreAbstractViewsTest(CoreTestMixin):
           non-sponsored model.
         - the post kicks off a run on a sponsored model.
         """
-        monkeypatch.setattr("webapp.apps.comp.views.Compute", self.mockcompute)
+        monkeypatch.setattr("webapp.apps.comp.views.views.Compute", self.mockcompute)
 
         u = User.objects.create_user(
             username="test-no-pmt",
@@ -432,20 +459,193 @@ def test_placeholder_page(db, client):
     assert "comp/inputs_form.html" in [t.name for t in resp.templates]
 
 
-def test_outputs_api(db, client, profile, password):
+def test_outputs_api(db, api_client, profile, password):
     # Test auth errors return 401.
-    anon_user = auth.get_user(client)
+    anon_user = auth.get_user(api_client)
     assert not anon_user.is_authenticated
-    assert client.put("/outputs/api/").status_code == 401
-    client.login(username=profile.user.username, password=password)
-    assert client.put("/outputs/api/").status_code == 401
+    assert api_client.put("/outputs/api/").status_code == 401
+    api_client.login(username=profile.user.username, password=password)
+    assert api_client.put("/outputs/api/").status_code == 401
 
     # Test data errors return 400
     user = User.objects.get(username="comp-api-user")
-    client.login(username=user.username, password="heyhey2222")
+    api_client.login(username=user.username, password="heyhey2222")
     assert (
-        client.put(
-            "/outputs/api/", data={"bad": "data"}, content_type="application/json"
-        ).status_code
+        api_client.put("/outputs/api/", data={"bad": "data"}, format="json").status_code
         == 400
     )
+
+
+@pytest.mark.django_db
+class CoreAbstractAPITest(CoreTestMixin):
+    """
+    Abstract test class to be used for testing api endpoints.
+    """
+
+    title = None
+    post_data_ok = {}
+    mockcompute = None
+
+    def test_get_inputs(self, api_client):
+        resp = api_client.get(f"/{self.owner}/{self.title}/api/v1/inputs/")
+        assert resp.status_code == 200
+
+        ioutils = get_ioutils(self.project)
+        mp, defaults = ioutils.displayer.package_defaults()
+        exp = {"meta_parameters": mp, "model_parameters": defaults}
+        assert exp == resp.data
+
+    def test_post_inputs(self, api_client):
+        inputs = self.inputs_ok()
+        inputs.pop("adjustment")
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/inputs/", data=inputs, format="json"
+        )
+        assert resp.status_code == 200
+
+        ioutils = get_ioutils(self.project)
+        ioutils.displayer.meta_parameters.update(inputs["meta_parameters"])
+        mp, defaults = ioutils.displayer.package_defaults()
+        exp = {"meta_parameters": mp, "model_parameters": defaults}
+        assert exp == resp.data
+
+    def test_post_bad_inputs(self, api_client):
+        inputs = self.inputs_bad()
+        inputs.pop("adjustment")
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/inputs/", data=inputs, format="json"
+        )
+        assert resp.status_code == 400
+
+    def test_runmodel(self, monkeypatch, api_client, profile):
+        resp = self.post_api_data(monkeypatch, api_client, self.inputs_ok(), profile)
+        assert resp.status_code == 201
+        assert resp.data
+        api_url = resp.data["api_url"]
+        resp = api_client.get(resp.data["api_url"])
+        assert resp.status_code == 202
+        resp = api_client.get(resp.data["api_url"])
+        assert resp.status_code == 200
+
+        # clear out credentials and make sure results are public.
+        api_client.credentials()
+        resp = api_client.get(api_url)
+        assert resp.status_code == 200
+
+        model_pk = resp.data["model_pk"]
+        sim = Simulation.objects.get(project=self.project, model_pk=model_pk)
+        assert sim.outputs
+        assert sim.traceback is None
+
+    def test_runmodel_bad_inputs(self, monkeypatch, api_client, profile):
+        self.mockcompute.client = api_client
+        monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
+        self.set_auth_token(api_client, profile.user)
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/", data=self.inputs_bad(), format="json"
+        )
+        assert resp.status_code == 400
+
+    def test_post_wo_login(self, monkeypatch, api_client):
+        """
+        Test post without logged-in user:
+        - return 403 (forbidden).
+        """
+        monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
+
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/", data=self.inputs_ok(), format="json"
+        )
+        assert resp.status_code == 403
+
+    def test_post_wo_payment_info(self, monkeypatch, api_client):
+        """
+        Test post with logged-in user that has not provided a pmt method:
+        - return 403 (forbidden).
+        - sponsored model returns 201 (resource created).
+        """
+        monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
+
+        u = User.objects.create_user(
+            username="test-no-pmt",
+            email="test-no-pmt@email.com",
+            password="testtest2222",
+        )
+        Token.objects.create(user=u)
+        prof = Profile.objects.create(user=u, is_active=True)
+        assert not hasattr(u, "customer")
+
+        self.set_auth_token(api_client, u)
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/", data=self.inputs_ok(), format="json"
+        )
+        if self.provided_free:
+            # kick off run
+            assert resp.status_code == 201
+        else:
+            assert resp.status_code == 403
+
+    def inputs_ok(self):
+        raise NotImplementedError()
+
+    def inputs_bad(self):
+        raise NotImplementedError()
+
+    @property
+    def provided_free(self):
+        raise NotImplementedError()
+
+
+@pytest.mark.usefixtures("sponsored_matchups")
+@pytest.mark.django_db
+class TestMatchupsAPISponsored(CoreAbstractAPITest):
+    class MatchupsMockCompute(MockCompute):
+        outputs = read_outputs("Matchups_v1")
+
+    owner = "hdoupe"
+    title = "Matchups"
+    mockcompute = MatchupsMockCompute
+
+    def inputs_ok(self):
+        return {
+            "meta_parameters": {"use_full_data": False},
+            "adjustment": {"matchup": {"pitcher": "Max Scherzer"}},
+        }
+
+    def inputs_bad(self):
+        return {
+            "meta_parameters": {"use_full_data": "Hello, world!"},
+            "adjustment": {"matchup": {"pitcher": "not a pitcher"}},
+        }
+
+    @property
+    def provided_free(self):
+        return True
+
+
+@pytest.mark.requires_stripe
+@pytest.mark.usefixtures("unsponsored_matchups")
+@pytest.mark.django_db
+class TestMatchupsAPI(CoreAbstractAPITest):
+    class MatchupsMockCompute(MockCompute):
+        outputs = read_outputs("Matchups_v1")
+
+    owner = "hdoupe"
+    title = "Matchups"
+    mockcompute = MatchupsMockCompute
+
+    def inputs_ok(self):
+        return {
+            "meta_parameters": {"use_full_data": False},
+            "adjustment": {"matchup": {"pitcher": "Max Scherzer"}},
+        }
+
+    def inputs_bad(self):
+        return {
+            "meta_parameters": {"use_full_data": "Hello, world!"},
+            "adjustment": {"matchup": {"pitcher": "not a pitcher"}},
+        }
+
+    @property
+    def provided_free(self):
+        return False
