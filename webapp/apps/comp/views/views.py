@@ -260,8 +260,8 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
                 try:
                     inputs_form.fields[field].initial = val
                 except KeyError:
+                    print("unknown", field, val)
                     unknown_fields = True
-        unknown_fields = mark_safe(unknown_fields)
         # is_bound is turned off so that the `initial` data is displayed.
         # Note that form is validated and cleaned with is_bound call.
         inputs_form.is_bound = False
