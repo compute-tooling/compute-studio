@@ -161,7 +161,9 @@ class Simulation(models.Model):
     def json_filename(self):
         return f"{self.project.title}_{self.model_pk}.json"
 
-    def compute_eta(self, reference_time=timezone.now()):
+    def compute_eta(self, reference_time=None):
+        if reference_time is None:
+            reference_time = timezone.now()
         exp_comp_dt = self.exp_comp_datetime
         dt = exp_comp_dt - reference_time
         exp_num_minutes = dt.total_seconds() / 60.0
