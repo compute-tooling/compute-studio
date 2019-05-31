@@ -8,4 +8,4 @@ class RequiresActive(BasePermission):
 
 class RequiresPayment(BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user.customer)
+        return bool(getattr(request.user, "customer", None))

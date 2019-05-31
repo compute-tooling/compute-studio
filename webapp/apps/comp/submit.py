@@ -143,6 +143,8 @@ class Submit:
         self.submitted_id, self.max_q_length = self.compute.submit_job(
             data, self.project.worker_ext(action=actions.SIM)
         )
+        print(f"job id: {self.submitted_id}")
+        print(f"q lenghth: {self.max_q_length}")
 
 
 class APISubmit(Submit):
