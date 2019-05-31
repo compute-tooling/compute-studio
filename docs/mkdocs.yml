@@ -8,6 +8,9 @@ pages:
     - Ouptuts: 'publish/outputs.md'
     - Functions: 'publish/functions.md'
     - Environment: 'publish/environment.md'
+  - API:
+    - Guide: 'api/guide.md'
+    - Authentication: 'api/auth.md'
 
 highlightjs: true
 hljs_style: github
