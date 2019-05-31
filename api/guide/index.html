@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Guide - COMP Models</title>
+        <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <script src="../../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../../js/bootstrap-3.0.3.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container">
+
+                <!-- Collapsed navigation -->
+                <div class="navbar-header">
+                    <!-- Expander button -->
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="../..">COMP Models</a>
+                </div>
+
+                <!-- Expanded navigation -->
+                <div class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li >
+                                <a href="../..">Home</a>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Publish <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li >
+    <a href="../../publish/guide/">Guide</a>
+</li>
+                                    
+<li >
+    <a href="../../publish/inputs/">Inputs</a>
+</li>
+                                    
+<li >
+    <a href="../../publish/outputs/">Ouptuts</a>
+</li>
+                                    
+<li >
+    <a href="../../publish/functions/">Functions</a>
+</li>
+                                    
+<li >
+    <a href="../../publish/environment/">Environment</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown active">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">API <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li class="active">
+    <a href="./">Guide</a>
+</li>
+                                    
+<li >
+    <a href="../auth/">Authentication</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li >
+                                <a rel="next" href="../../publish/environment/">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li >
+                                <a rel="prev" href="../auth/">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+        <li class="main active"><a href="#api-guide">API Guide</a></li>
+            <li><a href="#endpoints">Endpoints</a></li>
+            <li><a href="#ownertitleapiv1">/[owner]/[title]/api/v1/</a></li>
+            <li><a href="#ownertitleapiv1model_pk">/[owner]/[title]/api/v1/[model_pk]</a></li>
+            <li><a href="#ownertitleapiv1inputs">/[owner]/[title]/api/v1/inputs/</a></li>
+    </ul>
+</div></div>
+                <div class="col-md-9" role="main">
+
+<h1 id="api-guide">API Guide</h1>
+<p>COMP offers a REST API for viewing the input parameters for a given model, creating simulations, and viewing existing simulations. This is intended for users who would like to build applications on top of the COMP interface or create simulations programmatically. An API Token is required for requests that modify data. Find out how to get your token <a href="/api/auth/">here</a>.  </p>
+<h2 id="endpoints">Endpoints</h2>
+<h2 id="ownertitleapiv1">/[owner]/[title]/api/v1/</h2>
+<p>Used for creating simulations.</p>
+<p>Supports POST HTTP actions.</p>
+<h3 id="create-simulation">Create simulation</h3>
+<pre><code class="bash">POST hdoupe/Matchups/api/v1/
+</code></pre>
+
+<p><strong>Example:</strong></p>
+<pre><code class="json">{
+    &quot;meta_parameters&quot;: {
+        &quot;use_full_data&quot;: true
+    },
+    &quot;adjustment&quot;: {
+        &quot;matchup&quot;: {
+            &quot;pitcher&quot;: &quot;Max Scherzer&quot;
+        }
+    }
+}
+</code></pre>
+
+<p><strong>Response:</strong></p>
+<pre><code class="bash">HTTP/1.1 201 Created
+Allow: GET, POST, HEAD, OPTIONS
+
+{
+    &quot;api_url&quot;: &quot;/hdoupe/Matchups/api/v1/22&quot;,
+    &quot;creation_date&quot;: &quot;2019-05-31T10:43:03.105760-05:00&quot;,
+    &quot;eta&quot;: 0.33,
+    &quot;gui_url&quot;: &quot;/hdoupe/Matchups/22/&quot;,
+    &quot;inputs&quot;: {
+        &quot;adjustment&quot;: {
+            &quot;matchup&quot;: {
+                &quot;pitcher&quot;: &quot;Max Scherzer&quot;
+            }
+        },
+        &quot;errors_warnings&quot;: {
+            &quot;API&quot;: {
+                &quot;errors&quot;: {},
+                &quot;warnings&quot;: {}
+            },
+            &quot;GUI&quot;: {
+                &quot;errors&quot;: {},
+                &quot;warnings&quot;: {}
+            },
+            &quot;matchup&quot;: {
+                &quot;errors&quot;: {},
+                &quot;warnings&quot;: {}
+            }
+        },
+        &quot;inputs_file&quot;: null,
+        &quot;meta_parameters&quot;: {
+            &quot;use_full_data&quot;: true
+        }
+    },
+    &quot;model_pk&quot;: 22,
+    &quot;outputs&quot;: null,
+    &quot;traceback&quot;: null
+}
+
+</code></pre>
+
+<h2 id="ownertitleapiv1model_pk">/[owner]/[title]/api/v1/[model_pk]</h2>
+<p>Used for getting simulations.</p>
+<p>Supports GET HTTP actions.</p>
+<h3 id="get-simulation">Get simulation</h3>
+<pre><code class="bash">GET /hdoupe/Matchups/api/v1/22
+</code></pre>
+
+<p><strong>Response:</strong></p>
+<pre><code class="bash">HTTP 200 OK
+Allow: GET, HEAD, OPTIONS
+Content-Type: application/json
+Vary: Accept
+
+{
+    &quot;inputs&quot;: {
+        &quot;meta_parameters&quot;: {
+            &quot;use_full_data&quot;: true
+        },
+        &quot;adjustment&quot;: {
+            &quot;matchup&quot;: {
+                &quot;pitcher&quot;: &quot;Max Scherzer&quot;
+            }
+        },
+        &quot;inputs_file&quot;: null,
+        &quot;errors_warnings&quot;: {
+            &quot;API&quot;: {
+                &quot;errors&quot;: {},
+                &quot;warnings&quot;: {}
+            },
+            &quot;GUI&quot;: {
+                &quot;errors&quot;: {},
+                &quot;warnings&quot;: {}
+            },
+            &quot;matchup&quot;: {
+                &quot;errors&quot;: {},
+                &quot;warnings&quot;: {}
+            }
+        }
+    },
+    &quot;outputs&quot;: {
+        &quot;renderable&quot;: [
+            {
+                &quot;title&quot;: &quot;Max Scherzer v. All batters&quot;,
+                &quot;media_type&quot;: &quot;bokeh&quot;,
+                &quot;data&quot;: {
+                    &quot;html&quot;: &quot;html here&quot;,
+                    &quot;javascript&quot;: &quot;javascript here&quot;
+                }
+            },
+            {
+                &quot;title&quot;: &quot;Max Scherzer v. Chipper Jones&quot;,
+                &quot;media_type&quot;: &quot;bokeh&quot;,
+                &quot;data&quot;: {
+                    &quot;html&quot;: &quot;html here&quot;,
+                    &quot;javascript&quot;: &quot;javascript here&quot;
+                }
+            }
+        ],
+        &quot;downloadable&quot;: [
+            {
+                &quot;title&quot;: &quot;Max Scherzer v. All batters&quot;,
+                &quot;media_type&quot;: &quot;CSV&quot;,
+                &quot;data&quot;: &quot;csv here&quot;
+            },
+            {
+                &quot;title&quot;: &quot;Max Scherzer v. Chipper Jones&quot;,
+                &quot;media_type&quot;: &quot;CSV&quot;,
+                &quot;data&quot;: &quot;csv here&quot;
+            }
+        ]
+    },
+    &quot;traceback&quot;: null,
+    &quot;creation_date&quot;: &quot;2019-05-31T11:41:22.211492-05:00&quot;,
+    &quot;api_url&quot;: &quot;/hdoupe/Matchups/api/v1/23&quot;,
+    &quot;gui_url&quot;: &quot;/hdoupe/Matchups/23/&quot;,
+    &quot;eta&quot;: 0.0,
+    &quot;model_pk&quot;: 23
+}
+
+</code></pre>
+
+<h2 id="ownertitleapiv1inputs">/[owner]/[title]/api/v1/inputs/</h2>
+<p>Used for viewing the inputs for a given model.</p>
+<p>Supports GET and POST HTTP actions.</p>
+<h3 id="view-inputs">View inputs:</h3>
+<pre><code class="bash">GET hdoupe/Matchups/api/v1/inputs/
+</code></pre>
+
+<p><strong>Response:</strong></p>
+<pre><code>HTTP 200 OK
+Allow: GET, POST, HEAD, OPTIONS
+Content-Type: application/json
+Vary: Accept
+
+{
+    &quot;meta_parameters&quot;: {
+        &quot;use_full_data&quot;: {
+            &quot;type&quot;: &quot;bool&quot;,
+            &quot;title&quot;: &quot;Use Full Data&quot;,
+            &quot;value&quot;: [
+                {
+                    &quot;value&quot;: true
+                }
+            ],
+            &quot;validators&quot;: {
+                &quot;choice&quot;: {
+                    &quot;choices&quot;: [
+                        true,
+                        false
+                    ]
+                }
+            },
+            &quot;description&quot;: &quot;Flag that determines whether Matchups uses the 10 year data set or the 2018 data set.&quot;,
+            &quot;number_dims&quot;: 0
+        }
+    },
+    &quot;model_parameters&quot;: {
+        &quot;matchup&quot;: {
+            &quot;start_date&quot;: {
+                &quot;type&quot;: &quot;date&quot;,
+                &quot;section_1&quot;: &quot;Date&quot;,
+                &quot;title&quot;: &quot;Start Date&quot;,
+                &quot;value&quot;: [
+                    {
+                        &quot;value&quot;: &quot;2008-01-01&quot;,
+                        &quot;use_full_data&quot;: true
+                    }
+                ],
+                &quot;validators&quot;: {
+                    &quot;date_range&quot;: {
+                        &quot;max&quot;: &quot;end_date&quot;,
+                        &quot;min&quot;: &quot;2008-01-01&quot;
+                    }
+                },
+                &quot;description&quot;: &quot;Date to start pulling statcast information&quot;,
+                &quot;section_2&quot;: &quot;&quot;,
+                &quot;notes&quot;: &quot;If using the 2018 dataset, only use dates in 2018.&quot;,
+                &quot;number_dims&quot;: 0
+            },
+            &quot;pitcher&quot;: {
+                &quot;type&quot;: &quot;str&quot;,
+                &quot;section_1&quot;: &quot;Parameters&quot;,
+                &quot;title&quot;: &quot;Pitcher Name&quot;,
+                &quot;value&quot;: [
+                    {
+                        &quot;value&quot;: &quot;Clayton Kershaw&quot;,
+                        &quot;use_full_data&quot;: true
+                    }
+                ],
+                &quot;validators&quot;: {
+                    &quot;choice&quot;: {
+                        &quot;choices&quot;: [
+                            &quot;A. J. Achter&quot;,
+                            &quot;A. J. Burnett&quot;,
+                            &quot;A. J. Cole&quot;,
+                            &quot;A. J. Ellis&quot;,
+                            &quot;A. J. Griffin&quot;,
+                            &quot;A. J. Jimenez&quot;,
+                            &quot;A. J. Minter&quot;,
+                            &quot;A. J. Morris&quot;,
+                            &quot;A. J. Murray&quot;,
+                            &quot;A. J. Pierzynski&quot;,
+                            &quot;A. J. Pollock&quot;,
+                            &quot;A. J. Reed&quot;,
+                            &quot;A. J. Schugel&quot;,
+                            &quot;AJ Ramos&quot;,
+                            &quot;Aaron Altherr&quot;,
+                            &quot;Aaron Barrett&quot;,
+
+    ...
+</code></pre>
+
+<h3 id="update-with-meta-parameters">Update with meta parameters</h3>
+<pre><code class="bash">POST /hdoupe/Matchups/api/v1/inputs/
+</code></pre>
+
+<p><strong>Example:</strong></p>
+<pre><code class="json">{
+    &quot;meta_parameters&quot;: {&quot;use_full_data&quot;: true}
+}
+</code></pre>
+
+<p><strong>Response:</strong></p>
+<pre><code>HTTP 200 OK
+Allow: GET, POST, HEAD, OPTIONS
+Content-Type: application/json
+Vary: Accept
+
+{
+    &quot;meta_parameters&quot;: {
+        &quot;use_full_data&quot;: {
+            &quot;type&quot;: &quot;bool&quot;,
+            &quot;title&quot;: &quot;Use Full Data&quot;,
+            &quot;value&quot;: [
+                {
+                    &quot;value&quot;: false
+                }
+            ],
+            &quot;validators&quot;: {
+                &quot;choice&quot;: {
+                    &quot;choices&quot;: [
+                        true,
+                        false
+                    ]
+                }
+            },
+            &quot;description&quot;: &quot;Flag that determines whether Matchups uses the 10 year data set or the 2018 data set.&quot;,
+            &quot;number_dims&quot;: 0
+        }
+    },
+    &quot;model_parameters&quot;: {
+        &quot;matchup&quot;: {
+            &quot;start_date&quot;: {
+                &quot;type&quot;: &quot;date&quot;,
+                &quot;section_1&quot;: &quot;Date&quot;,
+                &quot;title&quot;: &quot;Start Date&quot;,
+                &quot;value&quot;: [
+                    {
+                        &quot;value&quot;: &quot;2018-01-01&quot;,
+                        &quot;use_full_data&quot;: false
+                    }
+                ],
+                &quot;validators&quot;: {
+                    &quot;date_range&quot;: {
+                        &quot;max&quot;: &quot;end_date&quot;,
+                        &quot;min&quot;: &quot;2008-01-01&quot;
+                    }
+                },
+                &quot;description&quot;: &quot;Date to start pulling statcast information&quot;,
+                &quot;section_2&quot;: &quot;&quot;,
+                &quot;notes&quot;: &quot;If using the 2018 dataset, only use dates in 2018.&quot;,
+                &quot;number_dims&quot;: 0
+            },
+            &quot;pitcher&quot;: {
+                &quot;type&quot;: &quot;str&quot;,
+                &quot;section_1&quot;: &quot;Parameters&quot;,
+                &quot;title&quot;: &quot;Pitcher Name&quot;,
+                &quot;value&quot;: [
+                    {
+                        &quot;value&quot;: &quot;Jacob deGrom&quot;,
+                        &quot;use_full_data&quot;: false
+                    }
+                ],
+                &quot;validators&quot;: {
+                    &quot;choice&quot;: {
+                        &quot;choices&quot;: [
+                            &quot;A. J. Achter&quot;,
+                            &quot;A. J. Burnett&quot;,
+                            &quot;A. J. Cole&quot;,
+                            &quot;A. J. Ellis&quot;,
+                            &quot;A. J. Griffin&quot;,
+                            &quot;A. J. Jimenez&quot;,
+                            &quot;A. J. Minter&quot;,
+                            &quot;A. J. Morris&quot;,
+                            &quot;A. J. Murray&quot;,
+                            &quot;A. J. Pierzynski&quot;,
+    ...
+</code></pre>
+
+<p>For more detail on the result, check out the <a href="/publish/inputs/">inputs documentation</a>.</p></div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js" defer></script>
+        <script src="../../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form role="form">
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="Keyboard Shortcuts Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Keyboard Shortcuts</h4>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
