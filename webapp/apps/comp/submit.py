@@ -131,7 +131,7 @@ class Submit:
                 self.ioutils.Parser.append_errors_warnings(
                     self.model.errors_warnings[inputs_style],
                     add_errors,
-                    {} if inputs_style == "GUI" else defaults[inputs_style],
+                    defaults.get(inputs_style, {}),
                 )
 
     def submit(self):

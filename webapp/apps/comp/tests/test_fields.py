@@ -4,10 +4,13 @@ from django import forms
 
 from webapp.apps.comp.fields import (
     ValueField,
+    ChoiceValueField,
+    DataList,
     coerce_bool,
     coerce_int,
     coerce_float,
     coerce_date,
+    coerce,
 )
 
 
@@ -76,3 +79,19 @@ def test_ValueField_zerodim():
     assert svf.clean("<,1,*") == ["<", 1, "*"]
     assert svf.clean("<") == ["<"]
     assert svf.clean("*") == ["*"]
+
+
+def test_ChoiceValueField():
+    cvf = ChoiceValueField(
+        [(True, True), (False, False)], coerce=coerce_bool, number_dims=0
+    )
+    assert cvf.clean("True") == True
+    assert cvf.clean("True,*,*,False") == [True, "*", "*", False]
+
+    cvf = ChoiceValueField(
+        [("hello", "hello"), ("world", "world")], coerce=coerce, number_dims=0
+    )
+    assert cvf.clean("hello") == "hello"
+    assert cvf.clean("<,hello,world") == ["<", "hello", "world"]
+    with pytest.raises(forms.ValidationError) as e:
+        cvf.clean("yep,bad input")
