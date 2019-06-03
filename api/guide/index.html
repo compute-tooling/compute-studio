@@ -114,7 +114,6 @@
                 <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
     <ul class="nav bs-sidenav">
         <li class="main active"><a href="#api-guide">API Guide</a></li>
-            <li><a href="#endpoints">Endpoints</a></li>
             <li><a href="#ownertitleapiv1">/[owner]/[title]/api/v1/</a></li>
             <li><a href="#ownertitleapiv1model_pk">/[owner]/[title]/api/v1/[model_pk]</a></li>
             <li><a href="#ownertitleapiv1inputs">/[owner]/[title]/api/v1/inputs/</a></li>
@@ -123,8 +122,8 @@
                 <div class="col-md-9" role="main">
 
 <h1 id="api-guide">API Guide</h1>
-<p>COMP offers a REST API for viewing the input parameters for a given model, creating simulations, and viewing existing simulations. This is intended for users who would like to build applications on top of the COMP interface or create simulations programmatically. An API Token is required for requests that modify data. Find out how to get your token <a href="/api/auth/">here</a>.  </p>
-<h2 id="endpoints">Endpoints</h2>
+<p>COMP offers a REST API for creating simulations, viewing existing simulations, and viewing the input parameters for a given model. This is intended for users who would like to build applications on top of the COMP interface or create simulations programmatically. An API token is required for requests that modify data. Find out how to get your token <a href="/api/auth/">here</a>.  </p>
+<p>More information about the data formats that are shown below can be found in the COMP publishing documentation on <a href="/publish/inputs/">inputs</a> and <a href="/publish/outputs/">outputs</a>.</p>
 <h2 id="ownertitleapiv1">/[owner]/[title]/api/v1/</h2>
 <p>Used for creating simulations.</p>
 <p>Supports POST HTTP actions.</p>
@@ -443,9 +442,7 @@ Vary: Accept
                             &quot;A. J. Murray&quot;,
                             &quot;A. J. Pierzynski&quot;,
     ...
-</code></pre>
-
-<p>For more detail on the result, check out the <a href="/publish/inputs/">inputs documentation</a>.</p></div>
+</code></pre></div>
         </div>
 
         <footer class="col-md-12">
