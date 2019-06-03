@@ -54,6 +54,7 @@ class Value:
                 ),
                 coerce=coerce_func,
                 choices=choices,
+                number_dims=self.number_dims,
                 **field_kwargs,
             )
         else:
