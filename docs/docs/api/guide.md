@@ -1,10 +1,9 @@
 # API Guide
 
-COMP offers a REST API for viewing the input parameters for a given model, creating simulations, and viewing existing simulations. This is intended for users who would like to build applications on top of the COMP interface or create simulations programmatically. An API Token is required for requests that modify data. Find out how to get your token [here](/api/auth/).  
+COMP offers a REST API for creating simulations, viewing existing simulations, and viewing the input parameters for a given model. This is intended for users who would like to build applications on top of the COMP interface or create simulations programmatically. An API token is required for requests that modify data. Find out how to get your token [here](/api/auth/).  
 
+More information about the data formats that are shown below can be found in the COMP publishing documentation on [inputs](/publish/inputs/) and [outputs](/publish/outputs/).
 
-Endpoints
--------------
 
 ## /[owner]/[title]/api/v1/
 
@@ -354,9 +353,6 @@ Vary: Accept
                             "A. J. Pierzynski",
     ...
 ```
-
-
-For more detail on the result, check out the [inputs documentation](/publish/inputs/).
 
 
 [1]: https://github.com/comp-org/COMP-Developer-Toolkit#comp-developer-toolkit
