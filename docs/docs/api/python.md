@@ -7,7 +7,6 @@ api = API("PSLmodels", "Tax-Brain", api_token="your token")
 
 res = api.create(
     meta_parameters={
-        "use_full_sample": False, 
         "data_source": "PUF",
         "year": 2020,
     },
@@ -17,10 +16,11 @@ res = api.create(
         }
     }
 )
+
 # output: 
 # {'inputs': {'meta_parameters': {'year': 2020,
 #    'data_source': 'PUF',
-#    'use_full_sample': False},
+#    'use_full_sample': True},
 #   'adjustment': {'policy': {'II_em': [{'year': 2020, 'value': 5000}]},
 #    'behavior': {}},
 #   'inputs_file': {'policy': {'II_em': {'2020': 5000}}, 'behavior': {}},
@@ -30,11 +30,12 @@ res = api.create(
 #    'API': {'errors': {}, 'warnings': {}}}},
 #  'outputs': None,
 #  'traceback': None,
-#  'creation_date': '2019-06-04T17:24:17.305795-05:00',
-#  'api_url': '/PSLmodels/Tax-Brain/api/v1/41104/',
-#  'gui_url': '/PSLmodels/Tax-Brain/41104/',
+#  'creation_date': '2019-06-04T17:30:23.581357-05:00',
+#  'api_url': '/PSLmodels/Tax-Brain/api/v1/41105/',
+#  'gui_url': '/PSLmodels/Tax-Brain/41105/',
 #  'eta': 5.0,
-#  'model_pk': 41104}
+#  'model_pk': 41105}
+ 
 ```
 
 Retrieve the result as a Pandas DataFrame:
@@ -46,10 +47,10 @@ result["Total Liabilities Change by Calendar Year (Billions).csv"]
 
 
 # output:
-# Unnamed: 0 	2020
-# 0 	Individual Income Tax Liability Change 	$-168.21
-# 1 	Payroll Tax Liability Change 	$0.00
-# 2 	Combined Payroll and Individual Income Tax Lia... 	$-168.21
+# Unnamed: 0 	2020 	2021 	2022 	2023 	2024 	2025 	2026 	2027 	2028 	2029
+# 0 	Individual Income Tax Liability Change 	$-168.49 	$-175.45 	$-183.43 	$-190.69 	$-198.26 	$-207.17 	$-32.96 	$-34.10 	$-35.26 	$-36.46
+# 1 	Payroll Tax Liability Change 	$0.00 	$0.00 	$0.00 	$0.00 	$0.00 	$0.00 	$0.00 	$0.00 	$0.00 	$0.00
+# 2 	Combined Payroll and Individual Income Tax Lia... 	$-168.49 	$-175.45 	$-183.43 	$-190.69 	$-198.26 	$-207.17 	$-32.96 	$-34.10 	$-35.26 	$-36.46
 
 ```
 
