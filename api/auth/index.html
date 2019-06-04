@@ -128,12 +128,13 @@
 <h1 id="authentication">Authentication</h1>
 <p>API endpoints that create simulations require the user to include their API Token with their request. Here a few methods for retrieving your authentication token:</p>
 <h3 id="comp-developer-toolkit"><a href="https://github.com/comp-org/COMP-Developer-Toolkit#comp-developer-toolkit">COMP-Developer-ToolKit</a></h3>
-<pre><code class="bash">$ cdk-token --username myuser --password mypass
+<pre><code class="bash">$ pip install compdevkit
+$ cdk-token --username myuser --password mypass
 Token: your-token-here
 </code></pre>
 
 <h3 id="httpie"><a href="https://httpie.org/">HTTPie</a></h3>
-<pre><code class="bash">$ http post https://www.compmodels.org/api-token-auth/ username=hdoupe password=mypass
+<pre><code class="bash">$ http post https://compmodels.org/api-token-auth/ username=hdoupe password=mypass
 
 HTTP/1.1 200 OK
 Allow: POST, OPTIONS
@@ -144,11 +145,11 @@ Allow: POST, OPTIONS
 </code></pre>
 
 <h3 id="python-with-the-requests-library"><a href="https://2.python-requests.org/en/master/">Python with the Requests library</a></h3>
-<pre><code class="python">In [1]: import requests                                                                                                       
+<pre><code class="python">In [1]: import requests
 
-In [2]: resp = requests.post(&quot;https://www.compmodels.org/api-token-auth/&quot;, json={&quot;username&quot;: &quot;hdoupe&quot;, &quot;password&quot;: &quot;mypass&quot;})  
+In [2]: resp = requests.post(&quot;https://compmodels.org/api-token-auth/&quot;, json={&quot;username&quot;: &quot;hdoupe&quot;, &quot;password&quot;: &quot;mypass&quot;})
 
-In [3]: resp.json()                                                                                                           
+In [3]: resp.json()
 Out[3]: {'token': 'Your token here'}
 </code></pre></div>
         </div>

@@ -125,12 +125,13 @@
 
 <h1 id="python">Python</h1>
 <p>The COMP REST API can easily be wrapped with a <a href="#api-implementation">Python class</a> to provide a more intuitive way to use the API:</p>
+<p><a href="/api/auth/">How do I get my auth token?</a></p>
 <pre><code class="python">api = API(&quot;PSLmodels&quot;, &quot;Tax-Brain&quot;, api_token=&quot;your token&quot;)
 
 res = api.create(
     meta_parameters={
-        &quot;use_full_sample&quot;: False, 
-        &quot;data_source&quot;: &quot;CPS&quot;
+        &quot;data_source&quot;: &quot;PUF&quot;,
+        &quot;year&quot;: 2020,
     },
     adjustment={
         &quot;policy&quot;: {
@@ -142,7 +143,7 @@ res = api.create(
 # output: 
 # {'inputs': {'meta_parameters': {'year': 2020,
 #    'data_source': 'PUF',
-#    'use_full_sample': False},
+#    'use_full_sample': True},
 #   'adjustment': {'policy': {'II_em': [{'year': 2020, 'value': 5000}]},
 #    'behavior': {}},
 #   'inputs_file': {'policy': {'II_em': {'2020': 5000}}, 'behavior': {}},
@@ -152,11 +153,11 @@ res = api.create(
 #    'API': {'errors': {}, 'warnings': {}}}},
 #  'outputs': None,
 #  'traceback': None,
-#  'creation_date': '2019-06-04T08:47:30.287598-05:00',
-#  'api_url': '/PSLmodels/Tax-Brain/api/v1/40754/',
-#  'gui_url': '/PSLmodels/Tax-Brain/40754/',
+#  'creation_date': '2019-06-04T17:30:23.581357-05:00',
+#  'api_url': '/PSLmodels/Tax-Brain/api/v1/41105/',
+#  'gui_url': '/PSLmodels/Tax-Brain/41105/',
 #  'eta': 5.0,
-#  'model_pk': 40754}
+#  'model_pk': 41105}
 
 </code></pre>
 
@@ -167,10 +168,10 @@ result[&quot;Total Liabilities Change by Calendar Year (Billions).csv&quot;]
 
 
 # output:
-# Unnamed: 0    2020
-# 0     Individual Income Tax Liability Change  $-168.21
-# 1     Payroll Tax Liability Change    $0.00
-# 2     Combined Payroll and Individual Income Tax Lia...   $-168.21
+# Unnamed: 0    2020    2021    2022    2023    2024    2025    2026    2027    2028    2029
+# 0     Individual Income Tax Liability Change  $-168.49    $-175.45    $-183.43    $-190.69    $-198.26    $-207.17    $-32.96     $-34.10     $-35.26     $-36.46
+# 1     Payroll Tax Liability Change    $0.00   $0.00   $0.00   $0.00   $0.00   $0.00   $0.00   $0.00   $0.00   $0.00
+# 2     Combined Payroll and Individual Income Tax Lia...   $-168.49    $-175.45    $-183.43    $-190.69    $-198.26    $-207.17    $-32.96     $-34.10     $-35.26     $-36.46
 
 </code></pre>
 
@@ -257,6 +258,7 @@ result[&quot;Total Liabilities Change by Calendar Year (Billions).csv&quot;]
 <h2 id="api-implementation">API implementation:</h2>
 <pre><code class="python">from io import StringIO
 import time
+import os
 
 import requests
 import pandas as pd
