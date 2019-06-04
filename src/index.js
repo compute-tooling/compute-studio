@@ -117,15 +117,15 @@ class PublishForm extends React.Component {
                   {status.project_exists}
                 </div>
               ) : (
-                <div />
-              )}
+                  <div />
+                )}
               {status && status.auth ? (
                 <div class="alert alert-danger" role="alert">
                   {status.auth}
                 </div>
               ) : (
-                <div />
-              )}
+                  <div />
+                )}
               <div class="mt-5">
                 <h3>About</h3>
                 <hr className="my-3" />
@@ -195,15 +195,6 @@ class PublishForm extends React.Component {
               <div class="mt-5">
                 <h3>Environment</h3>
                 <hr className="my-3" />
-                <p>
-                  <em>
-                    Describe how to install this project and its resource
-                    requirements as detailed in{" "}
-                    <a href="https://github.com/comp-org/comp/blob/master/docs/ENVIRONMENT.md">
-                      the environment documentation.
-                    </a>
-                  </em>
-                </p>
                 <div class="mt-1 mb-1">
                   <label>
                     <b>Expected job time:</b> Time in seconds for simulation to
@@ -255,7 +246,7 @@ class CreateApp extends React.Component {
     this.doSubmit = this.doSubmit.bind(this);
   }
   doSubmit(data) {
-    return axios.post("/publish/api/", data).then(function(response) {
+    return axios.post("/publish/api/", data).then(function (response) {
       console.log("post", response);
       window.location.replace("/");
     });
@@ -264,6 +255,14 @@ class CreateApp extends React.Component {
     return (
       <div>
         <h1 style={{ marginBottom: "2rem" }}>Publish</h1>
+
+        <p class="lead">
+          Publish your model on COMP.
+          Check out the
+          <a href="https://docs.compmodels.org/publish/guide/">
+            {" "}developer documentation</a>
+          {" "} to learn more about the publishing criteria.
+        </p>
         <PublishForm
           fetchInitialValues={null}
           initialValues={initialValues}
@@ -288,11 +287,11 @@ class AppDetail extends React.Component {
     const app_name = this.props.match.params.app_name;
     return axios
       .get(`/publish/api/${username}/${app_name}/detail/`)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
         return response.data;
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.log(error);
       });
   }
@@ -302,7 +301,7 @@ class AppDetail extends React.Component {
     const app_name = this.props.match.params.app_name;
     return axios
       .put(`/publish/api/${username}/${app_name}/detail/`, data)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
         window.location.replace("/");
       });
