@@ -61,6 +61,13 @@ def translate_to_django(meta_parameters: dict) -> MetaParameters:
                 field = field(
                     label="", min_value=min_value, max_value=max_value, required=False
                 )
+            elif "choice" in data["validators"]:
+                field = forms.TypedChoiceField(
+                    label="",
+                    choices=[(c, c) for c in data["validators"]["choice"]["choices"]],
+                    required=False,
+                    coerce=int if data["type"] == "int" else float,
+                )
             else:
                 field = field(label="", required=False)
         else:  # bool

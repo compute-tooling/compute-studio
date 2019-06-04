@@ -46,9 +46,7 @@ class ValueField(forms.Field):
         "invalid_type": _("%(value)s is not able to be converted to the correct type")
     }
 
-    def __init__(
-        self, *, coerce=lambda val: val, number_dims=1, empty_value="", **kwargs
-    ):
+    def __init__(self, coerce=lambda val: val, number_dims=1, empty_value="", **kwargs):
         self.coerce = coerce
         self.empty_value = empty_value
         self.number_dims = number_dims
@@ -91,3 +89,67 @@ class ValueField(forms.Field):
         if self.number_dims == 0 and len(python_values) == 1 and num_ops == 0:
             python_values = python_values[0]
         return python_values
+
+
+class DataList(forms.Widget):
+    def __init__(self, data_list, placeholder, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.data_list = data_list
+        self.placeholder = placeholder
+
+    def render(self, name, value, attrs=None, renderer=None):
+        attrs = self.build_attrs(self.attrs, attrs)
+        option_str = "\n".join(
+            [f'<option value="{value[0]}">' for value in self.data_list]
+        )
+        class_ = attrs.get("class", "")
+        class_str = f'class="{class_}"' if class_ else ""
+        value_str = value if value is not None else ""
+        return f"""
+            <input 
+                list="id_{name}-list" 
+                id="id_{name}" 
+                name="{name}" 
+                {class_str} 
+                placeholder="{self.placeholder}" 
+                value="{value_str}"
+            />
+            <datalist id="id_{name}-list"> {option_str} </datalist>
+            """
+
+
+class ChoiceValueField(ValueField):
+    default_error_messages = {
+        "invalid_type": _("%(value)s is not able to be converted to the correct type"),
+        "invalid_choice": _(
+            "Select a valid choice. %(value)s is not one of the available choices."
+        ),
+    }
+
+    def __init__(
+        self, choices, coerce=lambda val: val, number_dims=1, empty_value="", **kwargs
+    ):
+        super().__init__(coerce, number_dims, empty_value, **kwargs)
+        self.choices = choices
+
+    def validate(self, value):
+        super().validate(value)
+        if not self.valid_value(value):
+            print("fail", value)
+            raise forms.ValidationError(
+                self.error_messages["invalid_choice"],
+                code="invalid_choice",
+                params={"value": value},
+            )
+
+    def valid_value(self, value):
+        if not isinstance(value, list):
+            values = [value]
+        else:
+            values = value
+        for v in values:
+            if is_wildcard(v) or is_reverse(v) or v in (self.empty_value, None):
+                continue
+            elif (v, v) not in self.choices:
+                return False
+        return True
