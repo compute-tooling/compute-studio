@@ -11,6 +11,7 @@ pages:
   - API:
     - Guide: 'api/guide.md'
     - Authentication: 'api/auth.md'
+    - Python: 'api/python.md'
 
 highlightjs: true
 hljs_style: github
