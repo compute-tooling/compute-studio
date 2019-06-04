@@ -2,6 +2,8 @@
 
 The COMP REST API can easily be wrapped with a [Python class](#api-implementation) to provide a more intuitive way to use the API:
 
+[How do I get my auth token?](/api/auth/)
+
 ```python
 api = API("PSLmodels", "Tax-Brain", api_token="your token")
 
