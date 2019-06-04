@@ -14,7 +14,7 @@ Token: your-token-here
 ### [HTTPie][2]
 
 ```bash
-$ http post https://www.compmodels.org/api-token-auth/ username=hdoupe password=mypass
+$ http post https://compmodels.org/api-token-auth/ username=hdoupe password=mypass
 
 HTTP/1.1 200 OK
 Allow: POST, OPTIONS
@@ -27,11 +27,11 @@ Allow: POST, OPTIONS
 ### [Python with the Requests library][3]
 
 ```python
-In [1]: import requests                                                                                                       
+In [1]: import requests
 
-In [2]: resp = requests.post("https://www.compmodels.org/api-token-auth/", json={"username": "hdoupe", "password": "mypass"})  
+In [2]: resp = requests.post("https://compmodels.org/api-token-auth/", json={"username": "hdoupe", "password": "mypass"})
 
-In [3]: resp.json()                                                                                                           
+In [3]: resp.json()
 Out[3]: {'token': 'Your token here'}
 ```
 
