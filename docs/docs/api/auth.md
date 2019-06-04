@@ -6,6 +6,7 @@ API endpoints that create simulations require the user to include their API Toke
 ### [COMP-Developer-ToolKit][1]
 
 ```bash
+$ pip install compdevkit
 $ cdk-token --username myuser --password mypass
 Token: your-token-here
 ```
