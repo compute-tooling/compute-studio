@@ -8,7 +8,8 @@ api = API("PSLmodels", "Tax-Brain", api_token="your token")
 res = api.create(
     meta_parameters={
         "use_full_sample": False, 
-        "data_source": "CPS"
+        "data_source": "PUF",
+        "year": 2020,
     },
     adjustment={
         "policy": {
@@ -16,7 +17,6 @@ res = api.create(
         }
     }
 )
-
 # output: 
 # {'inputs': {'meta_parameters': {'year': 2020,
 #    'data_source': 'PUF',
@@ -30,12 +30,11 @@ res = api.create(
 #    'API': {'errors': {}, 'warnings': {}}}},
 #  'outputs': None,
 #  'traceback': None,
-#  'creation_date': '2019-06-04T08:47:30.287598-05:00',
-#  'api_url': '/PSLmodels/Tax-Brain/api/v1/40754/',
-#  'gui_url': '/PSLmodels/Tax-Brain/40754/',
+#  'creation_date': '2019-06-04T17:24:17.305795-05:00',
+#  'api_url': '/PSLmodels/Tax-Brain/api/v1/41104/',
+#  'gui_url': '/PSLmodels/Tax-Brain/41104/',
 #  'eta': 5.0,
-#  'model_pk': 40754}
-
+#  'model_pk': 41104}
 ```
 
 Retrieve the result as a Pandas DataFrame:
@@ -141,6 +140,7 @@ api.inputs()
 ```python
 from io import StringIO
 import time
+import os
 
 import requests
 import pandas as pd
@@ -151,7 +151,7 @@ class APIException(Exception):
 
 class API:
     host = "https://www.compmodels.org"
-    
+
     def __init__(self, owner, title, api_token=None):
         self.owner = owner
         self.title = title
@@ -161,7 +161,7 @@ class API:
         }
         self.sim_url = f"{self.host}/{owner}/{title}/api/v1/"
         self.inputs_url = f"{self.host}/{owner}/{title}/api/v1/inputs/"
-        
+
     def inputs(self, meta_parameters: dict = None):
         meta_parameters = meta_parameters or {}
         if not meta_parameters:
@@ -174,7 +174,7 @@ class API:
         if resp.status_code == 200:
             return resp.json()
         raise APIException(resp.text)
-        
+
     def create(self, adjustment: dict = None, meta_parameters: dict = None):
         adjustment = adjustment or {}
         meta_parameters = meta_parameters or {}
@@ -189,7 +189,7 @@ class API:
         if resp.status_code == 201:
             return resp.json()
         raise APIException(resp.text)
-    
+
     def detail(self, model_pk):
         while True:
             resp = requests.get(f"{self.sim_url}{model_pk}/")
@@ -200,7 +200,7 @@ class API:
             else:
                 raise APIException(resp.text)
             time.sleep(20)
-    
+
     def results(self, model_pk):
         result = self.detail(model_pk)
         res = {}
