@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Python - COMP Models</title>
+        <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <script src="../../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../../js/bootstrap-3.0.3.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container">
+
+                <!-- Collapsed navigation -->
+                <div class="navbar-header">
+                    <!-- Expander button -->
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="../..">COMP Models</a>
+                </div>
+
+                <!-- Expanded navigation -->
+                <div class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li >
+                                <a href="../..">Home</a>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Publish <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li >
+    <a href="../../publish/guide/">Guide</a>
+</li>
+                                    
+<li >
+    <a href="../../publish/inputs/">Inputs</a>
+</li>
+                                    
+<li >
+    <a href="../../publish/outputs/">Ouptuts</a>
+</li>
+                                    
+<li >
+    <a href="../../publish/functions/">Functions</a>
+</li>
+                                    
+<li >
+    <a href="../../publish/environment/">Environment</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown active">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">API <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li >
+    <a href="../guide/">Guide</a>
+</li>
+                                    
+<li >
+    <a href="../auth/">Authentication</a>
+</li>
+                                    
+<li class="active">
+    <a href="./">Python</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li >
+                                <a rel="next" href="../auth/">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="disabled">
+                                <a rel="prev" >
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+        <li class="main active"><a href="#python">Python</a></li>
+            <li><a href="#api-implementation">API implementation:</a></li>
+    </ul>
+</div></div>
+                <div class="col-md-9" role="main">
+
+<h1 id="python">Python</h1>
+<p>The COMP REST API can easily be wrapped with a <a href="#api-implementation">Python class</a> to provide a more intuitive way to use the API:</p>
+<pre><code class="python">api = API(&quot;PSLmodels&quot;, &quot;Tax-Brain&quot;, api_token=&quot;your token&quot;)
+
+res = api.create(
+    meta_parameters={
+        &quot;use_full_sample&quot;: False, 
+        &quot;data_source&quot;: &quot;CPS&quot;
+    },
+    adjustment={
+        &quot;policy&quot;: {
+            &quot;II_em&quot;: [{&quot;year&quot;: 2020, &quot;value&quot;: 5000}]
+        }
+    }
+)
+
+# output: 
+# {'inputs': {'meta_parameters': {'year': 2020,
+#    'data_source': 'PUF',
+#    'use_full_sample': False},
+#   'adjustment': {'policy': {'II_em': [{'year': 2020, 'value': 5000}]},
+#    'behavior': {}},
+#   'inputs_file': {'policy': {'II_em': {'2020': 5000}}, 'behavior': {}},
+#   'errors_warnings': {'policy': {'errors': {}, 'warnings': {}},
+#    'behavior': {'errors': {}, 'warnings': {}},
+#    'GUI': {'errors': {}, 'warnings': {}},
+#    'API': {'errors': {}, 'warnings': {}}}},
+#  'outputs': None,
+#  'traceback': None,
+#  'creation_date': '2019-06-04T08:47:30.287598-05:00',
+#  'api_url': '/PSLmodels/Tax-Brain/api/v1/40754/',
+#  'gui_url': '/PSLmodels/Tax-Brain/40754/',
+#  'eta': 5.0,
+#  'model_pk': 40754}
+
+</code></pre>
+
+<p>Retrieve the result as a Pandas DataFrame:</p>
+<pre><code class="python">result = api.results(res[&quot;model_pk&quot;])
+
+result[&quot;Total Liabilities Change by Calendar Year (Billions).csv&quot;]
+
+
+# output:
+# Unnamed: 0    2020
+# 0     Individual Income Tax Liability Change  $-168.21
+# 1     Payroll Tax Liability Change    $0.00
+# 2     Combined Payroll and Individual Income Tax Lia...   $-168.21
+
+</code></pre>
+
+<p>View the model's inputs:</p>
+<pre><code class="python">api.inputs()
+
+# output:
+# {'meta_parameters': {'year': {'validators': {'choice': {'choices': [2013,
+#       2014,
+#       2015,
+#       2016,
+#       2017,
+#       2018,
+#       2019,
+#       2020,
+#       2021,
+#       2022,
+#       2023,
+#       2024,
+#       2025,
+#       2026,
+#       2027,
+#       2028]}},
+#    'description': 'Year for parameters.',
+#    'title': 'Start Year',
+#    'number_dims': 0,
+#    'type': 'int',
+#    'value': [{'value': 2019}]},
+#   'data_source': {'validators': {'choice': {'choices': ['PUF', 'CPS']}},
+#    'description': 'Data source can be PUF or CPS',
+#    'title': 'Data Source',
+#    'number_dims': 0,
+#    'type': 'str',
+#    'value': [{'value': 'PUF'}]},
+#   'use_full_sample': {'validators': {'choice': {'choices': [True, False]}},
+#    'description': 'Use entire data set or a 2% sample.',
+#    'title': 'Use Full Sample',
+#    'number_dims': 0,
+#    'type': 'bool',
+#    'value': [{'value': True}]}},
+#  'model_parameters': {'policy': {'CPI_offset': {'validators': {'range': {'min': -0.005,
+#       'max': 0.005}},
+#     'section_2': 'Offsets',
+#     'section_1': 'Parameter Indexing',
+#     'description': 'Values are zero before 2017; reforms that introduce indexing with chained CPI would have values around -0.0025 beginning in the year before the first year policy parameters will have values computed with chained CPI.',
+#     'title': 'Decimal offset ADDED to unchained CPI to get parameter indexing rate',
+#     'number_dims': 0,
+#     'notes': &quot;See April 2013 CBO report entitled 'What Would Be the Effect on the Deficit of Using the Chained CPI to Index Benefit Programs and the Tax Code?', which includes this: 'The chained CPI grows more slowly than the traditional CPI does: an average of about 0.25 percentage points more slowly per year over the past decade.' &lt;https://www.cbo.gov/publication/44089&gt;&quot;,
+#     'type': 'float',
+#     'value': [{'year': 2019, 'value': -0.0025}]},
+#    'FICA_ss_trt': {'validators': {'range': {'min': 0, 'max': 1}},
+#     'section_2': 'Social Security FICA',
+#     'section_1': 'Payroll Taxes',
+#     'description': 'Social Security FICA rate, including both employer and employee.',
+#     'title': 'Social Security payroll tax rate',
+#     'number_dims': 0,
+#     'notes': '',
+#     'type': 'float',
+#     'value': [{'year': 2019, 'value': 0.124}]},
+#    'SS_Earnings_c': {'validators': {'range': {'min': 0, 'max': 9e+99}},
+#     'section_2': 'Social Security FICA',
+#     'checkbox': True,
+#     'section_1': 'Payroll Taxes',
+#     'description': 'Individual earnings below this amount are subjected to Social Security (OASDI) payroll tax.',
+#     'title': 'Maximum taxable earnings (MTE) for Social Security',
+#     'number_dims': 0,
+#     'notes': 'This parameter is indexed by the rate of growth in average wages, not by the price inflation rate.',
+#     'type': 'float',
+#     'value': [{'year': 2019, 'value': 133048.08}]},
+#    'SS_Earnings_thd': {'validators': {'range': {'min': 0, 'max': 9e+99}},
+#     'section_2': 'Social Security FICA',
+#     'checkbox': False,
+#     'section_1': 'Payroll Taxes',
+#     'description': 'Individual earnings above this threshold are subjected to Social Security (OASDI) payroll tax, in addition to earnings below the maximum taxable earnings threshold.',
+#     'title': 'Additional Taxable Earnings Threshold for Social Security',
+#     'number_dims': 0,
+#     'notes': '',
+#     'type': 'float',
+#     'value': [{'year': 2019, 'value': 9e+99}]},
+#
+#   ...
+</code></pre>
+
+<h2 id="api-implementation">API implementation:</h2>
+<pre><code class="python">from io import StringIO
+import time
+
+import requests
+import pandas as pd
+
+
+class APIException(Exception):
+    pass
+
+class API:
+    host = &quot;https://www.compmodels.org&quot;
+
+    def __init__(self, owner, title, api_token=None):
+        self.owner = owner
+        self.title = title
+        api_token = self.get_token(api_token)
+        self.auth_header = {
+            &quot;Authorization&quot;: f&quot;Token {api_token}&quot;
+        }
+        self.sim_url = f&quot;{self.host}/{owner}/{title}/api/v1/&quot;
+        self.inputs_url = f&quot;{self.host}/{owner}/{title}/api/v1/inputs/&quot;
+
+    def inputs(self, meta_parameters: dict = None):
+        meta_parameters = meta_parameters or {}
+        if not meta_parameters:
+            resp = requests.get(self.inputs_url)
+        else:
+            resp = requests.post(
+                self.inputs_url,
+                json=meta_parameters,
+            )
+        if resp.status_code == 200:
+            return resp.json()
+        raise APIException(resp.text)
+
+    def create(self, adjustment: dict = None, meta_parameters: dict = None):
+        adjustment = adjustment or {}
+        meta_parameters = meta_parameters or {}
+        resp = requests.post(
+            self.sim_url,
+            json={
+                &quot;adjustment&quot;: adjustment, 
+                &quot;meta_parameters&quot;: meta_parameters
+            },
+            headers=self.auth_header
+        )
+        if resp.status_code == 201:
+            return resp.json()
+        raise APIException(resp.text)
+
+    def detail(self, model_pk):
+        while True:
+            resp = requests.get(f&quot;{self.sim_url}{model_pk}/&quot;)
+            if resp.status_code == 202:
+                pass
+            elif resp.status_code == 200:
+                return resp.json()
+            else:
+                raise APIException(resp.text)
+            time.sleep(20)
+
+    def results(self, model_pk):
+        result = self.detail(model_pk)
+        res = {}
+        for output in result[&quot;outputs&quot;][&quot;downloadable&quot;]:
+            if output[&quot;media_type&quot;] == &quot;CSV&quot;:
+                res[output[&quot;title&quot;]] = pd.read_csv(
+                    StringIO(output[&quot;data&quot;])
+                )
+            else:
+                print(f'{output[&quot;media_type&quot;]} not implemented yet')
+        return res
+
+    def get_token(self, api_token):
+        if api_token:
+            return api_token
+        elif os.environ.get(&quot;COMP_API_TOKEN&quot;, None) is not None:
+            return os.environ[&quot;COMP_API_TOKEN&quot;]
+        elif os.path.exists(&quot;~/.comp-api-token&quot;):
+            with open(&quot;~/.comp-api-token&quot;, &quot;r&quot;) as f:
+                return f.read().strip()
+        else:
+            raise APIException(
+                &quot;API token not found. It can be passed as an argument to &quot;
+                &quot;this class, as an environment variable, or read from &quot;
+                &quot;~/.comp-api-token&quot;
+            )
+</code></pre></div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js" defer></script>
+        <script src="../../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form role="form">
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="Keyboard Shortcuts Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Keyboard Shortcuts</h4>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
