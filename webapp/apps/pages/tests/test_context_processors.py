@@ -8,7 +8,7 @@ from webapp.apps.pages.context_processors import project_list
 def test_project_list():
     projs = project_list(None)
     assert projs
-    assert len(projs["project_list"]) == Project.objects.count()
+    assert len(projs["project_list"]) == Project.objects.filter(listed=True).count()
     assert isinstance(projs, dict)
     mu = ("hdoupe", "Matchups", "/hdoupe/Matchups/")
     assert mu in projs["project_list"]

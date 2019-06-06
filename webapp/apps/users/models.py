@@ -114,6 +114,8 @@ class Project(models.Model):
         max_length=32,
     )
 
+    listed = models.BooleanField(default=True)
+
     objects = ProjectManager()
 
     @staticmethod
