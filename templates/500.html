@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid" style="margin:20px;">
+    {% csrf_token %}
+    <h4>Whoops! COMP has experienced an error.</h4>
+    <p>The COMP admin have been notified of this error and are working to fix it. </p>
+</div>
+
+{% endblock %}
