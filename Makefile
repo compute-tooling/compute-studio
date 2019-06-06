@@ -16,6 +16,10 @@ dist-push:
 	docker push comporg/celerybase:$(TAG) && \
 	docker push comporg/matchups_tasks:$(TAG)
 
+dist-gcr-tag:
+	cd distributed && \
+	    python gcr_tag.py --tag $(TAG) --host gcr.io --project comp-workers --config worker_config.prod.json
+
 dist-test:
 	cd distributed && \
 	docker-compose rm -f && \
