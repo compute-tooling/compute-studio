@@ -6,6 +6,7 @@ hljs.registerLanguage("json", json);
 
 import "highlight.js/styles/default.css";
 import React from "react";
+import { Field } from "formik";
 
 var Remarkable = require("remarkable");
 
@@ -16,16 +17,16 @@ const inputStyle = {
 };
 
 var md = new Remarkable({
-  highlight: function(str, lang) {
+  highlight: function (str, lang) {
     if ((lang && hljs.getLanguage(lang)) || true) {
       try {
         return hljs.highlight(lang, str).value;
-      } catch (err) {}
+      } catch (err) { }
     }
 
     try {
       return hljs.highlightAuto(str).value;
-    } catch (err) {}
+    } catch (err) { }
     return ""; // use external default escaping
   }
 });
@@ -80,6 +81,30 @@ export const TextField = ({ field, form: { touched, errors }, ...props }) => {
     </div>
   );
 };
+
+function checkboxChange(e, onChange) {
+  e.target.value = !e.target.value;
+  onChange(e)
+}
+
+export const CheckboxField = ({ field, form: { touched, errors }, ...props }) => {
+  return (
+    <div>
+      <label>
+        <b>{props.label}</b>
+        {props.description ? props.description : ""}
+        <input
+          className="form-check mt-1"
+          type="checkbox"
+          {...field}
+          {...props}
+          checked={field.value}
+          onChange={e => checkboxChange(e, field.onChange)}
+        />
+      </label>
+    </div>
+  );
+}
 
 export const TextAreaField = ({
   field,

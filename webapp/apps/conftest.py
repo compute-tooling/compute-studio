@@ -71,11 +71,12 @@ def django_db_setup(django_db_setup, django_db_blocker):
             "exp_task_time": 10,
             "owner": modeler.profile,
             "server_cost": 0.1,
+            "listed": True,
         }
 
         projects = [
             {"title": "Matchups", "owner": hdoupe.profile},
-            {"title": "Used-for-testing"},
+            {"title": "Used-for-testing", "listed": False},
             {"title": "Tax-Brain"},
             {"title": "Used-for-testing-sponsored-apps", "sponsor": sponsor.profile},
         ]

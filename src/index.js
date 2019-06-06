@@ -9,9 +9,9 @@ import * as Yup from "yup";
 import {
   TextField,
   TextAreaField,
-  CodeSnippetField,
   ServerSizeField,
-  Message
+  Message,
+  CheckboxField
 } from "./fields";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
@@ -29,7 +29,8 @@ var Schema = Yup.object().shape({
   exp_task_time: Yup.number().min(
     0,
     "Expected task time must be greater than ${min}."
-  )
+  ),
+  listed: Yup.boolean().required(requiredMessage)
 });
 
 const initialValues = {
@@ -38,20 +39,23 @@ const initialValues = {
   oneliner: "",
   repo_url: "",
   server_size: [4, 2],
-  exp_task_time: 0
+  exp_task_time: 0,
+  listed: true,
 };
 
 const specialRequests = (
-  <p>
-    You may contact the COMP admin at
+  <div>
+    <p>
+      You may contact the COMP admin at
     <a href="mailto:henrymdoupe@gmail.com"> henrymdoupe@gmail.com</a> to
-    discuss:
+                              discuss:
+    </p>
     <ul>
       <li>giving collaborators write-access to this app's publish details.</li>
       <li>special accomodations that need to be made for this model.</li>
       <li>any questions or feedback about the publish process.</li>
     </ul>
-  </p>
+  </div>
 );
 
 class PublishForm extends React.Component {
@@ -113,23 +117,23 @@ class PublishForm extends React.Component {
           render={({ onChange, status, errors }) => (
             <Form>
               {status && status.project_exists ? (
-                <div class="alert alert-danger" role="alert">
+                <div className="alert alert-danger" role="alert">
                   {status.project_exists}
                 </div>
               ) : (
                   <div />
                 )}
               {status && status.auth ? (
-                <div class="alert alert-danger" role="alert">
+                <div className="alert alert-danger" role="alert">
                   {status.auth}
                 </div>
               ) : (
                   <div />
                 )}
-              <div class="mt-5">
+              <div className="mt-5">
                 <h3>About</h3>
                 <hr className="my-3" />
-                <div class="mt-1 mb-1">
+                <div className="mt-1 mb-1">
                   <Field
                     type="text"
                     name="title"
@@ -144,7 +148,7 @@ class PublishForm extends React.Component {
                     render={msg => <Message msg={msg} />}
                   />
                 </div>
-                <div class="mt-1 mb-1">
+                <div className="mt-1 mb-1">
                   <Field
                     type="text"
                     name="oneliner"
@@ -159,7 +163,7 @@ class PublishForm extends React.Component {
                     render={msg => <Message msg={msg} />}
                   />
                 </div>
-                <div class="mt-1 mb-1">
+                <div className="mt-1 mb-1">
                   <Field
                     type="text"
                     name="description"
@@ -174,11 +178,11 @@ class PublishForm extends React.Component {
                     render={msg => <Message msg={msg} />}
                   />
                 </div>
-                <div class="mt-1 mb-1">
+                <div className="mt-1 mb-1">
                   <label>
                     <b>Repo URL:</b>
                   </label>
-                  <p class="mt-1 mb-1">
+                  <p className="mt-1 mb-1">
                     <Field
                       className="form-control w-50rem"
                       type="url"
@@ -191,16 +195,29 @@ class PublishForm extends React.Component {
                     />
                   </p>
                 </div>
+                <div className="mt-3 mb-1">
+                  <Field
+                    component={CheckboxField}
+                    label="Listed: "
+                    description="Include this app in the public list of apps"
+                    name="listed"
+                    onChange={onChange}
+                  />
+                  <ErrorMessage
+                    name="listed"
+                    render={msg => <Message msg={msg} />}
+                  />
+                </div>
               </div>
-              <div class="mt-5">
+              <div className="mt-5">
                 <h3>Environment</h3>
                 <hr className="my-3" />
-                <div class="mt-1 mb-1">
+                <div className="mt-1 mb-1">
                   <label>
                     <b>Expected job time:</b> Time in seconds for simulation to
                     complete
                   </label>
-                  <p class="mt-1 mb-1">
+                  <p className="mt-1 mb-1">
                     <Field
                       className="form-control w-50rem"
                       type="number"
@@ -212,7 +229,7 @@ class PublishForm extends React.Component {
                     />
                   </p>
                 </div>
-                <div class="mt-1 mb-1">
+                <div className="mt-1 mb-1">
                   <Field name="server_size" component={ServerSizeField} />
                   <ErrorMessage
                     name="server_size"
@@ -256,7 +273,7 @@ class CreateApp extends React.Component {
       <div>
         <h1 style={{ marginBottom: "2rem" }}>Publish</h1>
 
-        <p class="lead">
+        <p className="lead">
           Publish your model on COMP.
           Check out the
           <a href="https://docs.compmodels.org/publish/guide/">
