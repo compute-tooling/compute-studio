@@ -1,0 +1,20 @@
+ apiVersion: extensions/v1beta1
+ kind: Deployment
+ metadata:
+   name: flask
+ spec:
+   replicas: 1
+   selector:
+     matchLabels:
+       app: flask
+   template:
+     metadata:
+       labels:
+         app: flask
+     spec:
+       containers:
+       - name: flask
+         image: comporg/flask:kube-4
+         imagePullPolicy: Always
+         ports:
+         - containerPort: 5000
