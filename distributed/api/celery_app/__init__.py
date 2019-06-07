@@ -41,6 +41,13 @@ task_routes = {
     "pslmodels_costofcapitalcalculator_tasks.inputs_parse": {
         "queue": "pslmodels_costofcapitalcalculator_inputs_queue"
     },
+    "petermetz_taxcruncher_tasks.sim": {"queue": "petermetz_taxcruncher_queue"},
+    "petermetz_taxcruncher_tasks.inputs_get": {
+        "queue": "petermetz_taxcruncher_inputs_queue"
+    },
+    "petermetz_taxcruncher_tasks.inputs_parse": {
+        "queue": "petermetz_taxcruncher_inputs_queue"
+    },
 }
 
 
