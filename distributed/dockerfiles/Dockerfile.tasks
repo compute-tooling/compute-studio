@@ -38,5 +38,5 @@ RUN cd /home/distributed && pip install -e .
 
 WORKDIR /home/distributed/api
 
-COPY celery_sim.sh celery_sim.sh
-COPY celery_io.sh celery_io.sh
+COPY celery_sim.sh /home/distributed/api/celery_sim.sh
+COPY celery_io.sh /home/distributed/api/celery_io.sh
