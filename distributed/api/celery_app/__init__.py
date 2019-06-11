@@ -24,32 +24,30 @@ OUTPUTS_VERSION = os.environ.get("OUTPUTS_VERSION")
 
 task_routes = {
     # '{project_name}_tasks.*': {'queue': '{project_name}_queue'},
-    "hdoupe_matchups_tasks.sim": {"queue": "hdoupe_matchups_queue"},
-    "hdoupe_matchups_tasks.inputs_get": {"queue": "hdoupe_matchups_inputs_queue"},
-    "hdoupe_matchups_tasks.inputs_parse": {"queue": "hdoupe_matchups_inputs_queue"},
-    "pslmodels_taxbrain_tasks.sim": {"queue": "pslmodels_taxbrain_queue"},
-    "pslmodels_taxbrain_tasks.inputs_get": {"queue": "pslmodels_taxbrain_inputs_queue"},
-    "pslmodels_taxbrain_tasks.inputs_parse": {
-        "queue": "pslmodels_taxbrain_inputs_queue"
-    },
-    "pslmodels_costofcapitalcalculator_tasks.sim": {
-        "queue": "pslmodels_costofcapitalcalculator_queue"
-    },
-    "pslmodels_costofcapitalcalculator_tasks.inputs_get": {
-        "queue": "pslmodels_costofcapitalcalculator_inputs_queue"
-    },
-    "pslmodels_costofcapitalcalculator_tasks.inputs_parse": {
-        "queue": "pslmodels_costofcapitalcalculator_inputs_queue"
-    },
+    # "hdoupe_matchups_tasks.sim": {"queue": "hdoupe_matchups_queue"},
+    # "hdoupe_matchups_tasks.inputs_get": {"queue": "hdoupe_matchups_inputs_queue"},
+    # "hdoupe_matchups_tasks.inputs_parse": {"queue": "hdoupe_matchups_inputs_queue"},
+    # "pslmodels_taxbrain_tasks.sim": {"queue": "pslmodels_taxbrain_queue"},
+    # "pslmodels_taxbrain_tasks.inputs_get": {"queue": "pslmodels_taxbrain_inputs_queue"},
+    # "pslmodels_taxbrain_tasks.inputs_parse": {
+    #     "queue": "pslmodels_taxbrain_inputs_queue"
+    # },
+    # "pslmodels_costofcapitalcalculator_tasks.sim": {
+    #     "queue": "pslmodels_costofcapitalcalculator_queue"
+    # },
+    # "pslmodels_costofcapitalcalculator_tasks.inputs_get": {
+    #     "queue": "pslmodels_costofcapitalcalculator_inputs_queue"
+    # },
+    # "pslmodels_costofcapitalcalculator_tasks.inputs_parse": {
+    #     "queue": "pslmodels_costofcapitalcalculator_inputs_queue"
+    # },
 }
 
 
 celery_app = Celery(
     "celery_app", broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND
 )
-celery_app.conf.update(
-    task_serializer="json", accept_content=["msgpack", "json"], task_routes=task_routes
-)
+celery_app.conf.update(task_serializer="json", accept_content=["msgpack", "json"])
 
 
 def task_wrapper(func):

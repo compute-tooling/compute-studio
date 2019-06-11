@@ -40,6 +40,12 @@ if __name__ == "__main__":
     ext_str = ""
     reg_url = "https://github.com"
     raw_url = "https://raw.githubusercontent.com"
+
+    resource_req = {
+        "io": {"request": {"memory": "128Mi", "cpu": "200m"}},
+        "sim": {"request": {"memory": "1000Mi", "cpu": "1000m"}},
+    }
+
     for obj in config:
         safeowner = clean(obj["owner"])
         safetitle = clean(obj["title"])
@@ -62,7 +68,11 @@ if __name__ == "__main__":
                 )
             )
         for action in ["io", "sim"]:
-            kubeout = f"kubernetes/{safeowner}-{safetitle}-{action}-deployment.yaml"
+            kubeout = (
+                f"kubernetes/apps/{safeowner}-{safetitle}-{action}-deployment.yaml"
+            )
+
+            req = resource_req[action]["request"]
 
             with open(kubeout, "w") as f:
                 f.write(
@@ -73,6 +83,10 @@ if __name__ == "__main__":
                         SAFETITLE=safetitle,
                         ACTION=action,
                         TAG=args.tag,
+                        REQUEST_MEMORY=req["memory"],
+                        REQUEST_CPU=req["cpu"],
+                        MAX_MEMORY=obj["memory"],
+                        MAX_CPU=obj["cpu"],
                         **obj["environment"],
                     )
                 )

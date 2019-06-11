@@ -18,6 +18,13 @@ spec:
         imagePullPolicy: Always
         command: ["./celery_{{ACTION}}.sh"]
         args: ["{{OWNER}}", "{{TITLE}}"]
+        resources:
+          requests:
+            memory: "{{REQUEST_MEMORY}}"
+            cpu: "{{REQUEST_CPU}}"
+          limits:
+            memory: "{{MAX_MEMORY}}"
+            cpu: "{{MAX_CPU}}"
         env:
         - name: OUTPUTS_VERSION
           value: v1
