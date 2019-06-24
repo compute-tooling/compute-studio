@@ -19,6 +19,18 @@ class UserCreationForm(authforms.UserCreationForm):
     def save(self, commit=False):
         user = super().save()
         Profile.objects.create(user=user, is_active=True)
+        send_mail(
+            "Welcome to COMP!",
+            (
+                f"Hello {user.username}, welcome to COMP. "
+                f"Please write back here if you have any "
+                f"questions or there is anything else we "
+                f"can do to help you get up and running."
+            ),
+            "henrymdoupe@gmail.com",
+            set([user.email, "henrymdoupe@gmail.com", "matt.h.jensen@gmail.com"]),
+            fail_silently=True,
+        )
         return user
 
     class Meta(authforms.UserCreationForm.Meta):

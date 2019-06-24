@@ -20,7 +20,6 @@ services:
       - LOCAL=True
       - OBJ_STORAGE_EDGE=https://sfo2.cdn.digitaloceanspaces.com
       - OBJ_STORAGE_BUCKET=compresults-dev
-
     ports:
       - "8000:8000"
     container_name: web
