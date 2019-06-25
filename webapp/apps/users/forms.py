@@ -5,7 +5,7 @@ import stripe
 from django.contrib.auth import get_user_model, forms as authforms
 from django import forms
 from django.contrib.contenttypes.models import ContentType
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, send_mail
 
 from .models import Profile, Project
 
