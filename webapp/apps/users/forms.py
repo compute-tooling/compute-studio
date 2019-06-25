@@ -5,7 +5,7 @@ import stripe
 from django.contrib.auth import get_user_model, forms as authforms
 from django import forms
 from django.contrib.contenttypes.models import ContentType
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 
 from .models import Profile, Project
 
@@ -19,18 +19,19 @@ class UserCreationForm(authforms.UserCreationForm):
     def save(self, commit=False):
         user = super().save()
         Profile.objects.create(user=user, is_active=True)
-        send_mail(
-            "Welcome to COMP!",
-            (
+        email_msg = EmailMessage(
+            subject="Welcome to COMP!",
+            body=(
                 f"Hello {user.username}, welcome to COMP. "
                 f"Please write back here if you have any "
                 f"questions or there is anything else we "
                 f"can do to help you get up and running."
             ),
-            "henrymdoupe@gmail.com",
-            set([user.email, "henrymdoupe@gmail.com", "matt.h.jensen@gmail.com"]),
-            fail_silently=True,
+            from_email="henrymdoupe@gmail.com",
+            to=[user.email],
+            bcc=["matt.h.jensen@gmail.com"],
         )
+        email_msg.send(fail_silently=True)
         return user
 
     class Meta(authforms.UserCreationForm.Meta):
