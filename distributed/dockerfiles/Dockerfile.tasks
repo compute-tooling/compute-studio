@@ -21,7 +21,6 @@ ADD ${RAW_REPO_URL}/${BRANCH}/compconfig/install.sh /home
 RUN bash /home/install.sh
 RUN pip install "git+${REPO_URL}.git@${BRANCH}#egg=compconfig&subdirectory=compconfig"
 ADD ${RAW_REPO_URL}/${BRANCH}/compconfig/compconfig/tests/test_functions.py /home
-RUN pip install compdevkit>=1.6.0
 RUN py.test /home/test_functions.py -v
 ######################
 
