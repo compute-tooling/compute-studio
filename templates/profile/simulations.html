@@ -10,7 +10,20 @@
     </tr>
     {% for run in queryset %}
       <tr>
-        <td><a href="{{run.get_absolute_url}}">{{run.get_absolute_url}}</a></td>
+        <td>
+          <div class="row">
+            <div class="col align-self-start">
+              <a href="{{run.get_absolute_url}}">{{run.model_pk}}</a>
+            </div>
+            <div class="col align-self-center ">
+              <label
+                data-toggle="tooltip"
+                data-placement="top"
+                title="Edit parameters">
+                <a class="color-inherit hover-blue" href="{{run.get_absolute_edit_url}}"><i class="fas fa-edit fa-sm"></i></a></td>
+              </label>
+            </div>
+          </div>
         <td>{{run.run_time}}</td>
         <td>{{run.effective_cost}}</td>
         <td>{{run.creation_date}}</td>
