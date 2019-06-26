@@ -187,3 +187,11 @@ span.default-value {
   overflow-y: auto;
   height: 100vh;
 }
+
+.hover-blue:hover {
+  color: #007bff;
+}
+
+.color-inherit {
+  color: inherit;
+}
