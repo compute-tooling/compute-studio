@@ -1,7 +1,10 @@
 import argparse
 import json
+import os
 import re
 import subprocess
+
+TAG = os.environ.get("TAG")
 
 
 def clean(word):
@@ -17,7 +20,7 @@ if __name__ == "__main__":
     parser.add_argument("--config", required=True)
     parser.add_argument("--host", required=False, default="gcr.io")
     parser.add_argument("--project", required=False, default="comp-workers")
-    parser.add_argument("--tag", required=True)
+    parser.add_argument("--tag", required=False, default=TAG)
     args = parser.parse_args()
 
     with open(args.config, "r") as f:
