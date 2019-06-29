@@ -18,7 +18,7 @@ dist-push:
 
 dist-gcr-tag:
 	cd distributed && \
-	    python gcr_tag.py --tag $(TAG) --host gcr.io --project comp-workers --config worker_config.prod.json
+	    python gcr_tag.py --tag $(TAG) --host gcr.io --project comp-workers --config worker_config.kube.json
 
 dist-test:
 	cd distributed && \
