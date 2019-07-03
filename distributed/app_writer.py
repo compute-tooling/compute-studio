@@ -42,8 +42,8 @@ if __name__ == "__main__":
     raw_url = "https://raw.githubusercontent.com"
 
     resource_req = {
-        "io": {"request": {"memory": "128Mi", "cpu": "200m"}},
-        "sim": {"request": {"memory": "1000Mi", "cpu": "1000m"}},
+        "io": {"requests": {"memory": "128Mi", "cpu": "200m"}},
+        "sim": {"requests": {"memory": "1000Mi", "cpu": "1000m"}},
     }
 
     for obj in config:
@@ -72,7 +72,8 @@ if __name__ == "__main__":
                 f"kubernetes/apps/{safeowner}-{safetitle}-{action}-deployment.yaml"
             )
 
-            req = resource_req[action]["request"]
+            req = resource_req[action]
+            resources = dict(resource_req[action], **obj["resources"])
 
             with open(kubeout, "w") as f:
                 f.write(
@@ -83,10 +84,10 @@ if __name__ == "__main__":
                         SAFETITLE=safetitle,
                         ACTION=action,
                         TAG=args.tag,
-                        REQUEST_MEMORY=req["memory"],
-                        REQUEST_CPU=req["cpu"],
-                        MAX_MEMORY=obj["memory"],
-                        MAX_CPU=obj["cpu"],
+                        REQUEST_MEMORY=resources["requests"]["memory"],
+                        REQUEST_CPU=resources["requests"]["cpu"],
+                        MAX_MEMORY=resources["limits"]["memory"],
+                        MAX_CPU=resources["limits"]["cpu"],
                         **obj["environment"],
                     )
                 )
