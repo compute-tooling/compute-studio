@@ -45,7 +45,11 @@ class TestUserModels:
         sims = profile.sims_breakdown()
 
         # check that all apps are queried.
-        titles = {project.title for project in Project.objects.all()}
+        titles = {
+            project.title
+            for project in Project.objects.all()
+            if profile.sims.filter(project=project).count()
+        }
         assert titles == set(sims.keys())
 
         testapprun = test_models[0]

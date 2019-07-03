@@ -7,24 +7,24 @@
       {% csrf_token %}
       <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item">
-          <a class="nav-link active" id="models-tab" data-toggle="tab" href="#models" role="tab" aria-controls="models" aria-selected="false">My Models</a>
+          <a class="nav-link active" id="simulations-tab" data-toggle="tab" href="#simulations" role="tab" aria-controls="models" aria-selected="false">My Simulations</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" id="simulations-tab" data-toggle="tab" href="#simulations" role="tab" aria-controls="simulations" aria-selected="true">My Simulations</a>
+            <a class="nav-link" id="models-tab" data-toggle="tab" href="#models" role="tab" aria-controls="simulations" aria-selected="true">My Models</a>
           </li>
         <li class="nav-item">
           <a class="nav-link" id="costs-tab" data-toggle="tab" href="#costs" role="tab" aria-controls="costs" aria-selected="false">Costs</a>
         </li>
       </ul>
       <div class="tab-content" id="profileTab">
-        <div class="tab-pane fade show active" id="models" role="tabpanel" aria-labelledby="models-tab">
+        <div class="tab-pane fade show active" id="simulations" role="tabpanel" aria-labelledby="simulations-tab">
           <div class="profile-tab-content">
-              {% include 'profile/models.html' %}
+              {% include 'profile/simulations.html' %}
           </div>
         </div>
-        <div class="tab-pane fade" id="simulations" role="tabpanel" aria-labelledby="simulations-tab">
+        <div class="tab-pane fade" id="models" role="tabpanel" aria-labelledby="models-tab">
           <div class="profile-tab-content">
-            {% include 'profile/simulations.html' %}
+            {% include 'profile/models.html' %}
           </div>
         </div>
         <div class="tab-pane fade" id="costs" role="tabpanel" aria-labelledby="costs-tab">
