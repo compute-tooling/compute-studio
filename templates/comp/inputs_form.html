@@ -174,7 +174,7 @@
             {% endif %}
             {% for section, params in default_form.items %}
               <div class="card card-body card-outer">
-                {% include 'comp/inputs/major_section.html' with title=section.title params=params %}
+                {% include 'comp/inputs/major_section.html' with title=section params=params %}
               </div>
             {% endfor %}
           </div>
