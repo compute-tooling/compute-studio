@@ -1,24 +1,12 @@
-
-dist-build:
-	# template command:
-	# docker build --no-cache --build-arg TAG=$(TAG) -t comporg/{project_name}_tasks:$(TAG) --file dockerfiles/projects/Dockerfile.{project_name}_tasks ./
-
+workers:
 	cd distributed && \
-	docker build -t comporg/distributed:$(TAG) ./ -f dockerfiles/Dockerfile && \
-	docker build --build-arg TAG=$(TAG) -t comporg/flask:$(TAG) --file dockerfiles/Dockerfile.flask ./ && \
-	docker build --build-arg TAG=$(TAG) -t comporg/celerybase:$(TAG) --file dockerfiles/Dockerfile.celerybase ./ && \
-	docker build --build-arg TAG=$(TAG) -t comporg/matchups_tasks:$(TAG) --file dockerfiles/projects/Dockerfile.matchups_tasks ./
-
-dist-push:
-	cd distributed && \
-	docker push comporg/distributed:$(TAG) && \
-	docker push comporg/flask:$(TAG) && \
-	docker push comporg/celerybase:$(TAG) && \
-	docker push comporg/matchups_tasks:$(TAG)
-
-dist-gcr-tag:
-	cd distributed && \
+	    docker-compose -f docker-compose.yml $(python app_writer.py --config worker_config.kube.json) build && \
 	    python gcr_tag.py --tag $(TAG) --host gcr.io --project comp-workers --config worker_config.kube.json
+
+workers-apply:
+	cd distributed && \
+		kubectl apply -f kubernetes/ && \
+		kubectl apply -f kubernetes/apps/
 
 dist-test:
 	cd distributed && \
