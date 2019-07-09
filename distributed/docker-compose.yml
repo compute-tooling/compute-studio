@@ -21,14 +21,14 @@ services:
     build:
       context: ./
       dockerfile: dockerfiles/Dockerfile.celerybase
-    image: "comporg/celerybase"
+    image: "comporg/celerybase:latest"
     depends_on:
       - distributed
   distributed:
     build:
       context: ./
       dockerfile: dockerfiles/Dockerfile
-    image: "comporg/distributed"
+    image: "comporg/distributed:latest"
 
 ####################################################
   redis:

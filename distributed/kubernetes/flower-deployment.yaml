@@ -1,0 +1,27 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: flower-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flower-monitor
+  template:
+    metadata:
+      labels:
+        app: flower-monitor
+    spec:
+      containers:
+      - name: flower-monitor
+        image: mher/flower
+        imagePullPolicy: Always
+        command: ["flower"]
+        args: ["--broker=redis://redis-master/0", "--port=8888"] 
+        env:
+        - name: GET_HOSTS_FROM
+          value: dns
+        - name: FLOWER_PORT
+          value: "8888"
+        ports:
+        - containerPort: 8888
