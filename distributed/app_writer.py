@@ -83,7 +83,7 @@ if __name__ == "__main__":
                         SAFEOWNER=safeowner,
                         SAFETITLE=safetitle,
                         ACTION=action,
-                        TAG=args.tag,
+                        TAG=obj.get("TAG") or args.tag,
                         REQUEST_MEMORY=resources["requests"]["memory"],
                         REQUEST_CPU=resources["requests"]["cpu"],
                         MAX_MEMORY=resources["limits"]["memory"],

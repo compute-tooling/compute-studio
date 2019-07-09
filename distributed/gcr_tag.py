@@ -30,10 +30,11 @@ if __name__ == "__main__":
         safeowner = clean(obj["owner"])
         safetitle = clean(obj["title"])
         img_name = f"{safeowner}_{safetitle}_tasks"
+        tag = obj.get("TAG") or args.tag
         run(
-            f"docker tag comporg/{img_name}:{args.tag} {args.host}/{args.project}/{img_name}:{args.tag}"
+            f"docker tag comporg/{img_name}:{tag} {args.host}/{args.project}/{img_name}:{tag}"
         )
-        run(f"docker push {args.host}/{args.project}/{img_name}:{args.tag}")
+        run(f"docker push {args.host}/{args.project}/{img_name}:{tag}")
     for img_name in ["distributed", "celerybase"]:
         run(
             f"docker tag comporg/{img_name} {args.host}/{args.project}/{img_name}:latest"
