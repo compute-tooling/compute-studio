@@ -7,11 +7,11 @@
         "branch": "master",
         "resources": {
             "requests": {
-                "memory": "1500Mi",
+                "memory": "300Mi",
                 "cpu": "500m"
             },
             "limits": {
-                "memory": "3000Mi",
+                "memory": "4000Mi",
                 "cpu": "1000m"
             }
         },

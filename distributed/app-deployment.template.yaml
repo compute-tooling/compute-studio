@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: {{SAFEOWNER}}-{{SAFETITLE}}-{{ACTION}}
-        image: gcr.io/comp-workers/{{SAFEOWNER}}_{{SAFETITLE}}_tasks:{{TAG}}
+        image: gcr.io/{{PROJECT}}/{{SAFEOWNER}}_{{SAFETITLE}}_tasks:{{TAG}}
         imagePullPolicy: Always
         command: ["./celery_{{ACTION}}.sh"]
         args: ["{{OWNER}}", "{{TITLE}}"]
