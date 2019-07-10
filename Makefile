@@ -1,11 +1,14 @@
+PROJECT ?= comp-workers
+CONFIG ?= worker_config.prod.json
+
 kube-config:
 	cd distributed && \
-		python app_writer.py --config worker_config.kube.json
+		python app_writer.py --config $(CONFIG)
 
 workers:
 	cd distributed && \
-	    docker-compose -f docker-compose.yml `python app_writer.py --config worker_config.kube.json` build && \
-	    python gcr_tag.py --tag $(TAG) --host gcr.io --project comp-workers --config worker_config.kube.json
+	    docker-compose -f docker-compose.yml `python app_writer.py --config $(CONFIG)` build && \
+	    python gcr_tag.py --tag $(TAG) --host gcr.io --project comp-workers --config $(CONFIG)
 
 workers-apply:
 	cd distributed && \
