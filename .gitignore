@@ -38,3 +38,5 @@ secret-docker-compose.yml
 
 distributed/kubernetes/apps/*
 dev-secret.yaml
+
+*flask-deployment.yaml

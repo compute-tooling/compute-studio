@@ -3,12 +3,12 @@ CONFIG ?= worker_config.prod.json
 
 kube-config:
 	cd distributed && \
-		python app_writer.py --config $(CONFIG)
+		python app_writer.py --config $(CONFIG) --project $(PROJECT)
 
 workers:
 	cd distributed && \
-	    docker-compose -f docker-compose.yml `python app_writer.py --config $(CONFIG)` build && \
-	    python gcr_tag.py --tag $(TAG) --host gcr.io --project comp-workers --config $(CONFIG)
+	    docker-compose -f docker-compose.yml `python app_writer.py --config $(CONFIG) --project $(PROJECT)` build && \
+	    python gcr_tag.py --tag $(TAG) --host gcr.io --project $(PROJECT) --config $(CONFIG)
 
 workers-apply:
 	cd distributed && \

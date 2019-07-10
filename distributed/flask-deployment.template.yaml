@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: flask
-        image: gcr.io/comp-workers/flask:k8s-12
+        image: gcr.io/{{PROJECT}}/flask:{{TAG}}
         imagePullPolicy: Always
         env:
         - name: GET_HOSTS_FROM

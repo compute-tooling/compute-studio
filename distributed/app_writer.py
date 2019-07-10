@@ -8,6 +8,7 @@ from pathlib import Path
 from jinja2 import Template
 
 TAG = os.environ.get("TAG", "")
+PROJECT = os.environ.get("PROJECT", "comp-workers")
 
 
 def clean(word):
@@ -18,9 +19,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Write tasks modules from template.")
     parser.add_argument("--config", required=True)
     parser.add_argument("--tag", required=False, default=TAG)
+    parser.add_argument("--project", required=False, default=PROJECT)
     args = parser.parse_args()
 
     path = Path("docker-compose-apps")
+    path.mkdir(exist_ok=True)
+    shutil.rmtree(path / "*", ignore_errors=True)
+
+    path = Path("kubernetes/apps")
     path.mkdir(exist_ok=True)
     shutil.rmtree(path / "*", ignore_errors=True)
 
@@ -31,6 +37,12 @@ if __name__ == "__main__":
 
     with open(args.config, "r") as f:
         config = json.loads(f.read())
+
+    with open("flask-deployment.template.yaml", "r") as f:
+        flask_template_text = f.read()
+    flask_template = Template(flask_template_text)
+    with open("kubernetes/flask-deployment.yaml", "w") as f:
+        f.write(flask_template.render(PROJECT=args.project, TAG=args.tag))
 
     with open("app-deployment.template.yaml", "r") as f:
         kube_template_text = f.read()
@@ -80,6 +92,7 @@ if __name__ == "__main__":
                     kube_template.render(
                         OWNER=obj["owner"],
                         TITLE=obj["title"],
+                        PROJECT=args.project,
                         SAFEOWNER=safeowner,
                         SAFETITLE=safetitle,
                         ACTION=action,
