@@ -2,6 +2,8 @@ from django import forms
 
 from .fields import (
     ValueField,
+    ChoiceValueField,
+    DataList,
     coerce_bool,
     coerce_float,
     coerce_int,
@@ -28,12 +30,12 @@ class Value:
         self.number_dims = number_dims
         if self.number_dims == 0 and "choice" in validators:
             choices_ = validators["choice"]["choices"]
-            if len(choices_) < 25:
-                choices_.remove(self.default_value)
-                choices_.insert(0, self.default_value)
-                choices = [(c, c) for c in choices_]
-            else:
-                choices = None
+            choices_.remove(self.default_value)
+            choices_.insert(0, self.default_value)
+            choices = [(c, c) for c in choices_]
+        elif self.number_dims == 0 and coerce_func.__name__ == "coerce_bool":
+            choices_ = [self.default_value, not self.default_value]
+            choices = [(c, c) for c in choices_]
         else:
             choices = None
         if isinstance(self.default_value, list):
@@ -44,12 +46,15 @@ class Value:
         attrs.update(field_kwargs)
         if self.number_dims == 0 and choices is not None:
             attrs["class"] += " unedited"
-            self.form_field = forms.TypedChoiceField(
+            self.form_field = ChoiceValueField(
                 label=self.label,
                 required=False,
-                widget=forms.Select(attrs=attrs),
+                widget=DataList(
+                    data_list=choices, placeholder=self.default_value, attrs=attrs
+                ),
                 coerce=coerce_func,
                 choices=choices,
+                number_dims=self.number_dims,
                 **field_kwargs,
             )
         else:

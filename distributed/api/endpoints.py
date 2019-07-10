@@ -48,9 +48,11 @@ def route_to_task(owner, app_name, endpoint, action):
     print("getting...", owner, app_name, endpoint, action)
     task_name = f"{owner}_{app_name}_tasks.{action}"
     print("got task_name", task_name)
+    print("map", celery_app.amqp.routes)
     if task_name in celery_app.amqp.routes[0].map:
         return endpoint(task_name)
     else:
+        print("not available but submit anyways for debug")
         return json.dumps({"error": "invalid endpoint"}), 404
 
 
@@ -83,7 +85,9 @@ def results():
         return json.dumps(async_result.result)
     elif async_result.failed():
         print("traceback", async_result.traceback)
-        return {"status": "WORKER_FAILURE", "traceback": async_result.traceback}
+        return json.dumps(
+            {"status": "WORKER_FAILURE", "traceback": async_result.traceback}
+        )
     else:
         resp = make_response("not ready", 202)
         return resp

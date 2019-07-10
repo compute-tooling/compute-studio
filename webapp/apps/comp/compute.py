@@ -7,8 +7,8 @@ import requests_mock
 requests_mock.Mocker.TEST_PREFIX = "test"
 
 WORKER_HN = os.environ.get("WORKERS")
-TIMEOUT_IN_SECONDS = 1.0
-MAX_ATTEMPTS_SUBMIT_JOB = 20
+TIMEOUT_IN_SECONDS = 4
+MAX_ATTEMPTS_SUBMIT_JOB = 6
 
 
 class JobFailError(Exception):

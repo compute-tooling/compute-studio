@@ -24,6 +24,7 @@ class TestPublishViews:
             "description": "**Super** new!",
             "repo_url": "https://github.com/comp-org/comp-ce",
             "server_size": [4, 8],
+            "listed": True,
         }
         resp = client.post("/publish/api/", post_data)
         assert resp.status_code == 401
@@ -47,6 +48,7 @@ class TestPublishViews:
             "server_size": ["4", "2"],
             "exp_task_time": 20,
             "server_cost": Decimal("0.1"),
+            "listed": True,
         }
         owner = Profile.objects.get(user__username="modeler")
         project = Project.objects.create(owner=owner, **exp)

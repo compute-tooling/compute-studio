@@ -1,0 +1,20 @@
+[
+    {
+        "owner": "hdoupe",
+        "title": "Matchups",
+        "sim_time_limit": 60,
+        "repo_url": "https://github.com/hdoupe/Matchups",
+        "branch": "master",
+        "resources": {
+            "requests": {
+                "memory": "300Mi",
+                "cpu": "500m"
+            },
+            "limits": {
+                "memory": "4000Mi",
+                "cpu": "1000m"
+            }
+        },
+        "environment": {"BUILD_NUM": 0}
+    }
+]

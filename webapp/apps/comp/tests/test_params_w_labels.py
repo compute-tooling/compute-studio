@@ -9,7 +9,7 @@ from paramtools import Parameters, ValidationError
 
 from webapp.apps.comp.meta_parameters import translate_to_django, MetaParameters
 from webapp.apps.comp.displayer import Displayer
-from webapp.apps.comp.fields import ValueField
+from webapp.apps.comp.fields import ValueField, ChoiceValueField
 from webapp.apps.comp.tests.parser import LocalParser
 from webapp.apps.users.models import Project
 from webapp.apps.comp.ioutils import get_ioutils
@@ -74,7 +74,7 @@ def test_make_field_types(TestParams: Parameters, pt_metaparam: dict):
     spec = params.specification(meta_data=True, **mp_inst)
 
     param = Param("str_choice_param", spec["str_choice_param"])
-    assert isinstance(param.fields["str_choice_param"], forms.TypedChoiceField)
+    assert isinstance(param.fields["str_choice_param"], ChoiceValueField)
 
     param = Param("min_int_param", spec["min_int_param"])
     assert all([isinstance(field, ValueField) for _, field in param.fields.items()])

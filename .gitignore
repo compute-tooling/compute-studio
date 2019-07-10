@@ -35,3 +35,8 @@ secret-docker-compose.yml
 
 *worker_config.prod.json
 *docker-compose-apps*
+
+distributed/kubernetes/apps/*
+dev-secret.yaml
+
+*flask-deployment.yaml
