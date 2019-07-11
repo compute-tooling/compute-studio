@@ -24,6 +24,33 @@ var Schema = Yup.object().shape({});
 
 const initialValues = {};
 
+const ParamElement = (...props) => {
+  var param_data = props[0].param_data;
+  var tooltip = <div />;
+  if (param_data.description) {
+    tooltip = (
+      <label
+        className="input-tooltip"
+        data-toggle="tooltip"
+        data-placement="top"
+        title={param_data.description}
+      >
+        {" "}
+        <i className="fas fa-info-circle" />
+      </label>
+    );
+  }
+  return (
+    // <div className="container" style={{ padding: "left 0" }}>
+    <div className="row has-statuses col-xs-12">
+      <label>
+        {param_data.title} {tooltip}
+      </label>
+    </div>
+    // </div>
+  );
+};
+
 class InputsForm extends React.Component {
   constructor(props) {
     super(props);
@@ -35,6 +62,27 @@ class InputsForm extends React.Component {
   componentDidMount() {
     if (this.props.fetchInitialValues) {
       this.props.fetchInitialValues().then(data => {
+        var initialValues = {};
+        for (const [msect, params] of Object.entries(data.model_parameters)) {
+          for (const [param, param_data] of Object.entries(params)) {
+            param_data["form_fields"] = [];
+            for (const vals of param_data.value) {
+              var s = [];
+              for (const [label, label_val] of Object.entries(vals).sort()) {
+                if (label == "value") {
+                  continue;
+                }
+                s.push(`${label}__${label_val}`);
+              }
+              var field_name = `${param}.${s.join(".")}`;
+              initialValues[field_name] = "";
+              param_data.form_fields.push(field_name);
+              // console.log(param, field_name, param_data.form_fields);
+            }
+          }
+        }
+        // console.log(initialValues);
+        console.log(data.model_parameters.policy.STD);
         this.setState({ initialValues: data.model_parameters });
       });
     }
@@ -44,7 +92,7 @@ class InputsForm extends React.Component {
     if (!this.state.initialValues) {
       return <p> loading.... </p>;
     }
-    console.log(this.state.initialValues);
+    // console.log(this.state.initialValues);
     return (
       <div>
         <Formik
@@ -111,20 +159,51 @@ class InputsForm extends React.Component {
                   ) {
                     let msect = item[0];
                     let params = item[1];
-                    console.log("msect");
-                    console.log(item);
-                    console.log(msect);
-                    console.log(params);
+                    // console.log("msect");
+                    // console.log(item);
+                    // console.log(msect);
+                    // console.log(params);
 
                     return (
                       <div className="card card-body card-outer">
                         <p>{msect}</p>
                         {Object.entries(params).map(function(param, ix) {
-                          return <p>{param[0]}</p>;
+                          var name = param[0];
+                          var data = param[1];
+                          if (data.form_fields.length == 1) {
+                            var colClass = "col-6";
+                          } else {
+                            var colClass = "col";
+                          }
+                          var param_element = (
+                            <ParamElement param_data={data} />
+                          );
+                          return (
+                            <div>
+                              {param_element}
+                              <div
+                                className="form-row has-statuses"
+                                style={{ "margin-left": "-20px" }}
+                              >
+                                {data.form_fields.map(function(form_field) {
+                                  return (
+                                    <div className={colClass}>
+                                      <Field
+                                        className="form-control"
+                                        name={form_field}
+                                        placeHolder="Hello"
+                                      />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
                         })}
                       </div>
                     );
                   })}
+                  ;
                   <div className="card card-body card-outer">
                     <pre>
                       <code>

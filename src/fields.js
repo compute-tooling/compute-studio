@@ -17,16 +17,16 @@ const inputStyle = {
 };
 
 var md = new Remarkable({
-  highlight: function (str, lang) {
+  highlight: function(str, lang) {
     if ((lang && hljs.getLanguage(lang)) || true) {
       try {
         return hljs.highlight(lang, str).value;
-      } catch (err) { }
+      } catch (err) {}
     }
 
     try {
       return hljs.highlightAuto(str).value;
-    } catch (err) { }
+    } catch (err) {}
     return ""; // use external default escaping
   }
 });
@@ -84,10 +84,14 @@ export const TextField = ({ field, form: { touched, errors }, ...props }) => {
 
 function checkboxChange(e, onChange) {
   e.target.value = !e.target.value;
-  onChange(e)
+  onChange(e);
 }
 
-export const CheckboxField = ({ field, form: { touched, errors }, ...props }) => {
+export const CheckboxField = ({
+  field,
+  form: { touched, errors },
+  ...props
+}) => {
   return (
     <div>
       <label>
@@ -104,7 +108,7 @@ export const CheckboxField = ({ field, form: { touched, errors }, ...props }) =>
       </label>
     </div>
   );
-}
+};
 
 export const TextAreaField = ({
   field,
@@ -196,6 +200,42 @@ export const ServerSizeField = ({
           </option>
         </select>
       </p>
+    </div>
+  );
+};
+
+export const Param = ({ field, form: { touched, errors }, ...props }) => {
+  var element = (
+    <input
+      className="form-control"
+      {...field}
+      {...props}
+      onChange={field.onChange}
+    />
+  );
+  let param = props.param;
+  var tooltip = <div />;
+  if (param.description) {
+    tooltip = (
+      <label
+        className="input-tooltip"
+        data-toggle="tooltip"
+        data-placement="top"
+        title={param.description}
+      >
+        {" "}
+        <i className="fas fa-info-circle" />
+      </label>
+    );
+  }
+  return (
+    <div className="container" style={{ padding: "left 0" }}>
+      <div className="row has-statuses col-xs-12">
+        <label>
+          {param.title} {tooltip}
+        </label>
+      </div>
+      <label>{element}</label>
     </div>
   );
 };
