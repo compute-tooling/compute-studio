@@ -20,12 +20,9 @@ axios.defaults.xsrfCookieName = "csrftoken";
 const domContainer = document.querySelector("#inputs-container");
 const requiredMessage = "This field is required.";
 
-var Schema = Yup.object().shape({
-});
+var Schema = Yup.object().shape({});
 
-const initialValues = {
-};
-
+const initialValues = {};
 
 class InputsForm extends React.Component {
   constructor(props) {
@@ -38,7 +35,7 @@ class InputsForm extends React.Component {
   componentDidMount() {
     if (this.props.fetchInitialValues) {
       this.props.fetchInitialValues().then(data => {
-        this.setState({ initialValues: data });
+        this.setState({ initialValues: data.model_parameters });
       });
     }
   }
@@ -47,6 +44,7 @@ class InputsForm extends React.Component {
     if (!this.state.initialValues) {
       return <p> loading.... </p>;
     }
+    console.log(this.state.initialValues);
     return (
       <div>
         <Formik
@@ -78,27 +76,56 @@ class InputsForm extends React.Component {
           validationSchema={Schema}
           render={({ onChange, status, errors }) => (
             <Form>
-              <div class="row">
-                <div class="col-4">
-                  <ul class="list-unstyled components sticky-top scroll-y">
+              <div className="row">
+                <div className="col-4">
+                  <ul className="list-unstyled components sticky-top scroll-y">
                     <li>
-                      <div class="card card-body card-outer">
+                      <div className="card card-body card-outer">
                         <p>Hello world!</p>
-                        <button type="submit" name="reset" value="true" class="btn btn-block btn-outline-dark">Reset</button>
+                        <button
+                          type="submit"
+                          name="reset"
+                          value="true"
+                          className="btn btn-block btn-outline-dark"
+                        >
+                          Reset
+                        </button>
                       </div>
                     </li>
                     <li>
-                      <div class="card card-body card-outer">
-                        <button type="submit" class="btn btn-block btn-success">
+                      <div className="card card-body card-outer">
+                        <button
+                          type="submit"
+                          className="btn btn-block btn-success"
+                        >
                           <b>Run</b>
                         </button>
                       </div>
                     </li>
                   </ul>
                 </div>
-                <div class="col-8">
-                  <div class="card card-body card-outer">
-                    <p>hello</p>
+                <div className="col-8">
+                  {Object.entries(this.state.initialValues).map(function(
+                    item,
+                    ix
+                  ) {
+                    let msect = item[0];
+                    let params = item[1];
+                    console.log("msect");
+                    console.log(item);
+                    console.log(msect);
+                    console.log(params);
+
+                    return (
+                      <div className="card card-body card-outer">
+                        <p>{msect}</p>
+                        {Object.entries(params).map(function(param, ix) {
+                          return <p>{param[0]}</p>;
+                        })}
+                      </div>
+                    );
+                  })}
+                  <div className="card card-body card-outer">
                     <pre>
                       <code>
                         {JSON.stringify(this.state.initialValues, null, 4)}
@@ -114,7 +141,6 @@ class InputsForm extends React.Component {
     );
   }
 }
-
 
 class InputsApp extends React.Component {
   constructor(props) {
@@ -153,12 +179,12 @@ class InputsApp extends React.Component {
     const app_name = this.props.match.params.app_name;
     const id = `${username}/${app_name}`;
     return (
-        <InputsForm
-          fetchInitialValues={this.fetchInitialValues}
-          initialValues={null}
-          submitType="Create"
-          doSubmit={this.doSubmit}
-        />
+      <InputsForm
+        fetchInitialValues={this.fetchInitialValues}
+        initialValues={null}
+        submitType="Create"
+        doSubmit={this.doSubmit}
+      />
     );
   }
 }
