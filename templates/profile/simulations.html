@@ -1,36 +1,55 @@
+{% load strings %}
+
 {% for project, queryset in runs.items %}
-  <h4>{{project}}</h4>
-  <table class="table">
-    <tr>
-      <th>Output</th>
-      <th>Run time (s)</th>
-      <th>Run cost ($)</th>
-      <th>Date (EST)</th>
-      <th>Status</th>
-    </tr>
-    {% for run in queryset %}
+<div class="card card-body card-outer mb-4">
+    <h5><a href="/{{project}}/">{{project}}</a>
+    <div class="float-right">
+      <button
+        class="btn collapse-button"
+        type="button"
+        data-toggle="collapse"
+        data-target="#{{project|make_id}}-collapse-major"
+        aria-expanded="false"
+        aria-controls="{{project|make_id}}-collapse-major"
+        style="margin-left:20px;">
+        <i class="far fa-plus-square" style="size:5x;" ></i>
+      </button>
+    </div>
+  </h5>
+  <div class="collapse collapse-plus-minus" id="{{project|make_id}}-collapse-major">
+    <table class="container table table-responsive-md">
       <tr>
-        <td>
-          <div class="row">
-            <div class="col align-self-start">
-              <a href="{{run.get_absolute_url}}">{{run.model_pk}}</a>
-            </div>
-            <div class="col align-self-center ">
-              <label
-                data-toggle="tooltip"
-                data-placement="top"
-                title="Edit parameters">
-                <a class="color-inherit hover-blue" href="{{run.get_absolute_edit_url}}"><i class="fas fa-edit fa-sm"></i></a></td>
-              </label>
-            </div>
-          </div>
-        <td>{{run.run_time}}</td>
-        <td>{{run.effective_cost}}</td>
-        <td>{{run.creation_date}}</td>
-        <td class="sim-status">{{run.status}}</td>
+        <th>Output</th>
+        <th>Run time (s)</th>
+        <th>Run cost ($)</th>
+        <th>Date (EST)</th>
+        <th>Status</th>
       </tr>
-    {% endfor %}
-  </table>
+      {% for run in queryset %}
+        <tr>
+          <td>
+            <div class="row">
+              <div class="col align-self-start">
+                <a href="{{run.get_absolute_url}}">{{run.model_pk}}</a>
+              </div>
+              <div class="col align-self-center ">
+                <label
+                  data-toggle="tooltip"
+                  data-placement="top"
+                  title="Edit parameters">
+                  <a class="color-inherit hover-blue" href="{{run.get_absolute_edit_url}}"><i class="fas fa-edit fa-sm"></i></a></td>
+                </label>
+              </div>
+            </div>
+          <td>{{run.run_time}}</td>
+          <td>{{run.effective_cost}}</td>
+          <td>{{run.creation_date}}</td>
+          <td class="sim-status">{{run.status}}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
 {% endfor %}
 
 <script>

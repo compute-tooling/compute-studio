@@ -46,20 +46,20 @@ class TestUserModels:
 
         # check that all apps are queried.
         titles = {
-            project.title
+            f"{project.owner.user.username}/{project.title}"
             for project in Project.objects.all()
             if profile.sims.filter(project=project).count()
         }
         assert titles == set(sims.keys())
 
         testapprun = test_models[0]
-        assert sims["Used-for-testing"].count() == 1
-        for sim in sims["Used-for-testing"].all():
+        assert sims["modeler/Used-for-testing"].count() == 1
+        for sim in sims["modeler/Used-for-testing"].all():
             assert sim == testapprun
 
         sponsoredtestapprun = test_models[1]
-        assert sims["Used-for-testing-sponsored-apps"].count() == 1
-        for sim in sims["Used-for-testing-sponsored-apps"].all():
+        assert sims["modeler/Used-for-testing-sponsored-apps"].count() == 1
+        for sim in sims["modeler/Used-for-testing-sponsored-apps"].all():
             assert sim == sponsoredtestapprun
 
     def test_project_show_sponsor(self, test_models):
