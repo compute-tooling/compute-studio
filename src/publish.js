@@ -40,15 +40,15 @@ const initialValues = {
   repo_url: "",
   server_size: [4, 2],
   exp_task_time: 0,
-  listed: true,
+  listed: true
 };
 
 const specialRequests = (
   <div>
     <p>
       You may contact the COMP admin at
-    <a href="mailto:henrymdoupe@gmail.com"> henrymdoupe@gmail.com</a> to
-                              discuss:
+      <a href="mailto:henrymdoupe@gmail.com"> henrymdoupe@gmail.com</a> to
+      discuss:
     </p>
     <ul>
       <li>giving collaborators write-access to this app's publish details.</li>
@@ -121,15 +121,15 @@ class PublishForm extends React.Component {
                   {status.project_exists}
                 </div>
               ) : (
-                  <div />
-                )}
+                <div />
+              )}
               {status && status.auth ? (
                 <div className="alert alert-danger" role="alert">
                   {status.auth}
                 </div>
               ) : (
-                  <div />
-                )}
+                <div />
+              )}
               <div className="mt-5">
                 <h3>About</h3>
                 <hr className="my-3" />
@@ -263,7 +263,7 @@ class CreateApp extends React.Component {
     this.doSubmit = this.doSubmit.bind(this);
   }
   doSubmit(data) {
-    return axios.post("/publish/api/", data).then(function (response) {
+    return axios.post("/publish/api/", data).then(function(response) {
       console.log("post", response);
       window.location.replace("/");
     });
@@ -274,11 +274,12 @@ class CreateApp extends React.Component {
         <h1 style={{ marginBottom: "2rem" }}>Publish</h1>
 
         <p className="lead">
-          Publish your model on COMP.
-          Check out the
+          Publish your model on COMP. Check out the
           <a href="https://docs.compmodels.org/publish/guide/">
-            {" "}developer documentation</a>
-          {" "} to learn more about the publishing criteria.
+            {" "}
+            developer documentation
+          </a>{" "}
+          to learn more about the publishing criteria.
         </p>
         <PublishForm
           fetchInitialValues={null}
@@ -304,11 +305,11 @@ class AppDetail extends React.Component {
     const app_name = this.props.match.params.app_name;
     return axios
       .get(`/publish/api/${username}/${app_name}/detail/`)
-      .then(function (response) {
+      .then(function(response) {
         console.log(response);
         return response.data;
       })
-      .catch(function (error) {
+      .catch(function(error) {
         console.log(error);
       });
   }
@@ -316,9 +317,10 @@ class AppDetail extends React.Component {
   doSubmit(data) {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
+    console.log(data);
     return axios
       .put(`/publish/api/${username}/${app_name}/detail/`, data)
-      .then(function (response) {
+      .then(function(response) {
         console.log(response);
         window.location.replace("/");
       });

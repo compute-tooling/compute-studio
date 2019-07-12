@@ -60,7 +60,8 @@ class InputsForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      initialValues: this.props.initialValues
+      initialValues: this.props.initialValues,
+      model_parameters: false
     };
   }
 
@@ -79,34 +80,50 @@ class InputsForm extends React.Component {
                 }
                 s.push(`${label}__${label_val}`);
               }
-              var field_name = `${param}.${s.join(".")}`;
+              if (s.length == 0) {
+                s.push("nolabels");
+              }
+              var field_name = `${param}.${s.join("___")}`;
               initialValues[field_name] = "";
               param_data.form_fields[field_name] = vals.value;
-              // console.log(param, field_name, param_data.form_fields);
             }
           }
         }
-        // console.log(initialValues);
-        console.log(data.model_parameters.policy.STD);
-        this.setState({ initialValues: data.model_parameters });
+        this.state.model_parameters = data.model_parameters;
+        this.setState({ initialValues: true });
       });
     }
   }
 
   render() {
-    if (!this.state.initialValues) {
+    if (!this.state.model_parameters) {
       return <p> loading.... </p>;
     }
-    // console.log(this.state.initialValues);
     return (
       <div>
         <Formik
-          initialValues={this.state.initialValues}
           onSubmit={(values, actions) => {
-            console.log(values, actions);
             var formdata = new FormData();
             for (var field in values) {
-              formdata.append([field], values[field]);
+              var voList = [];
+              for (const [voStr, val] of Object.entries(values[field])) {
+                var vo = {};
+                if (!val) {
+                  continue;
+                }
+                if (voStr == "nolabels") {
+                  vo["value"] = val;
+                } else {
+                  var labelsSplit = voStr.split("___");
+                  for (const label of labelsSplit) {
+                    var labelSplit = label.split("__");
+                    vo[labelSplit[0]] = labelSplit[1];
+                  }
+                  vo["value"] = val;
+                }
+                voList.push(vo);
+              }
+              formdata.append([field], JSON.stringify(voList));
             }
             this.props
               .doSubmit(formdata)
@@ -158,16 +175,12 @@ class InputsForm extends React.Component {
                   </ul>
                 </div>
                 <div className="col-8">
-                  {Object.entries(this.state.initialValues).map(function(
+                  {Object.entries(this.state.model_parameters).map(function(
                     item,
                     ix
                   ) {
                     let msect = item[0];
                     let params = item[1];
-                    // console.log("msect");
-                    // console.log(item);
-                    // console.log(msect);
-                    // console.log(params);
 
                     return (
                       <div className="card card-body card-outer">
@@ -212,14 +225,13 @@ class InputsForm extends React.Component {
                       </div>
                     );
                   })}
-                  ;
-                  <div className="card card-body card-outer">
+                  {/* <div className="card card-body card-outer">
                     <pre>
                       <code>
                         {JSON.stringify(this.state.initialValues, null, 4)}
                       </code>
                     </pre>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </Form>
@@ -254,8 +266,9 @@ class InputsApp extends React.Component {
   doSubmit(data) {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
+    // TODO post as json instead of form data.
     return axios
-      .put(`/${username}/${app_name}/api/v1/`, data)
+      .post(`/${username}/${app_name}/api/v1/`, data)
       .then(function(response) {
         console.log(response);
         window.location.replace("/");
