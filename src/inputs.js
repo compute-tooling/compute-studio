@@ -19,6 +19,11 @@ axios.defaults.xsrfCookieName = "csrftoken";
 
 const domContainer = document.querySelector("#inputs-container");
 const requiredMessage = "This field is required.";
+const typeMap = {
+  int: "number",
+  float: "number",
+  bool: "string"
+};
 
 var Schema = Yup.object().shape({});
 
@@ -65,7 +70,7 @@ class InputsForm extends React.Component {
         var initialValues = {};
         for (const [msect, params] of Object.entries(data.model_parameters)) {
           for (const [param, param_data] of Object.entries(params)) {
-            param_data["form_fields"] = [];
+            param_data["form_fields"] = {};
             for (const vals of param_data.value) {
               var s = [];
               for (const [label, label_val] of Object.entries(vals).sort()) {
@@ -76,7 +81,7 @@ class InputsForm extends React.Component {
               }
               var field_name = `${param}.${s.join(".")}`;
               initialValues[field_name] = "";
-              param_data.form_fields.push(field_name);
+              param_data.form_fields[field_name] = vals.value;
               // console.log(param, field_name, param_data.form_fields);
             }
           }
@@ -170,7 +175,7 @@ class InputsForm extends React.Component {
                         {Object.entries(params).map(function(param, ix) {
                           var name = param[0];
                           var data = param[1];
-                          if (data.form_fields.length == 1) {
+                          if (Object.keys(data.form_fields).length == 1) {
                             var colClass = "col-6";
                           } else {
                             var colClass = "col";
@@ -183,15 +188,19 @@ class InputsForm extends React.Component {
                               {param_element}
                               <div
                                 className="form-row has-statuses"
-                                style={{ "margin-left": "-20px" }}
+                                style={{ marginLeft: "-20px" }}
                               >
-                                {data.form_fields.map(function(form_field) {
+                                {Object.entries(data.form_fields).map(function(
+                                  form_field,
+                                  ix
+                                ) {
                                   return (
                                     <div className={colClass}>
                                       <Field
                                         className="form-control"
-                                        name={form_field}
-                                        placeHolder="Hello"
+                                        name={form_field[0]}
+                                        placeholder={form_field[1]}
+                                        type={typeMap[data.type]}
                                       />
                                     </div>
                                   );
