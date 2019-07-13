@@ -19,11 +19,11 @@ axios.defaults.xsrfCookieName = "csrftoken";
 
 const domContainer = document.querySelector("#inputs-container");
 const requiredMessage = "This field is required.";
-const typeMap = {
-  int: "number",
-  float: "number",
-  bool: "string"
-};
+// const typeMap = {
+//   int: "number",
+//   float: "number",
+//   bool: "string"
+// };
 
 var Schema = Yup.object().shape({});
 
@@ -104,6 +104,7 @@ class InputsForm extends React.Component {
         <Formik
           onSubmit={(values, actions) => {
             var formdata = new FormData();
+            var adjustment = {};
             for (var field in values) {
               var voList = [];
               for (const [voStr, val] of Object.entries(values[field])) {
@@ -123,8 +124,9 @@ class InputsForm extends React.Component {
                 }
                 voList.push(vo);
               }
-              formdata.append([field], JSON.stringify(voList));
+              adjustment[field] = voList;
             }
+            formdata.append("adjustment", JSON.stringify(adjustment));
             this.props
               .doSubmit(formdata)
               .then(response => {
@@ -213,7 +215,7 @@ class InputsForm extends React.Component {
                                         className="form-control"
                                         name={form_field[0]}
                                         placeholder={form_field[1]}
-                                        type={typeMap[data.type]}
+                                        // type={typeMap[data.type]}
                                       />
                                     </div>
                                   );
@@ -267,6 +269,8 @@ class InputsApp extends React.Component {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     // TODO post as json instead of form data.
+    console.log("posting...");
+    console.log(data);
     return axios
       .post(`/${username}/${app_name}/api/v1/`, data)
       .then(function(response) {
