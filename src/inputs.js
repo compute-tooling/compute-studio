@@ -56,11 +56,31 @@ const ParamElement = (...props) => {
   );
 };
 
+const SectionHeader = (...props) => {
+  let title = props[0].title;
+  let size = props[0].size;
+  return (
+    <h1 style={{ "font-size": { size } }}>
+      {title}
+      <div className="float-right">
+        <button
+          className="btn collapse-button"
+          type="button"
+          style={{ marginLeft: "20px" }}
+        >
+          <i class="far fa-minus-square" style={{ size: "5px" }} />
+        </button>
+      </div>
+    </h1>
+  );
+};
+
 class InputsForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       initialValues: this.props.initialValues,
+      sects: false,
       model_parameters: false
     };
   }
@@ -69,9 +89,35 @@ class InputsForm extends React.Component {
     if (this.props.fetchInitialValues) {
       this.props.fetchInitialValues().then(data => {
         var initialValues = {};
+        var sects = {};
+        var section_1 = "";
+        var section_2 = "";
         for (const [msect, params] of Object.entries(data.model_parameters)) {
+          sects[[msect]] = {};
           for (const [param, param_data] of Object.entries(params)) {
             param_data["form_fields"] = {};
+            // Group by major section, section_1 and section_2.
+            // console.log("param", param, param_data, section_1, section_2);
+            if ("section_1" in param_data) {
+              section_1 = param_data.section_1;
+            } else {
+              section_1 = "";
+            }
+            if ("section_2" in param_data) {
+              section_2 = param_data.section_2;
+            } else {
+              section_2 = "";
+            }
+            // console.log(section_1, section_2);
+            if (!(section_1 in sects[[msect]])) {
+              sects[[msect]][[section_1]] = {};
+            }
+            if (!(section_2 in sects[[msect]][[section_1]])) {
+              sects[[msect]][[section_1]][[section_2]] = [];
+            }
+            sects[[msect]][[section_1]][[section_2]].push(param);
+
+            // Define form_fields from value objects.
             for (const vals of param_data.value) {
               var s = [];
               for (const [label, label_val] of Object.entries(vals).sort()) {
@@ -89,8 +135,16 @@ class InputsForm extends React.Component {
             }
           }
         }
+        // console.log("data set");
+        // console.log("sects");
+        // console.log(sects);
+        this.state.sects = sects;
         this.state.model_parameters = data.model_parameters;
-        this.setState({ initialValues: true });
+        this.setState({
+          initialValues: true
+          // sects: sects,
+          // model_parameters: model_parameters
+        });
       });
     }
   }
@@ -99,6 +153,8 @@ class InputsForm extends React.Component {
     if (!this.state.model_parameters) {
       return <p> loading.... </p>;
     }
+    console.log("done loading");
+    let model_parameters = this.state.model_parameters;
     return (
       <div>
         <Formik
@@ -177,53 +233,116 @@ class InputsForm extends React.Component {
                   </ul>
                 </div>
                 <div className="col-8">
-                  {Object.entries(this.state.model_parameters).map(function(
-                    item,
+                  {Object.entries(this.state.sects).map(function(
+                    msect_item,
                     ix
                   ) {
-                    let msect = item[0];
-                    let params = item[1];
-
+                    // msect --> section_1: dict(dict) --> section_2: dict(list)
+                    // console.log(this.state);
+                    // let model_parameters = this.state.model_parameters;
+                    let msect = msect_item[0];
+                    let section_1_dict = msect_item[1];
                     return (
                       <div className="card card-body card-outer">
-                        <p>{msect}</p>
-                        {Object.entries(params).map(function(param, ix) {
-                          var name = param[0];
-                          var data = param[1];
-                          if (Object.keys(data.form_fields).length == 1) {
-                            var colClass = "col-6";
-                          } else {
-                            var colClass = "col";
-                          }
-                          var param_element = (
-                            <ParamElement param_data={data} />
-                          );
-                          return (
-                            <div>
-                              {param_element}
-                              <div
-                                className="form-row has-statuses"
-                                style={{ marginLeft: "-20px" }}
-                              >
-                                {Object.entries(data.form_fields).map(function(
-                                  form_field,
-                                  ix
-                                ) {
-                                  return (
-                                    <div className={colClass}>
-                                      <Field
-                                        className="form-control"
-                                        name={form_field[0]}
-                                        placeholder={form_field[1]}
-                                        // type={typeMap[data.type]}
-                                      />
-                                    </div>
-                                  );
-                                })}
+                        <SectionHeader title={msect} size="2.9rem" />
+                        <hr className="mb-3" style={{ "border-top": "0" }} />
+                        <div
+                          className="card card-body card-inner"
+                          style={{ padding: "0rem" }}
+                        >
+                          {Object.entries(section_1_dict).map(function(
+                            section_2_item,
+                            ix
+                          ) {
+                            let section_1 = section_2_item[0];
+                            let section_1_id = section_1.replace(" ", "-");
+                            let section_2_dict = section_2_item[1];
+                            return (
+                              <div className="inputs-block" id={section_1_id}>
+                                <div
+                                  className="card card-body card-outer mb-3 shadow-sm"
+                                  style={{ padding: "1rem" }}
+                                >
+                                  <SectionHeader
+                                    title={section_1}
+                                    size={"1rem"}
+                                  />
+                                  <div
+                                    className="card card-body card-inner mb-3"
+                                    style={{ padding: "0rem" }}
+                                  >
+                                    {Object.entries(section_2_dict).map(
+                                      function(param_list_item, ix) {
+                                        let section_2 = param_list_item[0];
+                                        let param_list = param_list_item[1];
+                                        return (
+                                          <div>
+                                            <h3>{section_2}</h3>
+                                            {param_list.map(function(param) {
+                                              let data =
+                                                model_parameters[[msect]][
+                                                  [param]
+                                                ];
+                                              if (
+                                                Object.keys(data.form_fields)
+                                                  .length == 1
+                                              ) {
+                                                var colClass = "col-6";
+                                              } else {
+                                                var colClass = "col";
+                                              }
+                                              var param_element = (
+                                                <ParamElement
+                                                  param_data={data}
+                                                />
+                                              );
+                                              return (
+                                                <div
+                                                  className="container"
+                                                  style={{ padding: "left 0" }}
+                                                >
+                                                  {param_element}
+                                                  <div
+                                                    className="form-row has-statuses"
+                                                    style={{
+                                                      marginLeft: "-20px"
+                                                    }}
+                                                  >
+                                                    {Object.entries(
+                                                      data.form_fields
+                                                    ).map(function(
+                                                      form_field,
+                                                      ix
+                                                    ) {
+                                                      return (
+                                                        <div
+                                                          className={colClass}
+                                                        >
+                                                          <Field
+                                                            className="form-control"
+                                                            name={form_field[0]}
+                                                            placeholder={
+                                                              form_field[1]
+                                                            }
+                                                            // type={typeMap[data.type]}
+                                                          />
+                                                        </div>
+                                                      );
+                                                    })}
+                                                  </div>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        );
+                                      }
+                                    )}
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
                     );
                   })}
