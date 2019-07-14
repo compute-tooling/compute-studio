@@ -6,24 +6,13 @@ import { BrowserRouter, Route, Switch } from "react-router-dom";
 import axios from "axios";
 import { Formik, Field, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import {
-  TextField,
-  TextAreaField,
-  CodeSnippetField,
-  ServerSizeField,
-  Message
-} from "./fields";
+import { Message } from "./fields";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
 
 const domContainer = document.querySelector("#inputs-container");
 const requiredMessage = "This field is required.";
-// const typeMap = {
-//   int: "number",
-//   float: "number",
-//   bool: "string"
-// };
 
 var Schema = Yup.object().shape({});
 
@@ -31,6 +20,20 @@ const initialValues = {};
 
 function makeID(title) {
   return title.replace(" ", "-");
+}
+
+function yupType(type) {
+  if (type == "int") {
+    return Yup.number().integer();
+  } else if (type == "float") {
+    return Yup.number();
+  } else if (type == "bool") {
+    return Yup.bool();
+  } else if (type == "date") {
+    return Yup.date();
+  } else {
+    return Yup.string();
+  }
 }
 
 const ParamElement = (...props) => {
@@ -101,6 +104,7 @@ class InputsForm extends React.Component {
         var sects = {};
         var section_1 = "";
         var section_2 = "";
+        var yupShape = {};
         for (const [msect, params] of Object.entries(data.model_parameters)) {
           sects[[msect]] = {};
           for (const [param, param_data] of Object.entries(params)) {
@@ -125,6 +129,28 @@ class InputsForm extends React.Component {
               sects[[msect]][[section_1]][[section_2]] = [];
             }
             sects[[msect]][[section_1]][[section_2]].push(param);
+            console.log(param);
+            console.log("getting yupObj", param_data.type);
+            var yupObj = yupType(param_data.type);
+            console.log("yup", yupObj);
+            if ("validators" in param_data && param_data.type != "bool") {
+              if ("range" in param_data.validators) {
+                if ("min" in param_data.validators.range) {
+                  var min_val = param_data.validators.range.min;
+                  console.log("minval", min_val);
+                  if (!(min_val in params)) {
+                    yupObj = yupObj.min(min_val);
+                  }
+                }
+                if ("max" in param_data.validators.range) {
+                  var max_val = param_data.validators.range.max;
+                  if (!(max_val in params)) {
+                    yupObj = yupObj.max(max_val);
+                  }
+                }
+              }
+            }
+            console.log("success w creation");
 
             // Define form_fields from value objects.
             for (const vals of param_data.value) {
@@ -141,14 +167,17 @@ class InputsForm extends React.Component {
               var field_name = `${param}.${s.join("___")}`;
               initialValues[field_name] = "";
               param_data.form_fields[field_name] = vals.value;
+              yupShape[field_name] = yupObj;
             }
           }
         }
-        // console.log("data set");
+        console.log("data set");
         // console.log("sects");
         // console.log(sects);
         this.state.sects = sects;
         this.state.model_parameters = data.model_parameters;
+        this.state.schema = Yup.object().shape(yupShape);
+        console.log("schema created", this.state.schema);
         this.setState({
           initialValues: true
           // sects: sects,
@@ -167,6 +196,7 @@ class InputsForm extends React.Component {
     return (
       <div>
         <Formik
+          validationSchema={this.state.schema}
           onSubmit={(values, actions) => {
             var formdata = new FormData();
             var adjustment = {};
@@ -210,7 +240,6 @@ class InputsForm extends React.Component {
                 }
               });
           }}
-          validationSchema={Schema}
           render={({ onChange, status, errors }) => (
             <Form>
               <div className="row">
@@ -358,6 +387,11 @@ class InputsForm extends React.Component {
                                                                   form_field[1]
                                                                 }
                                                                 // type={typeMap[data.type]}
+                                                              />
+                                                              <ErrorMessage
+                                                                name={
+                                                                  form_field[0]
+                                                                }
                                                               />
                                                             </div>
                                                           );
