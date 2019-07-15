@@ -36,6 +36,33 @@ function yupType(type) {
   }
 }
 
+function yupValidator(params, param_data) {
+  let yupObj = yupType(param_data.type);
+  if (!("validators" in param_data) || param_data.type == "bool") {
+    return yupObj;
+  }
+  if ("range" in param_data.validators) {
+    var min_val = null;
+    var max_val = null;
+    if ("min" in param_data.validators.range) {
+      min_val = param_data.validators.range.min;
+      if (!(min_val in params)) {
+        yupObj = yupObj.min(min_val);
+      }
+    }
+    if ("max" in param_data.validators.range) {
+      max_val = param_data.validators.range.max;
+      if (!(max_val in params)) {
+        yupObj = yupObj.max(max_val);
+      }
+    }
+  }
+  if ("choice" in param_data.validators) {
+    yupObj = yupObj.oneOf(param_data.validators.choice.choices);
+  }
+  return yupObj;
+}
+
 const ParamElement = (...props) => {
   var param_data = props[0].param_data;
   var tooltip = <div />;
@@ -100,11 +127,11 @@ class InputsForm extends React.Component {
   componentDidMount() {
     if (this.props.fetchInitialValues) {
       this.props.fetchInitialValues().then(data => {
-        var initialValues = {};
+        var initialValues = { adjustment: {}, meta_parameters: {} };
         var sects = {};
         var section_1 = "";
         var section_2 = "";
-        var yupShape = {};
+        var adjShape = {};
         for (const [msect, params] of Object.entries(data.model_parameters)) {
           sects[[msect]] = {};
           for (const [param, param_data] of Object.entries(params)) {
@@ -127,28 +154,11 @@ class InputsForm extends React.Component {
               sects[[msect]][[section_1]][[section_2]] = [];
             }
             sects[[msect]][[section_1]][[section_2]].push(param);
-            var yupObj = yupType(param_data.type);
-            if ("validators" in param_data && param_data.type != "bool") {
-              if ("range" in param_data.validators) {
-                var min_val = null;
-                var max_val = null;
-                if ("min" in param_data.validators.range) {
-                  min_val = param_data.validators.range.min;
-                  if (!(min_val in params)) {
-                    yupObj = yupObj.min(min_val);
-                  }
-                }
-                if ("max" in param_data.validators.range) {
-                  max_val = param_data.validators.range.max;
-                  if (!(max_val in params)) {
-                    yupObj = yupObj.max(max_val);
-                  }
-                }
-              }
-            }
+
+            var yupObj = yupValidator(params, param_data);
 
             // Define form_fields from value objects.
-            initialValues[param] = {};
+            initialValues["adjustment"][param] = {};
             var paramYupShape = {};
             for (const vals of param_data.value) {
               var s = [];
@@ -162,21 +172,31 @@ class InputsForm extends React.Component {
                 s.push("nolabels");
               }
               var field_name = `${s.join("___")}`;
-              initialValues[param][field_name] = "";
+              initialValues["adjustment"][param][field_name] = "";
               param_data.form_fields[field_name] = vals.value;
               paramYupShape[field_name] = yupObj;
             }
-            yupShape[param] = Yup.object().shape(paramYupShape);
+            adjShape[param] = Yup.object().shape(paramYupShape);
           }
         }
-        var schema = Yup.object().shape({
-          "CPI_offset.year__2019": Yup.number().min(-0.01)
-        });
+        var mpShape = {};
+        for (const [mp_name, mp_data] of Object.entries(data.meta_parameters)) {
+          var yupObj = yupValidator(data.meta_parameters, mp_data);
+          mpShape[mp_name] = yupObj;
+          initialValues["meta_parameters"][mp_name] = "";
+        }
+
+        var schema = {
+          adjustment: Yup.object().shape(adjShape),
+          meta_parameters: Yup.object().shape(mpShape)
+        };
+
         this.setState({
           initialValues: initialValues,
           sects: sects,
           model_parameters: data.model_parameters,
-          schema: Yup.object().shape(yupShape)
+          meta_parameters: data.meta_parameters,
+          schema: Yup.object().shape(schema)
         });
       });
     }
@@ -187,6 +207,7 @@ class InputsForm extends React.Component {
       return <p> loading.... </p>;
     }
     console.log("rendering");
+    let meta_parameters = this.state.meta_parameters;
     let model_parameters = this.state.model_parameters;
     let initialValues = this.state.initialValues;
     let schema = this.state.schema;
@@ -200,9 +221,12 @@ class InputsForm extends React.Component {
           onSubmit={(values, actions) => {
             var formdata = new FormData();
             var adjustment = {};
-            for (var field in values) {
+            var meta_parameters = {};
+            for (var field in values.adjustment) {
               var voList = [];
-              for (const [voStr, val] of Object.entries(values[field])) {
+              for (const [voStr, val] of Object.entries(
+                values.adjustment[field]
+              )) {
                 var vo = {};
                 if (!val) {
                   continue;
@@ -221,7 +245,11 @@ class InputsForm extends React.Component {
               }
               adjustment[field] = voList;
             }
+            for (var field in values.meta_parameters) {
+              meta_parameters[field] = values.meta_parameters[field];
+            }
             formdata.append("adjustment", JSON.stringify(adjustment));
+            formdata.append("meta_parameters", JSON.stringify(meta_parameters));
             this.props
               .doSubmit(formdata)
               .then(response => {
@@ -247,7 +275,32 @@ class InputsForm extends React.Component {
                   <ul className="list-unstyled components sticky-top scroll-y">
                     <li>
                       <div className="card card-body card-outer">
-                        <p>Hello world!</p>
+                        <div className="inputs-block">
+                          <ul className="list-unstyled components">
+                            {Object.entries(meta_parameters).map(function(
+                              mp_item,
+                              ix
+                            ) {
+                              return (
+                                <li key={mp_item[0]}>
+                                  <ParamElement
+                                    param_data={meta_parameters[mp_item[0]]}
+                                  />
+                                  <Field
+                                    name={mp_item[0]}
+                                    placeholder={mp_item[1].value[0].value}
+                                  />
+                                </li>
+                              );
+                            })}
+                            <li>
+                              <p className="form-text text-muted">
+                                Click Reset to update the default values of the
+                                parameters.
+                              </p>
+                            </li>
+                          </ul>
+                        </div>
                         <button
                           type="submit"
                           name="reset"
@@ -275,9 +328,7 @@ class InputsForm extends React.Component {
                     msect_item,
                     ix
                   ) {
-                    // msect --> section_1: dict(dict) --> section_2: dict(list)
-                    // console.log(this.state);
-                    // let model_parameters = this.state.model_parameters;
+                    // msect --> section_1: dict(dict) --> section_2: dict(dict)
                     let msect = msect_item[0];
                     let section_1_dict = msect_item[1];
                     return (
@@ -377,7 +428,7 @@ class InputsForm extends React.Component {
                                                           form_field,
                                                           ix
                                                         ) {
-                                                          let field_name = `${param}.${
+                                                          let field_name = `adjustment.${param}.${
                                                             form_field[0]
                                                           }`;
                                                           return (
