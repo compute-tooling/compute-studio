@@ -4,7 +4,7 @@ import ReactDOM from "react-dom";
 import React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import axios from "axios";
-import { Formik, Field, Form, ErrorMessage } from "formik";
+import { Formik, Field, FastField, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { Message } from "./fields";
 
@@ -68,7 +68,7 @@ const SectionHeader = (...props) => {
   let size = props[0].size;
   let label = props[0].label;
   return (
-    <h1 style={{ "font-size": { size } }}>
+    <h1 style={{ fontSize: { size } }}>
       {title}
       <div className="float-right">
         <button
@@ -80,7 +80,7 @@ const SectionHeader = (...props) => {
           aria-controls={`${makeID(title)}-collapse-${label}`}
           style={{ marginLeft: "20px" }}
         >
-          <i class="far fa-minus-square" style={{ size: "5px" }} />
+          <i className="far fa-minus-square" style={{ size: "5px" }} />
         </button>
       </div>
     </h1>
@@ -104,7 +104,7 @@ class InputsForm extends React.Component {
         var sects = {};
         var section_1 = "";
         var section_2 = "";
-        var yupShape = {};
+        var yupSchema = Yup.object();
         for (const [msect, params] of Object.entries(data.model_parameters)) {
           sects[[msect]] = {};
           for (const [param, param_data] of Object.entries(params)) {
@@ -129,28 +129,31 @@ class InputsForm extends React.Component {
               sects[[msect]][[section_1]][[section_2]] = [];
             }
             sects[[msect]][[section_1]][[section_2]].push(param);
-            console.log(param);
-            console.log("getting yupObj", param_data.type);
+            // console.log(param);
+            // console.log("getting yupObj", param_data.type);
             var yupObj = yupType(param_data.type);
-            console.log("yup", yupObj);
+            // console.log("yup", yupObj);
             if ("validators" in param_data && param_data.type != "bool") {
               if ("range" in param_data.validators) {
+                var min_val = null;
+                var max_val = null;
                 if ("min" in param_data.validators.range) {
-                  var min_val = param_data.validators.range.min;
-                  console.log("minval", min_val);
+                  min_val = param_data.validators.range.min;
+                  // console.log("minval", min_val);
                   if (!(min_val in params)) {
                     yupObj = yupObj.min(min_val);
                   }
                 }
                 if ("max" in param_data.validators.range) {
-                  var max_val = param_data.validators.range.max;
+                  max_val = param_data.validators.range.max;
                   if (!(max_val in params)) {
                     yupObj = yupObj.max(max_val);
                   }
                 }
+                // console.log("yupObj", yupObj, min_val, max_val);
               }
             }
-            console.log("success w creation");
+            // console.log("success w creation");
 
             // Define form_fields from value objects.
             for (const vals of param_data.value) {
@@ -167,36 +170,50 @@ class InputsForm extends React.Component {
               var field_name = `${param}.${s.join("___")}`;
               initialValues[field_name] = "";
               param_data.form_fields[field_name] = vals.value;
-              yupShape[field_name] = yupObj;
+              // yupShape[field_name] = yupObj;
+              yupSchema.shape({ [field_name]: yupObj });
             }
           }
         }
         console.log("data set");
         // console.log("sects");
         // console.log(sects);
-        this.state.sects = sects;
-        this.state.model_parameters = data.model_parameters;
-        this.state.schema = Yup.object().shape(yupShape);
-        console.log("schema created", this.state.schema);
+        // this.state.sects = sects;
+        // this.state.model_parameters = data.model_parameters;
+        // this.state.schema = yupSchema;
+        var schema = Yup.object().shape({
+          "CPI_offset.year__2019": Yup.number().min(-0.01)
+        });
+        // this.state.schema = Yup.object().shape(yupShape);
+        console.log("schema created", schema);
+        console.log(initialValues);
+        // this.state.initialValues = initialValues;
         this.setState({
-          initialValues: true
-          // sects: sects,
-          // model_parameters: model_parameters
+          initialValues: initialValues,
+          sects: sects,
+          model_parameters: data.model_parameters,
+          schema: schema
         });
       });
     }
   }
 
   render() {
-    if (!this.state.model_parameters) {
+    if (!this.state.model_parameters || !this.state.initialValues) {
       return <p> loading.... </p>;
     }
     console.log("done loading");
     let model_parameters = this.state.model_parameters;
+    let initialValues = this.state.initialValues;
+    let schema = this.state.schema;
+    console.log("initialValues");
+    console.log(initialValues);
+    console.log(model_parameters);
     return (
       <div>
         <Formik
-          validationSchema={this.state.schema}
+          initialValues={initialValues}
+          validationSchema={schema}
           onSubmit={(values, actions) => {
             var formdata = new FormData();
             var adjustment = {};
@@ -281,15 +298,15 @@ class InputsForm extends React.Component {
                     let msect = msect_item[0];
                     let section_1_dict = msect_item[1];
                     return (
-                      <div className="card card-body card-outer">
+                      <div className="card card-body card-outer" key={msect}>
                         <SectionHeader
                           title={msect}
                           size="2.9rem"
                           label="major"
                         />
-                        <hr className="mb-3" style={{ "border-top": "0" }} />
+                        <hr className="mb-3" style={{ borderTop: "0" }} />
                         <div
-                          class="collapse show collapse-plus-minus"
+                          className="collapse show collapse-plus-minus"
                           id={`${makeID(msect)}-collapse-major`}
                         >
                           <div
@@ -304,7 +321,11 @@ class InputsForm extends React.Component {
                               let section_1_id = section_1.replace(" ", "-");
                               let section_2_dict = section_2_item[1];
                               return (
-                                <div className="inputs-block" id={section_1_id}>
+                                <div
+                                  className="inputs-block"
+                                  id={section_1_id}
+                                  key={section_1_id}
+                                >
                                   <div
                                     className="card card-body card-outer mb-3 shadow-sm"
                                     style={{ padding: "1rem" }}
@@ -315,7 +336,7 @@ class InputsForm extends React.Component {
                                       label="section-1"
                                     />
                                     <div
-                                      class="collapse show collapse-plus-minus"
+                                      className="collapse show collapse-plus-minus"
                                       id={`${makeID(
                                         section_1
                                       )}-collapse-section-1`}
@@ -329,7 +350,7 @@ class InputsForm extends React.Component {
                                             let section_2 = param_list_item[0];
                                             let param_list = param_list_item[1];
                                             return (
-                                              <div>
+                                              <div key={section_2}>
                                                 <h3>{section_2}</h3>
                                                 {param_list.map(function(
                                                   param
@@ -358,6 +379,7 @@ class InputsForm extends React.Component {
                                                       style={{
                                                         padding: "left 0"
                                                       }}
+                                                      key={param}
                                                     >
                                                       {param_element}
                                                       <div
@@ -376,6 +398,9 @@ class InputsForm extends React.Component {
                                                             <div
                                                               className={
                                                                 colClass
+                                                              }
+                                                              key={
+                                                                form_field[0]
                                                               }
                                                             >
                                                               <Field
