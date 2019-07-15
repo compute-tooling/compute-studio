@@ -104,13 +104,12 @@ class InputsForm extends React.Component {
         var sects = {};
         var section_1 = "";
         var section_2 = "";
-        var yupSchema = Yup.object();
+        var yupShape = {};
         for (const [msect, params] of Object.entries(data.model_parameters)) {
           sects[[msect]] = {};
           for (const [param, param_data] of Object.entries(params)) {
             param_data["form_fields"] = {};
             // Group by major section, section_1 and section_2.
-            // console.log("param", param, param_data, section_1, section_2);
             if ("section_1" in param_data) {
               section_1 = param_data.section_1;
             } else {
@@ -121,7 +120,6 @@ class InputsForm extends React.Component {
             } else {
               section_2 = "";
             }
-            // console.log(section_1, section_2);
             if (!(section_1 in sects[[msect]])) {
               sects[[msect]][[section_1]] = {};
             }
@@ -129,34 +127,29 @@ class InputsForm extends React.Component {
               sects[[msect]][[section_1]][[section_2]] = [];
             }
             sects[[msect]][[section_1]][[section_2]].push(param);
-            // console.log(param);
-            // console.log("getting yupObj", param_data.type);
-            // var yupObj = yupType(param_data.type);
-            // // console.log("yup", yupObj);
-            // if ("validators" in param_data && param_data.type != "bool") {
-            //   if ("range" in param_data.validators) {
-            //     var min_val = null;
-            //     var max_val = null;
-            //     if ("min" in param_data.validators.range) {
-            //       min_val = param_data.validators.range.min;
-            //       // console.log("minval", min_val);
-            //       if (!(min_val in params)) {
-            //         yupObj = yupObj.min(min_val);
-            //       }
-            //     }
-            //     if ("max" in param_data.validators.range) {
-            //       max_val = param_data.validators.range.max;
-            //       if (!(max_val in params)) {
-            //         yupObj = yupObj.max(max_val);
-            //       }
-            //     }
-            //     // console.log("yupObj", yupObj, min_val, max_val);
-            //   }
-            // }
-            // console.log("success w creation");
+            var yupObj = yupType(param_data.type);
+            if ("validators" in param_data && param_data.type != "bool") {
+              if ("range" in param_data.validators) {
+                var min_val = null;
+                var max_val = null;
+                if ("min" in param_data.validators.range) {
+                  min_val = param_data.validators.range.min;
+                  if (!(min_val in params)) {
+                    yupObj = yupObj.min(min_val);
+                  }
+                }
+                if ("max" in param_data.validators.range) {
+                  max_val = param_data.validators.range.max;
+                  if (!(max_val in params)) {
+                    yupObj = yupObj.max(max_val);
+                  }
+                }
+              }
+            }
 
             // Define form_fields from value objects.
             initialValues[param] = {};
+            var paramYupShape = {};
             for (const vals of param_data.value) {
               var s = [];
               for (const [label, label_val] of Object.entries(vals).sort()) {
@@ -168,33 +161,22 @@ class InputsForm extends React.Component {
               if (s.length == 0) {
                 s.push("nolabels");
               }
-              // var field_name = `${param}.${s.join("___")}`;
               var field_name = `${s.join("___")}`;
               initialValues[param][field_name] = "";
               param_data.form_fields[field_name] = vals.value;
-              // yupShape[field_name] = yupObj;
-              // yupSchema.shape({ [field_name]: yupObj });
+              paramYupShape[field_name] = yupObj;
             }
+            yupShape[param] = Yup.object().shape(paramYupShape);
           }
         }
-        console.log("data set");
-        // console.log("sects");
-        // console.log(sects);
-        // this.state.sects = sects;
-        // this.state.model_parameters = data.model_parameters;
-        // this.state.schema = yupSchema;
         var schema = Yup.object().shape({
           "CPI_offset.year__2019": Yup.number().min(-0.01)
         });
-        // this.state.schema = Yup.object().shape(yupShape);
-        console.log("schema created", schema);
-        console.log(initialValues);
-        // this.state.initialValues = initialValues;
         this.setState({
           initialValues: initialValues,
           sects: sects,
           model_parameters: data.model_parameters,
-          schema: schema
+          schema: Yup.object().shape(yupShape)
         });
       });
     }
@@ -204,18 +186,17 @@ class InputsForm extends React.Component {
     if (!this.state.model_parameters || !this.state.initialValues) {
       return <p> loading.... </p>;
     }
-    console.log("done loading");
+    console.log("rendering");
     let model_parameters = this.state.model_parameters;
     let initialValues = this.state.initialValues;
     let schema = this.state.schema;
-    console.log("initialValues");
-    console.log(initialValues);
-    console.log(model_parameters);
     return (
       <div>
         <Formik
           initialValues={initialValues}
           validationSchema={schema}
+          validateOnChange={false}
+          validateOnBlur={true}
           onSubmit={(values, actions) => {
             var formdata = new FormData();
             var adjustment = {};
@@ -406,7 +387,7 @@ class InputsForm extends React.Component {
                                                               }
                                                               key={field_name}
                                                             >
-                                                              <Field
+                                                              <FastField
                                                                 className="form-control"
                                                                 name={
                                                                   field_name
@@ -420,6 +401,11 @@ class InputsForm extends React.Component {
                                                                 name={
                                                                   field_name
                                                                 }
+                                                                render={msg => (
+                                                                  <Message
+                                                                    msg={msg}
+                                                                  />
+                                                                )}
                                                               />
                                                             </div>
                                                           );
