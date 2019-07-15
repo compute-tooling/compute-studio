@@ -131,31 +131,32 @@ class InputsForm extends React.Component {
             sects[[msect]][[section_1]][[section_2]].push(param);
             // console.log(param);
             // console.log("getting yupObj", param_data.type);
-            var yupObj = yupType(param_data.type);
-            // console.log("yup", yupObj);
-            if ("validators" in param_data && param_data.type != "bool") {
-              if ("range" in param_data.validators) {
-                var min_val = null;
-                var max_val = null;
-                if ("min" in param_data.validators.range) {
-                  min_val = param_data.validators.range.min;
-                  // console.log("minval", min_val);
-                  if (!(min_val in params)) {
-                    yupObj = yupObj.min(min_val);
-                  }
-                }
-                if ("max" in param_data.validators.range) {
-                  max_val = param_data.validators.range.max;
-                  if (!(max_val in params)) {
-                    yupObj = yupObj.max(max_val);
-                  }
-                }
-                // console.log("yupObj", yupObj, min_val, max_val);
-              }
-            }
+            // var yupObj = yupType(param_data.type);
+            // // console.log("yup", yupObj);
+            // if ("validators" in param_data && param_data.type != "bool") {
+            //   if ("range" in param_data.validators) {
+            //     var min_val = null;
+            //     var max_val = null;
+            //     if ("min" in param_data.validators.range) {
+            //       min_val = param_data.validators.range.min;
+            //       // console.log("minval", min_val);
+            //       if (!(min_val in params)) {
+            //         yupObj = yupObj.min(min_val);
+            //       }
+            //     }
+            //     if ("max" in param_data.validators.range) {
+            //       max_val = param_data.validators.range.max;
+            //       if (!(max_val in params)) {
+            //         yupObj = yupObj.max(max_val);
+            //       }
+            //     }
+            //     // console.log("yupObj", yupObj, min_val, max_val);
+            //   }
+            // }
             // console.log("success w creation");
 
             // Define form_fields from value objects.
+            initialValues[param] = {};
             for (const vals of param_data.value) {
               var s = [];
               for (const [label, label_val] of Object.entries(vals).sort()) {
@@ -167,11 +168,12 @@ class InputsForm extends React.Component {
               if (s.length == 0) {
                 s.push("nolabels");
               }
-              var field_name = `${param}.${s.join("___")}`;
-              initialValues[field_name] = "";
+              // var field_name = `${param}.${s.join("___")}`;
+              var field_name = `${s.join("___")}`;
+              initialValues[param][field_name] = "";
               param_data.form_fields[field_name] = vals.value;
               // yupShape[field_name] = yupObj;
-              yupSchema.shape({ [field_name]: yupObj });
+              // yupSchema.shape({ [field_name]: yupObj });
             }
           }
         }
@@ -394,19 +396,20 @@ class InputsForm extends React.Component {
                                                           form_field,
                                                           ix
                                                         ) {
+                                                          let field_name = `${param}.${
+                                                            form_field[0]
+                                                          }`;
                                                           return (
                                                             <div
                                                               className={
                                                                 colClass
                                                               }
-                                                              key={
-                                                                form_field[0]
-                                                              }
+                                                              key={field_name}
                                                             >
                                                               <Field
                                                                 className="form-control"
                                                                 name={
-                                                                  form_field[0]
+                                                                  field_name
                                                                 }
                                                                 placeholder={
                                                                   form_field[1]
@@ -415,7 +418,7 @@ class InputsForm extends React.Component {
                                                               />
                                                               <ErrorMessage
                                                                 name={
-                                                                  form_field[0]
+                                                                  field_name
                                                                 }
                                                               />
                                                             </div>
