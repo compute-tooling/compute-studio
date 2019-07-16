@@ -36,6 +36,7 @@
     "highlight.js": "^9.15.6",
     "react": "^16.8.3",
     "react-dom": "^16.8.3",
+    "react-loading": "^2.0.3",
     "react-router-dom": "^4.3.1",
     "remarkable": "^1.7.1",
     "sass-loader": "^7.1.0",

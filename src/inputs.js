@@ -7,6 +7,7 @@ import axios from "axios";
 import { Formik, Field, FastField, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { Message } from "./fields";
+import ReactLoading from "react-loading";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
@@ -114,6 +115,31 @@ const SectionHeader = (...props) => {
   );
 };
 
+const LoadingElement = () => {
+  return (
+    <div className="row">
+      <div className="col-4">
+        <ul className="list-unstyled components sticky-top scroll-y">
+          <li>
+            <div className="card card-body card-outer">
+              <div className="d-flex justify-content-center">
+                <ReactLoading type="spokes" color="#2b2c2d" />
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div className="col-8">
+        <div className="card card-body card-outer">
+          <div className="d-flex justify-content-center">
+            <ReactLoading type="spokes" color="#2b2c2d" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 class InputsForm extends React.Component {
   constructor(props) {
     super(props);
@@ -204,7 +230,7 @@ class InputsForm extends React.Component {
 
   render() {
     if (!this.state.model_parameters || !this.state.initialValues) {
-      return <p> loading.... </p>;
+      return <LoadingElement />;
     }
     console.log("rendering");
     let meta_parameters = this.state.meta_parameters;
