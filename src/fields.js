@@ -140,7 +140,16 @@ export const TextAreaField = ({
 };
 
 export const Message = ({ msg, props }) => (
-  <small className={`form-text text-muted ${props}`}>{msg}</small>
+  <small className={`form-text text-muted`}>{msg}</small>
+);
+
+export const RedMessage = ({ msg, props }) => (
+  <p
+    className={`form-text font-weight-bold`}
+    style={{ color: "#dc3545", fontSize: "80%" }}
+  >
+    {msg}
+  </p>
 );
 
 export const CodeSnippetField = ({

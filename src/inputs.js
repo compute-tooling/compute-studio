@@ -6,7 +6,7 @@ import { BrowserRouter, Route, Switch } from "react-router-dom";
 import axios from "axios";
 import { Formik, Field, FastField, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { Message } from "./fields";
+import { RedMessage } from "./fields";
 import ReactLoading from "react-loading";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
@@ -25,9 +25,14 @@ function makeID(title) {
 
 function yupType(type) {
   if (type == "int") {
-    return Yup.number().integer();
+    return Yup.number()
+      .integer()
+      .nullable()
+      .transform(value => value === "" || value);
   } else if (type == "float") {
-    return Yup.number();
+    return Yup.number()
+      .nullable()
+      .transform(value => (!value ? null : value));
   } else if (type == "bool") {
     return Yup.bool();
   } else if (type == "date") {
@@ -36,6 +41,10 @@ function yupType(type) {
     return Yup.string();
   }
 }
+
+const minMsg = "Must be greater than or equal to ${min}";
+const maxMsg = "Must be less than or equal to ${max}";
+const oneOfMsg = "Must be one of the following values: ${values}";
 
 function yupValidator(params, param_data) {
   let yupObj = yupType(param_data.type);
@@ -48,20 +57,28 @@ function yupValidator(params, param_data) {
     if ("min" in param_data.validators.range) {
       min_val = param_data.validators.range.min;
       if (!(min_val in params)) {
-        yupObj = yupObj.min(min_val);
+        yupObj = yupObj.min(min_val, minMsg);
       }
     }
     if ("max" in param_data.validators.range) {
       max_val = param_data.validators.range.max;
       if (!(max_val in params)) {
-        yupObj = yupObj.max(max_val);
+        yupObj = yupObj.max(max_val, maxMsg);
       }
     }
   }
   if ("choice" in param_data.validators) {
-    yupObj = yupObj.oneOf(param_data.validators.choice.choices);
+    yupObj = yupObj.oneOf(param_data.validators.choice.choices, oneOfMsg);
   }
   return yupObj;
+}
+
+function valForForm(val) {
+  if (typeof val === "boolean") {
+    return val ? "True" : "False";
+  } else {
+    return val;
+  }
 }
 
 const ParamElement = (...props) => {
@@ -212,7 +229,7 @@ class InputsForm extends React.Component {
         for (const [mp_name, mp_data] of Object.entries(data.meta_parameters)) {
           var yupObj = yupValidator(data.meta_parameters, mp_data);
           mpShape[mp_name] = yupObj;
-          initialValues["meta_parameters"][mp_name] = "";
+          initialValues["meta_parameters"][mp_name] = mp_data.value[0].value;
         }
 
         var schema = {
@@ -248,35 +265,45 @@ class InputsForm extends React.Component {
           validateOnChange={false}
           validateOnBlur={true}
           onSubmit={(values, actions) => {
+            let data = this.state.schema.cast(values);
             var formdata = new FormData();
             var adjustment = {};
             var meta_parameters = {};
-            for (var field in values.adjustment) {
-              var voList = [];
-              for (const [voStr, val] of Object.entries(
-                values.adjustment[field]
-              )) {
-                var vo = {};
-                if (!val) {
-                  continue;
-                }
-                if (voStr == "nolabels") {
-                  vo["value"] = val;
-                } else {
-                  var labelsSplit = voStr.split("___");
-                  for (const label of labelsSplit) {
-                    var labelSplit = label.split("__");
-                    vo[labelSplit[0]] = labelSplit[1];
+            for (const [msect, params] of Object.entries(data.adjustment)) {
+              adjustment[msect] = {};
+              for (const [paramName, paramData] of Object.entries(params)) {
+                var voList = [];
+                for (const [voStr, val] of Object.entries(paramData)) {
+                  console.log(paramName, val, !val);
+                  var vo = {};
+                  if (!val) {
+                    continue;
                   }
-                  vo["value"] = val;
+                  if (voStr == "nolabels") {
+                    vo["value"] = val;
+                  } else {
+                    var labelsSplit = voStr.split("___");
+                    for (const label of labelsSplit) {
+                      var labelSplit = label.split("__");
+                      vo[labelSplit[0]] = labelSplit[1];
+                    }
+                    vo["value"] = val;
+                  }
+                  voList.push(vo);
                 }
-                voList.push(vo);
+                if (voList.length > 0) {
+                  adjustment[msect][paramName] = voList;
+                }
               }
-              adjustment[field] = voList;
             }
-            for (var field in values.meta_parameters) {
-              meta_parameters[field] = values.meta_parameters[field];
+            for (const [mp_name, mp_val] of Object.entries(
+              data.meta_parameters
+            )) {
+              meta_parameters[mp_name] = mp_val;
             }
+            console.log("submitting");
+            console.log(adjustment);
+            console.log(meta_parameters);
             formdata.append("adjustment", JSON.stringify(adjustment));
             formdata.append("meta_parameters", JSON.stringify(meta_parameters));
             this.props
@@ -310,14 +337,21 @@ class InputsForm extends React.Component {
                               mp_item,
                               ix
                             ) {
+                              let field_name = `meta_parameters.${mp_item[0]}`;
                               return (
-                                <li key={mp_item[0]}>
+                                <li key={field_name}>
                                   <ParamElement
                                     param_data={meta_parameters[mp_item[0]]}
                                   />
                                   <Field
-                                    name={mp_item[0]}
-                                    placeholder={mp_item[1].value[0].value}
+                                    name={field_name}
+                                    placeholder={valForForm(
+                                      mp_item[1].value[0].value
+                                    )}
+                                  />
+                                  <ErrorMessage
+                                    name={field_name}
+                                    render={msg => <RedMessage msg={msg} />}
                                   />
                                 </li>
                               );
@@ -472,9 +506,9 @@ class InputsForm extends React.Component {
                                                                 name={
                                                                   field_name
                                                                 }
-                                                                placeholder={
+                                                                placeholder={valForForm(
                                                                   form_field[1]
-                                                                }
+                                                                )}
                                                                 // type={typeMap[data.type]}
                                                               />
                                                               <ErrorMessage
@@ -482,7 +516,7 @@ class InputsForm extends React.Component {
                                                                   field_name
                                                                 }
                                                                 render={msg => (
-                                                                  <Message
+                                                                  <RedMessage
                                                                     msg={msg}
                                                                   />
                                                                 )}
