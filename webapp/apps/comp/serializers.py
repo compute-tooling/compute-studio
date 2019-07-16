@@ -19,10 +19,30 @@ class OutputsSerializer(serializers.Serializer):
     meta = serializers.JSONField()
 
 
+class MiniSimulationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Simulation
+        fields = ("model_pk",)
+
+
 class InputsSerializer(serializers.ModelSerializer):
+    job_id = serializers.UUIDField(required=False)
+    status = serializers.ChoiceField(
+        choices=(("SUCCESS", "Success"), ("FAIL", "Fail")), required=False
+    )
+    simulation = MiniSimulationSerializer(required=False)
+
     class Meta:
         model = Inputs
-        fields = ("meta_parameters", "adjustment", "inputs_file", "errors_warnings")
+        fields = (
+            "meta_parameters",
+            "adjustment",
+            "inputs_file",
+            "errors_warnings",
+            "job_id",
+            "status",
+            "traceback",
+        )
 
 
 class SimulationSerializer(serializers.ModelSerializer):

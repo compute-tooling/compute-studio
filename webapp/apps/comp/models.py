@@ -40,6 +40,12 @@ class Inputs(models.Model):
         "users.Project", on_delete=models.SET_NULL, related_name="sim_params", null=True
     )
 
+    owner = models.ForeignKey(
+        "users.Profile", on_delete=models.CASCADE, null=True, related_name="inputs"
+    )
+    traceback = models.CharField(null=True, blank=True, default=None, max_length=4000)
+    job_id = models.UUIDField(blank=True, default=None, null=True)
+
     @property
     def deserialized_inputs(self):
         """

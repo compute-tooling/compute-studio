@@ -1,11 +1,12 @@
 from collections import namedtuple, defaultdict
+import time
 
 from webapp.apps.comp import actions
-from webapp.apps.comp.compute import SyncCompute
+from webapp.apps.comp.compute import Compute
 from webapp.apps.comp.displayer import Displayer
 from webapp.apps.comp.exceptions import AppError
+from webapp.apps.comp.models import Inputs
 from webapp.apps.comp.utils import dims_to_dict, dims_to_string, is_reverse, is_wildcard
-
 
 ParamData = namedtuple("ParamData", ["name", "data"])
 
@@ -15,9 +16,12 @@ class ParameterLookUpException(Exception):
 
 
 class BaseParser:
-    def __init__(self, project, displayer, clean_inputs, **valid_meta_params):
+    def __init__(
+        self, project, displayer, clean_inputs, compute=None, **valid_meta_params
+    ):
         self.project = project
         self.clean_inputs = clean_inputs
+        self.compute = compute or Compute()
         self.valid_meta_params = valid_meta_params
         for param, value in valid_meta_params.items():
             setattr(self, param, value)
@@ -51,25 +55,14 @@ class BaseParser:
             "adjustment": params,
             "errors_warnings": errors_warnings,
         }
-        success, result = SyncCompute().submit_job(
+        job_id, queue_length = self.compute.submit_job(
             data, self.project.worker_ext(action=actions.PARSE)
         )
-        if not success:
-            raise AppError(params, result)
-        if isinstance(result, (tuple, list)):
-            result, *inputs_file = result
-            inputs_file = inputs_file[0]
-        else:
-            inputs_file = None
-        if "GUI" in errors_warnings:
-            result["GUI"] = errors_warnings["GUI"]
-        if "API" in errors_warnings:
-            result["API"] = errors_warnings["API"]
-        return result, params, inputs_file
+        return job_id, queue_length
 
 
 class Parser(BaseParser):
-    def parse_parameters(self):
+    def parse_parameters(self, inputs_obj):
         """
         Parse request and model objects and collect revisions and warnings
         This function is also called by dynamic/views.behavior_model.  In the
@@ -100,7 +93,28 @@ class Parser(BaseParser):
         for sect, inputs in adjustment.items():
             uf = self.unflatten(inputs, errors_warnings)
             unflattened[sect] = uf
-        return self.post(errors_warnings, unflattened)
+        job_id, _ = self.post(errors_warnings, unflattened)
+        inputs_obj.job_id = job_id
+        inputs_obj.save()
+
+        while True:
+            inputs = Inputs.objects.get(job_id=job_id)
+            if inputs.status in ("SUCCESS", "FAIL"):
+                break
+            time.sleep(0.2)
+        success = inputs.status == "SUCCESS"
+        if not success:
+            raise AppError(unflattened, inputs.traceback)
+        # if isinstance(result, (tuple, list)):
+        #     result, *inputs_file = result
+        #     inputs_file = inputs_file[0]
+        # else:
+        #     inputs_file = None
+        # if "GUI" in errors_warnings:
+        #     inputs.["GUI"] = errors_warnings["GUI"]
+        # if "API" in errors_warnings:
+        #     result["API"] = inputs.errors_warnings["API"]
+        return inputs
 
     def unflatten(self, parsed_input, errors_warnings):
         params = defaultdict(list)
@@ -212,4 +226,13 @@ class APIParser(BaseParser):
         for sect in adjustment:
             adjustment[sect].update(self.clean_inputs.get(sect, {}))
 
-        return self.post(errors_warnings, adjustment)
+        # kick off async parsing
+        job_id, queue_length = self.post(errors_warnings, adjustment)
+
+        return {
+            "job_id": job_id,
+            "queue_length": queue_length,
+            "adjustment": adjustment,
+            "errors_warnings": errors_warnings,
+            "inputs_file": None,
+        }

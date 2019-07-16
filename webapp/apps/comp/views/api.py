@@ -14,10 +14,11 @@ import s3like
 
 from webapp.apps.users.models import Project
 
+from webapp.apps.comp.asyncsubmit import SubmitInputs, SubmitSim, BadPost
 from webapp.apps.comp.compute import Compute, JobFailError
 from webapp.apps.comp.exceptions import AppError, ValidationError
 from webapp.apps.comp.ioutils import get_ioutils
-from webapp.apps.comp.models import Simulation
+from webapp.apps.comp.models import Inputs, Simulation
 from webapp.apps.comp.parser import APIParser
 from webapp.apps.comp.permissions import RequiresActive, RequiresPayment
 from webapp.apps.comp.serializers import (
@@ -25,7 +26,8 @@ from webapp.apps.comp.serializers import (
     InputsSerializer,
     OutputsSerializer,
 )
-from webapp.apps.comp.submit import handle_submission, BadPost, APISubmit
+
+# from webapp.apps.comp.submit import handle_submission, BadPost, APISubmit
 
 from .core import GetOutputsObjectMixin, RecordOutputsMixin, AbstractRouterAPIView
 
@@ -54,11 +56,11 @@ class InputsAPIView(APIView):
         )
 
     def get(self, request, *args, **kwargs):
-        print("sim api method=GET", request.GET, kwargs)
+        print("inputs api method=GET", request.GET, kwargs)
         return self.get_inputs(kwargs)
 
     def post(self, request, *args, **kwargs):
-        print("sim api method=GET", request.GET, kwargs)
+        print("inputs api method=POST", request.POST, kwargs)
         ser = InputsSerializer(data=request.data)
         if ser.is_valid():
             data = ser.validated_data
@@ -69,6 +71,49 @@ class InputsAPIView(APIView):
             return self.get_inputs(kwargs, meta_parameters)
         else:
             return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MyInputsAPIView(APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    def get(self, request, *args, **kwargs):
+        print("inputs api method=GET", request.GET, kwargs)
+        if "pk" not in kwargs:
+            return Response({"error": "Primary key required."}, status=400)
+        inputs = Inputs.objects.get(pk=kwargs["pk"])
+        return InputsSerializer(inputs).data
+
+    def put(self, request, *args, **kwargs):
+        print("inputs api method=PUT", kwargs)
+        if request.user.username == "comp-api-user":
+            ser = InputsSerializer(data=request.data)
+            if ser.is_valid():
+                data = ser.validated_data
+                inputs = get_object_or_404(Inputs, job_id=data["job_id"])
+                if inputs.status == "PENDING":
+                    # successful run
+                    if data["status"] == "SUCCESS":
+                        inputs.status = "SUCCESS"
+                        inputs.adjustment = data["adjustment"]
+                        inputs.errors_warnings = data["errors_warnings"]
+                        inputs.inputs_file = data.get("inputs_file", None)
+                        inputs.save()
+                        submit_sim = SubmitSim(inputs, compute=Compute())
+                        submit_sim.submit()
+                    # failed run, exception was caught
+                    else:
+                        inputs.status = "FAIL"
+                        inputs.traceback = data["traceback"]
+                        inputs.save()
+                return Response(status=status.HTTP_200_OK)
+            else:
+                return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
 class BaseCreateAPIView(APIView):
@@ -89,9 +134,8 @@ class BaseCreateAPIView(APIView):
         ioutils = get_ioutils(project, Parser=APIParser)
 
         try:
-            result = handle_submission(
-                request, project, ioutils, compute, submit_class=APISubmit
-            )
+            submit_inputs = SubmitInputs(request.user, project, ioutils, compute)
+            result = submit_inputs.submit()
         except AppError as ae:
             try:
                 send_mail(
@@ -159,7 +203,7 @@ class DetailAPIView(GetOutputsObjectMixin, APIView):
         compute = Compute()
         try:
             job_ready = compute.results_ready(job_id)
-        except JobFailError as jfe:
+        except JobFailError:
             self.object.traceback = ""
             self.object.save()
             return Response(
