@@ -160,7 +160,7 @@ class InputsForm extends React.Component {
         var adjShape = {};
         for (const [msect, params] of Object.entries(data.model_parameters)) {
           var msectShape = {};
-          sects[[msect]] = {};
+          sects[msect] = {};
           initialValues.adjustment[msect] = {};
           for (const [param, param_data] of Object.entries(params)) {
             param_data["form_fields"] = {};
@@ -175,13 +175,13 @@ class InputsForm extends React.Component {
             } else {
               section_2 = "";
             }
-            if (!(section_1 in sects[[msect]])) {
-              sects[[msect]][[section_1]] = {};
+            if (!(section_1 in sects[msect])) {
+              sects[msect][section_1] = {};
             }
-            if (!(section_2 in sects[[msect]][[section_1]])) {
-              sects[[msect]][[section_1]][[section_2]] = [];
+            if (!(section_2 in sects[msect][section_1])) {
+              sects[msect][section_1][section_2] = [];
             }
-            sects[[msect]][[section_1]][[section_2]].push(param);
+            sects[msect][section_1][section_2].push(param);
 
             var yupObj = yupValidator(params, param_data);
 
@@ -419,7 +419,7 @@ class InputsForm extends React.Component {
                                                   param
                                                 ) {
                                                   let data =
-                                                    model_parameters[[msect]][
+                                                    model_parameters[msect][
                                                       [param]
                                                     ];
                                                   if (
