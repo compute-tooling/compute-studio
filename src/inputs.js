@@ -159,7 +159,9 @@ class InputsForm extends React.Component {
         var section_2 = "";
         var adjShape = {};
         for (const [msect, params] of Object.entries(data.model_parameters)) {
+          var msectShape = {};
           sects[[msect]] = {};
+          initialValues.adjustment[msect] = {};
           for (const [param, param_data] of Object.entries(params)) {
             param_data["form_fields"] = {};
             // Group by major section, section_1 and section_2.
@@ -184,7 +186,7 @@ class InputsForm extends React.Component {
             var yupObj = yupValidator(params, param_data);
 
             // Define form_fields from value objects.
-            initialValues["adjustment"][param] = {};
+            initialValues.adjustment[msect][param] = {};
             var paramYupShape = {};
             for (const vals of param_data.value) {
               var s = [];
@@ -198,12 +200,13 @@ class InputsForm extends React.Component {
                 s.push("nolabels");
               }
               var field_name = `${s.join("___")}`;
-              initialValues["adjustment"][param][field_name] = "";
+              initialValues.adjustment[msect][param][field_name] = "";
               param_data.form_fields[field_name] = vals.value;
               paramYupShape[field_name] = yupObj;
             }
-            adjShape[param] = Yup.object().shape(paramYupShape);
+            msectShape[param] = Yup.object().shape(paramYupShape);
           }
+          adjShape[msect] = Yup.object().shape(msectShape);
         }
         var mpShape = {};
         for (const [mp_name, mp_data] of Object.entries(data.meta_parameters)) {
@@ -454,7 +457,7 @@ class InputsForm extends React.Component {
                                                           form_field,
                                                           ix
                                                         ) {
-                                                          let field_name = `adjustment.${param}.${
+                                                          let field_name = `adjustment.${msect}.${param}.${
                                                             form_field[0]
                                                           }`;
                                                           return (
@@ -506,13 +509,6 @@ class InputsForm extends React.Component {
                       </div>
                     );
                   })}
-                  {/* <div className="card card-body card-outer">
-                    <pre>
-                      <code>
-                        {JSON.stringify(this.state.initialValues, null, 4)}
-                      </code>
-                    </pre>
-                  </div> */}
                 </div>
               </div>
             </Form>
@@ -554,7 +550,7 @@ class InputsApp extends React.Component {
       .post(`/${username}/${app_name}/api/v1/`, data)
       .then(function(response) {
         console.log(response);
-        window.location.replace("/");
+        // window.location.replace("/");
       });
   }
 
