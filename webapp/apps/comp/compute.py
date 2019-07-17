@@ -136,6 +136,6 @@ class SyncCompute(Compute):
 
         success = data["status"] == "SUCCESS"
         if success:
-            return success, data["result"]
+            return success, data
         else:
-            return success, data["traceback"]
+            return success, data

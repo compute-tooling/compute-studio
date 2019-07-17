@@ -121,7 +121,7 @@ class RecordOutputsMixin(ChargeRunMixin):
         # successful run
         if data["status"] == "SUCCESS":
             sim.status = "SUCCESS"
-            sim.outputs = data["result"]
+            sim.outputs = {"outputs": data["outputs"], "version": data["version"]}
             sim.save()
         # failed run, exception is caught
         else:

@@ -45,6 +45,15 @@ class Inputs(models.Model):
     )
     traceback = models.CharField(null=True, blank=True, default=None, max_length=4000)
     job_id = models.UUIDField(blank=True, default=None, null=True)
+    status = models.CharField(
+        choices=(
+            ("PENDING", "Pending"),
+            ("SUCCESS", "Success"),
+            ("FAIL", "Fail"),
+            ("WORKER_FAILURE", "Worker Failure"),
+        ),
+        max_length=20,
+    )
 
     @property
     def deserialized_inputs(self):

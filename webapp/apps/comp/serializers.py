@@ -3,20 +3,16 @@ from rest_framework import serializers
 from .models import Inputs, Simulation
 
 
-class ResultSerializer(serializers.Serializer):
-    outputs = serializers.JSONField()
-    # only used with v0!
-    aggr_outputs = serializers.JSONField(required=False)
-    version = serializers.CharField()
-
-
 class OutputsSerializer(serializers.Serializer):
     job_id = serializers.UUIDField()
     status = serializers.ChoiceField(choices=(("SUCCESS", "Success"), ("FAIL", "Fail")))
     traceback = serializers.CharField(required=False)
-    result = ResultSerializer(required=False)
     model_version = serializers.CharField(required=False)
     meta = serializers.JSONField()
+    outputs = serializers.JSONField()
+    # only used with v0!
+    aggr_outputs = serializers.JSONField(required=False)
+    version = serializers.CharField()
 
 
 class MiniSimulationSerializer(serializers.ModelSerializer):
@@ -30,7 +26,7 @@ class InputsSerializer(serializers.ModelSerializer):
     status = serializers.ChoiceField(
         choices=(("SUCCESS", "Success"), ("FAIL", "Fail")), required=False
     )
-    sim = MiniSimulationSerializer(required=False)
+    sim = MiniSimulationSerializer(source="outputs", required=False)
 
     class Meta:
         model = Inputs

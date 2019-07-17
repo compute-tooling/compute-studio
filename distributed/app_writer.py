@@ -86,6 +86,9 @@ if __name__ == "__main__":
 
             req = resource_req[action]
             resources = dict(resource_req[action], **obj["resources"])
+            if action == "io":
+                resources["requests"]["memory"] = "250Mi"
+                resources["limits"]["memory"] = "700Mi"
 
             with open(kubeout, "w") as f:
                 f.write(

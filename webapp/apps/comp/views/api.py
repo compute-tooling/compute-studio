@@ -74,19 +74,29 @@ class InputsAPIView(APIView):
             return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class MyInputsAPIView(APIView):
+class DetailMyInputsAPIView(APIView):
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
         TokenAuthentication,
     )
 
+    queryset = Inputs.objects.all()
+
     def get(self, request, *args, **kwargs):
         print("inputs api method=GET", request.GET, kwargs)
-        if "pk" not in kwargs:
-            return Response({"error": "Primary key required."}, status=400)
-        inputs = Inputs.objects.get(pk=kwargs["pk"])
-        return InputsSerializer(inputs).data
+        # if "pk" not in kwargs:
+        #     return Response({"error": "Primary key required."}, status=400)
+        inputs = get_object_or_404(self.queryset, pk=kwargs["pk"])
+        return Response(InputsSerializer(inputs).data)
+
+
+class MyInputsAPIView(APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
 
     def put(self, request, *args, **kwargs):
         print("inputs api method=PUT", kwargs)
@@ -99,7 +109,6 @@ class MyInputsAPIView(APIView):
                     # successful run
                     if data["status"] == "SUCCESS":
                         inputs.status = "SUCCESS"
-                        inputs.adjustment = data["adjustment"]
                         inputs.errors_warnings = data["errors_warnings"]
                         inputs.inputs_file = data.get("inputs_file", None)
                         inputs.save()
@@ -135,7 +144,7 @@ class BaseCreateAPIView(APIView):
         ioutils = get_ioutils(project, Parser=APIParser)
 
         try:
-            submit_inputs = SubmitInputs(request.user, project, ioutils, compute)
+            submit_inputs = SubmitInputs(request, project, ioutils, compute)
             result = submit_inputs.submit()
         except BadPostException as bpe:
             return Response(bpe.errors, status=status.HTTP_400_BAD_REQUEST)

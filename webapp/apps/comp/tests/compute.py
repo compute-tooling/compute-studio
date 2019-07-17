@@ -69,6 +69,7 @@ class MockComputeWorkerFailure(MockCompute):
         self.client = None
         self.sim = None
         with requests_mock.Mocker() as mock:
+            print("mocking: ", url)
             text = "FAIL"
             mock.register_uri("GET", url, text=text)
             return Compute.remote_query_job(self, url, params)

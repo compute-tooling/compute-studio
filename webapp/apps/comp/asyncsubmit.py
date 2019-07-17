@@ -76,6 +76,7 @@ class SubmitInputs:
             project=self.project,
             owner=getattr(self.request.user, "profile", None),
             job_id=result["job_id"],
+            status="PENDING",
         )
         return self.inputs
 

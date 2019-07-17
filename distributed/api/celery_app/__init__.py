@@ -73,11 +73,11 @@ def task_wrapper(func):
                 version = outputs.pop("version", OUTPUTS_VERSION)
                 if version == "v0":
                     res["model_version"] = "NA"
-                    res["result"] = dict(outputs, **{"version": version})
+                    res.update(dict(outputs, **{"version": version}))
                 else:
                     res["model_version"] = outputs.pop("model_version")
                     outputs = s3like.write_to_s3like(task_id, outputs)
-                    res["result"] = {"outputs": outputs, "version": version}
+                    res.update({"outputs": outputs, "version": version})
             else:
                 res["result"] = outputs
         except Exception as e:
