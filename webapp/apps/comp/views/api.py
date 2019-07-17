@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.core.mail import send_mail
 
 from rest_framework.authentication import (
     BasicAuthentication,
@@ -14,9 +15,9 @@ import s3like
 
 from webapp.apps.users.models import Project
 
-from webapp.apps.comp.asyncsubmit import SubmitInputs, SubmitSim, BadPost
+from webapp.apps.comp.asyncsubmit import SubmitInputs, SubmitSim
 from webapp.apps.comp.compute import Compute, JobFailError
-from webapp.apps.comp.exceptions import AppError, ValidationError
+from webapp.apps.comp.exceptions import AppError, ValidationError, BadPostException
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.models import Inputs, Simulation
 from webapp.apps.comp.parser import APIParser
@@ -136,6 +137,8 @@ class BaseCreateAPIView(APIView):
         try:
             submit_inputs = SubmitInputs(request.user, project, ioutils, compute)
             result = submit_inputs.submit()
+        except BadPostException as bpe:
+            return Response(bpe.errors, status=status.HTTP_400_BAD_REQUEST)
         except AppError as ae:
             try:
                 send_mail(
@@ -150,23 +153,14 @@ class BaseCreateAPIView(APIView):
                     fail_silently=True,
                 )
             # Http 401 exception if mail credentials are not set up.
-            except Exception as e:
+            except Exception:
                 pass
 
-            return Response(ae.traceback, status=status.HTTP_400_BAD_REQUEST)
+            return Response(ae.traceback, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # case where validation failed
-        if isinstance(result, BadPost):
-            return result.http_response
+        inputs = InputsSerializer(result)
 
-        # No errors--submit to model
-        if result.save is not None:
-            sim = SimulationSerializer(result.save.runmodel_instance)
-            return Response(sim.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(
-                result.submit.model.errors_warnings, status=status.HTTP_400_BAD_REQUEST
-            )
+        return Response(inputs.data, status=status.HTTP_201_CREATED)
 
 
 class RequiresLoginAPIView(BaseCreateAPIView):

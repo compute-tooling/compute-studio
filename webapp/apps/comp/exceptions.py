@@ -14,3 +14,9 @@ class AppError(COMPError):
 
 class ValidationError(COMPError):
     pass
+
+
+class BadPostException(COMPError):
+    def __init__(self, errors, *args, **kwargs):
+        self.errors = errors
+        super().__init__(*args, **kwargs)

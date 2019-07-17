@@ -30,11 +30,12 @@ class InputsSerializer(serializers.ModelSerializer):
     status = serializers.ChoiceField(
         choices=(("SUCCESS", "Success"), ("FAIL", "Fail")), required=False
     )
-    simulation = MiniSimulationSerializer(required=False)
+    sim = MiniSimulationSerializer(required=False)
 
     class Meta:
         model = Inputs
         fields = (
+            "pk",
             "meta_parameters",
             "adjustment",
             "inputs_file",
@@ -42,6 +43,7 @@ class InputsSerializer(serializers.ModelSerializer):
             "job_id",
             "status",
             "traceback",
+            "sim",
         )
 
 
