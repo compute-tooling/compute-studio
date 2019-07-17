@@ -7,8 +7,9 @@
     <div class="col-xs-12">
       <label>
         {{ param.title }}
-        {% include 'comp/inputs/fields/tooltip.html' with text=param.info %}
-
+        {% if param.info %}
+          {% include 'comp/inputs/fields/tooltip.html' with text=param.info %}
+        {% endif %}
       <!-- TODO: add auxillary block for optional checkbox parameter. -->
       {% if param.has_checkbox %}
         {% with form|dict_get:param.checkbox_field.name as checkbox_field %}

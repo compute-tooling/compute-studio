@@ -5,7 +5,7 @@ register = template.Library()
 
 @register.filter
 def make_id(name):
-    return "-".join(name.split())
+    return "-".join(name.lower().replace("/", "-").split())
 
 
 @register.filter
