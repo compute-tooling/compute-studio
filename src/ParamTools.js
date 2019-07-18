@@ -3,16 +3,6 @@
 import * as Yup from "yup";
 
 
-// need to require schema in model_parameters!
-export const tbLabelSchema = Yup.object().shape({
-  year: Yup.number(),
-  MARS: Yup.string(),
-  idedtype: Yup.string(),
-  EIC: Yup.string(),
-  data_source: Yup.string(),
-});
-
-
 export function yupType(type) {
   if (type == "int") {
     return Yup.number()
@@ -62,4 +52,119 @@ export function yupValidator(params, param_data) {
     yupObj = yupObj.oneOf(param_data.validators.choice.choices, oneOfMsg);
   }
   return yupObj;
+}
+
+
+export function convertToFormik(data) {
+  var initialValues = { adjustment: {}, meta_parameters: {} };
+  var sects = {};
+  var section_1 = "";
+  var section_2 = "";
+  var adjShape = {};
+  for (const [msect, params] of Object.entries(data.model_parameters)) {
+    var msectShape = {};
+    sects[msect] = {};
+    initialValues.adjustment[msect] = {};
+    for (const [param, param_data] of Object.entries(params)) {
+      param_data["form_fields"] = {};
+      // Group by major section, section_1 and section_2.
+      if ("section_1" in param_data) {
+        section_1 = param_data.section_1;
+      } else {
+        section_1 = "";
+      }
+      if ("section_2" in param_data) {
+        section_2 = param_data.section_2;
+      } else {
+        section_2 = "";
+      }
+      if (!(section_1 in sects[msect])) {
+        sects[msect][section_1] = {};
+      }
+      if (!(section_2 in sects[msect][section_1])) {
+        sects[msect][section_1][section_2] = [];
+      }
+      sects[msect][section_1][section_2].push(param);
+
+      var yupObj = yupValidator(params, param_data);
+
+      // Define form_fields from value objects.
+      initialValues.adjustment[msect][param] = {};
+      var paramYupShape = {};
+      for (const vals of param_data.value) {
+        var s = [];
+        for (const [label, label_val] of Object.entries(vals).sort()) {
+          if (label == "value") {
+            continue;
+          }
+          s.push(`${label}__${label_val}`);
+        }
+        if (s.length == 0) {
+          s.push("nolabels");
+        }
+        var field_name = `${s.join("___")}`;
+
+        // TODO: match with edit value when supplied.
+        initialValues.adjustment[msect][param][field_name] = "";
+        param_data.form_fields[field_name] = vals.value;
+        paramYupShape[field_name] = yupObj;
+      }
+      msectShape[param] = Yup.object().shape(paramYupShape);
+    }
+    adjShape[msect] = Yup.object().shape(msectShape);
+  }
+  var mpShape = {};
+  for (const [mp_name, mp_data] of Object.entries(data.meta_parameters)) {
+    var yupObj = yupValidator(data.meta_parameters, mp_data);
+    mpShape[mp_name] = yupObj;
+    initialValues["meta_parameters"][mp_name] = mp_data.value[0].value;
+  }
+
+  var schema = Yup.object().shape({
+    adjustment: Yup.object().shape(adjShape),
+    meta_parameters: Yup.object().shape(mpShape)
+  });
+
+  return [initialValues, sects, data.model_parameters, data.meta_parameters, schema];
+}
+
+
+export function formikToJSON(values, schema, labelSchema) {
+  let data = schema.cast(values);
+  var adjustment = {};
+  var meta_parameters = {};
+  for (const [msect, params] of Object.entries(data.adjustment)) {
+    adjustment[msect] = {};
+    for (const [paramName, paramData] of Object.entries(params)) {
+      var voList = [];
+      for (const [voStr, val] of Object.entries(paramData)) {
+        var vo = {};
+        if (!val) {
+          continue;
+        }
+        if (voStr == "nolabels") {
+          vo["value"] = val;
+        } else {
+          var labelsSplit = voStr.split("___");
+          for (const label of labelsSplit) {
+            var labelSplit = label.split("__");
+            vo[labelSplit[0]] = labelSplit[1];
+          }
+          vo = labelSchema.cast(vo)
+          vo["value"] = val;
+        }
+        voList.push(vo);
+      }
+      if (voList.length > 0) {
+        adjustment[msect][paramName] = voList;
+      }
+    }
+  }
+  for (const [mp_name, mp_val] of Object.entries(
+    data.meta_parameters
+  )) {
+    meta_parameters[mp_name] = mp_val;
+  }
+
+  return [meta_parameters, adjustment];
 }
