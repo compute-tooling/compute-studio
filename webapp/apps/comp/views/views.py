@@ -107,13 +107,13 @@ class InputsView(InputsMixin, View):
         project = self.projects.get(
             owner__user__username=kwargs["username"], title=kwargs["title"]
         )
-        ioutils = get_ioutils(project)
-        inputs_form = InputsForm(project, ioutils.displayer)
-        # set cleaned_data with is_valid call
-        inputs_form.is_valid()
-        inputs_form.clean()
+        # ioutils = get_ioutils(project)
+        # inputs_form = InputsForm(project, ioutils.displayer)
+        # # set cleaned_data with is_valid call
+        # inputs_form.is_valid()
+        # inputs_form.clean()
         context = self.project_context(request, project)
-        return self._render_inputs_form(request, project, inputs_form, ioutils, context)
+        return self._render_inputs_form(request, project, None, None, context)
 
     def post(self, request, *args, **kwargs):
         print("method=POST", request.POST)
@@ -179,14 +179,14 @@ class InputsView(InputsMixin, View):
         return render(request, self.template_name, context)
 
     def _render_inputs_form(self, request, project, inputs_form, ioutils, context):
-        valid_meta_params = {}
-        parsed_meta_parameters = ioutils.displayer.parsed_meta_parameters()
-        for mp_name in parsed_meta_parameters.parameters:
-            valid_meta_params[mp_name] = inputs_form.cleaned_data[mp_name]
-        ioutils.displayer.meta_parameters = valid_meta_params
+        # valid_meta_params = {}
+        # parsed_meta_parameters = ioutils.displayer.parsed_meta_parameters()
+        # for mp_name in parsed_meta_parameters.parameters:
+        #     valid_meta_params[mp_name] = inputs_form.cleaned_data[mp_name]
+        # ioutils.displayer.meta_parameters = valid_meta_params
         context = dict(
-            form=inputs_form,
-            default_form=ioutils.displayer.defaults(flat=False),
+            # form=inputs_form,
+            # default_form=ioutils.displayer.defaults(flat=False),
             webapp_version=self.webapp_version,
             has_errors=self.has_errors,
             **context,

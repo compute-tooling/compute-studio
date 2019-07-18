@@ -91,41 +91,6 @@ class DetailMyInputsAPIView(APIView):
         return Response(InputsSerializer(inputs).data)
 
 
-class MyInputsAPIView(APIView):
-    authentication_classes = (
-        SessionAuthentication,
-        BasicAuthentication,
-        TokenAuthentication,
-    )
-
-    def put(self, request, *args, **kwargs):
-        print("inputs api method=PUT", kwargs)
-        if request.user.username == "comp-api-user":
-            ser = InputsSerializer(data=request.data)
-            if ser.is_valid():
-                data = ser.validated_data
-                inputs = get_object_or_404(Inputs, job_id=data["job_id"])
-                if inputs.status == "PENDING":
-                    # successful run
-                    if data["status"] == "SUCCESS":
-                        inputs.status = "SUCCESS"
-                        inputs.errors_warnings = data["errors_warnings"]
-                        inputs.inputs_file = data.get("inputs_file", None)
-                        inputs.save()
-                        submit_sim = SubmitSim(inputs, compute=Compute())
-                        submit_sim.submit()
-                    # failed run, exception was caught
-                    else:
-                        inputs.status = "FAIL"
-                        inputs.traceback = data["traceback"]
-                        inputs.save()
-                return Response(status=status.HTTP_200_OK)
-            else:
-                return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-
 class BaseCreateAPIView(APIView):
     authentication_classes = (
         SessionAuthentication,
@@ -243,6 +208,49 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
                 sim = get_object_or_404(Simulation, job_id=data["job_id"])
                 if sim.status == "PENDING":
                     self.record_outputs(sim, data)
+                return Response(status=status.HTTP_200_OK)
+            else:
+                return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class MyInputsAPIView(APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    def put(self, request, *args, **kwargs):
+        print("inputs api method=PUT", kwargs)
+        import time
+
+        time.sleep(2)
+        if request.user.username == "comp-api-user":
+            data = request.data
+            print("req")
+            print(data)
+            ser = InputsSerializer(data=request.data)
+            if ser.is_valid():
+                data = ser.validated_data
+                inputs = get_object_or_404(Inputs, job_id=data["job_id"])
+                print("data")
+                print(data)
+                if inputs.status == "PENDING":
+                    # successful run
+                    if data["status"] == "SUCCESS":
+                        inputs.status = "SUCCESS"
+                        inputs.errors_warnings = data["errors_warnings"]
+                        inputs.inputs_file = data.get("inputs_file", None)
+                        inputs.save()
+                        submit_sim = SubmitSim(inputs, compute=Compute())
+                        submit_sim.submit()
+                    # failed run, exception was caught
+                    else:
+                        inputs.status = "FAIL"
+                        inputs.traceback = data["traceback"]
+                        inputs.save()
                 return Response(status=status.HTTP_200_OK)
             else:
                 return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)

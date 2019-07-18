@@ -9,16 +9,19 @@ class OutputsSerializer(serializers.Serializer):
     traceback = serializers.CharField(required=False)
     model_version = serializers.CharField(required=False)
     meta = serializers.JSONField()
-    outputs = serializers.JSONField()
+    outputs = serializers.JSONField(required=False)
     # only used with v0!
     aggr_outputs = serializers.JSONField(required=False)
-    version = serializers.CharField()
+    version = serializers.CharField(required=False)
 
 
 class MiniSimulationSerializer(serializers.ModelSerializer):
+    api_url = serializers.CharField(source="get_absolute_api_url")
+    gui_url = serializers.CharField(source="get_absolute_url")
+
     class Meta:
         model = Simulation
-        fields = ("model_pk",)
+        fields = ("model_pk", "api_url", "gui_url")
 
 
 class InputsSerializer(serializers.ModelSerializer):
@@ -27,6 +30,7 @@ class InputsSerializer(serializers.ModelSerializer):
         choices=(("SUCCESS", "Success"), ("FAIL", "Fail")), required=False
     )
     sim = MiniSimulationSerializer(source="outputs", required=False)
+    api_url = serializers.CharField(source="get_absolute_api_url", required=False)
 
     class Meta:
         model = Inputs
@@ -40,6 +44,7 @@ class InputsSerializer(serializers.ModelSerializer):
             "status",
             "traceback",
             "sim",
+            "api_url",
         )
 
 

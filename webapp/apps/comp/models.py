@@ -80,6 +80,14 @@ class Inputs(models.Model):
     def pretty_meta_parameters(self):
         return json.dumps(self.meta_parameters, indent=4)
 
+    def get_absolute_api_url(self):
+        kwargs = {
+            "pk": self.pk,
+            "title": self.project.title,
+            "username": self.project.owner.user.username,
+        }
+        return reverse("detail_myinputs_api", kwargs=kwargs)
+
 
 class SimulationManager(models.Manager):
     def next_model_pk(self, project):

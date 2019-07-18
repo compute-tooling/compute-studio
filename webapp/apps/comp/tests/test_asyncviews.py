@@ -192,9 +192,7 @@ class TestAsyncAPI(CoreTestMixin):
             self.mockcompute.client = api_client
             monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
             put_adj_resp = api_client.put(
-                f"/{self.owner}/{self.title}/api/v1/myinputs/",
-                data=adj_callback_data,
-                format="json",
+                f"/inputs/api/", data=adj_callback_data, format="json"
             )
             assert put_adj_resp.status_code == 200
 

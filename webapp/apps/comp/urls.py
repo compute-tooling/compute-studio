@@ -20,9 +20,8 @@ urlpatterns = [
     path(
         "api/v1/myinputs/<int:pk>/",
         DetailMyInputsAPIView.as_view(),
-        name="myinputs_api",
+        name="detail_myinputs_api",
     ),
-    path("api/v1/myinputs/", MyInputsAPIView.as_view(), name="detail_myinputs_api"),
     path("api/v1/<int:model_pk>/", DetailAPIView.as_view(), name="detail_api"),
     path("<int:model_pk>/edit/", EditInputsView.as_view(), name="edit"),
     path("<int:model_pk>/download/", OutputsDownloadView.as_view(), name="download"),

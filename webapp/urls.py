@@ -32,6 +32,7 @@ urlpatterns = [
     path("users/", include("django.contrib.auth.urls")),
     path("billing/", include("webapp.apps.billing.urls")),
     path("outputs/api/", compviews.OutputsAPIView.as_view(), name="outputs_api"),
+    path("inputs/api/", compviews.MyInputsAPIView.as_view(), name="myinputs_api"),
     path(
         "<str:username>/<str:title>/detail/",
         publishviews.ProjectDetailView.as_view(),
