@@ -7,6 +7,7 @@ import axios from "axios";
 import { Formik, Field, FastField, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { RedMessage } from "./fields";
+import { LoadingModal, RunModal } from "./modal";
 import ReactLoading from "react-loading";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
@@ -15,9 +16,16 @@ axios.defaults.xsrfCookieName = "csrftoken";
 const domContainer = document.querySelector("#inputs-container");
 const requiredMessage = "This field is required.";
 
-var Schema = Yup.object().shape({});
-
 const initialValues = {};
+
+// need to require schema in model_parameters!
+const tbLabelSchema = Yup.object().shape({
+  year: Yup.number(),
+  MARS: Yup.string(),
+  idedtype: Yup.string(),
+  EIC: Yup.string(),
+  data_source: Yup.string(),
+});
 
 function makeID(title) {
   return title.replace(" ", "-");
@@ -28,13 +36,14 @@ function yupType(type) {
     return Yup.number()
       .integer()
       .nullable()
-      .transform(value => value === "" || value);
+      .transform(value => (!value ? null : value));
   } else if (type == "float") {
     return Yup.number()
       .nullable()
       .transform(value => (!value ? null : value));
   } else if (type == "bool") {
-    return Yup.bool();
+    return Yup.bool().nullable()
+      .transform(value => (!value ? null : value));
   } else if (type == "date") {
     return Yup.date();
   } else {
@@ -157,6 +166,7 @@ const LoadingElement = () => {
   );
 };
 
+
 class InputsForm extends React.Component {
   constructor(props) {
     super(props);
@@ -274,7 +284,6 @@ class InputsForm extends React.Component {
               for (const [paramName, paramData] of Object.entries(params)) {
                 var voList = [];
                 for (const [voStr, val] of Object.entries(paramData)) {
-                  console.log(paramName, val, !val);
                   var vo = {};
                   if (!val) {
                     continue;
@@ -287,6 +296,7 @@ class InputsForm extends React.Component {
                       var labelSplit = label.split("__");
                       vo[labelSplit[0]] = labelSplit[1];
                     }
+                    vo = tbLabelSchema.cast(vo)
                     vo["value"] = val;
                   }
                   voList.push(vo);
@@ -309,23 +319,25 @@ class InputsForm extends React.Component {
             this.props
               .doSubmit(formdata)
               .then(response => {
+                console.log("success");
                 actions.setSubmitting(false);
+                console.log(response.data.pk);
+                actions.setStatus({
+                  status: "PENDING",
+                  inputs_pk: response.data.pk,
+                  api_url: response.data.api_url,
+                });
               })
               .catch(error => {
                 console.log("error", error);
-                console.log(error.response.data);
-                actions.setSubmitting(false);
-                if (error.response.status == 400) {
-                  actions.setStatus(error.response.data);
-                } else if (error.response.status == 401) {
-                  actions.setStatus({
-                    auth: "You must be logged in to publish a model."
-                  });
-                }
               });
           }}
-          render={({ onChange, status, errors }) => (
+          render={({ handleSubmit, onChange, status, errors }) => (
             <Form>
+              {status && status.status === "PENDING" ? (
+                <LoadingModal inputs_url={status.api_url} />
+              ) : <div></div>}
+
               <div className="row">
                 <div className="col-4">
                   <ul className="list-unstyled components sticky-top scroll-y">
@@ -333,7 +345,7 @@ class InputsForm extends React.Component {
                       <div className="card card-body card-outer">
                         <div className="inputs-block">
                           <ul className="list-unstyled components">
-                            {Object.entries(meta_parameters).map(function(
+                            {Object.entries(meta_parameters).map(function (
                               mp_item,
                               ix
                             ) {
@@ -375,19 +387,12 @@ class InputsForm extends React.Component {
                       </div>
                     </li>
                     <li>
-                      <div className="card card-body card-outer">
-                        <button
-                          type="submit"
-                          className="btn btn-block btn-success"
-                        >
-                          <b>Run</b>
-                        </button>
-                      </div>
+                      <RunModal handleSubmit={handleSubmit} />
                     </li>
                   </ul>
                 </div>
                 <div className="col-8">
-                  {Object.entries(this.state.sects).map(function(
+                  {Object.entries(this.state.sects).map(function (
                     msect_item,
                     ix
                   ) {
@@ -410,7 +415,7 @@ class InputsForm extends React.Component {
                             className="card card-body card-inner"
                             style={{ padding: "0rem" }}
                           >
-                            {Object.entries(section_1_dict).map(function(
+                            {Object.entries(section_1_dict).map(function (
                               section_2_item,
                               ix
                             ) {
@@ -443,18 +448,18 @@ class InputsForm extends React.Component {
                                         style={{ padding: "0rem" }}
                                       >
                                         {Object.entries(section_2_dict).map(
-                                          function(param_list_item, ix) {
+                                          function (param_list_item, ix) {
                                             let section_2 = param_list_item[0];
                                             let param_list = param_list_item[1];
                                             return (
                                               <div key={section_2}>
                                                 <h3>{section_2}</h3>
-                                                {param_list.map(function(
+                                                {param_list.map(function (
                                                   param
                                                 ) {
                                                   let data =
                                                     model_parameters[msect][
-                                                      [param]
+                                                    [param]
                                                     ];
                                                   if (
                                                     Object.keys(
@@ -487,13 +492,13 @@ class InputsForm extends React.Component {
                                                       >
                                                         {Object.entries(
                                                           data.form_fields
-                                                        ).map(function(
+                                                        ).map(function (
                                                           form_field,
                                                           ix
                                                         ) {
                                                           let field_name = `adjustment.${msect}.${param}.${
                                                             form_field[0]
-                                                          }`;
+                                                            }`;
                                                           return (
                                                             <div
                                                               className={
@@ -509,7 +514,7 @@ class InputsForm extends React.Component {
                                                                 placeholder={valForForm(
                                                                   form_field[1]
                                                                 )}
-                                                                // type={typeMap[data.type]}
+                                                              // type={typeMap[data.type]}
                                                               />
                                                               <ErrorMessage
                                                                 name={
@@ -565,11 +570,11 @@ class InputsApp extends React.Component {
     const app_name = this.props.match.params.app_name;
     return axios
       .get(`/${username}/${app_name}/api/v1/inputs/`)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
         return response.data;
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.log(error);
       });
   }
@@ -582,8 +587,9 @@ class InputsApp extends React.Component {
     console.log(data);
     return axios
       .post(`/${username}/${app_name}/api/v1/`, data)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
+        return response;
         // window.location.replace("/");
       });
   }

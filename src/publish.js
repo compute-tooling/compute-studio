@@ -121,15 +121,15 @@ class PublishForm extends React.Component {
                   {status.project_exists}
                 </div>
               ) : (
-                <div />
-              )}
+                  <div />
+                )}
               {status && status.auth ? (
                 <div className="alert alert-danger" role="alert">
                   {status.auth}
                 </div>
               ) : (
-                <div />
-              )}
+                  <div />
+                )}
               <div className="mt-5">
                 <h3>About</h3>
                 <hr className="my-3" />
@@ -263,7 +263,7 @@ class CreateApp extends React.Component {
     this.doSubmit = this.doSubmit.bind(this);
   }
   doSubmit(data) {
-    return axios.post("/publish/api/", data).then(function(response) {
+    return axios.post("/publish/api/", data).then(function (response) {
       console.log("post", response);
       window.location.replace("/");
     });
@@ -305,11 +305,11 @@ class AppDetail extends React.Component {
     const app_name = this.props.match.params.app_name;
     return axios
       .get(`/publish/api/${username}/${app_name}/detail/`)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
         return response.data;
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.log(error);
       });
   }
@@ -320,7 +320,7 @@ class AppDetail extends React.Component {
     console.log(data);
     return axios
       .put(`/publish/api/${username}/${app_name}/detail/`, data)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
         window.location.replace("/");
       });
