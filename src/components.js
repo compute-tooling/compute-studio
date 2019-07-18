@@ -5,8 +5,7 @@ import ReactLoading from "react-loading";
 
 import { makeID } from "./utils";
 
-export const ParamElement = (...props) => {
-  var param_data = props[0].param_data;
+export const ParamElement = ({ param_data }) => {
   var tooltip = <div />;
   if (param_data.description) {
     tooltip = (
@@ -32,10 +31,7 @@ export const ParamElement = (...props) => {
   );
 };
 
-export const SectionHeader = (...props) => {
-  let title = props[0].title;
-  let size = props[0].size;
-  let label = props[0].label;
+export const SectionHeader = ({ title, size, label }) => {
   return (
     <h1 style={{ fontSize: { size } }}>
       {title}
