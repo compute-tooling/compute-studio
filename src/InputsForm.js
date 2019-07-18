@@ -6,7 +6,7 @@ import { Formik, Field, FastField, Form, ErrorMessage } from "formik";
 
 import { RedMessage } from "./fields";
 import { ParamElement, SectionHeader, LoadingElement } from "./components";
-import { LoadingModal, RunModal } from "./modal";
+import { ValidatingModal, RunModal } from "./modal";
 import { formikToJSON, convertToFormik } from "./ParamTools";
 import { makeID, valForForm } from "./utils";
 
@@ -89,7 +89,7 @@ class InputsForm extends React.Component {
           render={({ handleSubmit, onChange, status, errors }) => (
             <Form>
               {status && status.status === "PENDING" ? (
-                <LoadingModal inputs_url={status.api_url} />
+                <ValidatingModal inputs_url={status.api_url} />
               ) : <div></div>}
 
               <div className="row">

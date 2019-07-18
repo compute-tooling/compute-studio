@@ -3,7 +3,7 @@ import React from "react";
 import ReactLoading from "react-loading";
 import axios from "axios";
 
-export class LoadingModal extends React.Component {
+export class ValidatingModal extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -25,7 +25,6 @@ export class LoadingModal extends React.Component {
   }
 
   componentDidMount() {
-    console.log("mounted", this.state.inputs_url);
     this.timer = setInterval(() => {
       axios
         .get(this.state.inputs_url)
@@ -53,13 +52,13 @@ export class LoadingModal extends React.Component {
   }
 
   componentWillUnmount() {
-    console.log("unmounting???");
     clearInterval(this.timer);
   }
 
   render() {
     console.log("rendering modal")
     if (this.state.status != "PENDING" && this.state.simUrl) {
+      clearInterval(this.timer);
       window.location.replace(this.state.simUrl);
     }
     console.log(this.state);
