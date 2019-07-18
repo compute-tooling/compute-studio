@@ -21,8 +21,8 @@ def clean(word):
     return re.sub("[^0-9a-zA-Z]+", "", word).lower()
 
 
-def sim_endpoint(compute_task):
-    print(f"sim endpoint {compute_task}")
+def async_endpoint(compute_task):
+    print(f"async endpoint {compute_task}")
     data = request.get_data()
     inputs = json.loads(data)
     print("inputs", inputs)
@@ -52,7 +52,6 @@ def route_to_task(owner, app_name, endpoint, action):
     if task_name in celery_app.amqp.routes[0].map:
         return endpoint(task_name)
     else:
-        print("not available but submit anyways for debug")
         return json.dumps({"error": "invalid endpoint"}), 404
 
 
@@ -66,14 +65,14 @@ def endpoint_inputs(owner, app_name):
 @bp.route("/<owner>/<app_name>/parse", methods=["POST"])
 def endpoint_parse(owner, app_name):
     action = "inputs_parse"
-    endpoint = sync_endpoint
+    endpoint = async_endpoint
     return route_to_task(owner, app_name, endpoint, action)
 
 
 @bp.route("/<owner>/<app_name>/sim", methods=["POST"])
 def endpoint_sim(owner, app_name):
     action = "sim"
-    endpoint = sim_endpoint
+    endpoint = async_endpoint
     return route_to_task(owner, app_name, endpoint, action)
 
 
