@@ -29,8 +29,6 @@ def inputs_parse(self, meta_param_dict, adjustment, errors_warnings):
     # get ready for upcoming schema change moving from tuples to dicts.
     if isinstance(res, tuple):
         res = {"errors_warnings": res[0], "inputs_file": res[1]}
-    elif isinstance(res, dict):
-        return res
     else:
         res = {"errors_warnings": res}
     return res
