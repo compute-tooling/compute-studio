@@ -79,8 +79,8 @@ export const LoadingElement = () => {
   );
 };
 
-export const MetaParameters = ({ meta_parameters }) => {
-  console.log("meta params re-render");
+export const MetaParameters = React.memo(({ meta_parameters }) => {
+  // console.log("meta params re-render");
   return (
     <div className="card card-body card-outer">
       <div className="inputs-block">
@@ -118,10 +118,10 @@ export const MetaParameters = ({ meta_parameters }) => {
       </button>
     </div>
   );
-};
+});
 
-const Value = ({ fieldName, placeholder, propsValue, colClass }) => {
-  console.log("rendering component");
+const ValueComponent = ({ fieldName, placeholder, propsValue, colClass }) => {
+  // console.log("rendering component");
   return (
     <div className={colClass} key={makeID(fieldName)}>
       <FastField
@@ -135,6 +135,8 @@ const Value = ({ fieldName, placeholder, propsValue, colClass }) => {
   );
 };
 
+const Value = React.memo(ValueComponent);
+
 export const Param = ({ param, msect, data, values }) => {
   // console.log("re-rendering", param);
   // let data = model_parameters[msect][[param]];
@@ -144,10 +146,6 @@ export const Param = ({ param, msect, data, values }) => {
     var colClass = "col";
   }
   var paramElement = <ParamElement param_data={data} />;
-
-  const shouldComponentUpdate = (nextProps, nextState) => {
-    console.log("should update", nextProps, nextState);
-  };
 
   return (
     <div className="container" style={{ padding: "left 0" }} key={param}>
@@ -173,6 +171,47 @@ export const Param = ({ param, msect, data, values }) => {
     </div>
   );
 };
+
+// export class Param extends React.Component {
+//   constructor(props){
+//     super(props);
+//     this.state = {
+//       param: this.props.param,
+//       msect: this.props.msect,
+//       data: this.props.data,
+//       values: this.props.values,
+//       formikProps: this.props.formikProps,
+//     }
+//   }
+
+//   render() {
+//     let data = this.state.data;
+//     let param = this.state.param;
+//     return (
+//       <div className="container" style={{ padding: "left 0" }} key={param}>
+//       {paramElement}
+//       <div className="form-row has-statuses" style={{ marginLeft: "-20px" }}>
+//         {Object.entries(data.form_fields).map(function(form_field, ix) {
+//           let labels = form_field[0];
+//           let fieldName = `adjustment.${msect}.${param}.${labels}`;
+//           let placeholder = valForForm(form_field[1]);
+//           let value = values[labels];
+//           // console.log("value", value);
+//           return (
+//             <Value
+//               key={fieldName}
+//               fieldName={fieldName}
+//               placeholder={placeholder}
+//               value={value}
+//               colClass={colClass}
+//             />
+//           );
+//         })}
+//       </div>
+//     </div>
+//     )
+//   }
+// }
 
 export const Section2 = ({
   section_2,
