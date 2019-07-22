@@ -82,7 +82,6 @@ export const LoadingElement = () => {
 
 export const MetaParameters = React.memo(
   ({ meta_parameters, values }) => {
-    // console.log("meta params re-render");
     return (
       <div className="card card-body card-outer">
         <div className="inputs-block">
@@ -128,11 +127,10 @@ export const MetaParameters = React.memo(
   }
 );
 
-const ValueComponent = ({ fieldName, placeholder, propsValue, colClass }) => {
+const ValueComponent = ({ fieldName, placeholder, colClass }) => {
   return (
     <div className={colClass} key={makeID(fieldName)}>
       <FastField
-        value={propsValue}
         className="form-control"
         name={fieldName}
         placeholder={placeholder}
@@ -146,8 +144,6 @@ const Value = React.memo(ValueComponent);
 
 export const Param = React.memo(
   ({ param, msect, data, values }) => {
-    // console.log("re-rendering param");
-    // let data = model_parameters[msect][[param]];
     if (Object.keys(data.form_fields).length == 1) {
       var colClass = "col-6";
     } else {
@@ -163,14 +159,11 @@ export const Param = React.memo(
             let labels = form_field[0];
             let fieldName = `adjustment.${msect}.${param}.${labels}`;
             let placeholder = valForForm(form_field[1]);
-            let value = values[labels];
-            // console.log("value", value);
             return (
               <Value
                 key={fieldName}
                 fieldName={fieldName}
                 placeholder={placeholder}
-                value={value}
                 colClass={colClass}
               />
             );
@@ -187,7 +180,6 @@ export const Param = React.memo(
 const Section2 = React.memo(
   ({ section_2, param_list, msect, model_parameters, values }) => {
     let section_2_id = makeID(section_2);
-    console.log("section2 re-render");
     return (
       <div key={section_2_id}>
         <h3>{section_2}</h3>
@@ -219,7 +211,6 @@ const Section2 = React.memo(
 const Section1 = React.memo(
   ({ section_1, section_2_dict, msect, model_parameters, values }) => {
     let section_1_id = makeID(section_1);
-    console.log("section1 rerender");
     return (
       <div className="inputs-block" id={section_1_id} key={section_1_id}>
         <div
@@ -259,7 +250,16 @@ const Section1 = React.memo(
     );
   },
   (prevProps, nextProps) => {
-    return isEqual(prevProps.values, nextProps.values);
+    for (const [section2, paramList] of Object.entries(
+      prevProps.section_2_dict
+    )) {
+      for (const param of paramList) {
+        if (!isEqual(prevProps.values[param], nextProps.values[param])) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 );
 
