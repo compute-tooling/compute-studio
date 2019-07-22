@@ -58,8 +58,8 @@ class InputsForm extends React.Component {
         <Formik
           initialValues={initialValues}
           validationSchema={schema}
-          validateOnChange={false}
-          validateOnBlur={true}
+          validateOnChange={true}
+          validateOnBlur={false}
           onSubmit={(values, actions) => {
             const [meta_parameters, adjustment] = formikToJSON(values, this.state.schema, tbLabelSchema);
             console.log("submitting");
@@ -84,7 +84,7 @@ class InputsForm extends React.Component {
                 console.log("error", error);
               });
           }}
-          render={({ handleSubmit, onChange, status, errors }) => (
+          render={({ handleSubmit, handleChange, handleBlur, status, errors, values, setFieldValue }) => (
             <Form>
               {status && status.status === "PENDING" ? (
                 <ValidatingModal inputs_url={status.api_url} />
@@ -97,9 +97,10 @@ class InputsForm extends React.Component {
                       <MetaParameters
                         meta_parameters={meta_parameters}
                         handleSubmit={handleSubmit}
-                        onChange={onChange}
+                        handleChange={handleChange}
                         status={status}
                         errors={errors}
+                        values={values}
                       />
                     </li>
                     <li>
@@ -122,9 +123,12 @@ class InputsForm extends React.Component {
                         section_1_dict={section_1_dict}
                         model_parameters={model_parameters}
                         handleSubmit={handleSubmit}
-                        onChange={onChange}
+                        handleChange={handleChange}
                         status={status}
                         errors={errors}
+                        values={values}
+                        setFieldValue={setFieldValue}
+                        handleBlur={handleBlur}
                       />
                     );
                   })}
