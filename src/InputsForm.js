@@ -8,16 +8,14 @@ import { MetaParameters, MajorSection, LoadingElement } from "./components";
 import { ValidatingModal, RunModal } from "./modal";
 import { formikToJSON, convertToFormik } from "./ParamTools";
 
-
 // need to require schema in model_parameters!
 const tbLabelSchema = Yup.object().shape({
   year: Yup.number(),
   MARS: Yup.string(),
   idedtype: Yup.string(),
   EIC: Yup.string(),
-  data_source: Yup.string(),
+  data_source: Yup.string()
 });
-
 
 class InputsForm extends React.Component {
   constructor(props) {
@@ -32,7 +30,13 @@ class InputsForm extends React.Component {
   componentDidMount() {
     if (this.props.fetchInitialValues) {
       this.props.fetchInitialValues().then(data => {
-        const [initialValues, sects, model_parameters, meta_parameters, schema] = convertToFormik(data);
+        const [
+          initialValues,
+          sects,
+          model_parameters,
+          meta_parameters,
+          schema
+        ] = convertToFormik(data);
         this.setState({
           initialValues: initialValues,
           sects: sects,
@@ -61,7 +65,11 @@ class InputsForm extends React.Component {
           validateOnChange={true}
           validateOnBlur={false}
           onSubmit={(values, actions) => {
-            const [meta_parameters, adjustment] = formikToJSON(values, this.state.schema, tbLabelSchema);
+            const [meta_parameters, adjustment] = formikToJSON(
+              values,
+              this.state.schema,
+              tbLabelSchema
+            );
             console.log("submitting");
             console.log(adjustment);
             console.log(meta_parameters);
@@ -77,18 +85,28 @@ class InputsForm extends React.Component {
                 actions.setStatus({
                   status: "PENDING",
                   inputs_pk: response.data.pk,
-                  api_url: response.data.api_url,
+                  api_url: response.data.api_url
                 });
               })
               .catch(error => {
                 console.log("error", error);
               });
           }}
-          render={({ handleSubmit, handleChange, handleBlur, status, errors, values, setFieldValue }) => (
+          render={({
+            handleSubmit,
+            handleChange,
+            handleBlur,
+            status,
+            errors,
+            values,
+            setFieldValue
+          }) => (
             <Form>
               {status && status.status === "PENDING" ? (
                 <ValidatingModal inputs_url={status.api_url} />
-              ) : <div></div>}
+              ) : (
+                <div />
+              )}
 
               <div className="row">
                 <div className="col-4">
@@ -96,11 +114,11 @@ class InputsForm extends React.Component {
                     <li>
                       <MetaParameters
                         meta_parameters={meta_parameters}
-                        handleSubmit={handleSubmit}
-                        handleChange={handleChange}
-                        status={status}
-                        errors={errors}
-                        values={values}
+                        // handleSubmit={handleSubmit}
+                        // handleChange={handleChange}
+                        // status={status}
+                        // errors={errors}
+                        values={values.meta_parameters}
                       />
                     </li>
                     <li>
@@ -109,7 +127,7 @@ class InputsForm extends React.Component {
                   </ul>
                 </div>
                 <div className="col-8">
-                  {Object.entries(this.state.sects).map(function (
+                  {Object.entries(this.state.sects).map(function(
                     msect_item,
                     ix
                   ) {
@@ -142,5 +160,4 @@ class InputsForm extends React.Component {
   }
 }
 
-
-export { InputsForm }
+export { InputsForm };

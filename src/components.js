@@ -1,10 +1,11 @@
 "use strict";
 
 import React from "react";
+import isEqual from "react";
 import ReactLoading from "react-loading";
 import { Field, FastField, ErrorMessage } from "formik";
 
-import { makeID, valForForm } from "./utils";
+import { makeID, valForForm, shallowEqual } from "./utils";
 import { RedMessage } from "./fields";
 
 export const ParamElement = ({ param_data }) => {
@@ -79,49 +80,57 @@ export const LoadingElement = () => {
   );
 };
 
-export const MetaParameters = React.memo(({ meta_parameters }) => {
-  // console.log("meta params re-render");
-  return (
-    <div className="card card-body card-outer">
-      <div className="inputs-block">
-        <ul className="list-unstyled components">
-          {Object.entries(meta_parameters).map(function(mp_item, ix) {
-            let field_name = `meta_parameters.${mp_item[0]}`;
-            return (
-              <li key={field_name}>
-                <ParamElement param_data={meta_parameters[mp_item[0]]} />
-                <FastField
-                  name={field_name}
-                  placeholder={valForForm(mp_item[1].value[0].value)}
-                />
-                <ErrorMessage
-                  name={field_name}
-                  render={msg => <RedMessage msg={msg} />}
-                />
-              </li>
-            );
-          })}
-          <li>
-            <p className="form-text text-muted">
-              Click Reset to update the default values of the parameters.
-            </p>
-          </li>
-        </ul>
+export const MetaParameters = React.memo(
+  ({ meta_parameters, values }) => {
+    console.log("meta params re-render");
+    return (
+      <div className="card card-body card-outer">
+        <div className="inputs-block">
+          <ul className="list-unstyled components">
+            {Object.entries(meta_parameters).map(function(mp_item, ix) {
+              let paramName = `${mp_item[0]}`;
+              let fieldName = `meta_parameters.${paramName}`;
+              return (
+                <li key={fieldName}>
+                  <ParamElement param_data={meta_parameters[paramName]} />
+                  <FastField
+                    value={values[paramName]}
+                    name={fieldName}
+                    placeholder={valForForm(mp_item[1].value[0].value)}
+                  />
+                  <ErrorMessage
+                    name={fieldName}
+                    render={msg => <RedMessage msg={msg} />}
+                  />
+                </li>
+              );
+            })}
+            <li>
+              <p className="form-text text-muted">
+                Click Reset to update the default values of the parameters.
+              </p>
+            </li>
+          </ul>
+        </div>
+        <button
+          type="submit"
+          name="reset"
+          value="true"
+          className="btn btn-block btn-outline-dark"
+        >
+          Reset
+        </button>
       </div>
-      <button
-        type="submit"
-        name="reset"
-        value="true"
-        className="btn btn-block btn-outline-dark"
-      >
-        Reset
-      </button>
-    </div>
-  );
-});
+    );
+  },
+  (prevProps, nextProps) => {
+    console.log(prevProps, nextProps);
+    return shallowEqual(prevProps.values, nextProps.values);
+  }
+);
 
 const ValueComponent = ({ fieldName, placeholder, propsValue, colClass }) => {
-  // console.log("rendering component");
+  console.log("rendering component", fieldName);
   return (
     <div className={colClass} key={makeID(fieldName)}>
       <FastField
