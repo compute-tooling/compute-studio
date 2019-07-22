@@ -4,7 +4,12 @@ import * as Yup from "yup";
 import React from "react";
 import { Formik, Form } from "formik";
 
-import { MetaParameters, MajorSection, LoadingElement } from "./components";
+import {
+  MetaParameters,
+  MajorSection,
+  LoadingElement,
+  SectionHeaderList
+} from "./components";
 import { ValidatingModal, RunModal } from "./modal";
 import { formikToJSON, convertToFormik } from "./ParamTools";
 
@@ -57,6 +62,7 @@ class InputsForm extends React.Component {
     let model_parameters = this.state.model_parameters;
     let initialValues = this.state.initialValues;
     let schema = this.state.schema;
+    let sects = this.state.sects;
     return (
       <div>
         <Formik
@@ -122,15 +128,15 @@ class InputsForm extends React.Component {
                       />
                     </li>
                     <li>
+                      <SectionHeaderList sects={sects} />
+                    </li>
+                    <li>
                       <RunModal handleSubmit={handleSubmit} />
                     </li>
                   </ul>
                 </div>
                 <div className="col-8">
-                  {Object.entries(this.state.sects).map(function(
-                    msect_item,
-                    ix
-                  ) {
+                  {Object.entries(sects).map(function(msect_item, ix) {
                     // msect --> section_1: dict(dict) --> section_2: dict(dict)
                     let msect = msect_item[0];
                     let section_1_dict = msect_item[1];

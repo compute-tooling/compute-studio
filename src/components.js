@@ -24,13 +24,11 @@ export const ParamElement = ({ param_data }) => {
     );
   }
   return (
-    // <div className="container" style={{ padding: "left 0" }}>
     <div className="row has-statuses col-xs-12">
       <label>
         {param_data.title} {tooltip}
       </label>
     </div>
-    // </div>
   );
 };
 
@@ -303,3 +301,51 @@ export const MajorSection = React.memo(
     );
   }
 );
+
+export const SectionHeaderList = ({ sects }) => {
+  return (
+    <div className="card card-body card-outer">
+      {Object.entries(sects).map(([msect, section1], ix) => {
+        return (
+          <div
+            className="card card-body card-inner mb-1 mr-1"
+            key={`${msect}-header-card`}
+          >
+            <div className="list-group">
+              <a
+                className="list-group-item list-group-item-action mt-0"
+                href={`#${makeID(msect)}`}
+                key={`#${makeID(msect)}-msect-panel`}
+                style={{
+                  border: "0px",
+                  padding: "0rem",
+                  color: "inherit"
+                }}
+              >
+                <h3 style={{ color: "inherit" }}>{msect}</h3>
+              </a>
+              {Object.entries(section1).map(
+                ([section1Title, section2Params], ix) => {
+                  return (
+                    <a
+                      className="list-group-item list-group-item-action"
+                      href={`#${makeID(section1Title)}`}
+                      key={`#${makeID(section1Title)}-section1-panel`}
+                      style={{
+                        padding: ".3rem 0rem",
+                        border: "0px",
+                        color: "inherit"
+                      }}
+                    >
+                      {section1Title}
+                    </a>
+                  );
+                }
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
