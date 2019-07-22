@@ -62,8 +62,8 @@ class InputsForm extends React.Component {
         <Formik
           initialValues={initialValues}
           validationSchema={schema}
-          validateOnChange={true}
-          validateOnBlur={false}
+          validateOnChange={false}
+          validateOnBlur={true}
           onSubmit={(values, actions) => {
             const [meta_parameters, adjustment] = formikToJSON(
               values,

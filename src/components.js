@@ -1,9 +1,9 @@
 "use strict";
 
 import React from "react";
-import isEqual from "react";
 import ReactLoading from "react-loading";
 import { Field, FastField, ErrorMessage } from "formik";
+import { isEqual } from "lodash/lang";
 
 import { makeID, valForForm, shallowEqual } from "./utils";
 import { RedMessage } from "./fields";
@@ -82,7 +82,7 @@ export const LoadingElement = () => {
 
 export const MetaParameters = React.memo(
   ({ meta_parameters, values }) => {
-    console.log("meta params re-render");
+    // console.log("meta params re-render");
     return (
       <div className="card card-body card-outer">
         <div className="inputs-block">
@@ -124,13 +124,11 @@ export const MetaParameters = React.memo(
     );
   },
   (prevProps, nextProps) => {
-    console.log(prevProps, nextProps);
-    return shallowEqual(prevProps.values, nextProps.values);
+    return isEqual(prevProps.values, nextProps.values);
   }
 );
 
 const ValueComponent = ({ fieldName, placeholder, propsValue, colClass }) => {
-  console.log("rendering component", fieldName);
   return (
     <div className={colClass} key={makeID(fieldName)}>
       <FastField
@@ -146,140 +144,147 @@ const ValueComponent = ({ fieldName, placeholder, propsValue, colClass }) => {
 
 const Value = React.memo(ValueComponent);
 
-export const Param = ({ param, msect, data, values }) => {
-  // console.log("re-rendering", param);
-  // let data = model_parameters[msect][[param]];
-  if (Object.keys(data.form_fields).length == 1) {
-    var colClass = "col-6";
-  } else {
-    var colClass = "col";
-  }
-  var paramElement = <ParamElement param_data={data} />;
+export const Param = React.memo(
+  ({ param, msect, data, values }) => {
+    // console.log("re-rendering param");
+    // let data = model_parameters[msect][[param]];
+    if (Object.keys(data.form_fields).length == 1) {
+      var colClass = "col-6";
+    } else {
+      var colClass = "col";
+    }
+    var paramElement = <ParamElement param_data={data} />;
 
-  return (
-    <div className="container" style={{ padding: "left 0" }} key={param}>
-      {paramElement}
-      <div className="form-row has-statuses" style={{ marginLeft: "-20px" }}>
-        {Object.entries(data.form_fields).map(function(form_field, ix) {
-          let labels = form_field[0];
-          let fieldName = `adjustment.${msect}.${param}.${labels}`;
-          let placeholder = valForForm(form_field[1]);
-          let value = values[labels];
-          // console.log("value", value);
+    return (
+      <div className="container" style={{ padding: "left 0" }} key={param}>
+        {paramElement}
+        <div className="form-row has-statuses" style={{ marginLeft: "-20px" }}>
+          {Object.entries(data.form_fields).map(function(form_field, ix) {
+            let labels = form_field[0];
+            let fieldName = `adjustment.${msect}.${param}.${labels}`;
+            let placeholder = valForForm(form_field[1]);
+            let value = values[labels];
+            // console.log("value", value);
+            return (
+              <Value
+                key={fieldName}
+                fieldName={fieldName}
+                placeholder={placeholder}
+                value={value}
+                colClass={colClass}
+              />
+            );
+          })}
+        </div>
+      </div>
+    );
+  },
+  (prevProps, nextProps) => {
+    return isEqual(prevProps.values, nextProps.values);
+  }
+);
+
+const Section2 = React.memo(
+  ({ section_2, param_list, msect, model_parameters, values }) => {
+    let section_2_id = makeID(section_2);
+    console.log("section2 re-render");
+    return (
+      <div key={section_2_id}>
+        <h3>{section_2}</h3>
+        {param_list.map(function(param) {
           return (
-            <Value
-              key={fieldName}
-              fieldName={fieldName}
-              placeholder={placeholder}
-              value={value}
-              colClass={colClass}
+            <Param
+              key={`${param}-component`}
+              param={param}
+              msect={msect}
+              data={model_parameters[msect][param]}
+              values={values[param]}
+              // {...props}
             />
           );
         })}
       </div>
-    </div>
-  );
-};
+    );
+  },
+  (prevProps, nextProps) => {
+    for (const param of prevProps.param_list) {
+      if (!isEqual(prevProps.values[param], nextProps.values[param])) {
+        return false;
+      }
+    }
+    return true;
+  }
+);
 
-// export class Param extends React.Component {
-//   constructor(props){
-//     super(props);
-//     this.state = {
-//       param: this.props.param,
-//       msect: this.props.msect,
-//       data: this.props.data,
-//       values: this.props.values,
-//       formikProps: this.props.formikProps,
-//     }
-//   }
+const Section1 = React.memo(
+  ({ section_1, section_2_dict, msect, model_parameters, values }) => {
+    let section_1_id = makeID(section_1);
+    console.log("section1 rerender");
+    return (
+      <div className="inputs-block" id={section_1_id} key={section_1_id}>
+        <div
+          className="card card-body card-outer mb-3 shadow-sm"
+          style={{ padding: "1rem" }}
+        >
+          <SectionHeader title={section_1} size={"1rem"} label="section-1" />
+          <div
+            className="collapse show collapse-plus-minus"
+            id={`${makeID(section_1)}-collapse-section-1`}
+          >
+            <div
+              className="card card-body card-inner mb-3"
+              style={{ padding: "0rem" }}
+            >
+              {Object.entries(section_2_dict).map(function(
+                param_list_item,
+                ix
+              ) {
+                let section_2 = param_list_item[0];
+                let param_list = param_list_item[1];
+                return (
+                  <Section2
+                    key={`${makeID(section_2)}-component`}
+                    section_2={section_2}
+                    param_list={param_list}
+                    msect={msect}
+                    model_parameters={model_parameters}
+                    values={values}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  },
+  (prevProps, nextProps) => {
+    return isEqual(prevProps.values, nextProps.values);
+  }
+);
 
-//   render() {
-//     let data = this.state.data;
-//     let param = this.state.param;
-//     return (
-//       <div className="container" style={{ padding: "left 0" }} key={param}>
-//       {paramElement}
-//       <div className="form-row has-statuses" style={{ marginLeft: "-20px" }}>
-//         {Object.entries(data.form_fields).map(function(form_field, ix) {
-//           let labels = form_field[0];
-//           let fieldName = `adjustment.${msect}.${param}.${labels}`;
-//           let placeholder = valForForm(form_field[1]);
-//           let value = values[labels];
-//           // console.log("value", value);
-//           return (
-//             <Value
-//               key={fieldName}
-//               fieldName={fieldName}
-//               placeholder={placeholder}
-//               value={value}
-//               colClass={colClass}
-//             />
-//           );
-//         })}
-//       </div>
-//     </div>
-//     )
-//   }
-// }
-
-export const Section2 = ({
-  section_2,
-  param_list,
-  msect,
-  model_parameters,
-  values
-}) => {
-  let section_2_id = makeID(section_2);
-  return (
-    <div key={section_2_id}>
-      <h3>{section_2}</h3>
-      {param_list.map(function(param) {
-        return (
-          <Param
-            key={`${param}-component`}
-            param={param}
-            msect={msect}
-            data={model_parameters[msect][param]}
-            values={values[param]}
-            // {...props}
-          />
-        );
-      })}
-    </div>
-  );
-};
-
-export const Section1 = ({
-  section_1,
-  section_2_dict,
-  msect,
-  model_parameters,
-  ...props
-}) => {
-  let section_1_id = makeID(section_1);
-  return (
-    <div className="inputs-block" id={section_1_id} key={section_1_id}>
-      <div
-        className="card card-body card-outer mb-3 shadow-sm"
-        style={{ padding: "1rem" }}
-      >
-        <SectionHeader title={section_1} size={"1rem"} label="section-1" />
+export const MajorSection = React.memo(
+  ({ msect, section_1_dict, model_parameters, ...props }) => {
+    return (
+      <div className="card card-body card-outer" key={msect}>
+        <SectionHeader title={msect} size="2.9rem" label="major" />
+        <hr className="mb-3" style={{ borderTop: "0" }} />
         <div
           className="collapse show collapse-plus-minus"
-          id={`${makeID(section_1)}-collapse-section-1`}
+          id={`${makeID(msect)}-collapse-major`}
         >
           <div
-            className="card card-body card-inner mb-3"
+            className="card card-body card-inner"
             style={{ padding: "0rem" }}
           >
-            {Object.entries(section_2_dict).map(function(param_list_item, ix) {
-              let section_2 = param_list_item[0];
-              let param_list = param_list_item[1];
+            {Object.entries(section_1_dict).map(function(section_2_item, ix) {
+              let section_1 = section_2_item[0];
+              let section_2_dict = section_2_item[1];
               return (
-                <Section2
-                  key={`${makeID(section_2)}-component`}
-                  section_2={section_2}
-                  param_list={param_list}
+                <Section1
+                  key={`${makeID(section_1)}-component`}
+                  section_1={section_1}
+                  section_2_dict={section_2_dict}
                   msect={msect}
                   model_parameters={model_parameters}
                   values={props.values.adjustment[msect]}
@@ -289,41 +294,12 @@ export const Section1 = ({
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-export const MajorSection = ({
-  msect,
-  section_1_dict,
-  model_parameters,
-  ...props
-}) => {
-  return (
-    <div className="card card-body card-outer" key={msect}>
-      <SectionHeader title={msect} size="2.9rem" label="major" />
-      <hr className="mb-3" style={{ borderTop: "0" }} />
-      <div
-        className="collapse show collapse-plus-minus"
-        id={`${makeID(msect)}-collapse-major`}
-      >
-        <div className="card card-body card-inner" style={{ padding: "0rem" }}>
-          {Object.entries(section_1_dict).map(function(section_2_item, ix) {
-            let section_1 = section_2_item[0];
-            let section_2_dict = section_2_item[1];
-            return (
-              <Section1
-                key={`${makeID(section_1)}-component`}
-                section_1={section_1}
-                section_2_dict={section_2_dict}
-                msect={msect}
-                model_parameters={model_parameters}
-                {...props}
-              />
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
+    );
+  },
+  (prevProps, nextProps) => {
+    return isEqual(
+      prevProps.values.adjustment[prevProps.msect],
+      nextProps.values.adjustment[prevProps.msect]
+    );
+  }
+);
