@@ -1,7 +1,7 @@
 "use strict";
 
 export function makeID(title) {
-  return title.replace(" ", "-");
+  return title.split(" ").join("-");
 }
 
 export function valForForm(val) {
