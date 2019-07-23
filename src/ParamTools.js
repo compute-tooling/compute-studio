@@ -1,4 +1,4 @@
-import * as Yup from "yup";
+import * as yup from "yup";
 
 const integerMsg = "Must be an integer.";
 const floatMsg = "Must be a floating point number.";
@@ -10,28 +10,32 @@ const oneOfMsg = "Must be one of the following values: ${values}";
 
 export function yupType(type) {
   if (type == "int") {
-    return Yup.number()
+    return yup
+      .number()
       .integer(integerMsg)
       .typeError(integerMsg)
       .nullable()
       .transform(value => (value === "" ? null : value));
   } else if (type == "float") {
-    return Yup.number()
+    return yup
+      .number()
       .typeError(floatMsg)
       .nullable()
       .transform(value => (value === "" ? null : value));
   } else if (type == "bool") {
-    return Yup.bool()
+    return yup
+      .bool()
       .typeError(boolMsg)
       .nullable()
       .transform(value => (value === "" ? null : value));
   } else if (type == "date") {
-    return Yup.date(dateMsg)
+    return yup
+      .date(dateMsg)
       .typeError(dateMsg)
       .nullable()
       .transform(value => (value === "" ? null : value));
   } else {
-    return Yup.string();
+    return yup.string();
   }
 }
 
@@ -116,9 +120,9 @@ export function convertToFormik(data) {
         param_data.form_fields[field_name] = vals.value;
         paramYupShape[field_name] = yupObj;
       }
-      msectShape[param] = Yup.object().shape(paramYupShape);
+      msectShape[param] = yup.object().shape(paramYupShape);
     }
-    adjShape[msect] = Yup.object().shape(msectShape);
+    adjShape[msect] = yup.object().shape(msectShape);
   }
   var mpShape = {};
   for (const [mp_name, mp_data] of Object.entries(data.meta_parameters)) {
@@ -127,9 +131,9 @@ export function convertToFormik(data) {
     initialValues["meta_parameters"][mp_name] = mp_data.value[0].value;
   }
 
-  var schema = Yup.object().shape({
-    adjustment: Yup.object().shape(adjShape),
-    meta_parameters: Yup.object().shape(mpShape)
+  var schema = yup.object().shape({
+    adjustment: yup.object().shape(adjShape),
+    meta_parameters: yup.object().shape(mpShape)
   });
 
   return [

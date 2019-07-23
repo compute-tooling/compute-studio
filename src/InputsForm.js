@@ -1,6 +1,6 @@
 "use strict";
 
-import * as Yup from "yup";
+import * as yup from "yup";
 import React from "react";
 import { Formik, Form } from "formik";
 
@@ -14,12 +14,12 @@ import { ValidatingModal, RunModal } from "./modal";
 import { formikToJSON, convertToFormik } from "./ParamTools";
 
 // need to require schema in model_parameters!
-const tbLabelSchema = Yup.object().shape({
-  year: Yup.number(),
-  MARS: Yup.string(),
-  idedtype: Yup.string(),
-  EIC: Yup.string(),
-  data_source: Yup.string()
+const tbLabelSchema = yup.object().shape({
+  year: yup.number(),
+  MARS: yup.string(),
+  idedtype: yup.string(),
+  EIC: yup.string(),
+  data_source: yup.string()
 });
 
 class InputsForm extends React.Component {

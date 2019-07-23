@@ -5,7 +5,7 @@ import React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import axios from "axios";
 import { Formik, Field, Form, ErrorMessage } from "formik";
-import * as Yup from "yup";
+import * as yup from "yup";
 import {
   TextField,
   TextAreaField,
@@ -20,17 +20,16 @@ axios.defaults.xsrfCookieName = "csrftoken";
 const domContainer = document.querySelector("#publish-container");
 const requiredMessage = "This field is required.";
 
-var Schema = Yup.object().shape({
-  title: Yup.string().required(requiredMessage),
-  oneliner: Yup.string().required(requiredMessage),
-  description: Yup.string().required(requiredMessage),
-  repo_url: Yup.string().url(),
-  // server_size: Yup.mixed().oneOf([[4, 2], [8, 4], [16, 8], [32, 16], [64, 32]]),
-  exp_task_time: Yup.number().min(
-    0,
-    "Expected task time must be greater than ${min}."
-  ),
-  listed: Yup.boolean().required(requiredMessage)
+var Schema = yup.object().shape({
+  title: yup.string().required(requiredMessage),
+  oneliner: yup.string().required(requiredMessage),
+  description: yup.string().required(requiredMessage),
+  repo_url: yup.string().url(),
+  // server_size: yup.mixed().oneOf([[4, 2], [8, 4], [16, 8], [32, 16], [64, 32]]),
+  exp_task_time: yup
+    .number()
+    .min(0, "Expected task time must be greater than ${min}."),
+  listed: yup.boolean().required(requiredMessage)
 });
 
 const initialValues = {
@@ -121,15 +120,15 @@ class PublishForm extends React.Component {
                   {status.project_exists}
                 </div>
               ) : (
-                  <div />
-                )}
+                <div />
+              )}
               {status && status.auth ? (
                 <div className="alert alert-danger" role="alert">
                   {status.auth}
                 </div>
               ) : (
-                  <div />
-                )}
+                <div />
+              )}
               <div className="mt-5">
                 <h3>About</h3>
                 <hr className="my-3" />
@@ -263,7 +262,7 @@ class CreateApp extends React.Component {
     this.doSubmit = this.doSubmit.bind(this);
   }
   doSubmit(data) {
-    return axios.post("/publish/api/", data).then(function (response) {
+    return axios.post("/publish/api/", data).then(function(response) {
       console.log("post", response);
       window.location.replace("/");
     });
@@ -305,11 +304,11 @@ class AppDetail extends React.Component {
     const app_name = this.props.match.params.app_name;
     return axios
       .get(`/publish/api/${username}/${app_name}/detail/`)
-      .then(function (response) {
+      .then(function(response) {
         console.log(response);
         return response.data;
       })
-      .catch(function (error) {
+      .catch(function(error) {
         console.log(error);
       });
   }
@@ -320,7 +319,7 @@ class AppDetail extends React.Component {
     console.log(data);
     return axios
       .put(`/publish/api/${username}/${app_name}/detail/`, data)
-      .then(function (response) {
+      .then(function(response) {
         console.log(response);
         window.location.replace("/");
       });
