@@ -1,31 +1,39 @@
-
-
 import * as Yup from "yup";
 
+const integerMsg = "Must be an integer.";
+const floatMsg = "Must be a floating point number.";
+const dateMsg = "Must be a date.";
+const boolMsg = "Must be a boolean value.";
+const minMsg = "Must be greater than or equal to ${min}";
+const maxMsg = "Must be less than or equal to ${max}";
+const oneOfMsg = "Must be one of the following values: ${values}";
 
 export function yupType(type) {
   if (type == "int") {
     return Yup.number()
-      .integer()
+      .integer(integerMsg)
+      .typeError(integerMsg)
       .nullable()
-      .transform(value => (!value ? null : value));
+      .transform(value => (value === "" ? null : value));
   } else if (type == "float") {
     return Yup.number()
+      .typeError(floatMsg)
       .nullable()
-      .transform(value => (!value ? null : value));
+      .transform(value => (value === "" ? null : value));
   } else if (type == "bool") {
-    return Yup.bool().nullable()
-      .transform(value => (!value ? null : value));
+    return Yup.bool()
+      .typeError(boolMsg)
+      .nullable()
+      .transform(value => (value === "" ? null : value));
   } else if (type == "date") {
-    return Yup.date();
+    return Yup.date(dateMsg)
+      .typeError(dateMsg)
+      .nullable()
+      .transform(value => (value === "" ? null : value));
   } else {
     return Yup.string();
   }
 }
-
-const minMsg = "Must be greater than or equal to ${min}";
-const maxMsg = "Must be less than or equal to ${max}";
-const oneOfMsg = "Must be one of the following values: ${values}";
 
 export function yupValidator(params, param_data) {
   let yupObj = yupType(param_data.type);
@@ -53,7 +61,6 @@ export function yupValidator(params, param_data) {
   }
   return yupObj;
 }
-
 
 export function convertToFormik(data) {
   var initialValues = { adjustment: {}, meta_parameters: {} };
@@ -125,9 +132,14 @@ export function convertToFormik(data) {
     meta_parameters: Yup.object().shape(mpShape)
   });
 
-  return [initialValues, sects, data.model_parameters, data.meta_parameters, schema];
+  return [
+    initialValues,
+    sects,
+    data.model_parameters,
+    data.meta_parameters,
+    schema
+  ];
 }
-
 
 export function formikToJSON(values, schema, labelSchema) {
   let data = schema.cast(values);
@@ -150,7 +162,7 @@ export function formikToJSON(values, schema, labelSchema) {
             var labelSplit = label.split("__");
             vo[labelSplit[0]] = labelSplit[1];
           }
-          vo = labelSchema.cast(vo)
+          vo = labelSchema.cast(vo);
           vo["value"] = val;
         }
         voList.push(vo);
@@ -160,9 +172,7 @@ export function formikToJSON(values, schema, labelSchema) {
       }
     }
   }
-  for (const [mp_name, mp_val] of Object.entries(
-    data.meta_parameters
-  )) {
+  for (const [mp_name, mp_val] of Object.entries(data.meta_parameters)) {
     meta_parameters[mp_name] = mp_val;
   }
 
