@@ -2,21 +2,22 @@
 
 {% for project, queryset in runs.items %}
 <div class="card card-body card-outer mb-4">
-    <h5><a href="/{{project}}/">{{project}}</a>
-    <div class="float-right">
+    <div class="float-left">
+      <h5>
       <button
-        class="btn collapse-button"
+        class="btn btn collapse-button mr-3"
         type="button"
         data-toggle="collapse"
         data-target="#{{project|make_id}}-collapse-major"
         aria-expanded="false"
         aria-controls="{{project|make_id}}-collapse-major"
         style="margin-left:20px;">
-        <i class="far fa-plus-square" style="size:5x;" ></i>
+        <i class="fas fa-chevron-right" style="size:5x;" ></i>
       </button>
+      <a href="/{{project}}/">{{project}}</a></h5>
     </div>
   </h5>
-  <div class="collapse collapse-plus-minus" id="{{project|make_id}}-collapse-major">
+  <div class="collapse collapse-arrow-minus" id="{{project|make_id}}-collapse-major">
     <table class="container table table-responsive-md">
       <tr>
         <th>Output</th>
