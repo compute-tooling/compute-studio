@@ -8,6 +8,14 @@ const minMsg = "Must be greater than or equal to ${min}";
 const maxMsg = "Must be less than or equal to ${max}";
 const oneOfMsg = "Must be one of the following values: ${values}";
 
+function transform(value, originalValue) {
+  if (originalValue.trim() === "" || originalValue.trim() === "*") {
+    return null;
+  } else {
+    return value;
+  }
+}
+
 export function yupType(type) {
   if (type == "int") {
     return yup
@@ -15,25 +23,25 @@ export function yupType(type) {
       .integer(integerMsg)
       .typeError(integerMsg)
       .nullable()
-      .transform(value => (value === "" ? null : value));
+      .transform(transform);
   } else if (type == "float") {
     return yup
       .number()
       .typeError(floatMsg)
       .nullable()
-      .transform(value => (value === "" ? null : value));
+      .transform(transform);
   } else if (type == "bool") {
     return yup
       .bool()
       .typeError(boolMsg)
       .nullable()
-      .transform(value => (value === "" ? null : value));
+      .transform(transform);
   } else if (type == "date") {
     return yup
       .date(dateMsg)
       .typeError(dateMsg)
       .nullable()
-      .transform(value => (value === "" ? null : value));
+      .transform(tranform);
   } else {
     return yup.string();
   }
