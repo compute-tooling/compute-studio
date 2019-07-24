@@ -68,6 +68,15 @@ $(document).ready(function() {
     btn.html('<i class="far fa-minus-square" style="size:5x;" ></i>');
   });
 
+  $(".collapse-arrow-minus").on("hidden.bs.collapse", function() {
+    btn = $(`[data-target="#${$(this).attr("id")}"]`);
+    btn.html('<i class="fas fa-chevron-right" style="size:5x;" ></i>');
+  });
+  $(".collapse-arrow-minus").on("show.bs.collapse", function() {
+    btn = $(`[data-target="#${$(this).attr("id")}"]`);
+    btn.html('<i class="fas fa-chevron-down" style="size:5x;" ></i>');
+  });
+
   // Show help message on 'change' events.
   $(".metaparam-field").change(function() {
     $("#metaparam-msg").removeClass("d-none");
