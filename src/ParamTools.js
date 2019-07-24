@@ -9,11 +9,20 @@ const maxMsg = "Must be less than or equal to ${max}";
 const oneOfMsg = "Must be one of the following values: ${values}";
 
 function transform(value, originalValue) {
-  if (originalValue.trim() === "" || originalValue.trim() === "*") {
+  console.log("value", value, originalValue);
+  if (
+    typeof originalValue === "string" &&
+    (originalValue.trim() === "" || originalValue.trim() === "*")
+  ) {
     return null;
   } else {
     return value;
   }
+}
+
+function transformArray(value, originalValue) {
+  console.log(value, originalValue);
+  return originalValue.split(",");
 }
 
 export function yupType(type) {
@@ -47,7 +56,7 @@ export function yupType(type) {
   }
 }
 
-export function yupValidator(params, param_data) {
+export function yupValidator(params, param_data, extend = false) {
   let yupObj = yupType(param_data.type);
   if (!("validators" in param_data) || param_data.type == "bool") {
     return yupObj;
@@ -71,6 +80,13 @@ export function yupValidator(params, param_data) {
   if ("choice" in param_data.validators) {
     yupObj = yupObj.oneOf(param_data.validators.choice.choices, oneOfMsg);
   }
+
+  if (extend) {
+    yupObj = yup
+      .array()
+      .of(yupObj)
+      .transform(transformArray);
+  }
   return yupObj;
 }
 
@@ -80,6 +96,7 @@ export function convertToFormik(data) {
   var section_1 = "";
   var section_2 = "";
   var adjShape = {};
+  const extend = true;
   for (const [msect, params] of Object.entries(data.model_parameters)) {
     var msectShape = {};
     sects[msect] = {};
@@ -105,7 +122,7 @@ export function convertToFormik(data) {
       }
       sects[msect][section_1][section_2].push(param);
 
-      var yupObj = yupValidator(params, param_data);
+      var yupObj = yupValidator(params, param_data, extend);
 
       // Define form_fields from value objects.
       initialValues.adjustment[msect][param] = {};
