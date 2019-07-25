@@ -82,21 +82,22 @@ class InputsForm extends React.Component {
             let formdata = new FormData();
             formdata.append("adjustment", JSON.stringify(adjustment));
             formdata.append("meta_parameters", JSON.stringify(meta_parameters));
-            this.props
-              .doSubmit(formdata)
-              .then(response => {
-                console.log("success");
-                actions.setSubmitting(false);
-                console.log(response.data.pk);
-                actions.setStatus({
-                  status: "PENDING",
-                  inputs_pk: response.data.pk,
-                  api_url: response.data.api_url
-                });
-              })
-              .catch(error => {
-                console.log("error", error);
-              });
+            alert(JSON.stringify(adjustment, null, 4));
+            // this.props
+            //   .doSubmit(formdata)
+            //   .then(response => {
+            //     console.log("success");
+            //     actions.setSubmitting(false);
+            //     console.log(response.data.pk);
+            //     actions.setStatus({
+            //       status: "PENDING",
+            //       inputs_pk: response.data.pk,
+            //       api_url: response.data.api_url
+            //     });
+            //   })
+            //   .catch(error => {
+            //     console.log("error", error);
+            //   });
           }}
           render={({
             handleSubmit,
