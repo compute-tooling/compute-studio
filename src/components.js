@@ -99,8 +99,7 @@ export const MetaParameters = React.memo(
                   {getField(
                     fieldName,
                     mp_item[1],
-                    valForForm(mp_item[1].value[0].value),
-                    false
+                    valForForm(mp_item[1].value[0].value)
                   )}
                   <ErrorMessage
                     name={fieldName}
@@ -136,10 +135,22 @@ export const MetaParameters = React.memo(
   }
 );
 
-const ValueComponent = ({ fieldName, placeholder, colClass, data }) => {
+const ValueComponent = ({
+  fieldName,
+  placeholder,
+  colClass,
+  data,
+  isTouched
+}) => {
+  let style = isTouched ? { backgroundColor: "rgba(102, 175, 233, 0.2)" } : {};
   return (
     <div className={colClass} key={makeID(fieldName)}>
-      {getField(fieldName, data, placeholder, true)}
+      {getField(fieldName, data, placeholder, style, true)}
+      {isTouched ? (
+        <small className="ml-2" style={{ color: "#869191" }}>
+          Default: {placeholder}
+        </small>
+      ) : null}
       <ErrorMessage name={fieldName} render={msg => <RedMessage msg={msg} />} />
     </div>
   );
@@ -160,7 +171,6 @@ export const Param = React.memo(
       var colClass = "col";
     }
     var paramElement = <ParamElement param_data={data} />;
-
     return (
       <div className="container" style={{ padding: "left 0" }} key={param}>
         {paramElement}
@@ -176,6 +186,7 @@ export const Param = React.memo(
                 placeholder={placeholder}
                 colClass={colClass}
                 data={data}
+                isTouched={labels in values && values[labels]}
               />
             );
           })}

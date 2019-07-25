@@ -115,12 +115,10 @@ class InputsForm extends React.Component {
               ) : (
                 <div />
               )}
-
               <div className="row">
                 <div className="col-4">
                   <ul className="list-unstyled components sticky-top scroll-y">
                     <li>
-                      {console.log("touched1", touched)}
                       <MetaParameters
                         meta_parameters={meta_parameters}
                         // handleSubmit={handleSubmit}

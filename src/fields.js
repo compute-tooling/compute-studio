@@ -6,7 +6,8 @@ hljs.registerLanguage("json", json);
 
 import "highlight.js/styles/default.css";
 import React from "react";
-import { Field } from "formik";
+import Select from "react-select";
+import { FastField } from "formik";
 
 var Remarkable = require("remarkable");
 
@@ -213,38 +214,88 @@ export const ServerSizeField = ({
   );
 };
 
-export const Param = ({ field, form: { touched, errors }, ...props }) => {
-  var element = (
-    <input
-      className="form-control"
-      {...field}
-      {...props}
-      onChange={field.onChange}
+export const SelectField = ({ field, form, ...props }) => {
+  const handleChange = option => {
+    if (Array.isArray(option)) {
+      var value = option.map(op => op.value);
+    } else {
+      var value = option.value;
+    }
+    form.setFieldValue(field.name, value);
+    form.setFieldTouched(field.name, true);
+  };
+  let style = props.style;
+  return (
+    <Select
+      isMulti={!!props.isMulti ? props.isMulti : false}
+      options={props.options}
+      name={field.name}
+      value={
+        props.options
+          ? props.options.find(option => option.value === field.value)
+          : ""
+      }
+      placeholder={props.placeholder}
+      onChange={handleChange}
+      onBlur={field.onBlur}
+      styles={{ control: styles => ({ ...styles, ...style }) }}
+      hideSelectedOptions={false}
     />
   );
-  let param = props.param;
-  var tooltip = <div />;
-  if (param.description) {
-    tooltip = (
-      <label
-        className="input-tooltip"
-        data-toggle="tooltip"
-        data-placement="top"
-        title={param.description}
-      >
-        {" "}
-        <i className="fas fa-info-circle" />
-      </label>
+};
+
+export function getField(
+  fieldName,
+  data,
+  placeholder,
+  style = {},
+  isMulti = false
+) {
+  const makeOptions = choices => {
+    let opts = choices.map(choice => {
+      return { label: choice.toString(), value: choice };
+    });
+    if (isMulti) {
+      opts.push({ label: "*", value: "*" });
+      opts.push({ label: "<", value: "<" });
+    }
+    return opts;
+  };
+
+  if (data.type == "bool") {
+    return (
+      <FastField
+        name={fieldName}
+        component={SelectField}
+        options={makeOptions([true, false])}
+        isMulti={isMulti}
+        placeholder={placeholder}
+        style={style}
+      />
+    );
+  } else if (
+    data.validators &&
+    data.validators.choice &&
+    data.validators.choice.choices
+  ) {
+    return (
+      <FastField
+        name={fieldName}
+        component={SelectField}
+        options={makeOptions(data.validators.choice.choices)}
+        isMulti={isMulti}
+        placeholder={placeholder}
+        style={style}
+      />
+    );
+  } else {
+    return (
+      <FastField
+        className="form-control"
+        name={fieldName}
+        placeholder={placeholder}
+        style={style}
+      />
     );
   }
-  return (
-    <div className="container" style={{ padding: "left 0" }}>
-      <div className="row has-statuses col-xs-12">
-        <label>
-          {param.title} {tooltip}
-        </label>
-      </div>
-      <label>{element}</label>
-    </div>
-  );
-};
+}
