@@ -21,6 +21,12 @@ function transform(value, originalValue) {
 }
 
 function transformArray(value, originalValue) {
+  if (Array.isArray(originalValue)) return originalValue;
+
+  if (!(typeof originalValue === "string")) {
+    console.log("ensuring list", typeof originalValue, originalValue);
+    return [originalValue];
+  }
   return originalValue.split(",");
 }
 
@@ -208,7 +214,9 @@ export function convertToFormik(data) {
   for (const [mp_name, mp_data] of Object.entries(data.meta_parameters)) {
     var yupObj = yupValidator(data.meta_parameters, mp_data);
     mpShape[mp_name] = yupObj;
-    initialValues["meta_parameters"][mp_name] = mp_data.value[0].value;
+    initialValues["meta_parameters"][mp_name] = yupObj.cast(
+      mp_data.value[0].value
+    );
   }
 
   var schema = yup.object().shape({

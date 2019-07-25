@@ -2,11 +2,11 @@
 
 import React from "react";
 import ReactLoading from "react-loading";
-import { Field, FastField, ErrorMessage } from "formik";
+import { FastField, ErrorMessage } from "formik";
 import { isEqual } from "lodash/lang";
 
-import { makeID, valForForm, shallowEqual } from "./utils";
-import { RedMessage } from "./fields";
+import { makeID, valForForm } from "./utils";
+import { RedMessage, getField } from "./fields";
 
 export const ParamElement = ({ param_data }) => {
   var tooltip = <div />;
@@ -79,7 +79,8 @@ export const LoadingElement = () => {
 };
 
 export const MetaParameters = React.memo(
-  ({ meta_parameters, values }) => {
+  ({ meta_parameters, values, touched }) => {
+    let isTouched = "meta_parameters" in touched;
     return (
       <div className="card card-body card-outer">
         <div className="inputs-block">
@@ -90,11 +91,17 @@ export const MetaParameters = React.memo(
               return (
                 <li key={fieldName}>
                   <ParamElement param_data={meta_parameters[paramName]} />
-                  <FastField
+                  {/* <FastField
                     value={values[paramName]}
                     name={fieldName}
                     placeholder={valForForm(mp_item[1].value[0].value)}
-                  />
+                  /> */}
+                  {getField(
+                    fieldName,
+                    mp_item[1],
+                    valForForm(mp_item[1].value[0].value),
+                    false
+                  )}
                   <ErrorMessage
                     name={fieldName}
                     render={msg => <RedMessage msg={msg} />}
@@ -103,9 +110,13 @@ export const MetaParameters = React.memo(
               );
             })}
             <li>
-              <p className="form-text text-muted">
-                Click Reset to update the default values of the parameters.
-              </p>
+              {isTouched ? (
+                <p className="form-text text-muted">
+                  Click Reset to update the default values of the parameters.
+                </p>
+              ) : (
+                <div />
+              )}
             </li>
           </ul>
         </div>
@@ -126,33 +137,9 @@ export const MetaParameters = React.memo(
 );
 
 const ValueComponent = ({ fieldName, placeholder, colClass, data }) => {
-  if (data.type == "bool") {
-    var el = (
-      <FastField component="select" name={fieldName}>
-        <option value={true}>true</option>
-        <option value={false}>false</option>
-      </FastField>
-    );
-  } else if (data.validators && data.choice && data.choice.choices) {
-    var el = (
-      <FastField component="select" name={fieldName}>
-        {data.choice.choices.map(choice => {
-          <option value={choice}>{choice}</option>;
-        })}
-      </FastField>
-    );
-  } else {
-    var el = (
-      <FastField
-        className="form-control"
-        name={fieldName}
-        placeholder={placeholder}
-      />
-    );
-  }
   return (
     <div className={colClass} key={makeID(fieldName)}>
-      {el}
+      {getField(fieldName, data, placeholder, true)}
       <ErrorMessage name={fieldName} render={msg => <RedMessage msg={msg} />} />
     </div>
   );
@@ -164,6 +151,11 @@ export const Param = React.memo(
   ({ param, msect, data, values }) => {
     if (Object.keys(data.form_fields).length == 1) {
       var colClass = "col-6";
+    } else if (
+      data.type === "bool" ||
+      (!!data.validators && data.validators.choice)
+    ) {
+      var colClass = "col-md-auto";
     } else {
       var colClass = "col";
     }

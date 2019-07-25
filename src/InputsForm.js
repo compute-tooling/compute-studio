@@ -106,7 +106,8 @@ class InputsForm extends React.Component {
             status,
             errors,
             values,
-            setFieldValue
+            setFieldValue,
+            touched
           }) => (
             <Form>
               {status && status.status === "PENDING" ? (
@@ -119,6 +120,7 @@ class InputsForm extends React.Component {
                 <div className="col-4">
                   <ul className="list-unstyled components sticky-top scroll-y">
                     <li>
+                      {console.log("touched1", touched)}
                       <MetaParameters
                         meta_parameters={meta_parameters}
                         // handleSubmit={handleSubmit}
@@ -126,6 +128,7 @@ class InputsForm extends React.Component {
                         // status={status}
                         // errors={errors}
                         values={values.meta_parameters}
+                        touched={touched}
                       />
                     </li>
                     <li>
@@ -137,6 +140,17 @@ class InputsForm extends React.Component {
                   </ul>
                 </div>
                 <div className="col-8">
+                  {/* <div className="card card-outer">
+                    <pre>
+                      <code>
+                        {JSON.stringify(
+                          formikToJSON(values, schema, tbLabelSchema),
+                          null,
+                          4
+                        )}
+                      </code>
+                    </pre>
+                  </div> */}
                   {Object.entries(sects).map(function(msect_item, ix) {
                     // msect --> section_1: dict(dict) --> section_2: dict(dict)
                     let msect = msect_item[0];
