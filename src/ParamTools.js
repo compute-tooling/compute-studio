@@ -33,6 +33,14 @@ yup.number.prototype._typeCheck = function(value) {
   );
 };
 
+yup.bool.prototype._typeCheck = function(value) {
+  if (value instanceof Boolean) value = value.valueOf();
+  return (
+    (typeof value === "string" && (value === "*" || value === "<")) ||
+    typeof value === "boolean"
+  );
+};
+
 const minObj = min => {
   return {
     message: minMsg,
@@ -98,9 +106,21 @@ export function yupType(type) {
 }
 
 export function yupValidator(params, param_data, extend = false) {
+  const ensureExtend = obj => {
+    if (extend) {
+      return yup
+        .array()
+        .of(obj)
+        .transform(transformArray)
+        .compact(v => v == null || v === "");
+    } else {
+      return obj;
+    }
+  };
+
   let yupObj = yupType(param_data.type);
   if (!("validators" in param_data) || param_data.type == "bool") {
-    return yupObj;
+    return ensureExtend(yupObj);
   }
   if ("range" in param_data.validators) {
     var min_val = null;
@@ -122,14 +142,7 @@ export function yupValidator(params, param_data, extend = false) {
     yupObj = yupObj.oneOf(param_data.validators.choice.choices, oneOfMsg);
   }
 
-  if (extend) {
-    yupObj = yup
-      .array()
-      .of(yupObj)
-      .transform(transformArray)
-      .compact();
-  }
-  return yupObj;
+  return ensureExtend(yupObj);
 }
 
 export function convertToFormik(data) {
