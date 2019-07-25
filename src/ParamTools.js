@@ -9,30 +9,71 @@ const maxMsg = "Must be less than or equal to ${max}";
 const oneOfMsg = "Must be one of the following values: ${values}";
 
 function transform(value, originalValue) {
-  console.log("value", value, originalValue);
-  if (
-    typeof originalValue === "string" &&
-    (originalValue.trim() === "" || originalValue.trim() === "*")
-  ) {
-    return null;
-  } else {
-    return value;
+  if (typeof originalValue === "string") {
+    let trimmed = originalValue.trim();
+    if (trimmed === "") {
+      return null;
+    } else if (trimmed === "*" || trimmed === "<") {
+      return trimmed;
+    }
   }
+  return value;
 }
 
 function transformArray(value, originalValue) {
-  console.log(value, originalValue);
   return originalValue.split(",");
 }
+
+yup.number.prototype._typeCheck = function(value) {
+  if (value instanceof Number) value = value.valueOf();
+
+  return (
+    (typeof value === "string" && (value === "*" || value === "<")) ||
+    (typeof value === "number" && !isNaN(value))
+  );
+};
+
+const minObj = min => {
+  return {
+    message: minMsg,
+    name: "contrib.min",
+    exclusive: true,
+    params: { min },
+    test: value =>
+      value == null || value === "*" || value === "<" || value >= min
+  };
+};
+
+const maxObj = max => {
+  return {
+    message: maxMsg,
+    name: "contrib.max",
+    exclusive: true,
+    params: { max },
+    test: value =>
+      value == null || value === "*" || value === "<" || value <= max
+  };
+};
+
+const integerObj = () => {
+  return {
+    message: integerMsg,
+    name: "contrib.integer",
+    exclusive: true,
+    params: {},
+    test: value =>
+      value == null || value === "*" || value === "<" || Number.isInteger(value)
+  };
+};
 
 export function yupType(type) {
   if (type == "int") {
     return yup
       .number()
-      .integer(integerMsg)
       .typeError(integerMsg)
       .nullable()
-      .transform(transform);
+      .transform(transform)
+      .test(integerObj());
   } else if (type == "float") {
     return yup
       .number()
@@ -67,13 +108,13 @@ export function yupValidator(params, param_data, extend = false) {
     if ("min" in param_data.validators.range) {
       min_val = param_data.validators.range.min;
       if (!(min_val in params)) {
-        yupObj = yupObj.min(min_val, minMsg);
+        yupObj = yupObj.test(minObj(min_val));
       }
     }
     if ("max" in param_data.validators.range) {
       max_val = param_data.validators.range.max;
       if (!(max_val in params)) {
-        yupObj = yupObj.max(max_val, maxMsg);
+        yupObj = yupObj.test(maxObj(max_val));
       }
     }
   }
@@ -85,7 +126,8 @@ export function yupValidator(params, param_data, extend = false) {
     yupObj = yup
       .array()
       .of(yupObj)
-      .transform(transformArray);
+      .transform(transformArray)
+      .compact();
   }
   return yupObj;
 }
@@ -170,7 +212,7 @@ export function convertToFormik(data) {
   ];
 }
 
-export function formikToJSON(values, schema, labelSchema) {
+export function formikToJSON(values, schema, labelSchema, extend = false) {
   let data = schema.cast(values);
   var adjustment = {};
   var meta_parameters = {};
@@ -180,7 +222,7 @@ export function formikToJSON(values, schema, labelSchema) {
       var voList = [];
       for (const [voStr, val] of Object.entries(paramData)) {
         var vo = {};
-        if (!val) {
+        if (!val || !val.length) {
           continue;
         }
         if (voStr == "nolabels") {
