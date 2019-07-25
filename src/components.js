@@ -125,14 +125,34 @@ export const MetaParameters = React.memo(
   }
 );
 
-const ValueComponent = ({ fieldName, placeholder, colClass }) => {
-  return (
-    <div className={colClass} key={makeID(fieldName)}>
+const ValueComponent = ({ fieldName, placeholder, colClass, data }) => {
+  if (data.type == "bool") {
+    var el = (
+      <FastField component="select" name={fieldName}>
+        <option value={true}>true</option>
+        <option value={false}>false</option>
+      </FastField>
+    );
+  } else if (data.validators && data.choice && data.choice.choices) {
+    var el = (
+      <FastField component="select" name={fieldName}>
+        {data.choice.choices.map(choice => {
+          <option value={choice}>{choice}</option>;
+        })}
+      </FastField>
+    );
+  } else {
+    var el = (
       <FastField
         className="form-control"
         name={fieldName}
         placeholder={placeholder}
       />
+    );
+  }
+  return (
+    <div className={colClass} key={makeID(fieldName)}>
+      {el}
       <ErrorMessage name={fieldName} render={msg => <RedMessage msg={msg} />} />
     </div>
   );
@@ -163,6 +183,7 @@ export const Param = React.memo(
                 fieldName={fieldName}
                 placeholder={placeholder}
                 colClass={colClass}
+                data={data}
               />
             );
           })}
