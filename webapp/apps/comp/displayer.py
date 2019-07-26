@@ -37,8 +37,6 @@ class Displayer:
         )
         if not success:
             raise AppError(self.meta_parameters, result["traceback"])
-        # with open(INPUTS, "r") as f:
-        #     return json.loads(f.read())
         if cache_result:
             self._cache[args] = result
         return result
