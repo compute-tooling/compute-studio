@@ -82,6 +82,7 @@ class InputsForm extends React.Component {
             let formdata = new FormData();
             formdata.append("adjustment", JSON.stringify(adjustment));
             formdata.append("meta_parameters", JSON.stringify(meta_parameters));
+            formdata.append("client", "web-beta");
             alert(JSON.stringify(adjustment, null, 4));
             // this.props
             //   .doSubmit(formdata)

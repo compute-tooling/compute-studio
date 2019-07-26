@@ -58,6 +58,7 @@ class InputsSerializer(serializers.ModelSerializer):
             "sim",
             "api_url",
             "extend",
+            "client",
         )
 
 

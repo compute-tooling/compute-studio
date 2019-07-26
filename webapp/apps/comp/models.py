@@ -55,6 +55,15 @@ class Inputs(models.Model):
         max_length=20,
     )
 
+    client = models.CharField(
+        choices=(
+            ("web-alpha", "Web-Alpha"),
+            ("web-beta", "Web-Beta"),
+            ("rest-api", "REST API"),
+        ),
+        max_length=32,
+    )
+
     @property
     def deserialized_inputs(self):
         """

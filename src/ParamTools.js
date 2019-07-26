@@ -157,7 +157,7 @@ export function convertToFormik(data) {
   var section_1 = "";
   var section_2 = "";
   var adjShape = {};
-  const extend = true;
+  const extend = extend in data ? data.extend : false;
   for (const [msect, params] of Object.entries(data.model_parameters)) {
     var msectShape = {};
     sects[msect] = {};
@@ -242,8 +242,13 @@ export function convertToFormik(data) {
 
 export function formikToJSON(values, schema, labelSchema, extend = false) {
   let data = schema.cast(values);
-  var adjustment = {};
   var meta_parameters = {};
+  var adjustment = {};
+
+  for (const [mp_name, mp_val] of Object.entries(data.meta_parameters)) {
+    meta_parameters[mp_name] = mp_val;
+  }
+
   for (const [msect, params] of Object.entries(data.adjustment)) {
     adjustment[msect] = {};
     for (const [paramName, paramData] of Object.entries(params)) {
@@ -265,7 +270,11 @@ export function formikToJSON(values, schema, labelSchema, extend = false) {
           var labelsSplit = voStr.split("___");
           for (const label of labelsSplit) {
             var labelSplit = label.split("__");
-            vo[labelSplit[0]] = labelSplit[1];
+            if (label in meta_parameters) {
+              vo[labelSplit[0]] = meta_parameters[labelSplit[0]];
+            } else {
+              vo[labelSplit[0]] = labelSplit[1];
+            }
           }
           vo = labelSchema.cast(vo);
           vo["value"] = val;
@@ -276,9 +285,6 @@ export function formikToJSON(values, schema, labelSchema, extend = false) {
         adjustment[msect][paramName] = voList;
       }
     }
-  }
-  for (const [mp_name, mp_val] of Object.entries(data.meta_parameters)) {
-    meta_parameters[mp_name] = mp_val;
   }
 
   return [meta_parameters, adjustment];
