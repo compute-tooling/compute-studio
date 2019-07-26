@@ -4,6 +4,12 @@ from webapp.apps.comp.exceptions import AppError
 from webapp.apps.comp.meta_parameters import translate_to_django
 
 
+import os
+import json
+
+INPUTS = os.path.join(os.path.abspath(os.path.dirname(__file__)), "inputs.json")
+
+
 class Displayer:
     def __init__(self, project, Param, compute: SyncCompute = None, **meta_parameters):
         self.project = project
@@ -30,21 +36,23 @@ class Displayer:
         be done over the distributed REST API.
         """
         args = tuple(v for k, v in sorted(self.meta_parameters.items()))
-        if args in self._cache:
-            res = self._cache[args]
-            return res["meta_parameters"], res["model_parameters"]
-        success, result = self.compute.submit_job(
-            {"meta_param_dict": self.meta_parameters},
-            self.project.worker_ext(action=actions.INPUTS),
-        )
-        if not success:
-            raise AppError(self.meta_parameters, result["traceback"])
-        if cache_result:
-            self._cache[args] = {
-                "meta_parameters": result["meta_parameters"],
-                "model_parameters": result["model_parameters"],
-            }
-        return result["meta_parameters"], result["model_parameters"]
+        # if args in self._cache:
+        #     res = self._cache[args]
+        #     return res["meta_parameters"], res["model_parameters"]
+        # success, result = self.compute.submit_job(
+        #     {"meta_param_dict": self.meta_parameters},
+        #     self.project.worker_ext(action=actions.INPUTS),
+        # )
+        # if not success:
+        #     raise AppError(self.meta_parameters, result["traceback"])
+        with open(INPUTS, "r") as f:
+            return json.loads(f.read())
+        # if cache_result:
+        #     self._cache[args] = {
+        #         "meta_parameters": result["meta_parameters"],
+        #         "model_parameters": result["model_parameters"],
+        #     }
+        # return result["meta_parameters"], result["model_parameters"]
 
     def _default_flatdict(self, use_param_cls=True):
         """

@@ -34,6 +34,18 @@ class InputsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Inputs
+        fields = ("meta_parameters", "adjustment", "inputs_file", "errors_warnings")
+
+    job_id = serializers.UUIDField(required=False)
+    status = serializers.ChoiceField(
+        choices=(("SUCCESS", "Success"), ("FAIL", "Fail")), required=False
+    )
+    sim = MiniSimulationSerializer(source="outputs", required=False)
+    api_url = serializers.CharField(source="get_absolute_api_url", required=False)
+    extend = serializers.BooleanField(required=False, default=False)
+
+    class Meta:
+        model = Inputs
         fields = (
             "pk",
             "meta_parameters",
@@ -45,6 +57,7 @@ class InputsSerializer(serializers.ModelSerializer):
             "traceback",
             "sim",
             "api_url",
+            "extend",
         )
 
 
