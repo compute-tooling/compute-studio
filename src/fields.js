@@ -7,6 +7,7 @@ hljs.registerLanguage("json", json);
 import "highlight.js/styles/default.css";
 import React from "react";
 import Select from "react-select";
+import { Button } from "react-bootstrap";
 import { FastField } from "formik";
 
 var Remarkable = require("remarkable");
@@ -83,8 +84,16 @@ export const TextField = ({ field, form: { touched, errors }, ...props }) => {
   );
 };
 
-function checkboxChange(e, onChange) {
-  e.target.value = !e.target.value;
+function checkboxChange(e, onChange, placeholder = null) {
+  let value =
+    e.target.value != null && e.target.value !== ""
+      ? e.target.value
+      : placeholder;
+  if (typeof value === "boolean") {
+    e.target.value = !value;
+  } else {
+    e.target.value = value === "true" ? false : true;
+  }
   onChange(e);
 }
 
@@ -108,6 +117,31 @@ export const CheckboxField = ({
         />
       </label>
     </div>
+  );
+};
+
+export const CPIField = ({ field, form: { touched, errors }, ...props }) => {
+  let fader = props.placeholder ? "" : "fader";
+  if (field.value != null) {
+    fader = field.value === "true" ? "" : "fader";
+  }
+  let className = `btn btn-checkbox ${fader}`;
+  return (
+    <Button
+      className={className}
+      {...field}
+      {...props}
+      placeholder={props.placeholder.toString()}
+      key={`${field.name}-button`}
+      type="checkbox"
+      value={field.value}
+      onClick={e => {
+        e.preventDefault(); // Don't submit form!
+        checkboxChange(e, field.onChange, props.placeholder);
+      }}
+    >
+      CPI{" "}
+    </Button>
   );
 };
 

@@ -6,9 +6,9 @@ import { FastField, ErrorMessage } from "formik";
 import { isEqual } from "lodash/lang";
 
 import { makeID, valForForm } from "./utils";
-import { RedMessage, getField } from "./fields";
+import { RedMessage, getField, CPIField } from "./fields";
 
-export const ParamElement = ({ param_data }) => {
+export const ParamElement = ({ param_data, checkbox }) => {
   var tooltip = <div />;
   if (param_data.description) {
     tooltip = (
@@ -26,7 +26,7 @@ export const ParamElement = ({ param_data }) => {
   return (
     <div className="row has-statuses col-xs-12">
       <label>
-        {param_data.title} {tooltip}
+        {param_data.title} {tooltip} {!!checkbox ? checkbox : null}
       </label>
     </div>
   );
@@ -170,7 +170,18 @@ export const Param = React.memo(
     } else {
       var colClass = "col";
     }
-    var paramElement = <ParamElement param_data={data} />;
+    if ("checkbox" in data) {
+      var checkbox = (
+        <FastField
+          name={`adjustment.${msect}.${param}.checkbox`}
+          placeholder={data.checkbox}
+          component={CPIField}
+        />
+      );
+    } else {
+      var checkbox = null;
+    }
+    var paramElement = <ParamElement param_data={data} checkbox={checkbox} />;
     return (
       <div className="container" style={{ padding: "left 0" }} key={param}>
         {paramElement}

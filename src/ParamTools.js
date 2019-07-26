@@ -206,8 +206,15 @@ export function convertToFormik(data) {
         param_data.form_fields[field_name] = vals.value;
         paramYupShape[field_name] = yupObj;
       }
+
+      if ("checkbox" in param_data) {
+        paramYupShape["checkbox"] = yup.bool().nullable();
+        initialValues.adjustment[msect][param]["checkbox"] = null;
+      }
+
       msectShape[param] = yup.object().shape(paramYupShape);
     }
+
     adjShape[msect] = yup.object().shape(msectShape);
   }
   var mpShape = {};
@@ -243,11 +250,17 @@ export function formikToJSON(values, schema, labelSchema, extend = false) {
       var voList = [];
       for (const [voStr, val] of Object.entries(paramData)) {
         var vo = {};
-        if (!val || !val.length) {
+        if (
+          val == null ||
+          (typeof val === "string" && !val) ||
+          (Array.isArray(val) && !val.length)
+        ) {
           continue;
         }
         if (voStr == "nolabels") {
           vo["value"] = val;
+        } else if (voStr === "checkbox") {
+          adjustment[msect][`${paramName}_checkbox`] = val;
         } else {
           var labelsSplit = voStr.split("___");
           for (const label of labelsSplit) {
