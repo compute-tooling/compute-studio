@@ -34,11 +34,9 @@ from webapp.apps.billing.utils import has_payment_method
 from webapp.apps.users.models import Project, is_profile_active
 
 from webapp.apps.comp.constants import WEBAPP_VERSION
-from webapp.apps.comp.forms import InputsForm
 from webapp.apps.comp.models import Simulation
 from webapp.apps.comp.compute import Compute, JobFailError
 from webapp.apps.comp.ioutils import get_ioutils
-from webapp.apps.comp.submit import handle_submission, BadPost
 from webapp.apps.comp.tags import TAGS
 from webapp.apps.comp.exceptions import AppError, ValidationError
 from webapp.apps.comp.serializers import OutputsSerializer
@@ -107,90 +105,7 @@ class InputsView(InputsMixin, View):
         project = self.projects.get(
             owner__user__username=kwargs["username"], title=kwargs["title"]
         )
-        # ioutils = get_ioutils(project)
-        # inputs_form = InputsForm(project, ioutils.displayer)
-        # # set cleaned_data with is_valid call
-        # inputs_form.is_valid()
-        # inputs_form.clean()
         context = self.project_context(request, project)
-        return self._render_inputs_form(request, project, None, None, context)
-
-    def post(self, request, *args, **kwargs):
-        print("method=POST", request.POST)
-        compute = Compute()
-        project = self.projects.get(
-            owner__user__username=kwargs["username"], title=kwargs["title"]
-        )
-        ioutils = get_ioutils(project)
-        if request.POST.get("reset", ""):
-            inputs_form = InputsForm(project, ioutils.displayer, request.POST.dict())
-            if inputs_form.is_valid():
-                inputs_form.clean()
-            else:
-                inputs_form = InputsForm(project, ioutils.displayer)
-                inputs_form.is_valid()
-                inputs_form.clean()
-            context = self.project_context(request, project)
-            return self._render_inputs_form(
-                request, project, inputs_form, ioutils, context
-            )
-
-        try:
-            result = handle_submission(request, project, ioutils, compute)
-        except AppError as ae:
-            try:
-                send_mail(
-                    f"COMP AppError",
-                    f"An error has occurred:\n {ae.parameters}\n causing: {ae.traceback}\n user:{request.user.username}\n project: {project.app_url}.",
-                    "henrymdoupe@gmail.com",
-                    ["henrymdoupe@gmail.com"],
-                    fail_silently=True,
-                )
-            # Http 401 exception if mail credentials are not set up.
-            except Exception as e:
-                pass
-            return render(
-                request,
-                "comp/app_error.html",
-                context={"params": ae.parameters, "traceback": ae.traceback},
-            )
-
-        # case where validation failed
-        if isinstance(result, BadPost):
-            return result.http_response
-
-        # No errors--submit to model
-        if result.save is not None:
-            print("redirecting...", result.save.runmodel_instance.get_absolute_url())
-            return redirect(result.save.runmodel_instance)
-        else:
-            inputs_form = result.submit.form
-            valid_meta_params = result.submit.valid_meta_params
-            has_errors = result.submit.has_errors
-
-        ioutils.displayer.meta_parameters = valid_meta_params
-        context = dict(
-            form=inputs_form,
-            default_form=ioutils.displayer.defaults(flat=False),
-            webapp_version=self.webapp_version,
-            has_errors=self.has_errors,
-            **self.project_context(request, project),
-        )
-        return render(request, self.template_name, context)
-
-    def _render_inputs_form(self, request, project, inputs_form, ioutils, context):
-        # valid_meta_params = {}
-        # parsed_meta_parameters = ioutils.displayer.parsed_meta_parameters()
-        # for mp_name in parsed_meta_parameters.parameters:
-        #     valid_meta_params[mp_name] = inputs_form.cleaned_data[mp_name]
-        # ioutils.displayer.meta_parameters = valid_meta_params
-        context = dict(
-            # form=inputs_form,
-            # default_form=ioutils.displayer.defaults(flat=False),
-            webapp_version=self.webapp_version,
-            has_errors=self.has_errors,
-            **context,
-        )
         return render(request, self.template_name, context)
 
 
@@ -241,55 +156,16 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
         project = self.object.project
-        ioutils = get_ioutils(project)
-        parsed_meta_parameters = ioutils.displayer.parsed_meta_parameters()
-        initial = {}
-        for k, v in self.object.inputs.raw_gui_inputs.items():
-            if v not in ("", None):
-                initial[k] = v
-        for mp_name in parsed_meta_parameters.parameters:
-            mp_val = self.object.inputs.meta_parameters.get(mp_name, None)
-            if mp_val is not None:
-                initial[mp_name] = mp_val
-        inputs_form = InputsForm(project, ioutils.displayer, initial=initial)
-        # clean data with is_valid call.
-        inputs_form.is_valid()
-        unknown_fields = False
-        for field, val in inputs_form.initial.items():
-            if val not in (None, ""):
-                try:
-                    inputs_form.fields[field].initial = val
-                except KeyError:
-                    print("unknown", field, val)
-                    unknown_fields = True
-        # is_bound is turned off so that the `initial` data is displayed.
-        # Note that form is validated and cleaned with is_bound call.
-        inputs_form.is_bound = False
         context = self.project_context(request, project)
-        context.update(
-            {
-                "object": self.object,
-                "unknown_fields": unknown_fields,
-                "adjustment": self.object.inputs.display_params,
-            }
-        )
-        return self._render_inputs_form(request, project, ioutils, inputs_form, context)
-
-    def _render_inputs_form(self, request, project, ioutils, inputs_form, context):
-        valid_meta_params = {}
-        parsed_meta_parameters = ioutils.displayer.parsed_meta_parameters()
-        for mp_name in parsed_meta_parameters.parameters:
-            valid_meta_params[mp_name] = (
-                inputs_form.initial.get(mp_name, None) or inputs_form[mp_name].data
-            )
-        ioutils.displayer.meta_parameters = valid_meta_params
-        context = dict(
-            form=inputs_form,
-            default_form=ioutils.displayer.defaults(flat=False),
-            webapp_version=self.webapp_version,
-            has_errors=self.has_errors,
-            **context,
-        )
+        # unknown_fields = False
+        # for field, val in inputs_form.initial.items():
+        #     if val not in (None, ""):
+        #         try:
+        #             inputs_form.fields[field].initial = val
+        #         except KeyError:
+        #             print("unknown", field, val)
+        #             unknown_fields = True
+        # is_bound is turned off so that the `initial` data is displayed.
         return render(request, self.template_name, context)
 
 

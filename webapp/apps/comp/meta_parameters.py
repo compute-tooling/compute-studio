@@ -5,8 +5,11 @@ from django import forms
 from marshmallow import Schema, fields, validate, exceptions
 from paramtools import ValueValidatorSchema
 
-from webapp.apps.comp.fields import coerce_bool
 from webapp.apps.comp.exceptions import ValidationError
+
+
+def coerce_bool(val):
+    return val in ("True", "true")
 
 
 @dataclass

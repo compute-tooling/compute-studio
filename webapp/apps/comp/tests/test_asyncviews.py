@@ -120,8 +120,7 @@ class TestAsyncAPI(CoreTestMixin):
             assert resp.status_code == 200
 
             ioutils = get_ioutils(self.project)
-            mp, defaults = ioutils.displayer.package_defaults()
-            exp = {"meta_parameters": mp, "model_parameters": defaults}
+            exp = ioutils.displayer.package_defaults()
             assert exp == resp.data
 
     def test_post_inputs(self, api_client, worker_url):
@@ -144,8 +143,7 @@ class TestAsyncAPI(CoreTestMixin):
 
             ioutils = get_ioutils(self.project)
             ioutils.displayer.meta_parameters.update(meta_params["meta_parameters"])
-            mp, defaults = ioutils.displayer.package_defaults()
-            exp = {"meta_parameters": mp, "model_parameters": defaults}
+            exp = ioutils.displayer.package_defaults()
             assert exp == resp.data
 
     def test_runmodel(

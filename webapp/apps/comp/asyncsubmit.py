@@ -64,7 +64,8 @@ class SubmitInputs:
             self.ioutils.displayer,
             adjustment,
             compute=self.compute,
-            extend=validated_data.get("extend", False) ** self.valid_meta_params,
+            extend=validated_data.get("extend", False),
+            **self.valid_meta_params,
         )
 
         result = parser.parse_parameters()

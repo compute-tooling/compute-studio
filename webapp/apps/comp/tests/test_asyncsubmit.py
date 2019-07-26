@@ -10,7 +10,6 @@ from webapp.apps.comp.asyncsubmit import SubmitInputs, SubmitSim
 from webapp.apps.comp.displayer import Displayer
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.models import Inputs, Simulation
-from webapp.apps.comp.param import Param
 from webapp.apps.comp.parser import APIParser
 
 # from webapp.apps.comp.tests.parser import LocalParser, LocalAPIParser
@@ -69,3 +68,19 @@ def test_submit_outputs(db, submit_sim):
     assert result.status == "PENDING"
     assert result.inputs == submit_inputs.inputs
     assert result.job_id != submit_inputs.inputs.job_id
+
+
+# TODO: test with errors and sponsor v. unsponsor
+
+# def test_submit_w_errors(db, get_inputs, meta_param_dict, profile):
+#     mock_errors_warnings = {
+#         "majorsection1": {"errors": {"intparam": ["an error"]}, "warnings": {}}
+#     }
+#     project = Project.objects.get(title="Used-for-testing")
+#     ioutils = get_ioutils(
+#         project, Displayer=MockDisplayer, Parser=MockParser, Param=Param
+#     )
+
+#     factory = RequestFactory()
+#     data = {"has_errors": ["False"], "metaparam": ["3"], "intparam": ["1"]}
+#     request = factory.post("/modeler/Used-for-testing/sim", data)

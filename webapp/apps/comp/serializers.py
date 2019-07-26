@@ -42,7 +42,7 @@ class InputsSerializer(serializers.ModelSerializer):
     )
     sim = MiniSimulationSerializer(source="outputs", required=False)
     api_url = serializers.CharField(source="get_absolute_api_url", required=False)
-    extend = serializers.BooleanField(required=False, default=False)
+    extend = serializers.BooleanField(required=False, default=False, read_only=True)
 
     class Meta:
         model = Inputs

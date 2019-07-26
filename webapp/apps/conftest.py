@@ -285,7 +285,10 @@ def get_inputs(comp_inputs_json):
     p1 = Params1().specification(serializable=True, meta_data=True)
     p2 = Params2().specification(serializable=True, meta_data=True)
     mp = MetaParams().specification(serializable=True, meta_data=True)
-    return mp, {"majorsection1": p1, "majorsection2": p2}
+    return {
+        "meta_parameters": mp,
+        "model_parameters": {"majorsection1": p1, "majorsection2": p2},
+    }
 
 
 @pytest.fixture

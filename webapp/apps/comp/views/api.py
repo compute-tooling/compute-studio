@@ -51,10 +51,8 @@ class InputsAPIView(APIView):
                 )
             except ValidationError as e:
                 return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
-        meta_parameters, model_parameters = ioutils.displayer.package_defaults()
-        return Response(
-            {"meta_parameters": meta_parameters, "model_parameters": model_parameters}
-        )
+        defaults = ioutils.displayer.package_defaults()
+        return Response(defaults)
 
     def get(self, request, *args, **kwargs):
         print("inputs api method=GET", request.GET, kwargs)
