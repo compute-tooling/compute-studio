@@ -291,7 +291,7 @@ export function formikToJSON(values, schema, labelSchema, extend = false) {
           continue;
         }
         if (voStr === "checkbox") {
-          adjustment[msect][`${paramName}_checkbox`] = val;
+          adjustment[msect][`${paramName}_checkbox`] = [{ value: val }];
           continue;
         }
         if (voStr == "nolabels") {
