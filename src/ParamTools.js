@@ -1,4 +1,5 @@
 import * as yup from "yup";
+import { parseFromOps } from "./ops";
 
 const integerMsg = "Must be an integer.";
 const floatMsg = "Must be a floating point number.";
@@ -289,10 +290,13 @@ export function formikToJSON(values, schema, labelSchema, extend = false) {
         ) {
           continue;
         }
+        if (voStr === "checkbox") {
+          adjustment[msect][`${paramName}_checkbox`] = val;
+          continue;
+        }
         if (voStr == "nolabels") {
           vo["value"] = val;
-        } else if (voStr === "checkbox") {
-          adjustment[msect][`${paramName}_checkbox`] = val;
+          voList.push(vo);
         } else {
           var labelsSplit = voStr.split("___");
           for (const label of labelsSplit) {
@@ -305,8 +309,13 @@ export function formikToJSON(values, schema, labelSchema, extend = false) {
           }
           vo = labelSchema.cast(vo);
           vo["value"] = val;
+          console.log(extend);
+          if (extend) {
+            voList.push(...parseFromOps(vo));
+          } else {
+            voList.push(vo);
+          }
         }
-        voList.push(vo);
       }
       if (voList.length > 0) {
         adjustment[msect][paramName] = voList;

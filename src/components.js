@@ -7,6 +7,7 @@ import { isEqual } from "lodash/lang";
 
 import { makeID, valForForm } from "./utils";
 import { RedMessage, getField, CPIField } from "./fields";
+import { Card, Button } from "react-bootstrap";
 
 export const ParamElement = ({ param_data, checkbox }) => {
   var tooltip = <div />;
@@ -32,7 +33,8 @@ export const ParamElement = ({ param_data, checkbox }) => {
   );
 };
 
-export const SectionHeader = ({ title, size, label }) => {
+export const SectionHeader = ({ title, size, label, openDefault = true }) => {
+  const [open, setOpen] = React.useState(openDefault);
   return (
     <h1 style={{ fontSize: { size } }}>
       {title}
@@ -45,8 +47,12 @@ export const SectionHeader = ({ title, size, label }) => {
           aria-expanded="false"
           aria-controls={`${makeID(title)}-collapse-${label}`}
           style={{ marginLeft: "20px" }}
+          onClick={e => setOpen(!open)}
         >
-          <i className="far fa-minus-square" style={{ size: "5px" }} />
+          <i
+            className={`far fa-${open ? "minus" : "plus"}-square`}
+            style={{ size: "5px" }}
+          />
         </button>
       </div>
     </h1>
@@ -384,3 +390,50 @@ export const SectionHeaderList = ({ sects }) => {
     </div>
   );
 };
+
+export const Preview = React.memo(
+  ({ values, schema, tbLabelSchema, transformfunc, extend }) => {
+    const [preview, setPreview] = React.useState({});
+    const parseValues = () => {
+      try {
+        return transformfunc(values, schema, tbLabelSchema, extend);
+      } catch (error) {
+        return {};
+      }
+    };
+    const onClick = e => {
+      e.preventDefault();
+      setPreview(parseValues());
+    };
+    return (
+      <Card className="card-outer">
+        <Card className="card-body card-inner mt-1 mb-1">
+          <SectionHeader
+            title="Preview"
+            size="2.9rem"
+            label="preview"
+            openDefault={false}
+          />
+          <div
+            className="collapse collapse-plus-minus"
+            id="Preview-collapse-preview"
+          >
+            <pre>
+              <code>{JSON.stringify(preview, null, 4)}</code>
+            </pre>
+            <Button
+              variant="outline-success"
+              className="col-3"
+              onClick={onClick}
+            >
+              Refresh
+            </Button>
+          </div>
+        </Card>
+      </Card>
+    );
+  },
+  (prevProps, nextProps) => {
+    return isEqual(prevProps.values, nextProps.values);
+  }
+);

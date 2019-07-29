@@ -52,6 +52,8 @@ class InputsAPIView(APIView):
             except ValidationError as e:
                 return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
         defaults = ioutils.displayer.package_defaults()
+        if "year" in defaults["meta_parameters"]:
+            defaults.update({"extend": True})
         return Response(defaults)
 
     def get(self, request, *args, **kwargs):

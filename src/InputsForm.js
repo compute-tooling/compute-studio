@@ -8,6 +8,7 @@ import {
   MetaParameters,
   MajorSection,
   LoadingElement,
+  Preview,
   SectionHeaderList
 } from "./components";
 import { ValidatingModal, RunModal } from "./modal";
@@ -47,7 +48,8 @@ class InputsForm extends React.Component {
           sects: sects,
           model_parameters: model_parameters,
           meta_parameters: meta_parameters,
-          schema: schema
+          schema: schema,
+          extend: "extend" in data ? data.extend : false
         });
       });
     }
@@ -63,6 +65,7 @@ class InputsForm extends React.Component {
     let initialValues = this.state.initialValues;
     let schema = this.state.schema;
     let sects = this.state.sects;
+    let extend = this.state.extend;
     return (
       <div>
         <Formik
@@ -139,17 +142,13 @@ class InputsForm extends React.Component {
                   </ul>
                 </div>
                 <div className="col-8">
-                  {/* <div className="card card-outer">
-                    <pre>
-                      <code>
-                        {JSON.stringify(
-                          formikToJSON(values, schema, tbLabelSchema),
-                          null,
-                          4
-                        )}
-                      </code>
-                    </pre>
-                  </div> */}
+                  <Preview
+                    values={values}
+                    schema={schema}
+                    tbLabelSchema={tbLabelSchema}
+                    transformfunc={formikToJSON}
+                    extend={extend}
+                  />
                   {Object.entries(sects).map(function(msect_item, ix) {
                     // msect --> section_1: dict(dict) --> section_2: dict(dict)
                     let msect = msect_item[0];
