@@ -7,6 +7,8 @@ const boolMsg = "Must be a boolean value.";
 const minMsg = "Must be greater than or equal to ${min}";
 const maxMsg = "Must be less than or equal to ${max}";
 const oneOfMsg = "Must be one of the following values: ${values}";
+const reverseOpMsg =
+  "'<' can only be used as the first index and must be followed by one or more values.";
 
 function transform(value, originalValue) {
   if (typeof originalValue === "string") {
@@ -24,10 +26,28 @@ function transformArray(value, originalValue) {
   if (Array.isArray(originalValue)) return originalValue;
 
   if (!(typeof originalValue === "string")) {
-    console.log("ensuring list", typeof originalValue, originalValue);
     return [originalValue];
   }
   return originalValue.split(",");
+}
+
+function testReverseOp(value) {
+  if (!value || (Array.isArray(value) && value.lenghth === 0)) return true;
+
+  const wildCardIndex = value.indexOf("<");
+  // reverseOp can only be used as first index.
+  if (wildCardIndex > 0) {
+    return false;
+  }
+  // if used, must be followed by one or more values.
+  if (wildCardIndex === 0 && value.length === 1) {
+    return false;
+  }
+  // cannot be used more than once.
+  if (wildCardIndex >= 0 && value.indexOf("<", wildCardIndex + 1) !== -1) {
+    return false;
+  }
+  return true;
 }
 
 yup.number.prototype._typeCheck = function(value) {
@@ -69,15 +89,21 @@ const maxObj = max => {
   };
 };
 
-const integerObj = () => {
-  return {
-    message: integerMsg,
-    name: "contrib.integer",
-    exclusive: true,
-    params: {},
-    test: value =>
-      value == null || value === "*" || value === "<" || Number.isInteger(value)
-  };
+const reverseObj = {
+  message: reverseOpMsg,
+  name: "reverseOpValidator",
+  exclusive: true,
+  params: {},
+  test: testReverseOp
+};
+
+const integerObj = {
+  message: integerMsg,
+  name: "contrib.integer",
+  exclusive: true,
+  params: {},
+  test: value =>
+    value == null || value === "*" || value === "<" || Number.isInteger(value)
 };
 
 export function yupType(type) {
@@ -87,7 +113,7 @@ export function yupType(type) {
       .typeError(integerMsg)
       .nullable()
       .transform(transform)
-      .test(integerObj());
+      .test(integerObj);
   } else if (type == "float") {
     return yup
       .number()
@@ -118,7 +144,8 @@ export function yupValidator(params, param_data, extend = false) {
         .array()
         .of(obj)
         .transform(transformArray)
-        .compact(v => v == null || v === "");
+        .compact(v => v == null || v === "")
+        .test(reverseObj);
     } else {
       return obj;
     }
@@ -157,7 +184,7 @@ export function convertToFormik(data) {
   var section_1 = "";
   var section_2 = "";
   var adjShape = {};
-  const extend = extend in data ? data.extend : false;
+  const extend = "extend" in data ? data.extend : false;
   for (const [msect, params] of Object.entries(data.model_parameters)) {
     var msectShape = {};
     sects[msect] = {};
