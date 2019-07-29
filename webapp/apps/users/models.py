@@ -61,7 +61,7 @@ class Profile(models.Model):
                 runs[
                     f"{project.owner.user.username}/{project.title}"
                 ] = queryset.all().order_by("-pk")
-        return runs
+        return dict(sorted(runs.items(), key=lambda item: -item[1].count()))
 
     class Meta:
         # not in use yet...

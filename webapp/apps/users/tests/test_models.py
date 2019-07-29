@@ -44,6 +44,12 @@ class TestUserModels:
     def test_profile_sims(self, profile, test_models):
         sims = profile.sims_breakdown()
 
+        # check that sims are ordered descending by number sims.
+        simcount = 9e99
+        for title, qs in sims.items():
+            assert qs.count() <= simcount
+            simcount = qs.count()
+
         # check that all apps are queried.
         titles = {
             f"{project.owner.user.username}/{project.title}"
