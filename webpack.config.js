@@ -4,7 +4,7 @@ var webpack = require("webpack");
 module.exports = [
   {
     context: __dirname,
-    mode: "development",
+    mode: "production",
     entry: "./src/publish.js",
     output: {
       path: path.resolve("./static/js/"),
@@ -32,7 +32,7 @@ module.exports = [
   },
   {
     context: __dirname,
-    mode: "development",
+    mode: "production",
     entry: "./src/inputs.js",
     output: {
       path: path.resolve("./static/js/"),
@@ -58,5 +58,4 @@ module.exports = [
       ]
     }
   }
-
 ];
