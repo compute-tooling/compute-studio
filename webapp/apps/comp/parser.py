@@ -6,8 +6,6 @@ from webapp.apps.comp.compute import Compute
 from webapp.apps.comp.displayer import Displayer
 from webapp.apps.comp.exceptions import AppError
 from webapp.apps.comp.models import Inputs
-from webapp.apps.comp.ops import parse_ops
-from webapp.apps.comp.utils import dims_to_dict, dims_to_string, is_reverse, is_wildcard
 
 ParamData = namedtuple("ParamData", ["name", "data"])
 
@@ -18,19 +16,12 @@ class ParameterLookUpException(Exception):
 
 class BaseParser:
     def __init__(
-        self,
-        project,
-        displayer,
-        clean_inputs,
-        extend=False,
-        compute=None,
-        **valid_meta_params,
+        self, project, displayer, clean_inputs, compute=None, **valid_meta_params
     ):
         self.project = project
         self.clean_inputs = clean_inputs
         self.compute = compute or Compute()
         self.valid_meta_params = valid_meta_params
-        self.extend = extend
         for param, value in valid_meta_params.items():
             setattr(self, param, value)
         defaults = displayer.package_defaults()
@@ -85,10 +76,6 @@ class APIParser(BaseParser):
 
         for sect in adjustment:
             adjustment[sect].update(self.clean_inputs.get(sect, {}))
-            if self.extend and hasattr(self, "year"):
-                adjustment[sect] = parse_ops(
-                    adjustmnet[sect], errors_warnings, "year", self.year
-                )
 
         # kick off async parsing
         job_id, queue_length = self.post(errors_warnings, adjustment)

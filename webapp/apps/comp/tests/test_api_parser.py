@@ -2,6 +2,7 @@ from webapp.apps.users.models import Project
 from webapp.apps.comp.displayer import Displayer
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.models import Inputs
+from webapp.apps.comp.ops import parse_ops
 from webapp.apps.comp.tests.parser import LocalAPIParser
 
 
@@ -69,6 +70,8 @@ def test_api_parser_extra_section(db, get_inputs, valid_meta_params):
 # TODO: need OPs tests from test_params_w_ops
 
 # good data
+
+
 # raw_inputs = {
 #     "CPI_offset____year__mp": "<,-0.001,*",
 #     "STD____MARS__single___year__mp": "4000,*,*,6000",

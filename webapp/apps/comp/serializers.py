@@ -29,12 +29,16 @@ class InputsSerializer(serializers.ModelSerializer):
     status = serializers.ChoiceField(
         choices=(("SUCCESS", "Success"), ("FAIL", "Fail")), required=False
     )
+    client = serializers.ChoiceField(
+        choices=(
+            ("web-alpha", "Web-Alpha"),
+            ("web-beta", "Web-Beta"),
+            ("rest-api", "REST API"),
+        ),
+        required=False,
+    )
     sim = MiniSimulationSerializer(source="outputs", required=False)
     api_url = serializers.CharField(source="get_absolute_api_url", required=False)
-
-    class Meta:
-        model = Inputs
-        fields = ("meta_parameters", "adjustment", "inputs_file", "errors_warnings")
 
     job_id = serializers.UUIDField(required=False)
     status = serializers.ChoiceField(
@@ -42,7 +46,6 @@ class InputsSerializer(serializers.ModelSerializer):
     )
     sim = MiniSimulationSerializer(source="outputs", required=False)
     api_url = serializers.CharField(source="get_absolute_api_url", required=False)
-    extend = serializers.BooleanField(required=False, default=False, read_only=True)
 
     class Meta:
         model = Inputs
@@ -57,7 +60,6 @@ class InputsSerializer(serializers.ModelSerializer):
             "traceback",
             "sim",
             "api_url",
-            "extend",
             "client",
         )
 

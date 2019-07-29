@@ -229,8 +229,6 @@ class MyInputsAPIView(APIView):
         time.sleep(2)
         if request.user.username == "comp-api-user":
             data = request.data
-            print("req")
-            print(data)
             ser = InputsSerializer(data=request.data)
             if ser.is_valid():
                 data = ser.validated_data
@@ -253,6 +251,7 @@ class MyInputsAPIView(APIView):
                         inputs.save()
                 return Response(status=status.HTTP_200_OK)
             else:
+                print("inputs put error", ser.errors)
                 return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)

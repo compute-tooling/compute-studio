@@ -11,7 +11,7 @@ import {
   Preview,
   SectionHeaderList
 } from "./components";
-import { ValidatingModal, RunModal } from "./modal";
+import { ValidatingModal, RunModal, AuthModal } from "./modal";
 import { formikToJSON, convertToFormik } from "./ParamTools";
 
 // need to require schema in model_parameters!
@@ -77,31 +77,37 @@ class InputsForm extends React.Component {
             const [meta_parameters, adjustment] = formikToJSON(
               values,
               this.state.schema,
-              tbLabelSchema
+              tbLabelSchema,
+              this.state.extend
             );
             console.log("submitting");
             console.log(adjustment);
             console.log(meta_parameters);
+
             let formdata = new FormData();
             formdata.append("adjustment", JSON.stringify(adjustment));
             formdata.append("meta_parameters", JSON.stringify(meta_parameters));
             formdata.append("client", "web-beta");
-            alert(JSON.stringify(adjustment, null, 4));
-            // this.props
-            //   .doSubmit(formdata)
-            //   .then(response => {
-            //     console.log("success");
-            //     actions.setSubmitting(false);
-            //     console.log(response.data.pk);
-            //     actions.setStatus({
-            //       status: "PENDING",
-            //       inputs_pk: response.data.pk,
-            //       api_url: response.data.api_url
-            //     });
-            //   })
-            //   .catch(error => {
-            //     console.log("error", error);
-            //   });
+            this.props
+              .doSubmit(formdata)
+              .then(response => {
+                console.log("success");
+                actions.setSubmitting(false);
+                console.log(response.data.pk);
+                actions.setStatus({
+                  status: "PENDING",
+                  inputs_pk: response.data.pk,
+                  api_url: response.data.api_url
+                });
+              })
+              .catch(error => {
+                console.log("error", error);
+                if (error.response.status == 403) {
+                  actions.setStatus({
+                    auth: "You must be logged in to publish a model."
+                  });
+                }
+              });
           }}
           render={({
             handleSubmit,
@@ -119,6 +125,7 @@ class InputsForm extends React.Component {
               ) : (
                 <div />
               )}
+              {status && status.auth ? <AuthModal /> : <div />}
               <div className="row">
                 <div className="col-4">
                   <ul className="list-unstyled components sticky-top scroll-y">
