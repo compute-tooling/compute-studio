@@ -129,9 +129,9 @@ export const MetaParameters = React.memo(
           type="submit"
           name="reset"
           value="true"
-          className="btn btn-block btn-outline-dark"
+          className="btn btn-block btn-outline-dark mt-3"
         >
-          Reset
+          Reset (disabled)
         </button>
       </div>
     );
