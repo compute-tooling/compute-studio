@@ -94,7 +94,7 @@ export const RunModal = ({ handleSubmit }) => {
           onClick={handleShow}
           className="btn btn-block btn-success"
         >
-          Run
+          <b>Run</b>
         </Button>
       </div>
       <Modal show={show} onHide={handleClose}>
@@ -109,12 +109,11 @@ export const RunModal = ({ handleSubmit }) => {
             Close
           </Button>
           <Button
-            variant="primary"
+            variant="success"
             onClick={handleCloseWithSubmit}
             type="submit"
-            className="btn-block btn-success"
           >
-            <b>Run</b>
+            Run simulation
           </Button>
         </Modal.Footer>
       </Modal>
