@@ -127,7 +127,7 @@ class InputsForm extends React.Component {
               )}
               {status && status.auth ? <AuthModal /> : <div />}
               <div className="row">
-                <div className="col-4">
+                <div className="col-sm-4">
                   <ul className="list-unstyled components sticky-top scroll-y">
                     <li>
                       <MetaParameters
@@ -148,7 +148,7 @@ class InputsForm extends React.Component {
                     </li>
                   </ul>
                 </div>
-                <div className="col-8">
+                <div className="col-sm-8">
                   <Preview
                     values={values}
                     schema={schema}

@@ -62,7 +62,7 @@ export const SectionHeader = ({ title, size, label, openDefault = true }) => {
 export const LoadingElement = () => {
   return (
     <div className="row">
-      <div className="col-4">
+      <div className="col-sm-4">
         <ul className="list-unstyled components sticky-top scroll-y">
           <li>
             <div className="card card-body card-outer">
@@ -73,7 +73,7 @@ export const LoadingElement = () => {
           </li>
         </ul>
       </div>
-      <div className="col-8">
+      <div className="col-sm-8">
         <div className="card card-body card-outer">
           <div className="d-flex justify-content-center">
             <ReactLoading type="spokes" color="#2b2c2d" />
