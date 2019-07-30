@@ -29,8 +29,10 @@ class InputsForm extends React.Component {
     this.state = {
       initialValues: this.props.initialValues,
       sects: false,
-      model_parameters: false
+      model_parameters: false,
+      resetting: false
     };
+    this.resetInitialValues = this.resetInitialValues.bind(this);
   }
 
   componentDidMount() {
@@ -55,8 +57,36 @@ class InputsForm extends React.Component {
     }
   }
 
+  resetInitialValues(metaParameters) {
+    this.setState({ resetting: true });
+    this.props
+      .resetInitialValues({ meta_parameters: metaParameters })
+      .then(data => {
+        const [
+          initialValues,
+          sects,
+          model_parameters,
+          meta_parameters,
+          schema
+        ] = convertToFormik(data);
+        this.setState({
+          initialValues: initialValues,
+          sects: sects,
+          model_parameters: model_parameters,
+          meta_parameters: meta_parameters,
+          schema: schema,
+          extend: "extend" in data ? data.extend : false,
+          resetting: false
+        });
+      });
+  }
+
   render() {
-    if (!this.state.model_parameters || !this.state.initialValues) {
+    if (
+      !this.state.model_parameters ||
+      !this.state.initialValues ||
+      this.state.resetting
+    ) {
       return <LoadingElement />;
     }
     console.log("rendering");
@@ -73,6 +103,7 @@ class InputsForm extends React.Component {
           validationSchema={schema}
           validateOnChange={false}
           validateOnBlur={true}
+          enableReinitialize={true}
           onSubmit={(values, actions) => {
             const [meta_parameters, adjustment] = formikToJSON(
               values,
@@ -138,6 +169,7 @@ class InputsForm extends React.Component {
                         // errors={errors}
                         values={values.meta_parameters}
                         touched={touched}
+                        resetInitialValues={this.resetInitialValues}
                       />
                     </li>
                     <li>

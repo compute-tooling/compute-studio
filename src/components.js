@@ -85,7 +85,7 @@ export const LoadingElement = () => {
 };
 
 export const MetaParameters = React.memo(
-  ({ meta_parameters, values, touched }) => {
+  ({ meta_parameters, values, touched, resetInitialValues }) => {
     let isTouched = "meta_parameters" in touched;
     return (
       <div className="card card-body card-outer">
@@ -97,11 +97,6 @@ export const MetaParameters = React.memo(
               return (
                 <li key={fieldName}>
                   <ParamElement param_data={meta_parameters[paramName]} />
-                  {/* <FastField
-                    value={values[paramName]}
-                    name={fieldName}
-                    placeholder={valForForm(mp_item[1].value[0].value)}
-                  /> */}
                   {getField(
                     fieldName,
                     mp_item[1],
@@ -126,12 +121,14 @@ export const MetaParameters = React.memo(
           </ul>
         </div>
         <button
-          type="submit"
           name="reset"
-          value="true"
           className="btn btn-block btn-outline-dark mt-3"
+          onClick={e => {
+            e.preventDefault();
+            resetInitialValues(values);
+          }}
         >
-          Reset (disabled)
+          Reset
         </button>
       </div>
     );
