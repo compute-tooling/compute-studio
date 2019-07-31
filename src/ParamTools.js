@@ -1,5 +1,6 @@
 import * as yup from "yup";
-import { parseFromOps } from "./ops";
+import { parseFromOps, parseToOps } from "./ops";
+import { isEmpty } from "lodash/lang";
 
 const integerMsg = "Must be an integer.";
 const floatMsg = "Must be a floating point number.";
@@ -179,17 +180,70 @@ export function yupValidator(params, param_data, extend = false) {
   return ensureExtend(yupObj);
 }
 
+function select(valueObjects, labels) {
+  ret = [];
+  for (vo of valueObjects) {
+    matches = [];
+    for (const [labelName, labelValue] of Object.entries(labels)) {
+      if (labelName in vo) {
+        match = vo[labelName] === labelValue;
+      }
+    }
+    if (matches.some(val => val)) {
+      ret.push(vo);
+    }
+  }
+  return ret;
+}
+
+function labelsToString(valueObject) {
+  let s = [];
+  for (const [label, label_val] of Object.entries(valueObject).sort()) {
+    if (label === "value") {
+      continue;
+    }
+    s.push(`${label}__${label_val}`);
+  }
+  if (s.length == 0) {
+    s.push("nolabels");
+  }
+  return `${s.join("___")}`;
+}
+
 export function convertToFormik(data) {
   var initialValues = { adjustment: {}, meta_parameters: {} };
   var sects = {};
   var section_1 = "";
   var section_2 = "";
   var adjShape = {};
-  const extend = "extend" in data ? data.extend : false;
+  console.log("data", data);
+  const extend = "label_to_extend" in data ? data.label_to_extend : false;
+  const hasInitialValues = "userInputs" in data;
+  let [meta_parameters, adjustment] = [{}, {}];
+  if (hasInitialValues) {
+    adjustment = data.userInputs.adjustment;
+    meta_parameters = data.userInputs.meta_parameters;
+  }
   for (const [msect, params] of Object.entries(data.model_parameters)) {
     var msectShape = {};
     sects[msect] = {};
     initialValues.adjustment[msect] = {};
+    let editValues = {};
+    if (hasInitialValues && msect in adjustment) {
+      for (const [param, param_data] of Object.entries(adjustment[msect])) {
+        if (extend) {
+          var value = parseToOps(param_data, data.meta_parameters);
+        } else {
+          var value = param_data.value;
+        }
+        editValues[param] = param_data.map(vo => {
+          let fieldName = labelsToString(vo);
+          return { [fieldName]: value };
+        });
+        console.log(param, editValues[param]);
+      }
+    }
+    console.log("editValues", editValues);
     for (const [param, param_data] of Object.entries(params)) {
       param_data["form_fields"] = {};
       // Group by major section, section_1 and section_2.
@@ -216,23 +270,32 @@ export function convertToFormik(data) {
       // Define form_fields from value objects.
       initialValues.adjustment[msect][param] = {};
       var paramYupShape = {};
-      for (const vals of param_data.value) {
-        var s = [];
-        for (const [label, label_val] of Object.entries(vals).sort()) {
-          if (label == "value") {
-            continue;
-          }
-          s.push(`${label}__${label_val}`);
-        }
-        if (s.length == 0) {
-          s.push("nolabels");
-        }
-        var field_name = `${s.join("___")}`;
 
+      for (const vals of param_data.value) {
+        let fieldName = labelsToString(vals);
+        if (param in editValues) {
+          console.log(fieldName);
+          console.log(editValues[param]);
+        }
+        if (
+          !isEmpty(editValues) &&
+          param in editValues &&
+          fieldName in editValues[param]
+        ) {
+          console.log(
+            "edit val",
+            param,
+            fieldName,
+            editValues[param][fieldName]
+          );
+          var value = editValues[param][fieldName];
+        } else {
+          var value = vals.value;
+        }
         // TODO: match with edit value when supplied.
-        initialValues.adjustment[msect][param][field_name] = "";
-        param_data.form_fields[field_name] = vals.value;
-        paramYupShape[field_name] = yupObj;
+        initialValues.adjustment[msect][param][fieldName] = "";
+        param_data.form_fields[fieldName] = value;
+        paramYupShape[fieldName] = yupObj;
       }
 
       if ("checkbox" in param_data) {
@@ -245,20 +308,21 @@ export function convertToFormik(data) {
 
     adjShape[msect] = yup.object().shape(msectShape);
   }
-  var mpShape = {};
+  let mpShape = {};
   for (const [mp_name, mp_data] of Object.entries(data.meta_parameters)) {
-    var yupObj = yupValidator(data.meta_parameters, mp_data);
+    let yupObj = yupValidator(data.meta_parameters, mp_data);
+    let mpVal = mp_data.value[0].value;
     mpShape[mp_name] = yupObj;
     initialValues["meta_parameters"][mp_name] = yupObj.cast(
-      mp_data.value[0].value
+      mp_name in meta_parameters ? meta_parameters[mp_name] : mpVal
     );
   }
-
+  console.log("with metaparameters", initialValues);
   var schema = yup.object().shape({
     adjustment: yup.object().shape(adjShape),
     meta_parameters: yup.object().shape(mpShape)
   });
-
+  console.log("returning...");
   return [
     initialValues,
     sects,

@@ -23,15 +23,45 @@ class InputsApp extends React.Component {
   fetchInitialValues() {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
-    return axios
-      .get(`/${username}/${app_name}/api/v1/inputs/`)
-      .then(function(response) {
-        console.log(response);
-        return response.data;
-      })
-      .catch(function(error) {
-        console.log(error);
-      });
+    console.log(this.props.match, this.isEditPage);
+    if (this.type === "inputs") {
+      return axios
+        .get(`/${username}/${app_name}/api/v1/inputs/`)
+        .then(function(response) {
+          console.log(response);
+          return response.data;
+        })
+        .catch(function(error) {
+          console.log(error);
+          alert("Something went wrong while fetching the inputs.");
+        });
+    } else if (this.props.type === "edit") {
+      let model_pk = this.props.match.params.model_pk;
+      console.log("in the edit block");
+      return axios
+        .all([
+          axios.get(`/${username}/${app_name}/api/v1/inputs/`),
+          axios.get(`/${username}/${app_name}/api/v1/${model_pk}/edit/`)
+        ])
+        .then(
+          axios.spread((inputsResp, detailResp) => {
+            console.log("inputsResp", inputsResp);
+            console.log("detailResp", detailResp);
+            let data = inputsResp.data;
+            data["userInputs"] = {
+              adjustment: detailResp.data.adjustment,
+              meta_parameters: detailResp.data.meta_parameters
+            };
+            return data;
+          })
+        )
+        .catch(error => {
+          console.log(error);
+          alert("Something went wrong while fetching the inputs");
+        });
+    } else {
+      console.log(`type: ${this.props.type} is not allowed.`);
+    }
   }
 
   resetInitialValues(metaParameters) {
@@ -51,7 +81,6 @@ class InputsApp extends React.Component {
   doSubmit(data) {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
-    // TODO post as json instead of form data.
     console.log("posting...");
     console.log(data);
     return axios
@@ -82,7 +111,16 @@ class InputsApp extends React.Component {
 ReactDOM.render(
   <BrowserRouter>
     <Switch>
-      <Route exact path="/:username/:app_name/" component={InputsApp} />
+      <Route
+        exact
+        path="/:username/:app_name/"
+        render={routeProps => <InputsApp type="inputs" {...routeProps} />}
+      />
+      <Route
+        exact
+        path="/:username/:app_name/:model_pk/edit/"
+        render={routeProps => <InputsApp type="edit" {...routeProps} />}
+      />
     </Switch>
   </BrowserRouter>,
   domContainer
