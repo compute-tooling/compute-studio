@@ -157,15 +157,6 @@ class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
         )
         project = self.object.project
         context = self.project_context(request, project)
-        # unknown_fields = False
-        # for field, val in inputs_form.initial.items():
-        #     if val not in (None, ""):
-        #         try:
-        #             inputs_form.fields[field].initial = val
-        #         except KeyError:
-        #             print("unknown", field, val)
-        #             unknown_fields = True
-        # is_bound is turned off so that the `initial` data is displayed.
         return render(request, self.template_name, context)
 
 
