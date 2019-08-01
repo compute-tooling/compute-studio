@@ -19,7 +19,6 @@ export function parseFromOps(value, extendLabel = "year") {
 }
 
 export function parseToOps(valueObjects, metaParameters, extendLabel = "year") {
-  console.log("parsing", valueObjects);
   if (!valueObjects.length) return [];
   let res = [];
   for (let i = 0; i < valueObjects.length; i++) {
@@ -33,14 +32,12 @@ export function parseToOps(valueObjects, metaParameters, extendLabel = "year") {
       res.push(valueObjects[i].value);
     } else {
       let gap = valueObjects[i][extendLabel] - valueObjects[i - 1][extendLabel];
-      console.log(gap);
       for (let j = 0; j < gap - 1; j++) {
         res.push("*");
       }
       res.push(valueObjects[i].value);
     }
   }
-  console.log("got result", res);
   return res;
 }
 

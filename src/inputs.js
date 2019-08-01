@@ -24,7 +24,7 @@ class InputsApp extends React.Component {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     console.log(this.props.match, this.isEditPage);
-    if (this.type === "inputs") {
+    if (this.props.type === "inputs") {
       return axios
         .get(`/${username}/${app_name}/api/v1/inputs/`)
         .then(function(response) {

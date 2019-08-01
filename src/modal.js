@@ -19,9 +19,7 @@ export class ValidatingModal extends React.Component {
   }
 
   handleClose() {
-    console.log("closing timer", this.state.timer);
     clearInterval(this.state.timer);
-    console.log("turnong off show");
     this.setState({ setShow: false, show: false });
   }
   handleShow() {
@@ -59,7 +57,6 @@ export class ValidatingModal extends React.Component {
       clearInterval(this.state.timer);
       window.location.replace(this.state.simUrl);
     }
-    console.log(this.state);
     return (
       <div>
         <Modal show={this.state.show} onHide={this.handleClose}>

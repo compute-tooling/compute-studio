@@ -222,6 +222,14 @@ class TestAsyncAPI(CoreTestMixin):
         assert sim.outputs
         assert sim.traceback is None
 
+        # test get inputs form model_pk
+        get_resp_inputs = api_client.get(
+            f"/{self.owner}/{self.title}/api/v1/{model_pk}/edit/"
+        )
+        assert get_resp_inputs.status_code == 200
+        data = get_resp_inputs.data
+        assert "adjustment" in data
+
 
 def test_placeholder_page(db, client):
     title = "Matchups"

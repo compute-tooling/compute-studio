@@ -85,9 +85,12 @@ class DetailMyInputsAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         print("inputs api method=GET", request.GET, kwargs)
-        # if "pk" not in kwargs:
-        #     return Response({"error": "Primary key required."}, status=400)
-        inputs = get_object_or_404(self.queryset, pk=kwargs["pk"])
+        if "model_pk" in kwargs:
+            inputs = get_object_or_404(
+                self.queryset, outputs__model_pk=kwargs["model_pk"]
+            )
+        else:
+            inputs = get_object_or_404(self.queryset, pk=kwargs["pk"])
         return Response(InputsSerializer(inputs).data)
 
 

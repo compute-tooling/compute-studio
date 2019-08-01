@@ -193,6 +193,12 @@ export const Param = React.memo(
             let labels = form_field[0];
             let fieldName = `adjustment.${msect}.${param}.${labels}`;
             let placeholder = valForForm(form_field[1]);
+            let isTouched = false;
+            if (labels in values) {
+              isTouched = Array.isArray(values[labels])
+                ? values[labels].length > 0
+                : !!values[labels];
+            }
             return (
               <Value
                 key={fieldName}
@@ -200,7 +206,7 @@ export const Param = React.memo(
                 placeholder={placeholder}
                 colClass={colClass}
                 data={data}
-                isTouched={labels in values && values[labels]}
+                isTouched={isTouched}
               />
             );
           })}
@@ -395,12 +401,16 @@ export const Preview = React.memo(
       try {
         return transformfunc(values, schema, tbLabelSchema, extend);
       } catch (error) {
-        return {};
+        return ["Something went wrong while creating the preview.", ""];
       }
     };
     const onClick = e => {
       e.preventDefault();
-      setPreview(parseValues());
+      const [meta_parameters, model_parameters] = parseValues();
+      setPreview({
+        meta_parameters: meta_parameters,
+        model_parameters: model_parameters
+      });
     };
     return (
       <Card className="card-outer">

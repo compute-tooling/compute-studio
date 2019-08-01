@@ -23,6 +23,11 @@ urlpatterns = [
         name="detail_myinputs_api",
     ),
     path("api/v1/<int:model_pk>/", DetailAPIView.as_view(), name="detail_api"),
+    path(
+        "api/v1/<int:model_pk>/edit/",
+        DetailMyInputsAPIView.as_view(),
+        name="detail_myinputs_api_model_pk",
+    ),
     path("<int:model_pk>/edit/", EditInputsView.as_view(), name="edit"),
     path("<int:model_pk>/download/", OutputsDownloadView.as_view(), name="download"),
     path("<int:model_pk>/", OutputsView.as_view(), name="outputs"),
