@@ -3,21 +3,7 @@ import json
 import pytest
 import paramtools
 
-from webapp.apps.comp.utils import is_reverse, is_wildcard, json_int_key_encode
-
-
-@pytest.mark.parametrize(
-    "item,exp", [("<", True), ("a", False), ("1", False), (1, False), (False, False)]
-)
-def test_is_reverse(item, exp):
-    assert is_reverse(item) is exp
-
-
-@pytest.mark.parametrize(
-    "item,exp", [("*", True), ("a", False), ("1", False), (1, False), (False, False)]
-)
-def test_is_wildcard(item, exp):
-    assert is_wildcard(item) is exp
+from webapp.apps.comp.utils import json_int_key_encode
 
 
 def test_json_int_key_encode():
