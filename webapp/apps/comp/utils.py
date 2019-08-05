@@ -17,3 +17,10 @@ def json_int_key_encode(rename_dict):
                 new_label = k
             rename_dict[new_label] = json_int_key_encode(rename_dict.pop(k))
     return rename_dict
+
+
+def is_valid(inputs):
+    for sect, ew in inputs.errors_warnings.items():
+        if len(ew["errors"]) > 0:
+            return False
+    return True

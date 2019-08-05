@@ -49,6 +49,7 @@ class Inputs(models.Model):
         choices=(
             ("PENDING", "Pending"),
             ("SUCCESS", "Success"),
+            ("INVALID", "Invalid"),
             ("FAIL", "Fail"),
             ("WORKER_FAILURE", "Worker Failure"),
         ),

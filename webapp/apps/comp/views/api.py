@@ -27,8 +27,7 @@ from webapp.apps.comp.serializers import (
     InputsSerializer,
     OutputsSerializer,
 )
-
-# from webapp.apps.comp.submit import handle_submission, BadPost, APISubmit
+from webapp.apps.comp.utils import is_valid
 
 from .core import GetOutputsObjectMixin, RecordOutputsMixin, AbstractRouterAPIView
 
@@ -241,12 +240,13 @@ class MyInputsAPIView(APIView):
                 if inputs.status == "PENDING":
                     # successful run
                     if data["status"] == "SUCCESS":
-                        inputs.status = "SUCCESS"
                         inputs.errors_warnings = data["errors_warnings"]
                         inputs.inputs_file = data.get("inputs_file", None)
+                        inputs.status = "SUCCESS" if is_valid(inputs) else "INVALID"
                         inputs.save()
-                        submit_sim = SubmitSim(inputs, compute=Compute())
-                        submit_sim.submit()
+                        if inputs.status == "SUCCESS":
+                            submit_sim = SubmitSim(inputs, compute=Compute())
+                            submit_sim.submit()
                     # failed run, exception was caught
                     else:
                         inputs.status = "FAIL"

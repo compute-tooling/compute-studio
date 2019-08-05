@@ -2,14 +2,14 @@
 
 import React from "react";
 import ReactLoading from "react-loading";
-import { FastField, ErrorMessage } from "formik";
-import { isEqual } from "lodash/lang";
+import { FastField, ErrorMessage, setNestedObjectValues } from "formik";
+import { isEqual, isEmpty } from "lodash/lang";
 
 import { makeID, valForForm } from "./utils";
 import { RedMessage, getField, CPIField } from "./fields";
 import { Card, Button } from "react-bootstrap";
 
-export const ParamElement = ({ param_data, checkbox }) => {
+export const ParamElement = ({ param_data, checkbox, id }) => {
   var tooltip = <div />;
   if (param_data.description) {
     tooltip = (
@@ -26,7 +26,7 @@ export const ParamElement = ({ param_data, checkbox }) => {
   }
   return (
     <div className="row has-statuses col-xs-12">
-      <label>
+      <label id={id}>
         {param_data.title} {tooltip} {!!checkbox ? checkbox : null}
       </label>
     </div>
@@ -96,7 +96,10 @@ export const MetaParameters = React.memo(
               let fieldName = `meta_parameters.${paramName}`;
               return (
                 <li key={fieldName}>
-                  <ParamElement param_data={meta_parameters[paramName]} />
+                  <ParamElement
+                    param_data={meta_parameters[paramName]}
+                    id={fieldName}
+                  />
                   {getField(
                     fieldName,
                     mp_item[1],
@@ -184,7 +187,13 @@ export const Param = React.memo(
     } else {
       var checkbox = null;
     }
-    var paramElement = <ParamElement param_data={data} checkbox={checkbox} />;
+    var paramElement = (
+      <ParamElement
+        param_data={data}
+        checkbox={checkbox}
+        id={`adjustment.${msect}.${param}`}
+      />
+    );
     return (
       <div className="container" style={{ padding: "left 0" }} key={param}>
         {paramElement}
@@ -444,3 +453,51 @@ export const Preview = React.memo(
     return isEqual(prevProps.values, nextProps.values);
   }
 );
+
+export const ErrorCard = ({ errors, model_parameters = null }) => {
+  const errorMsg =
+    "Some fields have errors. These must be fixed " +
+    "before the simulation can be submitted.";
+  const getTitle = (msect, paramName) => {
+    if (
+      !!model_parameters &&
+      msect in model_parameters &&
+      paramName in model_parameters[msect]
+    ) {
+      return model_parameters[msect][paramName].title;
+    } else {
+      return paramName;
+    }
+  };
+  return (
+    <Card className="card-outer">
+      <Card.Body>
+        <div className="alert alert-danger">
+          <p>{errorMsg}</p>
+        </div>
+        {Object.entries(errors).map(([msect, errors], ix) => {
+          return !isEmpty(errors.errors) ? (
+            <div key={`${msect}-error`} className="alert alert-danger">
+              <h4>{msect}</h4>
+              {Object.entries(errors.errors).map(([paramName, msg], ix) => {
+                return (
+                  <div key={`${msect}-${paramName}-error`}>
+                    <p>{`${getTitle(msect, paramName)}:`}</p>
+                    <ul className="list-unstyled">
+                      <li className="ml-2">
+                        {msg}{" "}
+                        <a href={`#adjustment.${msect}.${paramName}`}>[link]</a>
+                      </li>
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div key={`${msect}-error`} />
+          );
+        })}
+      </Card.Body>
+    </Card>
+  );
+};
