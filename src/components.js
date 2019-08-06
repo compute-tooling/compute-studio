@@ -424,7 +424,7 @@ export const Preview = React.memo(
       const [meta_parameters, model_parameters] = parseValues();
       setPreview({
         meta_parameters: meta_parameters,
-        model_parameters: model_parameters
+        adjustment: model_parameters
       });
     };
     return (
