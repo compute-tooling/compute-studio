@@ -64,7 +64,7 @@ export const RunModal = ({ handleSubmit }) => {
             Are you sure that you want to run this simulation?
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body>TODO: add info about sponsored or not.</Modal.Body>
+        <Modal.Body>All sims are sponsored on the development site.</Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>
             Close
