@@ -38,10 +38,19 @@ export const ParamElement = ({
   );
 };
 
-export const SectionHeader = ({ title, size, label, openDefault = true }) => {
+export const SectionHeader = ({
+  title,
+  titleSize,
+  titleClass,
+  label,
+  openDefault = true
+}) => {
   const [open, setOpen] = React.useState(openDefault);
   return (
-    <h1 style={{ fontSize: { size } }}>
+    <h1
+      style={{ fontSize: titleSize }}
+      className={titleClass ? titleClass : ""}
+    >
       {title}
       <div className="float-right">
         <button
@@ -274,7 +283,11 @@ const Section1 = React.memo(
           className="card card-body card-outer mb-3 shadow-sm"
           style={{ padding: "1rem" }}
         >
-          <SectionHeader title={section_1} size={"1rem"} label="section-1" />
+          <SectionHeader
+            title={section_1}
+            titleSize={"2.5rem"}
+            label="section-1"
+          />
           <div
             className="collapse show collapse-plus-minus"
             id={`${makeID(section_1)}-collapse-section-1`}
@@ -324,8 +337,8 @@ export const MajorSection = React.memo(
   ({ msect, section_1_dict, model_parameters, ...props }) => {
     return (
       <div className="card card-body card-outer" key={msect}>
-        <SectionHeader title={msect} size="2.9rem" label="major" />
-        <hr className="mb-3" style={{ borderTop: "0" }} />
+        <SectionHeader title={msect} titleSize="2.9rem" label="major" />
+        <hr className="mb-1" style={{ borderTop: "0" }} />
         <div
           className="collapse show collapse-plus-minus"
           id={`${makeID(msect)}-collapse-major`}
@@ -432,7 +445,8 @@ export const Preview = React.memo(
         <Card className="card-body card-inner mt-1 mb-1">
           <SectionHeader
             title="Preview"
-            size="2.9rem"
+            titleSize="2.0rem"
+            titleClass="font-italic"
             label="preview"
             openDefault={false}
           />
