@@ -454,39 +454,41 @@ export const Preview = React.memo(
   }
 );
 
-export const ErrorCard = ({ errors, model_parameters = null }) => {
-  const errorMsg =
-    "Some fields have errors. These must be fixed " +
-    "before the simulation can be submitted.";
+export const ErrorCard = ({ errorMsg, errors, model_parameters = null }) => {
   const getTitle = (msect, paramName) => {
     if (
       !!model_parameters &&
       msect in model_parameters &&
       paramName in model_parameters[msect]
     ) {
-      return model_parameters[msect][paramName].title;
+      return [true, model_parameters[msect][paramName].title];
     } else {
-      return paramName;
+      return [false, paramName];
     }
   };
   return (
     <Card className="card-outer">
       <Card.Body>
-        <div className="alert alert-danger">
-          <p>{errorMsg}</p>
-        </div>
+        <div className="alert alert-danger">{errorMsg}</div>
         {Object.entries(errors).map(([msect, errors], ix) => {
           return !isEmpty(errors.errors) ? (
             <div key={`${msect}-error`} className="alert alert-danger">
-              <h4>{msect}</h4>
+              <h5>{msect}</h5>
               {Object.entries(errors.errors).map(([paramName, msg], ix) => {
+                let [exists, title] = getTitle(msect, paramName);
                 return (
                   <div key={`${msect}-${paramName}-error`}>
-                    <p>{`${getTitle(msect, paramName)}:`}</p>
+                    <p>
+                      <b>{`${title}:`}</b>
+                    </p>
                     <ul className="list-unstyled">
                       <li className="ml-2">
                         {msg}{" "}
-                        <a href={`#adjustment.${msect}.${paramName}`}>[link]</a>
+                        {exists ? (
+                          <a href={`#adjustment.${msect}.${paramName}`}>
+                            [link]
+                          </a>
+                        ) : null}
                       </li>
                     </ul>
                   </div>

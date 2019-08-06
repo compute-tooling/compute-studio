@@ -48,15 +48,21 @@ class InputsForm extends React.Component {
           sects,
           model_parameters,
           meta_parameters,
-          schema
+          schema,
+          unknownParams
         ] = convertToFormik(data);
+        let hasSimData = !!data.detail && !!data.detail.sim;
         this.setState({
           initialValues: initialValues,
           sects: sects,
           model_parameters: model_parameters,
           meta_parameters: meta_parameters,
           schema: schema,
-          extend: "extend" in data ? data.extend : false
+          extend: "extend" in data ? data.extend : false,
+          unknownParams: unknownParams,
+          creationDate: hasSimData ? data.detail.sim.creation_date : null,
+          modelVersion: hasSimData ? data.detail.sim.model_version : null,
+          detailAPIURL: !!data.detail ? data.detail.api_url : null
         });
       });
     }
@@ -72,7 +78,8 @@ class InputsForm extends React.Component {
           sects,
           model_parameters,
           meta_parameters,
-          schema
+          schema,
+          unknownParams
         ] = convertToFormik(data);
         this.setState({
           initialValues: initialValues,
@@ -144,6 +151,14 @@ class InputsForm extends React.Component {
     let schema = this.state.schema;
     let sects = this.state.sects;
     let extend = this.state.extend;
+    let hasUnknownParams = this.state.unknownParams.length > 0;
+    let unknownParamsErrors = { "Unknown Parameters": { errors: {} } };
+    if (hasUnknownParams) {
+      for (const param of this.state.unknownParams) {
+        unknownParamsErrors["Unknown Parameters"].errors[param] =
+          "This parameter is no longer used.";
+      }
+    }
     return (
       <div>
         <Formik
@@ -204,26 +219,12 @@ class InputsForm extends React.Component {
               {isSubmitting ? <ValidatingModal /> : <div />}
               {status && status.auth ? <AuthModal /> : <div />}
 
-              {status && status.status === "INVALID" && status.serverErrors ? (
-                <div className="card card-outer">
-                  <pre>
-                    <code>{JSON.stringify(status.serverErrors, null, 4)}</code>
-                  </pre>
-                </div>
-              ) : (
-                <div />
-              )}
-
               <div className="row">
                 <div className="col-sm-4">
                   <ul className="list-unstyled components sticky-top scroll-y">
                     <li>
                       <MetaParameters
                         meta_parameters={meta_parameters}
-                        // handleSubmit={handleSubmit}
-                        // handleChange={handleChange}
-                        // status={status}
-                        // errors={errors}
                         values={values.meta_parameters}
                         touched={touched}
                         resetInitialValues={this.resetInitialValues}
@@ -242,8 +243,33 @@ class InputsForm extends React.Component {
                   status.status === "INVALID" &&
                   status.serverErrors ? (
                     <ErrorCard
+                      errorMsg={
+                        <p>
+                          "Some fields have errors. These must be fixed " +
+                          "before the simulation can be submitted."
+                        </p>
+                      }
                       errors={status.serverErrors}
                       model_parameters={model_parameters}
+                    />
+                  ) : (
+                    <div />
+                  )}
+
+                  {hasUnknownParams ? (
+                    <ErrorCard
+                      errorMsg={
+                        <p>
+                          {"One or more parameters have been renamed or " +
+                            "removed since this simulation was run on " +
+                            `${this.state.creationDate} with version ${
+                              this.state.modelVersion
+                            }. You may view the full simulation detail `}
+                          <a href={this.state.detailAPIURL}>here.</a>
+                        </p>
+                      }
+                      errors={unknownParamsErrors}
+                      model_parameters={{}}
                     />
                   ) : (
                     <div />

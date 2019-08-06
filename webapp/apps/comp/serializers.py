@@ -18,10 +18,11 @@ class OutputsSerializer(serializers.Serializer):
 class MiniSimulationSerializer(serializers.ModelSerializer):
     api_url = serializers.CharField(source="get_absolute_api_url")
     gui_url = serializers.CharField(source="get_absolute_url")
+    creation_date = serializers.DateTimeField(format="%Y-%m-%d")
 
     class Meta:
         model = Simulation
-        fields = ("model_pk", "api_url", "gui_url")
+        fields = ("model_pk", "api_url", "gui_url", "creation_date", "model_version")
 
 
 class InputsSerializer(serializers.ModelSerializer):

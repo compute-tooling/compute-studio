@@ -1,6 +1,7 @@
 import * as yup from "yup";
 import { parseFromOps, parseToOps } from "./ops";
 import { isEmpty } from "lodash/lang";
+import { union as lodashUnion, difference } from "lodash/array";
 
 const integerMsg = "Must be an integer.";
 const floatMsg = "Must be a floating point number.";
@@ -224,11 +225,12 @@ export function convertToFormik(data) {
   let label_to_extend =
     "label_to_extend" in data ? data.label_to_extend : "year";
   // end TODO
-  const hasInitialValues = "userInputs" in data;
+  const hasInitialValues = "detail" in data;
   let [meta_parameters, adjustment] = [{}, {}];
+  let unknownParams = [];
   if (hasInitialValues) {
-    adjustment = data.userInputs.adjustment;
-    meta_parameters = data.userInputs.meta_parameters;
+    adjustment = data.detail.adjustment;
+    meta_parameters = data.detail.meta_parameters;
   }
   for (const [msect, params] of Object.entries(data.model_parameters)) {
     var msectShape = {};
@@ -236,6 +238,12 @@ export function convertToFormik(data) {
     initialValues.adjustment[msect] = {};
     if (!(msect in adjustment)) {
       adjustment[msect] = {};
+    }
+    if (hasInitialValues && msect in adjustment) {
+      unknownParams = lodashUnion(
+        unknownParams,
+        difference(Object.keys(adjustment[msect]), Object.keys(params))
+      );
     }
     for (const [param, param_data] of Object.entries(params)) {
       param_data["form_fields"] = {};
@@ -316,7 +324,8 @@ export function convertToFormik(data) {
     sects,
     data.model_parameters,
     data.meta_parameters,
-    schema
+    schema,
+    unknownParams
   ];
 }
 

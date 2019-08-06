@@ -48,10 +48,7 @@ class InputsApp extends React.Component {
             console.log("inputsResp", inputsResp);
             console.log("detailResp", detailResp);
             let data = inputsResp.data;
-            data["userInputs"] = {
-              adjustment: detailResp.data.adjustment,
-              meta_parameters: detailResp.data.meta_parameters
-            };
+            data["detail"] = detailResp.data;
             return data;
           })
         )
