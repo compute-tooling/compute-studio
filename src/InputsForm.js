@@ -116,6 +116,7 @@ class InputsForm extends React.Component {
           }
         })
         .catch(error => {
+          console.log("polling error:");
           console.log(error);
           this.killTimer();
           actions.setSubmitting(false);
@@ -126,7 +127,9 @@ class InputsForm extends React.Component {
   }
 
   killTimer() {
+    console.log("timer method");
     if (!!this.state.timer) {
+      console.log("clearing timer...");
       clearInterval(this.state.timer);
       this.setState({ timer: null });
     }
