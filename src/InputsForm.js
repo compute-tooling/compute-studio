@@ -121,6 +121,7 @@ class InputsForm extends React.Component {
           this.killTimer();
           actions.setSubmitting(false);
           // request likely cancelled because timer was killed.
+          console.log("iscancel", axios.isCancel(error));
           if (!axios.isCancel(error)) {
             alert("There was an error validating your inputs.");
           }
