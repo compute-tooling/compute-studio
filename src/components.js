@@ -9,7 +9,12 @@ import { makeID, valForForm } from "./utils";
 import { RedMessage, getField, CPIField } from "./fields";
 import { Card, Button } from "react-bootstrap";
 
-export const ParamElement = ({ param_data, checkbox, id }) => {
+export const ParamElement = ({
+  param_data,
+  checkbox,
+  id,
+  classes = "row has-statuses col-xs-12"
+}) => {
   var tooltip = <div />;
   if (param_data.description) {
     tooltip = (
@@ -25,7 +30,7 @@ export const ParamElement = ({ param_data, checkbox, id }) => {
     );
   }
   return (
-    <div className="row has-statuses col-xs-12">
+    <div className={classes}>
       <label id={id}>
         {param_data.title} {tooltip} {!!checkbox ? checkbox : null}
       </label>
@@ -89,16 +94,17 @@ export const MetaParameters = React.memo(
     let isTouched = "meta_parameters" in touched;
     return (
       <div className="card card-body card-outer">
-        <div className="inputs-block">
+        <div className="form-group">
           <ul className="list-unstyled components">
             {Object.entries(meta_parameters).map(function(mp_item, ix) {
               let paramName = `${mp_item[0]}`;
               let fieldName = `meta_parameters.${paramName}`;
               return (
-                <li key={fieldName}>
+                <li key={fieldName} className="mb-3">
                   <ParamElement
                     param_data={meta_parameters[paramName]}
                     id={fieldName}
+                    classes=""
                   />
                   {getField(
                     fieldName,
@@ -195,7 +201,7 @@ export const Param = React.memo(
       />
     );
     return (
-      <div className="container" style={{ padding: "left 0" }} key={param}>
+      <div className="container mb-3" style={{ padding: "left 0" }} key={param}>
         {paramElement}
         <div className="form-row has-statuses" style={{ marginLeft: "-20px" }}>
           {Object.entries(data.form_fields).map(function(form_field, ix) {
@@ -232,8 +238,8 @@ const Section2 = React.memo(
   ({ section_2, param_list, msect, model_parameters, values }) => {
     let section_2_id = makeID(section_2);
     return (
-      <div key={section_2_id}>
-        <h3>{section_2}</h3>
+      <div key={section_2_id} className="mb-2">
+        <h3 className="mb-1">{section_2}</h3>
         {param_list.map(function(param) {
           return (
             <Param
