@@ -74,6 +74,29 @@ class TestUserModels:
         assert reg.project.display_sponsor == "Not sponsored"
         assert sponsored.project.display_sponsor == "sponsor"
 
+    def test_project_is_sponsored(self, test_models):
+        reg, sponsored = test_models
+        assert not reg.project.is_sponsored
+        assert sponsored.project.is_sponsored
+
+    def test_project_can_run(self, profile, test_models):
+        reg, sponsored = test_models
+
+        # profile has no customer:
+        profile.customer = None
+        assert not profile.can_run(reg.project)
+        assert profile.can_run(sponsored.project)
+
+        # profile has a customer.
+        profile.customer = 1  # dummy to fool method.
+        assert profile.can_run(reg.project)
+        assert profile.can_run(sponsored.project)
+
+        # profile is inactive:
+        profile.is_active = False
+        assert not profile.can_run(reg.project)
+        assert not profile.can_run(sponsored.project)
+
     def test_project_access(self, profile):
         project = Project.objects.get(
             title="Used-for-testing", owner__user__username="modeler"

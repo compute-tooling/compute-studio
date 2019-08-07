@@ -63,6 +63,23 @@ class Profile(models.Model):
                 ] = queryset.all().order_by("-pk")
         return dict(sorted(runs.items(), key=lambda item: -item[1].count()))
 
+    def can_run(self, project):
+        if not self.is_active:
+            return False
+        if hasattr(self, "customer") and self.customer:
+            return True
+
+        return project.is_sponsored
+
+    @property
+    def status(self):
+        if not self.is_active:
+            return "inactive"
+        if hasattr(self, "customer"):
+            return "customer"
+        else:
+            return "profile"
+
     class Meta:
         # not in use yet...
         permissions = (("access_public", "Has access to public projects"),)
@@ -176,6 +193,10 @@ class Project(models.Model):
 
     def worker_ext(self, action):
         return f"{self.owner.user.username}/{self.title}/{action}"
+
+    @property
+    def is_sponsored(self):
+        return self.sponsor is not None
 
     @property
     def display_sponsor(self):

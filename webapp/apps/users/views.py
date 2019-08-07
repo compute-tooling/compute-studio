@@ -8,7 +8,11 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.contrib.auth import get_user_model
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
 from webapp.apps.billing.utils import USE_STRIPE
+from webapp.apps.publish.views import GetProjectMixin
 
 from .forms import UserCreationForm, CancelSubscriptionForm, DeleteUserForm
 from .models import is_profile_active, Project
@@ -107,3 +111,31 @@ class DeleteUserDone(generic.TemplateView):
 
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
+
+
+class AccessStatusAPI(GetProjectMixin, APIView):
+    def get(self, request, *args, **kwargs):
+        data = {}
+        user = request.user
+        if user.is_authenticated and user.profile:
+            user_status = user.profile.status
+        else:
+            user_status = "anon"
+
+        if kwargs:
+            project = self.get_object(**kwargs)
+            is_sponsored = project.is_sponsored
+            if user.is_authenticated and user.profile:
+                can_run = user.profile.can_run(project)
+            else:
+                can_run = False
+
+            return Response(
+                {
+                    "is_sponsored": is_sponsored,
+                    "user_status": user_status,
+                    "can_run": can_run,
+                }
+            )
+        else:
+            return Response({"user_status": user_status})

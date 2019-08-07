@@ -115,3 +115,28 @@ class TestUsersViews:
             resp = client.get(url)
             assert resp.status_code == 302
             assert resp.url.startswith("/users/login/")
+
+    def test_access_api(self, api_client, profile, password):
+        user = auth.get_user(api_client)
+        assert not user.is_authenticated
+
+        resp = api_client.get("/users/status/")
+        assert resp.data == {"user_status": "anon"}
+
+        resp = api_client.get("/users/status/modeler/Used-for-testing/")
+        assert resp.data == {
+            "user_status": "anon",
+            "is_sponsored": False,
+            "can_run": False,
+        }
+
+        resp = api_client.get("/users/status/modeler/Used-for-testing-sponsored-apps/")
+        assert resp.data == {
+            "user_status": "anon",
+            "is_sponsored": True,
+            "can_run": False,
+        }
+
+        assert api_client.login(username=profile.user.username, password=password)
+        resp = api_client.get("/users/status/")
+        assert resp.data == {"user_status": profile.status}
