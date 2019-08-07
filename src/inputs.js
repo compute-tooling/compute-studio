@@ -25,13 +25,18 @@ class InputsApp extends React.Component {
     const app_name = this.props.match.params.app_name;
     console.log(this.props.match, this.isEditPage);
     if (this.props.type === "inputs") {
-      return axios
-        .get(`/${username}/${app_name}/api/v1/inputs/`)
-        .then(function(response) {
-          console.log(response);
-          return response.data;
-        })
-        .catch(function(error) {
+      return axios.all([
+        axios.get(`/${username}/${app_name}/api/v1/inputs/`),
+        axios.get(`/users/status/${username}/${app_name}/`)
+      ])
+        .then(axios.spread((inputsResp, statusResp) => {
+          console.log("inputsResp", inputsResp)
+          console.log("statusResp", statusResp);
+          let data = inputsResp.data;
+          data["accessStatus"] = statusResp.data;
+          return data;
+        }))
+        .catch(error => {
           console.log(error);
           alert("Something went wrong while fetching the inputs.");
         });
@@ -41,14 +46,17 @@ class InputsApp extends React.Component {
       return axios
         .all([
           axios.get(`/${username}/${app_name}/api/v1/inputs/`),
-          axios.get(`/${username}/${app_name}/api/v1/${model_pk}/edit/`)
+          axios.get(`/${username}/${app_name}/api/v1/${model_pk}/edit/`),
+          axios.get(`/users/status/${username}/${app_name}/`)
         ])
         .then(
-          axios.spread((inputsResp, detailResp) => {
+          axios.spread((inputsResp, detailResp, statusResp) => {
             console.log("inputsResp", inputsResp);
             console.log("detailResp", detailResp);
+            console.log("statusResp", statusResp)
             let data = inputsResp.data;
             data["detail"] = detailResp.data;
+            data["accessStatus"] = statusResp;
             return data;
           })
         )
@@ -66,11 +74,11 @@ class InputsApp extends React.Component {
     const app_name = this.props.match.params.app_name;
     return axios
       .post(`/${username}/${app_name}/api/v1/inputs/`, metaParameters)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
         return response.data;
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.log(error);
       });
   }
@@ -82,7 +90,7 @@ class InputsApp extends React.Component {
     console.log(data);
     return axios
       .post(`/${username}/${app_name}/api/v1/`, data)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
         return response;
         // window.location.replace("/");

@@ -62,7 +62,8 @@ class InputsForm extends React.Component {
           unknownParams: unknownParams,
           creationDate: hasSimData ? data.detail.sim.creation_date : null,
           modelVersion: hasSimData ? data.detail.sim.model_version : null,
-          detailAPIURL: !!data.detail ? data.detail.api_url : null
+          detailAPIURL: !!data.detail ? data.detail.api_url : null,
+          accessStatus: data.accessStatus,
         });
       });
     }
@@ -201,6 +202,8 @@ class InputsForm extends React.Component {
               })
               .catch(error => {
                 console.log("error", error);
+                actions.setSubmitting(false)
+                actions.setStatus({ status: null })
                 if (error.response.status == 403) {
                   actions.setStatus({
                     auth: "You must be logged in to publish a model."
@@ -219,97 +222,98 @@ class InputsForm extends React.Component {
             setFieldValue,
             touched
           }) => (
-            <Form>
-              {isSubmitting ? <ValidatingModal /> : <div />}
-              {status && status.auth ? <AuthModal /> : <div />}
+              <Form>
+                {isSubmitting ? <ValidatingModal /> : <div />}
+                {status && status.auth ? <AuthModal /> : <div />}
 
-              <div className="row">
-                <div className="col-sm-4">
-                  <ul className="list-unstyled components sticky-top scroll-y">
-                    <li>
-                      <MetaParameters
-                        meta_parameters={meta_parameters}
-                        values={values.meta_parameters}
-                        touched={touched}
-                        resetInitialValues={this.resetInitialValues}
-                      />
-                    </li>
-                    <li>
-                      <SectionHeaderList sects={sects} />
-                    </li>
-                    <li>
-                      <RunModal handleSubmit={handleSubmit} />
-                    </li>
-                  </ul>
-                </div>
-                <div className="col-sm-8">
-                  {status &&
-                  status.status === "INVALID" &&
-                  status.serverErrors ? (
-                    <ErrorCard
-                      errorMsg={
-                        <p>
-                          "Some fields have errors. These must be fixed " +
-                          "before the simulation can be submitted."
+                <div className="row">
+                  <div className="col-sm-4">
+                    <ul className="list-unstyled components sticky-top scroll-y">
+                      <li>
+                        <MetaParameters
+                          meta_parameters={meta_parameters}
+                          values={values.meta_parameters}
+                          touched={touched}
+                          resetInitialValues={this.resetInitialValues}
+                        />
+                      </li>
+                      <li>
+                        <SectionHeaderList sects={sects} />
+                      </li>
+                      <li>
+                        <RunModal handleSubmit={handleSubmit} accessStatus={this.state.accessStatus} />
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="col-sm-8">
+                    {status &&
+                      status.status === "INVALID" &&
+                      status.serverErrors ? (
+                        <ErrorCard
+                          errorMsg={
+                            <p>
+                              "Some fields have errors. These must be fixed " +
+                              "before the simulation can be submitted."
                         </p>
-                      }
-                      errors={status.serverErrors}
-                      model_parameters={model_parameters}
-                    />
-                  ) : (
-                    <div />
-                  )}
+                          }
+                          errors={status.serverErrors}
+                          model_parameters={model_parameters}
+                        />
+                      ) : (
+                        <div />
+                      )}
 
-                  {hasUnknownParams ? (
-                    <ErrorCard
-                      errorMsg={
-                        <p>
-                          {"One or more parameters have been renamed or " +
-                            "removed since this simulation was run on " +
-                            `${this.state.creationDate} with version ${
+                    {hasUnknownParams ? (
+                      <ErrorCard
+                        errorMsg={
+                          <p>
+                            {"One or more parameters have been renamed or " +
+                              "removed since this simulation was run on " +
+                              `${this.state.creationDate} with version ${
                               this.state.modelVersion
-                            }. You may view the full simulation detail `}
-                          <a href={this.state.detailAPIURL}>here.</a>
-                        </p>
-                      }
-                      errors={unknownParamsErrors}
-                      model_parameters={{}}
-                    />
-                  ) : (
-                    <div />
-                  )}
-
-                  <Preview
-                    values={values}
-                    schema={schema}
-                    tbLabelSchema={tbLabelSchema}
-                    transformfunc={formikToJSON}
-                    extend={extend}
-                  />
-                  {Object.entries(sects).map(function(msect_item, ix) {
-                    // msect --> section_1: dict(dict) --> section_2: dict(dict)
-                    let msect = msect_item[0];
-                    let section_1_dict = msect_item[1];
-                    return (
-                      <MajorSection
-                        key={`${msect}-component`}
-                        msect={msect}
-                        section_1_dict={section_1_dict}
-                        model_parameters={model_parameters}
-                        handleSubmit={handleSubmit}
-                        handleChange={handleChange}
-                        status={status}
-                        errors={errors}
-                        values={values}
-                        setFieldValue={setFieldValue}
-                        handleBlur={handleBlur}
+                              }. You may view the full simulation detail `}
+                            <a href={this.state.detailAPIURL}>here.</a>
+                          </p>
+                        }
+                        errors={unknownParamsErrors}
+                        model_parameters={{}}
                       />
-                    );
-                  })}
+                    ) : (
+                        <div />
+                      )}
+
+                    <Preview
+                      values={values}
+                      schema={schema}
+                      tbLabelSchema={tbLabelSchema}
+                      transformfunc={formikToJSON}
+                      extend={extend}
+                    />
+                    {Object.entries(sects).map(function (msect_item, ix) {
+                      // msect --> section_1: dict(dict) --> section_2: dict(dict)
+                      let msect = msect_item[0];
+                      let section_1_dict = msect_item[1];
+                      return (
+                        <MajorSection
+                          key={`${msect}-component`}
+                          msect={msect}
+                          section_1_dict={section_1_dict}
+                          model_parameters={model_parameters}
+                          handleSubmit={handleSubmit}
+                          handleChange={handleChange}
+                          status={status}
+                          errors={errors}
+                          values={values}
+                          setFieldValue={setFieldValue}
+                          handleBlur={handleBlur}
+                          extend={extend}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            </Form>
-          )}
+              </Form>
+            )}
         />
       </div>
     );

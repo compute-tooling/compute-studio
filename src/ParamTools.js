@@ -53,7 +53,7 @@ function testReverseOp(value) {
   return true;
 }
 
-yup.number.prototype._typeCheck = function(value) {
+yup.number.prototype._typeCheck = function (value) {
   if (value instanceof Number) value = value.valueOf();
 
   return (
@@ -62,7 +62,7 @@ yup.number.prototype._typeCheck = function(value) {
   );
 };
 
-yup.bool.prototype._typeCheck = function(value) {
+yup.bool.prototype._typeCheck = function (value) {
   if (value instanceof Boolean) value = value.valueOf();
   return (
     (typeof value === "string" && (value === "*" || value === "<")) ||
@@ -134,7 +134,7 @@ export function yupType(type) {
       .date(dateMsg)
       .typeError(dateMsg)
       .nullable()
-      .transform(tranform);
+      .transform(transform);
   } else {
     return yup.string();
   }

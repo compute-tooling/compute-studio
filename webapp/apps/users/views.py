@@ -124,7 +124,7 @@ class AccessStatusAPI(GetProjectMixin, APIView):
 
         if kwargs:
             project = self.get_object(**kwargs)
-            is_sponsored = project.is_sponsored
+            exp_cost, exp_time = project.exp_job_info(adjust=True)
             if user.is_authenticated and user.profile:
                 can_run = user.profile.can_run(project)
             else:
@@ -132,9 +132,12 @@ class AccessStatusAPI(GetProjectMixin, APIView):
 
             return Response(
                 {
-                    "is_sponsored": is_sponsored,
+                    "is_sponsored": project.is_sponsored,
                     "user_status": user_status,
                     "can_run": can_run,
+                    "server_cost": project.server_cost,
+                    "exp_cost": exp_cost,
+                    "exp_time": exp_time,
                 }
             )
         else:

@@ -116,25 +116,37 @@ class TestUsersViews:
             assert resp.status_code == 302
             assert resp.url.startswith("/users/login/")
 
-    def test_access_api(self, api_client, profile, password):
+    def test_access_api(self, api_client, profile, password, test_models):
         user = auth.get_user(api_client)
         assert not user.is_authenticated
+
+        project, sponsored_project = test_models[0].project, test_models[1].project
 
         resp = api_client.get("/users/status/")
         assert resp.data == {"user_status": "anon"}
 
-        resp = api_client.get("/users/status/modeler/Used-for-testing/")
+        resp = api_client.get(
+            f"/users/status/{project.owner.user.username}/{project.title}/"
+        )
         assert resp.data == {
             "user_status": "anon",
             "is_sponsored": False,
             "can_run": False,
+            "exp_cost": project.exp_job_info(adjust=True)[0],
+            "exp_time": project.exp_job_info(adjust=True)[1],
+            "server_cost": project.server_cost,
         }
 
-        resp = api_client.get("/users/status/modeler/Used-for-testing-sponsored-apps/")
+        resp = api_client.get(
+            f"/users/status/{sponsored_project.owner.user.username}/{sponsored_project.title}/"
+        )
         assert resp.data == {
             "user_status": "anon",
             "is_sponsored": True,
             "can_run": False,
+            "exp_cost": sponsored_project.exp_job_info(adjust=True)[0],
+            "exp_time": sponsored_project.exp_job_info(adjust=True)[1],
+            "server_cost": sponsored_project.server_cost,
         }
 
         assert api_client.login(username=profile.user.username, password=password)

@@ -105,7 +105,7 @@ export const MetaParameters = React.memo(
       <div className="card card-body card-outer">
         <div className="form-group">
           <ul className="list-unstyled components">
-            {Object.entries(meta_parameters).map(function(mp_item, ix) {
+            {Object.entries(meta_parameters).map(function (mp_item, ix) {
               let paramName = `${mp_item[0]}`;
               let fieldName = `meta_parameters.${paramName}`;
               return (
@@ -133,8 +133,8 @@ export const MetaParameters = React.memo(
                   Click Reset to update the default values of the parameters.
                 </p>
               ) : (
-                <div />
-              )}
+                  <div />
+                )}
             </li>
           </ul>
         </div>
@@ -161,12 +161,13 @@ const ValueComponent = ({
   placeholder,
   colClass,
   data,
-  isTouched
+  isTouched,
+  extend
 }) => {
   let style = isTouched ? { backgroundColor: "rgba(102, 175, 233, 0.2)" } : {};
   return (
     <div className={colClass} key={makeID(fieldName)}>
-      {getField(fieldName, data, placeholder, style, true)}
+      {getField(fieldName, data, placeholder, style, extend)}
       {isTouched ? (
         <small className="ml-2" style={{ color: "#869191" }}>
           Default: {placeholder}
@@ -180,7 +181,7 @@ const ValueComponent = ({
 const Value = React.memo(ValueComponent);
 
 export const Param = React.memo(
-  ({ param, msect, data, values }) => {
+  ({ param, msect, data, values, extend }) => {
     if (Object.keys(data.form_fields).length == 1) {
       var colClass = "col-6";
     } else if (
@@ -213,7 +214,7 @@ export const Param = React.memo(
       <div className="container mb-3" style={{ padding: "left 0" }} key={param}>
         {paramElement}
         <div className="form-row has-statuses" style={{ marginLeft: "-20px" }}>
-          {Object.entries(data.form_fields).map(function(form_field, ix) {
+          {Object.entries(data.form_fields).map(function (form_field, ix) {
             let labels = form_field[0];
             let fieldName = `adjustment.${msect}.${param}.${labels}`;
             let placeholder = valForForm(form_field[1]);
@@ -231,6 +232,7 @@ export const Param = React.memo(
                 colClass={colClass}
                 data={data}
                 isTouched={isTouched}
+                extend={extend}
               />
             );
           })}
@@ -244,12 +246,12 @@ export const Param = React.memo(
 );
 
 const Section2 = React.memo(
-  ({ section_2, param_list, msect, model_parameters, values }) => {
+  ({ section_2, param_list, msect, model_parameters, values, extend }) => {
     let section_2_id = makeID(section_2);
     return (
       <div key={section_2_id} className="mb-2">
         <h3 className="mb-1">{section_2}</h3>
-        {param_list.map(function(param) {
+        {param_list.map(function (param) {
           return (
             <Param
               key={`${param}-component`}
@@ -257,7 +259,8 @@ const Section2 = React.memo(
               msect={msect}
               data={model_parameters[msect][param]}
               values={values[param]}
-              // {...props}
+              extend={extend}
+            // {...props}
             />
           );
         })}
@@ -275,7 +278,7 @@ const Section2 = React.memo(
 );
 
 const Section1 = React.memo(
-  ({ section_1, section_2_dict, msect, model_parameters, values }) => {
+  ({ section_1, section_2_dict, msect, model_parameters, values, extend }) => {
     let section_1_id = makeID(section_1);
     return (
       <div className="inputs-block" id={section_1_id} key={section_1_id}>
@@ -296,7 +299,7 @@ const Section1 = React.memo(
               className="card card-body card-inner mb-3"
               style={{ padding: "0rem" }}
             >
-              {Object.entries(section_2_dict).map(function(
+              {Object.entries(section_2_dict).map(function (
                 param_list_item,
                 ix
               ) {
@@ -310,6 +313,7 @@ const Section1 = React.memo(
                     msect={msect}
                     model_parameters={model_parameters}
                     values={values}
+                    extend={extend}
                   />
                 );
               })}
@@ -347,7 +351,7 @@ export const MajorSection = React.memo(
             className="card card-body card-inner"
             style={{ padding: "0rem" }}
           >
-            {Object.entries(section_1_dict).map(function(section_2_item, ix) {
+            {Object.entries(section_1_dict).map(function (section_2_item, ix) {
               let section_1 = section_2_item[0];
               let section_2_dict = section_2_item[1];
               return (
@@ -358,6 +362,7 @@ export const MajorSection = React.memo(
                   msect={msect}
                   model_parameters={model_parameters}
                   values={props.values.adjustment[msect]}
+                  extend={props.extend}
                 />
               );
             })}
@@ -516,8 +521,8 @@ export const ErrorCard = ({ errorMsg, errors, model_parameters = null }) => {
               })}
             </div>
           ) : (
-            <div key={`${msect}-error`} />
-          );
+              <div key={`${msect}-error`} />
+            );
         })}
       </Card.Body>
     </Card>
