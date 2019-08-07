@@ -175,7 +175,7 @@ export function yupValidator(params, param_data, extend = false) {
     }
   }
   if ("choice" in param_data.validators) {
-    yupObj = yupObj.oneOf(param_data.validators.choice.choices, oneOfMsg);
+    yupObj = yupObj.oneOf(lodashUnion(param_data.validators.choice.choices, [null, ""]), oneOfMsg);
   }
 
   return ensureExtend(yupObj);

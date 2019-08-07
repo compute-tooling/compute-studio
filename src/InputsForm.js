@@ -106,7 +106,7 @@ class InputsForm extends React.Component {
               simUrl: response.data.sim.gui_url
             });
             this.killTimer();
-            window.location.replace(response.data.sim.gui_url);
+            window.location.href = response.data.sim.gui_url;
           } else if (response.data.status === "INVALID") {
             actions.setSubmitting(false);
             actions.setStatus({

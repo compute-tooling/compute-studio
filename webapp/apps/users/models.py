@@ -66,7 +66,7 @@ class Profile(models.Model):
     def can_run(self, project):
         if not self.is_active:
             return False
-        if hasattr(self, "customer") and self.customer:
+        if hasattr(self.user, "customer") and self.user.customer:
             return True
 
         return project.is_sponsored
