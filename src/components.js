@@ -7,7 +7,7 @@ import { isEqual, isEmpty } from "lodash/lang";
 
 import { makeID, valForForm } from "./utils";
 import { RedMessage, getField, CPIField } from "./fields";
-import { Card, Button } from "react-bootstrap";
+import { Card, Button, Overlay, OverlayTrigger, Tooltip } from "react-bootstrap";
 
 export const ParamElement = ({
   param_data,
@@ -15,19 +15,16 @@ export const ParamElement = ({
   id,
   classes = "row has-statuses col-xs-12"
 }) => {
-  var tooltip = <div />;
+  let tooltip = <div />;
   if (param_data.description) {
     tooltip = (
-      <label
-        className="input-tooltip"
-        data-toggle="tooltip"
-        data-placement="top"
-        title={param_data.description}
-      >
-        {" "}
-        <i className="fas fa-info-circle" />
-      </label>
-    );
+      <OverlayTrigger trigger={["hover", "click"]} overlay={<Tooltip id={`${id}-tooltip`}>{param_data.description}</Tooltip>}>
+        <span className="d-inline-block">
+          <label>
+            <i className="fas fa-info-circle" />
+          </label>
+        </span>
+      </OverlayTrigger>);
   }
   return (
     <div className={classes}>
@@ -109,7 +106,7 @@ export const MetaParameters = React.memo(
               let paramName = `${mp_item[0]}`;
               let fieldName = `meta_parameters.${paramName}`;
               return (
-                <li key={fieldName} className="mb-3">
+                <li key={fieldName} className="mb-3 mt-1">
                   <ParamElement
                     param_data={meta_parameters[paramName]}
                     id={fieldName}
