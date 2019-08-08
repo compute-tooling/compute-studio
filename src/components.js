@@ -340,7 +340,7 @@ const Section1 = React.memo(
 export const MajorSection = React.memo(
   ({ msect, section_1_dict, model_parameters, ...props }) => {
     return (
-      <div className="card card-body card-outer" key={msect}>
+      <div className="card card-body card-outer" key={msect} id={makeID(msect)}>
         <SectionHeader title={msect} titleSize="2.9rem" label="major" />
         <hr className="mb-1" style={{ borderTop: "0" }} />
         <div
