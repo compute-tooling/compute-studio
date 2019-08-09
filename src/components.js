@@ -159,11 +159,13 @@ const ValueComponent = ({
   colClass,
   data,
   isTouched,
-  extend
+  extend,
+  label
 }) => {
   let style = isTouched ? { backgroundColor: "rgba(102, 175, 233, 0.2)" } : {};
   return (
     <div className={colClass} key={makeID(fieldName)}>
+      {label ? <small style={{ padding: 0 }}>{label}</small> : null}
       {getField(fieldName, data, placeholder, style, extend)}
       {isTouched ? (
         <small className="ml-2" style={{ color: "#869191" }}>
@@ -178,7 +180,7 @@ const ValueComponent = ({
 const Value = React.memo(ValueComponent);
 
 export const Param = React.memo(
-  ({ param, msect, data, values, extend }) => {
+  ({ param, msect, data, values, extend, meta_parameters }) => {
     if (Object.keys(data.form_fields).length == 1) {
       var colClass = "col-6";
     } else if (
@@ -213,6 +215,11 @@ export const Param = React.memo(
         <div className="form-row has-statuses" style={{ marginLeft: "-20px" }}>
           {Object.entries(data.form_fields).map(function (form_field, ix) {
             let labels = form_field[0];
+            let vo = data.value[ix];
+            let commaSepLabs = Object.entries(vo)
+              .filter(item => item[0] != "value" && !(item[0] in meta_parameters))
+              .map(item => item[1]).join(",");
+            console.log(vo, commaSepLabs)
             let fieldName = `adjustment.${msect}.${param}.${labels}`;
             let placeholder = valForForm(form_field[1]);
             let isTouched = false;
@@ -230,6 +237,7 @@ export const Param = React.memo(
                 data={data}
                 isTouched={isTouched}
                 extend={extend}
+                label={commaSepLabs}
               />
             );
           })}
@@ -243,7 +251,7 @@ export const Param = React.memo(
 );
 
 const Section2 = React.memo(
-  ({ section_2, param_list, msect, model_parameters, values, extend }) => {
+  ({ section_2, param_list, msect, model_parameters, values, extend, meta_parameters }) => {
     let section_2_id = makeID(section_2);
     return (
       <div key={section_2_id} className="mb-2">
@@ -257,7 +265,7 @@ const Section2 = React.memo(
               data={model_parameters[msect][param]}
               values={values[param]}
               extend={extend}
-            // {...props}
+              meta_parameters={meta_parameters}
             />
           );
         })}
@@ -275,7 +283,7 @@ const Section2 = React.memo(
 );
 
 const Section1 = React.memo(
-  ({ section_1, section_2_dict, msect, model_parameters, values, extend }) => {
+  ({ section_1, section_2_dict, msect, model_parameters, values, extend, meta_parameters }) => {
     let section_1_id = makeID(section_1);
     return (
       <div className="inputs-block" id={section_1_id} key={section_1_id}>
@@ -311,6 +319,7 @@ const Section1 = React.memo(
                     model_parameters={model_parameters}
                     values={values}
                     extend={extend}
+                    meta_parameters={meta_parameters}
                   />
                 );
               })}
@@ -335,7 +344,7 @@ const Section1 = React.memo(
 );
 
 export const MajorSection = React.memo(
-  ({ msect, section_1_dict, model_parameters, ...props }) => {
+  ({ msect, section_1_dict, meta_parameters, model_parameters, ...props }) => {
     return (
       <div className="card card-body card-outer" key={msect} id={makeID(msect)}>
         <SectionHeader title={msect} titleSize="2.9rem" label="major" />
@@ -360,6 +369,7 @@ export const MajorSection = React.memo(
                   model_parameters={model_parameters}
                   values={props.values.adjustment[msect]}
                   extend={props.extend}
+                  meta_parameters={meta_parameters}
                 />
               );
             })}

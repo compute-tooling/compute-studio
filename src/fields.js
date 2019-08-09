@@ -19,16 +19,16 @@ const inputStyle = {
 };
 
 var md = new Remarkable({
-  highlight: function(str, lang) {
+  highlight: function (str, lang) {
     if ((lang && hljs.getLanguage(lang)) || true) {
       try {
         return hljs.highlight(lang, str).value;
-      } catch (err) {}
+      } catch (err) { }
     }
 
     try {
       return hljs.highlightAuto(str).value;
-    } catch (err) {}
+    } catch (err) { }
     return ""; // use external default escaping
   }
 });

@@ -298,6 +298,7 @@ class InputsForm extends React.Component {
                           key={`${msect}-component`}
                           msect={msect}
                           section_1_dict={section_1_dict}
+                          meta_parameters={meta_parameters}
                           model_parameters={model_parameters}
                           handleSubmit={handleSubmit}
                           handleChange={handleChange}
