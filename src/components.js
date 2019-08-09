@@ -219,7 +219,6 @@ export const Param = React.memo(
             let commaSepLabs = Object.entries(vo)
               .filter(item => item[0] != "value" && !(item[0] in meta_parameters))
               .map(item => item[1]).join(",");
-            console.log(vo, commaSepLabs)
             let fieldName = `adjustment.${msect}.${param}.${labels}`;
             let placeholder = valForForm(form_field[1]);
             let isTouched = false;
