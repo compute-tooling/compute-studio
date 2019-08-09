@@ -23,8 +23,8 @@ class InputsApp extends React.Component {
   fetchInitialValues() {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
-    console.log(this.props.match, this.isEditPage);
     if (this.props.type === "inputs") {
+      console.log("fresh page");
       return axios.all([
         axios.get(`/${username}/${app_name}/api/v1/inputs/`),
         axios.get(`/users/status/${username}/${app_name}/`)
@@ -42,7 +42,7 @@ class InputsApp extends React.Component {
         });
     } else if (this.props.type === "edit") {
       let model_pk = this.props.match.params.model_pk;
-      console.log("in the edit block");
+      console.log("detail page");
       return axios
         .all([
           axios.get(`/${username}/${app_name}/api/v1/inputs/`),
@@ -56,7 +56,7 @@ class InputsApp extends React.Component {
             console.log("statusResp", statusResp)
             let data = inputsResp.data;
             data["detail"] = detailResp.data;
-            data["accessStatus"] = statusResp;
+            data["accessStatus"] = statusResp.data;
             return data;
           })
         )
