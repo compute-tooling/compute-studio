@@ -6,7 +6,6 @@ hljs.registerLanguage("json", json);
 
 import "highlight.js/styles/default.css";
 import React from "react";
-import Select from "react-select";
 import { Button } from "react-bootstrap";
 import { FastField } from "formik";
 
@@ -249,34 +248,33 @@ export const ServerSizeField = ({
 };
 
 export const SelectField = ({ field, form, ...props }) => {
-  const handleChange = option => {
-    if (Array.isArray(option)) {
-      var value = option.map(op => op.value);
-    } else {
-      var value = option.value;
-    }
-    form.setFieldValue(field.name, value);
+
+  const [value, setValue] = React.useState("");
+
+  const handleBlur = e => {
+    form.setFieldValue(field.name, e.target.value);
     form.setFieldTouched(field.name, true);
   };
-  let style = props.style;
+
   return (
-    <Select
-      isMulti={!!props.isMulti ? props.isMulti : false}
-      options={props.options}
-      name={field.name}
-      value={
-        props.options
-          ? props.options.find(option => option.value === field.value)
-          : ""
-      }
-      placeholder={props.placeholder}
-      onChange={handleChange}
-      onBlur={field.onBlur}
-      styles={{ control: styles => ({ ...styles, ...style }) }}
-      hideSelectedOptions={false}
-    />
+    <>
+      <input
+        className="form-control"
+        list={`datalist-${field.name}`}
+        id={`datalist-${field.name}-choice`}
+        placeholder={props.placeholder}
+        name={field.name}
+        onChange={e => setValue(e.target.value)}
+        onBlur={handleBlur}
+        value={value}
+      />
+      <datalist id={`datalist-${field.name}`} >
+        {props.options}
+      </datalist>
+    </>
   );
 };
+
 
 export function getField(
   fieldName,
@@ -286,42 +284,49 @@ export function getField(
   isMulti = false
 ) {
   const makeOptions = choices => {
-    let opts = choices.map(choice => {
-      return { label: choice.toString(), value: choice };
-    });
+    let opts = choices.map(choice =>
+      <option key={choice.toString()} value={choice}>{choice.toString()}</option>
+    );
     if (isMulti) {
-      opts.push({ label: "*", value: "*" });
-      opts.push({ label: "<", value: "<" });
+      opts.push(<option key="*" value="*">{"*"}</option>);
+      opts.push(<option key="<" value="<">{"<"}</option>);
     }
     return opts;
   };
 
+  let choices;
   if (data.type == "bool") {
-    return (
-      <FastField
-        name={fieldName}
-        component={SelectField}
-        options={makeOptions([true, false])}
-        isMulti={isMulti}
-        placeholder={placeholder}
-        style={style}
-      />
-    );
+    choices = ["true", "false"];
   } else if (
     data.validators &&
     data.validators.choice &&
     data.validators.choice.choices
   ) {
-    return (
-      <FastField
-        name={fieldName}
-        component={SelectField}
-        options={makeOptions(data.validators.choice.choices)}
-        isMulti={isMulti}
-        placeholder={placeholder}
-        style={style}
-      />
-    );
+    choices = data.validators.choice.choices;
+  }
+
+  if (choices) {
+    if (isMulti) {
+      return (
+        <FastField
+          name={fieldName}
+          component={SelectField}
+          options={makeOptions(choices)}
+          placeholder={placeholder}
+        />
+      );
+    } else {
+      return (
+        <FastField
+          name={fieldName}
+          className="form-control"
+          component="select"
+          placeholder={placeholder}
+        >
+          {makeOptions(data.validators.choice.choices)}
+        </FastField>
+      );
+    }
   } else {
     return (
       <FastField
