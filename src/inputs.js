@@ -23,6 +23,7 @@ class InputsApp extends React.Component {
   fetchInitialValues() {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
+    console.log("router", username, app_name, this.props.type)
     if (this.props.type === "inputs") {
       console.log("fresh page");
       return axios.all([
@@ -147,8 +148,8 @@ ReactDOM.render(
       />
       <Route
         exact
-        path="/:username/:app_name/:model_pk/edit_sim/"
-        render={routeProps => <InputsApp type="edit" {...routeProps} />}
+        path="/:username/:app_name/:model_pk/edit/"
+        render={routeProps => <InputsApp type="edit_sim" {...routeProps} />}
       />
       <Route
         exact
