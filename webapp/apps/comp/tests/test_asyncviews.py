@@ -179,15 +179,17 @@ class TestAsyncAPI(CoreTestMixin):
                 f"/{self.owner}/{self.title}/api/v1/", data=adj, format="json"
             )
             assert init_resp.status_code == 201
+            inputs_pk = init_resp.data["pk"]
 
             get_resp_pend = api_client.get(
-                f"/{self.owner}/{self.title}/api/v1/myinputs/{init_resp.data['pk']}/"
+                f"/{self.owner}/{self.title}/api/v1/myinputs/{inputs_pk}/"
             )
             assert get_resp_pend.status_code == 200
             assert get_resp_pend.data["status"] == "PENDING"
+            assert get_resp_pend.data["pk"] == inputs_pk
 
             edit_inputs_resp = client.get(
-                f"/{self.owner}/{self.title}/{init_resp.data['pk']}/inputs/"
+                f"/{self.owner}/{self.title}/inputs/{inputs_pk}/"
             )
             assert edit_inputs_resp.status_code == 200
 
@@ -234,6 +236,8 @@ class TestAsyncAPI(CoreTestMixin):
         assert get_resp_inputs.status_code == 200
         data = get_resp_inputs.data
         assert "adjustment" in data
+        assert data["sim"]["model_pk"] == model_pk
+        assert data["pk"] == inputs_pk
 
 
 def test_placeholder_page(db, client):

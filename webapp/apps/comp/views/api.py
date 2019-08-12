@@ -87,8 +87,9 @@ class DetailMyInputsAPIView(APIView):
         if "model_pk" in kwargs:
             inputs = get_object_or_404(
                 self.queryset,
+                outputs__model_pk=kwargs["model_pk"],
                 project__title=kwargs["title"],
-                project__owner__user__username=kwawrgs["username"],
+                project__owner__user__username=kwargs["username"],
             )
         else:
             inputs = get_object_or_404(self.queryset, pk=kwargs["pk"])
