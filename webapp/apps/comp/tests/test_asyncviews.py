@@ -147,7 +147,7 @@ class TestAsyncAPI(CoreTestMixin):
             assert exp == resp.data
 
     def test_runmodel(
-        self, monkeypatch, api_client, profile, worker_url, comp_api_user
+        self, monkeypatch, client, api_client, profile, worker_url, comp_api_user
     ):
         """
         Test lifetime of submitting a model.
@@ -185,6 +185,11 @@ class TestAsyncAPI(CoreTestMixin):
             )
             assert get_resp_pend.status_code == 200
             assert get_resp_pend.data["status"] == "PENDING"
+
+            edit_inputs_resp = client.get(
+                f"/{self.owner}/{self.title}/{init_resp.data['pk']}/inputs/"
+            )
+            assert edit_inputs_resp.status_code == 200
 
             self.set_auth_token(api_client, comp_api_user.user)
             self.mockcompute.client = api_client

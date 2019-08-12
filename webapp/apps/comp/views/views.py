@@ -34,7 +34,7 @@ from webapp.apps.billing.utils import has_payment_method
 from webapp.apps.users.models import Project, is_profile_active
 
 from webapp.apps.comp.constants import WEBAPP_VERSION
-from webapp.apps.comp.models import Simulation
+from webapp.apps.comp.models import Inputs, Simulation
 from webapp.apps.comp.compute import Compute, JobFailError
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.tags import TAGS
@@ -42,7 +42,12 @@ from webapp.apps.comp.exceptions import AppError, ValidationError
 from webapp.apps.comp.serializers import OutputsSerializer
 
 
-from .core import AbstractRouterView, InputsMixin, GetOutputsObjectMixin
+from .core import (
+    AbstractRouterView,
+    InputsMixin,
+    GetOutputsObjectMixin,
+    GetInputsObjectMixin,
+)
 
 OBJ_STORAGE_URL = os.environ.get("OBJ_STORAGE_URL")
 
@@ -147,13 +152,26 @@ class RouterView(InputsMixin, AbstractRouterView):
         return self.handle(request, False, *args, **kwargs)
 
 
-class EditInputsView(GetOutputsObjectMixin, InputsMixin, View):
+class EditSimView(GetOutputsObjectMixin, InputsMixin, View):
     model = Simulation
 
     def get(self, request, *args, **kwargs):
         print("edit method=GET", request.GET)
         self.object = self.get_object(
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
+        )
+        project = self.object.project
+        context = self.project_context(request, project)
+        return render(request, self.template_name, context)
+
+
+class EditInputsView(GetInputsObjectMixin, InputsMixin, View):
+    model = Inputs
+
+    def get(self, request, *args, **kwargs):
+        print("edit method=GET", request.GET)
+        self.object = self.get_object(
+            kwargs["inputs_pk"], kwargs["username"], kwargs["title"]
         )
         project = self.object.project
         context = self.project_context(request, project)

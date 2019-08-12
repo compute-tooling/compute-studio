@@ -4,6 +4,7 @@ from django.urls import path
 from webapp.apps.comp.views import (
     RouterView,
     EditInputsView,
+    EditSimView,
     OutputsDownloadView,
     OutputsView,
     InputsAPIView,
@@ -28,7 +29,8 @@ urlpatterns = [
         DetailMyInputsAPIView.as_view(),
         name="detail_myinputs_api_model_pk",
     ),
-    path("<int:model_pk>/edit/", EditInputsView.as_view(), name="edit"),
+    path("<int:model_pk>/edit/", EditSimView.as_view(), name="edit"),
     path("<int:model_pk>/download/", OutputsDownloadView.as_view(), name="download"),
+    path("<int:inputs_pk>/inputs/", EditInputsView.as_view(), name="inputs"),
     path("<int:model_pk>/", OutputsView.as_view(), name="outputs"),
 ]
