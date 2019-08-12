@@ -248,8 +248,14 @@ export const ServerSizeField = ({
 };
 
 export const SelectField = ({ field, form, ...props }) => {
+  let initVal;
+  if (field.value) {
+    initVal = Array.isArray(field.value) ? field.value.join(",") : field.value;
+  } else {
+    initVal = "";
+  }
 
-  const [value, setValue] = React.useState("");
+  const [value, setValue] = React.useState(initVal);
 
   const handleBlur = e => {
     form.setFieldValue(field.name, e.target.value);
@@ -267,6 +273,7 @@ export const SelectField = ({ field, form, ...props }) => {
         onChange={e => setValue(e.target.value)}
         onBlur={handleBlur}
         value={value}
+        style={props.style}
       />
       <datalist id={`datalist-${field.name}`} >
         {props.options}
@@ -313,6 +320,7 @@ export function getField(
           component={SelectField}
           options={makeOptions(choices)}
           placeholder={placeholder}
+          style={style}
         />
       );
     } else {
@@ -322,6 +330,7 @@ export function getField(
           className="form-control"
           component="select"
           placeholder={placeholder}
+          style={style}
         >
           {makeOptions(data.validators.choice.choices)}
         </FastField>
