@@ -86,7 +86,9 @@ class DetailMyInputsAPIView(APIView):
         print("myinputs api method=GET", request.GET, kwargs)
         if "model_pk" in kwargs:
             inputs = get_object_or_404(
-                self.queryset, outputs__model_pk=kwargs["model_pk"]
+                self.queryset,
+                project__title=kwargs["title"],
+                project__owner__user__username=kwawrgs["username"],
             )
         else:
             inputs = get_object_or_404(self.queryset, pk=kwargs["pk"])
