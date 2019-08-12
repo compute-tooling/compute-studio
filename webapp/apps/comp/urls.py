@@ -31,6 +31,6 @@ urlpatterns = [
     ),
     path("<int:model_pk>/edit/", EditSimView.as_view(), name="edit"),
     path("<int:model_pk>/download/", OutputsDownloadView.as_view(), name="download"),
-    path("inputs/<int:inputs_pk>/", EditInputsView.as_view(), name="inputs"),
+    path("inputs/<int:inputs_pk>/", EditInputsView.as_view(), name="edit_inputs"),
     path("<int:model_pk>/", OutputsView.as_view(), name="outputs"),
 ]

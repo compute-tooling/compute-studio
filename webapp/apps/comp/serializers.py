@@ -47,6 +47,7 @@ class InputsSerializer(serializers.ModelSerializer):
     )
     sim = MiniSimulationSerializer(source="outputs", required=False)
     api_url = serializers.CharField(source="get_absolute_api_url", required=False)
+    edit_inputs_url = serializers.CharField(source="get_edit_url", required=False)
 
     class Meta:
         model = Inputs
@@ -61,6 +62,7 @@ class InputsSerializer(serializers.ModelSerializer):
             "traceback",
             "sim",
             "api_url",
+            "edit_inputs_url",
             "client",
         )
 

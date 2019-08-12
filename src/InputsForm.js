@@ -15,6 +15,7 @@ import {
 } from "./components";
 import { ValidatingModal, RunModal, AuthModal } from "./modal";
 import { formikToJSON, convertToFormik } from "./ParamTools";
+import { hasServerErrors } from "./utils";
 
 // need to require schema in model_parameters!
 const tbLabelSchema = yup.object().shape({
@@ -52,6 +53,7 @@ class InputsForm extends React.Component {
           unknownParams
         ] = convertToFormik(data);
         let hasSimData = !!data.detail && !!data.detail.sim;
+
         this.setState({
           initialValues: initialValues,
           sects: sects,
@@ -63,6 +65,8 @@ class InputsForm extends React.Component {
           creationDate: hasSimData ? data.detail.sim.creation_date : null,
           modelVersion: hasSimData ? data.detail.sim.model_version : null,
           detailAPIURL: !!data.detail ? data.detail.api_url : null,
+          editInputsUrl: !!data.detail ? data.detail.edit_inputs_url : null,
+          initialServerErrors: !!data.detail && hasServerErrors(data.detail.errors_warnings) ? data.detail.errors_warnings : null,
           accessStatus: data.accessStatus,
         });
       });
@@ -99,7 +103,9 @@ class InputsForm extends React.Component {
       axios
         .get(respData.api_url)
         .then(response => {
-          if (response.data.status === "SUCCESS") {
+          // be careful with race condidition where status is SUCCESS but
+          // sim has not yet been submitted and saved!
+          if (response.data.status === "SUCCESS" && response.data.sim !== null) {
             actions.setSubmitting(false);
             actions.setStatus({
               status: response.data.status,
@@ -111,8 +117,11 @@ class InputsForm extends React.Component {
             actions.setSubmitting(false);
             actions.setStatus({
               status: response.data.status,
-              serverErrors: response.data.errors_warnings
+              serverErrors: response.data.errors_warnings,
+              editInputsUrl: response.data.edit_inputs_url
             });
+            window.scroll(0, 0)
+            history.pushState(null, null, response.data.edit_inputs_url);
             this.killTimer();
           }
         })
@@ -164,6 +173,15 @@ class InputsForm extends React.Component {
           "This parameter is no longer used.";
       }
     }
+    let initialStatus;
+    if (this.state.initialServerErrors) {
+      initialStatus = {
+        serverErrors: this.state.initialServerErrors,
+        status: "INVALID",
+        editInputsUrl: this.state.editInputsUrl
+      }
+    }
+
     return (
       <div>
         <Formik
@@ -172,6 +190,7 @@ class InputsForm extends React.Component {
           validateOnChange={false}
           validateOnBlur={true}
           enableReinitialize={true}
+          initialStatus={initialStatus}
           onSubmit={(values, actions) => {
             const [meta_parameters, adjustment] = formikToJSON(
               values,
@@ -252,9 +271,10 @@ class InputsForm extends React.Component {
                         <ErrorCard
                           errorMsg={
                             <p>
-                              "Some fields have errors. These must be fixed " +
-                              "before the simulation can be submitted."
-                        </p>
+                              Some fields have errors. These must be fixed before the simulation can be submitted.
+                              You may re-visit this page a later time by entering the following link:{" "}
+                              <a href={status.editInputsUrl}>{status.editInputsUrl}</a>
+                            </p>
                           }
                           errors={status.serverErrors}
                           model_parameters={model_parameters}

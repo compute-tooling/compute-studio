@@ -98,6 +98,14 @@ class Inputs(models.Model):
         }
         return reverse("detail_myinputs_api", kwargs=kwargs)
 
+    def get_edit_url(self):
+        kwargs = {
+            "inputs_pk": self.pk,
+            "title": self.project.title,
+            "username": self.project.owner.user.username,
+        }
+        return reverse("edit_inputs", kwargs=kwargs)
+
 
 class SimulationManager(models.Manager):
     def next_model_pk(self, project):
