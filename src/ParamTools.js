@@ -286,7 +286,7 @@ export function convertToFormik(data) {
           let matches = select(adjustment[msect][param], labels);
           initialValue = parseToOps(matches, meta_parameters, label_to_extend);
         }
-        // TODO: match with edit value when supplied.
+
         initialValues.adjustment[msect][param][fieldName] = initialValue;
         param_data.form_fields[fieldName] = placeholder;
         paramYupShape[fieldName] = yupObj;
@@ -356,6 +356,9 @@ export function formikToJSON(values, schema, labelSchema, extend = false) {
           continue;
         }
         if (voStr == "nolabels") {
+          if (extend && Array.isArray(val) && val.length) {
+            val = val[0];
+          }
           vo["value"] = val;
           voList.push(vo);
         } else {
