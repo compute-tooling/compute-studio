@@ -83,7 +83,7 @@ class DetailMyInputsAPIView(APIView):
     queryset = Inputs.objects.all()
 
     def get(self, request, *args, **kwargs):
-        print("inputs api method=GET", request.GET, kwargs)
+        print("myinputs api method=GET", request.GET, kwargs)
         if "model_pk" in kwargs:
             inputs = get_object_or_404(
                 self.queryset, outputs__model_pk=kwargs["model_pk"]
@@ -225,7 +225,7 @@ class MyInputsAPIView(APIView):
     )
 
     def put(self, request, *args, **kwargs):
-        print("inputs api method=PUT", kwargs)
+        print("myinputs api method=PUT", kwargs)
         import time
 
         time.sleep(2)
