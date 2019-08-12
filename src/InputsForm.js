@@ -121,7 +121,6 @@ class InputsForm extends React.Component {
               editInputsUrl: response.data.edit_inputs_url
             });
             window.scroll(0, 0)
-            history.pushState(null, null, response.data.edit_inputs_url);
             this.killTimer();
           }
         })
@@ -211,10 +210,14 @@ class InputsForm extends React.Component {
               .then(response => {
                 console.log("success");
                 console.log(response.data.pk);
+                // update url so that user can come back to inputs later on
+                // model errors or some type of unforeseen error in COMP.
+                history.pushState(null, null, response.data.edit_inputs_url);
                 actions.setStatus({
                   status: "PENDING",
                   inputs_pk: response.data.pk,
-                  api_url: response.data.api_url
+                  api_url: response.data.api_url,
+                  editInputsUrl: response.data.edit_inputs_url
                 });
                 // set submitting as false in poll func.
                 this.poll(actions, response.data);
