@@ -215,13 +215,13 @@ export default class InputsForm extends React.Component {
               .doSubmit(formdata)
               .then(response => {
                 console.log("success");
-                console.log(response.data.pk);
+                console.log(response.data.hashid);
                 // update url so that user can come back to inputs later on
                 // model errors or some type of unforeseen error in COMP.
                 history.pushState(null, null, response.data.edit_inputs_url);
                 actions.setStatus({
                   status: "PENDING",
-                  inputs_pk: response.data.pk,
+                  inputs_hashid: response.data.hashid,
                   api_url: response.data.api_url,
                   editInputsUrl: response.data.edit_inputs_url
                 });

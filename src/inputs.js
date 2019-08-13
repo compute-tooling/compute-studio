@@ -32,7 +32,7 @@ class InputsApp extends React.Component {
           axios.get(`/${username}/${app_name}/api/v1/inputs/`),
           axios.get(`/users/status/${username}/${app_name}/`)
         ])
-        .done(
+        .then(
           axios.spread((inputsResp, statusResp) => {
             console.log("inputsResp", inputsResp);
             console.log("statusResp", statusResp);
@@ -43,7 +43,7 @@ class InputsApp extends React.Component {
         );
     } else if (this.props.type === "edit_sim") {
       let model_pk = this.props.match.params.model_pk;
-      console.log("detail page");
+      console.log("edit sim");
       return axios
         .all([
           axios.get(`/${username}/${app_name}/api/v1/inputs/`),
@@ -62,12 +62,12 @@ class InputsApp extends React.Component {
           })
         );
     } else if (this.props.type === "edit_inputs") {
-      let inputs_pk = this.props.match.params.inputs_pk;
-      console.log("detail page");
+      let inputs_hashid = this.props.match.params.inputs_hashid;
+      console.log("edit inputs");
       return axios
         .all([
           axios.get(`/${username}/${app_name}/api/v1/inputs/`),
-          axios.get(`/${username}/${app_name}/api/v1/myinputs/${inputs_pk}/`),
+          axios.get(`/${username}/${app_name}/api/v1/inputs/${inputs_hashid}/`),
           axios.get(`/users/status/${username}/${app_name}/`)
         ])
         .then(
@@ -146,7 +146,7 @@ ReactDOM.render(
       />
       <Route
         exact
-        path="/:username/:app_name/inputs/:inputs_pk/"
+        path="/:username/:app_name/inputs/:inputs_hashid/"
         render={routeProps => <InputsApp type="edit_inputs" {...routeProps} />}
       />
     </Switch>
