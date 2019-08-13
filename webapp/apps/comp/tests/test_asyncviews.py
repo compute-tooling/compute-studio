@@ -179,17 +179,17 @@ class TestAsyncAPI(CoreTestMixin):
                 f"/{self.owner}/{self.title}/api/v1/", data=adj, format="json"
             )
             assert init_resp.status_code == 201
-            inputs_pk = init_resp.data["pk"]
+            inputs_hashid = init_resp.data["hashid"]
 
             get_resp_pend = api_client.get(
-                f"/{self.owner}/{self.title}/api/v1/myinputs/{inputs_pk}/"
+                f"/{self.owner}/{self.title}/api/v1/inputs/{inputs_hashid}/"
             )
             assert get_resp_pend.status_code == 200
             assert get_resp_pend.data["status"] == "PENDING"
-            assert get_resp_pend.data["pk"] == inputs_pk
+            assert get_resp_pend.data["hashid"] == inputs_hashid
 
             edit_inputs_resp = client.get(
-                f"/{self.owner}/{self.title}/inputs/{inputs_pk}/"
+                f"/{self.owner}/{self.title}/inputs/{inputs_hashid}/"
             )
             assert edit_inputs_resp.status_code == 200
 
@@ -201,16 +201,16 @@ class TestAsyncAPI(CoreTestMixin):
             )
             assert put_adj_resp.status_code == 200
 
-            inputs_pk = get_resp_pend.data["pk"]
+            inputs_hashid = get_resp_pend.data["hashid"]
             get_resp_succ = api_client.get(
-                f"/{self.owner}/{self.title}/api/v1/myinputs/{inputs_pk}/"
+                f"/{self.owner}/{self.title}/api/v1/inputs/{inputs_hashid}/"
             )
             assert get_resp_succ.status_code == 200
             assert get_resp_succ.data["status"] == "SUCCESS"
             assert get_resp_succ.data["sim"]["model_pk"]
 
             model_pk = get_resp_succ.data["sim"]["model_pk"]
-            inputs = Inputs.objects.get(pk=inputs_pk)
+            inputs = Inputs.objects.from_hashid(inputs_hashid)
             assert inputs.outputs.model_pk == model_pk
             assert inputs.outputs.status == "PENDING"
 
@@ -237,7 +237,7 @@ class TestAsyncAPI(CoreTestMixin):
         data = get_resp_inputs.data
         assert "adjustment" in data
         assert data["sim"]["model_pk"] == model_pk
-        assert data["pk"] == inputs_pk
+        assert data["hashid"] == inputs_hashid
 
 
 def test_placeholder_page(db, client):

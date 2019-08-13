@@ -37,6 +37,18 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 CSRF_COOKIE_NAME = "csrftoken"
 
+
+def get_salt(env_var, dev_value):
+    salt = os.environ.get(env_var, None)
+    if salt:
+        return salt
+    else:
+        return dev_value
+
+
+INPUTS_SALT = get_salt("INPUTS_SALT", "dev-inputs-salt")
+
+
 # Application definition
 
 INSTALLED_APPS = [

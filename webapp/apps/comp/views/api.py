@@ -92,7 +92,7 @@ class DetailMyInputsAPIView(APIView):
                 project__owner__user__username=kwargs["username"],
             )
         else:
-            inputs = get_object_or_404(self.queryset, pk=kwargs["pk"])
+            inputs = self.queryset.get_object_from_hashid_or_404(kwargs["hashid"])
         return Response(InputsSerializer(inputs).data)
 
 
@@ -229,9 +229,7 @@ class MyInputsAPIView(APIView):
 
     def put(self, request, *args, **kwargs):
         print("myinputs api method=PUT", kwargs)
-        import time
 
-        time.sleep(2)
         if request.user.username == "comp-api-user":
             data = request.data
             ser = InputsSerializer(data=request.data)

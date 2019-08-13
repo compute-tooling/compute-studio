@@ -113,16 +113,6 @@ class GetOutputsObjectMixin:
         )
 
 
-class GetInputsObjectMixin:
-    def get_object(self, inputs_pk, username, title):
-        return get_object_or_404(
-            self.model,
-            pk=inputs_pk,
-            project__title=title,
-            project__owner__user__username=username,
-        )
-
-
 class RecordOutputsMixin(ChargeRunMixin):
     def record_outputs(self, sim, data):
         self.charge_run(sim, data["meta"], use_stripe=USE_STRIPE)

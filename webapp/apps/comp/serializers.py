@@ -26,6 +26,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
 
 
 class InputsSerializer(serializers.ModelSerializer):
+    hashid = serializers.CharField(source="get_hashid", required=False)
     job_id = serializers.UUIDField(required=False)
     status = serializers.ChoiceField(
         choices=(("SUCCESS", "Success"), ("FAIL", "Fail")), required=False
@@ -52,7 +53,7 @@ class InputsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inputs
         fields = (
-            "pk",
+            "hashid",
             "meta_parameters",
             "adjustment",
             "inputs_file",

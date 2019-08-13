@@ -4,8 +4,12 @@ import json
 
 from dataclasses import dataclass, field
 from typing import List, Union
+from hashids import Hashids
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils import timezone
 from django.contrib.postgres.fields import JSONField
@@ -14,6 +18,37 @@ from django.urls import reverse
 from django.utils import timezone
 
 from webapp.apps.comp import utils
+from webapp.settings import INPUTS_SALT
+
+
+hashids = Hashids(INPUTS_SALT, min_length=6)
+
+
+class InputsQuerySet(models.QuerySet):
+    def from_hashid(self, hashid):
+        """
+        Get inputs object from a hash of its pk. Return None
+        if the decode does not resolve to a pk.
+        """
+        pk = hashids.decode(hashid)
+        if not pk:
+            return None
+        else:
+            return self.get(pk=pk[0])
+
+    def get_object_from_hashid_or_404(self, hashid):
+        """
+        Get inputs object from a hash of its pk and 
+        raise 404 exception if it does not exist.
+        """
+        try:
+            obj = self.from_hashid(hashid)
+        except ObjectDoesNotExist:
+            raise Http404("Object matching query does not exist")
+        if obj:
+            return obj
+        else:
+            raise Http404("Object matching query does not exist")
 
 
 class Inputs(models.Model):
@@ -65,6 +100,8 @@ class Inputs(models.Model):
         max_length=32,
     )
 
+    objects = InputsQuerySet.as_manager()
+
     @property
     def deserialized_inputs(self):
         """
@@ -92,7 +129,7 @@ class Inputs(models.Model):
 
     def get_absolute_api_url(self):
         kwargs = {
-            "pk": self.pk,
+            "hashid": self.get_hashid,
             "title": self.project.title,
             "username": self.project.owner.user.username,
         }
@@ -100,11 +137,14 @@ class Inputs(models.Model):
 
     def get_edit_url(self):
         kwargs = {
-            "inputs_pk": self.pk,
+            "hashid": self.get_hashid(),
             "title": self.project.title,
             "username": self.project.owner.user.username,
         }
         return reverse("edit_inputs", kwargs=kwargs)
+
+    def get_hashid(self):
+        return hashids.encode(self.pk)
 
 
 class SimulationManager(models.Manager):

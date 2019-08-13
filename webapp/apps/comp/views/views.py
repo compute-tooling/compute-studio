@@ -42,12 +42,7 @@ from webapp.apps.comp.exceptions import AppError, ValidationError
 from webapp.apps.comp.serializers import OutputsSerializer
 
 
-from .core import (
-    AbstractRouterView,
-    InputsMixin,
-    GetOutputsObjectMixin,
-    GetInputsObjectMixin,
-)
+from .core import AbstractRouterView, InputsMixin, GetOutputsObjectMixin
 
 OBJ_STORAGE_URL = os.environ.get("OBJ_STORAGE_URL")
 
@@ -165,14 +160,12 @@ class EditSimView(GetOutputsObjectMixin, InputsMixin, View):
         return render(request, self.template_name, context)
 
 
-class EditInputsView(GetInputsObjectMixin, InputsMixin, View):
+class EditInputsView(InputsMixin, View):
     model = Inputs
 
     def get(self, request, *args, **kwargs):
         print("edit method=GET", request.GET)
-        self.object = self.get_object(
-            kwargs["inputs_pk"], kwargs["username"], kwargs["title"]
-        )
+        self.object = self.model.objects.get_object_from_hashid_or_404(kwargs["hashid"])
         project = self.object.project
         context = self.project_context(request, project)
         return render(request, self.template_name, context)
