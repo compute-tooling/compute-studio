@@ -19,3 +19,4 @@ markdown
 django-guardian
 s3like==1.4.0
 newrelic
+hashids
