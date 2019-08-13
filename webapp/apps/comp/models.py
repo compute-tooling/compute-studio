@@ -129,7 +129,7 @@ class Inputs(models.Model):
 
     def get_absolute_api_url(self):
         kwargs = {
-            "hashid": self.get_hashid,
+            "hashid": self.get_hashid(),
             "title": self.project.title,
             "username": self.project.owner.user.username,
         }
