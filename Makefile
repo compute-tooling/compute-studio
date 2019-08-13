@@ -1,7 +1,7 @@
 PROJECT ?= comp-workers
 CONFIG ?= worker_config.prod.json
 MODE ?= test
-NEW_RELIC_TOKEN := `cat ~/.newrelic-$(MODE)`
+NEW_RELIC_TOKEN ?= `cat ~/.newrelic-$(MODE)`
 
 kube-config:
 	cd distributed && \
@@ -24,8 +24,8 @@ dist-test:
 	docker-compose rm -f
 
 webapp-build:
-	docker build -t webbase:latest -f Dockerfile.base ./
-	docker build -t web:$(TAG) ./
+	docker build -t webbase:latest -f Dockerfile.base ./ && \
+	docker build --build-arg NEW_RELIC_TOKEN=$(NEW_RELIC_TOKEN) -t web:$(TAG) ./
 
 webapp-push:
 	docker tag web:$(TAG) registry.heroku.com/compmodels/web
