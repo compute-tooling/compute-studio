@@ -5,7 +5,8 @@ import React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import axios from "axios";
 
-import { InputsForm } from "./InputsForm";
+import InputsForm from "./InputsForm";
+import ErrorBoundary from "./ErrorBoundary";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
@@ -23,24 +24,23 @@ class InputsApp extends React.Component {
   fetchInitialValues() {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
-    console.log("router", username, app_name, this.props.type)
+    console.log("router", username, app_name, this.props.type);
     if (this.props.type === "inputs") {
       console.log("fresh page");
-      return axios.all([
-        axios.get(`/${username}/${app_name}/api/v1/inputs/`),
-        axios.get(`/users/status/${username}/${app_name}/`)
-      ])
-        .then(axios.spread((inputsResp, statusResp) => {
-          console.log("inputsResp", inputsResp)
-          console.log("statusResp", statusResp);
-          let data = inputsResp.data;
-          data["accessStatus"] = statusResp.data;
-          return data;
-        }))
-        .catch(error => {
-          console.log(error);
-          alert("Something went wrong while fetching the inputs.");
-        });
+      return axios
+        .all([
+          axios.get(`/${username}/${app_name}/api/v1/inputs/`),
+          axios.get(`/users/status/${username}/${app_name}/`)
+        ])
+        .done(
+          axios.spread((inputsResp, statusResp) => {
+            console.log("inputsResp", inputsResp);
+            console.log("statusResp", statusResp);
+            let data = inputsResp.data;
+            data["accessStatus"] = statusResp.data;
+            return data;
+          })
+        );
     } else if (this.props.type === "edit_sim") {
       let model_pk = this.props.match.params.model_pk;
       console.log("detail page");
@@ -54,17 +54,13 @@ class InputsApp extends React.Component {
           axios.spread((inputsResp, detailResp, statusResp) => {
             console.log("inputsResp", inputsResp);
             console.log("detailResp", detailResp);
-            console.log("statusResp", statusResp)
+            console.log("statusResp", statusResp);
             let data = inputsResp.data;
             data["detail"] = detailResp.data;
             data["accessStatus"] = statusResp.data;
             return data;
           })
-        )
-        .catch(error => {
-          console.log(error);
-          alert("Something went wrong while fetching the inputs");
-        });
+        );
     } else if (this.props.type === "edit_inputs") {
       let inputs_pk = this.props.match.params.inputs_pk;
       console.log("detail page");
@@ -78,17 +74,13 @@ class InputsApp extends React.Component {
           axios.spread((inputsResp, detailResp, statusResp) => {
             console.log("inputsResp", inputsResp);
             console.log("detailResp", detailResp);
-            console.log("statusResp", statusResp)
+            console.log("statusResp", statusResp);
             let data = inputsResp.data;
             data["detail"] = detailResp.data;
             data["accessStatus"] = statusResp.data;
             return data;
           })
-        )
-        .catch(error => {
-          console.log(error);
-          alert("Something went wrong while fetching the inputs");
-        });
+        );
     } else {
       console.log(`type: ${this.props.type} is not allowed.`);
     }
@@ -99,11 +91,11 @@ class InputsApp extends React.Component {
     const app_name = this.props.match.params.app_name;
     return axios
       .post(`/${username}/${app_name}/api/v1/inputs/`, metaParameters)
-      .then(function (response) {
+      .then(function(response) {
         console.log(response);
         return response.data;
       })
-      .catch(function (error) {
+      .catch(function(error) {
         console.log(error);
       });
   }
@@ -115,10 +107,9 @@ class InputsApp extends React.Component {
     console.log(data);
     return axios
       .post(`/${username}/${app_name}/api/v1/`, data)
-      .then(function (response) {
+      .then(function(response) {
         console.log(response);
         return response;
-        // window.location.replace("/");
       });
   }
 
@@ -127,13 +118,15 @@ class InputsApp extends React.Component {
     const app_name = this.props.match.params.app_name;
     const id = `${username}/${app_name}`;
     return (
-      <InputsForm
-        fetchInitialValues={this.fetchInitialValues}
-        resetInitialValues={this.resetInitialValues}
-        initialValues={null}
-        submitType="Create"
-        doSubmit={this.doSubmit}
-      />
+      <ErrorBoundary>
+        <InputsForm
+          fetchInitialValues={this.fetchInitialValues}
+          resetInitialValues={this.resetInitialValues}
+          initialValues={null}
+          submitType="Create"
+          doSubmit={this.doSubmit}
+        />
+      </ErrorBoundary>
     );
   }
 }
