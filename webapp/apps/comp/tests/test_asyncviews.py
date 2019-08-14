@@ -7,6 +7,7 @@ import requests_mock
 
 from django.contrib import auth
 from django.urls import reverse
+from django.test import Client
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 from rest_framework.response import Response
@@ -52,20 +53,33 @@ class CoreTestMixin:
         return self._project
 
 
+class ResponseStatusException(Exception):
+    def __init__(self, exp_status, act_status, stage):
+        self.exp_status = exp_status
+        self.act_status = act_status
+        self.stage = state
+        super().__init__(f"{stage}: expected {exp_status}, got {act_status}")
+
+
+def assert_status(exp_status, act_status, stage):
+    if exp_status != act_status:
+        raise ResponseStatusException(exp_status, act_status, stage)
+
+
 class RunMockModel(CoreTestMixin):
     def __init__(
         self,
-        owner,
-        title,
-        defaults,
-        inputs,
-        errors_warnings,
-        client,
-        api_client,
-        worker_url,
-        comp_api_user,
+        owner: str,
+        title: str,
+        defaults: dict,
+        inputs: dict,
+        errors_warnings: dict,
+        client: Client,
+        api_client: APIClient,
+        worker_url: str,
+        comp_api_user: User,
         monkeypatch,
-        mockcompute,
+        mockcompute: MockCompute,
     ):
         self.owner = owner
         self.title = title
@@ -106,7 +120,11 @@ class RunMockModel(CoreTestMixin):
         self.view_inputs_from_model_pk(model_pk, inputs_hashid)
 
     def post_adjustment(
-        self, mock: requests_mock.Mocker, defaults_resp_data, adj_resp_data, adj
+        self,
+        mock: requests_mock.Mocker,
+        defaults_resp_data: dict,
+        adj_resp_data: dict,
+        adj: dict,
     ) -> Response:
         print("mocking", f"{self.worker_url}{self.owner}/{self.title}/inputs")
         mock.register_uri(
@@ -124,37 +142,37 @@ class RunMockModel(CoreTestMixin):
             f"/{self.owner}/{self.title}/api/v1/", data=adj, format="json"
         )
         assert init_resp.status_code == 201
+        assert_status(201, init_resp.status_code, "post_adjustment")
         return init_resp
 
-    def poll_adjustment(self, mock, inputs_hashid) -> Response:
+    def poll_adjustment(self, mock: requests_mock.Mocker, inputs_hashid: str):
         get_resp_pend = self.api_client.get(
             f"/{self.owner}/{self.title}/api/v1/inputs/{inputs_hashid}/"
         )
-        assert get_resp_pend.status_code == 200
+        assert_status(200, get_resp_pend.status_code, "poll_adjustment")
         assert get_resp_pend.data["status"] == "PENDING"
         assert get_resp_pend.data["hashid"] == inputs_hashid
 
         edit_inputs_resp = self.client.get(
             f"/{self.owner}/{self.title}/inputs/{inputs_hashid}/"
         )
-        assert edit_inputs_resp.status_code == 200
-        return get_resp_pend
+        assert_status(200, edit_inputs_resp.status_code, "poll_adjustment")
 
-    def put_adjustment(self, adj_callback_data) -> Response:
+    def put_adjustment(self, adj_callback_data: dict) -> Response:
         set_auth_token(self.api_client, self.comp_api_user.user)
         self.mockcompute.client = self.api_client
         self.monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
         put_adj_resp = self.api_client.put(
             f"/inputs/api/", data=adj_callback_data, format="json"
         )
-        assert put_adj_resp.status_code == 200
+        assert_status(200, put_adj_resp.status_code, "put_adjustment")
         return put_adj_resp
 
-    def check_adjustment_finished(self, inputs_hashid) -> Inputs:
+    def check_adjustment_finished(self, inputs_hashid: str) -> Inputs:
         get_resp_succ = self.api_client.get(
             f"/{self.owner}/{self.title}/api/v1/inputs/{inputs_hashid}/"
         )
-        assert get_resp_succ.status_code == 200
+        assert_status(200, get_resp_succ.status_code, "check_adjustment_finished")
         assert get_resp_succ.data["status"] == "SUCCESS"
         assert get_resp_succ.data["sim"]["model_pk"]
 
@@ -170,31 +188,31 @@ class RunMockModel(CoreTestMixin):
         get_resp_pend = self.api_client.get(
             f"/{self.owner}/{self.title}/api/v1/{model_pk}/"
         )
-        assert get_resp_pend.status_code == 202
+        assert_status(202, get_resp_pend.status_code, "poll_simulation")
 
-    def check_simulation_finished(self, model_pk):
+    def check_simulation_finished(self, model_pk: int):
         get_resp_succ = self.api_client.get(
             f"/{self.owner}/{self.title}/api/v1/{model_pk}/"
         )
-        assert get_resp_succ.status_code == 200
+        assert_status(200, get_resp_succ.status_code, "check_simulation_finished")
         model_pk = get_resp_succ.data["model_pk"]
         sim = Simulation.objects.get(project=self.project, model_pk=model_pk)
         assert sim.status == "SUCCESS"
         assert sim.outputs
         assert sim.traceback is None
 
-    def view_inputs_from_model_pk(self, model_pk, inputs_hashid):
+    def view_inputs_from_model_pk(self, model_pk: int, inputs_hashid: str):
         get_resp_inputs = self.api_client.get(
             f"/{self.owner}/{self.title}/api/v1/{model_pk}/edit/"
         )
-        assert get_resp_inputs.status_code == 200
+        assert_status(200, get_resp_inputs.status_code, "view_inputs_from_model_pk")
         data = get_resp_inputs.data
         assert "adjustment" in data
         assert data["sim"]["model_pk"] == model_pk
         assert data["hashid"] == inputs_hashid
 
         edit_page = self.client.get(f"/{self.owner}/{self.title}/{model_pk}/edit/")
-        assert edit_page.status_code == 200
+        assert_status(200, edit_page.status_code, "view_inputs_from_model_pk")
 
 
 @pytest.fixture
@@ -312,32 +330,6 @@ class TestAsyncAPI(CoreTestMixin):
     #     """
     #     Test lifetime of submitting a model.
     #     """
-    #     # set_auth_token(api_client, profile.user)
-    #     defaults_resp_data = {"status": "SUCCESS", **self.defaults()}
-    #     adj = self.inputs_ok()
-    #     adj_job_id = str(uuid.uuid4())
-    #     adj_resp_data = {"job_id": adj_job_id, "qlength": 1}
-    #     adj_callback_data = {
-    #         "status": "SUCCESS",
-    #         "job_id": adj_job_id,
-    #         **{"errors_warnings": self.errors_warnings()},
-    #     }
-    #     with requests_mock.Mocker() as mock:
-    #         print("mocking", f"{worker_url}{self.owner}/{self.title}/inputs")
-    #         mock.register_uri(
-    #             "POST",
-    #             f"{worker_url}{self.owner}/{self.title}/inputs",
-    #             text=json.dumps(defaults_resp_data),
-    #         )
-    #         mock.register_uri(
-    #             "POST",
-    #             f"{worker_url}{self.owner}/{self.title}/parse",
-    #             text=json.dumps(adj_resp_data),
-    #         )
-
-    #         init_resp = api_client.post(
-    #             f"/{self.owner}/{self.title}/api/v1/", data=adj, format="json"
-    #         )
 
 
 def test_placeholder_page(db, client):
