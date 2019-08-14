@@ -32,7 +32,7 @@ class InputsApp extends React.Component {
           axios.get(`/${username}/${app_name}/api/v1/inputs/`),
           axios.get(`/users/status/${username}/${app_name}/`)
         ])
-        .then(
+        .done(
           axios.spread((inputsResp, statusResp) => {
             console.log("inputsResp", inputsResp);
             console.log("statusResp", statusResp);
@@ -50,7 +50,7 @@ class InputsApp extends React.Component {
           axios.get(`/${username}/${app_name}/api/v1/${model_pk}/edit/`),
           axios.get(`/users/status/${username}/${app_name}/`)
         ])
-        .then(
+        .done(
           axios.spread((inputsResp, detailResp, statusResp) => {
             console.log("inputsResp", inputsResp);
             console.log("detailResp", detailResp);
@@ -70,7 +70,7 @@ class InputsApp extends React.Component {
           axios.get(`/${username}/${app_name}/api/v1/inputs/${inputs_hashid}/`),
           axios.get(`/users/status/${username}/${app_name}/`)
         ])
-        .then(
+        .done(
           axios.spread((inputsResp, detailResp, statusResp) => {
             console.log("inputsResp", inputsResp);
             console.log("detailResp", detailResp);
@@ -91,12 +91,9 @@ class InputsApp extends React.Component {
     const app_name = this.props.match.params.app_name;
     return axios
       .post(`/${username}/${app_name}/api/v1/inputs/`, metaParameters)
-      .then(function(response) {
+      .done(function(response) {
         console.log(response);
         return response.data;
-      })
-      .catch(function(error) {
-        console.log(error);
       });
   }
 
@@ -107,7 +104,7 @@ class InputsApp extends React.Component {
     console.log(data);
     return axios
       .post(`/${username}/${app_name}/api/v1/`, data)
-      .then(function(response) {
+      .done(function(response) {
         console.log(response);
         return response;
       });

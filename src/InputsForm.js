@@ -105,7 +105,7 @@ export default class InputsForm extends React.Component {
     let timer = setInterval(() => {
       axios
         .get(respData.api_url)
-        .then(response => {
+        .done(response => {
           // be careful with race condidition where status is SUCCESS but
           // sim has not yet been submitted and saved!
           if (
@@ -137,7 +137,7 @@ export default class InputsForm extends React.Component {
           actions.setSubmitting(false);
           // request likely cancelled because timer was killed.
           if (error.message && error.message != "Request aborted") {
-            alert("There was an error validating your inputs.");
+            throw error;
           }
         });
     }, 500);
