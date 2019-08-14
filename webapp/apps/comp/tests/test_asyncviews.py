@@ -28,25 +28,20 @@ def read_outputs(outputs_name):
     return outputs
 
 
+def login_client(client, user, password):
+    """
+    Helper function to login client
+    """
+    success = client.login(username=user.username, password=password)
+    assert success
+    return success
+
+
+def set_auth_token(api_client: APIClient, user: User):
+    api_client.credentials(HTTP_AUTHORIZATION=f"Token {user.auth_token.key}")
+
+
 class CoreTestMixin:
-    def login_client(self, client, user, password):
-        """
-        Helper function to login client
-        """
-        success = client.login(username=user.username, password=password)
-        assert success
-        return success
-
-    def set_auth_token(self, api_client: APIClient, user: User):
-        api_client.credentials(HTTP_AUTHORIZATION=f"Token {user.auth_token.key}")
-
-    @property
-    def provided_free(self):
-        raise NotImplementedError()
-
-    def inputs_ok(self):
-        return {"has_errors": False}
-
     @property
     def project(self):
         if getattr(self, "_project", None) is None:
@@ -54,6 +49,125 @@ class CoreTestMixin:
                 owner__user__username=self.owner, title=self.title
             )
         return self._project
+
+
+class RunMockModel(CoreTestMixin):
+    def __init__(
+        self,
+        owner,
+        title,
+        defaults,
+        inputs,
+        errors_warnings,
+        client,
+        api_client,
+        worker_url,
+        comp_api_user,
+        monkeypatch,
+        mockcompute,
+    ):
+        self.owner = owner
+        self.title = title
+        self.defaults = defaults
+        self.inputs = inputs
+        self.errors_warnings = errors_warnings
+        self.client = client
+        self.api_client = api_client
+        self.worker_url = worker_url
+        self.comp_api_user = comp_api_user
+        self.monkeypatch = monkeypatch
+        self.mockcompute = mockcompute
+
+    def run(self):
+        defaults_resp_data = {"status": "SUCCESS", **self.defaults}
+        adj = self.inputs
+        adj_job_id = str(uuid.uuid4())
+        adj_resp_data = {"job_id": adj_job_id, "qlength": 1}
+        adj_callback_data = {
+            "status": "SUCCESS",
+            "job_id": adj_job_id,
+            **{"errors_warnings": self.errors_warnings},
+        }
+        with requests_mock.Mocker() as mock:
+            print("mocking", f"{self.worker_url}{self.owner}/{self.title}/inputs")
+            mock.register_uri(
+                "POST",
+                f"{self.worker_url}{self.owner}/{self.title}/inputs",
+                text=json.dumps(defaults_resp_data),
+            )
+            mock.register_uri(
+                "POST",
+                f"{self.worker_url}{self.owner}/{self.title}/parse",
+                text=json.dumps(adj_resp_data),
+            )
+
+            init_resp = self.api_client.post(
+                f"/{self.owner}/{self.title}/api/v1/", data=adj, format="json"
+            )
+            assert init_resp.status_code == 201
+            inputs_hashid = init_resp.data["hashid"]
+
+            get_resp_pend = self.api_client.get(
+                f"/{self.owner}/{self.title}/api/v1/inputs/{inputs_hashid}/"
+            )
+            assert get_resp_pend.status_code == 200
+            assert get_resp_pend.data["status"] == "PENDING"
+            assert get_resp_pend.data["hashid"] == inputs_hashid
+
+            edit_inputs_resp = self.client.get(
+                f"/{self.owner}/{self.title}/inputs/{inputs_hashid}/"
+            )
+            assert edit_inputs_resp.status_code == 200
+
+            set_auth_token(self.api_client, self.comp_api_user.user)
+            self.mockcompute.client = self.api_client
+            self.monkeypatch.setattr(
+                "webapp.apps.comp.views.api.Compute", self.mockcompute
+            )
+            put_adj_resp = self.api_client.put(
+                f"/inputs/api/", data=adj_callback_data, format="json"
+            )
+            assert put_adj_resp.status_code == 200
+
+            inputs_hashid = get_resp_pend.data["hashid"]
+            get_resp_succ = self.api_client.get(
+                f"/{self.owner}/{self.title}/api/v1/inputs/{inputs_hashid}/"
+            )
+            assert get_resp_succ.status_code == 200
+            assert get_resp_succ.data["status"] == "SUCCESS"
+            assert get_resp_succ.data["sim"]["model_pk"]
+
+            model_pk = get_resp_succ.data["sim"]["model_pk"]
+            inputs = Inputs.objects.from_hashid(inputs_hashid)
+            assert inputs.outputs.model_pk == model_pk
+            assert inputs.outputs.status == "PENDING"
+
+            self.mockcompute.sim = inputs.outputs
+            get_resp_pend = self.api_client.get(
+                f"/{self.owner}/{self.title}/api/v1/{model_pk}/"
+            )
+            assert get_resp_pend.status_code == 202
+            sim = Simulation.objects.get(project=self.project, model_pk=model_pk)
+
+        get_resp_succ = self.api_client.get(
+            f"/{self.owner}/{self.title}/api/v1/{model_pk}/"
+        )
+        assert get_resp_succ.status_code == 200
+        model_pk = get_resp_succ.data["model_pk"]
+        sim = Simulation.objects.get(project=self.project, model_pk=model_pk)
+        assert sim.status == "SUCCESS"
+        assert sim.outputs
+        assert sim.traceback is None
+
+        # test get inputs form model_pk
+        get_resp_inputs = self.api_client.get(
+            f"/{self.owner}/{self.title}/api/v1/{model_pk}/edit/"
+        )
+        assert get_resp_inputs.status_code == 200
+        data = get_resp_inputs.data
+        assert "adjustment" in data
+        assert data["sim"]["model_pk"] == model_pk
+        assert data["hashid"] == inputs_hashid
 
 
 @pytest.fixture
@@ -103,10 +217,6 @@ class TestAsyncAPI(CoreTestMixin):
     def errors_warnings(self):
         return {"matchup": {"errors": {}, "warnings": {}}}
 
-    @property
-    def provided_free(self):
-        return True
-
     def test_get_inputs(self, api_client, worker_url):
         defaults = self.defaults()
         resp_data = {"status": "SUCCESS", **defaults}
@@ -152,92 +262,55 @@ class TestAsyncAPI(CoreTestMixin):
         """
         Test lifetime of submitting a model.
         """
-        self.set_auth_token(api_client, profile.user)
-        defaults_resp_data = {"status": "SUCCESS", **self.defaults()}
-        adj = self.inputs_ok()
-        adj_job_id = str(uuid.uuid4())
-        adj_resp_data = {"job_id": adj_job_id, "qlength": 1}
-        adj_callback_data = {
-            "status": "SUCCESS",
-            "job_id": adj_job_id,
-            **{"errors_warnings": self.errors_warnings()},
-        }
-        with requests_mock.Mocker() as mock:
-            print("mocking", f"{worker_url}{self.owner}/{self.title}/inputs")
-            mock.register_uri(
-                "POST",
-                f"{worker_url}{self.owner}/{self.title}/inputs",
-                text=json.dumps(defaults_resp_data),
-            )
-            mock.register_uri(
-                "POST",
-                f"{worker_url}{self.owner}/{self.title}/parse",
-                text=json.dumps(adj_resp_data),
-            )
+        set_auth_token(api_client, profile.user)
 
-            init_resp = api_client.post(
-                f"/{self.owner}/{self.title}/api/v1/", data=adj, format="json"
-            )
-            assert init_resp.status_code == 201
-            inputs_hashid = init_resp.data["hashid"]
-
-            get_resp_pend = api_client.get(
-                f"/{self.owner}/{self.title}/api/v1/inputs/{inputs_hashid}/"
-            )
-            assert get_resp_pend.status_code == 200
-            assert get_resp_pend.data["status"] == "PENDING"
-            assert get_resp_pend.data["hashid"] == inputs_hashid
-
-            edit_inputs_resp = client.get(
-                f"/{self.owner}/{self.title}/inputs/{inputs_hashid}/"
-            )
-            assert edit_inputs_resp.status_code == 200
-
-            self.set_auth_token(api_client, comp_api_user.user)
-            self.mockcompute.client = api_client
-            monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
-            put_adj_resp = api_client.put(
-                f"/inputs/api/", data=adj_callback_data, format="json"
-            )
-            assert put_adj_resp.status_code == 200
-
-            inputs_hashid = get_resp_pend.data["hashid"]
-            get_resp_succ = api_client.get(
-                f"/{self.owner}/{self.title}/api/v1/inputs/{inputs_hashid}/"
-            )
-            assert get_resp_succ.status_code == 200
-            assert get_resp_succ.data["status"] == "SUCCESS"
-            assert get_resp_succ.data["sim"]["model_pk"]
-
-            model_pk = get_resp_succ.data["sim"]["model_pk"]
-            inputs = Inputs.objects.from_hashid(inputs_hashid)
-            assert inputs.outputs.model_pk == model_pk
-            assert inputs.outputs.status == "PENDING"
-
-            self.mockcompute.sim = inputs.outputs
-            get_resp_pend = api_client.get(
-                f"/{self.owner}/{self.title}/api/v1/{model_pk}/"
-            )
-            assert get_resp_pend.status_code == 202
-            sim = Simulation.objects.get(project=self.project, model_pk=model_pk)
-
-        get_resp_succ = api_client.get(f"/{self.owner}/{self.title}/api/v1/{model_pk}/")
-        assert get_resp_succ.status_code == 200
-        model_pk = get_resp_succ.data["model_pk"]
-        sim = Simulation.objects.get(project=self.project, model_pk=model_pk)
-        assert sim.status == "SUCCESS"
-        assert sim.outputs
-        assert sim.traceback is None
-
-        # test get inputs form model_pk
-        get_resp_inputs = api_client.get(
-            f"/{self.owner}/{self.title}/api/v1/{model_pk}/edit/"
+        rmm = RunMockModel(
+            owner=self.owner,
+            title=self.title,
+            defaults=self.defaults(),
+            inputs=self.inputs_ok(),
+            errors_warnings=self.errors_warnings(),
+            client=client,
+            api_client=api_client,
+            worker_url=worker_url,
+            comp_api_user=comp_api_user,
+            monkeypatch=monkeypatch,
+            mockcompute=self.mockcompute,
         )
-        assert get_resp_inputs.status_code == 200
-        data = get_resp_inputs.data
-        assert "adjustment" in data
-        assert data["sim"]["model_pk"] == model_pk
-        assert data["hashid"] == inputs_hashid
+        rmm.run()
+
+    # def test_anon_perms(
+    #     self, client, api_client, profile, worker_url, comp_api_user
+    # ):
+    #     """
+    #     Test lifetime of submitting a model.
+    #     """
+    #     # set_auth_token(api_client, profile.user)
+    #     defaults_resp_data = {"status": "SUCCESS", **self.defaults()}
+    #     adj = self.inputs_ok()
+    #     adj_job_id = str(uuid.uuid4())
+    #     adj_resp_data = {"job_id": adj_job_id, "qlength": 1}
+    #     adj_callback_data = {
+    #         "status": "SUCCESS",
+    #         "job_id": adj_job_id,
+    #         **{"errors_warnings": self.errors_warnings()},
+    #     }
+    #     with requests_mock.Mocker() as mock:
+    #         print("mocking", f"{worker_url}{self.owner}/{self.title}/inputs")
+    #         mock.register_uri(
+    #             "POST",
+    #             f"{worker_url}{self.owner}/{self.title}/inputs",
+    #             text=json.dumps(defaults_resp_data),
+    #         )
+    #         mock.register_uri(
+    #             "POST",
+    #             f"{worker_url}{self.owner}/{self.title}/parse",
+    #             text=json.dumps(adj_resp_data),
+    #         )
+
+    #         init_resp = api_client.post(
+    #             f"/{self.owner}/{self.title}/api/v1/", data=adj, format="json"
+    #         )
 
 
 def test_placeholder_page(db, client):

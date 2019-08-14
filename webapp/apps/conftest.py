@@ -164,6 +164,26 @@ def profile(db, user, customer):
         return Profile.objects.create(user=user, is_active=True)
 
 
+def profile_has_mockcustomer(db, password):
+    User = get_user_model()
+    user = User.objects.create_user(
+        username="mockcustomer", email="mockcustomer@email.com", password=password
+    )
+    Token.objects.create(user=user)
+    # profile has a customer.
+    customer = Customer.objects.create(
+        stripe_id="hello world",
+        livemode=False,
+        user=profile.user,
+        account_balance=0,
+        currency="usd",
+        delinquent=False,
+        default_source="123",
+        metadata={},
+    )
+    return Profile.objects.create(user=customer.user, is_active=True)
+
+
 @pytest.fixture
 def plans(db):
     plans = Plan.objects.filter(product__name="modeler/Used-for-testing")
