@@ -112,7 +112,6 @@ class SubmitSim:
         sim.owner = self.inputs.owner
         sim.project = self.inputs.project
         sim.sponsor = sim.project.sponsor
-        # TODO: collect upstream version
         sim.model_vers = None
         sim.webapp_vers = WEBAPP_VERSION
         sim.model_pk = Simulation.objects.next_model_pk(sim.project)
