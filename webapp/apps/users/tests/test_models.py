@@ -84,21 +84,23 @@ class TestUserModels:
         reg, sponsored = test_models
 
         # profile has no customer:
+        customer = getattr(profile.user, "customer", None)
         profile.user.customer = None
         assert not profile.can_run(reg.project)
         assert profile.can_run(sponsored.project)
 
         # profile has a customer.
-        customer = Customer.objects.create(
-            stripe_id="hello world",
-            livemode=False,
-            user=profile.user,
-            account_balance=0,
-            currency="usd",
-            delinquent=False,
-            default_source="123",
-            metadata={},
-        )
+        if customer is None:
+            customer = Customer.objects.create(
+                stripe_id="hello world",
+                livemode=False,
+                user=profile.user,
+                account_balance=0,
+                currency="usd",
+                delinquent=False,
+                default_source="123",
+                metadata={},
+            )
 
         profile.user.customer = customer  # dummy to fool method.
         assert profile.can_run(reg.project)

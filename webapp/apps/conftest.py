@@ -164,7 +164,8 @@ def profile(db, user, customer):
         return Profile.objects.create(user=user, is_active=True)
 
 
-def profile_has_mockcustomer(db, password):
+@pytest.fixture
+def profile_w_mockcustomer(db, password):
     User = get_user_model()
     user = User.objects.create_user(
         username="mockcustomer", email="mockcustomer@email.com", password=password
@@ -174,7 +175,7 @@ def profile_has_mockcustomer(db, password):
     customer = Customer.objects.create(
         stripe_id="hello world",
         livemode=False,
-        user=profile.user,
+        user=user,
         account_balance=0,
         currency="usd",
         delinquent=False,

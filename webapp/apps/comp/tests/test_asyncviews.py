@@ -57,7 +57,7 @@ class ResponseStatusException(Exception):
     def __init__(self, exp_status, act_status, stage):
         self.exp_status = exp_status
         self.act_status = act_status
-        self.stage = state
+        self.stage = stage
         super().__init__(f"{stage}: expected {exp_status}, got {act_status}")
 
 
@@ -126,7 +126,6 @@ class RunMockModel(CoreTestMixin):
         adj_resp_data: dict,
         adj: dict,
     ) -> Response:
-        print("mocking", f"{self.worker_url}{self.owner}/{self.title}/inputs")
         mock.register_uri(
             "POST",
             f"{self.worker_url}{self.owner}/{self.title}/inputs",
@@ -141,7 +140,6 @@ class RunMockModel(CoreTestMixin):
         init_resp = self.api_client.post(
             f"/{self.owner}/{self.title}/api/v1/", data=adj, format="json"
         )
-        assert init_resp.status_code == 201
         assert_status(201, init_resp.status_code, "post_adjustment")
         return init_resp
 
@@ -324,12 +322,64 @@ class TestAsyncAPI(CoreTestMixin):
         )
         rmm.run()
 
-    # def test_anon_perms(
-    #     self, client, api_client, profile, worker_url, comp_api_user
-    # ):
-    #     """
-    #     Test lifetime of submitting a model.
-    #     """
+    def test_perms(
+        self,
+        monkeypatch,
+        client,
+        api_client,
+        profile,
+        profile_w_mockcustomer,
+        worker_url,
+        comp_api_user,
+    ):
+        """
+        Test unable to post anon params.
+        """
+        kwargs = dict(
+            owner=self.owner,
+            title=self.title,
+            defaults=self.defaults(),
+            inputs=self.inputs_ok(),
+            errors_warnings=self.errors_warnings(),
+            client=client,
+            api_client=api_client,
+            worker_url=worker_url,
+            comp_api_user=comp_api_user,
+            monkeypatch=monkeypatch,
+            mockcompute=self.mockcompute,
+        )
+        rmm = RunMockModel(**kwargs)
+        with pytest.raises(ResponseStatusException) as excinfo:
+            rmm.run()
+        assert excinfo.value.stage == "post_adjustment"
+        assert excinfo.value.exp_status == 201
+        assert excinfo.value.act_status == 403
+
+        proj = Project.objects.get(title=self.title, owner__user__username=self.owner)
+        proj.sponsor = None
+        proj.save()
+
+        if getattr(profile.user, "customer", None) is None:
+            set_auth_token(api_client, profile_w_mockcustomer.user)
+        else:
+            set_auth_token(api_client, profile.user)
+        rmm = RunMockModel(**kwargs)
+        rmm.run()
+
+        customer = getattr(profile.user, "customer", None)
+        try:
+            profile.customer = None
+            profile.save()
+            set_auth_token(api_client, profile.user)
+            rmm = RunMockModel(**kwargs)
+            with pytest.raises(ResponseStatusException) as excinfo:
+                rmm.run()
+            assert excinfo.value.stage == "post_adjustment"
+            assert excinfo.value.exp_status == 201
+            assert excinfo.value.act_status == 403
+        finally:
+            profile.customer = customer
+            profile.save()
 
 
 def test_placeholder_page(db, client):
