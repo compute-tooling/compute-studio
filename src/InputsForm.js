@@ -13,6 +13,7 @@ import {
   SectionHeaderList,
   ErrorCard
 } from "./components";
+import ErrorBoundary from "./ErrorBoundary";
 import { ValidatingModal, RunModal, AuthModal } from "./modal";
 import { formikToJSON, convertToFormik } from "./ParamTools";
 import { hasServerErrors } from "./utils";
@@ -34,7 +35,8 @@ export default class InputsForm extends React.Component {
       sects: false,
       model_parameters: false,
       resetting: false,
-      timer: null
+      timer: null,
+      error: null
     };
     this.resetInitialValues = this.resetInitialValues.bind(this);
     this.poll = this.poll.bind(this);
@@ -43,36 +45,41 @@ export default class InputsForm extends React.Component {
 
   componentDidMount() {
     if (this.props.fetchInitialValues) {
-      this.props.fetchInitialValues().then(data => {
-        const [
-          initialValues,
-          sects,
-          model_parameters,
-          meta_parameters,
-          schema,
-          unknownParams
-        ] = convertToFormik(data);
-        let hasSimData = !!data.detail && !!data.detail.sim;
+      this.props
+        .fetchInitialValues()
+        .then(data => {
+          const [
+            initialValues,
+            sects,
+            model_parameters,
+            meta_parameters,
+            schema,
+            unknownParams
+          ] = convertToFormik(data);
+          let hasSimData = !!data.detail && !!data.detail.sim;
 
-        this.setState({
-          initialValues: initialValues,
-          sects: sects,
-          model_parameters: model_parameters,
-          meta_parameters: meta_parameters,
-          schema: schema,
-          extend: "extend" in data ? data.extend : false,
-          unknownParams: unknownParams,
-          creationDate: hasSimData ? data.detail.sim.creation_date : null,
-          modelVersion: hasSimData ? data.detail.sim.model_version : null,
-          detailAPIURL: !!data.detail ? data.detail.api_url : null,
-          editInputsUrl: !!data.detail ? data.detail.edit_inputs_url : null,
-          initialServerErrors:
-            !!data.detail && hasServerErrors(data.detail.errors_warnings)
-              ? data.detail.errors_warnings
-              : null,
-          accessStatus: data.accessStatus
+          this.setState({
+            initialValues: initialValues,
+            sects: sects,
+            model_parameters: model_parameters,
+            meta_parameters: meta_parameters,
+            schema: schema,
+            extend: "extend" in data ? data.extend : false,
+            unknownParams: unknownParams,
+            creationDate: hasSimData ? data.detail.sim.creation_date : null,
+            modelVersion: hasSimData ? data.detail.sim.model_version : null,
+            detailAPIURL: !!data.detail ? data.detail.api_url : null,
+            editInputsUrl: !!data.detail ? data.detail.edit_inputs_url : null,
+            initialServerErrors:
+              !!data.detail && hasServerErrors(data.detail.errors_warnings)
+                ? data.detail.errors_warnings
+                : null,
+            accessStatus: data.accessStatus
+          });
+        })
+        .catch(err => {
+          this.setState({ error: err });
         });
-      });
     }
   }
 
@@ -98,6 +105,9 @@ export default class InputsForm extends React.Component {
           extend: "extend" in data ? data.extend : false,
           resetting: false
         });
+      })
+      .catch(err => {
+        this.setState({ error: err });
       });
   }
 
@@ -105,7 +115,7 @@ export default class InputsForm extends React.Component {
     let timer = setInterval(() => {
       axios
         .get(respData.api_url)
-        .done(response => {
+        .then(response => {
           // be careful with race condidition where status is SUCCESS but
           // sim has not yet been submitted and saved!
           if (
@@ -137,7 +147,7 @@ export default class InputsForm extends React.Component {
           actions.setSubmitting(false);
           // request likely cancelled because timer was killed.
           if (error.message && error.message != "Request aborted") {
-            throw error;
+            this.setState({ error: error });
           }
         });
     }, 500);
@@ -156,6 +166,9 @@ export default class InputsForm extends React.Component {
   }
 
   render() {
+    if (this.state.error !== null) {
+      throw this.state.error;
+    }
     if (
       !this.state.model_parameters ||
       !this.state.initialValues ||
@@ -164,6 +177,7 @@ export default class InputsForm extends React.Component {
       return <LoadingElement />;
     }
     console.log("rendering");
+
     let meta_parameters = this.state.meta_parameters;
     let model_parameters = this.state.model_parameters;
     let initialValues = this.state.initialValues;

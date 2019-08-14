@@ -24,16 +24,12 @@ export default class ErrorBoundary extends React.Component {
               <h2>Whoops! COMP has experienced an error.</h2>
             </Card.Title>
             <Card.Text>
-              <p>
-                The COMP technical team has been notified of this error and is
-                working to fix it. In addition, you are welcome to discuss this
-                issue with the COMP technical team by opening an{" "}
-                <a href="https://github.com/comp-org/comp-ce/issues/new">
-                  issue
-                </a>{" "}
-                in the COMP source code repository or{" "}
-                <a href="mailto:henrymdoupe@gmail.com">emailing Hank</a>.
-              </p>
+              The COMP technical team has been notified of this error and is
+              working to fix it. In addition, you are welcome to discuss this
+              issue with the COMP technical team by opening an{" "}
+              <a href="https://github.com/comp-org/comp-ce/issues/new">issue</a>{" "}
+              in the COMP source code repository or{" "}
+              <a href="mailto:henrymdoupe@gmail.com">emailing Hank</a>.
             </Card.Text>
           </Card.Body>
         </Card>
