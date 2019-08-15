@@ -18,16 +18,16 @@ const inputStyle = {
 };
 
 var md = new Remarkable({
-  highlight: function (str, lang) {
+  highlight: function(str, lang) {
     if ((lang && hljs.getLanguage(lang)) || true) {
       try {
         return hljs.highlight(lang, str).value;
-      } catch (err) { }
+      } catch (err) {}
     }
 
     try {
       return hljs.highlightAuto(str).value;
-    } catch (err) { }
+    } catch (err) {}
     return ""; // use external default escaping
   }
 });
@@ -122,7 +122,7 @@ export const CheckboxField = ({
 export const CPIField = ({ field, form: { touched, errors }, ...props }) => {
   let fader = props.placeholder ? "" : "fader";
   if (field.value != null) {
-    fader = field.value === "true" ? "" : "fader";
+    fader = field.value.toString() === "true" ? "" : "fader";
   }
   let className = `btn btn-checkbox ${fader}`;
   return (
@@ -275,13 +275,10 @@ export const SelectField = ({ field, form, ...props }) => {
         value={value}
         style={props.style}
       />
-      <datalist id={`datalist-${field.name}`} >
-        {props.options}
-      </datalist>
+      <datalist id={`datalist-${field.name}`}>{props.options}</datalist>
     </>
   );
 };
-
 
 export function getField(
   fieldName,
@@ -291,12 +288,22 @@ export function getField(
   isMulti = false
 ) {
   const makeOptions = choices => {
-    let opts = choices.map(choice =>
-      <option key={choice.toString()} value={choice}>{choice.toString()}</option>
-    );
+    let opts = choices.map(choice => (
+      <option key={choice.toString()} value={choice}>
+        {choice.toString()}
+      </option>
+    ));
     if (isMulti) {
-      opts.push(<option key="*" value="*">{"*"}</option>);
-      opts.push(<option key="<" value="<">{"<"}</option>);
+      opts.push(
+        <option key="*" value="*">
+          {"*"}
+        </option>
+      );
+      opts.push(
+        <option key="<" value="<">
+          {"<"}
+        </option>
+      );
     }
     return opts;
   };

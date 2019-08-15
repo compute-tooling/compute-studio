@@ -53,7 +53,7 @@ function testReverseOp(value) {
   return true;
 }
 
-yup.number.prototype._typeCheck = function (value) {
+yup.number.prototype._typeCheck = function(value) {
   if (value instanceof Number) value = value.valueOf();
 
   return (
@@ -62,7 +62,7 @@ yup.number.prototype._typeCheck = function (value) {
   );
 };
 
-yup.bool.prototype._typeCheck = function (value) {
+yup.bool.prototype._typeCheck = function(value) {
   if (value instanceof Boolean) value = value.valueOf();
   return (
     (typeof value === "string" && (value === "*" || value === "<")) ||
@@ -175,7 +175,10 @@ export function yupValidator(params, param_data, extend = false) {
     }
   }
   if ("choice" in param_data.validators) {
-    yupObj = yupObj.oneOf(lodashUnion(param_data.validators.choice.choices, [null, ""]), oneOfMsg);
+    yupObj = yupObj.oneOf(
+      lodashUnion(param_data.validators.choice.choices, [null, ""]),
+      oneOfMsg
+    );
   }
 
   return ensureExtend(yupObj);
@@ -240,6 +243,8 @@ export function convertToFormik(data) {
       adjustment[msect] = {};
     }
     if (hasInitialValues && msect in adjustment) {
+      // Checkbox params are added to unkownParams and are removed in the
+      // checkbox logic block later.
       unknownParams = lodashUnion(
         unknownParams,
         difference(Object.keys(adjustment[msect]), Object.keys(params))
@@ -295,6 +300,11 @@ export function convertToFormik(data) {
       if ("checkbox" in param_data) {
         let initialValue = null;
         if (hasInitialValues && `${param}_checkbox` in adjustment[msect]) {
+          // checkbox params are added to unknownParams and it is cheaper
+          // to remove them as they come up here.
+          unknownParams = unknownParams.filter(
+            param => param !== `${param}_checkbox`
+          );
           initialValue = adjustment[msect][`${param}_checkbox`][0].value;
         }
         paramYupShape["checkbox"] = yup.bool().nullable();
