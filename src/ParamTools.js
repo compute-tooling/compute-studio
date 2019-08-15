@@ -303,7 +303,7 @@ export function convertToFormik(data) {
           // checkbox params are added to unknownParams and it is cheaper
           // to remove them as they come up here.
           unknownParams = unknownParams.filter(
-            param => param !== `${param}_checkbox`
+            unknownParam => unknownParam !== `${param}_checkbox`
           );
           initialValue = adjustment[msect][`${param}_checkbox`][0].value;
         }
