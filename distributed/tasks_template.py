@@ -12,7 +12,9 @@ except ImportError as ie:
         raise ie
 
 
-@celery_app.task(name="{{APP_NAME}}.inputs_get", soft_time_limit=10, bind=True)
+@celery_app.task(
+    name="{{APP_NAME}}.inputs_get", soft_time_limit=10, bind=True, acks_late=True
+)
 @task_wrapper
 def inputs_get(self, meta_param_dict):
     res = compconfig.get_inputs(meta_param_dict)
@@ -22,7 +24,9 @@ def inputs_get(self, meta_param_dict):
     return res
 
 
-@celery_app.task(name="{{APP_NAME}}.inputs_parse", soft_time_limit=10, bind=True)
+@celery_app.task(
+    name="{{APP_NAME}}.inputs_parse", soft_time_limit=10, bind=True, acks_late=True
+)
 @task_wrapper
 def inputs_parse(self, meta_param_dict, adjustment, errors_warnings):
     res = compconfig.validate_inputs(meta_param_dict, adjustment, errors_warnings)
@@ -34,7 +38,12 @@ def inputs_parse(self, meta_param_dict, adjustment, errors_warnings):
     return res
 
 
-@celery_app.task(name="{{APP_NAME}}.sim", soft_time_limit={{SIM_TIME_LIMIT}}, bind=True)
+@celery_app.task(
+    name="{{APP_NAME}}.sim",
+    soft_time_limit={{SIM_TIME_LIMIT}},
+    bind=True,
+    acks_late=True,
+)
 @task_wrapper
 def sim(self, meta_param_dict, adjustment):
     return compconfig.run_model(meta_param_dict, adjustment)
