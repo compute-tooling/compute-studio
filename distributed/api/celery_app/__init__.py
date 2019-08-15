@@ -55,7 +55,11 @@ celery_app = Celery(
     "celery_app", broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND
 )
 celery_app.conf.update(
-    task_serializer="json", accept_content=["msgpack", "json"], task_routes=task_routes
+    task_serializer="json",
+    accept_content=["msgpack", "json"],
+    task_routes=task_routes,
+    worker_prefetch_multiplier=1,
+    task_acks_late=True,
 )
 
 
