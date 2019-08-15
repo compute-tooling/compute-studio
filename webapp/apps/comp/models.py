@@ -4,8 +4,12 @@ import json
 
 from dataclasses import dataclass, field
 from typing import List, Union
+from hashids import Hashids
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils import timezone
 from django.contrib.postgres.fields import JSONField
@@ -14,6 +18,37 @@ from django.urls import reverse
 from django.utils import timezone
 
 from webapp.apps.comp import utils
+from webapp.settings import INPUTS_SALT
+
+
+hashids = Hashids(INPUTS_SALT, min_length=6)
+
+
+class InputsQuerySet(models.QuerySet):
+    def from_hashid(self, hashid):
+        """
+        Get inputs object from a hash of its pk. Return None
+        if the decode does not resolve to a pk.
+        """
+        pk = hashids.decode(hashid)
+        if not pk:
+            return None
+        else:
+            return self.get(pk=pk[0])
+
+    def get_object_from_hashid_or_404(self, hashid):
+        """
+        Get inputs object from a hash of its pk and 
+        raise 404 exception if it does not exist.
+        """
+        try:
+            obj = self.from_hashid(hashid)
+        except ObjectDoesNotExist:
+            raise Http404("Object matching query does not exist")
+        if obj:
+            return obj
+        else:
+            raise Http404("Object matching query does not exist")
 
 
 class Inputs(models.Model):
@@ -40,6 +75,33 @@ class Inputs(models.Model):
         "users.Project", on_delete=models.SET_NULL, related_name="sim_params", null=True
     )
 
+    owner = models.ForeignKey(
+        "users.Profile", on_delete=models.CASCADE, null=True, related_name="inputs"
+    )
+    traceback = models.CharField(null=True, blank=True, default=None, max_length=4000)
+    job_id = models.UUIDField(blank=True, default=None, null=True)
+    status = models.CharField(
+        choices=(
+            ("PENDING", "Pending"),
+            ("SUCCESS", "Success"),
+            ("INVALID", "Invalid"),
+            ("FAIL", "Fail"),
+            ("WORKER_FAILURE", "Worker Failure"),
+        ),
+        max_length=20,
+    )
+
+    client = models.CharField(
+        choices=(
+            ("web-alpha", "Web-Alpha"),
+            ("web-beta", "Web-Beta"),
+            ("rest-api", "REST API"),
+        ),
+        max_length=32,
+    )
+
+    objects = InputsQuerySet.as_manager()
+
     @property
     def deserialized_inputs(self):
         """
@@ -64,6 +126,25 @@ class Inputs(models.Model):
     @property
     def pretty_meta_parameters(self):
         return json.dumps(self.meta_parameters, indent=4)
+
+    def get_absolute_api_url(self):
+        kwargs = {
+            "hashid": self.get_hashid(),
+            "title": self.project.title,
+            "username": self.project.owner.user.username,
+        }
+        return reverse("detail_myinputs_api", kwargs=kwargs)
+
+    def get_edit_url(self):
+        kwargs = {
+            "hashid": self.get_hashid(),
+            "title": self.project.title,
+            "username": self.project.owner.user.username,
+        }
+        return reverse("edit_inputs", kwargs=kwargs)
+
+    def get_hashid(self):
+        return hashids.encode(self.pk)
 
 
 class SimulationManager(models.Manager):

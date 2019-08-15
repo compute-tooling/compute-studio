@@ -1,7 +1,7 @@
 from django import forms
 
-from webapp.apps.comp.fields import coerce_bool
 from webapp.apps.comp.meta_parameters import (
+    coerce_bool,
     MetaParameter,
     MetaParameters,
     translate_to_django,
@@ -56,3 +56,8 @@ def test_translate():
     assert next(k for k in result.parameters.keys()) == "use_full_data"
     assert mp.value == True
     assert isinstance(mp.field, forms.TypedChoiceField)
+
+
+def test_coerce_bool():
+    assert coerce_bool("True") is True
+    assert coerce_bool("False") is False

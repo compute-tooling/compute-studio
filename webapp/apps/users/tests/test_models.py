@@ -3,6 +3,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from guardian.shortcuts import assign_perm, remove_perm
 
+from webapp.apps.billing.models import Customer
 from webapp.apps.users.models import Profile, Project, is_profile_active
 
 User = get_user_model()
@@ -73,6 +74,42 @@ class TestUserModels:
         reg, sponsored = test_models
         assert reg.project.display_sponsor == "Not sponsored"
         assert sponsored.project.display_sponsor == "sponsor"
+
+    def test_project_is_sponsored(self, test_models):
+        reg, sponsored = test_models
+        assert not reg.project.is_sponsored
+        assert sponsored.project.is_sponsored
+
+    def test_project_can_run(self, profile, test_models):
+        reg, sponsored = test_models
+
+        # profile has no customer:
+        customer = getattr(profile.user, "customer", None)
+        profile.user.customer = None
+        assert not profile.can_run(reg.project)
+        assert profile.can_run(sponsored.project)
+
+        # profile has a customer.
+        if customer is None:
+            customer = Customer.objects.create(
+                stripe_id="hello world",
+                livemode=False,
+                user=profile.user,
+                account_balance=0,
+                currency="usd",
+                delinquent=False,
+                default_source="123",
+                metadata={},
+            )
+
+        profile.user.customer = customer  # dummy to fool method.
+        assert profile.can_run(reg.project)
+        assert profile.can_run(sponsored.project)
+
+        # profile is inactive:
+        profile.is_active = False
+        assert not profile.can_run(reg.project)
+        assert not profile.can_run(sponsored.project)
 
     def test_project_access(self, profile):
         project = Project.objects.get(

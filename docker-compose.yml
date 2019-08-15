@@ -1,4 +1,4 @@
-version: '3'
+version: '3.7'
 
 services:
   db:
@@ -7,8 +7,15 @@ services:
       - postgres_data:/var/lib/postgresql/data/
     networks:
       - distributed_worker_net
+  webbase:
+    build:
+      context: ./
+      dockerfile: Dockerfile.base
+    image: webbase
   web:
-    build: .
+    build:
+      context: ./
+      dockerfile: Dockerfile.dev
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/code
@@ -25,6 +32,7 @@ services:
     container_name: web
     depends_on:
       - db
+      - webbase
     networks:
       - distributed_worker_net
 

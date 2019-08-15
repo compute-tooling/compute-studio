@@ -7,8 +7,20 @@ import requests_mock
 requests_mock.Mocker.TEST_PREFIX = "test"
 
 WORKER_HN = os.environ.get("WORKERS")
-TIMEOUT_IN_SECONDS = 6
+TIMEOUT_IN_SECONDS = 1.2
 MAX_ATTEMPTS_SUBMIT_JOB = 4
+
+
+# class Future:
+#     def __init__(self, job_id, model, **kwargs):
+#         self.job_id = job_id
+#         self.model = model
+
+#     def status(self):
+#         return self.model.get(job_id=self.job_id).status
+
+#     def ready(self):
+#         return self.status() != "PENDING"
 
 
 class JobFailError(Exception):
@@ -97,7 +109,6 @@ class Compute(object):
 
 class SyncCompute(Compute):
     def submit(self, tasks, url, increment_counter=True, use_wnc_offset=True):
-        queue_length = 0
         submitted = False
         attempts = 0
         while not submitted:
@@ -125,6 +136,6 @@ class SyncCompute(Compute):
 
         success = data["status"] == "SUCCESS"
         if success:
-            return success, data["result"]
+            return success, data
         else:
-            return success, data["traceback"]
+            return success, data

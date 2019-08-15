@@ -6,7 +6,8 @@ hljs.registerLanguage("json", json);
 
 import "highlight.js/styles/default.css";
 import React from "react";
-import { Field } from "formik";
+import { Button } from "react-bootstrap";
+import { FastField } from "formik";
 
 var Remarkable = require("remarkable");
 
@@ -17,16 +18,16 @@ const inputStyle = {
 };
 
 var md = new Remarkable({
-  highlight: function (str, lang) {
+  highlight: function(str, lang) {
     if ((lang && hljs.getLanguage(lang)) || true) {
       try {
         return hljs.highlight(lang, str).value;
-      } catch (err) { }
+      } catch (err) {}
     }
 
     try {
       return hljs.highlightAuto(str).value;
-    } catch (err) { }
+    } catch (err) {}
     return ""; // use external default escaping
   }
 });
@@ -82,12 +83,24 @@ export const TextField = ({ field, form: { touched, errors }, ...props }) => {
   );
 };
 
-function checkboxChange(e, onChange) {
-  e.target.value = !e.target.value;
-  onChange(e)
+function checkboxChange(e, onChange, placeholder = null) {
+  let value =
+    e.target.value != null && e.target.value !== ""
+      ? e.target.value
+      : placeholder;
+  if (typeof value === "boolean") {
+    e.target.value = !value;
+  } else {
+    e.target.value = value === "true" ? false : true;
+  }
+  onChange(e);
 }
 
-export const CheckboxField = ({ field, form: { touched, errors }, ...props }) => {
+export const CheckboxField = ({
+  field,
+  form: { touched, errors },
+  ...props
+}) => {
   return (
     <div>
       <label>
@@ -104,7 +117,32 @@ export const CheckboxField = ({ field, form: { touched, errors }, ...props }) =>
       </label>
     </div>
   );
-}
+};
+
+export const CPIField = ({ field, form: { touched, errors }, ...props }) => {
+  let fader = props.placeholder ? "" : "fader";
+  if (field.value != null) {
+    fader = field.value.toString() === "true" ? "" : "fader";
+  }
+  let className = `btn btn-checkbox ${fader}`;
+  return (
+    <Button
+      className={className}
+      {...field}
+      {...props}
+      placeholder={props.placeholder.toString()}
+      key={`${field.name}-button`}
+      type="checkbox"
+      value={field.value}
+      onClick={e => {
+        e.preventDefault(); // Don't submit form!
+        checkboxChange(e, field.onChange, props.placeholder);
+      }}
+    >
+      CPI{" "}
+    </Button>
+  );
+};
 
 export const TextAreaField = ({
   field,
@@ -136,7 +174,16 @@ export const TextAreaField = ({
 };
 
 export const Message = ({ msg, props }) => (
-  <small className={`form-text text-muted ${props}`}>{msg}</small>
+  <small className={`form-text text-muted`}>{msg}</small>
+);
+
+export const RedMessage = ({ msg, props }) => (
+  <p
+    className={`form-text font-weight-bold`}
+    style={{ color: "#dc3545", fontSize: "80%" }}
+  >
+    {msg}
+  </p>
 );
 
 export const CodeSnippetField = ({
@@ -199,3 +246,111 @@ export const ServerSizeField = ({
     </div>
   );
 };
+
+export const SelectField = ({ field, form, ...props }) => {
+  let initVal;
+  if (field.value) {
+    initVal = Array.isArray(field.value) ? field.value.join(",") : field.value;
+  } else {
+    initVal = "";
+  }
+
+  const [value, setValue] = React.useState(initVal);
+
+  const handleBlur = e => {
+    form.setFieldValue(field.name, e.target.value);
+    form.setFieldTouched(field.name, true);
+  };
+
+  return (
+    <>
+      <input
+        className="form-control"
+        list={`datalist-${field.name}`}
+        id={`datalist-${field.name}-choice`}
+        placeholder={props.placeholder}
+        name={field.name}
+        onChange={e => setValue(e.target.value)}
+        onBlur={handleBlur}
+        value={value}
+        style={props.style}
+      />
+      <datalist id={`datalist-${field.name}`}>{props.options}</datalist>
+    </>
+  );
+};
+
+export function getField(
+  fieldName,
+  data,
+  placeholder,
+  style = {},
+  isMulti = false
+) {
+  const makeOptions = choices => {
+    let opts = choices.map(choice => (
+      <option key={choice.toString()} value={choice}>
+        {choice.toString()}
+      </option>
+    ));
+    if (isMulti) {
+      opts.push(
+        <option key="*" value="*">
+          {"*"}
+        </option>
+      );
+      opts.push(
+        <option key="<" value="<">
+          {"<"}
+        </option>
+      );
+    }
+    return opts;
+  };
+
+  let choices;
+  if (data.type == "bool") {
+    choices = ["true", "false"];
+  } else if (
+    data.validators &&
+    data.validators.choice &&
+    data.validators.choice.choices
+  ) {
+    choices = data.validators.choice.choices;
+  }
+
+  if (choices) {
+    if (isMulti) {
+      return (
+        <FastField
+          name={fieldName}
+          component={SelectField}
+          options={makeOptions(choices)}
+          placeholder={placeholder}
+          style={style}
+        />
+      );
+    } else {
+      return (
+        <FastField
+          name={fieldName}
+          className="form-control"
+          component="select"
+          placeholder={placeholder}
+          style={style}
+        >
+          {makeOptions(data.validators.choice.choices)}
+        </FastField>
+      );
+    }
+  } else {
+    return (
+      <FastField
+        className="form-control"
+        name={fieldName}
+        placeholder={placeholder}
+        style={style}
+      />
+    );
+  }
+}

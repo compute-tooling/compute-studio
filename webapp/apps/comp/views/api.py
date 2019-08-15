@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.core.mail import send_mail
 
 from rest_framework.authentication import (
     BasicAuthentication,
@@ -14,10 +15,11 @@ import s3like
 
 from webapp.apps.users.models import Project
 
+from webapp.apps.comp.asyncsubmit import SubmitInputs, SubmitSim
 from webapp.apps.comp.compute import Compute, JobFailError
-from webapp.apps.comp.exceptions import AppError, ValidationError
+from webapp.apps.comp.exceptions import AppError, ValidationError, BadPostException
 from webapp.apps.comp.ioutils import get_ioutils
-from webapp.apps.comp.models import Simulation
+from webapp.apps.comp.models import Inputs, Simulation
 from webapp.apps.comp.parser import APIParser
 from webapp.apps.comp.permissions import RequiresActive, RequiresPayment
 from webapp.apps.comp.serializers import (
@@ -25,7 +27,7 @@ from webapp.apps.comp.serializers import (
     InputsSerializer,
     OutputsSerializer,
 )
-from webapp.apps.comp.submit import handle_submission, BadPost, APISubmit
+from webapp.apps.comp.utils import is_valid
 
 from .core import GetOutputsObjectMixin, RecordOutputsMixin, AbstractRouterAPIView
 
@@ -48,17 +50,17 @@ class InputsAPIView(APIView):
                 )
             except ValidationError as e:
                 return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
-        meta_parameters, model_parameters = ioutils.displayer.package_defaults()
-        return Response(
-            {"meta_parameters": meta_parameters, "model_parameters": model_parameters}
-        )
+        defaults = ioutils.displayer.package_defaults()
+        if "year" in defaults["meta_parameters"]:
+            defaults.update({"extend": True})
+        return Response(defaults)
 
     def get(self, request, *args, **kwargs):
-        print("sim api method=GET", request.GET, kwargs)
+        print("inputs api method=GET", request.GET, kwargs)
         return self.get_inputs(kwargs)
 
     def post(self, request, *args, **kwargs):
-        print("sim api method=GET", request.GET, kwargs)
+        print("inputs api method=POST", request.POST, kwargs)
         ser = InputsSerializer(data=request.data)
         if ser.is_valid():
             data = ser.validated_data
@@ -69,6 +71,29 @@ class InputsAPIView(APIView):
             return self.get_inputs(kwargs, meta_parameters)
         else:
             return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DetailMyInputsAPIView(APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    queryset = Inputs.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        print("myinputs api method=GET", request.GET, kwargs)
+        if "model_pk" in kwargs:
+            inputs = get_object_or_404(
+                self.queryset,
+                outputs__model_pk=kwargs["model_pk"],
+                project__title=kwargs["title"],
+                project__owner__user__username=kwargs["username"],
+            )
+        else:
+            inputs = self.queryset.get_object_from_hashid_or_404(kwargs["hashid"])
+        return Response(InputsSerializer(inputs).data)
 
 
 class BaseCreateAPIView(APIView):
@@ -89,9 +114,10 @@ class BaseCreateAPIView(APIView):
         ioutils = get_ioutils(project, Parser=APIParser)
 
         try:
-            result = handle_submission(
-                request, project, ioutils, compute, submit_class=APISubmit
-            )
+            submit_inputs = SubmitInputs(request, project, ioutils, compute)
+            result = submit_inputs.submit()
+        except BadPostException as bpe:
+            return Response(bpe.errors, status=status.HTTP_400_BAD_REQUEST)
         except AppError as ae:
             try:
                 send_mail(
@@ -106,23 +132,14 @@ class BaseCreateAPIView(APIView):
                     fail_silently=True,
                 )
             # Http 401 exception if mail credentials are not set up.
-            except Exception as e:
+            except Exception:
                 pass
 
-            return Response(ae.traceback, status=status.HTTP_400_BAD_REQUEST)
+            return Response(ae.traceback, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # case where validation failed
-        if isinstance(result, BadPost):
-            return result.http_response
+        inputs = InputsSerializer(result)
 
-        # No errors--submit to model
-        if result.save is not None:
-            sim = SimulationSerializer(result.save.runmodel_instance)
-            return Response(sim.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(
-                result.submit.model.errors_warnings, status=status.HTTP_400_BAD_REQUEST
-            )
+        return Response(inputs.data, status=status.HTTP_201_CREATED)
 
 
 class RequiresLoginAPIView(BaseCreateAPIView):
@@ -159,7 +176,7 @@ class DetailAPIView(GetOutputsObjectMixin, APIView):
         compute = Compute()
         try:
             job_ready = compute.results_ready(job_id)
-        except JobFailError as jfe:
+        except JobFailError:
             self.object.traceback = ""
             self.object.save()
             return Response(
@@ -198,6 +215,47 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
                     self.record_outputs(sim, data)
                 return Response(status=status.HTTP_200_OK)
             else:
+                return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class MyInputsAPIView(APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    def put(self, request, *args, **kwargs):
+        print("myinputs api method=PUT", kwargs)
+
+        if request.user.username == "comp-api-user":
+            data = request.data
+            ser = InputsSerializer(data=request.data)
+            if ser.is_valid():
+                data = ser.validated_data
+                inputs = get_object_or_404(Inputs, job_id=data["job_id"])
+                print("data")
+                print(data)
+                if inputs.status == "PENDING":
+                    # successful run
+                    if data["status"] == "SUCCESS":
+                        inputs.errors_warnings = data["errors_warnings"]
+                        inputs.inputs_file = data.get("inputs_file", None)
+                        inputs.status = "SUCCESS" if is_valid(inputs) else "INVALID"
+                        inputs.save()
+                        if inputs.status == "SUCCESS":
+                            submit_sim = SubmitSim(inputs, compute=Compute())
+                            submit_sim.submit()
+                    # failed run, exception was caught
+                    else:
+                        inputs.status = "FAIL"
+                        inputs.traceback = data["traceback"]
+                        inputs.save()
+                return Response(status=status.HTTP_200_OK)
+            else:
+                print("inputs put error", ser.errors)
                 return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)

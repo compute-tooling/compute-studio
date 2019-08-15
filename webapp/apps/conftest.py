@@ -51,17 +51,16 @@ def django_db_setup(django_db_setup, django_db_blocker):
             username="hdoupe", email="hdoupe@email.com", password="hdoupe2222"
         )
 
-        for u in [modeler, sponsor, hdoupe]:
-            Token.objects.create(user=u)
-            Profile.objects.create(user=u, is_active=True)
-
         # User for pushing outputs from the workers to the webapp.
         comp_api_user = User.objects.create_user(
             username="comp-api-user",
             email="comp-api-user@email.com",
             password="heyhey2222",
         )
-        Profile.objects.create(user=comp_api_user, is_active=True)
+
+        for u in [modeler, sponsor, hdoupe, comp_api_user]:
+            Token.objects.create(user=u)
+            Profile.objects.create(user=u, is_active=True)
 
         common = {
             "description": "[Matchups](https://github.com/hdoupe/Matchups) provides pitch data on pitcher and batter matchups.. Select a date range using the format YYYY-MM-DD. Keep in mind that Matchups only provides data on matchups going back to 2008. Two datasets are offered to run this model: one that only has the most recent season, 2018, and one that contains data on every single pitch going back to 2008. Next, select your favorite pitcher and some batters who he's faced in the past. Click submit to start analyzing the selected matchups!",
@@ -163,6 +162,27 @@ def profile(db, user, customer):
         return Profile.objects.create(user=customer.user, is_active=True)
     else:
         return Profile.objects.create(user=user, is_active=True)
+
+
+@pytest.fixture
+def profile_w_mockcustomer(db, password):
+    User = get_user_model()
+    user = User.objects.create_user(
+        username="mockcustomer", email="mockcustomer@email.com", password=password
+    )
+    Token.objects.create(user=user)
+    # profile has a customer.
+    customer = Customer.objects.create(
+        stripe_id="hello world",
+        livemode=False,
+        user=user,
+        account_balance=0,
+        currency="usd",
+        delinquent=False,
+        default_source="123",
+        metadata={},
+    )
+    return Profile.objects.create(user=customer.user, is_active=True)
 
 
 @pytest.fixture
@@ -286,4 +306,17 @@ def get_inputs(comp_inputs_json):
     p1 = Params1().specification(serializable=True, meta_data=True)
     p2 = Params2().specification(serializable=True, meta_data=True)
     mp = MetaParams().specification(serializable=True, meta_data=True)
-    return mp, {"majorsection1": p1, "majorsection2": p2}
+    return {
+        "meta_parameters": mp,
+        "model_parameters": {"majorsection1": p1, "majorsection2": p2},
+    }
+
+
+@pytest.fixture
+def worker_url():
+    return f"http://{os.environ['WORKERS']}/"
+
+
+@pytest.fixture
+def comp_api_user(db):
+    return Profile.objects.get(user__username="comp-api-user")

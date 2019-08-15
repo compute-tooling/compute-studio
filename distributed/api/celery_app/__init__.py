@@ -73,13 +73,13 @@ def task_wrapper(func):
                 version = outputs.pop("version", OUTPUTS_VERSION)
                 if version == "v0":
                     res["model_version"] = "NA"
-                    res["result"] = dict(outputs, **{"version": version})
+                    res.update(dict(outputs, **{"version": version}))
                 else:
                     res["model_version"] = outputs.pop("model_version")
                     outputs = s3like.write_to_s3like(task_id, outputs)
-                    res["result"] = {"outputs": outputs, "version": version}
+                    res.update({"outputs": outputs, "version": version})
             else:
-                res["result"] = outputs
+                res.update(outputs)
         except Exception as e:
             traceback_str = traceback.format_exc()
         finish = time.time()
@@ -107,6 +107,16 @@ def post_results(sender=None, headers=None, body=None, **kwargs):
         print(f"posting data to {COMP_URL}/outputs/api/")
         resp = requests.put(
             f"{COMP_URL}/outputs/api/",
+            json=kwargs["retval"],
+            auth=(COMP_API_USER, COMP_API_USER_PASS),
+        )
+        print("resp", resp.status_code)
+        if resp.status_code == 400:
+            print("errors", resp.json())
+    if kwargs["task"].name.endswith("parse"):
+        print(f"posting data to {COMP_URL}/inputs/api/")
+        resp = requests.put(
+            f"{COMP_URL}/inputs/api/",
             json=kwargs["retval"],
             auth=(COMP_API_USER, COMP_API_USER_PASS),
         )

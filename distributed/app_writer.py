@@ -1,4 +1,5 @@
 import argparse
+import copy
 import json
 import os
 import re
@@ -83,9 +84,11 @@ if __name__ == "__main__":
             kubeout = (
                 f"kubernetes/apps/{safeowner}-{safetitle}-{action}-deployment.yaml"
             )
-
-            req = resource_req[action]
-            resources = dict(resource_req[action], **obj["resources"])
+            req = copy.deepcopy(resource_req[action])
+            resources = dict(req, **copy.deepcopy(obj["resources"]))
+            if action == "io":
+                resources["requests"]["memory"] = "250Mi"
+                resources["limits"]["memory"] = "700Mi"
 
             with open(kubeout, "w") as f:
                 f.write(

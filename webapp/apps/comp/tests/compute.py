@@ -20,6 +20,7 @@ class MockCompute(Compute):
         self.num_times_to_wait = num_times_to_wait
 
     def remote_submit_job(self, url, data, timeout, headers=None):
+        print("mocking:", url)
         with requests_mock.Mocker() as mock:
             resp = {"job_id": str(uuid.uuid4()), "qlength": 2}
             resp = json.dumps(resp)
@@ -68,6 +69,7 @@ class MockComputeWorkerFailure(MockCompute):
         self.client = None
         self.sim = None
         with requests_mock.Mocker() as mock:
+            print("mocking: ", url)
             text = "FAIL"
             mock.register_uri("GET", url, text=text)
             return Compute.remote_query_job(self, url, params)
