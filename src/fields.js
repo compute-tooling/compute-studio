@@ -293,18 +293,6 @@ export function getField(
         {choice.toString()}
       </option>
     ));
-    if (isMulti) {
-      opts.push(
-        <option key="*" value="*">
-          {"*"}
-        </option>
-      );
-      opts.push(
-        <option key="<" value="<">
-          {"<"}
-        </option>
-      );
-    }
     return opts;
   };
 
