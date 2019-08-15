@@ -24,7 +24,8 @@ const tbLabelSchema = yup.object().shape({
   MARS: yup.string(),
   idedtype: yup.string(),
   EIC: yup.string(),
-  data_source: yup.string()
+  data_source: yup.string(),
+  use_full_sample: yup.bool()
 });
 
 export default class InputsForm extends React.Component {
@@ -86,7 +87,9 @@ export default class InputsForm extends React.Component {
   resetInitialValues(metaParameters) {
     this.setState({ resetting: true });
     this.props
-      .resetInitialValues({ meta_parameters: metaParameters })
+      .resetInitialValues({
+        meta_parameters: tbLabelSchema.cast(metaParameters)
+      })
       .then(data => {
         const [
           initialValues,
