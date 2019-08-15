@@ -4,9 +4,14 @@ import ReactDOM from "react-dom";
 import React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import axios from "axios";
+import * as Sentry from "@sentry/browser";
 
 import InputsForm from "./InputsForm";
 import ErrorBoundary from "./ErrorBoundary";
+
+Sentry.init({
+  dsn: "https://fde6bcb39fda4af38471b16e2c1711af@sentry.io/1530834"
+});
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";

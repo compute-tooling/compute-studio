@@ -1,5 +1,6 @@
 import React from "react";
 import { Card } from "react-bootstrap";
+import * as Sentry from "@sentry/browser";
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -8,10 +9,22 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    this.setState({
-      error: error,
-      errorInfo: errorInfo
-    });
+    if (process.env.NODE_ENV === "production") {
+      Sentry.withScope(scope => {
+        scope.setExtras(errorInfo);
+        const eventId = Sentry.captureException(error);
+        this.setState({
+          eventId,
+          error: error,
+          errorInfo: errorInfo
+        });
+      });
+    } else {
+      this.setState({
+        error,
+        errorInfo
+      });
+    }
   }
 
   render() {
