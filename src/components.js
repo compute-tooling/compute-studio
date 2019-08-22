@@ -505,7 +505,7 @@ export const ErrorCard = ({ errorMsg, errors, model_parameters = null }) => {
           return !isEmpty(errors.errors) ? (
             <div key={`${msect}-error`} className="alert alert-danger">
               <h5>{msect}</h5>
-              {Object.entries(errors.errors).map(([paramName, msg], ix) => {
+              {Object.entries(errors.errors).map(([paramName, msgs], ix) => {
                 let [exists, title] = getTitle(msect, paramName);
                 return (
                   <div key={`${msect}-${paramName}-error`}>
@@ -514,12 +514,14 @@ export const ErrorCard = ({ errorMsg, errors, model_parameters = null }) => {
                     </p>
                     <ul className="list-unstyled">
                       <li className="ml-2">
-                        {msg}{" "}
-                        {exists ? (
-                          <a href={`#adjustment.${msect}.${paramName}`}>
-                            [link]
-                          </a>
-                        ) : null}
+                        <ul>
+                          {msgs.map((msg, ix) => <li key={`msg-${ix}`}>{msg}</li>)}{" "}
+                          {exists ? (
+                            <li className="list-unstyled"><a href={`#adjustment.${msect}.${paramName}`}>
+                              [link]
+                          </a></li>
+                          ) : null}
+                        </ul>
                       </li>
                     </ul>
                   </div>
