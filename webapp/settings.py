@@ -69,7 +69,8 @@ INSTALLED_APPS = [
     "widget_tweaks",
     "crispy_forms",
     "guardian",
-    # 'allauth', # new
+    "rest_auth",
+    "allauth",
     # 'allauth.account', # new
     # 'allauth.socialaccount', # new
     # 'allauth.socialaccount.providers.github', # new
@@ -145,6 +146,8 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+
+ACCOUNT_AUTHENTICATION_METHOD = "username"
 
 
 # Internationalization

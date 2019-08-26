@@ -20,3 +20,5 @@ django-guardian
 s3like==1.4.0
 newrelic
 hashids
+django-rest-auth
+django-allauth
