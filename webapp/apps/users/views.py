@@ -1,4 +1,4 @@
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views import generic, View
 from django.views.generic.edit import FormView
 from django.shortcuts import render, get_object_or_404
@@ -138,7 +138,10 @@ class AccessStatusAPI(GetProjectMixin, APIView):
                     "server_cost": project.server_cost,
                     "exp_cost": exp_cost,
                     "exp_time": exp_time,
+                    "api_url": reverse("access_project", kwargs=kwargs),
                 }
             )
         else:
-            return Response({"user_status": user_status})
+            return Response(
+                {"user_status": user_status, "api_url": reverse("access_status")}
+            )

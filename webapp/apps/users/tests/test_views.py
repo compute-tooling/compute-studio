@@ -123,7 +123,7 @@ class TestUsersViews:
         project, sponsored_project = test_models[0].project, test_models[1].project
 
         resp = api_client.get("/users/status/")
-        assert resp.data == {"user_status": "anon"}
+        assert resp.data == {"user_status": "anon", "api_url": "/users/status/"}
 
         resp = api_client.get(
             f"/users/status/{project.owner.user.username}/{project.title}/"
@@ -135,6 +135,7 @@ class TestUsersViews:
             "exp_cost": project.exp_job_info(adjust=True)[0],
             "exp_time": project.exp_job_info(adjust=True)[1],
             "server_cost": project.server_cost,
+            "api_url": f"/users/status/{project.owner.user.username}/{project.title}/",
         }
 
         resp = api_client.get(
@@ -147,8 +148,9 @@ class TestUsersViews:
             "exp_cost": sponsored_project.exp_job_info(adjust=True)[0],
             "exp_time": sponsored_project.exp_job_info(adjust=True)[1],
             "server_cost": sponsored_project.server_cost,
+            "api_url": f"/users/status/{sponsored_project.owner.user.username}/{sponsored_project.title}/",
         }
 
         assert api_client.login(username=profile.user.username, password=password)
         resp = api_client.get("/users/status/")
-        assert resp.data == {"user_status": profile.status}
+        assert resp.data == {"user_status": profile.status, "api_url": "/users/status/"}
