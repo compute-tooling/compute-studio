@@ -87,6 +87,8 @@ if __name__ == "__main__":
             req = copy.deepcopy(resource_req[action])
             resources = dict(req, **copy.deepcopy(obj["resources"]))
             if action == "io":
+                resources["requests"]["cpu"] = "700m"
+                resources["limits"]["cpu"] = "1000m"
                 resources["requests"]["memory"] = "250Mi"
                 resources["limits"]["memory"] = "700Mi"
 
