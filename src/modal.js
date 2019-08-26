@@ -2,6 +2,9 @@ import { Button, Modal, Collapse } from "react-bootstrap";
 import React from "react";
 import ReactLoading from "react-loading";
 
+import { LoginForm } from "./AuthForms";
+import axios from "axios";
+
 export class ValidatingModal extends React.Component {
   constructor(props) {
     super(props);
@@ -68,28 +71,44 @@ const PricingInfoCollapse = ({ accessStatus }) => {
   );
 }
 
-const RequireLoginDialog = ({ show, setShow }) => {
+const RequireLoginDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
+  const [authenticated, setAuthStatus] = React.useState(false);
+  const [hasSubmitted, setHasSubmitted] = React.useState(false);
+  const [newModal, updateNewModal] = React.useState(null);
   const handleCloseWithRedirect = (e, redirectLink) => {
     e.preventDefault();
     setShow(false);
     window.location.href = redirectLink;
   };
+  if (authenticated && !hasSubmitted) {
+    axios.get(
+      accessStatus.api_url
+    ).then(resp => {
+      let accessStatus = resp.data;
+      let modal = getModal(accessStatus, show, setShow, handleSubmit);
+      updateNewModal(modal)
+    });
+    setHasSubmitted(true);
+  }
+  if (newModal !== null) {
+    return newModal;
+  }
   return (
     <Modal show={show} onHide={() => setShow(false)}>
       <Modal.Header closeButton>
         <Modal.Title>Sign up</Modal.Title>
       </Modal.Header>
-      <Modal.Body>You must be logged in to run simulations.</Modal.Body>
+      <Modal.Body>
+        You must be logged in to run simulations.
+        <div className="mt-2">
+          <LoginForm setAuthStatus={setAuthStatus} />
+        </div>
+      </Modal.Body>
+
       <Modal.Footer>
         <Button variant="outline-secondary" onClick={() => setShow(false)}>
           Close
           </Button>
-        <Button
-          variant="primary"
-          onClick={e => handleCloseWithRedirect(e, "/users/login")}
-        >
-          <b>Log in</b>
-        </Button>
         <Button
           variant="success"
           onClick={e => handleCloseWithRedirect(e, "/users/signup")}
@@ -175,6 +194,17 @@ const RunDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
 }
 
 
+const getModal = (accessStatus, show, setShow, handleSubmit) => {
+  if (accessStatus.can_run) {
+    return <RunDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />;
+  } else if (accessStatus.user_status === "anon") {
+    return <RequireLoginDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />;
+  } else if (accessStatus.user_status === "profile") {
+    return <RequirePmtDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />
+  }
+}
+
+
 export const RunModal = ({ handleSubmit, accessStatus }) => {
   const [show, setShow] = React.useState(false);
 
@@ -183,16 +213,9 @@ export const RunModal = ({ handleSubmit, accessStatus }) => {
   if (!accessStatus.is_sponsored) {
     runbuttontext = `Run ($${accessStatus.exp_cost})`
   }
-
-  let dialog;
-  if (accessStatus.can_run) {
-    dialog = <RunDialog show={show} setShow={setShow} handleSubmit={handleSubmit} accessStatus={accessStatus} />;
-  } else if (accessStatus.user_status === "anon") {
-    dialog = <RequireLoginDialog show={show} setShow={setShow} />;
-  } else if (accessStatus.user_status === "profile") {
-    dialog = <RequirePmtDialog show={show} setShow={setShow} accessStatus={accessStatus} />
-  }
-
+  console.log("getting modal", show, setShow)
+  let dialog = getModal(accessStatus, show, setShow, handleSubmit)
+  console.log("got dialog", dialog)
   return (
     <>
       <div className="card card-body card-outer">
