@@ -26,18 +26,21 @@ export const LoginForm = ({ setAuthStatus }) => (
       }}
       render={props => (
         <Form>
-          <label>
-            Username:
+          <div className="mt-1">
+            <label> Username:</label>
             <Field name="username" className="form-control" />
-          </label>
-          <label>
-            Password
+          </div>
+          <div className="mt-1">
+            <label> Password </label>
             <Field name="password" type="password" className="form-control" />
-          </label>
+          </div>
           <Button onClick={e => {
             e.preventDefault();
             props.handleSubmit(e);
-          }}> Login </Button>
+          }}
+            variant="primary"
+            className="mt-2"
+          > Login </Button>
         </Form>
       )}
 
