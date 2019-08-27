@@ -85,7 +85,7 @@ const RequireLoginDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
       accessStatus.api_url
     ).then(resp => {
       let accessStatus = resp.data;
-      let dialog = getDialog(accessStatus, show, setShow, handleSubmit);
+      let dialog = <Dialog accessStatus={accessStatus} show={show} setShow={null} handleSubmit={handleSubmit} />
       updateNewDialog(dialog)
     });
     setHasSubmitted(true);
@@ -151,7 +151,6 @@ const RequirePmtDialog = ({ show, setShow, accessStatus }) => {
 }
 
 const RunDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
-
   const handleCloseWithSubmit = () => {
     setShow(false);
     handleSubmit();
@@ -193,8 +192,10 @@ const RunDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
   );
 }
 
-
-const getDialog = (accessStatus, show, setShow, handleSubmit) => {
+const Dialog = ({ accessStatus, show, setShow, handleSubmit }) => {
+  if (setShow == null) {
+    [show, setShow] = React.useState(show);
+  }
   if (accessStatus.can_run) {
     return <RunDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />;
   } else if (accessStatus.user_status === "anon") {
@@ -208,12 +209,16 @@ const getDialog = (accessStatus, show, setShow, handleSubmit) => {
 export const RunModal = ({ handleSubmit, accessStatus }) => {
   const [show, setShow] = React.useState(false);
 
+  const handleShow = (show) => {
+    setShow(show);
+  }
+
 
   let runbuttontext = "Run"
   if (!accessStatus.is_sponsored) {
     runbuttontext = `Run ($${accessStatus.exp_cost})`
   }
-  let dialog = getDialog(accessStatus, show, setShow, handleSubmit)
+
   return (
     <>
       <div className="card card-body card-outer">
@@ -225,7 +230,7 @@ export const RunModal = ({ handleSubmit, accessStatus }) => {
           <b>{runbuttontext}</b>
         </Button>
       </div>
-      {dialog}
+      <Dialog accessStatus={accessStatus} show={show} setShow={handleShow} handleSubmit={handleSubmit} />
     </>
   );
 };
