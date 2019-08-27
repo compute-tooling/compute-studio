@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model, forms as authforms
 from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail
+from django.utils.translation import gettext_lazy as _
 
 from .models import Profile, Project, create_profile_from_user
 
@@ -16,10 +17,23 @@ stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 
 class UserCreationForm(authforms.UserCreationForm):
+    error_messages = {
+        "password_mismatch": _("The two password fields didn’t match."),
+        "duplicate_email": _("A user is already registered with this e-mail address."),
+    }
+
     def save(self, commit=False):
         user = super().save()
         create_profile_from_user(user)
         return user
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email")
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError(
+                self.error_messages["duplicate_email"], code="duplicate_email"
+            )
+        return email
 
     class Meta(authforms.UserCreationForm.Meta):
         model = User

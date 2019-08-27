@@ -28,6 +28,39 @@ class TestUsersViews:
         assert user.profile
         assert user.profile.is_active
 
+        # test email cannot be re-used.
+        data = {
+            "csrfmiddlewaretoken": ["abc123"],
+            "username": ["testlogin"],
+            "email": ["tester@testing.ai"],
+            "password1": [password],
+            "password2": [password],
+        }
+
+        resp = client.post("/users/signup/", data=data)
+        assert resp.status_code == 200
+        assert resp.context["form"].errors == {
+            "email": ["A user is already registered with this e-mail address."],
+            "username": ["A user with that username already exists."],
+        }
+
+    def test_didnt_break_pw_confirm_validation(self, client, password):
+        # Make sure validation wasn't broken from modifying the django
+        # user creation form error message dictionary.
+        data = {
+            "csrfmiddlewaretoken": ["abc123"],
+            "username": ["testlogin"],
+            "email": ["tester@testing.ai"],
+            "password1": [password],
+            "password2": [password + "heyo"],
+        }
+
+        resp = client.post("/users/signup/", data=data)
+        assert resp.status_code == 200
+        assert resp.context["form"].errors == {
+            "password2": ["The two password fields didn’t match."]
+        }
+
     def test_signup_over_api(self, api_client):
         data = {
             "email": "random@testing.com",
