@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     "rest_framework",
     "rest_framework.authtoken",
     "webapp.apps.comp",
@@ -71,8 +72,9 @@ INSTALLED_APPS = [
     "guardian",
     "rest_auth",
     "allauth",
-    # 'allauth.account', # new
-    # 'allauth.socialaccount', # new
+    "allauth.account",
+    "rest_auth.registration",
+    "allauth.socialaccount",
     # 'allauth.socialaccount.providers.github', # new
 ]
 
@@ -134,6 +136,10 @@ LOGIN_URL = "/users/login/"
 
 # For custom user class
 AUTH_USER_MODEL = "users.User"
+
+# diable django-allauth email verification for now.
+# https://django-allauth.readthedocs.io/en/latest/configuration.html
+ACCOUNT_EMAIL_VERIFICATION = "none"
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators

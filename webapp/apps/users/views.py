@@ -15,7 +15,17 @@ from webapp.apps.billing.utils import USE_STRIPE
 from webapp.apps.publish.views import GetProjectMixin
 
 from .forms import UserCreationForm, CancelSubscriptionForm, DeleteUserForm
-from .models import is_profile_active, Project
+from .models import is_profile_active, Project, create_profile_from_user
+
+
+from django.dispatch import receiver
+
+from allauth.account.signals import user_signed_up
+
+
+@receiver(user_signed_up)
+def user_signed_up_callback(request, user, **kwargs):
+    create_profile_from_user(user)
 
 
 class SignUp(generic.CreateView):

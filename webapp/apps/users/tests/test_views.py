@@ -28,6 +28,19 @@ class TestUsersViews:
         assert user.profile
         assert user.profile.is_active
 
+    def test_signup_over_api(self, api_client):
+        data = {
+            "email": "random@testing.com",
+            "username": "random123",
+            "password1": "heyhey2222",
+            "password2": "heyhey2222",
+        }
+        resp = api_client.post("/rest-auth/registration/", data)
+        assert resp.status_code == 201
+
+        user = User.objects.get(username="random123")
+        assert user.profile
+
     def test_get_user_settings(self, client, profile, password):
         success = client.login(username=profile.user.username, password=password)
         assert success
