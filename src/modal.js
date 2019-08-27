@@ -74,7 +74,7 @@ const PricingInfoCollapse = ({ accessStatus }) => {
 const RequireLoginDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
   const [authenticated, setAuthStatus] = React.useState(false);
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
-  const [newModal, updateNewModal] = React.useState(null);
+  const [newDialog, updateNewDialog] = React.useState(null);
   const handleCloseWithRedirect = (e, redirectLink) => {
     e.preventDefault();
     setShow(false);
@@ -85,13 +85,13 @@ const RequireLoginDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
       accessStatus.api_url
     ).then(resp => {
       let accessStatus = resp.data;
-      let modal = getModal(accessStatus, show, setShow, handleSubmit);
-      updateNewModal(modal)
+      let dialog = getDialog(accessStatus, show, setShow, handleSubmit);
+      updateNewDialog(dialog)
     });
     setHasSubmitted(true);
   }
-  if (newModal !== null) {
-    return newModal;
+  if (newDialog !== null) {
+    return newDialog;
   }
   return (
     <Modal show={show} onHide={() => setShow(false)}>
@@ -194,7 +194,7 @@ const RunDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
 }
 
 
-const getModal = (accessStatus, show, setShow, handleSubmit) => {
+const getDialog = (accessStatus, show, setShow, handleSubmit) => {
   if (accessStatus.can_run) {
     return <RunDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />;
   } else if (accessStatus.user_status === "anon") {
@@ -213,9 +213,7 @@ export const RunModal = ({ handleSubmit, accessStatus }) => {
   if (!accessStatus.is_sponsored) {
     runbuttontext = `Run ($${accessStatus.exp_cost})`
   }
-  console.log("getting modal", show, setShow)
-  let dialog = getModal(accessStatus, show, setShow, handleSubmit)
-  console.log("got dialog", dialog)
+  let dialog = getDialog(accessStatus, show, setShow, handleSubmit)
   return (
     <>
       <div className="card card-body card-outer">
