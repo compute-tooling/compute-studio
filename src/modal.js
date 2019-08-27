@@ -2,7 +2,7 @@ import { Button, Modal, Collapse } from "react-bootstrap";
 import React from "react";
 import ReactLoading from "react-loading";
 
-import { LoginForm } from "./AuthForms";
+import { LoginForm, SignupForm } from "./AuthForms";
 import axios from "axios";
 
 export class ValidatingModal extends React.Component {
@@ -75,11 +75,7 @@ const RequireLoginDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
   const [authenticated, setAuthStatus] = React.useState(false);
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
   const [newDialog, updateNewDialog] = React.useState(null);
-  const handleCloseWithRedirect = (e, redirectLink) => {
-    e.preventDefault();
-    setShow(false);
-    window.location.href = redirectLink;
-  };
+  const [isLogIn, setIsLogIn] = React.useState(true);
   if (authenticated && !hasSubmitted) {
     axios.get(
       accessStatus.api_url
@@ -96,24 +92,22 @@ const RequireLoginDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
   return (
     <Modal show={show} onHide={() => setShow(false)}>
       <Modal.Header closeButton>
-        <Modal.Title>Sign up</Modal.Title>
+        <Modal.Title>You must be logged in to run simulations.</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        You must be logged in to run simulations.
-        <div className="mt-2">
-          <LoginForm setAuthStatus={setAuthStatus} />
+        <div className="mt-2" >
+          {isLogIn ?
+            <LoginForm setAuthStatus={setAuthStatus} />
+            :
+            <SignupForm setAuthStatus={setAuthStatus} />
+          }
         </div>
+        <Button className="mt-3" variant={`outline-${!isLogIn ? "primary" : "success"}`} onClick={() => setIsLogIn(!isLogIn)} >{!isLogIn ? "Log in" : "Sign up"}</Button>
       </Modal.Body>
 
       <Modal.Footer>
         <Button variant="outline-secondary" onClick={() => setShow(false)}>
           Close
-          </Button>
-        <Button
-          variant="success"
-          onClick={e => handleCloseWithRedirect(e, "/users/signup")}
-        >
-          <b>Sign up</b>
         </Button>
       </Modal.Footer>
     </Modal >
