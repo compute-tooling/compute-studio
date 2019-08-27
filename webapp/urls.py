@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf.urls import url
 from rest_framework.authtoken import views as rf_views
 
 from webapp.apps.comp import views as compviews
@@ -33,6 +34,8 @@ urlpatterns = [
     path("billing/", include("webapp.apps.billing.urls")),
     path("outputs/api/", compviews.OutputsAPIView.as_view(), name="outputs_api"),
     path("inputs/api/", compviews.MyInputsAPIView.as_view(), name="myinputs_api"),
+    url(r"^rest-auth/", include("rest_auth.urls")),
+    url(r"^rest-auth/registration/", include("rest_auth.registration.urls")),
     path(
         "<str:username>/<str:title>/detail/",
         publishviews.ProjectDetailView.as_view(),

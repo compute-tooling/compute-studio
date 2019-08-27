@@ -5,9 +5,10 @@ import stripe
 from django.contrib.auth import get_user_model, forms as authforms
 from django import forms
 from django.contrib.contenttypes.models import ContentType
-from django.core.mail import EmailMessage, send_mail
+from django.core.mail import send_mail
+from django.utils.translation import gettext_lazy as _
 
-from .models import Profile, Project
+from .models import Profile, Project, create_profile_from_user
 
 
 User = get_user_model()
@@ -16,23 +17,23 @@ stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 
 class UserCreationForm(authforms.UserCreationForm):
+    error_messages = {
+        "password_mismatch": _("The two password fields didn’t match."),
+        "duplicate_email": _("A user is already registered with this e-mail address."),
+    }
+
     def save(self, commit=False):
         user = super().save()
-        Profile.objects.create(user=user, is_active=True)
-        email_msg = EmailMessage(
-            subject="Welcome to COMP!",
-            body=(
-                f"Hello {user.username}, welcome to COMP. "
-                f"Please write back here if you have any "
-                f"questions or there is anything else we "
-                f"can do to help you get up and running."
-            ),
-            from_email="henrymdoupe@gmail.com",
-            to=[user.email],
-            bcc=["matt.h.jensen@gmail.com"],
-        )
-        email_msg.send(fail_silently=True)
+        create_profile_from_user(user)
         return user
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email")
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError(
+                self.error_messages["duplicate_email"], code="duplicate_email"
+            )
+        return email
 
     class Meta(authforms.UserCreationForm.Meta):
         model = User

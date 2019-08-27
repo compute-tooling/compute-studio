@@ -28,6 +28,52 @@ class TestUsersViews:
         assert user.profile
         assert user.profile.is_active
 
+        # test email cannot be re-used.
+        data = {
+            "csrfmiddlewaretoken": ["abc123"],
+            "username": ["testlogin"],
+            "email": ["tester@testing.ai"],
+            "password1": [password],
+            "password2": [password],
+        }
+
+        resp = client.post("/users/signup/", data=data)
+        assert resp.status_code == 200
+        assert resp.context["form"].errors == {
+            "email": ["A user is already registered with this e-mail address."],
+            "username": ["A user with that username already exists."],
+        }
+
+    def test_didnt_break_pw_confirm_validation(self, client, password):
+        # Make sure validation wasn't broken from modifying the django
+        # user creation form error message dictionary.
+        data = {
+            "csrfmiddlewaretoken": ["abc123"],
+            "username": ["testlogin"],
+            "email": ["tester@testing.ai"],
+            "password1": [password],
+            "password2": [password + "heyo"],
+        }
+
+        resp = client.post("/users/signup/", data=data)
+        assert resp.status_code == 200
+        assert resp.context["form"].errors == {
+            "password2": ["The two password fields didn’t match."]
+        }
+
+    def test_signup_over_api(self, api_client):
+        data = {
+            "email": "random@testing.com",
+            "username": "random123",
+            "password1": "heyhey2222",
+            "password2": "heyhey2222",
+        }
+        resp = api_client.post("/rest-auth/registration/", data)
+        assert resp.status_code == 201
+
+        user = User.objects.get(username="random123")
+        assert user.profile
+
     def test_get_user_settings(self, client, profile, password):
         success = client.login(username=profile.user.username, password=password)
         assert success
@@ -123,7 +169,7 @@ class TestUsersViews:
         project, sponsored_project = test_models[0].project, test_models[1].project
 
         resp = api_client.get("/users/status/")
-        assert resp.data == {"user_status": "anon"}
+        assert resp.data == {"user_status": "anon", "api_url": "/users/status/"}
 
         resp = api_client.get(
             f"/users/status/{project.owner.user.username}/{project.title}/"
@@ -135,6 +181,7 @@ class TestUsersViews:
             "exp_cost": project.exp_job_info(adjust=True)[0],
             "exp_time": project.exp_job_info(adjust=True)[1],
             "server_cost": project.server_cost,
+            "api_url": f"/users/status/{project.owner.user.username}/{project.title}/",
         }
 
         resp = api_client.get(
@@ -147,8 +194,9 @@ class TestUsersViews:
             "exp_cost": sponsored_project.exp_job_info(adjust=True)[0],
             "exp_time": sponsored_project.exp_job_info(adjust=True)[1],
             "server_cost": sponsored_project.server_cost,
+            "api_url": f"/users/status/{sponsored_project.owner.user.username}/{sponsored_project.title}/",
         }
 
         assert api_client.login(username=profile.user.username, password=password)
         resp = api_client.get("/users/status/")
-        assert resp.data == {"user_status": profile.status}
+        assert resp.data == {"user_status": profile.status, "api_url": "/users/status/"}

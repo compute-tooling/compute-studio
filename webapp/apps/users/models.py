@@ -8,6 +8,7 @@ from django.db.models.functions import TruncMonth
 from django.db.models import F, Case, When, Sum
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+from django.core.mail import EmailMessage, send_mail
 from django.urls import reverse
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.utils.functional import cached_property
@@ -15,12 +16,35 @@ from django.utils.safestring import mark_safe
 
 from webapp.apps.billing.models import create_billing_objects
 from webapp.apps.comp.models import Inputs
+from webapp.settings import DEBUG
 
 
 def is_profile_active(user):
     if getattr(user, "profile", False):
         return user.profile.is_active
     return False
+
+
+def create_profile_from_user(user):
+    Profile.objects.create(user=user, is_active=True)
+    email_msg = EmailMessage(
+        subject="Welcome to COMP!",
+        body=(
+            f"Hello {user.username}, welcome to COMP. "
+            f"Please write back here if you have any "
+            f"questions or there is anything else we "
+            f"can do to help you get up and running."
+        ),
+        from_email="henrymdoupe@gmail.com",
+        to=[user.email],
+        bcc=["matt.h.jensen@gmail.com"],
+    )
+    try:
+        email_msg.send(fail_silently=True)
+    except Exception as e:
+        print(e)
+        if not DEBUG:
+            raise e
 
 
 class User(AbstractUser):

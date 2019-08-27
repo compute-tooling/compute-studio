@@ -2,6 +2,9 @@ import { Button, Modal, Collapse } from "react-bootstrap";
 import React from "react";
 import ReactLoading from "react-loading";
 
+import { LoginForm, SignupForm } from "./AuthForms";
+import axios from "axios";
+
 export class ValidatingModal extends React.Component {
   constructor(props) {
     super(props);
@@ -68,33 +71,43 @@ const PricingInfoCollapse = ({ accessStatus }) => {
   );
 }
 
-const RequireLoginDialog = ({ show, setShow }) => {
-  const handleCloseWithRedirect = (e, redirectLink) => {
-    e.preventDefault();
-    setShow(false);
-    window.location.href = redirectLink;
-  };
+const RequireLoginDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
+  const [authenticated, setAuthStatus] = React.useState(false);
+  const [hasSubmitted, setHasSubmitted] = React.useState(false);
+  const [newDialog, updateNewDialog] = React.useState(null);
+  const [isLogIn, setIsLogIn] = React.useState(true);
+  if (authenticated && !hasSubmitted) {
+    axios.get(
+      accessStatus.api_url
+    ).then(resp => {
+      let accessStatus = resp.data;
+      let dialog = <Dialog accessStatus={accessStatus} show={show} setShow={null} handleSubmit={handleSubmit} />
+      updateNewDialog(dialog)
+    });
+    setHasSubmitted(true);
+  }
+  if (newDialog !== null) {
+    return newDialog;
+  }
   return (
     <Modal show={show} onHide={() => setShow(false)}>
       <Modal.Header closeButton>
-        <Modal.Title>Sign up</Modal.Title>
+        <Modal.Title>You must be logged in to run simulations.</Modal.Title>
       </Modal.Header>
-      <Modal.Body>You must be logged in to run simulations.</Modal.Body>
+      <Modal.Body>
+        <div className="mt-2" >
+          {isLogIn ?
+            <LoginForm setAuthStatus={setAuthStatus} />
+            :
+            <SignupForm setAuthStatus={setAuthStatus} />
+          }
+        </div>
+        <Button className="mt-3" variant={`outline-${!isLogIn ? "primary" : "success"}`} onClick={() => setIsLogIn(!isLogIn)} >{!isLogIn ? "Log in" : "Sign up"}</Button>
+      </Modal.Body>
+
       <Modal.Footer>
         <Button variant="outline-secondary" onClick={() => setShow(false)}>
           Close
-          </Button>
-        <Button
-          variant="primary"
-          onClick={e => handleCloseWithRedirect(e, "/users/login")}
-        >
-          <b>Log in</b>
-        </Button>
-        <Button
-          variant="success"
-          onClick={e => handleCloseWithRedirect(e, "/users/signup")}
-        >
-          <b>Sign up</b>
         </Button>
       </Modal.Footer>
     </Modal >
@@ -132,7 +145,6 @@ const RequirePmtDialog = ({ show, setShow, accessStatus }) => {
 }
 
 const RunDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
-
   const handleCloseWithSubmit = () => {
     setShow(false);
     handleSubmit();
@@ -174,23 +186,31 @@ const RunDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
   );
 }
 
+const Dialog = ({ accessStatus, show, setShow, handleSubmit }) => {
+  if (setShow == null) {
+    [show, setShow] = React.useState(show);
+  }
+  if (accessStatus.can_run) {
+    return <RunDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />;
+  } else if (accessStatus.user_status === "anon") {
+    return <RequireLoginDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />;
+  } else if (accessStatus.user_status === "profile") {
+    return <RequirePmtDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />
+  }
+}
+
 
 export const RunModal = ({ handleSubmit, accessStatus }) => {
   const [show, setShow] = React.useState(false);
+
+  const handleShow = (show) => {
+    setShow(show);
+  }
 
 
   let runbuttontext = "Run"
   if (!accessStatus.is_sponsored) {
     runbuttontext = `Run ($${accessStatus.exp_cost})`
-  }
-
-  let dialog;
-  if (accessStatus.can_run) {
-    dialog = <RunDialog show={show} setShow={setShow} handleSubmit={handleSubmit} accessStatus={accessStatus} />;
-  } else if (accessStatus.user_status === "anon") {
-    dialog = <RequireLoginDialog show={show} setShow={setShow} />;
-  } else if (accessStatus.user_status === "profile") {
-    dialog = <RequirePmtDialog show={show} setShow={setShow} accessStatus={accessStatus} />
   }
 
   return (
@@ -204,7 +224,7 @@ export const RunModal = ({ handleSubmit, accessStatus }) => {
           <b>{runbuttontext}</b>
         </Button>
       </div>
-      {dialog}
+      <Dialog accessStatus={accessStatus} show={show} setShow={handleShow} handleSubmit={handleSubmit} />
     </>
   );
 };

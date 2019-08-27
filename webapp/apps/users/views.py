@@ -1,4 +1,4 @@
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views import generic, View
 from django.views.generic.edit import FormView
 from django.shortcuts import render, get_object_or_404
@@ -15,7 +15,17 @@ from webapp.apps.billing.utils import USE_STRIPE
 from webapp.apps.publish.views import GetProjectMixin
 
 from .forms import UserCreationForm, CancelSubscriptionForm, DeleteUserForm
-from .models import is_profile_active, Project
+from .models import is_profile_active, Project, create_profile_from_user
+
+
+from django.dispatch import receiver
+
+from allauth.account.signals import user_signed_up
+
+
+@receiver(user_signed_up)
+def user_signed_up_callback(request, user, **kwargs):
+    create_profile_from_user(user)
 
 
 class SignUp(generic.CreateView):
@@ -138,7 +148,10 @@ class AccessStatusAPI(GetProjectMixin, APIView):
                     "server_cost": project.server_cost,
                     "exp_cost": exp_cost,
                     "exp_time": exp_time,
+                    "api_url": reverse("access_project", kwargs=kwargs),
                 }
             )
         else:
-            return Response({"user_status": user_status})
+            return Response(
+                {"user_status": user_status, "api_url": reverse("access_status")}
+            )
