@@ -118,7 +118,7 @@ export const SignupForm = ({ setAuthStatus }) => (
           {status
             && status.errors
             && status.errors.password1
-            ? <div className="alert alert-danger" role="alert"> <ul>{status.errors.password1.map(msg => <li>msg</li>)}</ul></div> : null}
+            ? <div className="alert alert-danger" role="alert"> <ul>{status.errors.password1.map(msg => <li>{msg}</li>)}</ul></div> : null}
           <div className="mt-1">
             <label> Username:</label>
             <Field name="username" className="form-control" />
