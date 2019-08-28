@@ -1,6 +1,6 @@
 # Developer Documentation
 
-Welcome to **Compute Studio CE's** developer documentation!
+Welcome to **Compute Studio's** developer documentation!
 
 ## Publish
 
