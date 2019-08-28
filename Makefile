@@ -28,15 +28,15 @@ webapp-build:
 	docker build --build-arg NEW_RELIC_TOKEN=$(NEW_RELIC_TOKEN) -t web:$(TAG) ./
 
 webapp-push:
-	docker tag web:$(TAG) registry.heroku.com/compmodels/web
-	docker push registry.heroku.com/compmodels/web
+	docker tag web:$(TAG) registry.heroku.com/compute-studio/web
+	docker push registry.heroku.com/compute-studio/web
 
 webapp-release:
-	heroku container:release web -a compmodels
+	heroku container:release web -a compute-studio
 
 webapp-test-push:
-	docker tag web:$(TAG) registry.heroku.com/compmodels-test/web
-	docker push registry.heroku.com/compmodels-test/web
+	docker tag web:$(TAG) registry.heroku.com/compute-studio-test/web
+	docker push registry.heroku.com/compute-studio-test/web
 
 webapp-test-release:
-	heroku container:release web -a compmodels-test
+	heroku container:release web -a compute-studio-test
