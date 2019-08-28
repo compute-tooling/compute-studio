@@ -14,14 +14,14 @@ services:
         AWS_ACCESS_KEY_ID: {{AWS_ACCESS_KEY_ID}}
         AWS_SECRET_ACCESS_KEY: {{AWS_SECRET_ACCESS_KEY}}
         BUILD_NUM: {{BUILD_NUM}}
-    image: "comporg/{{SAFEOWNER}}_{{SAFETITLE}}_tasks:${TAG}"
+    image: "{{SAFEOWNER}}_{{SAFETITLE}}_tasks:${TAG}"
     depends_on:
       - celerybase
       - redis
 
 
   {{SAFEOWNER}}_{{SAFETITLE}}_sim:
-    image: "comporg/{{SAFEOWNER}}_{{SAFETITLE}}_tasks:${TAG}"
+    image: "{{SAFEOWNER}}_{{SAFETITLE}}_tasks:${TAG}"
     entrypoint: ./celery_sim.sh {{OWNER}} {{TITLE}}
     environment:
       - AWS_ACCESS_KEY_ID={{AWS_ACCESS_KEY_ID}}
@@ -34,7 +34,7 @@ services:
       worker_net:
   
   {{SAFEOWNER}}_{{SAFETITLE}}_io:
-    image: "comporg/{{SAFEOWNER}}_{{SAFETITLE}}_tasks:${TAG}"
+    image: "{{SAFEOWNER}}_{{SAFETITLE}}_tasks:${TAG}"
     entrypoint: ./celery_io.sh {{OWNER}} {{TITLE}}
     depends_on:
       - {{SAFEOWNER}}_{{SAFETITLE}}_tasks

@@ -121,7 +121,7 @@ class BaseCreateAPIView(APIView):
         except AppError as ae:
             try:
                 send_mail(
-                    f"COMP AppError",
+                    f"Compute Studio AppError",
                     (
                         f"An error has occurred:\n {ae.parameters}\n causing: "
                         f"{ae.traceback}\n user:{request.user.username}\n "

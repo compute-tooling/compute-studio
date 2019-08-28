@@ -19,7 +19,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tag built images as gcr.")
     parser.add_argument("--config", required=True)
     parser.add_argument("--host", required=False, default="gcr.io")
-    parser.add_argument("--project", required=False, default="comp-workers")
+    parser.add_argument("--project", required=False, default="comp-studio")
     parser.add_argument("--tag", required=False, default=TAG)
     args = parser.parse_args()
 
@@ -31,17 +31,11 @@ if __name__ == "__main__":
         safetitle = clean(obj["title"])
         img_name = f"{safeowner}_{safetitle}_tasks"
         tag = obj.get("TAG") or args.tag
-        run(
-            f"docker tag comporg/{img_name}:{tag} {args.host}/{args.project}/{img_name}:{tag}"
-        )
+        run(f"docker tag {img_name}:{tag} {args.host}/{args.project}/{img_name}:{tag}")
         run(f"docker push {args.host}/{args.project}/{img_name}:{tag}")
     for img_name in ["distributed", "celerybase"]:
-        run(
-            f"docker tag comporg/{img_name} {args.host}/{args.project}/{img_name}:latest"
-        )
+        run(f"docker tag {img_name} {args.host}/{args.project}/{img_name}:latest")
         run(f"docker push {args.host}/{args.project}/{img_name}:latest")
 
-    run(
-        f"docker tag comporg/flask:{args.tag} {args.host}/{args.project}/flask:{args.tag}"
-    )
+    run(f"docker tag flask:{args.tag} {args.host}/{args.project}/flask:{args.tag}")
     run(f"docker push {args.host}/{args.project}/flask:{args.tag}")

@@ -33,7 +33,7 @@ def customer_created(event):
     print("processing customer.created event...")
     customer = Customer.objects.get(stripe_id=event.data["object"]["id"])
     send_mail(
-        "Welcome to COMP",
+        "Welcome to Compute Studio",
         "Thanks for joining!",
         "henrymdoupe@gmail.com",
         [customer.user.email],

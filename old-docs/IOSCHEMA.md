@@ -1,6 +1,6 @@
 # Input-Output Schema
 
-COMP relies on three primary JSON schemas: Meta Parameters, Model Parameters, and Outputs. COMP uses them to derive the COMP input form representing your model's default specification and your model's output page. One of the required Python functions in the next step of this guide will also rely on these schemas to validate user adjustments on the COMP input form. The [ParamTools][3] project is compatible with the inputs schemas below and can be used for the parameter processing and validation that is described in the Python functions documentation.
+Compute Studio relies on three primary JSON schemas: Meta Parameters, Model Parameters, and Outputs. Compute Studio uses them to derive the Compute Studio input form representing your model's default specification and your model's output page. One of the required Python functions in the next step of this guide will also rely on these schemas to validate user adjustments on the Compute Studio input form. The [ParamTools][3] project is compatible with the inputs schemas below and can be used for the parameter processing and validation that is described in the Python functions documentation.
 
 Meta Parameters
 --------------------------------
@@ -36,7 +36,7 @@ Example:
 Model Parameters
 ----------------
 
-COMP uses the JSON schema below for documenting Model Parameters and their values under the default sepcification. This schema is compliant with the ParamTools specification schema. You can find a [more complete guide][4] for the Model Parameters in the ParamTools documentation.
+Compute Studio uses the JSON schema below for documenting Model Parameters and their values under the default sepcification. This schema is compliant with the ParamTools specification schema. You can find a [more complete guide][4] for the Model Parameters in the ParamTools documentation.
 
 - "major_section": Broad categories of model parameters. A baseball model may break up its model parameters into Hitting, Pitching, and Fielding major sections.
 - "param_name": The name of the parameter as it is used in the modeling project.

@@ -63,7 +63,7 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
                     )
                     try:
                         send_mail(
-                            f"{request.user.username} is updating a model on COMP!",
+                            f"{request.user.username} is updating a model on Compute Studio!",
                             (
                                 f"{model.title} will be updated or you will have feedback within "
                                 f"the next 24 hours. Check the status of the update at "
@@ -110,7 +110,7 @@ class ProjectCreateAPIView(GetProjectMixin, APIView):
                 )
                 try:
                     send_mail(
-                        f"{request.user.username} is publishing a model on COMP!",
+                        f"{request.user.username} is publishing a model on Compute Studio!",
                         (
                             f"{model.title} will be live or you will have feedback within "
                             f"the next 24 hours. Check the status of the submission at "

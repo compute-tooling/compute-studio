@@ -1,4 +1,4 @@
-# COMP Data Sub-processors
+# Compute Studio Data Sub-processors
 
 | **Entity**          | **Purpose**               | **Entity Country**| **Website**            |
 |---------------------|---------------------------|-------------------|------------------------|

@@ -22,7 +22,7 @@ class TestPublishViews:
             "title": "New-Model",
             "oneliner": "oneliner",
             "description": "**Super** new!",
-            "repo_url": "https://github.com/comp-org/comp-ce",
+            "repo_url": "https://github.com/compute-tooling/compute-studio",
             "server_size": [4, 8],
             "listed": True,
         }
@@ -44,7 +44,7 @@ class TestPublishViews:
             "title": "Detail-Test",
             "oneliner": "oneliner",
             "description": "desc",
-            "repo_url": "https://github.com/comp-org/comp-ce",
+            "repo_url": "https://github.com/compute-tooling/compute-studio",
             "server_size": ["4", "2"],
             "exp_task_time": 20,
             "server_cost": Decimal("0.1"),
@@ -64,7 +64,7 @@ class TestPublishViews:
             "title": "Used-for-testing",
             "oneliner": "oneliner",
             "description": "hello world!",
-            "repo_url": "https://github.com/comp-org/comp-ce",
+            "repo_url": "https://github.com/compute-tooling/compute-studio",
             "server_size": [2, 4],
         }
         # not logged in --> not authorized

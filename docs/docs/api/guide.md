@@ -1,10 +1,10 @@
 # API Guide
 
-COMP offers a REST API for creating simulations, viewing existing simulations, and viewing the input parameters for a given model. This is intended for users who would like to build applications on top of the COMP interface or create simulations programmatically. An API token is required for requests that modify data. Find out how to get your token [here](/api/auth/).
+Compute Studio offers a REST API for creating simulations, viewing existing simulations, and viewing the input parameters for a given model. This is intended for users who would like to build applications on top of the Compute Studio interface or create simulations programmatically. An API token is required for requests that modify data. Find out how to get your token [here](/api/auth/).
 
-More information about the data formats that are shown below can be found in the COMP publishing documentation on [inputs](/publish/inputs/) and [outputs](/publish/outputs/).
+More information about the data formats that are shown below can be found in the Compute Studio publishing documentation on [inputs](/publish/inputs/) and [outputs](/publish/outputs/).
 
-This guide details the COMP API endpoints and schema. A more practical [Python example](/api/python/) is also provided.
+This guide details the Compute Studio API endpoints and schema. A more practical [Python example](/api/python/) is also provided.
 
 
 ## /[owner]/[title]/api/v1/
@@ -357,5 +357,5 @@ Vary: Accept
 ```
 
 
-[1]: https://github.com/comp-org/COMP-Developer-Toolkit#comp-developer-toolkit
+[1]: https://github.com/compute-tooling/compute-studio-kit#comp-studio-toolkit
 [2]: https://httpie.org/
