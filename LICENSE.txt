@@ -1,4 +1,4 @@
-    COMP is an open-source platform for sharing computational models. 
+    Compute Studio is an open-source platform for sharing computational models. 
     Copyright (C) 2018 Compute Tooling, LLC
 
     This program is free software: you can redistribute it and/or modify

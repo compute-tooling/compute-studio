@@ -1,11 +1,11 @@
 # Developer Documentation
 
-Welcome to **COMP CE's** developer documentation!
+Welcome to **Compute Studio CE's** developer documentation!
 
 ## Publish
 
-Check out our [guide](/publish/guide/) for publishing on [compmodels.org](https://www.compmodels.org).
+Check out our [guide](/publish/guide/) for publishing on [compute.studio](https://compute.studio).
 
 ## API
 
-Check out our [guide](/api/guide/) for using the [compmodels.org](https://www.compmodels.org) API.
+Check out our [guide](/api/guide/) for using the [compute.studio](https://compute.studio) API.

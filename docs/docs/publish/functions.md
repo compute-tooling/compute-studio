@@ -6,7 +6,7 @@ The modeling project must provide a Python function for each of the following ta
 - **Parse user adjustments**: Do model-specific formatting and validation on user adjustments.
 - **Run simulation**: Submit the user adjustments (or none) to the model to run the simulation.
 
-Once you've skimmed the criteria below, you can develop your functions against the [`compdevkit`](https://github.com/comp-org/Developer-Tools/) automated testing suite.
+Once you've skimmed the criteria below, you can develop your functions against the [`computestudiokit`](https://github.com/compute-studio/Compute-Studio-Kit/) automated testing suite.
 
 Model Parameters
 ----------------------
@@ -32,13 +32,13 @@ def get_inputs(meta_params_dict):
 ```
 
 Here's what you get after filling in this function:
-[![alt text](https://user-images.githubusercontent.com/9206065/56739963-eee28780-673d-11e9-8692-59f58af2b5ff.png)](https://www.compmodels.org/hdoupe/Matchups/)
+[![alt text](https://user-images.githubusercontent.com/9206065/56739963-eee28780-673d-11e9-8692-59f58af2b5ff.png)](https://compute.studio/hdoupe/Matchups/)
 
 Validate user adjustments
 --------------------------
 Accepts parsed user adjustments, separated by each major section. Returns warnings/errors (if any).
 
-COMP will provide parsed user adjustments of the form:
+Compute Studio will provide parsed user adjustments of the form:
 
 ```json
 {
@@ -87,7 +87,7 @@ Run simulation
 
 Accepts Meta Parameters values and model parameters. Returns outputs as specified in the [outputs page](/publish/outputs/)
 
-COMP submits the model's meta parameters and the parsed and formatted user adjustments:
+Compute Studio submits the model's meta parameters and the parsed and formatted user adjustments:
 
 ```
 {
@@ -111,4 +111,4 @@ def get_matchup(meta_param_dict, adjustment):
 
 Here's what you get after filling in this function:
 
-[![alt text](https://user-images.githubusercontent.com/9206065/56739964-ef7b1e00-673d-11e9-9d91-2f7227d09897.png)](https://www.compmodels.org/hdoupe/Matchups/16/)
+[![alt text](https://user-images.githubusercontent.com/9206065/56739964-ef7b1e00-673d-11e9-9d91-2f7227d09897.png)](https://compute.studio/hdoupe/Matchups/16/)

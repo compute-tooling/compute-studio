@@ -45,7 +45,7 @@ const initialValues = {
 const specialRequests = (
   <div>
     <p>
-      You may contact the COMP admin at
+      You may contact the Compute Studio admin at
       <a href="mailto:henrymdoupe@gmail.com"> henrymdoupe@gmail.com</a> to
       discuss:
     </p>
@@ -273,8 +273,8 @@ class CreateApp extends React.Component {
         <h1 style={{ marginBottom: "2rem" }}>Publish</h1>
 
         <p className="lead">
-          Publish your model on COMP. Check out the
-          <a href="https://docs.compmodels.org/publish/guide/">
+          Publish your model on Compute Studio. Check out the
+          <a href="https://docs.compute.studio/publish/guide/">
             {" "}
             developer documentation
           </a>{" "}

@@ -1,8 +1,8 @@
-# COMP Community Edition (CE)
+# Compute Studio Community Edition (CE)
 
-**COMP CE** is an open-source utility for sharing computational models.
+**Compute Studio CE** is an open-source utility for sharing computational models.
 
-To see COMP CE in action, visit [compmodels.org](https://www.compmodels.org).
+To see Compute Studio CE in action, visit [compute.studio](https://compute.studio).
 
 Features:
 - Share public models and simulations for free.
@@ -18,13 +18,13 @@ Planned:
 
 ## Publish
 
-Publish models to the public at www.compmodels.org/publish.
+Publish models to the public at [compute.studio/publish](https://compute.studio/publish).
 
 ## Contributing
 
 COMP CE is an open source project and anyone can contribute code or suggestions.
 
-You can reach COMP developers to discuss how to get started by opening an issue or joining the COMP Community [chat room](https://riot.im/app/#/room/!WQWxPnwidsSToqkeLk:matrix.org).
+You can reach COMP developers to discuss how to get started by opening an issue or joining the Compute Studio Community [chat room](https://riot.im/app/#/room/!WQWxPnwidsSToqkeLk:matrix.org).
 
 ## License
 
@@ -32,4 +32,4 @@ COMP Community Edition is licensed under the open source [GNU Affero General Pub
 
 ## Local Installation
 
-The technical documentation is out of date and will be updated once [#127](https://github.com/comp-org/comp-ce/pull/127) has been merged.
+The technical documentation is out of date and will be updated once [#127](https://github.com/compute-studio/compute-studio-ce/pull/127) has been merged.

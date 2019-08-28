@@ -234,7 +234,7 @@ export default class InputsForm extends React.Component {
                 console.log("success");
                 console.log(response.data.hashid);
                 // update url so that user can come back to inputs later on
-                // model errors or some type of unforeseen error in COMP.
+                // model errors or some type of unforeseen error in Compute Studio.
                 history.pushState(null, null, response.data.edit_inputs_url);
                 actions.setStatus({
                   status: "PENDING",
@@ -321,9 +321,7 @@ export default class InputsForm extends React.Component {
                         <p>
                           {"One or more parameters have been renamed or " +
                             "removed since this simulation was run on " +
-                            `${this.state.creationDate} with version ${
-                              this.state.modelVersion
-                            }. You may view the full simulation detail `}
+                            `${this.state.creationDate} with version ${this.state.modelVersion}. You may view the full simulation detail `}
                           <a href={this.state.detailAPIURL}>here.</a>
                         </p>
                       }

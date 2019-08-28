@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/comp-org/comp.git"
+    "url": "git+https://github.com/compute-studio/comp.git"
   },
   "author": "Hank Doupe and Matt Jensen",
   "license": "AGPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/comp-org/comp/issues"
+    "url": "https://github.com/compute-studio/comp/issues"
   },
-  "homepage": "https://github.com/comp-org/comp#readme",
+  "homepage": "https://github.com/compute-studio/comp#readme",
   "dependencies": {
     "@babel/core": "^7.5.5",
     "@babel/node": "^7.5.5",

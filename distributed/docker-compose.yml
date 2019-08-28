@@ -4,7 +4,7 @@ services:
     build:
       context: ./
       dockerfile: dockerfiles/Dockerfile.flask
-    image: "comporg/flask:${TAG}"
+    image: "flask:${TAG}"
     ports:
       - 5050:5050
     environment:
@@ -21,14 +21,14 @@ services:
     build:
       context: ./
       dockerfile: dockerfiles/Dockerfile.celerybase
-    image: "comporg/celerybase:latest"
+    image: "celerybase:latest"
     depends_on:
       - distributed
   distributed:
     build:
       context: ./
       dockerfile: dockerfiles/Dockerfile
-    image: "comporg/distributed:latest"
+    image: "distributed:latest"
 
 ####################################################
   redis:

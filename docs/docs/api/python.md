@@ -1,6 +1,6 @@
 # Python
 
-The COMP REST API can easily be wrapped with a [Python class](#api-implementation) to provide a more intuitive way to use the API:
+The Compute Studio REST API can easily be wrapped with a [Python class](#api-implementation) to provide a more intuitive way to use the API:
 
 [How do I get my API token?](/api/auth/)
 
@@ -153,7 +153,7 @@ class APIException(Exception):
     pass
 
 class API:
-    host = "https://www.compmodels.org"
+    host = "https://compute.studio"
 
     def __init__(self, owner, title, api_token=None):
         self.owner = owner
@@ -219,15 +219,15 @@ class API:
     def get_token(self, api_token):
         if api_token:
             return api_token
-        elif os.environ.get("COMP_API_TOKEN", None) is not None:
-            return os.environ["COMP_API_TOKEN"]
-        elif os.path.exists("~/.comp-api-token"):
-            with open("~/.comp-api-token", "r") as f:
+        elif os.environ.get("CS_API_TOKEN", None) is not None:
+            return os.environ["CS_API_TOKEN"]
+        elif os.path.exists("~/.cs-api-token"):
+            with open("~/.cs-api-token", "r") as f:
                 return f.read().strip()
         else:
             raise APIException(
                 "API token not found. It can be passed as an argument to "
                 "this class, as an environment variable, or read from "
-                "~/.comp-api-token"
+                "~/.cs-api-token"
             )
 ```

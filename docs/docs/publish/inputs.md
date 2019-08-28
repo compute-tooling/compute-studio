@@ -1,6 +1,6 @@
 # Inputs
 
-COMP uses the ParamTools inputs format for building its GUI. ParamTools also offers functionality for updating parameter values and validating the new values. Check out the [ParamTools documentation](https://paramtools.org) for more information on how to create your configuration files. COMP requires two typs of inputs: meta parameters and model parameters.
+Compute Studio uses the ParamTools inputs format for building its GUI. ParamTools also offers functionality for updating parameter values and validating the new values. Check out the [ParamTools documentation](https://paramtools.org) for more information on how to create your configuration files. Compute Studio requires two typs of inputs: meta parameters and model parameters.
 
 **First, what are *meta parameters*?**
 
@@ -8,7 +8,7 @@ Meta parameters *control* the default parameters. If the value of a parameter de
 
 ### Meta Parameters
 
-For example, the meta parameters for [PSLmodels/Tax-Brain](https://www.compmodels.org/PSLmodels/Tax-Brain/) are defined like this:
+For example, the meta parameters for [PSLmodels/Tax-Brain](https://compute.studio/PSLmodels/Tax-Brain/) are defined like this:
 
 ```json
 {
@@ -35,13 +35,13 @@ For example, the meta parameters for [PSLmodels/Tax-Brain](https://www.compmodel
 }
 ```
 
-COMP uses this information to build a set of controls that dictate which values of the default model parameters are shown:
+Compute Studio uses this information to build a set of controls that dictate which values of the default model parameters are shown:
 
-[![alt text](https://user-images.githubusercontent.com/9206065/56739962-eee28780-673d-11e9-836c-21efdced5f3b.png)](https://www.compmodels.org/PSLmodels/Tax-Brain/)
+[![alt text](https://user-images.githubusercontent.com/9206065/56739962-eee28780-673d-11e9-836c-21efdced5f3b.png)](https://compute.studio/PSLmodels/Tax-Brain/)
 
 ### Default Parameters
 
-The GUI is built directly from the default parameters. Here's an example using a subset of the inputs from [hdoupe/Matchups](https://www.compmodels.org/hdoupe/Matchups/):
+The GUI is built directly from the default parameters. Here's an example using a subset of the inputs from [hdoupe/Matchups](https://compute.studio/hdoupe/Matchups/):
 
 
 
@@ -87,6 +87,6 @@ The GUI is built directly from the default parameters. Here's an example using a
 
 ```
 
-COMP builds the model parameter GUI directly from this data:
+Compute Studio builds the model parameter GUI directly from this data:
 
-[![alt text](https://user-images.githubusercontent.com/9206065/56739963-eee28780-673d-11e9-8692-59f58af2b5ff.png)](https://www.compmodels.org/hdoupe/Matchups/)
+[![alt text](https://user-images.githubusercontent.com/9206065/56739963-eee28780-673d-11e9-8692-59f58af2b5ff.png)](https://compute.studio/hdoupe/Matchups/)

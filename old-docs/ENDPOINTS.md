@@ -25,7 +25,7 @@ Parse user adjustemnts
 ----------------------
 Accepts parsed user adjustments, separated by each major section. Returns parsed user adjustments, JSON representation of the user adjustments, and warnings/errors (if any).
 
-COMP will provide parsed user adjustments of the form:
+Compute Studio will provide parsed user adjustments of the form:
 
 ```json
 {
@@ -97,7 +97,7 @@ Run simulation
 
 Accepts Meta Parameters values and parsed and formatted user adjustments. Returns outputs as specified by the [Outputs schema](IOSCHEMA.md)
 
-COMP submits the model's meta parameters and the parsed and formatted user adjustments:
+Compute Studio submits the model's meta parameters and the parsed and formatted user adjustments:
 ```
     {
         "meta_parameter1": value,

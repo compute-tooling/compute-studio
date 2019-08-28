@@ -72,10 +72,10 @@ class CancelSubscriptionForm(ConfirmUsernameForm):
             user.profile.save()
             user.save()
         send_mail(
-            "You have unsubscribed from COMP",
+            "You have unsubscribed from Compute Studio",
             (
                 f"Hello {user.username}, you have recently unsubscribed "
-                f"from COMP. We value your feedback. Please let us know why "
+                f"from Compute Studio. We value your feedback. Please let us know why "
                 f"you unsubscribed and how we can win you back in the future."
             ),
             "henrymdoupe@gmail.com",
@@ -97,7 +97,7 @@ class DeleteUserForm(CancelSubscriptionForm):
                 f"Hello {user.username}, you have recently deleted your "
                 f"account. You have up to 5 days to change your mind and still "
                 f"recover your data. If this is a mistake, please contact us at "
-                f"admin@compmodels.com as soon as possible. If this was not a "
+                f"admin@compute.studio as soon as possible. If this was not a "
                 f"mistake, please let us know why you deleted your account "
                 f"and how we can win you back in the future."
             ),

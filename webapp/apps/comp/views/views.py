@@ -194,7 +194,7 @@ class OutputsView(GetOutputsObjectMixin, DetailView):
     def fail(self, model_pk, username, title):
         try:
             send_mail(
-                f"COMP Sim fail",
+                f"Compute Studio Sim fail",
                 f"An error has occurred at {username}/{title}/{model_pk}",
                 "henrymdoupe@gmail.com",
                 ["henrymdoupe@gmail.com"],

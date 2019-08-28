@@ -28,9 +28,9 @@ def is_profile_active(user):
 def create_profile_from_user(user):
     Profile.objects.create(user=user, is_active=True)
     email_msg = EmailMessage(
-        subject="Welcome to COMP!",
+        subject="Welcome to Compute Studio!",
         body=(
-            f"Hello {user.username}, welcome to COMP. "
+            f"Hello {user.username}, welcome to Compute Studio. "
             f"Please write back here if you have any "
             f"questions or there is anything else we "
             f"can do to help you get up and running."

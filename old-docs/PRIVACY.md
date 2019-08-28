@@ -2,13 +2,13 @@
 
 ## Last updated 12/22/2018 
 
-### [View All Versions](https://github.com/comp-org/comp/commits/master/docs/PRIVACY.md)
+### [View All Versions](https://github.com/compute-studio/comp/commits/master/docs/PRIVACY.md)
 
 ## Introduction
 
-COMP respects your privacy and is committed to protecting your personal data. This Privacy Policy will inform you as to how we look after your personal data when you visit our website (regardless of where you visit it from) and tell you about your privacy rights and how the law protects you.
+Compute Studio respects your privacy and is committed to protecting your personal data. This Privacy Policy will inform you as to how we look after your personal data when you visit our website (regardless of where you visit it from) and tell you about your privacy rights and how the law protects you.
 
-This Privacy Policy explains how information about you is collected, used and disclosed by Compute Tooling, Inc. and our subsidiaries, affiliated companies, consultants, employees, officers and directors (collectively, "COMP," "we," “our” or "us”). This Privacy Policy applies to information we collect when you use our websites, products, services, applications or software (collectively, the "Services") or when you otherwise interact with us. This policy describes the types of information we may collect from you or that you may provide when you visit the website www.compmodels.com (our “Website”) and our practices for collecting, using, maintaining, protecting and disclosing that information.
+This Privacy Policy explains how information about you is collected, used and disclosed by Compute Tooling, Inc. and our subsidiaries, affiliated companies, consultants, employees, officers and directors (collectively, "Compute Studio," "we," “our” or "us”). This Privacy Policy applies to information we collect when you use our websites, products, services, applications or software (collectively, the "Services") or when you otherwise interact with us. This policy describes the types of information we may collect from you or that you may provide when you visit the website www.compmodels.com (our “Website”) and our practices for collecting, using, maintaining, protecting and disclosing that information.
 
 This Privacy Policy applies to information we collect:
 
@@ -42,7 +42,7 @@ When you access or use our Services, we may automatically collect, store, use, a
 - Technical Data: Includes internet protocol (IP) address, your login data, browser type and version, time zone setting and location, access time, pages viewed, pages you visited before navigating to our Services, browser plug-in types and versions, operating system and platform.
 - Information Collected by Cookies and Other Tracking Technologies: We use various technologies to collect information, and this may include sending cookies to your computer or mobile device. Cookies are small data files stored on your hard drive or in device memory that help us to improve our Services and your experience, see which areas and features of our Services are popular and count visits. We may also collect information using web beacons (also known as "tracking pixels"). Web beacons are electronic images that may be used in our Services or emails and help deliver cookies, count visits, understand usage and campaign effectiveness and determine whether an email has been opened and acted upon. For more information about cookies, and how to disable them, please see "Your Choices" below.
 - Information We Collect from Other Sources: We may also obtain information from other sources and combine that with information we collect through our Services. We also collect, use and share aggregated data such as statistical or demographic data for any purpose. Aggregated data may be derived from your personal data but is not considered personal data in law as this data does not directly or indirectly reveal your identity. For example, we may aggregate your Technical Data to calculate the percentage of users accessing a specific website feature. However, if we combine or connect aggregated data with your personal data so that it can directly or indirectly identify you, we treat the combined data as personal data, which will be used in accordance with this privacy notice.
-- Information We Collect from Sub-processors: A sub-processor is a third-party data processor engaged by COMP, who has or potentially will have access to or process information you provide to us or we collect automatically. COMP engages different types of data sub-processors to perform various functions. A list of sub-processors engaged by COMP is maintained at https://github.com/comp-org/comp/blob/master/docs/SUBPROCESSORS.md. 
+- Information We Collect from Sub-processors: A sub-processor is a third-party data processor engaged by Compute Studio, who has or potentially will have access to or process information you provide to us or we collect automatically. Compute Studio engages different types of data sub-processors to perform various functions. A list of sub-processors engaged by Compute Studio is maintained at https://github.com/compute-studio/comp/blob/master/docs/SUBPROCESSORS.md. 
 
 ### Use of Information
 
@@ -52,7 +52,7 @@ We may use information about you for various purposes, including to:
 - Provide and deliver the products and services you request, process transactions and send you related information, including confirmations and invoices;
 - Send you technical notices, updates, security alerts and support and administrative messages;
 - Respond to your comments, questions and requests and provide customer service;
-- Communicate with you about products, services, offers, promotions, rewards and events offered by COMP and others, and provide news and information we think will be of interest to you;
+- Communicate with you about products, services, offers, promotions, rewards and events offered by Compute Studio and others, and provide news and information we think will be of interest to you;
 - Monitor and analyze trends, usage and activities in connection with our Services;
 -Personalize and improve our Services and provide content or features that match user profiles or interests;
 -Process and deliver contest entries and rewards;
@@ -62,7 +62,7 @@ We may use information about you for various purposes, including to:
 
 ### Transfer of Information to Other Countries
 
-COMP is based in the United States and the information we collect is governed by U.S. law. By accessing or using our Services or otherwise providing information to us, you consent to the processing and transfer of information in and to the U.S. and other countries for use by COMP as described in this Privacy Policy. If you choose to use our Services, you need to agree to our Terms and Conditions, which set out the contract between COMP and its users. COMP engages in a number of international activities. In connection with the management of those activities, COMP may transfer information to other countries. By submitting your information to COMP via the websites, or in connection with your interactions with COMP offline, you consent to such transfers and to the processing of this information in other countries.
+Compute Studio is based in the United States and the information we collect is governed by U.S. law. By accessing or using our Services or otherwise providing information to us, you consent to the processing and transfer of information in and to the U.S. and other countries for use by Compute Studio as described in this Privacy Policy. If you choose to use our Services, you need to agree to our Terms and Conditions, which set out the contract between Compute Studio and its users. Compute Studio engages in a number of international activities. In connection with the management of those activities, Compute Studio may transfer information to other countries. By submitting your information to Compute Studio via the websites, or in connection with your interactions with Compute Studio offline, you consent to such transfers and to the processing of this information in other countries.
 
 ### Sharing of Information
 
@@ -71,7 +71,7 @@ We may share certain information about you as follows or as otherwise described 
 - With certain trusted vendors, consultants and other service providers who need access to such information to carry out work on our behalf, such as payment processors for billing services;
 - With other users when you publish a model or otherwise participate in the interactive features of our Services;
 - In response to a request for information if we believe disclosure is in accordance with any applicable law, regulation or legal process, or as otherwise required by any applicable law, rule or regulation;
-- If we believe your actions are inconsistent with our user agreements or policies, or to protect the rights, property and safety of COMP or others;
+- If we believe your actions are inconsistent with our user agreements or policies, or to protect the rights, property and safety of Compute Studio or others;
 In connection with, or during negotiations of, any merger, sale of company assets, financing or acquisition of all or a portion of our business by another company; and
 With your express consent or at your direction.
 - We may also share aggregated or de-identified information, which cannot reasonably be used to identify you.
@@ -90,7 +90,7 @@ Our Services may offer social sharing features and other integrated tools (such 
 
 ### Analytics Services Provided By Others
 
-We may allow others to provide analytics services on our behalf. These entities may use cookies, web beacons and other technologies to collect information about your use of our Services and other websites, including your IP address, web browser, pages viewed, time spent on pages, links clicked and conversion information. This information may be used by COMP and others to, among other things, analyze and track data, determine the popularity of certain content, deliver content targeted to your interests and better understand your online activity.
+We may allow others to provide analytics services on our behalf. These entities may use cookies, web beacons and other technologies to collect information about your use of our Services and other websites, including your IP address, web browser, pages viewed, time spent on pages, links clicked and conversion information. This information may be used by Compute Studio and others to, among other things, analyze and track data, determine the popularity of certain content, deliver content targeted to your interests and better understand your online activity.
 
 ## Your Choices
 
@@ -104,11 +104,11 @@ Most web browsers are set to accept cookies by default. If you prefer, you can u
 
 ### Promotional Communications
 
-You may opt out of receiving promotional communications from COMP by following the instructions in those communications. If you opt out, we may still send you non-promotional communications, such as those about your account or our ongoing business relations.
+You may opt out of receiving promotional communications from Compute Studio by following the instructions in those communications. If you opt out, we may still send you non-promotional communications, such as those about your account or our ongoing business relations.
 
 ### Access, Erasure and Correction
 
-The laws in the European Economic Area and certain jurisdictions outside the United States, require us to provide users (to the extent those laws apply to such users) with information related to access, erasure and correction. Upon request COMP will provide you with information about whether we hold any of your personal information. If you would like to review, delete or update your information, you may contact us using the contact information below. We will permit you to correct, amend, or delete information that is demonstrated to be inaccurate. We will respond to your request within a reasonable timeframe. Please note, because of the way we maintain certain services, after you delete or amend your information, residual copies may take a period of time before they are deleted from our active servers and may remain in our backup systems. You will need to provide sufficient identifying information, such as your name and email address and possible additional identifying information as a security precaution.
+The laws in the European Economic Area and certain jurisdictions outside the United States, require us to provide users (to the extent those laws apply to such users) with information related to access, erasure and correction. Upon request Compute Studio will provide you with information about whether we hold any of your personal information. If you would like to review, delete or update your information, you may contact us using the contact information below. We will permit you to correct, amend, or delete information that is demonstrated to be inaccurate. We will respond to your request within a reasonable timeframe. Please note, because of the way we maintain certain services, after you delete or amend your information, residual copies may take a period of time before they are deleted from our active servers and may remain in our backup systems. You will need to provide sufficient identifying information, such as your name and email address and possible additional identifying information as a security precaution.
 
 ### Changes to this Privacy Policy
 
@@ -117,7 +117,7 @@ We may change this Privacy Policy from time to time. If we make changes, we will
 Contact Information
 To ask questions or comments about this Privacy Policy or our privacy practices please email us at admin@compmodels.com or write us at Compute Tooling, Inc. 213 E Highland Ave., Atlantic Highlands, NJ 07716. 
 
-This version of the Privacy Policy was last updated on December 22, 2018 and historic versions are archived here: https://github.com/comp-org/comp/commits/master/docs/PRIVACY.md.
+This version of the Privacy Policy was last updated on December 22, 2018 and historic versions are archived here: https://github.com/compute-studio/comp/commits/master/docs/PRIVACY.md.
 
 
 
