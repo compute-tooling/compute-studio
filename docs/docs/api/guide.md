@@ -357,5 +357,5 @@ Vary: Accept
 ```
 
 
-[1]: https://github.com/compute-studio/Compute-Studio-Toolkit#comp-studio-toolkit
+[1]: https://github.com/compute-tooling/compute-studio-kit#comp-studio-toolkit
 [2]: https://httpie.org/

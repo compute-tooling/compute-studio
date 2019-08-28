@@ -40,7 +40,7 @@ export default class ErrorBoundary extends React.Component {
               The Compute Studio technical team has been notified of this error
               and is working to fix it. In addition, you are welcome to discuss
               this issue with the Compute Studio technical team by opening an{" "}
-              <a href="https://github.com/compute-studio/compute-studio-ce/issues/new">
+              <a href="https://github.com/compute-tooling/compute-studio/issues/new">
                 issue
               </a>{" "}
               in the Compute Studio source code repository or{" "}

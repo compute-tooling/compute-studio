@@ -32,4 +32,4 @@ COMP Community Edition is licensed under the open source [GNU Affero General Pub
 
 ## Local Installation
 
-The technical documentation is out of date and will be updated once [#127](https://github.com/compute-studio/compute-studio-ce/pull/127) has been merged.
+The technical documentation is out of date and will be updated once [#127](https://github.com/compute-tooling/compute-studio/pull/127) has been merged.
