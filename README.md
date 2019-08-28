@@ -1,35 +1,32 @@
-# COMP Community Edition (CE)
+# Compute Studio
 
-**COMP CE** is an open-source utility for sharing computational models.
+**Compute Studio** is an open-source utility for developers to freely share computational apps with users.
 
-To see COMP CE in action, visit [compmodels.org](https://www.compmodels.org).
+To see C/S in action, visit [Compute.Studio](https://Compute.Studio).
+
+Principles:
+- Freely share public apps and computations.
+- Pay for your own resources, like compute, at cost.
+- Sponsor resources for others if you'd like.
 
 Features:
-- Share public models and simulations for free.
-- Pay for your own compute at cost.
-- Sponsor compute for others if you'd like.
+- A web-based graphical user interface for decisionmakers makes it easy to interact with C/S from the browser.
+- The REST API enables developers to include C/S Apps in their own applications. 
+- Each user's personal library tracks their computations, including both inputs and results. 
 
 Under development:
-
-- Share non-tabular output.
+- Sharing and privacy features. 
 
 Planned:
-- REST API to run simulations and build GUI simulation pages.
+- Collaboration features like commenting and editing.
 
-## Publish
-
-Publish models to the public at www.compmodels.org/publish.
 
 ## Contributing
 
-COMP CE is an open source project and anyone can contribute code or suggestions.
+Compute Studio is an open source project and anyone can contribute code or suggestions.
 
-You can reach COMP developers to discuss how to get started by opening an issue or joining the COMP Community [chat room](https://riot.im/app/#/room/!WQWxPnwidsSToqkeLk:matrix.org).
+You can reach Compute Studio developers to discuss how to get started by opening an issue or joining the Compute Studio Community [chat room](https://riot.im/app/#/room/!WQWxPnwidsSToqkeLk:matrix.org).
 
 ## License
 
-COMP Community Edition is licensed under the open source [GNU Affero General Public License](/License.txt) to Compute Tooling, LLC.
-
-## Local Installation
-
-The technical documentation is out of date and will be updated once [#127](https://github.com/comp-org/comp-ce/pull/127) has been merged.
+Compute Studio is licensed under the open source [GNU Affero General Public License](/License.txt) to Compute Tooling, Inc.
