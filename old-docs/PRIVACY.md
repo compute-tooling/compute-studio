@@ -8,7 +8,7 @@
 
 Compute Studio respects your privacy and is committed to protecting your personal data. This Privacy Policy will inform you as to how we look after your personal data when you visit our website (regardless of where you visit it from) and tell you about your privacy rights and how the law protects you.
 
-This Privacy Policy explains how information about you is collected, used and disclosed by Compute Tooling, Inc. and our subsidiaries, affiliated companies, consultants, employees, officers and directors (collectively, "Compute Studio," "we," “our” or "us”). This Privacy Policy applies to information we collect when you use our websites, products, services, applications or software (collectively, the "Services") or when you otherwise interact with us. This policy describes the types of information we may collect from you or that you may provide when you visit the website www.compmodels.com (our “Website”) and our practices for collecting, using, maintaining, protecting and disclosing that information.
+This Privacy Policy explains how information about you is collected, used and disclosed by Compute Tooling, Inc. and our subsidiaries, affiliated companies, consultants, employees, officers and directors (collectively, "Compute Studio," "we," “our” or "us”). This Privacy Policy applies to information we collect when you use our websites, products, services, applications or software (collectively, the "Services") or when you otherwise interact with us. This policy describes the types of information we may collect from you or that you may provide when you visit the website www.compute.studio (our “Website”) and our practices for collecting, using, maintaining, protecting and disclosing that information.
 
 This Privacy Policy applies to information we collect:
 
@@ -23,7 +23,7 @@ This Privacy Policy does *not* apply to information collected by:
 
 ### Children Under the Age of 13
 
-Our Website is not intended for children under 13 years of age. No one under age 13 may provide any personal information to or on the Website. We do not knowingly collect personal information from children under 13. If you are under 13, do not use or provide any information on this Website or on or through any of its features/register on the Website, make any purchases through the Website, use any of the interactive or public comment features of this Website or provide any information about yourself to us, including your name, address, telephone number, email address, or any screen name or user name you may use. If we learn we have collected or received personal information from a child under 13 without verification of parental consent, we will delete that information. If you believe we might have any information from or about a child under 13, please contact us at admin@compmodels.com.
+Our Website is not intended for children under 13 years of age. No one under age 13 may provide any personal information to or on the Website. We do not knowingly collect personal information from children under 13. If you are under 13, do not use or provide any information on this Website or on or through any of its features/register on the Website, make any purchases through the Website, use any of the interactive or public comment features of this Website or provide any information about yourself to us, including your name, address, telephone number, email address, or any screen name or user name you may use. If we learn we have collected or received personal information from a child under 13 without verification of parental consent, we will delete that information. If you believe we might have any information from or about a child under 13, please contact us at admin@compute.studio.
 
 ## Collection and Use of Information
 
@@ -115,7 +115,7 @@ The laws in the European Economic Area and certain jurisdictions outside the Uni
 We may change this Privacy Policy from time to time. If we make changes, we will notify you by revising the date at the bottom of the policy and, in some cases, we may provide you with additional notice (such as adding a statement to our homepage or sending you a notification). We encourage you to review the Privacy Policy whenever you access our Services to stay informed about our information practices and the ways you can help protect your privacy.
 
 Contact Information
-To ask questions or comments about this Privacy Policy or our privacy practices please email us at admin@compmodels.com or write us at Compute Tooling, Inc. 213 E Highland Ave., Atlantic Highlands, NJ 07716. 
+To ask questions or comments about this Privacy Policy or our privacy practices please email us at admin@compute.studio or write us at Compute Tooling, Inc. 213 E Highland Ave., Atlantic Highlands, NJ 07716. 
 
 This version of the Privacy Policy was last updated on December 22, 2018 and historic versions are archived here: https://github.com/compute-tooling/comp/commits/master/docs/PRIVACY.md.
 

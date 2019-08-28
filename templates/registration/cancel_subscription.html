@@ -9,7 +9,7 @@
   <form method="post" action="{% url 'cancel_subscription' %}">
     {% csrf_token %}
     <p>Are you sure that you would like to cancel your subscription? You will still be able to view your previous simulation results, but you will not be able to submit any simulations.</p>
-    <p>If you have a minute, we'd really appreciate an <a href="mailto:admin@compmodels.com">email</a> from you telling us how we can make Compute Studio a better site and win you back in the future.</p>
+    <p>If you have a minute, we'd really appreciate an <a href="mailto:admin@compute.studio">email</a> from you telling us how we can make Compute Studio a better site and win you back in the future.</p>
     <p>Enter your username below to confirm that you would like to cancel your subscription.</p>
     {% include 'includes/prettyform.html' with form=form %}
     <button type="submit" class="btn btn-danger mt-4">Cancel subscription</button>

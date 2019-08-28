@@ -8,7 +8,7 @@
   <form method="post" action="{% url 'delete_user' %}">
     {% csrf_token %}
     <p>Are you sure that you would like to delete your account? This will delete all of your data, including the outputs of all of your simulations. There are less drastic options available such as <a href="{% url 'cancel_subscription' %}">canceling your subscription</a> without deleting your data.</p>
-    <p>If you have a minute, we'd really appreciate an <a href="mailto:admin@compmodels.com">email</a> from you telling us how we can make Compute Studio a better site and win you back in the future.</p>
+    <p>If you have a minute, we'd really appreciate an <a href="mailto:admin@compute.studio">email</a> from you telling us how we can make Compute Studio a better site and win you back in the future.</p>
     <p>Enter your username below to confirm that you would like to delete your account.</p>
     {% include 'includes/prettyform.html' with form=form %}
     <button type="submit" class="btn btn-danger mt-4">Delete account</button>
