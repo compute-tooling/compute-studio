@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../../img/favicon.ico">
-        <title>Functions - COMP Models</title>
+        <title>Functions - Compute Studio</title>
         <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
         <link href="../../css/font-awesome.min.css" rel="stylesheet">
         <link href="../../css/base.css" rel="stylesheet">
@@ -39,7 +39,7 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand" href="../..">COMP Models</a>
+                    <a class="navbar-brand" href="../..">Compute Studio</a>
                 </div>
 
                 <!-- Expanded navigation -->
@@ -132,7 +132,7 @@
 <li><strong>Parse user adjustments</strong>: Do model-specific formatting and validation on user adjustments.</li>
 <li><strong>Run simulation</strong>: Submit the user adjustments (or none) to the model to run the simulation.</li>
 </ul>
-<p>Once you've skimmed the criteria below, you can develop your functions against the <a href="https://github.com/comp-org/Developer-Tools/"><code>compdevkit</code></a> automated testing suite.</p>
+<p>Once you've skimmed the criteria below, you can develop your functions against the <a href="https://github.com/compute-studio/Compute-Studio-Kit/"><code>computestudiokit</code></a> automated testing suite.</p>
 <h2 id="model-parameters">Model Parameters</h2>
 <p>Accepts Meta Parameters, if they are being utilized. Returns data in the form specified in the <a href="/publish/inputs/">inputs page</a>.</p>
 <ul>
@@ -154,10 +154,10 @@ def get_inputs(meta_params_dict):
 </code></pre>
 
 <p>Here's what you get after filling in this function:
-<a href="https://www.compmodels.org/hdoupe/Matchups/"><img alt="alt text" src="https://user-images.githubusercontent.com/9206065/56739963-eee28780-673d-11e9-8692-59f58af2b5ff.png" /></a></p>
+<a href="https://compute.studio/hdoupe/Matchups/"><img alt="alt text" src="https://user-images.githubusercontent.com/9206065/56739963-eee28780-673d-11e9-8692-59f58af2b5ff.png" /></a></p>
 <h2 id="validate-user-adjustments">Validate user adjustments</h2>
 <p>Accepts parsed user adjustments, separated by each major section. Returns warnings/errors (if any).</p>
-<p>COMP will provide parsed user adjustments of the form:</p>
+<p>Compute Studio will provide parsed user adjustments of the form:</p>
 <pre><code class="json">{
     &quot;matchup&quot;: {
         &quot;start_date&quot;: [{&quot;value&quot;: &quot;2012-08-01&quot;}],
@@ -196,7 +196,7 @@ def validate_inputs(meta_param_dict, adjustment, errors_warnings):
 <img alt="alt text" src="https://user-images.githubusercontent.com/9206065/56741151-48e44c80-6740-11e9-88a8-dcc5887a3187.png" /></p>
 <h2 id="run-simulation">Run simulation</h2>
 <p>Accepts Meta Parameters values and model parameters. Returns outputs as specified in the <a href="/publish/outputs/">outputs page</a></p>
-<p>COMP submits the model's meta parameters and the parsed and formatted user adjustments:</p>
+<p>Compute Studio submits the model's meta parameters and the parsed and formatted user adjustments:</p>
 <pre><code>{
     &quot;meta_params&quot;: {},
     &quot;model_params&quot;: {
@@ -217,7 +217,7 @@ def get_matchup(meta_param_dict, adjustment):
 </code></pre>
 
 <p>Here's what you get after filling in this function:</p>
-<p><a href="https://www.compmodels.org/hdoupe/Matchups/16/"><img alt="alt text" src="https://user-images.githubusercontent.com/9206065/56739964-ef7b1e00-673d-11e9-9d91-2f7227d09897.png" /></a></p></div>
+<p><a href="https://compute.studio/hdoupe/Matchups/16/"><img alt="alt text" src="https://user-images.githubusercontent.com/9206065/56739964-ef7b1e00-673d-11e9-9d91-2f7227d09897.png" /></a></p></div>
         </div>
 
         <footer class="col-md-12">

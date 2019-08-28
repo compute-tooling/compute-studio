@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../../img/favicon.ico">
-        <title>Authentication - COMP Models</title>
+        <title>Authentication - Compute Studio</title>
         <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
         <link href="../../css/font-awesome.min.css" rel="stylesheet">
         <link href="../../css/base.css" rel="stylesheet">
@@ -39,7 +39,7 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand" href="../..">COMP Models</a>
+                    <a class="navbar-brand" href="../..">Compute Studio</a>
                 </div>
 
                 <!-- Expanded navigation -->
@@ -118,7 +118,7 @@
                 <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
     <ul class="nav bs-sidenav">
         <li class="main active"><a href="#authentication">Authentication</a></li>
-            <li><a href="#comp-developer-toolkit">COMP-Developer-ToolKit</a></li>
+            <li><a href="#compute-studio-toolkit">Compute-Studio-ToolKit</a></li>
             <li><a href="#httpie">HTTPie</a></li>
             <li><a href="#python-with-the-requests-library">Python with the Requests library</a></li>
     </ul>
@@ -127,14 +127,14 @@
 
 <h1 id="authentication">Authentication</h1>
 <p>API endpoints that create simulations require the user to include their API Token with their request. Here a few methods for retrieving your authentication token:</p>
-<h3 id="comp-developer-toolkit"><a href="https://github.com/comp-org/COMP-Developer-Toolkit#comp-developer-toolkit">COMP-Developer-ToolKit</a></h3>
+<h3 id="compute-studio-toolkit"><a href="https://github.com/compute-studio/Compute-Studio-Kit#comp-studio-kit">Compute-Studio-ToolKit</a></h3>
 <pre><code class="bash">$ pip install compdevkit
-$ cdk-token --username myuser --password mypass
+$ csk-token --username myuser --password mypass
 Token: your-token-here
 </code></pre>
 
 <h3 id="httpie"><a href="https://httpie.org/">HTTPie</a></h3>
-<pre><code class="bash">$ http post https://compmodels.org/api-token-auth/ username=hdoupe password=mypass
+<pre><code class="bash">$ http post https://compute.studio/api-token-auth/ username=hdoupe password=mypass
 
 HTTP/1.1 200 OK
 Allow: POST, OPTIONS
@@ -147,7 +147,7 @@ Allow: POST, OPTIONS
 <h3 id="python-with-the-requests-library"><a href="https://2.python-requests.org/en/master/">Python with the Requests library</a></h3>
 <pre><code class="python">In [1]: import requests
 
-In [2]: resp = requests.post(&quot;https://compmodels.org/api-token-auth/&quot;, json={&quot;username&quot;: &quot;hdoupe&quot;, &quot;password&quot;: &quot;mypass&quot;})
+In [2]: resp = requests.post(&quot;https://compute.studio/api-token-auth/&quot;, json={&quot;username&quot;: &quot;hdoupe&quot;, &quot;password&quot;: &quot;mypass&quot;})
 
 In [3]: resp.json()
 Out[3]: {'token': 'Your token here'}
