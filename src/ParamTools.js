@@ -375,7 +375,7 @@ export function formikToJSON(values, schema, labelSchema, extend = false) {
           var labelsSplit = voStr.split("___");
           for (const label of labelsSplit) {
             var labelSplit = label.split("__");
-            if (label in meta_parameters) {
+            if (labelSplit[0] in meta_parameters) {
               vo[labelSplit[0]] = meta_parameters[labelSplit[0]];
             } else {
               vo[labelSplit[0]] = labelSplit[1];
