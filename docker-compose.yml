@@ -23,7 +23,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db/postgres
       - USE_STRIPE=False
       - DEBUG=True
-      - WORKERS=flask:5050
+      - WORKERS=${WORKERS}:5050
       - LOCAL=True
       - OBJ_STORAGE_EDGE=https://sfo2.cdn.digitaloceanspaces.com
       - OBJ_STORAGE_BUCKET=compresults-dev
