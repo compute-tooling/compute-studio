@@ -28,7 +28,7 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
-        <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+        <ul class="navbar-nav mr-auto mt-2 mt-lg-0 mobile-mb-3">
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               Models
@@ -40,22 +40,38 @@
               {% endfor %}
             </div>
           </li>
-          <li class="nav-item"><a href="{% url 'publish' %}" class="nav-link">Publish</a></li>
+        </ul>
           {% if user.is_authenticated %}
-            <li class="nav-item"><a href="{% url 'about' %}" class="nav-link">About</a></li>
-          {% endif %}
-        </ul>
-        <ul class="navbar-nav ml-auto">
-          <div class="login-status ml-auto" >
-            {% if user.is_authenticated %}
-              <a href="{% url 'home' %}">{{ user.username }}</a> |
-              <a href="{% url 'logout' %}">logout</a>
-            {% else %}
-              <a href="{% url 'login' %}">login</a> |
-              <a href="{% url 'signup' %}">signup</a>
-            {% endif %}
+          <div class="dropdown mobile-mb-1">
+            <a class="nav-link btn btn-outline-match-nav dropdown-toggle mb-1" style="display: inline;" href="#" id="navbarDropdown-prof" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              {{user.username}}
+            </a>
+            <div class="dropdown-menu desktop-menu-right" style="width:180px" aria-labelledby="navbarDropdown-prof">
+              <!-- Add new projects to the dropdown menu here! -->
+              <a class="dropdown-item" href="{% url 'home' %}">Dashboard</a>
+              <a class="dropdown-item" href="{% url 'publish' %}">Publish</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="{% url 'user_settings' %}">Settings</a>
+              <a class= "dropdown-item" href="{% url 'logout' %}">Sign out</a>
+           </div>
           </div>
-        </ul>
+          {% else %}
+          <div>
+            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+              <li class="nav-item mr-2 mobile-mb-3">
+                <a class="nav-link btn btn-match-nav" style="display: inline;" href="{% url 'login' %}">
+                    Sign in
+                </a>
+              </li> 
+              <li class="nav-item mobile-mb-1">
+                <a class="nav-link btn btn-outline-match-nav mb-1" style="display: inline;" href="{% url 'signup' %}">
+                    Sign up
+                </a>
+              </li>
+            </ul>
+          </div>
+          {% endif %}
+        </div>
       </div>
   </nav>
 
