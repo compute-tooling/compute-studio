@@ -8,7 +8,7 @@ body {
 
 
 .explainer {
-  color: #212121;
+  color: #2b2c2d;
 }
 
 .main-content {
@@ -35,42 +35,75 @@ code {
 }
 
 .login-status a:hover{
-  color:#ffffff;
+  color: rgb(238, 238, 238);
   text-decoration: none;
 }
 
 /* navbar */
 .navbar-custom {
-  background-color: #212121;
-}
-
-/* change the brand and text color */
-.navbar-custom .navbar-brand,
-.navbar-custom .navbar-text {
-  color: #ffffff;
-}
-
-/* change the link color */
-.navbar-custom .navbar-nav .nav-link {
-  color: #ffffff;
+  background-color: #2b2c2d;
 }
 
 /* change the color of active or hovered links */
+.navbar-custom .navbar-nav .nav-link,
 .navbar-custom .nav-item.active .nav-link,
-.navbar-custom .nav-item:hover .nav-link {
+.navbar-custom .navbar-brand,
+.navbar-custom .navbar-text,
+.navbar-custom .nav-link {
   color: #ffffff;
 }
 
+.navbar-custom .navbar-nav .nav-link:hover,
+.navbar-custom .nav-item.active .nav-link:hover,
+.navbar-custom .nav-link:hover,
+.btn-outline-match-nav:hover {
+  color: rgb(238, 238, 238, 0.9) !important;
+}
+
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) { 
+  .dropdown-menu.desktop-menu-right.show {
+    right: 0;
+    left: auto;
+  }
+}
+
+@media (max-width: 992px) { 
+  .mobile-mb-1 {
+    margin-bottom: 0.25rem !important;
+  }
+  .mobile-mb-2 {
+    margin-bottom: 0.5rem !important;
+  }
+  .mobile-mb-3 {
+    margin-bottom: 1rem !important;
+  }
+}
+
+
+.navbar-dark .navbar-toggler-icon {
+
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba(255, 255, 255, 1.0)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+
+}
 /* buttons with navbar color scheme */
 
 .btn-match-nav, .nav-pills .nav-link.active {
-  background-color: #212121 !important;
-  color: #e5e5e5 !important;
+  background-color: #2b2c2d !important;
+  color: #ffffff !important;
 }
 
+.btn-outline-match-nav {
+  border-color:#ffffff;
+  background-color: transparent;
+  color: #ffffff !important;
+}
+
+
 .inverse-btn-match-nav, .nav-pills .nav-link {
-  color: #212121 !important;
-  background-color: #e5e5e5 !important;
+  color: #2b2c2d !important;
+  background-color: #ffffff !important;
 }
 
 .divider{
