@@ -8,7 +8,7 @@ body {
 
 
 .explainer {
-  color: #212121;
+  color: #2b2c2d;
 }
 
 .main-content {
@@ -35,30 +35,29 @@ code {
 }
 
 .login-status a:hover{
-  color:#ffffff;
+  color: rgb(238, 238, 238);
   text-decoration: none;
 }
 
 /* navbar */
 .navbar-custom {
-  background-color: #212121;
-}
-
-/* change the brand and text color */
-.navbar-custom .navbar-brand,
-.navbar-custom .navbar-text {
-  color: #ffffff;
-}
-
-/* change the link color */
-.navbar-custom .navbar-nav .nav-link {
-  color: #ffffff;
+  background-color: #2b2c2d;
 }
 
 /* change the color of active or hovered links */
+.navbar-custom .navbar-nav .nav-link,
 .navbar-custom .nav-item.active .nav-link,
-.navbar-custom .nav-item:hover .nav-link {
+.navbar-custom .navbar-brand,
+.navbar-custom .navbar-text,
+.navbar-custom .nav-link {
   color: #ffffff;
+}
+
+.navbar-custom .navbar-nav .nav-link:hover,
+.navbar-custom .nav-item.active .nav-link:hover,
+.navbar-custom .nav-link:hover,
+.btn-outline-match-nav:hover {
+  color: rgb(238, 238, 238, 0.9) !important;
 }
 
 
@@ -91,7 +90,7 @@ code {
 /* buttons with navbar color scheme */
 
 .btn-match-nav, .nav-pills .nav-link.active {
-  background-color: #212121 !important;
+  background-color: #2b2c2d !important;
   color: #ffffff !important;
 }
 
@@ -103,7 +102,7 @@ code {
 
 
 .inverse-btn-match-nav, .nav-pills .nav-link {
-  color: #212121 !important;
+  color: #2b2c2d !important;
   background-color: #ffffff !important;
 }
 
