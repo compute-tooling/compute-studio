@@ -51,19 +51,24 @@ class InputsApp extends React.Component {
       console.log("edit sim");
       return axios
         .all([
-          axios.get(`/${username}/${app_name}/api/v1/inputs/`),
           axios.get(`/${username}/${app_name}/api/v1/${model_pk}/edit/`),
           axios.get(`/users/status/${username}/${app_name}/`)
         ])
         .then(
-          axios.spread((inputsResp, detailResp, statusResp) => {
-            console.log("inputsResp", inputsResp);
+          axios.spread((detailResp, statusResp) => {
             console.log("detailResp", detailResp);
             console.log("statusResp", statusResp);
-            let data = inputsResp.data;
-            data["detail"] = detailResp.data;
-            data["accessStatus"] = statusResp.data;
-            return data;
+            return axios
+              .post(`/${username}/${app_name}/api/v1/inputs/`, {
+                meta_parameters: detailResp.data.meta_parameters
+              })
+              .then(inputsResp => {
+                console.log("inputsResp", inputsResp);
+                let data = inputsResp.data;
+                data["detail"] = detailResp.data;
+                data["accessStatus"] = statusResp.data;
+                return data;
+              });
           })
         );
     } else if (this.props.type === "edit_inputs") {
@@ -71,19 +76,25 @@ class InputsApp extends React.Component {
       console.log("edit inputs");
       return axios
         .all([
-          axios.get(`/${username}/${app_name}/api/v1/inputs/`),
           axios.get(`/${username}/${app_name}/api/v1/inputs/${inputs_hashid}/`),
           axios.get(`/users/status/${username}/${app_name}/`)
         ])
         .then(
-          axios.spread((inputsResp, detailResp, statusResp) => {
-            console.log("inputsResp", inputsResp);
+          axios.spread((detailResp, statusResp) => {
             console.log("detailResp", detailResp);
             console.log("statusResp", statusResp);
-            let data = inputsResp.data;
-            data["detail"] = detailResp.data;
-            data["accessStatus"] = statusResp.data;
-            return data;
+            console.log("posting", detailResp.data.meta_parameters);
+            return axios
+              .post(`/${username}/${app_name}/api/v1/inputs/`, {
+                meta_parameters: detailResp.data.meta_parameters
+              })
+              .then(inputsResp => {
+                console.log("inputsResp", inputsResp);
+                let data = inputsResp.data;
+                data["detail"] = detailResp.data;
+                data["accessStatus"] = statusResp.data;
+                return data;
+              });
           })
         );
     } else {
