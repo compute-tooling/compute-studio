@@ -43,7 +43,7 @@
           <div class="card card-body card-inner">
               <div style="padding:.1rem">
                 <button
-                  class="btn collapse-button inverse-btn-match-nav w-50 mx-auto"
+                  class="btn collapse-button btn-outline-dark w-50 mx-auto"
                   type="button"
                   data-toggle="collapse"
                   data-target="#results-collapse"
@@ -64,20 +64,17 @@
                 </div>
               </div>
               <div style="padding:.1rem;">
-                <a href="{{ object.get_absolute_edit_url }}" class="btn inverse-btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Edit inputs</a>
-              </div>
-              <div style="padding:.1rem;">
-                <a href="{{ object.get_absolute_download_url }}" class="btn inverse-btn-match-nav w-50 mx-auto" style="display:block;padding:10px;">Download results</a>
+                <a href="{{ object.get_absolute_edit_url }}" class="btn btn-outline-dark w-50 mx-auto" style="display:block;padding:10px;">Edit inputs</a>
               </div>
           </div>
       </div>
       </div>
         <div class="card card-body card-outer">
           <div style="padding:.1rem;">
-            <a href="{{ object.get_absolute_download_url }}" class="btn btn-lg btn-match-nav w-50 mx-auto" style="display:block; margin:0.5rem;">Download Results</a>
+            <a href="{{ object.get_absolute_download_url }}" class="btn btn-lg btn-dark w-50 mx-auto" style="display:block; margin:0.5rem;">Download Results</a>
           </div>
           <div style="padding:.1rem;">
-            <a href="{{ object.get_absolute_download_url }}?raw_json=True" class="btn btn-sm inverse-btn-match-nav w-50 mx-auto" style="display:block;margin:0.5rem;">Download raw JSON</a>
+            <a href="{{ object.get_absolute_download_url }}?raw_json=True" class="btn btn-sm btn-outline-dark w-50 mx-auto" style="display:block;margin:0.5rem;">Download raw JSON</a>
           </div>
         </div>
     </div>
