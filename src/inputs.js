@@ -83,7 +83,6 @@ class InputsApp extends React.Component {
           axios.spread((detailResp, statusResp) => {
             console.log("detailResp", detailResp);
             console.log("statusResp", statusResp);
-            console.log("posting", detailResp.data.meta_parameters);
             return axios
               .post(`/${username}/${app_name}/api/v1/inputs/`, {
                 meta_parameters: detailResp.data.meta_parameters
