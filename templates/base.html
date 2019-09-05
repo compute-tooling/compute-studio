@@ -43,7 +43,7 @@
         </ul>
           {% if user.is_authenticated %}
           <div class="dropdown mobile-mb-1">
-            <a class="nav-link btn btn-outline-match-nav dropdown-toggle mb-1" style="display: inline;" href="#" id="navbarDropdown-prof" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <a class="nav-link btn btn-outline-match-nav dropdown-toggle mb-1" style="display: inline-block;" href="#" id="navbarDropdown-prof" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               {{user.username}}
             </a>
             <div class="dropdown-menu desktop-menu-right" style="width:180px" aria-labelledby="navbarDropdown-prof">
@@ -59,12 +59,12 @@
           <div>
             <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
               <li class="nav-item mr-2 mobile-mb-3">
-                <a class="nav-link btn btn-match-nav" style="display: inline;" href="{% url 'login' %}">
+                <a class="nav-link btn btn-match-nav" style="display: inline-block;" href="{% url 'login' %}">
                     Sign in
                 </a>
               </li> 
               <li class="nav-item mobile-mb-1">
-                <a class="nav-link btn btn-outline-match-nav mb-1" style="display: inline;" href="{% url 'signup' %}">
+                <a class="nav-link btn btn-outline-match-nav mb-1" style="display: inline-block;" href="{% url 'signup' %}">
                     Sign up
                 </a>
               </li>
