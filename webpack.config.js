@@ -3,49 +3,49 @@ var webpack = require("webpack");
 
 module.exports = [
   {
-    context: __dirname,
+    devtool: "inline-source-map",
     entry: "./src/publish.tsx",
     output: {
-      path: path.resolve("./static/js/"),
-      filename: "publish.js"
-    },
-    resolve: {
-      extensions: [".ts", ".tsx", ".js", ".tsx"]
+      filename: "publish.js",
+      path: path.resolve(__dirname, "dist")
     },
     module: {
       rules: [
-        { test: /\.(t|j)sx?$/, use: { loader: "awesome-typescript-loader" } },
-        { enforce: "pre", test: /\.js$/, loader: "source-map-loader" },
-        { test: /\.(css|scss)$/, use: ["style-loader", "css-loader"] }
+        {
+          test: /\.tsx?$/,
+          loader: "ts-loader"
+        },
+        {
+          test: /\.css$/i,
+          use: ["style-loader", "css-loader"]
+        }
       ]
     },
-    // externals: {
-    //   react: "React",
-    //   "react-dom": "ReactDOM"
-    // },
-    devtool: "source-map"
+    resolve: {
+      extensions: [".ts", ".tsx", ".js"]
+    }
   },
   {
-    context: __dirname,
+    devtool: "inline-source-map",
     entry: "./src/sim.tsx",
     output: {
-      path: path.resolve("./static/js/"),
-      filename: "sim.js"
-    },
-    resolve: {
-      extensions: [".ts", ".tsx", ".js", ".tsx"]
+      filename: "sim.js",
+      path: path.resolve(__dirname, "dist")
     },
     module: {
       rules: [
-        { test: /\.(t|j)sx?$/, use: { loader: "awesome-typescript-loader" } },
-        { enforce: "pre", test: /\.js$/, loader: "source-map-loader" },
-        { test: /\.(css|scss)$/, use: ["style-loader", "css-loader"] }
+        {
+          test: /\.tsx?$/,
+          loader: "ts-loader"
+        },
+        {
+          test: /\.css$/i,
+          use: ["style-loader", "css-loader"]
+        }
       ]
     },
-    // externals: {
-    //   react: "React",
-    //   "react-dom": "ReactDOM"
-    // },
-    devtool: "source-map"
+    resolve: {
+      extensions: [".ts", ".tsx", ".js"]
+    }
   }
 ];

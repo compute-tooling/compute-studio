@@ -4,7 +4,7 @@ import * as ReactDOM from "react-dom";
 import * as React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import axios from "axios";
-import { Formik, Field, Form, ErrorMessage } from "formik";
+import { Formik, Field, Form, ErrorMessage, FormikActions } from "formik";
 import * as yup from "yup";
 import {
   TextField,
@@ -32,16 +32,6 @@ var Schema = yup.object().shape({
   listed: yup.boolean().required(requiredMessage)
 });
 
-const initialValues = {
-  title: "",
-  description: "",
-  oneliner: "",
-  repo_url: "",
-  server_size: [4, 2],
-  exp_task_time: 0,
-  listed: true
-};
-
 const specialRequests = (
   <div>
     <p>
@@ -57,7 +47,40 @@ const specialRequests = (
   </div>
 );
 
-class PublishForm extends React.Component {
+interface PublishValues {
+  title: string,
+  description: string,
+  oneliner: string,
+  repo_url: string,
+  server_size: [number, number],
+  exp_task_time: number,
+  listed: boolean,
+}
+
+const initialValues: PublishValues = {
+  title: "",
+  description: "",
+  oneliner: "",
+  repo_url: "",
+  server_size: [4, 2],
+  exp_task_time: 0,
+  listed: true
+};
+
+interface PublishProps {
+  preview: boolean,
+  initialValues: PublishValues,
+  submitType: "Publish" | "Update",
+  fetchInitialValues: () => Promise<any>,
+  doSubmit: (data: FormData) => Promise<void>,
+}
+
+type PublishState = Readonly<{
+  preview: boolean,
+  initialValues: PublishValues,
+}>
+
+class PublishForm extends React.Component<PublishProps, PublishState> {
   constructor(props) {
     super(props);
     this.state = {
@@ -88,11 +111,11 @@ class PublishForm extends React.Component {
       <div>
         <Formik
           initialValues={this.state.initialValues}
-          onSubmit={(values, actions) => {
+          onSubmit={(values: PublishValues, actions: FormikActions<PublishValues>) => {
             console.log(values, actions);
             var formdata = new FormData();
-            for (var field in values) {
-              formdata.append([field], values[field]);
+            for (const field in values) {
+              formdata.append(field, values[field]);
             }
             this.props
               .doSubmit(formdata)
@@ -113,7 +136,7 @@ class PublishForm extends React.Component {
               });
           }}
           validationSchema={Schema}
-          render={({ onChange, status, errors }) => (
+          render={({ status }) => (
             <Form>
               {status && status.project_exists ? (
                 <div className="alert alert-danger" role="alert">
@@ -140,7 +163,6 @@ class PublishForm extends React.Component {
                     placeholder="Name of the app"
                     label="App Name"
                     preview={this.state.preview}
-                    onChange={onChange}
                   />
                   <ErrorMessage
                     name="title"
@@ -155,7 +177,6 @@ class PublishForm extends React.Component {
                     placeholder="Short description of this app"
                     label="One-Liner"
                     preview={this.state.preview}
-                    onChange={onChange}
                   />
                   <ErrorMessage
                     name="oneliner"
@@ -170,7 +191,6 @@ class PublishForm extends React.Component {
                     placeholder="Description of this app"
                     label="README"
                     preview={this.state.preview}
-                    onChange={onChange}
                   />
                   <ErrorMessage
                     name="description"
@@ -200,7 +220,6 @@ class PublishForm extends React.Component {
                     label="Listed: "
                     description="Include this app in the public list of apps"
                     name="listed"
-                    onChange={onChange}
                   />
                   <ErrorMessage
                     name="listed"
@@ -240,7 +259,6 @@ class PublishForm extends React.Component {
               <button
                 className="btn inline-block"
                 onClick={this.togglePreview}
-                value
               >
                 {this.state.preview ? "Edit" : "Preview"}
               </button>
@@ -256,7 +274,7 @@ class PublishForm extends React.Component {
   }
 }
 
-class CreateApp extends React.Component {
+class CreateApp extends React.Component<{doSubmit: PublishProps["doSubmit"]}, {}> {
   constructor(props) {
     super(props);
     this.doSubmit = this.doSubmit.bind(this);
@@ -292,7 +310,10 @@ class CreateApp extends React.Component {
   }
 }
 
-class AppDetail extends React.Component {
+interface Match {
+  params: { username: string, app_name: string }
+}
+class AppDetail extends React.Component<{match: Match}, {}> {
   constructor(props) {
     super(props);
     this.doSubmit = this.doSubmit.bind(this);
@@ -306,14 +327,15 @@ class AppDetail extends React.Component {
       .get(`/publish/api/${username}/${app_name}/detail/`)
       .then(function(response) {
         console.log(response);
-        return response.data;
+        let data: PublishValues = response.data;
+        return data;
       })
       .catch(function(error) {
         console.log(error);
       });
   }
 
-  doSubmit(data) {
+  doSubmit(data: FormData) {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     console.log(data);

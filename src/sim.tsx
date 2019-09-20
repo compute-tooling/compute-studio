@@ -8,6 +8,7 @@ import * as Sentry from "@sentry/browser";
 
 import InputsForm from "./InputsForm";
 import ErrorBoundary from "./ErrorBoundary";
+import { APIDetail, APIData } from "./types";
 
 Sentry.init({
   dsn: "https://fde6bcb39fda4af38471b16e2c1711af@sentry.io/1530834"
@@ -18,7 +19,19 @@ axios.defaults.xsrfCookieName = "csrftoken";
 
 const domContainer = document.querySelector("#inputs-container");
 
-class InputsApp extends React.Component {
+interface InputsAppProps {
+  match: {
+    params: {
+      username: string,
+      app_name: string,
+      inputs_hashid: string,
+      model_pk: string,
+    }
+  },
+  type: "inputs" | "edit_sim" | "edit_inputs";
+}
+
+class InputsApp extends React.Component<InputsAppProps, {}> {
   constructor(props) {
     super(props);
     this.doSubmit = this.doSubmit.bind(this);
@@ -29,6 +42,7 @@ class InputsApp extends React.Component {
   fetchInitialValues() {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
+    let data: APIData;
     console.log("router", username, app_name, this.props.type);
     if (this.props.type === "inputs") {
       console.log("fresh page");
@@ -41,7 +55,7 @@ class InputsApp extends React.Component {
           axios.spread((inputsResp, statusResp) => {
             console.log("inputsResp", inputsResp);
             console.log("statusResp", statusResp);
-            let data = inputsResp.data;
+            data = inputsResp.data;
             data["accessStatus"] = statusResp.data;
             return data;
           })
@@ -64,7 +78,7 @@ class InputsApp extends React.Component {
               })
               .then(inputsResp => {
                 console.log("inputsResp", inputsResp);
-                let data = inputsResp.data;
+                data = inputsResp.data;
                 data["detail"] = detailResp.data;
                 data["accessStatus"] = statusResp.data;
                 return data;
@@ -89,7 +103,7 @@ class InputsApp extends React.Component {
               })
               .then(inputsResp => {
                 console.log("inputsResp", inputsResp);
-                let data = inputsResp.data;
+                data = inputsResp.data,
                 data["detail"] = detailResp.data;
                 data["accessStatus"] = statusResp.data;
                 return data;
@@ -101,18 +115,19 @@ class InputsApp extends React.Component {
     }
   }
 
-  resetInitialValues(metaParameters) {
+  resetInitialValues(metaParameters: {[metaParam: string]: any}) {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     return axios
       .post(`/${username}/${app_name}/api/v1/inputs/`, metaParameters)
       .then(function(response) {
         console.log(response);
-        return response.data;
+        let data: APIData = response.data;
+        return data;
       });
   }
 
-  doSubmit(data) {
+  doSubmit(data: FormData) {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     console.log("posting...");
@@ -134,8 +149,6 @@ class InputsApp extends React.Component {
         <InputsForm
           fetchInitialValues={this.fetchInitialValues}
           resetInitialValues={this.resetInitialValues}
-          initialValues={null}
-          submitType="Create"
           doSubmit={this.doSubmit}
         />
       </ErrorBoundary>

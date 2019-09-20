@@ -2,7 +2,7 @@
 
 import { isEmpty } from "lodash/lang";
 
-export function makeID(title) {
+export function makeID(title: string): string {
   return title.split(" ").join("-");
 }
 
@@ -15,7 +15,7 @@ export function valForForm(val) {
 }
 
 
-export function hasServerErrors(errorsWarnings) {
+export function hasServerErrors(errorsWarnings: {[msect: string]: {errors: {[paramName: string]: any}}}): boolean {
   for (const [msect, ew] of Object.entries(errorsWarnings)) {
     if (!isEmpty(ew.errors)) {
       return true

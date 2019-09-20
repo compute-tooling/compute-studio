@@ -1,11 +1,17 @@
-import React from "react";
+import * as React from "react";
 import { Card } from "react-bootstrap";
 import * as Sentry from "@sentry/browser";
 
-export default class ErrorBoundary extends React.Component {
+type ErrorState = Readonly<{
+  eventId: any,
+  error: any,
+  errorInfo: any
+}>
+
+export default class ErrorBoundary extends React.Component<{}, ErrorState> {
   constructor(props) {
     super(props);
-    this.state = { error: null, errorInfo: null };
+    this.state = { error: null, errorInfo: null, eventId: null };
   }
 
   componentDidCatch(error, errorInfo) {

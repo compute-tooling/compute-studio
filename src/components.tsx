@@ -2,14 +2,24 @@
 
 import * as React from "react";
 import * as ReactLoading from "react-loading";
-import { FastField, ErrorMessage, setNestedObjectValues } from "formik";
+import { FastField, ErrorMessage, FormikTouched } from "formik";
 import { isEqual, isEmpty } from "lodash/lang";
+import * as yup from "yup";
+
 
 import { makeID, valForForm } from "./utils";
 import { RedMessage, getField, CPIField } from "./fields";
+import {ParamToolsParam, ParamToolsConfig, InitialValues, APIData, Sects} from "./types";
 import { Card, Button, Overlay, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { string } from "yup";
+import { InitialLetterProperty } from "csstype";
 
-export const ParamElement = ({
+
+
+
+
+
+export const ParamElement: React.FC<{param_data: ParamToolsParam, checkbox?: React.Component, id: string, classes?: string}> = ({
   param_data,
   checkbox,
   id,
@@ -35,7 +45,7 @@ export const ParamElement = ({
   );
 };
 
-export const SectionHeader = ({
+export const SectionHeader: React.FC<{title: string, titleSize: string, titleClass?: string, label: string, openDefault?: boolean}> = ({
   title,
   titleSize,
   titleClass,
@@ -62,7 +72,6 @@ export const SectionHeader = ({
         >
           <i
             className={`far fa-${open ? "minus" : "plus"}-square`}
-            style={{ size: "5px" }}
           />
         </button>
       </div>
@@ -71,6 +80,7 @@ export const SectionHeader = ({
 };
 
 export const LoadingElement = () => {
+  // @ts-ignore
   return (
     <div className="row">
       <div className="col-sm-4">
@@ -78,7 +88,9 @@ export const LoadingElement = () => {
           <li>
             <div className="card card-body card-outer">
               <div className="d-flex justify-content-center">
-                <ReactLoading type="spokes" color="#2b2c2d" />
+                <
+                  // @ts-ignore
+                  ReactLoading type="spokes" color="#2b2c2d" />
               </div>
             </div>
           </li>
@@ -87,7 +99,9 @@ export const LoadingElement = () => {
       <div className="col-sm-8">
         <div className="card card-body card-outer">
           <div className="d-flex justify-content-center">
-            <ReactLoading type="spokes" color="#2b2c2d" />
+            <
+              // @ts-ignore
+              ReactLoading type="spokes" color="#2b2c2d" />
           </div>
         </div>
       </div>
@@ -95,8 +109,15 @@ export const LoadingElement = () => {
   );
 };
 
-export const MetaParameters = React.memo(
-  ({ meta_parameters, values, touched, resetInitialValues }) => {
+
+
+const MetaParametersComponent: React.FC<{ 
+  meta_parameters: APIData["meta_parameters"], 
+  values: InitialValues["meta_parameters"],
+  touched: FormikTouched<InitialValues>, 
+  resetInitialValues: (metaParameters: {[metaParam: string]: any}) => any 
+}> = 
+({ meta_parameters, values, touched, resetInitialValues}) => {
     let isTouched = "meta_parameters" in touched;
     return (
       <div className="card card-body card-outer">
@@ -147,13 +168,22 @@ export const MetaParameters = React.memo(
         </button>
       </div>
     );
-  },
+  }
+
+  export const MetaParameters = React.memo(MetaParametersComponent,
   (prevProps, nextProps) => {
     return isEqual(prevProps.values, nextProps.values);
   }
 );
 
-const ValueComponent = ({
+const ValueComponent: React.FC<{
+  fieldName: string, 
+  placeholder: string, 
+  colClass: string, 
+  data: ParamToolsParam, 
+  isTouched: boolean, 
+  extend: boolean, 
+  label: string}> = ({
   fieldName,
   placeholder,
   colClass,
@@ -179,77 +209,94 @@ const ValueComponent = ({
 
 const Value = React.memo(ValueComponent);
 
-export const Param = React.memo(
-  ({ param, msect, data, values, extend, meta_parameters }) => {
-    if (Object.keys(data.form_fields).length == 1) {
-      var colClass = "col-6";
-    } else if (
-      data.type === "bool" ||
-      (!!data.validators && data.validators.choice)
-    ) {
-      var colClass = "col-md-auto";
-    } else {
-      var colClass = "col";
-    }
-    if ("checkbox" in data) {
-      var checkbox = (
-        <FastField
-          name={`adjustment.${msect}.${param}.checkbox`}
-          placeholder={data.checkbox}
-          component={CPIField}
-        />
-      );
-    } else {
-      var checkbox = null;
-    }
-    var paramElement = (
-      <ParamElement
-        param_data={data}
-        checkbox={checkbox}
-        id={`adjustment.${msect}.${param}`}
+const ParamComponent: React.FC<{
+  param: string, 
+  msect: string, 
+  data: ParamToolsParam, 
+  values: InitialValues["adjustment"]["msect"]["paramName"], 
+  extend: boolean, 
+  meta_parameters: ParamToolsConfig
+}> = ({param, msect, data, values, extend, meta_parameters}) => {
+  let checkbox;
+  let colClass;
+  if (Object.keys(data.form_fields).length == 1) {
+    colClass = "col-6";
+  } else if (
+    data.type === "bool" ||
+    (!!data.validators && data.validators.choice)
+  ) {
+    colClass = "col-md-auto";
+  } else {
+    colClass = "col";
+  }
+  if ("checkbox" in data || "indexed" in data) {
+    let checkbox = (
+      <FastField
+        name={`adjustment.${msect}.${param}.checkbox`}
+        placeholder={data.checkbox}
+        component={CPIField}
       />
     );
-    return (
-      <div className="container mb-3" style={{ padding: "left 0" }} key={param}>
-        {paramElement}
-        <div className="form-row has-statuses" style={{ marginLeft: "-20px" }}>
-          {Object.entries(data.form_fields).map(function (form_field, ix) {
-            let labels = form_field[0];
-            let vo = data.value[ix];
-            let commaSepLabs = Object.entries(vo)
-              .filter(item => item[0] != "value" && !(item[0] in meta_parameters))
-              .map(item => item[1]).join(",");
-            let fieldName = `adjustment.${msect}.${param}.${labels}`;
-            let placeholder = valForForm(form_field[1]);
-            let isTouched = false;
-            if (labels in values) {
-              isTouched = Array.isArray(values[labels])
-                ? values[labels].length > 0
-                : !!values[labels];
-            }
-            return (
-              <Value
-                key={fieldName}
-                fieldName={fieldName}
-                placeholder={placeholder}
-                colClass={colClass}
-                data={data}
-                isTouched={isTouched}
-                extend={extend}
-                label={commaSepLabs}
-              />
-            );
-          })}
-        </div>
+  } else {
+    checkbox = null;
+  }
+  let paramElement = (
+    <ParamElement
+      param_data={data}
+      checkbox={checkbox}
+      id={`adjustment.${msect}.${param}`}
+    />
+  );
+  return (
+    <div className="container mb-3" style={{ padding: "left 0" }} key={param}>
+      {paramElement}
+      <div className="form-row has-statuses" style={{ marginLeft: "-20px" }}>
+        {Object.entries(data.form_fields).map(function (form_field, ix) {
+          let labels = form_field[0];
+          let vo = data.value[ix];
+          let commaSepLabs = Object.entries(vo)
+            .filter(item => item[0] != "value" && !(item[0] in meta_parameters))
+            .map(item => item[1]).join(",");
+          let fieldName = `adjustment.${msect}.${param}.${labels}`;
+          let placeholder = valForForm(form_field[1]);
+          let isTouched = false;
+          if (labels in values) {
+            isTouched = Array.isArray(values[labels])
+              ? values[labels].length > 0
+              : !!values[labels];
+          }
+          return (
+            <Value
+              key={fieldName}
+              fieldName={fieldName}
+              placeholder={placeholder}
+              colClass={colClass}
+              data={data}
+              isTouched={isTouched}
+              extend={extend}
+              label={commaSepLabs}
+            />
+          );
+        })}
       </div>
-    );
-  },
+    </div>
+  );
+}
+
+export const Param = React.memo(ParamComponent,
   (prevProps, nextProps) => {
     return isEqual(prevProps.values, nextProps.values);
   }
 );
 
-const Section2 = React.memo(
+const Section2Component: React.FC<{
+  section_2: string, 
+  param_list: Array<string>, 
+  msect: string, 
+  model_parameters: APIData["model_parameters"], 
+  values: InitialValues["adjustment"]["msect"], 
+  extend: boolean, 
+  meta_parameters: APIData["meta_parameters"]}> = 
   ({ section_2, param_list, msect, model_parameters, values, extend, meta_parameters }) => {
     let section_2_id = makeID(section_2);
     return (
@@ -270,7 +317,10 @@ const Section2 = React.memo(
         })}
       </div>
     );
-  },
+  }
+  
+const Section2 = React.memo(
+  Section2Component,
   (prevProps, nextProps) => {
     for (const param of prevProps.param_list) {
       if (!isEqual(prevProps.values[param], nextProps.values[param])) {
@@ -281,7 +331,15 @@ const Section2 = React.memo(
   }
 );
 
-const Section1 = React.memo(
+const Section1Component: React.FC<{
+  section_1: string,
+  section_2_dict: {[section_2: string]: Array<string>},
+  msect: string,
+  model_parameters: APIData["model_parameters"],
+  values: InitialValues["adjustment"]["msect"],
+  extend: boolean,
+  meta_parameters: APIData["meta_parameters"]
+}> =
   ({ section_1, section_2_dict, msect, model_parameters, values, extend, meta_parameters }) => {
     let section_1_id = makeID(section_1);
     return (
@@ -327,7 +385,10 @@ const Section1 = React.memo(
         </div>
       </div>
     );
-  },
+  }
+
+const Section1 = React.memo(
+  Section1Component,
   (prevProps, nextProps) => {
     for (const [section2, paramList] of Object.entries(
       prevProps.section_2_dict
@@ -342,8 +403,15 @@ const Section1 = React.memo(
   }
 );
 
-export const MajorSection = React.memo(
-  ({ msect, section_1_dict, meta_parameters, model_parameters, ...props }) => {
+const MajorSectionComponent: React.FC<{
+  msect: string,
+  section_1_dict: {[section_1: string]: {[section_2: string]: Array<string>}},
+  meta_parameters: APIData["meta_parameters"],
+  model_parameters: APIData["model_parameters"],
+  values: InitialValues,
+  extend: boolean,
+}> = 
+  ({ msect, section_1_dict, meta_parameters, model_parameters, values, extend }) => {
     return (
       <div className="card card-body card-outer" key={msect} id={makeID(msect)}>
         <SectionHeader title={msect} titleSize="2.9rem" label="major" />
@@ -366,8 +434,8 @@ export const MajorSection = React.memo(
                   section_2_dict={section_2_dict}
                   msect={msect}
                   model_parameters={model_parameters}
-                  values={props.values.adjustment[msect]}
-                  extend={props.extend}
+                  values={values.adjustment[msect]}
+                  extend={extend}
                   meta_parameters={meta_parameters}
                 />
               );
@@ -376,7 +444,10 @@ export const MajorSection = React.memo(
         </div>
       </div>
     );
-  },
+  }
+
+export const MajorSection = React.memo(
+  MajorSectionComponent,
   (prevProps, nextProps) => {
     return isEqual(
       prevProps.values.adjustment[prevProps.msect],
@@ -385,7 +456,7 @@ export const MajorSection = React.memo(
   }
 );
 
-export const SectionHeaderList = ({ sects }) => {
+export const SectionHeaderList: React.FC<{sects: Sects}> = ({ sects }) => {
   return (
     <div className="card card-body card-outer">
       {Object.entries(sects).map(([msect, section1], ix) => {
@@ -433,7 +504,13 @@ export const SectionHeaderList = ({ sects }) => {
   );
 };
 
-export const Preview = React.memo(
+export const PreviewComponent: React.FC<{
+  values: InitialValues, 
+  schema: yup.Schema<any>, 
+  tbLabelSchema: yup.Schema<any>,
+  transformfunc: any,
+  extend: boolean,
+}> = 
   ({ values, schema, tbLabelSchema, transformfunc, extend }) => {
     const [preview, setPreview] = React.useState({});
     const parseValues = () => {
@@ -479,13 +556,20 @@ export const Preview = React.memo(
         </Card>
       </Card>
     );
-  },
+  }
+  
+export const Preview = React.memo(
+  PreviewComponent,
   (prevProps, nextProps) => {
     return isEqual(prevProps.values, nextProps.values);
   }
 );
 
-export const ErrorCard = ({ errorMsg, errors, model_parameters = null }) => {
+export const ErrorCard: React.FC<{
+  errorMsg: JSX.Element,
+  errors: {[sect: string]: {[paramName: string]: Array<string>}},
+  model_parameters: APIData["model_parameters"],
+}> = ({ errorMsg, errors, model_parameters = null }) => {
   const getTitle = (msect, paramName) => {
     if (
       !!model_parameters &&

@@ -5,7 +5,7 @@ hljs.registerLanguage("python", python);
 hljs.registerLanguage("json", json);
 
 import "highlight.js/styles/default.css";
-import React from "react";
+import * as React from "react";
 import { Button } from "react-bootstrap";
 import { FastField } from "formik";
 
@@ -173,11 +173,11 @@ export const TextAreaField = ({
   );
 };
 
-export const Message = ({ msg, props }) => (
+export const Message = ({ msg: string }) => (
   <small className={`form-text text-muted`}>{msg}</small>
 );
 
-export const RedMessage = ({ msg, props }) => (
+export const RedMessage = ({ msg }) => (
   <p
     className={`form-text font-weight-bold`}
     style={{ color: "#dc3545", fontSize: "80%" }}

@@ -13,10 +13,10 @@ import {
   SectionHeaderList,
   ErrorCard
 } from "./components";
-import ErrorBoundary from "./ErrorBoundary";
 import { ValidatingModal, RunModal, AuthModal } from "./modal";
 import { formikToJSON, convertToFormik } from "./ParamTools";
 import { hasServerErrors } from "./utils";
+import {APIData, AccessStatus, Sects, InitialValues} from "./types";
 
 // need to require schema in model_parameters!
 const tbLabelSchema = yup.object().shape({
@@ -28,17 +28,36 @@ const tbLabelSchema = yup.object().shape({
   use_full_sample: yup.bool()
 });
 
-export default class InputsForm extends React.Component<{}, {value: string}> {
+
+type InputsFormState = Readonly<{
+  initialValues: InitialValues,
+  sects: Sects,
+  model_parameters: APIData["model_parameters"],
+  meta_parameters: APIData["meta_parameters"],
+  schema: yup.Schema<any>,
+  extend: boolean,
+  unknownParams: Array<string>,
+  creationDate?: Date,
+  modelVersion?: string,
+  detailAPIURL?: string,
+  editInputsUrl: string,
+  initialServerErrors: {[msect: string]: {errors: {[paramName: string]: any}}},
+  accessStatus: AccessStatus,
+  resetting: boolean,
+  error: any,
+  timer: NodeJS.Timeout,
+}>
+
+interface InputsFormProps {
+  fetchInitialValues: () => Promise<any>;
+  resetInitialValues: (metaParameters: {[metaParam: string]: any}) => any,
+  doSubmit: (data: FormData) => Promise<any>
+}
+
+export default class InputsForm extends React.Component<InputsFormProps, InputsFormState> {
   constructor(props) {
     super(props);
-    this.state = {
-      initialValues: this.props.initialValues,
-      sects: false,
-      model_parameters: false,
-      resetting: false,
-      timer: null,
-      error: null
-    };
+    this.setState({resetting: false})
     this.resetInitialValues = this.resetInitialValues.bind(this);
     this.poll = this.poll.bind(this);
     this.killTimer = this.killTimer.bind(this);
@@ -106,7 +125,8 @@ export default class InputsForm extends React.Component<{}, {value: string}> {
           meta_parameters: meta_parameters,
           schema: schema,
           extend: "extend" in data ? data.extend : false,
-          resetting: false
+          resetting: false,
+          unknownParams: unknownParams
         });
       })
       .catch(err => {
@@ -188,7 +208,7 @@ export default class InputsForm extends React.Component<{}, {value: string}> {
     let sects = this.state.sects;
     let extend = this.state.extend;
     let hasUnknownParams = this.state.unknownParams.length > 0;
-    let unknownParamsErrors = { "Unknown Parameters": { errors: {} } };
+    let unknownParamsErrors: {[msect: string]: {errors: any}} = { "Unknown Parameters": { errors: {} } };
     if (hasUnknownParams) {
       for (const param of this.state.unknownParams) {
         unknownParamsErrors["Unknown Parameters"].errors[param] =
@@ -345,18 +365,11 @@ export default class InputsForm extends React.Component<{}, {value: string}> {
                     let section_1_dict = msect_item[1];
                     return (
                       <MajorSection
-                        key={`${msect}-component`}
                         msect={msect}
                         section_1_dict={section_1_dict}
                         meta_parameters={meta_parameters}
                         model_parameters={model_parameters}
-                        handleSubmit={handleSubmit}
-                        handleChange={handleChange}
-                        status={status}
-                        errors={errors}
                         values={values}
-                        setFieldValue={setFieldValue}
-                        handleBlur={handleBlur}
                         extend={extend}
                       />
                     );
