@@ -4,56 +4,48 @@ var webpack = require("webpack");
 module.exports = [
   {
     context: __dirname,
-    entry: "./src/publish.js",
+    entry: "./src/publish.tsx",
     output: {
       path: path.resolve("./static/js/"),
       filename: "publish.js"
     },
-    module: {
-      rules: [
-        {
-          // this is so that we can compile any React,
-          // ES6 and above into normal ES5 syntax
-          test: /\.(js|jsx)$/,
-          // we do not want anything from node_modules to be compiled
-          exclude: /node_modules/,
-          use: ["babel-loader"]
-        },
-        {
-          test: /\.(css|scss)$/,
-          use: [
-            "style-loader", // creates style nodes from JS strings
-            "css-loader" // translates CSS into CommonJS
-          ]
-        }
-      ]
-    }
-  },
-  {
-    context: __dirname,
-    entry: "./src/inputs.js",
-    output: {
-      path: path.resolve("./static/js/"),
-      filename: "inputs.js"
+    resolve: {
+      extensions: [".ts", ".tsx", ".js", ".tsx"]
     },
     module: {
       rules: [
-        {
-          // this is so that we can compile any React,
-          // ES6 and above into normal ES5 syntax
-          test: /\.(js|jsx)$/,
-          // we do not want anything from node_modules to be compiled
-          exclude: /node_modules/,
-          use: ["babel-loader"]
-        },
-        {
-          test: /\.(css|scss)$/,
-          use: [
-            "style-loader", // creates style nodes from JS strings
-            "css-loader" // translates CSS into CommonJS
-          ]
-        }
+        { test: /\.(t|j)sx?$/, use: { loader: "awesome-typescript-loader" } },
+        { enforce: "pre", test: /\.js$/, loader: "source-map-loader" },
+        { test: /\.(css|scss)$/, use: ["style-loader", "css-loader"] }
       ]
-    }
+    },
+    // externals: {
+    //   react: "React",
+    //   "react-dom": "ReactDOM"
+    // },
+    devtool: "source-map"
+  },
+  {
+    context: __dirname,
+    entry: "./src/sim.tsx",
+    output: {
+      path: path.resolve("./static/js/"),
+      filename: "sim.js"
+    },
+    resolve: {
+      extensions: [".ts", ".tsx", ".js", ".tsx"]
+    },
+    module: {
+      rules: [
+        { test: /\.(t|j)sx?$/, use: { loader: "awesome-typescript-loader" } },
+        { enforce: "pre", test: /\.js$/, loader: "source-map-loader" },
+        { test: /\.(css|scss)$/, use: ["style-loader", "css-loader"] }
+      ]
+    },
+    // externals: {
+    //   react: "React",
+    //   "react-dom": "ReactDOM"
+    // },
+    devtool: "source-map"
   }
 ];
