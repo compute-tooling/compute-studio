@@ -7,7 +7,7 @@ module.exports = [
     entry: "./src/publish.tsx",
     output: {
       filename: "publish.js",
-      path: path.resolve(__dirname, "dist")
+      path: path.resolve(__dirname, "static/js")
     },
     module: {
       rules: [
@@ -30,7 +30,7 @@ module.exports = [
     entry: "./src/sim.tsx",
     output: {
       filename: "sim.js",
-      path: path.resolve(__dirname, "dist")
+      path: path.resolve(__dirname, "static/js")
     },
     module: {
       rules: [

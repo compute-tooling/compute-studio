@@ -45,7 +45,7 @@ type InputsFormState = Readonly<{
   accessStatus: AccessStatus,
   resetting: boolean,
   error: any,
-  timer: NodeJS.Timeout,
+  timer: number,
 }>
 
 interface InputsFormProps {
@@ -174,6 +174,7 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
           }
         });
     }, 500);
+    // @ts-ignore
     this.setState({ timer: timer });
   }
 
@@ -208,7 +209,7 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
     let sects = this.state.sects;
     let extend = this.state.extend;
     let hasUnknownParams = this.state.unknownParams.length > 0;
-    let unknownParamsErrors: {[msect: string]: {errors: any}} = { "Unknown Parameters": { errors: {} } };
+    let unknownParamsErrors: {[sect: string]: {errors: any}} = { "Unknown Parameters": { errors: {} } };
     if (hasUnknownParams) {
       for (const param of this.state.unknownParams) {
         unknownParamsErrors["Unknown Parameters"].errors[param] =

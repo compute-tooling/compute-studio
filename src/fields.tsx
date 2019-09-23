@@ -1,13 +1,19 @@
-import hljs from "highlight.js/lib/highlight";
-import python from "highlight.js/lib/languages/python";
-import json from "highlight.js/lib/languages/json";
+import * as hljs from "highlight.js/lib/highlight";
+import * as python from "highlight.js/lib/languages/python";
+import * as json from "highlight.js/lib/languages/json";
 hljs.registerLanguage("python", python);
 hljs.registerLanguage("json", json);
 
 import "highlight.js/styles/default.css";
 import * as React from "react";
 import { Button } from "react-bootstrap";
-import { FastField } from "formik";
+import { FastField, FieldProps } from "formik";
+
+interface CustomFieldProps {
+  label: string,
+  preview: boolean,
+  description?: string,
+}
 
 var Remarkable = require("remarkable");
 
@@ -51,56 +57,59 @@ function markdownElement(markdownText) {
   );
 }
 
-function titleChange(e, onChange) {
+function titleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, onChange) {
   if (e.target.name == "title") {
     e.target.value = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
   }
   onChange(e);
 }
 
-export const TextField = ({ field, form: { touched, errors }, ...props }) => {
-  if (props.preview) {
-    var element = markdownElement(field.value);
-  } else {
-    var element = (
-      <input
-        className="form-control"
-        {...field}
-        {...props}
-        preview=""
-        style={inputStyle}
-        onChange={e => titleChange(e, field.onChange)}
-      />
-    );
-  }
+export const TextField = (fieldProps: FieldProps<any> & CustomFieldProps) => {
+  const {
+    field,
+    form: { touched, errors },
+    ...props
+  } = fieldProps;
   return (
     <div>
       <label>
         <b>{props.label}:</b>
-        {element}
+        {props.preview ? markdownElement(field.value) : (
+          <input
+            className="form-control"
+            {...field}
+            {...props}
+            style={inputStyle}
+            onChange={e => titleChange(e, field.onChange)}
+          />
+        )}
       </label>
     </div>
   );
 };
 
-function checkboxChange(e, onChange, placeholder = null) {
+function checkboxChange(e: React.ChangeEvent<HTMLInputElement>, onChange, placeholder = null) {
   let value =
     e.target.value != null && e.target.value !== ""
       ? e.target.value
       : placeholder;
   if (typeof value === "boolean") {
+    // @ts-ignore
     e.target.value = !value;
   } else {
+    // TODO: what is this case
+    // @ts-ignore
     e.target.value = value === "true" ? false : true;
   }
   onChange(e);
 }
 
-export const CheckboxField = ({
-  field,
-  form: { touched, errors },
-  ...props
-}) => {
+export const CheckboxField = (fieldProps: FieldProps<any> & CustomFieldProps) => {
+  const {
+    field,
+    form: { touched, errors },
+    ...props
+  } = fieldProps;
   return (
     <div>
       <label>
@@ -173,7 +182,7 @@ export const TextAreaField = ({
   );
 };
 
-export const Message = ({ msg: string }) => (
+export const Message = ({ msg }) => (
   <small className={`form-text text-muted`}>{msg}</small>
 );
 
@@ -229,17 +238,20 @@ export const ServerSizeField = ({
       </label>
       <p>
         <select name="server_size" onChange={field.onChange}>
-          <option multiple={true} value={[4, 2]}>
+          <
+            //@ts-ignore
+            option multiple={true} value={[4, 2]}>
             4 GB 2 vCPUs
           </option>
-          <option multiple={true} value={[8, 2]}>
+          <
+            //@ts-ignore
+            option multiple={true} value={[8, 2]}>
             8 GB 2 vCPUs
           </option>
-          <option multiple={true} value={[16, 4]}>
+          <
+            //@ts-ignore
+            option multiple={true} value={[16, 4]}>
             16 GB 4 vCPUs
-          </option>
-          <option multiple={true} value={[32, 8]}>
-            32 GB 8 vCPUs
           </option>
         </select>
       </p>

@@ -4,44 +4,31 @@ import * as ReactLoading from "react-loading";
 
 import { LoginForm, SignupForm } from "./AuthForms";
 import axios from "axios";
+import { AccessStatus } from "./types";
 
-export class ValidatingModal extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      show: true,
-      setShow: true
-    };
-    this.handleClose = this.handleClose.bind(this);
-    this.handleShow = this.handleShow.bind(this);
-  }
 
-  handleClose() {
-    this.setState({ setShow: false, show: false });
-  }
-  handleShow() {
-    this.setState({ setShow: true, show: true });
-  }
+export const ValidatingModal: React.FC<{defaultShow?: boolean}> = ({defaultShow = true}) => {
+  const [show, setShow] = React.useState(defaultShow);
 
-  render() {
-    return (
-      <div>
-        <Modal show={this.state.show} onHide={this.handleClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>Validating inputs...</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <div className="d-flex justify-content-center">
-              <ReactLoading type="spokes" color="#28a745" />
-            </div>
-          </Modal.Body>
-        </Modal>
-      </div>
-    );
-  }
+  return (
+    <div>
+      <Modal show={show} onHide={() => setShow(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Validating inputs...</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="d-flex justify-content-center">
+            <
+              // @ts-ignore
+              ReactLoading type="spokes" color="#28a745" />
+          </div>
+        </Modal.Body>
+      </Modal>
+    </div>
+  );
 }
 
-const PricingInfoCollapse = ({ accessStatus }) => {
+const PricingInfoCollapse: React.FC<{accessStatus: AccessStatus}> = ({ accessStatus }) => {
   const [collapseOpen, setCollapseOpen] = React.useState(false);
 
   return (
@@ -71,11 +58,17 @@ const PricingInfoCollapse = ({ accessStatus }) => {
   );
 }
 
-const RequireLoginDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
+const RequireLoginDialog: React.FC<{
+  accessStatus: AccessStatus, 
+  show: boolean, 
+  setShow?: React.Dispatch<any>, 
+  handleSubmit: ()=>void
+}> = ({ accessStatus, show, setShow, handleSubmit }) => {
   const [authenticated, setAuthStatus] = React.useState(false);
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
   const [newDialog, updateNewDialog] = React.useState(null);
   const [isLogIn, setIsLogIn] = React.useState(true);
+  const getVariant = (isLogIn: boolean) => isLogIn ? "outline-primary" : "outline-success"
   if (authenticated && !hasSubmitted) {
     axios.get(
       accessStatus.api_url
@@ -89,6 +82,7 @@ const RequireLoginDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
   if (newDialog !== null) {
     return newDialog;
   }
+  
   return (
     <Modal show={show} onHide={() => setShow(false)}>
       <Modal.Header closeButton>
@@ -102,7 +96,7 @@ const RequireLoginDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
             <SignupForm setAuthStatus={setAuthStatus} />
           }
         </div>
-        <Button className="mt-3" variant={`outline-${!isLogIn ? "primary" : "success"}`} onClick={() => setIsLogIn(!isLogIn)} >{!isLogIn ? "Log in" : "Sign up"}</Button>
+        <Button className="mt-3" variant={getVariant(isLogIn)} onClick={() => setIsLogIn(!isLogIn)} >{!isLogIn ? "Log in" : "Sign up"}</Button>
       </Modal.Body>
 
       <Modal.Footer>
@@ -114,7 +108,12 @@ const RequireLoginDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
   );
 }
 
-const RequirePmtDialog = ({ show, setShow, accessStatus }) => {
+const RequirePmtDialog: React.FC<{
+  accessStatus: AccessStatus, 
+  show: boolean, 
+  setShow?: React.Dispatch<any>, 
+  handleSubmit: ()=>void
+}> = ({ accessStatus, show, setShow, handleSubmit }) => {
   const handleCloseWithRedirect = (e, redirectLink) => {
     e.preventDefault();
     setShow(false);
@@ -144,7 +143,12 @@ const RequirePmtDialog = ({ show, setShow, accessStatus }) => {
   );
 }
 
-const RunDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
+const RunDialog: React.FC<{
+  accessStatus: AccessStatus, 
+  show: boolean, 
+  setShow?: React.Dispatch<any>, 
+  handleSubmit: ()=>void
+}> = ({ accessStatus, show, setShow, handleSubmit }) => {
   const handleCloseWithSubmit = () => {
     setShow(false);
     handleSubmit();
@@ -186,7 +190,12 @@ const RunDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
   );
 }
 
-const Dialog = ({ accessStatus, show, setShow, handleSubmit }) => {
+const Dialog: React.FC<{
+  accessStatus: AccessStatus, 
+  show: boolean, 
+  setShow?: React.Dispatch<any>, 
+  handleSubmit: ()=>void
+}> = ({ accessStatus, show, setShow, handleSubmit }) => {
   if (setShow == null) {
     [show, setShow] = React.useState(show);
   }
@@ -200,17 +209,14 @@ const Dialog = ({ accessStatus, show, setShow, handleSubmit }) => {
 }
 
 
-export const RunModal = ({ handleSubmit, accessStatus }) => {
+export const RunModal: React.FC<{handleSubmit: () => void, accessStatus: AccessStatus}> = ({ handleSubmit, accessStatus }) => {
   const [show, setShow] = React.useState(false);
 
-  const handleShow = (show) => {
-    setShow(show);
-  }
-
-
-  let runbuttontext = "Run"
+  let runbuttontext: string;
   if (!accessStatus.is_sponsored) {
-    runbuttontext = `Run ($${accessStatus.exp_cost})`
+    runbuttontext = `Run ($${accessStatus.exp_cost})`;
+  } else {
+    runbuttontext = "Run";
   }
 
   return (
@@ -224,12 +230,12 @@ export const RunModal = ({ handleSubmit, accessStatus }) => {
           <b>{runbuttontext}</b>
         </Button>
       </div>
-      <Dialog accessStatus={accessStatus} show={show} setShow={handleShow} handleSubmit={handleSubmit} />
+      <Dialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />
     </>
   );
 };
 
-export const AuthModal = () => {
+export const AuthModal: React.FC<{}> = () => {
   const [show, setShow] = React.useState(true);
 
   const handleClose = () => setShow(false);

@@ -80,7 +80,6 @@ export const SectionHeader: React.FC<{title: string, titleSize: string, titleCla
 };
 
 export const LoadingElement = () => {
-  // @ts-ignore
   return (
     <div className="row">
       <div className="col-sm-4">
@@ -567,16 +566,21 @@ export const Preview = React.memo(
 
 export const ErrorCard: React.FC<{
   errorMsg: JSX.Element,
-  errors: {[sect: string]: {[paramName: string]: Array<string>}},
+  errors: {
+    [sect: string]: {
+      errors: {[paramName: string]: Array<string>
+      }
+    }
+  },
   model_parameters: APIData["model_parameters"],
 }> = ({ errorMsg, errors, model_parameters = null }) => {
-  const getTitle = (msect, paramName) => {
+  const getTitle = (sect, paramName) => {
     if (
       !!model_parameters &&
-      msect in model_parameters &&
-      paramName in model_parameters[msect]
+      sect in model_parameters &&
+      paramName in model_parameters[sect]
     ) {
-      return [true, model_parameters[msect][paramName].title];
+      return [true, model_parameters[sect][paramName].title];
     } else {
       return [false, paramName];
     }
@@ -585,14 +589,14 @@ export const ErrorCard: React.FC<{
     <Card className="card-outer">
       <Card.Body>
         <div className="alert alert-danger">{errorMsg}</div>
-        {Object.entries(errors).map(([msect, errors], ix) => {
-          return !isEmpty(errors.errors) ? (
-            <div key={`${msect}-error`} className="alert alert-danger">
-              <h5>{msect}</h5>
-              {Object.entries(errors.errors).map(([paramName, msgs], ix) => {
-                let [exists, title] = getTitle(msect, paramName);
+        {Object.entries(errors).map(([sect, sect_errors]) => {
+          return !isEmpty(sect_errors.errors) ? (
+            <div key={`${sect}-error`} className="alert alert-danger">
+              <h5>{sect}</h5>
+              {Object.entries(sect_errors.errors).map(([paramName, msgs]) => {
+                let [exists, title] = getTitle(sect, paramName);
                 return (
-                  <div key={`${msect}-${paramName}-error`}>
+                  <div key={`${sect}-${paramName}-error`}>
                     <p>
                       <b>{`${title}:`}</b>
                     </p>
@@ -601,7 +605,7 @@ export const ErrorCard: React.FC<{
                         <ul>
                           {msgs.map((msg, ix) => <li key={`msg-${ix}`}>{msg}</li>)}{" "}
                           {exists ? (
-                            <li className="list-unstyled"><a href={`#adjustment.${msect}.${paramName}`}>
+                            <li className="list-unstyled"><a href={`#adjustment.${sect}.${paramName}`}>
                               [link]
                           </a></li>
                           ) : null}
@@ -613,7 +617,7 @@ export const ErrorCard: React.FC<{
               })}
             </div>
           ) : (
-              <div key={`${msect}-error`} />
+              <div key={`${sect}-error`} />
             );
         })}
       </Card.Body>
