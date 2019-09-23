@@ -269,13 +269,15 @@ class OutputsView(GetOutputsObjectMixin, DetailView):
         )
 
     def render_v1(self, request):
-        renderable = {"renderable": self.object.outputs["outputs"]["renderable"]}
-        outputs = s3like.read_from_s3like(renderable)
+        renderable = {
+            "renderable": self.object.outputs["outputs"]["renderable"]["outputs"]
+        }
+        # outputs = s3like.read_from_s3like(renderable)
         return render(
             request,
             "comp/outputs/v1/sim_detail.html",
             {
-                "outputs": outputs,
+                "outputs": renderable,
                 "object": self.object,
                 "result_header": "Results",
                 "bokeh_scripts": {

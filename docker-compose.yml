@@ -7,6 +7,8 @@ services:
       - postgres_data:/var/lib/postgresql/data/
     networks:
       - distributed_worker_net
+    ports:
+      - "5432:5432"
   webbase:
     build:
       context: ./
