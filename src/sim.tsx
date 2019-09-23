@@ -7,7 +7,7 @@ import axios from "axios";
 import * as Sentry from "@sentry/browser";
 
 import InputsForm from "./InputsForm";
-import ErrorBoundary from "./ErrorBoundary";
+// import ErrorBoundary from "./ErrorBoundary";
 import { APIDetail, APIData } from "./types";
 
 Sentry.init({
@@ -144,14 +144,15 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     const id = `${username}/${app_name}`;
+    console.log("let's render!")
     return (
-      <ErrorBoundary>
+      // <ErrorBoundary>
         <InputsForm
           fetchInitialValues={this.fetchInitialValues}
           resetInitialValues={this.resetInitialValues}
           doSubmit={this.doSubmit}
         />
-      </ErrorBoundary>
+      // </ErrorBoundary>
     );
   }
 }

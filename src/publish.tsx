@@ -112,7 +112,6 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
         <Formik
           initialValues={this.state.initialValues}
           onSubmit={(values: PublishValues, actions: FormikActions<PublishValues>) => {
-            console.log(values, actions);
             var formdata = new FormData();
             for (const field in values) {
               formdata.append(field, values[field]);

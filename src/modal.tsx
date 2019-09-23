@@ -1,6 +1,6 @@
 import { Button, Modal, Collapse } from "react-bootstrap";
 import * as React from "react";
-import * as ReactLoading from "react-loading";
+import ReactLoading from "react-loading";
 
 import { LoginForm, SignupForm } from "./AuthForms";
 import axios from "axios";
@@ -18,9 +18,7 @@ export const ValidatingModal: React.FC<{defaultShow?: boolean}> = ({defaultShow 
         </Modal.Header>
         <Modal.Body>
           <div className="d-flex justify-content-center">
-            <
-              // @ts-ignore
-              ReactLoading type="spokes" color="#28a745" />
+            <ReactLoading type="spokes" color="#28a745" />
           </div>
         </Modal.Body>
       </Modal>

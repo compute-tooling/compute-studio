@@ -1,9 +1,11 @@
 var path = require("path");
 var webpack = require("webpack");
+const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
+  .BundleAnalyzerPlugin;
 
 module.exports = [
   {
-    devtool: "inline-source-map",
+    devtool: "source-map",
     entry: "./src/publish.tsx",
     output: {
       filename: "publish.js",
@@ -18,15 +20,21 @@ module.exports = [
         {
           test: /\.css$/i,
           use: ["style-loader", "css-loader"]
+        },
+        {
+          enforce: "pre",
+          test: /\.js$/,
+          loader: "source-map-loader"
         }
       ]
     },
+    // plugins: [new BundleAnalyzerPlugin({ analyzerPort: 8001 })],
     resolve: {
       extensions: [".ts", ".tsx", ".js"]
     }
   },
   {
-    devtool: "inline-source-map",
+    devtool: "source-map",
     entry: "./src/sim.tsx",
     output: {
       filename: "sim.js",
@@ -41,9 +49,15 @@ module.exports = [
         {
           test: /\.css$/i,
           use: ["style-loader", "css-loader"]
+        },
+        {
+          enforce: "pre",
+          test: /\.js$/,
+          loader: "source-map-loader"
         }
       ]
     },
+    // plugins: [new BundleAnalyzerPlugin({ analyzerPort: 8002 })],
     resolve: {
       extensions: [".ts", ".tsx", ".js"]
     }

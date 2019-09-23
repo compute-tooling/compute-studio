@@ -1,6 +1,7 @@
 import * as yup from "yup";
 import { parseFromOps, parseToOps } from "./ops";
-import * as _ from "lodash";
+import {isEmpty} from "lodash/lang";
+import {union, difference} from "lodash/array";
 
 import {ValueObject, ParamToolsConfig, ParamToolsParam, FormValueObject, APIData, APIDetail, InitialValues, Sects} from "./types";
 
@@ -181,7 +182,7 @@ export function yupValidator(params: ParamToolsConfig, param_data: ParamToolsPar
   }
   if ("choice" in param_data.validators) {
     yupObj = yupObj.oneOf(
-      _.union(param_data.validators.choice.choices, [null, ""]),
+      union(param_data.validators.choice.choices, [null, ""]),
       oneOfMsg
     );
   }
@@ -191,7 +192,7 @@ export function yupValidator(params: ParamToolsConfig, param_data: ParamToolsPar
 
 function select(valueObjects: Array<ValueObject>, labels: {[key: string]: any}) {
   let ret = [];
-  if (_.isEmpty(labels)) {
+  if (isEmpty(labels)) {
     return valueObjects;
   }
   for (const vo of valueObjects) {
@@ -230,8 +231,8 @@ export function convertToFormik(data: APIData): [
   yup.Schema<any>,
   Array<string>
 ] {
-  let initialValues: InitialValues;
-  let sects: Sects;
+  let initialValues: InitialValues = {adjustment: {}, meta_parameters: {}};
+  let sects: Sects = {};
   let section_1: string;
   let section_2: string;
   let adjShape: {[msect: string]: yup.Schema<any>} = {};
@@ -241,8 +242,8 @@ export function convertToFormik(data: APIData): [
     "label_to_extend" in data ? data.label_to_extend : "year";
   // end TODO
   const hasInitialValues: boolean = "detail" in data;
-  let adjustment: APIDetail["adjustment"];
-  let meta_parameters: APIDetail["meta_parameters"];
+  let adjustment: APIDetail["adjustment"] = {};
+  let meta_parameters: APIDetail["meta_parameters"] = {};
   let unknownParams = [];
   if (hasInitialValues) {
     adjustment = data.detail.adjustment;
@@ -258,9 +259,9 @@ export function convertToFormik(data: APIData): [
     if (hasInitialValues && msect in adjustment) {
       // Checkbox params are added to unkownParams and are removed in the
       // checkbox logic block later.
-      unknownParams = _.union(
+      unknownParams = union(
         unknownParams,
-        _.difference(Object.keys(adjustment[msect]), Object.keys(params))
+        difference(Object.keys(adjustment[msect]), Object.keys(params))
       );
     }
     for (const [param, param_data] of Object.entries(params)) {
@@ -293,7 +294,7 @@ export function convertToFormik(data: APIData): [
       for (const vals of param_data.value) {
         let fieldName = labelsToString(vals);
         let placeholder = vals.value.toString();
-        let initialValue: Array<any>;
+        let initialValue: string | Array<any> = "";
         if (hasInitialValues && param in adjustment[msect]) {
           let labels = {};
           for (const [label, labelValue] of Object.entries(vals)) {
@@ -329,7 +330,7 @@ export function convertToFormik(data: APIData): [
 
     adjShape[msect] = yup.object().shape(msectShape);
   }
-  let mpShape: {[mpName: string]: yup.Schema<any>};
+  let mpShape: {[mpName: string]: yup.Schema<any>} = {};
   for (const [mp_name, mp_data] of Object.entries(data.meta_parameters)) {
     let yupObj = yupValidator(data.meta_parameters, mp_data);
     let mpVal = mp_data.value[0].value;
@@ -342,6 +343,7 @@ export function convertToFormik(data: APIData): [
     adjustment: yup.object().shape(adjShape),
     meta_parameters: yup.object().shape(mpShape)
   });
+
   return [
     initialValues,
     sects,

@@ -1,7 +1,7 @@
 "use strict";
 
 import * as React from "react";
-import * as ReactLoading from "react-loading";
+import ReactLoading from "react-loading";
 import { FastField, ErrorMessage, FormikTouched } from "formik";
 import { isEqual, isEmpty } from "lodash/lang";
 import * as yup from "yup";
@@ -11,12 +11,6 @@ import { makeID, valForForm } from "./utils";
 import { RedMessage, getField, CPIField } from "./fields";
 import {ParamToolsParam, ParamToolsConfig, InitialValues, APIData, Sects} from "./types";
 import { Card, Button, Overlay, OverlayTrigger, Tooltip } from "react-bootstrap";
-import { string } from "yup";
-import { InitialLetterProperty } from "csstype";
-
-
-
-
 
 
 export const ParamElement: React.FC<{param_data: ParamToolsParam, checkbox?: React.Component, id: string, classes?: string}> = ({
@@ -79,7 +73,8 @@ export const SectionHeader: React.FC<{title: string, titleSize: string, titleCla
   );
 };
 
-export const LoadingElement = () => {
+export const LoadingElement: React.FC<{}> = () => {
+  const loading = <ReactLoading type="spokes" color="#2b2c2d" />
   return (
     <div className="row">
       <div className="col-sm-4">
@@ -87,9 +82,7 @@ export const LoadingElement = () => {
           <li>
             <div className="card card-body card-outer">
               <div className="d-flex justify-content-center">
-                <
-                  // @ts-ignore
-                  ReactLoading type="spokes" color="#2b2c2d" />
+                {loading}
               </div>
             </div>
           </li>
@@ -98,9 +91,7 @@ export const LoadingElement = () => {
       <div className="col-sm-8">
         <div className="card card-body card-outer">
           <div className="d-flex justify-content-center">
-            <
-              // @ts-ignore
-              ReactLoading type="spokes" color="#2b2c2d" />
+            {loading}
           </div>
         </div>
       </div>

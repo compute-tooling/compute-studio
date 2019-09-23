@@ -30,22 +30,22 @@ const tbLabelSchema = yup.object().shape({
 
 
 type InputsFormState = Readonly<{
-  initialValues: InitialValues,
-  sects: Sects,
-  model_parameters: APIData["model_parameters"],
-  meta_parameters: APIData["meta_parameters"],
-  schema: yup.Schema<any>,
-  extend: boolean,
-  unknownParams: Array<string>,
+  initialValues?: InitialValues,
+  sects?: Sects,
+  model_parameters?: APIData["model_parameters"],
+  meta_parameters?: APIData["meta_parameters"],
+  schema?: yup.Schema<any>,
+  extend?: boolean,
+  unknownParams?: Array<string>,
   creationDate?: Date,
   modelVersion?: string,
   detailAPIURL?: string,
-  editInputsUrl: string,
-  initialServerErrors: {[msect: string]: {errors: {[paramName: string]: any}}},
-  accessStatus: AccessStatus,
-  resetting: boolean,
-  error: any,
-  timer: number,
+  editInputsUrl?: string,
+  initialServerErrors?: {[msect: string]: {errors: {[paramName: string]: any}}},
+  accessStatus?: AccessStatus,
+  resetting?: boolean,
+  error?: any,
+  timer?: number,
 }>
 
 interface InputsFormProps {
@@ -57,7 +57,12 @@ interface InputsFormProps {
 export default class InputsForm extends React.Component<InputsFormProps, InputsFormState> {
   constructor(props) {
     super(props);
-    this.setState({resetting: false})
+    this.state = {
+      resetting: false,
+      error: null,
+      model_parameters: null,
+      initialValues: null,
+    }
     this.resetInitialValues = this.resetInitialValues.bind(this);
     this.poll = this.poll.bind(this);
     this.killTimer = this.killTimer.bind(this);
@@ -77,7 +82,6 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
             unknownParams
           ] = convertToFormik(data);
           let hasSimData = !!data.detail && !!data.detail.sim;
-
           this.setState({
             initialValues: initialValues,
             sects: sects,
@@ -183,10 +187,6 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
       clearInterval(this.state.timer);
       this.setState({ timer: null });
     }
-  }
-
-  componentWillUnmount() {
-    this.killTimer();
   }
 
   render() {
@@ -366,6 +366,7 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
                     let section_1_dict = msect_item[1];
                     return (
                       <MajorSection
+                        key={msect}
                         msect={msect}
                         section_1_dict={section_1_dict}
                         meta_parameters={meta_parameters}
