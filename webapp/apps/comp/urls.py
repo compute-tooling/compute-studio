@@ -39,5 +39,6 @@ urlpatterns = [
     path("<int:model_pk>/edit/", EditSimView.as_view(), name="edit"),
     path("<int:model_pk>/download/", OutputsDownloadView.as_view(), name="download"),
     path("inputs/<str:hashid>/", EditInputsView.as_view(), name="edit_inputs"),
-    path("<int:model_pk>/", OutputsView.as_view(), name="outputs"),
+    path("<int:model_pk>/", EditSimView.as_view(), name="outputs"),
+    # path("<int:model_pk>/", OutputsView.as_view(), name="outputs"),
 ]

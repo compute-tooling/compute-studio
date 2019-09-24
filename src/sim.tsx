@@ -3,11 +3,13 @@
 import * as ReactDOM from "react-dom";
 import * as React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
+import { Nav, Tabs, Tab } from "react-bootstrap";
 import axios from "axios";
 import * as Sentry from "@sentry/browser";
 
 import InputsForm from "./InputsForm";
-// import ErrorBoundary from "./ErrorBoundary";
+import Result from "./Results";
+import ErrorBoundary from "./ErrorBoundary";
 import { APIDetail, APIData } from "./types";
 
 Sentry.init({
@@ -19,17 +21,22 @@ axios.defaults.xsrfCookieName = "csrftoken";
 
 const domContainer = document.querySelector("#inputs-container");
 
-interface InputsAppProps {
+interface URLProps {
   match: {
     params: {
-      username: string,
-      app_name: string,
-      inputs_hashid: string,
-      model_pk: string,
-    }
-  },
+      username: string;
+      app_name: string;
+      inputs_hashid: string;
+      model_pk: string;
+    };
+  };
+}
+
+interface InputsAppProps extends URLProps {
   type: "inputs" | "edit_sim" | "edit_inputs";
 }
+
+interface SimAppProps extends URLProps {}
 
 class InputsApp extends React.Component<InputsAppProps, {}> {
   constructor(props) {
@@ -103,8 +110,7 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
               })
               .then(inputsResp => {
                 console.log("inputsResp", inputsResp);
-                data = inputsResp.data,
-                data["detail"] = detailResp.data;
+                (data = inputsResp.data), (data["detail"] = detailResp.data);
                 data["accessStatus"] = statusResp.data;
                 return data;
               });
@@ -115,7 +121,7 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
     }
   }
 
-  resetInitialValues(metaParameters: {[metaParam: string]: any}) {
+  resetInitialValues(metaParameters: { [metaParam: string]: any }) {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     return axios
@@ -144,18 +150,45 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     const id = `${username}/${app_name}`;
-    console.log("let's render!")
+    console.log("let's render!");
     return (
-      // <ErrorBoundary>
+      <ErrorBoundary>
         <InputsForm
           fetchInitialValues={this.fetchInitialValues}
           resetInitialValues={this.resetInitialValues}
           doSubmit={this.doSubmit}
         />
-      // </ErrorBoundary>
+      </ErrorBoundary>
     );
   }
 }
+
+class OutputsApp extends React.Component<SimAppProps, {}> {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return <Result />;
+  }
+}
+
+const SimTabs: React.FC<
+  SimAppProps & { type: "inputs" | "outputs" }
+> = props => {
+  const [key, setKey] = React.useState(props.type);
+
+  return (
+    <Tabs id="sim-tabs" activeKey={key} onSelect={k => setKey(k)}>
+      <Tab variant="pills" eventKey="inputs" title="Inputs">
+        <InputsApp match={props.match} type="edit_sim" />
+      </Tab>
+      <Tab variant="pills" eventKey="outputs" title="Outputs">
+        <OutputsApp match={props.match} />
+      </Tab>
+    </Tabs>
+  );
+};
 
 ReactDOM.render(
   <BrowserRouter>
@@ -167,13 +200,18 @@ ReactDOM.render(
       />
       <Route
         exact
-        path="/:username/:app_name/:model_pk/edit/"
-        render={routeProps => <InputsApp type="edit_sim" {...routeProps} />}
+        path="/:username/:app_name/inputs/:inputs_hashid/"
+        render={routeProps => <InputsApp type="edit_inputs" {...routeProps} />}
       />
       <Route
         exact
-        path="/:username/:app_name/inputs/:inputs_hashid/"
-        render={routeProps => <InputsApp type="edit_inputs" {...routeProps} />}
+        path="/:username/:app_name/:model_pk/"
+        render={routeProps => <SimTabs type="outputs" {...routeProps} />}
+      />
+      <Route
+        exact
+        path="/:username/:app_name/:model_pk/edit/"
+        render={routeProps => <SimTabs type="inputs" {...routeProps} />}
       />
     </Switch>
   </BrowserRouter>,
