@@ -3,7 +3,7 @@
 import * as ReactDOM from "react-dom";
 import * as React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { Nav, Tabs, Tab } from "react-bootstrap";
+import { Nav, Tabs, Tab, Row, Col } from "react-bootstrap";
 import axios from "axios";
 import * as Sentry from "@sentry/browser";
 
@@ -178,15 +178,44 @@ const SimTabs: React.FC<
 > = props => {
   const [key, setKey] = React.useState(props.type);
 
+  // return (
+  //   <Tabs id="sim-tabs" activeKey={key} onSelect={k => setKey(k)}>
+  //     <Tab variant="pills" eventKey="inputs" title="Inputs">
+  //       <InputsApp match={props.match} type="edit_sim" />
+  //     </Tab>
+  //     <Tab variant="pills" eventKey="outputs" title="Outputs">
+  //       <OutputsApp match={props.match} />
+  //     </Tab>
+  //   </Tabs>
+  // );
+  const style = { padding: 0 };
   return (
-    <Tabs id="sim-tabs" activeKey={key} onSelect={k => setKey(k)}>
-      <Tab variant="pills" eventKey="inputs" title="Inputs">
-        <InputsApp match={props.match} type="edit_sim" />
-      </Tab>
-      <Tab variant="pills" eventKey="outputs" title="Outputs">
-        <OutputsApp match={props.match} />
-      </Tab>
-    </Tabs>
+    <Tab.Container
+      id="sim-tabs"
+      defaultActiveKey={key}
+      onSelect={(k: "inputs" | "outputs") => setKey(k)}
+    >
+      <Nav variant="pills" className="mb-4">
+        <Col style={style}>
+          <Nav.Item>
+            <Nav.Link eventKey="inputs">Inputs</Nav.Link>
+          </Nav.Item>
+        </Col>
+        <Col style={style}>
+          <Nav.Item>
+            <Nav.Link eventKey="outputs">Outputs</Nav.Link>
+          </Nav.Item>
+        </Col>
+      </Nav>
+      <Tab.Content>
+        <Tab.Pane eventKey="inputs">
+          <InputsApp match={props.match} type="edit_sim" />
+        </Tab.Pane>
+        <Tab.Pane eventKey="outputs">
+          <OutputsApp match={props.match} />
+        </Tab.Pane>
+      </Tab.Content>
+    </Tab.Container>
   );
 };
 
