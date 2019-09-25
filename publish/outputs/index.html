@@ -122,6 +122,7 @@
             <li><a href="#bokeh">bokeh</a></li>
             <li><a href="#table">table</a></li>
             <li><a href="#csv">CSV</a></li>
+            <li><a href="#pngjpeg">PNG/JPEG</a></li>
     </ul>
 </div></div>
                 <div class="col-md-9" role="main">
@@ -146,13 +147,13 @@
 }
 </code></pre>
 
-<p>There are two categories of outputs: "renderable" and "downloadable." Renderable outputs will be displayed on the outputs page while downloadable outputs are saved by the user as a zipfile. These categories are represented as the two top-level members in the JSON structure above. They point to a <code>List</code> of <code>Output Objects</code>.  Each <code>Output Object</code> has three members: <code>media_type</code>, <code>title</code>, and <code>data</code>.  Supported media types are:</p>
+<p>There are two categories of outputs: "renderable" and "downloadable." Renderable outputs will be displayed on the outputs page while downloadable outputs are saved by the user as a zipfile. These categories are represented as the two top-level members in the JSON structure above. They point to a <code>List</code> of <code>Output Objects</code>. Each <code>Output Object</code> has three members: <code>media_type</code>, <code>title</code>, and <code>data</code>. Supported media types are:</p>
 <ul>
 <li><a href="#bokeh"><code>bokeh</code></a></li>
 <li><a href="#table"><code>table</code></a></li>
 <li><a href="#CSV"><code>CSV</code></a></li>
-<li><code>PNG</code></li>
-<li><code>JPEG</code></li>
+<li><a href="#pngjpeg"><code>PNG</code></a></li>
+<li><a href="#pngjpeg"><code>JPEG</code></a></li>
 <li><code>MP3</code></li>
 <li><code>MP4</code></li>
 </ul>
@@ -199,7 +200,6 @@ append_output(my_other_df, &quot;My other results&quot;, renderable, downloadabl
     &quot;js&quot;: &quot;&lt;script&gt;...&lt;/script&gt;&quot;
   }
 }
-
 </code></pre>
 
 <ul>
@@ -287,6 +287,57 @@ output = {
     &quot;title&quot;: &quot;My CSV&quot;,
     &quot;data&quot;: csv
 }
+</code></pre>
+
+<p><br></p>
+<h2 id="pngjpeg">PNG/JPEG</h2>
+<p><br></p>
+<ul>
+<li><strong>JSON format:</strong></li>
+</ul>
+<pre><code class="json">{
+  &quot;media_type&quot;: &quot;PNG&quot;,
+  &quot;title&quot;: &quot;My PNG&quot;,
+  &quot;data&quot;: &quot;png bytes&quot;
+}
+</code></pre>
+
+<ul>
+<li><strong>Python example:</strong></li>
+</ul>
+<pre><code class="python">import io
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+# see: https://matplotlib.org/tutorials/introductory/usage.html#matplotlib-pyplot-and-pylab-how-are-they-related
+
+# prepare some data
+x = np.linspace(0, 2, 100)
+
+# Plot three lines
+plt.plot(x, x, label='linear')
+plt.plot(x, x**2, label='quadratic')
+plt.plot(x, x**3, label='cubic')
+
+plt.title(&quot;Simple Plot&quot;)
+
+plt.legend()
+
+# Matplotlib needs a file-like object to write the picture data.
+# For speed and efficiency, io.BytesIO is used as an in-memory file.
+in_memory_file = io.BytesIO()
+plt.savefig(in_memory_file, format=&quot;png&quot;)
+
+# Just need to rewind back to the beginning of the file.
+in_memory_file.seek(0)
+
+output = {
+  &quot;media_type&quot;: &quot;PNG&quot;,
+  &quot;title&quot;: &quot;My PNG Plot&quot;,
+  &quot;data&quot;: in_memory_file.read()
+}
+
 </code></pre></div>
         </div>
 
