@@ -10,7 +10,7 @@ import * as Sentry from "@sentry/browser";
 import InputsForm from "./InputsForm";
 import OutputsComponent from "./Outputs";
 import ErrorBoundary from "./ErrorBoundary";
-import { APIData, RemoteOutputs, Outputs } from "./types";
+import { APIData, RemoteOutputs, Outputs, SimAPIData } from "./types";
 
 Sentry.init({
   dsn: "https://fde6bcb39fda4af38471b16e2c1711af@sentry.io/1530834"
@@ -170,26 +170,26 @@ class OutputsApp extends React.Component<SimAppProps, {}> {
     this.fetchOutputs = this.fetchOutputs.bind(this);
   }
 
-  fetchRemoteOutputs(): Promise<RemoteOutputs> {
+  fetchRemoteOutputs(): Promise<SimAPIData<RemoteOutputs>> {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     const model_pk = this.props.match.params.model_pk;
     return axios
       .get(`/${username}/${app_name}/api/v1/${model_pk}/remote/`)
       .then(resp => {
-        let data: RemoteOutputs = resp.data.outputs.outputs;
+        let data: SimAPIData<RemoteOutputs> = resp.data;
         return data;
       });
   }
 
-  fetchOutputs(): Promise<Outputs> {
+  fetchOutputs(): Promise<SimAPIData<Outputs>> {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     let model_pk = this.props.match.params.model_pk;
     return axios
       .get(`/${username}/${app_name}/api/v1/${model_pk}/`)
       .then(resp => {
-        let data: Outputs = resp.data.outputs.outputs;
+        let data: SimAPIData<Outputs> = resp.data;
         return data;
       });
   }
@@ -212,12 +212,12 @@ const SimTabs: React.FC<
   const style = { padding: 0 };
   const buttonGroupStyle = {
     left: {
-      "border-top-right-radius": 0,
-      "border-bottom-right-radius": 0
+      borderTopRightRadius: 0,
+      borderBottomRightRadius: 0
     },
     right: {
-      "border-top-left-radius": 0,
-      "border-bottom-left-radius": 0
+      borderTopLeftRadius: 0,
+      borderBottomLeftRadius: 0
     }
   };
   return (

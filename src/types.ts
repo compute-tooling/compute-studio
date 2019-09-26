@@ -1,3 +1,5 @@
+import { Interface } from "readline";
+
 export interface ValueObject {
   value: number | string | Date | Array<number | string | Date>;
   [key: string]: any;
@@ -132,8 +134,17 @@ export interface Output extends RemoteOutput {
 }
 
 export interface RemoteOutputs {
-  renderable: { outputs: Array<RemoteOutput> };
-  downloadable: { outputs: Array<RemoteOutput> };
+  outputs: {
+    renderable: {
+      ziplocation: string;
+      outputs: Array<RemoteOutput>;
+    };
+    downloadable: {
+      ziplocation: string;
+      outputs: Array<RemoteOutput>;
+    };
+  };
+  version: "v0" | "v1";
 }
 
 export interface Outputs {
@@ -141,6 +152,29 @@ export interface Outputs {
   downloadable: Array<Output>;
 }
 
-// export interface OutputsAPIData {
+export interface Project {
+  title: string;
+  oneliner: string;
+  description: string;
+  repo_url: string;
+  server_size: [string, string];
+  exp_task_time: number;
+  server_cost: string;
+  listed: boolean;
+}
 
-// }
+export interface SimAPIData<T> {
+  traceback?: string;
+  creation_date: Date;
+  api_url: string;
+  gui_url: string;
+  eta: number;
+  model_pk: number;
+  status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS";
+  model_version: string;
+  run_time: 322;
+  exp_comp_datetime: Date;
+  owner: number;
+  project: Project;
+  outputs: T;
+}

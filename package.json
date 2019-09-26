@@ -32,6 +32,7 @@
     "css-loader": "^2.1.1",
     "formik": "^1.5.8",
     "highlight.js": "^9.15.8",
+    "moment": "^2.24.0",
     "react": "^16.8.6",
     "react-bootstrap": "^1.0.0-beta.12",
     "react-dom": "^16.8.6",
