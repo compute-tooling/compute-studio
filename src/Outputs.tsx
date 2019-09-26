@@ -1,8 +1,9 @@
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import ReactLoading from "react-loading";
 import { Card, Row, Col, OverlayTrigger, Tooltip } from "react-bootstrap";
 import * as moment from "moment";
-import { RemoteOutputs, Outputs, SimAPIData } from "./types";
+import { RemoteOutputs, Outputs, SimAPIData, Output } from "./types";
 
 interface OutputsProps {
   fetchRemoteOutputs: () => Promise<SimAPIData<RemoteOutputs>>;
@@ -12,7 +13,54 @@ interface OutputsProps {
 type OutputsState = Readonly<{
   remoteSim: SimAPIData<RemoteOutputs>;
   sim: SimAPIData<Outputs>;
+  openPortals: Array<number>;
 }>;
+
+type OutputsPortalProps = {
+  output: string; //Output;
+  rmOpenPortal: () => void;
+};
+
+class OutputsPortal extends React.Component<OutputsPortalProps, {}> {
+  el: HTMLDivElement;
+  externalWindow: Window;
+
+  constructor(props) {
+    super(props);
+    this.el = document.createElement("div");
+    this.externalWindow = null;
+  }
+
+  render() {
+    return ReactDOM.createPortal(<p>{this.props.output}</p>, this.el);
+  }
+
+  componentDidMount() {
+    this.externalWindow = window.open(
+      "",
+      "",
+      "width=600,height=400,left=200,top=200"
+    );
+
+    this.externalWindow.document.body.appendChild(this.el);
+    this.externalWindow.addEventListener("beforeunload", event => {
+      // Cancel the event as stated by the standard.
+      console.log("closing?");
+      event.preventDefault();
+      this.props.rmOpenPortal();
+      // this.externalWindow.close();
+      // Chrome requires returnValue to be set.
+      event.returnValue = "";
+    });
+  }
+
+  componentWillUnmount() {
+    console.log("Unmount?");
+    this.props.rmOpenPortal();
+    // modalRoot.removeChild(this.el);
+    if (this.externalWindow) this.externalWindow.close();
+  }
+}
 
 export default class OutputsComponent extends React.Component<
   OutputsProps,
@@ -22,7 +70,8 @@ export default class OutputsComponent extends React.Component<
     super(props);
     this.state = {
       remoteSim: null,
-      sim: null
+      sim: null,
+      openPortals: []
     };
   }
 
@@ -31,6 +80,19 @@ export default class OutputsComponent extends React.Component<
       this.setState({ remoteSim: data });
     });
   }
+
+  addOpenPortal = (ix: number) => {
+    this.setState(prevState => ({
+      openPortals: [...prevState.openPortals, ix]
+    }));
+  };
+
+  rmOpenPortal = (ix: number) => {
+    console.log("rm", ix);
+    this.setState(prevState => ({
+      openPortals: prevState.openPortals.filter(value => value != ix)
+    }));
+  };
 
   render() {
     if (!this.state.remoteSim) {
@@ -50,6 +112,7 @@ export default class OutputsComponent extends React.Component<
     let model_version = this.state.remoteSim.model_version;
     let project = this.state.remoteSim.project;
     let remoteOutputs = this.state.remoteSim.outputs.outputs;
+    console.log("openPortals", this.state.openPortals);
     return (
       <Card className="card-outer" style={{ overflow: "auto" }}>
         <Card className="card-inner">
@@ -60,6 +123,12 @@ export default class OutputsComponent extends React.Component<
             <Row className="text-center">
               {remoteOutputs.renderable.outputs.map((remoteOutput, ix) => (
                 <Col style={{ padding: 0 }} key={`output-${ix}`}>
+                  {this.state.openPortals.includes(ix) ? (
+                    <OutputsPortal
+                      output={`hello world-${ix}`}
+                      rmOpenPortal={() => this.rmOpenPortal(ix)}
+                    />
+                  ) : null}
                   <OverlayTrigger
                     trigger={["hover", "click"]}
                     overlay={
@@ -68,13 +137,15 @@ export default class OutputsComponent extends React.Component<
                       </Tooltip>
                     }
                   >
-                    <img
-                      style={{ objectFit: "contain" }}
-                      src={remoteOutput.screenshot}
-                      alt={remoteOutput.title}
-                      height={500}
-                      width={500}
-                    />
+                    <a href="#" onClick={() => this.addOpenPortal(ix)}>
+                      <img
+                        style={{ objectFit: "contain" }}
+                        src={remoteOutput.screenshot}
+                        alt={remoteOutput.title}
+                        height={500}
+                        width={500}
+                      />
+                    </a>
                   </OverlayTrigger>
                 </Col>
               ))}
