@@ -10,6 +10,7 @@ from .api import (
     InputsAPIView,
     APIRouterView,
     DetailAPIView,
+    RemoteDetailAPIView,
     OutputsAPIView,
     DetailMyInputsAPIView,
     MyInputsAPIView,

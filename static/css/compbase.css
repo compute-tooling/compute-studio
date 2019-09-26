@@ -1,11 +1,25 @@
-
 /* text */
 
 body {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
   font-size: 17px;
 }
 
+cs-black-background-color {
+  background-color: #2b2c2d;
+}
+
+cs-white-background-color {
+  background-color: #ffffff;
+}
+
+cs-black-color {
+  color: #2b2c2d;
+}
+
+cs-white-color {
+  color: #ffffff;
+}
 
 .explainer {
   color: #2b2c2d;
@@ -22,19 +36,19 @@ div.card.publish.markdown {
 
 code {
   color: inherit;
-  display:block;
+  display: block;
 }
 
 /* login */
 .login-status {
-  color:white;
+  color: white;
 }
 
-.login-status a{
-  color:white;
+.login-status a {
+  color: white;
 }
 
-.login-status a:hover{
+.login-status a:hover {
   color: rgb(238, 238, 238);
   text-decoration: none;
 }
@@ -60,16 +74,32 @@ code {
   color: rgb(238, 238, 238, 0.9) !important;
 }
 
+.sim-nav-item .nav-link.active,
+.sim-nav-item .show {
+  /* background-color: rgba(42, 44, 43, 1); */
+  /* darker ==> background-color: rgba(35, 36, 36, 1); */
+  background-color: rgba(60, 62, 62, 1);
+  color: #ffffff;
+  border: 1px solid #2b2c2d;
+}
+
+.sim-nav-item .nav-link,
+.sim-nav-item .show {
+  color: #ffffff;
+  /*darker ==> background-color: rgba(75, 77, 78, 1); */
+  background-color: rgba(87, 90, 91, 1);
+  border: 1px solid #2b2c2d;
+}
 
 /* Large devices (desktops, 992px and up) */
-@media (min-width: 992px) { 
+@media (min-width: 992px) {
   .dropdown-menu.desktop-menu-right.show {
     right: 0;
     left: auto;
   }
 }
 
-@media (max-width: 992px) { 
+@media (max-width: 992px) {
   .mobile-mb-1 {
     margin-bottom: 0.25rem !important;
   }
@@ -81,42 +111,39 @@ code {
   }
 }
 
-
 .navbar-dark .navbar-toggler-icon {
-
   background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba(255, 255, 255, 1.0)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
-
 }
 /* buttons with navbar color scheme */
 
-.btn-match-nav, .nav-pills .nav-link.active {
+.btn-match-nav,
+.main-navbar .nav-pills .nav-link.active {
   background-color: #2b2c2d !important;
   color: #ffffff !important;
 }
 
 .btn-outline-match-nav {
-  border-color:#ffffff;
+  border-color: #ffffff;
   background-color: transparent;
   color: #ffffff !important;
 }
 
-
-.inverse-btn-match-nav, .nav-pills .nav-link {
+.inverse-btn-match-nav,
+.main-navbar .nav-pills .nav-link {
   color: #2b2c2d !important;
   background-color: #ffffff !important;
 }
 
-.divider{
-  width:5px;
-  height:auto;
-  display:inline-block;
+.divider {
+  width: 5px;
+  height: auto;
+  display: inline-block;
 }
 
 /* used for the profile page--should probably be a the inverse-button-match-nav */
 .btn-comp {
-  background-color:#cccc !important;
+  background-color: #cccc !important;
 }
-
 
 /* format blocks of text */
 .wrapper {
@@ -135,12 +162,12 @@ code {
 
 /* add tent to input boxes */
 input.model:not(:placeholder-shown) {
-  background-color:  #e5e5e5!important;
+  background-color: #e5e5e5 !important;
 }
 
 /* drop margin-bottom on form group. */
 .form-group {
-  margin-bottom:0rem;
+  margin-bottom: 0rem;
 }
 
 /* fade auxillary button on toggle */
@@ -151,11 +178,11 @@ input.model:not(:placeholder-shown) {
 
 .card-inner {
   box-shadow: 0 1px 1px white;
-  border:0px;
+  border: 0px;
 }
 
 .card-outer {
-  box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
 /* remove asterisk on crispy-form-fields */
@@ -168,7 +195,8 @@ input.model:not(:placeholder-shown) {
 }
 
 /* dimmer version of the bootstrap glow */
-input.edited, select.form-control.model-param.edited {
+input.edited,
+select.form-control.model-param.edited {
   background-color: rgba(102, 175, 233, 0.2);
 }
 
@@ -179,7 +207,6 @@ span.default-value.hide-default {
 span.default-value {
   color: #869191;
 }
-
 
 /* thicken hr-4 input divider */
 .input-divider {
@@ -192,19 +219,18 @@ span.default-value {
 
 .error {
   font-size: 80%;
-  color: #dc3545
+  color: #dc3545;
 }
 
 .description {
-  width: "50rem"
+  width: "50rem";
 }
 
-
 .btn-checkbox {
-  padding: .25rem .5rem;
-  font-size: .68rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.68rem;
   line-height: 0.9;
-  border-radius: .2rem;
+  border-radius: 0.2rem;
   background-color: rgba(10, 102, 194, 1);
 
   color: rgb(231, 241, 252);

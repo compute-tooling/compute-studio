@@ -8,9 +8,9 @@ import axios from "axios";
 import * as Sentry from "@sentry/browser";
 
 import InputsForm from "./InputsForm";
-import Result from "./Results";
+import OutputsComponent from "./Outputs";
 import ErrorBoundary from "./ErrorBoundary";
-import { APIDetail, APIData } from "./types";
+import { APIData, RemoteOutputs, Outputs } from "./types";
 
 Sentry.init({
   dsn: "https://fde6bcb39fda4af38471b16e2c1711af@sentry.io/1530834"
@@ -166,10 +166,41 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
 class OutputsApp extends React.Component<SimAppProps, {}> {
   constructor(props) {
     super(props);
+    this.fetchRemoteOutputs = this.fetchRemoteOutputs.bind(this);
+    this.fetchOutputs = this.fetchOutputs.bind(this);
+  }
+
+  fetchRemoteOutputs(): Promise<RemoteOutputs> {
+    const username = this.props.match.params.username;
+    const app_name = this.props.match.params.app_name;
+    const model_pk = this.props.match.params.model_pk;
+    return axios
+      .get(`/${username}/${app_name}/api/v1/${model_pk}/remote/`)
+      .then(resp => {
+        let data: RemoteOutputs = resp.data.outputs.outputs;
+        return data;
+      });
+  }
+
+  fetchOutputs(): Promise<Outputs> {
+    const username = this.props.match.params.username;
+    const app_name = this.props.match.params.app_name;
+    let model_pk = this.props.match.params.model_pk;
+    return axios
+      .get(`/${username}/${app_name}/api/v1/${model_pk}/`)
+      .then(resp => {
+        let data: Outputs = resp.data.outputs.outputs;
+        return data;
+      });
   }
 
   render() {
-    return <Result />;
+    return (
+      <OutputsComponent
+        fetchRemoteOutputs={this.fetchRemoteOutputs}
+        fetchOutputs={this.fetchOutputs}
+      />
+    );
   }
 }
 
@@ -178,17 +209,17 @@ const SimTabs: React.FC<
 > = props => {
   const [key, setKey] = React.useState(props.type);
 
-  // return (
-  //   <Tabs id="sim-tabs" activeKey={key} onSelect={k => setKey(k)}>
-  //     <Tab variant="pills" eventKey="inputs" title="Inputs">
-  //       <InputsApp match={props.match} type="edit_sim" />
-  //     </Tab>
-  //     <Tab variant="pills" eventKey="outputs" title="Outputs">
-  //       <OutputsApp match={props.match} />
-  //     </Tab>
-  //   </Tabs>
-  // );
   const style = { padding: 0 };
+  const buttonGroupStyle = {
+    left: {
+      "border-top-right-radius": 0,
+      "border-bottom-right-radius": 0
+    },
+    right: {
+      "border-top-left-radius": 0,
+      "border-bottom-left-radius": 0
+    }
+  };
   return (
     <Tab.Container
       id="sim-tabs"
@@ -197,13 +228,17 @@ const SimTabs: React.FC<
     >
       <Nav variant="pills" className="mb-4">
         <Col style={style}>
-          <Nav.Item>
-            <Nav.Link eventKey="inputs">Inputs</Nav.Link>
+          <Nav.Item className="sim-nav-item">
+            <Nav.Link style={buttonGroupStyle.left} eventKey="inputs">
+              Inputs
+            </Nav.Link>
           </Nav.Item>
         </Col>
         <Col style={style}>
-          <Nav.Item>
-            <Nav.Link eventKey="outputs">Outputs</Nav.Link>
+          <Nav.Item className="sim-nav-item">
+            <Nav.Link style={buttonGroupStyle.right} eventKey="outputs">
+              Outputs
+            </Nav.Link>
           </Nav.Item>
         </Col>
       </Nav>

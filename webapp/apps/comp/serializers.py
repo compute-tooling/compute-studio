@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from webapp.apps.publish.serializers import PublishSerializer
+
 from .models import Inputs, Simulation
 
 
@@ -40,13 +42,11 @@ class InputsSerializer(serializers.ModelSerializer):
         required=False,
     )
     sim = MiniSimulationSerializer(source="outputs", required=False)
-    api_url = serializers.CharField(source="get_absolute_api_url", required=False)
 
     job_id = serializers.UUIDField(required=False)
     status = serializers.ChoiceField(
         choices=(("SUCCESS", "Success"), ("FAIL", "Fail")), required=False
     )
-    sim = MiniSimulationSerializer(source="outputs", required=False)
     api_url = serializers.CharField(source="get_absolute_api_url", required=False)
     edit_inputs_url = serializers.CharField(source="get_edit_url", required=False)
 
@@ -69,15 +69,14 @@ class InputsSerializer(serializers.ModelSerializer):
 
 
 class SimulationSerializer(serializers.ModelSerializer):
-    inputs = InputsSerializer(required=False)
     api_url = serializers.CharField(source="get_absolute_api_url")
     gui_url = serializers.CharField(source="get_absolute_url")
     eta = serializers.FloatField(source="compute_eta")
+    project = PublishSerializer()
 
     class Meta:
         model = Simulation
         fields = (
-            "inputs",
             "outputs",
             "traceback",
             "creation_date",
@@ -85,4 +84,11 @@ class SimulationSerializer(serializers.ModelSerializer):
             "gui_url",
             "eta",
             "model_pk",
+            "status",
+            "model_version",
+            "run_time",
+            "exp_comp_datetime",
+            "traceback",
+            "owner",
+            "project",
         )

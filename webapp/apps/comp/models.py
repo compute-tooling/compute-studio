@@ -38,7 +38,7 @@ class InputsQuerySet(models.QuerySet):
 
     def get_object_from_hashid_or_404(self, hashid):
         """
-        Get inputs object from a hash of its pk and 
+        Get inputs object from a hash of its pk and
         raise 404 exception if it does not exist.
         """
         try:

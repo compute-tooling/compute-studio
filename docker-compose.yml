@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 
 services:
   db:
@@ -27,8 +27,7 @@ services:
       - DEBUG=True
       - WORKERS=${WORKERS}:5050
       - LOCAL=True
-      - OBJ_STORAGE_EDGE=https://sfo2.cdn.digitaloceanspaces.com
-      - OBJ_STORAGE_BUCKET=compresults-dev
+      - BUCKET=cs-outputs-dev
     ports:
       - "8000:8000"
     container_name: web

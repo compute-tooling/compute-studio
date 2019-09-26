@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-import s3like
+import cs_storage
 
 from webapp.apps.users.models import Project
 
@@ -168,7 +168,11 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
             data = sim.data
             outputs = data["outputs"]["outputs"]
             if not as_remote:
-                data["outputs"] = s3like.read_from_s3like(outputs)
+                data["outputs"] = cs_storage.read(outputs)
+            else:
+                data["outputs"]["outputs"] = cs_storage.add_screenshot_links(
+                    data["outputs"]["outputs"]
+                )
             return Response(data, status=status.HTTP_200_OK)
         elif self.object.traceback is not None:
             return Response(sim.data, status=status.HTTP_200_OK)
@@ -206,7 +210,7 @@ class DetailAPIView(BaseDetailAPIView):
         return super().get(request, as_remote, *args, **kwargs)
 
 
-class RemoteAPIView(BaseDetailAPIView):
+class RemoteDetailAPIView(BaseDetailAPIView):
     def get(self, request, *args, **kwargs):
         as_remote = True
         return super().get(request, as_remote, *args, **kwargs)
