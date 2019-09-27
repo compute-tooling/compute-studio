@@ -79,6 +79,9 @@ export default class OutputsComponent extends React.Component<
     this.props.fetchRemoteOutputs().then(data => {
       this.setState({ remoteSim: data });
     });
+    this.props.fetchOutputs().then(data => {
+      this.setState({ sim: data });
+    });
   }
 
   addOpenPortal = (ix: number) => {
@@ -106,13 +109,16 @@ export default class OutputsComponent extends React.Component<
         </Card>
       );
     }
+    if (this.state.openPortals.length && this.state.sim == null) {
+      alert("still waiting on sim data...");
+    }
     let creation_date = moment(this.state.remoteSim.creation_date).format(
       "MMMM Do YYYY, h:mm:ss a"
     );
     let model_version = this.state.remoteSim.model_version;
     let project = this.state.remoteSim.project;
     let remoteOutputs = this.state.remoteSim.outputs.outputs;
-    console.log("openPortals", this.state.openPortals);
+
     return (
       <Card className="card-outer" style={{ overflow: "auto" }}>
         <Card className="card-inner">
