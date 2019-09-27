@@ -1,9 +1,23 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import ReactLoading from "react-loading";
-import { Card, Row, Col, OverlayTrigger, Tooltip } from "react-bootstrap";
+import {
+  Card,
+  Row,
+  Col,
+  OverlayTrigger,
+  Tooltip,
+  Modal,
+  Button
+} from "react-bootstrap";
 import * as moment from "moment";
-import { RemoteOutputs, Outputs, SimAPIData, Output } from "./types";
+import {
+  RemoteOutputs,
+  Outputs,
+  SimAPIData,
+  Output,
+  TableOutput,
+  BokehOutput
+} from "./types";
 
 interface OutputsProps {
   fetchRemoteOutputs: () => Promise<SimAPIData<RemoteOutputs>>;
@@ -13,54 +27,63 @@ interface OutputsProps {
 type OutputsState = Readonly<{
   remoteSim: SimAPIData<RemoteOutputs>;
   sim: SimAPIData<Outputs>;
-  openPortals: Array<number>;
 }>;
 
-type OutputsPortalProps = {
-  output: string; //Output;
-  rmOpenPortal: () => void;
+const Table: React.FC<{ output: TableOutput }> = ({ output }) => (
+  <div
+    dangerouslySetInnerHTML={{ __html: output.data }} // needs to be sanitized somehow.
+    className="card publish markdown"
+  />
+);
+
+const Bokeh: React.FC<{ output: BokehOutput }> = ({ output }) => (
+  <div>
+    <div
+      dangerouslySetInnerHTML={{
+        __html: output.data.html + " " + output.data.javascript
+      }}
+    ></div>
+  </div>
+);
+
+const OutputModal: React.FC<{
+  output: Output | BokehOutput | TableOutput;
+  children: JSX.Element;
+}> = ({ output, children }) => {
+  const [show, setShow] = React.useState(false);
+
+  let el;
+  switch (output.media_type) {
+    case "table":
+      el = <Table output={output as TableOutput} />;
+      break;
+    case "bokeh":
+      console.log("bokeh", output);
+      el = <Bokeh output={output as BokehOutput} />;
+      break;
+    default:
+      el = <div dangerouslySetInnerHTML={{ __html: output.data }} />;
+  }
+
+  return (
+    <>
+      <Button variant="outline-primary" onClick={() => setShow(true)}>
+        {children}
+      </Button>
+      <Modal show={show} onHide={() => setShow(false)} size="xl">
+        <Modal.Header closeButton>
+          <Modal.Title>{output.title}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{el}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-primary" onClick={() => setShow(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
 };
-
-class OutputsPortal extends React.Component<OutputsPortalProps, {}> {
-  el: HTMLDivElement;
-  externalWindow: Window;
-
-  constructor(props) {
-    super(props);
-    this.el = document.createElement("div");
-    this.externalWindow = null;
-  }
-
-  render() {
-    return ReactDOM.createPortal(<p>{this.props.output}</p>, this.el);
-  }
-
-  componentDidMount() {
-    this.externalWindow = window.open(
-      "",
-      "",
-      "width=600,height=400,left=200,top=200"
-    );
-
-    this.externalWindow.document.body.appendChild(this.el);
-    this.externalWindow.addEventListener("beforeunload", event => {
-      // Cancel the event as stated by the standard.
-      console.log("closing?");
-      event.preventDefault();
-      this.props.rmOpenPortal();
-      // this.externalWindow.close();
-      // Chrome requires returnValue to be set.
-      event.returnValue = "";
-    });
-  }
-
-  componentWillUnmount() {
-    console.log("Unmount?");
-    this.props.rmOpenPortal();
-    // modalRoot.removeChild(this.el);
-    if (this.externalWindow) this.externalWindow.close();
-  }
-}
 
 export default class OutputsComponent extends React.Component<
   OutputsProps,
@@ -70,8 +93,7 @@ export default class OutputsComponent extends React.Component<
     super(props);
     this.state = {
       remoteSim: null,
-      sim: null,
-      openPortals: []
+      sim: null
     };
   }
 
@@ -83,19 +105,6 @@ export default class OutputsComponent extends React.Component<
       this.setState({ sim: data });
     });
   }
-
-  addOpenPortal = (ix: number) => {
-    this.setState(prevState => ({
-      openPortals: [...prevState.openPortals, ix]
-    }));
-  };
-
-  rmOpenPortal = (ix: number) => {
-    console.log("rm", ix);
-    this.setState(prevState => ({
-      openPortals: prevState.openPortals.filter(value => value != ix)
-    }));
-  };
 
   render() {
     if (!this.state.remoteSim) {
@@ -109,9 +118,6 @@ export default class OutputsComponent extends React.Component<
         </Card>
       );
     }
-    if (this.state.openPortals.length && this.state.sim == null) {
-      alert("still waiting on sim data...");
-    }
     let creation_date = moment(this.state.remoteSim.creation_date).format(
       "MMMM Do YYYY, h:mm:ss a"
     );
@@ -119,6 +125,11 @@ export default class OutputsComponent extends React.Component<
     let project = this.state.remoteSim.project;
     let remoteOutputs = this.state.remoteSim.outputs.outputs;
 
+    let outputs: Outputs = null;
+    if (this.state.sim !== null) {
+      outputs = this.state.sim.outputs;
+      console.log("outputs", outputs);
+    }
     return (
       <Card className="card-outer" style={{ overflow: "auto" }}>
         <Card className="card-inner">
@@ -127,34 +138,47 @@ export default class OutputsComponent extends React.Component<
               {`These results were generated by ${project.title} on ${creation_date} using ${model_version}.`}
             </p>
             <Row className="text-center">
-              {remoteOutputs.renderable.outputs.map((remoteOutput, ix) => (
-                <Col style={{ padding: 0 }} key={`output-${ix}`}>
-                  {this.state.openPortals.includes(ix) ? (
-                    <OutputsPortal
-                      output={`hello world-${ix}`}
-                      rmOpenPortal={() => this.rmOpenPortal(ix)}
-                    />
-                  ) : null}
-                  <OverlayTrigger
-                    trigger={["hover", "click"]}
-                    overlay={
-                      <Tooltip id={`${ix}-tooltip`}>
-                        {remoteOutput.title}
-                      </Tooltip>
-                    }
-                  >
-                    <a href="#" onClick={() => this.addOpenPortal(ix)}>
-                      <img
-                        style={{ objectFit: "contain" }}
-                        src={remoteOutput.screenshot}
-                        alt={remoteOutput.title}
-                        height={500}
-                        width={500}
-                      />
-                    </a>
-                  </OverlayTrigger>
-                </Col>
-              ))}
+              {remoteOutputs.renderable.outputs.map((remoteOutput, ix) => {
+                let media_type = remoteOutput.media_type;
+                let output: TableOutput | BokehOutput;
+                if (outputs !== null && media_type == "table") {
+                  output = outputs.renderable[ix];
+                } else if (outputs !== null && media_type == "bokeh") {
+                  output = outputs.renderable[ix];
+                }
+                return (
+                  <Col style={{ padding: 0 }} key={`output-${ix}`}>
+                    <OverlayTrigger
+                      trigger={["hover", "click"]}
+                      overlay={
+                        <Tooltip id={`${ix}-tooltip`}>
+                          {remoteOutput.title}
+                        </Tooltip>
+                      }
+                    >
+                      {outputs !== null ? (
+                        <OutputModal output={output}>
+                          <img
+                            style={{ objectFit: "contain" }}
+                            src={remoteOutput.screenshot}
+                            alt={remoteOutput.title}
+                            height={500}
+                            width={500}
+                          />
+                        </OutputModal>
+                      ) : (
+                        <img
+                          style={{ objectFit: "contain" }}
+                          src={remoteOutput.screenshot}
+                          alt={remoteOutput.title}
+                          height={500}
+                          width={500}
+                        />
+                      )}
+                    </OverlayTrigger>
+                  </Col>
+                );
+              })}
             </Row>
           </Card.Body>
         </Card>

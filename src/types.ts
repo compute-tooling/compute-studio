@@ -1,4 +1,5 @@
 import { Interface } from "readline";
+import { string } from "prop-types";
 
 export interface ValueObject {
   value: number | string | Date | Array<number | string | Date>;
@@ -130,7 +131,15 @@ export interface RemoteOutput {
 }
 
 export interface Output extends RemoteOutput {
-  value: any;
+  data: any;
+}
+
+export interface TableOutput extends RemoteOutput {
+  data: string;
+}
+
+export interface BokehOutput extends RemoteOutput {
+  data: { html: string; javascript: string };
 }
 
 export interface RemoteOutputs {
@@ -148,8 +157,8 @@ export interface RemoteOutputs {
 }
 
 export interface Outputs {
-  renderable: Array<Output>;
-  downloadable: Array<Output>;
+  renderable: Array<Output | TableOutput | BokehOutput>;
+  downloadable: Array<Output | TableOutput | BokehOutput>;
 }
 
 export interface Project {
