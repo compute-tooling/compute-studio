@@ -38,7 +38,7 @@ class InputsQuerySet(models.QuerySet):
 
     def get_object_from_hashid_or_404(self, hashid):
         """
-        Get inputs object from a hash of its pk and 
+        Get inputs object from a hash of its pk and
         raise 404 exception if it does not exist.
         """
         try:
@@ -78,7 +78,7 @@ class Inputs(models.Model):
     owner = models.ForeignKey(
         "users.Profile", on_delete=models.CASCADE, null=True, related_name="inputs"
     )
-    traceback = models.CharField(null=True, blank=True, default=None, max_length=4000)
+    traceback = models.CharField(null=True, blank=True, default=None, max_length=8000)
     job_id = models.UUIDField(blank=True, default=None, null=True)
     status = models.CharField(
         choices=(
@@ -168,7 +168,7 @@ class Simulation(models.Model):
     meta_data = JSONField(default=None, blank=True, null=True)
     outputs = JSONField(default=None, blank=True, null=True)
     aggr_outputs = JSONField(default=None, blank=True, null=True)
-    traceback = models.CharField(null=True, blank=True, default=None, max_length=4000)
+    traceback = models.CharField(null=True, blank=True, default=None, max_length=8000)
     owner = models.ForeignKey(
         "users.Profile", on_delete=models.CASCADE, null=True, related_name="sims"
     )

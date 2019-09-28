@@ -127,4 +127,6 @@ class RecordOutputsMixin(ChargeRunMixin):
         else:
             sim.status = "FAIL"
             sim.traceback = data["traceback"]
+            if isinstance(sim.traceback, str) and len(sim.traceback) > 8000:
+                sim.traceback = sim.traceback[:8000]
             sim.save()
