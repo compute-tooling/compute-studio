@@ -1,25 +1,21 @@
 # Compute Studio
 
-**Compute Studio** is an open-source utility for developers to freely share computational apps with users.
+**Compute Studio** is an open-source platform for sharing models and simulations. 
 
-To see C/S in action, visit [Compute.Studio](https://Compute.Studio).
+To see Compute Studio in action, visit [Compute.Studio](https://Compute.Studio).
 
 Principles:
-- Freely share public apps and computations.
+- Freely share models and simulations with the public.
 - Pay for your own resources, like compute, at cost.
 - Sponsor resources for others if you'd like.
 
 Features:
-- A web-based graphical user interface for decisionmakers makes it easy to interact with C/S from the browser.
-- The REST API enables developers to include C/S Apps in their own applications. 
-- Each user's personal library tracks their computations, including both inputs and results. 
+- A web-based GUI for decisionmakers makes it easy to interact with models and simulations from the browser.
+- The web API enables developers to include CS models in their own applications. 
+- Personal libraries store simulations for users, including both inputs and results. 
 
 Under development:
-- Sharing and privacy features. 
-
-Planned:
-- Collaboration features like commenting and editing.
-
+- Sharing and privacy features for simulations and models. 
 
 ## Contributing
 
