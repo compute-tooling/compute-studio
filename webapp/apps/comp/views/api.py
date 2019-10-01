@@ -205,6 +205,8 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
     simulation results.
     """
 
+    authentication_classes = (TokenAuthentication,)
+
     def put(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.user.username == "comp-api-user":
             ser = OutputsSerializer(data=request.data)
@@ -221,11 +223,7 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
 
 
 class MyInputsAPIView(APIView):
-    authentication_classes = (
-        SessionAuthentication,
-        BasicAuthentication,
-        TokenAuthentication,
-    )
+    authentication_classes = (TokenAuthentication,)
 
     def put(self, request, *args, **kwargs):
         print("myinputs api method=PUT", kwargs)

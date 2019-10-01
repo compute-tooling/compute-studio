@@ -12,8 +12,7 @@ import s3like
 
 
 COMP_URL = os.environ.get("COMP_URL")
-COMP_API_USER = os.environ.get("COMP_API_USER")
-COMP_API_USER_PASS = os.environ.get("COMP_API_USER_PASS")
+COMP_API_TOKEN = os.environ.get("COMP_API_TOKEN")
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
 CELERY_RESULT_BACKEND = os.environ.get(
@@ -112,7 +111,7 @@ def post_results(sender=None, headers=None, body=None, **kwargs):
         resp = requests.put(
             f"{COMP_URL}/outputs/api/",
             json=kwargs["retval"],
-            auth=(COMP_API_USER, COMP_API_USER_PASS),
+            headers={"Authorization": f"Token {COMP_API_TOKEN}"},
         )
         print("resp", resp.status_code)
         if resp.status_code == 400:
@@ -122,7 +121,7 @@ def post_results(sender=None, headers=None, body=None, **kwargs):
         resp = requests.put(
             f"{COMP_URL}/inputs/api/",
             json=kwargs["retval"],
-            auth=(COMP_API_USER, COMP_API_USER_PASS),
+            headers={"Authorization": f"Token {COMP_API_TOKEN}"},
         )
         print("resp", resp.status_code)
         if resp.status_code == 400:
