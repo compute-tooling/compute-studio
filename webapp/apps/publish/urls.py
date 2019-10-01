@@ -1,12 +1,7 @@
 from django.conf.urls import url
 from django.urls import path
 
-from .views import (
-    ProjectView,
-    ProjectDetailView,
-    ProjectDetailAPIView,
-    ProjectCreateAPIView,
-)
+from .views import ProjectView, ProjectDetailView, ProjectDetailAPIView, ProjectAPIView
 
 
 urlpatterns = [
@@ -16,5 +11,5 @@ urlpatterns = [
         ProjectDetailAPIView.as_view(),
         name="project_detail_api",
     ),
-    path("api/", ProjectCreateAPIView.as_view(), name="project_create_api"),
+    path("api/", ProjectAPIView.as_view(), name="project_create_api"),
 ]
