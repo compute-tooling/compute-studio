@@ -81,7 +81,13 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
         return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
-class ProjectCreateAPIView(GetProjectMixin, APIView):
+class ProjectAPIView(GetProjectMixin, APIView):
+    queryset = Project.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        ser = PublishSerializer(self.queryset.all(), many=True)
+        return Response(ser.data, status=status.HTTP_200_OK)
+
     def post(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             serializer = PublishSerializer(data=request.POST)
