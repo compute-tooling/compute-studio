@@ -28,17 +28,13 @@ services:
       - AWS_SECRET_ACCESS_KEY={{AWS_SECRET_ACCESS_KEY}}
     depends_on:
       - {{SAFEOWNER}}_{{SAFETITLE}}_tasks
-    env_file:
-      - ./dockerfiles/dev.env
     networks:
       worker_net:
-  
+
   {{SAFEOWNER}}_{{SAFETITLE}}_io:
     image: "{{SAFEOWNER}}_{{SAFETITLE}}_tasks:${TAG}"
     entrypoint: ./celery_io.sh {{OWNER}} {{TITLE}}
     depends_on:
       - {{SAFEOWNER}}_{{SAFETITLE}}_tasks
-    env_file:
-      - ./dockerfiles/dev.env
     networks:
       worker_net:

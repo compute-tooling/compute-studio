@@ -8,12 +8,20 @@ from celery import Celery
 from celery.signals import task_postrun
 from celery.result import AsyncResult
 
-import s3like
+import cs_storage
+
+
+try:
+    from cs_config import functions
+except ImportError as ie:
+    if os.environ.get("IS_FLASK", "False") == "True":
+        functions = None
+    else:
+        raise ie
 
 
 COMP_URL = os.environ.get("COMP_URL")
-COMP_API_USER = os.environ.get("COMP_API_USER")
-COMP_API_USER_PASS = os.environ.get("COMP_API_USER_PASS")
+COMP_API_TOKEN = os.environ.get("COMP_API_TOKEN")
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
 CELERY_RESULT_BACKEND = os.environ.get(
@@ -79,12 +87,12 @@ def task_wrapper(func):
                     res["model_version"] = "NA"
                     res.update(dict(outputs, **{"version": version}))
                 else:
-                    res["model_version"] = outputs.pop("model_version")
-                    outputs = s3like.write_to_s3like(task_id, outputs)
+                    res["model_version"] = functions.get_version()
+                    outputs = cs_storage.write(task_id, outputs)
                     res.update({"outputs": outputs, "version": version})
             else:
                 res.update(outputs)
-        except Exception as e:
+        except Exception:
             traceback_str = traceback.format_exc()
         finish = time.time()
         if "meta" not in res:
@@ -112,7 +120,7 @@ def post_results(sender=None, headers=None, body=None, **kwargs):
         resp = requests.put(
             f"{COMP_URL}/outputs/api/",
             json=kwargs["retval"],
-            auth=(COMP_API_USER, COMP_API_USER_PASS),
+            headers={"Authorization": f"Token {COMP_API_TOKEN}"},
         )
         print("resp", resp.status_code)
         if resp.status_code == 400:
@@ -122,7 +130,7 @@ def post_results(sender=None, headers=None, body=None, **kwargs):
         resp = requests.put(
             f"{COMP_URL}/inputs/api/",
             json=kwargs["retval"],
-            auth=(COMP_API_USER, COMP_API_USER_PASS),
+            headers={"Authorization": f"Token {COMP_API_TOKEN}"},
         )
         print("resp", resp.status_code)
         if resp.status_code == 400:

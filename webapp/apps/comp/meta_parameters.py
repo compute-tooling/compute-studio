@@ -46,6 +46,9 @@ class MetaParameter:
 
 
 def translate_to_django(meta_parameters: dict) -> MetaParameters:
+
+    # TODO: handle schema
+    meta_parameters.pop("schema", None)
     new_mp = {}
     for name, data in meta_parameters.items():
         if data["type"] == "str" and "choice" in data["validators"]:

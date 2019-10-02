@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-import s3like
+import cs_storage
 
 from webapp.apps.users.models import Project
 
@@ -167,7 +167,7 @@ class DetailAPIView(GetOutputsObjectMixin, APIView):
         if self.object.outputs:
             data = sim.data
             outputs = data["outputs"]["outputs"]
-            data["outputs"] = s3like.read_from_s3like(outputs)
+            data["outputs"] = cs_storage.read(outputs)
             return Response(data, status=status.HTTP_200_OK)
         elif self.object.traceback is not None:
             return Response(sim.data, status=status.HTTP_200_OK)
@@ -205,6 +205,8 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
     simulation results.
     """
 
+    authentication_classes = (TokenAuthentication,)
+
     def put(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.user.username == "comp-api-user":
             ser = OutputsSerializer(data=request.data)
@@ -221,11 +223,7 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
 
 
 class MyInputsAPIView(APIView):
-    authentication_classes = (
-        SessionAuthentication,
-        BasicAuthentication,
-        TokenAuthentication,
-    )
+    authentication_classes = (TokenAuthentication,)
 
     def put(self, request, *args, **kwargs):
         print("myinputs api method=PUT", kwargs)
@@ -242,7 +240,7 @@ class MyInputsAPIView(APIView):
                     # successful run
                     if data["status"] == "SUCCESS":
                         inputs.errors_warnings = data["errors_warnings"]
-                        inputs.inputs_file = data.get("inputs_file", None)
+                        inputs.custom_adjustment = data.get("custom_adjustment", None)
                         inputs.status = "SUCCESS" if is_valid(inputs) else "INVALID"
                         inputs.save()
                         if inputs.status == "SUCCESS":

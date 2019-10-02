@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 services:
   flask:
     build:
@@ -7,16 +7,13 @@ services:
     image: "flask:${TAG}"
     ports:
       - 5050:5050
-    environment:
-      - DEVELOP=${DEVELOP}
-    container_name: flask
     depends_on:
       - redis
       - distributed
     networks:
       worker_net:
 
-####################################################
+  ####################################################
   celerybase:
     build:
       context: ./
@@ -30,7 +27,7 @@ services:
       dockerfile: dockerfiles/Dockerfile
     image: "distributed:latest"
 
-####################################################
+  ####################################################
   redis:
     image: redis
     networks:

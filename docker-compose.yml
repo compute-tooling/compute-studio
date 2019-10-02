@@ -1,12 +1,10 @@
-version: '3.7'
+version: "3.7"
 
 services:
   db:
     image: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    networks:
-      - distributed_worker_net
   webbase:
     build:
       context: ./
@@ -25,20 +23,13 @@ services:
       - DEBUG=True
       - WORKERS=${WORKERS}:5050
       - LOCAL=True
-      - OBJ_STORAGE_EDGE=https://sfo2.cdn.digitaloceanspaces.com
-      - OBJ_STORAGE_BUCKET=compresults-dev
+      - BUCKET=cs-outputs-dev-1
     ports:
       - "8000:8000"
     container_name: web
     depends_on:
       - db
       - webbase
-    networks:
-      - distributed_worker_net
-
-networks:
-  distributed_worker_net:
-    external: true
 
 volumes:
   postgres_data:

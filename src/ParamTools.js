@@ -218,6 +218,11 @@ function labelsToString(valueObject) {
 }
 
 export function convertToFormik(data) {
+  // TODO: handle schema.
+  if ("schema" in data.meta_parameters) {
+    delete data.meta_parameters["schema"];
+  }
+
   var initialValues = { adjustment: {}, meta_parameters: {} };
   var sects = {};
   var section_1 = "";
@@ -251,6 +256,9 @@ export function convertToFormik(data) {
       );
     }
     for (const [param, param_data] of Object.entries(params)) {
+      if (param === "schema") {
+        continue;
+      }
       param_data["form_fields"] = {};
       // Group by major section, section_1 and section_2.
       if ("section_1" in param_data) {

@@ -6,13 +6,11 @@ More information about the data formats that are shown below can be found in the
 
 This guide details the Compute Studio API endpoints and schema. A more practical [Python example](/api/python/) is also provided.
 
-
 ## /[owner]/[title]/api/v1/
 
 Used for creating simulations.
 
 Supports POST HTTP actions.
-
 
 ### Create simulation
 
@@ -21,16 +19,17 @@ POST hdoupe/Matchups/api/v1/
 ```
 
 **Example:**
+
 ```json
 {
-    "meta_parameters": {
-        "use_full_data": true
-    },
-    "adjustment": {
-        "matchup": {
-            "pitcher": "Max Scherzer"
-        }
+  "meta_parameters": {
+    "use_full_data": true
+  },
+  "adjustment": {
+    "matchup": {
+      "pitcher": "Max Scherzer"
     }
+  }
 }
 ```
 
@@ -65,7 +64,7 @@ Allow: GET, POST, HEAD, OPTIONS
                 "warnings": {}
             }
         },
-        "inputs_file": null,
+        "custom_adjustment": null,
         "meta_parameters": {
             "use_full_data": true
         }
@@ -107,7 +106,7 @@ Vary: Accept
                 "pitcher": "Max Scherzer"
             }
         },
-        "inputs_file": null,
+        "custom_adjustment": null,
         "errors_warnings": {
             "API": {
                 "errors": {},
@@ -171,8 +170,8 @@ Used for viewing the inputs for a given model.
 
 Supports GET and POST HTTP actions.
 
-
 ### View inputs:
+
 ```bash
 GET hdoupe/Matchups/api/v1/inputs/
 ```
@@ -259,7 +258,7 @@ Vary: Accept
                             "AJ Ramos",
                             "Aaron Altherr",
                             "Aaron Barrett",
-                        
+
     ...
 ```
 
@@ -273,7 +272,7 @@ POST /hdoupe/Matchups/api/v1/inputs/
 
 ```json
 {
-    "meta_parameters": {"use_full_data": true}
+  "meta_parameters": { "use_full_data": true }
 }
 ```
 
@@ -355,7 +354,6 @@ Vary: Accept
                             "A. J. Pierzynski",
     ...
 ```
-
 
 [1]: https://github.com/compute-tooling/compute-studio-kit#comp-studio-toolkit
 [2]: https://httpie.org/

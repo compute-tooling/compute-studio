@@ -85,5 +85,5 @@ class APIParser(BaseParser):
             "queue_length": queue_length,
             "adjustment": adjustment,
             "errors_warnings": errors_warnings,
-            "inputs_file": None,
+            "custom_adjustment": None,
         }
