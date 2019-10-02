@@ -1,5 +1,5 @@
 ARG TAG
-FROM comporg/distributed
+FROM distributed
 
 LABEL build="flask" date="2018-06-13"
 

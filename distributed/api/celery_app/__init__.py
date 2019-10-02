@@ -8,7 +8,16 @@ from celery import Celery
 from celery.signals import task_postrun
 from celery.result import AsyncResult
 
-import s3like
+import cs_storage
+
+
+try:
+    from cs_config import functions
+except ImportError as ie:
+    if os.environ.get("IS_FLASK", "False") == "True":
+        functions = None
+    else:
+        raise ie
 
 
 COMP_URL = os.environ.get("COMP_URL")
@@ -78,12 +87,12 @@ def task_wrapper(func):
                     res["model_version"] = "NA"
                     res.update(dict(outputs, **{"version": version}))
                 else:
-                    res["model_version"] = outputs.pop("model_version")
-                    outputs = s3like.write_to_s3like(task_id, outputs)
+                    res["model_version"] = functions.get_version()
+                    outputs = cs_storage.write(task_id, outputs)
                     res.update({"outputs": outputs, "version": version})
             else:
                 res.update(outputs)
-        except Exception as e:
+        except Exception:
             traceback_str = traceback.format_exc()
         finish = time.time()
         if "meta" not in res:

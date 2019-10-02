@@ -1,5 +1,5 @@
 ARG TAG
-FROM comporg/distributed
+FROM distributed
 
 ENV CELERY_BROKER_URL redis://redis-master/0
 ENV CELERY_RESULT_BACKEND redis://redis-master/0

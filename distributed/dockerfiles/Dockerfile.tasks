@@ -1,5 +1,5 @@
 ARG TAG
-FROM comporg/celerybase
+FROM celerybase
 
 # install packages here
 # install packages necessary for celery,
