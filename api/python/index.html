@@ -140,13 +140,13 @@ res = api.create(
     }
 )
 
-# output: 
+# output:
 # {'inputs': {'meta_parameters': {'year': 2020,
 #    'data_source': 'PUF',
 #    'use_full_sample': True},
 #   'adjustment': {'policy': {'II_em': [{'year': 2020, 'value': 5000}]},
 #    'behavior': {}},
-#   'inputs_file': {'policy': {'II_em': {'2020': 5000}}, 'behavior': {}},
+#   'custom_adjustment': {'policy': {'II_em': {'2020': 5000}}, 'behavior': {}},
 #   'errors_warnings': {'policy': {'errors': {}, 'warnings': {}},
 #    'behavior': {'errors': {}, 'warnings': {}},
 #    'GUI': {'errors': {}, 'warnings': {}},
@@ -299,7 +299,7 @@ class API:
         resp = requests.post(
             self.sim_url,
             json={
-                &quot;adjustment&quot;: adjustment, 
+                &quot;adjustment&quot;: adjustment,
                 &quot;meta_parameters&quot;: meta_parameters
             },
             headers=self.auth_header
