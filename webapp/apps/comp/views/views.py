@@ -25,7 +25,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-import s3like
+import gcsfs
+import cs_storage
 
 from webapp.settings import DEBUG
 
@@ -44,7 +45,7 @@ from webapp.apps.comp.serializers import OutputsSerializer
 
 from .core import AbstractRouterView, InputsMixin, GetOutputsObjectMixin
 
-OBJ_STORAGE_URL = os.environ.get("OBJ_STORAGE_URL")
+BUCKET = os.environ.get("BUCKET")
 
 
 class InputsMixin:
@@ -270,7 +271,7 @@ class OutputsView(GetOutputsObjectMixin, DetailView):
 
     def render_v1(self, request):
         renderable = {"renderable": self.object.outputs["outputs"]["renderable"]}
-        outputs = s3like.read_from_s3like(renderable)
+        outputs = cs_storage.read(renderable)
         return render(
             request,
             "comp/outputs/v1/sim_detail.html",
@@ -294,8 +295,8 @@ class OutputsView(GetOutputsObjectMixin, DetailView):
             return False
 
     def inputs_to_display(self):
-        if hasattr(self.object.inputs, "inputs_file"):
-            return json.dumps(self.object.inputs.inputs_file, indent=2)
+        if hasattr(self.object.inputs, "custom_adjustment"):
+            return json.dumps(self.object.inputs.custom_adjustment, indent=2)
         else:
             return ""
 
@@ -342,15 +343,13 @@ class OutputsDownloadView(GetOutputsObjectMixin, View):
         if request.GET.get("raw_json", False):
             return self.render_json()
         zip_loc = self.object.outputs["outputs"]["downloadable"]["ziplocation"]
-        endpoint = s3like.OBJ_STORAGE_EDGE.replace("https://", "")
-        url = f"https://{s3like.OBJ_STORAGE_BUCKET}.{endpoint}/{zip_loc}"
-        zip_resp = requests.get(url)
-        zip_data = BytesIO(zip_resp.content)
-        resp = HttpResponse(zip_data.getvalue(), content_type="application/zip")
-        resp[
-            "Content-Disposition"
-        ] = f"attachment; filename={self.object.zip_filename()}"
-        return resp
+        fs = gcsfs.GCSFileSystem(BUCKET)
+        with fs.open(f"{BUCKET}/{zip_loc}", "rb") as f:
+            resp = HttpResponse(f, content_type="application/zip")
+            resp[
+                "Content-Disposition"
+            ] = f"attachment; filename={self.object.zip_filename()}"
+            return resp
 
     def render_json(self):
         raw_json = json.dumps(

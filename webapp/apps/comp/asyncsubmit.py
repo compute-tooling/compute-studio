@@ -72,7 +72,7 @@ class SubmitInputs:
             meta_parameters=self.valid_meta_params,
             adjustment=result["adjustment"],
             errors_warnings=result["errors_warnings"],
-            inputs_file=result["inputs_file"],
+            custom_adjustment=result["custom_adjustment"],
             project=self.project,
             owner=getattr(self.request.user, "profile", None),
             job_id=result["job_id"],

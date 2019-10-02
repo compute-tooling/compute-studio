@@ -58,7 +58,7 @@ class Inputs(models.Model):
 
     # Validated GUI input that has been parsed to have the correct data types,
     # or JSON reform uploaded as file
-    inputs_file = JSONField(default=dict, blank=True, null=True)
+    custom_adjustment = JSONField(default=dict, blank=True, null=True)
 
     errors_warnings = JSONField(default=None, blank=True, null=True)
 
@@ -121,7 +121,7 @@ class Inputs(models.Model):
 
     @property
     def display_params(self):
-        return self.inputs_file or self.adjustment
+        return self.custom_adjustment or self.adjustment
 
     @property
     def pretty_meta_parameters(self):

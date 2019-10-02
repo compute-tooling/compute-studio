@@ -56,7 +56,7 @@ class InputsSerializer(serializers.ModelSerializer):
             "hashid",
             "meta_parameters",
             "adjustment",
-            "inputs_file",
+            "custom_adjustment",
             "errors_warnings",
             "job_id",
             "status",
