@@ -414,3 +414,11 @@ def test_outputs_api(db, api_client, profile, password):
         api_client.put("/outputs/api/", data={"bad": "data"}, format="json").status_code
         == 400
     )
+
+
+def test_anon_get_create_api(db, api_client):
+    anon_user = auth.get_user(api_client)
+    assert not anon_user.is_authenticated
+
+    resp = api_client.get("/hdoupe/Matchups/api/v1/")
+    assert resp.status_code == 403
