@@ -19,11 +19,11 @@ def invoice_payment_failed(event, link="test"):
     if hasattr(user, "email"):
         target_email = user.email
     else:
-        target_email = "henrymdoupe@gmail.com"
+        target_email = "hank@compute.studio"
     send_mail(
         "Your Payment Failed",
         f"Please pay the invoice at: {link}",
-        "henrymdoupe@gmail.com",
+        "hank@compute.studio",
         [target_email],
         fail_silently=False,
     )
@@ -35,7 +35,7 @@ def customer_created(event):
     send_mail(
         "Welcome to Compute Studio",
         "Thanks for joining!",
-        "henrymdoupe@gmail.com",
+        "hank@compute.studio",
         [customer.user.email],
         fail_silently=False,
     )

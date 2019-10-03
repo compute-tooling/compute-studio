@@ -69,8 +69,8 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
                                 f"the next 24 hours. Check the status of the update at "
                                 f"{status_url}."
                             ),
-                            "henrymdoupe@gmail.com",
-                            list({request.user.email, "henrymdoupe@gmail.com"}),
+                            "hank@compute.studio",
+                            list({request.user.email, "hank@compute.studio"}),
                             fail_silently=False,
                         )
                     # Http 401 exception if mail credentials are not set up.
@@ -122,8 +122,8 @@ class ProjectAPIView(GetProjectMixin, APIView):
                             f"the next 24 hours. Check the status of the submission at "
                             f"{status_url}."
                         ),
-                        "henrymdoupe@gmail.com",
-                        list({request.user.email, "henrymdoupe@gmail.com"}),
+                        "hank@compute.studio",
+                        list({request.user.email, "hank@compute.studio"}),
                         fail_silently=False,
                     )
                 # Http 401 exception if mail credentials are not set up.

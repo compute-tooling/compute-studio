@@ -46,7 +46,7 @@ const specialRequests = (
   <div>
     <p>
       You may contact the Compute Studio admin at
-      <a href="mailto:henrymdoupe@gmail.com"> henrymdoupe@gmail.com</a> to
+      <a href="mailto:hank@compute.studio"> hank@compute.studio</a> to
       discuss:
     </p>
     <ul>
