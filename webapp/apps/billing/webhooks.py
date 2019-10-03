@@ -14,17 +14,11 @@ stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 def invoice_payment_failed(event, link="test"):
     print("processing invoice.payment_failed event...")
-    print("sending mail...")
-    user = event.customer.user
-    if hasattr(user, "email"):
-        target_email = user.email
-    else:
-        target_email = "henrymdoupe@gmail.com"
     send_mail(
-        "Your Payment Failed",
-        f"Please pay the invoice at: {link}",
-        "henrymdoupe@gmail.com",
-        [target_email],
+        "Compute Studio",
+        "Payment failed",
+        "Compute Studio <hank@compute.studio>",
+        ["hank@compute.studio"],
         fail_silently=False,
     )
 
@@ -33,9 +27,9 @@ def customer_created(event):
     print("processing customer.created event...")
     customer = Customer.objects.get(stripe_id=event.data["object"]["id"])
     send_mail(
-        "Welcome to Compute Studio",
-        "Thanks for joining!",
-        "henrymdoupe@gmail.com",
+        "Compute Studio",
+        "Your payment method was set successfully! Please write back if you have any questions.",
+        "Compute Studio <hank@compute.studio>",
         [customer.user.email],
         fail_silently=False,
     )

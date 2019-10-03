@@ -44,7 +44,7 @@ export default class ErrorBoundary extends React.Component {
                 issue
               </a>{" "}
               in the Compute Studio source code repository or{" "}
-              <a href="mailto:henrymdoupe@gmail.com">emailing Hank</a>.
+              <a href="mailto:hank@compute.studio">emailing Hank</a>.
             </Card.Text>
           </Card.Body>
         </Card>

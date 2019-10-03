@@ -127,8 +127,8 @@ class BaseCreateAPIView(APIView):
                         f"{ae.traceback}\n user:{request.user.username}\n "
                         f"project: {project.app_url}."
                     ),
-                    "henrymdoupe@gmail.com",
-                    ["henrymdoupe@gmail.com"],
+                    "hank@compute.studio",
+                    ["hank@compute.studio"],
                     fail_silently=True,
                 )
             # Http 401 exception if mail credentials are not set up.

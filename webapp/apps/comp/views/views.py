@@ -197,8 +197,8 @@ class OutputsView(GetOutputsObjectMixin, DetailView):
             send_mail(
                 f"Compute Studio Sim fail",
                 f"An error has occurred at {username}/{title}/{model_pk}",
-                "henrymdoupe@gmail.com",
-                ["henrymdoupe@gmail.com"],
+                "hank@compute.studio",
+                ["hank@compute.studio"],
                 fail_silently=True,
             )
         # Http 401 exception if mail credentials are not set up.
