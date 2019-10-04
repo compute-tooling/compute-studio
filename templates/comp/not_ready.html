@@ -48,13 +48,13 @@
             insertEta(data.eta, data.origEta);
             setTimeout(function() {
               window.location.reload(1);
-            }, 7000);
+            }, 1000);
           }
         }
       });
     }
     ajaxEta();
-    setInterval(ajaxEta, 1000);
+    setInterval(ajaxEta, 5000);
   });
 </script>
 {% endblock %}
