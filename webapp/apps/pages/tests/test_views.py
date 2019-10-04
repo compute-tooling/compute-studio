@@ -22,3 +22,7 @@ class TestPageViews:
         assert resp.status_code == 200
         assert "project_list" in resp.context
         assert "profile/profile_base.html" in [t.name for t in resp.templates]
+
+    def test_get_pages(self, client):
+        for page in ["about", "privacy", "terms"]:
+            assert client.get(f"/{page}/").status_code == 200

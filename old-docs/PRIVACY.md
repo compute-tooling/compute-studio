@@ -1,8 +1,8 @@
 # Privacy Policy
 
-## Last updated 12/22/2018 
+## Last updated 12/22/2018
 
-### [View All Versions](https://github.com/compute-tooling/comp/commits/master/docs/PRIVACY.md)
+**[View All Versions](https://github.com/compute-tooling/comp/commits/master/docs/PRIVACY.md)**
 
 ## Introduction
 
@@ -14,9 +14,9 @@ This Privacy Policy applies to information we collect:
 
 - On our website
 - In email, text message, and other electronic messages between you and our Website.
-- Through our Application Programming Interfaces that provide access to our website. 
+- Through our Application Programming Interfaces that provide access to our website.
 
-This Privacy Policy does *not* apply to information collected by:
+This Privacy Policy does _not_ apply to information collected by:
 
 - Us offline or through any other means, including on any other website operated by any third party.
 - Any third party, including through any application or content (including advertising) that may link to or be accessible from or on our Website. Our Website may include links to third-party websites, plug-ins and/or applications. Clicking on those links or enabling those connections may allow third parties to collect or share data about you. We do not control these third-party websites and are not responsible for their privacy statements. When you leave our Website, we encourage you to read the privacy notice of every website you visit.
@@ -42,7 +42,7 @@ When you access or use our Services, we may automatically collect, store, use, a
 - Technical Data: Includes internet protocol (IP) address, your login data, browser type and version, time zone setting and location, access time, pages viewed, pages you visited before navigating to our Services, browser plug-in types and versions, operating system and platform.
 - Information Collected by Cookies and Other Tracking Technologies: We use various technologies to collect information, and this may include sending cookies to your computer or mobile device. Cookies are small data files stored on your hard drive or in device memory that help us to improve our Services and your experience, see which areas and features of our Services are popular and count visits. We may also collect information using web beacons (also known as "tracking pixels"). Web beacons are electronic images that may be used in our Services or emails and help deliver cookies, count visits, understand usage and campaign effectiveness and determine whether an email has been opened and acted upon. For more information about cookies, and how to disable them, please see "Your Choices" below.
 - Information We Collect from Other Sources: We may also obtain information from other sources and combine that with information we collect through our Services. We also collect, use and share aggregated data such as statistical or demographic data for any purpose. Aggregated data may be derived from your personal data but is not considered personal data in law as this data does not directly or indirectly reveal your identity. For example, we may aggregate your Technical Data to calculate the percentage of users accessing a specific website feature. However, if we combine or connect aggregated data with your personal data so that it can directly or indirectly identify you, we treat the combined data as personal data, which will be used in accordance with this privacy notice.
-- Information We Collect from Sub-processors: A sub-processor is a third-party data processor engaged by Compute Studio, who has or potentially will have access to or process information you provide to us or we collect automatically. Compute Studio engages different types of data sub-processors to perform various functions. A list of sub-processors engaged by Compute Studio is maintained at https://github.com/compute-tooling/comp/blob/master/docs/SUBPROCESSORS.md. 
+- Information We Collect from Sub-processors: A sub-processor is a third-party data processor engaged by Compute Studio, who has or potentially will have access to or process information you provide to us or we collect automatically. Compute Studio engages different types of data sub-processors to perform various functions. A list of sub-processors engaged by Compute Studio is maintained at https://github.com/compute-tooling/comp/blob/master/docs/SUBPROCESSORS.md.
 
 ### Use of Information
 
@@ -54,8 +54,8 @@ We may use information about you for various purposes, including to:
 - Respond to your comments, questions and requests and provide customer service;
 - Communicate with you about products, services, offers, promotions, rewards and events offered by Compute Studio and others, and provide news and information we think will be of interest to you;
 - Monitor and analyze trends, usage and activities in connection with our Services;
--Personalize and improve our Services and provide content or features that match user profiles or interests;
--Process and deliver contest entries and rewards;
+  -Personalize and improve our Services and provide content or features that match user profiles or interests;
+  -Process and deliver contest entries and rewards;
 - Deliver relevant website content and/or advertisements to you and measure or understand the effectiveness of the advertising we serve to you;
 - Link or combine with information we get from others to help understand your needs and provide you with better service; and
 - Administer and protect our business and our Website (including troubleshooting, data analysis, testing, system maintenance, support, reporting and hosting data).
@@ -72,8 +72,8 @@ We may share certain information about you as follows or as otherwise described 
 - With other users when you publish a model or otherwise participate in the interactive features of our Services;
 - In response to a request for information if we believe disclosure is in accordance with any applicable law, regulation or legal process, or as otherwise required by any applicable law, rule or regulation;
 - If we believe your actions are inconsistent with our user agreements or policies, or to protect the rights, property and safety of Compute Studio or others;
-In connection with, or during negotiations of, any merger, sale of company assets, financing or acquisition of all or a portion of our business by another company; and
-With your express consent or at your direction.
+  In connection with, or during negotiations of, any merger, sale of company assets, financing or acquisition of all or a portion of our business by another company; and
+  With your express consent or at your direction.
 - We may also share aggregated or de-identified information, which cannot reasonably be used to identify you.
 
 ### Data Security
@@ -115,13 +115,6 @@ The laws in the European Economic Area and certain jurisdictions outside the Uni
 We may change this Privacy Policy from time to time. If we make changes, we will notify you by revising the date at the bottom of the policy and, in some cases, we may provide you with additional notice (such as adding a statement to our homepage or sending you a notification). We encourage you to review the Privacy Policy whenever you access our Services to stay informed about our information practices and the ways you can help protect your privacy.
 
 Contact Information
-To ask questions or comments about this Privacy Policy or our privacy practices please email us at admin@compute.studio or write us at Compute Tooling, Inc. 213 E Highland Ave., Atlantic Highlands, NJ 07716. 
+To ask questions or comments about this Privacy Policy or our privacy practices please email us at admin@compute.studio or write us at Compute Tooling, Inc. 213 E Highland Ave., Atlantic Highlands, NJ 07716.
 
 This version of the Privacy Policy was last updated on December 22, 2018 and historic versions are archived here: https://github.com/compute-tooling/comp/commits/master/docs/PRIVACY.md.
-
-
-
-
-
-
-
