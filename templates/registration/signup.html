@@ -1,15 +1,17 @@
-{% extends 'base.html' %}
-
-{% load static %}
-{% block title %}Sign Up{% endblock %}
-
+{% extends 'base.html' %} {% load static %} {% block title %}Sign Up{%endblock%}
 {% block content %}
-  <div class="card card-body card-outer">
+<div class="card card-body card-outer">
   <h2 class="card-title">Sign up</h2>
   <form method="post" id="payment-form">
-    {% csrf_token %}
-    {% include 'includes/prettyform.html' with form=form %}
+    {% csrf_token %} {% include 'includes/prettyform.html' with form=form %}
     <button type="submit" class="btn btn-success mt-4">Sign up</button>
+    <p class="text-muted mt-3">
+      By creating an account, you agree to the
+      <a href="/terms/">Terms of Service</a>. For more information about Compute
+      Studio's privacy practices, see the Compute Studio
+      <a href="/privacy/">Privacy Statement</a>. We'll occasionally send you
+      account-related emails.
+    </p>
   </form>
-  </div>
+</div>
 {% endblock %}
