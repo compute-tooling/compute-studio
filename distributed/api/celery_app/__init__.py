@@ -1,6 +1,7 @@
 import os
 import time
 import functools
+import re
 import traceback
 
 import requests
@@ -30,33 +31,31 @@ CELERY_RESULT_BACKEND = os.environ.get(
 
 OUTPUTS_VERSION = os.environ.get("OUTPUTS_VERSION")
 
-task_routes = {
-    # '{project_name}_tasks.*': {'queue': '{project_name}_queue'},
-    "hdoupe_matchups_tasks.sim": {"queue": "hdoupe_matchups_queue"},
-    "hdoupe_matchups_tasks.inputs_get": {"queue": "hdoupe_matchups_inputs_queue"},
-    "hdoupe_matchups_tasks.inputs_parse": {"queue": "hdoupe_matchups_inputs_queue"},
-    "pslmodels_taxbrain_tasks.sim": {"queue": "pslmodels_taxbrain_queue"},
-    "pslmodels_taxbrain_tasks.inputs_get": {"queue": "pslmodels_taxbrain_inputs_queue"},
-    "pslmodels_taxbrain_tasks.inputs_parse": {
-        "queue": "pslmodels_taxbrain_inputs_queue"
-    },
-    "pslmodels_costofcapitalcalculator_tasks.sim": {
-        "queue": "pslmodels_costofcapitalcalculator_queue"
-    },
-    "pslmodels_costofcapitalcalculator_tasks.inputs_get": {
-        "queue": "pslmodels_costofcapitalcalculator_inputs_queue"
-    },
-    "pslmodels_costofcapitalcalculator_tasks.inputs_parse": {
-        "queue": "pslmodels_costofcapitalcalculator_inputs_queue"
-    },
-    "pslmodels_taxcruncher_tasks.sim": {"queue": "pslmodels_taxcruncher_queue"},
-    "pslmodels_taxcruncher_tasks.inputs_get": {
-        "queue": "pslmodels_taxcruncher_inputs_queue"
-    },
-    "pslmodels_taxcruncher_tasks.inputs_parse": {
-        "queue": "pslmodels_taxcruncher_inputs_queue"
-    },
-}
+
+def get_task_routes():
+    def clean(name):
+        return re.sub("[^0-9a-zA-Z]+", "", name).lower()
+
+    resp = requests.get(f"{COMP_URL}/publish/api/")
+    if resp.status_code != 200:
+        raise Exception(f"Response status code: {resp.status_code}")
+    data = resp.json()
+    task_routes = {}
+    for project in data:
+        owner = clean(project["owner"])
+        title = clean(project["title"])
+        model = f"{owner}_{title}"
+        task_routes.update(
+            {
+                f"{model}_tasks.sim": {"queue": f"{model}_queue"},
+                f"{model}_tasks.inputs_get": {"queue": f"{model}_inputs_queue"},
+                f"{model}_tasks.inputs_parse": {"queue": f"{model}_inputs_queue"},
+            }
+        )
+    return task_routes
+
+
+task_routes = get_task_routes()
 
 
 celery_app = Celery(
