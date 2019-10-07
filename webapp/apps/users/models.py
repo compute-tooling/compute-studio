@@ -104,6 +104,9 @@ class Profile(models.Model):
         else:
             return "profile"
 
+    def __str__(self):
+        return self.user.username
+
     class Meta:
         # not in use yet...
         permissions = (("access_public", "Has access to public projects"),)
