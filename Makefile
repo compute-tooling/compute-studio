@@ -6,7 +6,7 @@ MODELS ?= ""
 
 kube-config:
 	cd distributed && \
-		python app_writer.py --config $(CONFIG) --project $(PROJECT)
+		python app_writer.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS)
 
 workers:
 	cd distributed && \
