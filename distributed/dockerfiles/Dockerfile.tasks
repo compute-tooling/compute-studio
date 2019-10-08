@@ -20,6 +20,7 @@ ARG BRANCH=master
 ARG BUILD_NUM=0
 
 ADD ${RAW_REPO_URL}/${BRANCH}/cs-config/install.sh /home
+RUN cat /home/install.sh
 RUN bash /home/install.sh
 
 # Bump to trigger re-install of source, without re-installing dependencies.
