@@ -21,6 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("--config", required=True)
     parser.add_argument("--tag", required=False, default=TAG)
     parser.add_argument("--project", required=False, default=PROJECT)
+    parser.add_argument("--models", nargs="+", type=str, required=False, default=None)
     args = parser.parse_args()
 
     path = Path("docker-compose-apps")
@@ -60,6 +61,8 @@ if __name__ == "__main__":
     }
 
     for obj in config:
+        if args.models and obj["title"] not in args.models:
+            continue
         safeowner = clean(obj["owner"])
         safetitle = clean(obj["title"])
         repo_url = obj["repo_url"]

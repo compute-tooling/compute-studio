@@ -21,12 +21,16 @@ if __name__ == "__main__":
     parser.add_argument("--host", required=False, default="gcr.io")
     parser.add_argument("--project", required=False, default="comp-studio")
     parser.add_argument("--tag", required=False, default=TAG)
+    parser.add_argument("--models", nargs="+", type=str, required=False, default=None)
     args = parser.parse_args()
 
     with open(args.config, "r") as f:
         config = json.loads(f.read())
 
     for obj in config:
+        if args.models and obj["title"] not in args.models:
+            continue
+
         safeowner = clean(obj["owner"])
         safetitle = clean(obj["title"])
         img_name = f"{safeowner}_{safetitle}_tasks"

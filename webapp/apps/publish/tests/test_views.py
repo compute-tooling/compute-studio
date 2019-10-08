@@ -51,10 +51,11 @@ class TestPublishViews:
             "listed": True,
         }
         owner = Profile.objects.get(user__username="modeler")
-        project = Project.objects.create(owner=owner, **exp)
+        project = Project.objects.create(**dict(exp, **{"owner": owner}))
         resp = client.get("/publish/api/modeler/Detail-Test/detail/")
         assert resp.status_code == 200
         data = resp.json()
+        del data["owner"]
         serializer = PublishSerializer(project, data=data)
         assert serializer.is_valid()
         assert serializer.validated_data == exp
