@@ -12,7 +12,7 @@ Compute Studio relies on two data formats, one for the [inputs](/publish/inputs)
 
 Compute Studio interacts with your model using [4 Python functions](/publish/functions/): one for getting the model's version, one for getting the default inputs, one for validating user inputs, and one for running the model.
 
-## Pubish
+## Publish
 
 Now it's time to publish your model. The first step is to install [Compute Studio Kit](https://github.com/compute-tooling/compute-studio-kit/#compute-studio-kit) via `pip install cs-kit`. Next, create a directory named `cs-config` in your model's source code repository with the command `csk-init`. This creates a light-weight python package that includes an installation script, a `functions.py` file with stubs for each of the four Python functions, and a [py.test](https://docs.pytest.org/en/latest/) ready test suite located at `cs-config/cs_config/tests/test_functions.py`. Once you've filled in your functions, you can test whether they are compliant with the C/S criteria by running `py.test cs-config/`.
 
