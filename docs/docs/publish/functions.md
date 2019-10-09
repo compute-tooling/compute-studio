@@ -33,13 +33,13 @@ import matchups
 
 
 def get_inputs(meta_params_dict):
-    meta_params = MetaParams()
+    meta_params = matchups.MetaParams()
     meta_params.adjust(meta_params_dict)
-    params = MatchupsParams()
+    params = matchups.MatchupsParams()
     params.set_state(use_full_data=True)
     return {
         "meta_parameters": meta_params.dump(),
-        "model_parameters": model_parameters.dump()
+        "model_parameters": params.dump()
     }
 
 ```
@@ -54,7 +54,7 @@ Accepts parsed user adjustments, separated by each major section. Returns warnin
 Compute Studio will provide parsed user adjustments of the form:
 
 ```
-meta_parameters = {
+meta_param_dict = {
     "use_full_data": True
 }
 
@@ -98,7 +98,7 @@ import matchups
 
 def validate_inputs(meta_param_dict, adjustment, errors_warnings):
     # matchups doesn't look at meta_param_dict for validating inputs.
-    params = MatchupsParams()
+    params = matchups.MatchupsParams()
     params.adjust(adjustment["matchup"], raise_errors=False)
     errors_warnings["matchup"]["errors"].update(params.errors)
     return {"errors_warnings": errors_warnings}
@@ -115,7 +115,7 @@ Compute Studio submits the model's meta parameters and the parsed and formatted 
 
 ```
 meta_param_dict = {
-    "use_full_data": true
+    "use_full_data": True
 }
 adjustment = {
     "matchup": {
