@@ -62,7 +62,7 @@
 </li>
                                     
 <li >
-    <a href="../outputs/">Ouptuts</a>
+    <a href="../outputs/">Outputs</a>
 </li>
                                     
 <li >
@@ -120,7 +120,7 @@
         <li class="main active"><a href="#publishing-on-compute-studio">Publishing on Compute Studio</a></li>
             <li><a href="#data-formats">Data formats</a></li>
             <li><a href="#functions">Functions</a></li>
-            <li><a href="#pubish">Pubish</a></li>
+            <li><a href="#publish">Publish</a></li>
     </ul>
 </div></div>
                 <div class="col-md-9" role="main">
@@ -132,7 +132,7 @@
 <p>Compute Studio relies on two data formats, one for the <a href="/publish/inputs">inputs</a> and one for the <a href="/publish/outputs/">outputs</a>. These are JSON schemas that your model will need to adopt for Compute Studio to be able to generate input forms representing your model's default specification, validate user adjustments, and display model outputs.</p>
 <h2 id="functions">Functions</h2>
 <p>Compute Studio interacts with your model using <a href="/publish/functions/">4 Python functions</a>: one for getting the model's version, one for getting the default inputs, one for validating user inputs, and one for running the model.</p>
-<h2 id="pubish">Pubish</h2>
+<h2 id="publish">Publish</h2>
 <p>Now it's time to publish your model. The first step is to install <a href="https://github.com/compute-tooling/compute-studio-kit/#compute-studio-kit">Compute Studio Kit</a> via <code>pip install cs-kit</code>. Next, create a directory named <code>cs-config</code> in your model's source code repository with the command <code>csk-init</code>. This creates a light-weight python package that includes an installation script, a <code>functions.py</code> file with stubs for each of the four Python functions, and a <a href="https://docs.pytest.org/en/latest/">py.test</a> ready test suite located at <code>cs-config/cs_config/tests/test_functions.py</code>. Once you've filled in your functions, you can test whether they are compliant with the C/S criteria by running <code>py.test cs-config/</code>.</p>
 <p>Once your functions are passing the <code>cs-kit</code> tests, fill out the <a href="https://compute.studio/publish">publish form</a> that asks you to provide a title and overview for your new Compute Studio app and a link to your model's source code repository. If you would like to see a publishing template that has already been completed, you can view the Matchups template <a href="https://compute.studio/hdoupe/Matchups/detail">here</a>.</p>
 <p>Once you've submitted the publishing form, Hank will review it and get back to you within 24 hours to inform you whether the model is ready to be published or if there are criteria that have not been satisfied. Your model will be deployed to Compute Studio once it has met all of the critera. You will have the opportunity to test it out after it has been deployed.</p></div>
