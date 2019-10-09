@@ -118,6 +118,7 @@
                 <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
     <ul class="nav bs-sidenav">
         <li class="main active"><a href="#python-functions">Python functions</a></li>
+            <li><a href="#get-version">Get Version</a></li>
             <li><a href="#model-parameters">Model Parameters</a></li>
             <li><a href="#validate-user-adjustments">Validate user adjustments</a></li>
             <li><a href="#run-simulation">Run simulation</a></li>
@@ -128,11 +129,23 @@
 <h1 id="python-functions">Python functions</h1>
 <p>The modeling project must provide a Python function for each of the following tasks:</p>
 <ul>
+<li><strong>Get Version</strong>: Get the model's version.</li>
 <li><strong>Model Parameters</strong>: Get the default Model Parameters and their meta data.</li>
 <li><strong>Parse user adjustments</strong>: Do model-specific formatting and validation on user adjustments.</li>
 <li><strong>Run simulation</strong>: Submit the user adjustments (or none) to the model to run the simulation.</li>
 </ul>
-<p>Once you've skimmed the criteria below, you can develop your functions against the <a href="https://github.com/compute-tooling/compute-studio-kit/"><code>computestudiokit</code></a> automated testing suite.</p>
+<p>Once you've skimmed the criteria below, you can develop your functions against the <code>cs-kit</code> <a href="https://github.com/compute-tooling/compute-studio-kit/#test-your-functions-in-cs-configcs_configteststest_functionspy">automated testing suite</a>.</p>
+<h2 id="get-version">Get Version</h2>
+<p>Returns the version of the model as a string.</p>
+<ul>
+<li><strong>Python Example:</strong></li>
+</ul>
+<pre><code class="python">
+def get_version():
+    return &quot;1.0.0&quot;
+
+</code></pre>
+
 <h2 id="model-parameters">Model Parameters</h2>
 <p>Accepts Meta Parameters, if they are being utilized. Returns data in the form specified in the <a href="/publish/inputs/">inputs page</a>.</p>
 <ul>
@@ -145,11 +158,11 @@ def get_inputs(meta_params_dict):
     meta_params = MetaParams()
     meta_params.adjust(meta_params_dict)
     params = MatchupsParams()
-    spec = params.specification(
-        meta_data=True,
-        use_full_data=meta_params.use_full_data.tolist()
-    )
-    return meta_params.specification(meta_data=True), {&quot;matchup&quot;: spec}
+    params.set_state(use_full_data=True)
+    return {
+        &quot;meta_parameters&quot;: meta_params.dump(),
+        &quot;model_parameters&quot;: model_parameters.dump()
+    }
 
 </code></pre>
 
@@ -158,18 +171,30 @@ def get_inputs(meta_params_dict):
 <h2 id="validate-user-adjustments">Validate user adjustments</h2>
 <p>Accepts parsed user adjustments, separated by each major section. Returns warnings/errors (if any).</p>
 <p>Compute Studio will provide parsed user adjustments of the form:</p>
-<pre><code class="json">{
+<pre><code>meta_parameters = {
+    &quot;use_full_data&quot;: True
+}
+
+adjustment = {
+  &quot;matchup&quot;: {
+    &quot;start_date&quot;: [{ &quot;value&quot;: &quot;2012-08-01&quot; }],
+    &quot;end_date&quot;: [{ &quot;value&quot;: &quot;2012-09-01&quot; }],
+    &quot;pitcher&quot;: [{ &quot;value&quot;: &quot;Not a Real Pitcher&quot; }]
+  }
+}
+
+errors_warnings = {
     &quot;matchup&quot;: {
-        &quot;start_date&quot;: [{&quot;value&quot;: &quot;2012-08-01&quot;}],
-        &quot;end_date&quot;: [{&quot;value&quot;: &quot;2012-09-01&quot;}],
-        &quot;pitcher&quot;: [{&quot;value&quot;: &quot;Not a Real Pitcher&quot;}],
+        &quot;errors&quot;: {},
+        &quot;warnings&quot;: {}
     }
 }
 </code></pre>
 
 <p>The function should return:</p>
 <p>Warnings/Errors:</p>
-<pre><code class="python">    {
+<pre><code class="python">{
+    &quot;errors_warnings&quot;: {
         &quot;matchup&quot;: {
             &quot;errors&quot;: {
                 &quot;pitcher&quot;: ['Pitcher &quot;Not a Real Pitcher&quot; not allowed']
@@ -177,6 +202,7 @@ def get_inputs(meta_params_dict):
             &quot;warnings&quot;: {}
         }
     }
+}
 </code></pre>
 
 <ul>
@@ -189,7 +215,7 @@ def validate_inputs(meta_param_dict, adjustment, errors_warnings):
     params = MatchupsParams()
     params.adjust(adjustment[&quot;matchup&quot;], raise_errors=False)
     errors_warnings[&quot;matchup&quot;][&quot;errors&quot;].update(params.errors)
-    return errors_warnings
+    return {&quot;errors_warnings&quot;: errors_warnings}
 </code></pre>
 
 <p>Here's what you get after filling in this function:
@@ -197,12 +223,13 @@ def validate_inputs(meta_param_dict, adjustment, errors_warnings):
 <h2 id="run-simulation">Run simulation</h2>
 <p>Accepts Meta Parameters values and model parameters. Returns outputs as specified in the <a href="/publish/outputs/">outputs page</a></p>
 <p>Compute Studio submits the model's meta parameters and the parsed and formatted user adjustments:</p>
-<pre><code>{
-    &quot;meta_params&quot;: {},
-    &quot;model_params&quot;: {
-        &quot;some_major_section&quot;: {},
-        &quot;another_major_section&quot;: {}
-    }
+<pre><code>meta_param_dict = {
+    &quot;use_full_data&quot;: true
+}
+adjustment = {
+    &quot;matchup&quot;: {
+        &quot;pitcher&quot;: &quot;Max Scherzer&quot;
+    },
 }
 </code></pre>
 

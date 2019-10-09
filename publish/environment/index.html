@@ -123,9 +123,10 @@
                 <div class="col-md-9" role="main">
 
 <h1 id="model-environment">Model Environment</h1>
-<p>Compute Studio runs each project in its own <a href="https://www.docker.com/">Docker</a> container. <a href="https://hub.docker.com/r/continuumio/miniconda3">Miniconda3</a> is used as the base image. This means that <a href="https://conda.io/docs/"><code>conda</code></a> is installed by default. Thus, all packages available through the <code>conda</code> package manager can easily be installed. Include installation instructions in your email to Hank, and he will add them to the project's <code>Dockerfile</code>. If you are inclined, you will have access to this <code>Dockerfile</code> and will be able to build the Docker image and experiment with it. The installation instructions for the <code>matchups</code> project are simply a bash script:</p>
-<pre><code class="bash">conda install pandas pyarrow
-pip install pybaseball matchups
+<p>Compute Studio runs each project in its own <a href="https://www.docker.com/">Docker</a> container. <a href="https://hub.docker.com/r/continuumio/miniconda3">Miniconda3</a> is used as the base image, making it easy to install any package available through the <a href="https://docs.conda.io/en/latest/">Conda package manager</a>. An <code>install.sh</code> script is created for you by the <a href="https://github.com/compute-tooling/compute-studio-kit/#set-up-the-cs-config-directory"><code>csk-init</code></a> command in your <code>cs-config</code> directory. Compute Studio will use this script to install your package. The installation instructions for the <code>matchups</code> project are simply a bash script:</p>
+<pre><code class="bash"># located at: https://github.com/hdoupe/Matchups/blob/master/cs-config/install.sh
+conda install -c conda-forge pandas pyarrow bokeh &quot;paramtools&gt;=0.5.3&quot; fastparquet python-snappy pip
+pip install git+https://github.com/hdoupe/Matchups.git@master
 </code></pre></div>
         </div>
 
