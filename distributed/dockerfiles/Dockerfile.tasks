@@ -46,3 +46,7 @@ WORKDIR /home/distributed/api
 
 COPY celery_sim.sh /home/distributed/api/celery_sim.sh
 COPY celery_io.sh /home/distributed/api/celery_io.sh
+
+
+ENV DASK_SCHEDULER_ADDRESS pslmodels-ogusa-dask-scheduler:8786
+ENV DASK_DISTRIBUTED__DAEMON False

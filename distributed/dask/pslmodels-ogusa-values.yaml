@@ -1,0 +1,25 @@
+scheduler:
+  name: pslmodels-ogusa-scheduler
+  image:
+    repository: gcr.io/cs-workers-dev/pslmodels_ogusa_tasks
+    tag: 0.15.4.multi.12
+
+worker:
+  name: pslmodels-ogusa-worker
+  image:
+    repository: gcr.io/cs-workers-dev/pslmodels_ogusa_tasks
+    tag: 0.15.4.multi.12
+  replicas: 1
+  resources:
+    requests:
+      memory: 40G
+      cpu: 3
+    limits:
+      memory: 45G
+      cpu: 4
+  env:
+    - name: DASK_DISTRIBUTED__DAEMON
+      value: "false"
+
+jupyter:
+  enabled: true

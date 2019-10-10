@@ -1,0 +1,25 @@
+scheduler:
+  name: pslmodels-taxbrain-scheduler
+  image:
+    repository: gcr.io/cs-workers-dev/pslmodels_taxbrain_tasks
+    tag: 0.15.4.multi.2
+
+worker:
+  name: pslmodels-taxbrain-worker
+  image:
+    repository: gcr.io/cs-workers-dev/pslmodels_taxbrain_tasks
+    tag: 0.15.4.multi.7
+  replicas: 1
+  resources:
+    requests:
+      memory: 14G
+      cpu: 1
+    limits:
+      memory: 20G
+      cpu: 2
+  env:
+    - name: DASK_DISTRIBUTED__DAEMON
+      value: "false"
+
+jupyter:
+  enabled: true
