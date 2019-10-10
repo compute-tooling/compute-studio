@@ -51,6 +51,8 @@ if __name__ == "__main__":
 
     kube_template = Template(kube_template_text)
 
+    models = args.models if args.models and args.models[0] else None
+
     ext_str = ""
     reg_url = "https://github.com"
     raw_url = "https://raw.githubusercontent.com"
@@ -61,7 +63,7 @@ if __name__ == "__main__":
     }
 
     for obj in config:
-        if args.models and obj["title"] not in args.models:
+        if models and obj["title"] not in models:
             continue
         safeowner = clean(obj["owner"])
         safetitle = clean(obj["title"])
