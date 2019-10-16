@@ -13,11 +13,17 @@ spec:
         app: flask
     spec:
       containers:
-      - name: flask
-        image: gcr.io/{{PROJECT}}/flask:{{TAG}}
-        imagePullPolicy: Always
-        env:
-        - name: GET_HOSTS_FROM
-          value: dns
-        ports:
-        - containerPort: 5050
+        - name: flask
+          image: gcr.io/{{PROJECT}}/flask:{{TAG}}
+          imagePullPolicy: Always
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+          ports:
+            - containerPort: 5050
+          env:
+            - name: COMP_URL
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: COMP_URL

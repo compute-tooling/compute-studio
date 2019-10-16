@@ -4,6 +4,8 @@ from webapp.apps.users.models import Project
 
 
 class PublishSerializer(serializers.ModelSerializer):
+    owner = serializers.StringRelatedField(read_only=True)
+
     class Meta:
         model = Project
         fields = (
@@ -15,4 +17,5 @@ class PublishSerializer(serializers.ModelSerializer):
             "exp_task_time",
             "server_cost",
             "listed",
+            "owner",
         )

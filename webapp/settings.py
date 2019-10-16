@@ -18,8 +18,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 WEBAPP_VERSION = "0.1.0"
 
-ADMINS = [("Hank", "henrymdoupe@gmail.com")]
-SERVER_EMAIL = "henrymdoupe@gmail.com"
+ADMINS = [("Hank", "hank@compute.studio")]
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
@@ -75,6 +74,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "rest_auth.registration",
     "allauth.socialaccount",
+    "anymail",
     # 'allauth.socialaccount.providers.github', # new
 ]
 
@@ -182,5 +182,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
 
-EMAIL_BACKEND = "sgbackend.SendGridBackend"
-SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY", "dne")
+ANYMAIL = {
+    # (exact settings here depend on your ESP...)
+    "MAILGUN_API_KEY": os.environ.get("MAILGUN_API_KEY"),
+    "MAILGUN_SENDER_DOMAIN": "mg.compute.studio",  # your Mailgun domain, if needed
+}
+EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+DEFAULT_FROM_EMAIL = "hank@compute.studio"
+SERVER_EMAIL = "hank@compute.studio"

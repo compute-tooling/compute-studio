@@ -4,10 +4,10 @@ import os
 from api.celery_app import celery_app, task_wrapper
 
 try:
-    import compconfig
+    from cs_config import functions
 except ImportError as ie:
     if os.environ.get("IS_FLASK", "False") == "True":
-        compconfig = None
+        functions = None
     else:
         raise ie
 
@@ -17,11 +17,7 @@ except ImportError as ie:
 )
 @task_wrapper
 def inputs_get(self, meta_param_dict):
-    res = compconfig.get_inputs(meta_param_dict)
-    # get ready for upcoming schema change moving from tuples to dicts.
-    if isinstance(res, tuple):
-        res = {"meta_parameters": res[0], "model_parameters": res[1]}
-    return res
+    return functions.get_inputs(meta_param_dict)
 
 
 @celery_app.task(
@@ -29,13 +25,7 @@ def inputs_get(self, meta_param_dict):
 )
 @task_wrapper
 def inputs_parse(self, meta_param_dict, adjustment, errors_warnings):
-    res = compconfig.validate_inputs(meta_param_dict, adjustment, errors_warnings)
-    # get ready for upcoming schema change moving from tuples to dicts.
-    if isinstance(res, tuple):
-        res = {"errors_warnings": res[0], "inputs_file": res[1]}
-    else:
-        res = {"errors_warnings": res}
-    return res
+    return functions.validate_inputs(meta_param_dict, adjustment, errors_warnings)
 
 
 @celery_app.task(
@@ -46,4 +36,4 @@ def inputs_parse(self, meta_param_dict, adjustment, errors_warnings):
 )
 @task_wrapper
 def sim(self, meta_param_dict, adjustment):
-    return compconfig.run_model(meta_param_dict, adjustment)
+    return functions.run_model(meta_param_dict, adjustment)

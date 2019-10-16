@@ -35,7 +35,7 @@ def create_profile_from_user(user):
             f"questions or there is anything else we "
             f"can do to help you get up and running."
         ),
-        from_email="henrymdoupe@gmail.com",
+        from_email="hank@compute.studio",
         to=[user.email],
         bcc=["matt.h.jensen@gmail.com"],
     )
@@ -103,6 +103,9 @@ class Profile(models.Model):
             return "customer"
         else:
             return "profile"
+
+    def __str__(self):
+        return self.user.username
 
     class Meta:
         # not in use yet...

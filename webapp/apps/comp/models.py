@@ -58,7 +58,7 @@ class Inputs(models.Model):
 
     # Validated GUI input that has been parsed to have the correct data types,
     # or JSON reform uploaded as file
-    inputs_file = JSONField(default=dict, blank=True, null=True)
+    custom_adjustment = JSONField(default=dict, blank=True, null=True)
 
     errors_warnings = JSONField(default=None, blank=True, null=True)
 
@@ -78,7 +78,7 @@ class Inputs(models.Model):
     owner = models.ForeignKey(
         "users.Profile", on_delete=models.CASCADE, null=True, related_name="inputs"
     )
-    traceback = models.CharField(null=True, blank=True, default=None, max_length=4000)
+    traceback = models.CharField(null=True, blank=True, default=None, max_length=8000)
     job_id = models.UUIDField(blank=True, default=None, null=True)
     status = models.CharField(
         choices=(
@@ -121,7 +121,7 @@ class Inputs(models.Model):
 
     @property
     def display_params(self):
-        return self.inputs_file or self.adjustment
+        return self.custom_adjustment or self.adjustment
 
     @property
     def pretty_meta_parameters(self):
@@ -168,7 +168,7 @@ class Simulation(models.Model):
     meta_data = JSONField(default=None, blank=True, null=True)
     outputs = JSONField(default=None, blank=True, null=True)
     aggr_outputs = JSONField(default=None, blank=True, null=True)
-    traceback = models.CharField(null=True, blank=True, default=None, max_length=4000)
+    traceback = models.CharField(null=True, blank=True, default=None, max_length=8000)
     owner = models.ForeignKey(
         "users.Profile", on_delete=models.CASCADE, null=True, related_name="sims"
     )

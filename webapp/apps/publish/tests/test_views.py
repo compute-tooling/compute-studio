@@ -51,10 +51,11 @@ class TestPublishViews:
             "listed": True,
         }
         owner = Profile.objects.get(user__username="modeler")
-        project = Project.objects.create(owner=owner, **exp)
+        project = Project.objects.create(**dict(exp, **{"owner": owner}))
         resp = client.get("/publish/api/modeler/Detail-Test/detail/")
         assert resp.status_code == 200
         data = resp.json()
+        del data["owner"]
         serializer = PublishSerializer(project, data=data)
         assert serializer.is_valid()
         assert serializer.validated_data == exp
@@ -137,3 +138,12 @@ class TestPublishViews:
     def test_get_detail_page(self, client, test_models):
         resp = client.get("/modeler/Used-for-testing/detail/")
         assert resp.status_code == 200
+
+    def test_get_projects(self, client, test_models):
+        resp = client.get("/publish/api/")
+        assert resp.status_code == 200
+
+        exp = set(proj.title for proj in Project.objects.all())
+        act = set(proj["title"] for proj in resp.data)
+
+        assert exp == act

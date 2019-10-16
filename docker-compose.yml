@@ -5,10 +5,6 @@ services:
     image: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    networks:
-      - distributed_worker_net
-    ports:
-      - "5432:5432"
   webbase:
     build:
       context: ./
@@ -27,19 +23,17 @@ services:
       - DEBUG=True
       - WORKERS=${WORKERS}:5050
       - LOCAL=True
-      - BUCKET=cs-outputs-dev
+      - BUCKET=cs-outputs-dev-1
+      - MAILGUN_API_KEY=${MAILGUN_API_KEY}
+      - USE_STRIPE=${USE_STRIPE}
+      - STRIPE_SECRET=${STRIPE_SECRET}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
     ports:
       - "8000:8000"
     container_name: web
     depends_on:
       - db
       - webbase
-    networks:
-      - distributed_worker_net
-
-networks:
-  distributed_worker_net:
-    external: true
 
 volumes:
   postgres_data:

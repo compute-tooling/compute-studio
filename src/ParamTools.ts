@@ -223,6 +223,7 @@ function labelsToString(valueObject: ValueObject): string{
   return `${s.join("___")}`;
 }
 
+<<<<<<< HEAD:src/ParamTools.ts
 export function convertToFormik(data: APIData): [
   InitialValues, 
   Sects,
@@ -236,6 +237,19 @@ export function convertToFormik(data: APIData): [
   let section_1: string;
   let section_2: string;
   let adjShape: {[msect: string]: yup.Schema<any>} = {};
+=======
+export function convertToFormik(data) {
+  // TODO: handle schema.
+  if ("schema" in data.meta_parameters) {
+    delete data.meta_parameters["schema"];
+  }
+
+  var initialValues = { adjustment: {}, meta_parameters: {} };
+  var sects = {};
+  var section_1 = "";
+  var section_2 = "";
+  var adjShape = {};
+>>>>>>> origin/master:src/ParamTools.js
   // TODO: move these into formal spec!
   const extend: boolean = "extend" in data ? data.extend : false;
   let label_to_extend: string =
@@ -265,6 +279,9 @@ export function convertToFormik(data: APIData): [
       );
     }
     for (const [param, param_data] of Object.entries(params)) {
+      if (param === "schema") {
+        continue;
+      }
       param_data["form_fields"] = {};
       // Group by major section, section_1 and section_2.
       if ("section_1" in param_data) {

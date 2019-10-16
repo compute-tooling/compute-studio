@@ -32,12 +32,15 @@ if __name__ == "__main__":
     parser.add_argument("--sim-time-limit", dest="sim_time_limit", type=int)
     parser.add_argument("--config")
     parser.add_argument("--out", "-o", default="api/celery_app")
+    parser.add_argument("--models", nargs="+", type=str, required=False, default=None)
     args = parser.parse_args()
-
+    models = args.models if args.models and args.models[0] else None
     if args.config:
         with open(args.config) as f:
             config = json.loads(f.read())
         for obj in config:
+            if models and obj["title"] not in models:
+                continue
             template(obj["owner"], obj["title"], obj["sim_time_limit"], args.out)
     elif args.owner and args.title and args.sim_time_limit:
         template(args.owner, args.title, args.sim_time_limit, args.out)

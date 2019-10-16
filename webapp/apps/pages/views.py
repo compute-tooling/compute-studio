@@ -29,3 +29,17 @@ class AboutView(View):
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template)
+
+
+class PrivacyView(View):
+    template = "pages/privacy.html"
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template)
+
+
+class TermsView(View):
+    template = "pages/terms.html"
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template)

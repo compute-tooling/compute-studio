@@ -2,15 +2,16 @@ PROJECT ?= comp-workers
 CONFIG ?= worker_config.prod.json
 MODE ?= test
 NEW_RELIC_TOKEN ?= `cat ~/.newrelic-$(MODE)`
+MODELS ?= ""
 
 kube-config:
 	cd distributed && \
-		python app_writer.py --config $(CONFIG) --project $(PROJECT)
+		python app_writer.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS)
 
 workers:
 	cd distributed && \
-	    docker-compose -f docker-compose.yml `python app_writer.py --config $(CONFIG) --project $(PROJECT)` build && \
-	    python gcr_tag.py --tag $(TAG) --host gcr.io --project $(PROJECT) --config $(CONFIG)
+	    docker-compose -f docker-compose.yml `python app_writer.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS)` build && \
+	    python gcr_tag.py --tag $(TAG) --host gcr.io --project $(PROJECT) --config $(CONFIG) --models $(MODELS)
 
 workers-apply:
 	cd distributed && \

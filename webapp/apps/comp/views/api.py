@@ -127,8 +127,8 @@ class BaseCreateAPIView(APIView):
                         f"{ae.traceback}\n user:{request.user.username}\n "
                         f"project: {project.app_url}."
                     ),
-                    "henrymdoupe@gmail.com",
-                    ["henrymdoupe@gmail.com"],
+                    "hank@compute.studio",
+                    ["hank@compute.studio"],
                     fail_silently=True,
                 )
             # Http 401 exception if mail credentials are not set up.
@@ -222,6 +222,8 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
     simulation results.
     """
 
+    authentication_classes = (TokenAuthentication,)
+
     def put(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.user.username == "comp-api-user":
             ser = OutputsSerializer(data=request.data)
@@ -238,11 +240,7 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
 
 
 class MyInputsAPIView(APIView):
-    authentication_classes = (
-        SessionAuthentication,
-        BasicAuthentication,
-        TokenAuthentication,
-    )
+    authentication_classes = (TokenAuthentication,)
 
     def put(self, request, *args, **kwargs):
         print("myinputs api method=PUT", kwargs)
@@ -259,7 +257,7 @@ class MyInputsAPIView(APIView):
                     # successful run
                     if data["status"] == "SUCCESS":
                         inputs.errors_warnings = data["errors_warnings"]
-                        inputs.inputs_file = data.get("inputs_file", None)
+                        inputs.custom_adjustment = data.get("custom_adjustment", None)
                         inputs.status = "SUCCESS" if is_valid(inputs) else "INVALID"
                         inputs.save()
                         if inputs.status == "SUCCESS":

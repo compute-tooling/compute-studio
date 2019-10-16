@@ -13,15 +13,19 @@ spec:
         app: flower-monitor
     spec:
       containers:
-      - name: flower-monitor
-        image: mher/flower
-        imagePullPolicy: Always
-        command: ["flower"]
-        args: ["--broker=redis://redis-master/0", "--port=8888"] 
-        env:
-        - name: GET_HOSTS_FROM
-          value: dns
-        - name: FLOWER_PORT
-          value: "8888"
-        ports:
-        - containerPort: 8888
+        - name: flower-monitor
+          image: mher/flower
+          imagePullPolicy: Always
+          command: ["flower"]
+          args: ["--broker=redis://redis-master/0", "--port=8888"]
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+            - name: FLOWER_PORT
+              value: "8888"
+          ports:
+            - containerPort: 8888
+          resources:
+            requests:
+              memory: "95Mi"
+              cpu: "75m"

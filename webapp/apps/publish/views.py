@@ -69,8 +69,8 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
                                 f"the next 24 hours. Check the status of the update at "
                                 f"{status_url}."
                             ),
-                            "henrymdoupe@gmail.com",
-                            list({request.user.email, "henrymdoupe@gmail.com"}),
+                            "hank@compute.studio",
+                            list({request.user.email, "hank@compute.studio"}),
                             fail_silently=False,
                         )
                     # Http 401 exception if mail credentials are not set up.
@@ -81,7 +81,13 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
         return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
-class ProjectCreateAPIView(GetProjectMixin, APIView):
+class ProjectAPIView(GetProjectMixin, APIView):
+    queryset = Project.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        ser = PublishSerializer(self.queryset.all(), many=True)
+        return Response(ser.data, status=status.HTTP_200_OK)
+
     def post(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             serializer = PublishSerializer(data=request.POST)
@@ -116,8 +122,8 @@ class ProjectCreateAPIView(GetProjectMixin, APIView):
                             f"the next 24 hours. Check the status of the submission at "
                             f"{status_url}."
                         ),
-                        "henrymdoupe@gmail.com",
-                        list({request.user.email, "henrymdoupe@gmail.com"}),
+                        "hank@compute.studio",
+                        list({request.user.email, "hank@compute.studio"}),
                         fail_silently=False,
                     )
                 # Http 401 exception if mail credentials are not set up.

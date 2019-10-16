@@ -28,10 +28,6 @@ spec:
         env:
         - name: OUTPUTS_VERSION
           value: v1
-        - name: OBJ_STORAGE_ENDPOINT
-          value: "https://sfo2.digitaloceanspaces.com"
-        - name: OBJ_STORAGE_EDGE
-          value: "https://sfo2.cdn.digitaloceanspaces.com"
         - name: TITLE
           value: "{{TITLE}}"
         - name: OWNER
@@ -45,28 +41,13 @@ spec:
             secretKeyRef:
               name: worker-secret
               key: COMP_URL
-        - name: COMP_API_USER
+        - name: COMP_API_TOKEN
           valueFrom:
             secretKeyRef:
               name: worker-secret
-              key: COMP_API_USER
-        - name: COMP_API_USER_PASS
+              key: COMP_API_TOKEN
+        - name: BUCKET
           valueFrom:
             secretKeyRef:
               name: worker-secret
-              key: COMP_API_USER_PASS
-        - name: OBJ_STORAGE_BUCKET
-          valueFrom:
-            secretKeyRef:
-              name: worker-secret
-              key: OBJ_STORAGE_BUCKET
-        - name: OBJ_STORAGE_ACCESS
-          valueFrom:
-            secretKeyRef:
-              name: worker-secret
-              key: OBJ_STORAGE_ACCESS
-        - name: OBJ_STORAGE_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: worker-secret
-              key: OBJ_STORAGE_SECRET
+              key: BUCKET

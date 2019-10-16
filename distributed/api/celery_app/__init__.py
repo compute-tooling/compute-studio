@@ -1,6 +1,7 @@
 import os
 import time
 import functools
+import re
 import traceback
 
 import requests
@@ -8,12 +9,20 @@ from celery import Celery
 from celery.signals import task_postrun
 from celery.result import AsyncResult
 
-import s3like
+import cs_storage
+
+
+try:
+    from cs_config import functions
+except ImportError as ie:
+    if os.environ.get("IS_FLASK", "False") == "True":
+        functions = None
+    else:
+        raise ie
 
 
 COMP_URL = os.environ.get("COMP_URL")
-COMP_API_USER = os.environ.get("COMP_API_USER")
-COMP_API_USER_PASS = os.environ.get("COMP_API_USER_PASS")
+COMP_API_TOKEN = os.environ.get("COMP_API_TOKEN")
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
 CELERY_RESULT_BACKEND = os.environ.get(
@@ -22,33 +31,31 @@ CELERY_RESULT_BACKEND = os.environ.get(
 
 OUTPUTS_VERSION = os.environ.get("OUTPUTS_VERSION")
 
-task_routes = {
-    # '{project_name}_tasks.*': {'queue': '{project_name}_queue'},
-    "hdoupe_matchups_tasks.sim": {"queue": "hdoupe_matchups_queue"},
-    "hdoupe_matchups_tasks.inputs_get": {"queue": "hdoupe_matchups_inputs_queue"},
-    "hdoupe_matchups_tasks.inputs_parse": {"queue": "hdoupe_matchups_inputs_queue"},
-    "pslmodels_taxbrain_tasks.sim": {"queue": "pslmodels_taxbrain_queue"},
-    "pslmodels_taxbrain_tasks.inputs_get": {"queue": "pslmodels_taxbrain_inputs_queue"},
-    "pslmodels_taxbrain_tasks.inputs_parse": {
-        "queue": "pslmodels_taxbrain_inputs_queue"
-    },
-    "pslmodels_costofcapitalcalculator_tasks.sim": {
-        "queue": "pslmodels_costofcapitalcalculator_queue"
-    },
-    "pslmodels_costofcapitalcalculator_tasks.inputs_get": {
-        "queue": "pslmodels_costofcapitalcalculator_inputs_queue"
-    },
-    "pslmodels_costofcapitalcalculator_tasks.inputs_parse": {
-        "queue": "pslmodels_costofcapitalcalculator_inputs_queue"
-    },
-    "pslmodels_taxcruncher_tasks.sim": {"queue": "pslmodels_taxcruncher_queue"},
-    "pslmodels_taxcruncher_tasks.inputs_get": {
-        "queue": "pslmodels_taxcruncher_inputs_queue"
-    },
-    "pslmodels_taxcruncher_tasks.inputs_parse": {
-        "queue": "pslmodels_taxcruncher_inputs_queue"
-    },
-}
+
+def get_task_routes():
+    def clean(name):
+        return re.sub("[^0-9a-zA-Z]+", "", name).lower()
+
+    resp = requests.get(f"{COMP_URL}/publish/api/")
+    if resp.status_code != 200:
+        raise Exception(f"Response status code: {resp.status_code}")
+    data = resp.json()
+    task_routes = {}
+    for project in data:
+        owner = clean(project["owner"])
+        title = clean(project["title"])
+        model = f"{owner}_{title}"
+        task_routes.update(
+            {
+                f"{model}_tasks.sim": {"queue": f"{model}_queue"},
+                f"{model}_tasks.inputs_get": {"queue": f"{model}_inputs_queue"},
+                f"{model}_tasks.inputs_parse": {"queue": f"{model}_inputs_queue"},
+            }
+        )
+    return task_routes
+
+
+task_routes = get_task_routes()
 
 
 celery_app = Celery(
@@ -79,12 +86,12 @@ def task_wrapper(func):
                     res["model_version"] = "NA"
                     res.update(dict(outputs, **{"version": version}))
                 else:
-                    res["model_version"] = outputs.pop("model_version")
-                    outputs = s3like.write_to_s3like(task_id, outputs)
+                    res["model_version"] = functions.get_version()
+                    outputs = cs_storage.write(task_id, outputs)
                     res.update({"outputs": outputs, "version": version})
             else:
                 res.update(outputs)
-        except Exception as e:
+        except Exception:
             traceback_str = traceback.format_exc()
         finish = time.time()
         if "meta" not in res:
@@ -112,7 +119,7 @@ def post_results(sender=None, headers=None, body=None, **kwargs):
         resp = requests.put(
             f"{COMP_URL}/outputs/api/",
             json=kwargs["retval"],
-            auth=(COMP_API_USER, COMP_API_USER_PASS),
+            headers={"Authorization": f"Token {COMP_API_TOKEN}"},
         )
         print("resp", resp.status_code)
         if resp.status_code == 400:
@@ -122,7 +129,7 @@ def post_results(sender=None, headers=None, body=None, **kwargs):
         resp = requests.put(
             f"{COMP_URL}/inputs/api/",
             json=kwargs["retval"],
-            auth=(COMP_API_USER, COMP_API_USER_PASS),
+            headers={"Authorization": f"Token {COMP_API_TOKEN}"},
         )
         print("resp", resp.status_code)
         if resp.status_code == 400:

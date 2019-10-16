@@ -21,6 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("--config", required=True)
     parser.add_argument("--tag", required=False, default=TAG)
     parser.add_argument("--project", required=False, default=PROJECT)
+    parser.add_argument("--models", nargs="+", type=str, required=False, default=None)
     args = parser.parse_args()
 
     path = Path("docker-compose-apps")
@@ -50,16 +51,15 @@ if __name__ == "__main__":
 
     kube_template = Template(kube_template_text)
 
+    models = args.models if args.models and args.models[0] else None
+
     ext_str = ""
     reg_url = "https://github.com"
     raw_url = "https://raw.githubusercontent.com"
 
-    resource_req = {
-        "io": {"requests": {"memory": "128Mi", "cpu": "200m"}},
-        "sim": {"requests": {"memory": "1000Mi", "cpu": "1000m"}},
-    }
-
     for obj in config:
+        if models and obj["title"] not in models:
+            continue
         safeowner = clean(obj["owner"])
         safetitle = clean(obj["title"])
         repo_url = obj["repo_url"]
@@ -84,13 +84,14 @@ if __name__ == "__main__":
             kubeout = (
                 f"kubernetes/apps/{safeowner}-{safetitle}-{action}-deployment.yaml"
             )
-            req = copy.deepcopy(resource_req[action])
-            resources = dict(req, **copy.deepcopy(obj["resources"]))
             if action == "io":
-                resources["requests"]["cpu"] = "700m"
-                resources["limits"]["cpu"] = "1000m"
-                resources["requests"]["memory"] = "250Mi"
-                resources["limits"]["memory"] = "700Mi"
+                resources = {
+                    "requests": {"cpu": "700m", "memory": "250Mi"},
+                    "limits": {"cpu": "1000m", "memory": "700Mi"},
+                }
+            else:
+                resources = {"requests": {"memory": "1000Mi", "cpu": "1000m"}}
+                resources = dict(resources, **copy.deepcopy(obj["resources"]))
 
             with open(kubeout, "w") as f:
                 f.write(

@@ -12,17 +12,30 @@ axios.defaults.xsrfCookieName = "csrftoken";
 let LoginSchema = yup.object().shape({
   username: yup.string().required("Username is required."),
   password: yup.string().required("Password is required.")
-})
+});
 
 let SignupSchema = yup.object().shape({
   username: yup.string().required("Username is required."),
-  email: yup.string().email("Must be a valid email address.").required("Email address is required."),
+  email: yup
+    .string()
+    .email("Must be a valid email address.")
+    .required("Email address is required."),
   password1: yup.string().required("Password is required."),
   password2: yup
     .string()
-    .oneOf([yup.ref('password1'), null], "Passwords don't match")
-    .required("Confirmation password is required."),
-})
+    .oneOf([yup.ref("password1"), null], "Passwords don't match")
+    .required("Confirmation password is required.")
+});
+
+const tos = (
+  <p class="text-muted mt-3">
+    By creating an account, you agree to the
+    <a href="/terms/">Terms of Service</a>. For more information about Compute
+    Studio's privacy practices, see the Compute Studio{" "}
+    <a href="/privacy/">Privacy Statement</a>. We'll occasionally send you
+    account-related emails.
+  </p>
+);
 
 export const LoginForm = ({ setAuthStatus }) => (
   <div>
@@ -33,22 +46,27 @@ export const LoginForm = ({ setAuthStatus }) => (
         let formdata = new FormData();
         formdata.append("username", values.username);
         formdata.append("password", values.password);
-        axios.post(
-          "/rest-auth/login/",
-          formdata
-        ).then(
-          resp => { setAuthStatus(true) }
-        ).catch(err => {
-          if (err.response.status == 400) {
-            actions.setStatus({ errors: err.response.data })
-          } else {
-            throw err;
-          }
-        });
+        axios
+          .post("/rest-auth/login/", formdata)
+          .then(resp => {
+            setAuthStatus(true);
+          })
+          .catch(err => {
+            if (err.response.status == 400) {
+              actions.setStatus({ errors: err.response.data });
+            } else {
+              throw err;
+            }
+          });
       }}
       render={({ handleSubmit, status }) => (
         <Form>
-          {status && status.errors && status.errors.non_field_errors ? <div className="alert alert-danger" role="alert"> {status.errors.non_field_errors}</div> : null}
+          {status && status.errors && status.errors.non_field_errors ? (
+            <div className="alert alert-danger" role="alert">
+              {" "}
+              {status.errors.non_field_errors}
+            </div>
+          ) : null}
           <div className="mt-1">
             <label> Username:</label>
             <Field name="username" className="form-control" />
@@ -65,21 +83,22 @@ export const LoginForm = ({ setAuthStatus }) => (
               render={msg => <Message msg={msg} />}
             />
           </div>
-          <Button onClick={e => {
-            e.preventDefault();
-            handleSubmit(e);
-          }}
+          <Button
+            onClick={e => {
+              e.preventDefault();
+              handleSubmit(e);
+            }}
             variant="primary"
             className="mt-2"
-          > Login </Button>
+          >
+            {" "}
+            Login{" "}
+          </Button>
         </Form>
       )}
-
-    >
-    </Formik>
+    ></Formik>
   </div>
 );
-
 
 export const SignupForm = ({ setAuthStatus }) => (
   <div>
@@ -90,35 +109,45 @@ export const SignupForm = ({ setAuthStatus }) => (
         let formdata = new FormData();
         formdata.append("username", values.username);
         formdata.append("email", values.email);
-        formdata.append("password1", values.password1)
+        formdata.append("password1", values.password1);
         formdata.append("password2", values.password2);
-        axios.post(
-          "/rest-auth/registration/",
-          formdata
-        ).then(
-          resp => { setAuthStatus(true) }
-        ).catch(err => {
-          if (err.response.status == 400) {
-            actions.setStatus({ errors: err.response.data })
-          } else {
-            throw err;
-          }
-        });
+        axios
+          .post("/rest-auth/registration/", formdata)
+          .then(resp => {
+            setAuthStatus(true);
+          })
+          .catch(err => {
+            if (err.response.status == 400) {
+              actions.setStatus({ errors: err.response.data });
+            } else {
+              throw err;
+            }
+          });
       }}
       render={({ handleSubmit, status }) => (
         <Form>
-          {status
-            && status.errors
-            && status.errors.email ?
-            <div className="alert alert-danger" role="alert"> {status.errors.email}</div> : null}
-          {status
-            && status.errors
-            && status.errors.username
-            ? <div className="alert alert-danger" role="alert"> {status.errors.username}</div> : null}
-          {status
-            && status.errors
-            && status.errors.password1
-            ? <div className="alert alert-danger" role="alert"> <ul>{status.errors.password1.map(msg => <li>{msg}</li>)}</ul></div> : null}
+          {status && status.errors && status.errors.email ? (
+            <div className="alert alert-danger" role="alert">
+              {" "}
+              {status.errors.email}
+            </div>
+          ) : null}
+          {status && status.errors && status.errors.username ? (
+            <div className="alert alert-danger" role="alert">
+              {" "}
+              {status.errors.username}
+            </div>
+          ) : null}
+          {status && status.errors && status.errors.password1 ? (
+            <div className="alert alert-danger" role="alert">
+              {" "}
+              <ul>
+                {status.errors.password1.map(msg => (
+                  <li>{msg}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           <div className="mt-1">
             <label> Username:</label>
             <Field name="username" className="form-control" />
@@ -130,10 +159,7 @@ export const SignupForm = ({ setAuthStatus }) => (
           <div className="mt-1">
             <label> Email:</label>
             <Field name="email" className="form-control" type="email" />
-            <ErrorMessage
-              name="email"
-              render={msg => <Message msg={msg} />}
-            />
+            <ErrorMessage name="email" render={msg => <Message msg={msg} />} />
           </div>
           <div className="mt-1">
             <label> Password: </label>
@@ -151,16 +177,20 @@ export const SignupForm = ({ setAuthStatus }) => (
               render={msg => <Message msg={msg} />}
             />
           </div>
-          <Button onClick={e => {
-            e.preventDefault();
-            handleSubmit(e);
-          }}
+          <Button
+            onClick={e => {
+              e.preventDefault();
+              handleSubmit(e);
+            }}
             variant="success"
             className="mt-2"
-          > Signup </Button>
+          >
+            {" "}
+            Signup{" "}
+          </Button>
+          {tos}
         </Form>
       )}
-    >
-    </Formik>
+    ></Formik>
   </div>
 );

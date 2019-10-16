@@ -19,13 +19,13 @@ res = api.create(
     }
 )
 
-# output: 
+# output:
 # {'inputs': {'meta_parameters': {'year': 2020,
 #    'data_source': 'PUF',
 #    'use_full_sample': True},
 #   'adjustment': {'policy': {'II_em': [{'year': 2020, 'value': 5000}]},
 #    'behavior': {}},
-#   'inputs_file': {'policy': {'II_em': {'2020': 5000}}, 'behavior': {}},
+#   'custom_adjustment': {'policy': {'II_em': {'2020': 5000}}, 'behavior': {}},
 #   'errors_warnings': {'policy': {'errors': {}, 'warnings': {}},
 #    'behavior': {'errors': {}, 'warnings': {}},
 #    'GUI': {'errors': {}, 'warnings': {}},
@@ -37,7 +37,7 @@ res = api.create(
 #  'gui_url': '/PSLmodels/Tax-Brain/41105/',
 #  'eta': 5.0,
 #  'model_pk': 41105}
- 
+
 ```
 
 Retrieve the result as a Pandas DataFrame:
@@ -184,7 +184,7 @@ class API:
         resp = requests.post(
             self.sim_url,
             json={
-                "adjustment": adjustment, 
+                "adjustment": adjustment,
                 "meta_parameters": meta_parameters
             },
             headers=self.auth_header

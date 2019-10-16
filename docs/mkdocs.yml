@@ -5,7 +5,7 @@ pages:
   - Publish:
     - Guide: 'publish/guide.md'
     - Inputs: 'publish/inputs.md'
-    - Ouptuts: 'publish/outputs.md'
+    - Outputs: 'publish/outputs.md'
     - Functions: 'publish/functions.md'
     - Environment: 'publish/environment.md'
   - API:
