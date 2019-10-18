@@ -1,5 +1,6 @@
 import * as React from "react";
 import ReactLoading from "react-loading";
+import * as Bokeh from "bokehjs";
 import {
   Card,
   Row,
@@ -18,6 +19,7 @@ import {
   TableOutput,
   BokehOutput
 } from "./types";
+import { makeID } from "./utils";
 
 interface OutputsProps {
   fetchRemoteOutputs: () => Promise<SimAPIData<RemoteOutputs>>;
@@ -29,22 +31,38 @@ type OutputsState = Readonly<{
   sim: SimAPIData<Outputs>;
 }>;
 
-const Table: React.FC<{ output: TableOutput }> = ({ output }) => (
+const TableComponent: React.FC<{ output: TableOutput }> = ({ output }) => (
   <div
     dangerouslySetInnerHTML={{ __html: output.data }} // needs to be sanitized somehow.
     className="card publish markdown"
   />
 );
 
-const Bokeh: React.FC<{ output: BokehOutput }> = ({ output }) => (
-  <div>
-    <div
-      dangerouslySetInnerHTML={{
-        __html: output.data.html + " " + output.data.javascript
-      }}
-    ></div>
-  </div>
-);
+const BokehComponent: React.FC<{ output: BokehOutput }> = ({ output }) => {
+  let js = output.data.javascript;
+  let exp = RegExp('{"roots":.+"version":"[0-9].[0-9].[0-9]"}');
+  let res = exp.exec(js); //.split("\\\\n").join("\\n"));
+  console.log(res);
+  console.log(JSON.parse(res[0]));
+  let parsed = JSON.parse(res[0]);
+  let root_id = parsed.roots.root_ids[0];
+  let json_item = {
+    target_id: output.id,
+    root_id: root_id,
+    doc: parsed
+  };
+  console.log(output.data.html);
+  console.log(output.id);
+  // @ts-ignore
+  window.Bokeh.embed.embed_item(json_item);
+  return (
+    <Card>
+      <Card.Body>
+        <div id={output.id} data-root-id={root_id} className="bk-root"></div>
+      </Card.Body>
+    </Card>
+  );
+};
 
 const OutputModal: React.FC<{
   output: Output | BokehOutput | TableOutput;
@@ -55,11 +73,11 @@ const OutputModal: React.FC<{
   let el;
   switch (output.media_type) {
     case "table":
-      el = <Table output={output as TableOutput} />;
+      el = <TableComponent output={output as TableOutput} />;
       break;
     case "bokeh":
       console.log("bokeh", output);
-      el = <Bokeh output={output as BokehOutput} />;
+      el = <BokehComponent output={output as BokehOutput} />;
       break;
     default:
       el = <div dangerouslySetInnerHTML={{ __html: output.data }} />;
@@ -67,10 +85,15 @@ const OutputModal: React.FC<{
 
   return (
     <>
-      <Button variant="outline-primary" onClick={() => setShow(true)}>
+      <Button variant="outline-light" onClick={() => setShow(true)}>
         {children}
       </Button>
-      <Modal show={show} onHide={() => setShow(false)} size="xl">
+      <Modal
+        show={show}
+        onHide={() => setShow(false)}
+        size="xl"
+        className="output-modal"
+      >
         <Modal.Header closeButton>
           <Modal.Title>{output.title}</Modal.Title>
         </Modal.Header>
