@@ -1,3 +1,4 @@
+import base64
 import json
 
 from django import template
@@ -58,3 +59,8 @@ def pprint_json(data):
         except Exception:
             pass
         return data
+
+
+@register.filter
+def pic_encode(data):
+    return base64.b64encode(data).decode("utf-8")
