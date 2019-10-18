@@ -1,9 +1,18 @@
 import * as yup from "yup";
 import { parseFromOps, parseToOps } from "./ops";
-import {isEmpty} from "lodash/lang";
-import {union, difference} from "lodash/array";
+import { isEmpty } from "lodash/lang";
+import { union, difference } from "lodash/array";
 
-import {ValueObject, ParamToolsConfig, ParamToolsParam, FormValueObject, APIData, APIDetail, InitialValues, Sects} from "./types";
+import {
+  ValueObject,
+  ParamToolsConfig,
+  ParamToolsParam,
+  FormValueObject,
+  APIData,
+  APIDetail,
+  InitialValues,
+  Sects
+} from "./types";
 
 const integerMsg: string = "Must be an integer.";
 const floatMsg: string = "Must be a floating point number.";
@@ -36,7 +45,7 @@ function transformArray(value: any, originalValue: any): Array<any> {
   return originalValue.split(",");
 }
 
-function testReverseOp(value: any): boolean{
+function testReverseOp(value: any): boolean {
   if (!value || (Array.isArray(value) && value.length === 0)) return true;
 
   const wildCardIndex = value.indexOf("<");
@@ -142,7 +151,11 @@ export function yupType(type: "int" | "float" | "bool" | "date" | "string") {
   }
 }
 
-export function yupValidator(params: ParamToolsConfig, param_data: ParamToolsParam, extend: boolean = false) {
+export function yupValidator(
+  params: ParamToolsConfig,
+  param_data: ParamToolsParam,
+  extend: boolean = false
+) {
   const ensureExtend = obj => {
     if (extend) {
       return yup
@@ -174,7 +187,7 @@ export function yupValidator(params: ParamToolsConfig, param_data: ParamToolsPar
     if ("max" in param_data.validators.range) {
       max_val = param_data.validators.range.max;
       if (!(max_val in params)) {
-        let maxValTest = maxObj(max_val)
+        let maxValTest = maxObj(max_val);
         //@ts-ignore
         yupObj = yupObj.test(maxValTest);
       }
@@ -190,7 +203,10 @@ export function yupValidator(params: ParamToolsConfig, param_data: ParamToolsPar
   return ensureExtend(yupObj);
 }
 
-function select(valueObjects: Array<ValueObject>, labels: {[key: string]: any}) {
+function select(
+  valueObjects: Array<ValueObject>,
+  labels: { [key: string]: any }
+) {
   let ret = [];
   if (isEmpty(labels)) {
     return valueObjects;
@@ -209,7 +225,7 @@ function select(valueObjects: Array<ValueObject>, labels: {[key: string]: any}) 
   return ret;
 }
 
-function labelsToString(valueObject: ValueObject): string{
+function labelsToString(valueObject: ValueObject): string {
   let s = [];
   for (const [label, label_val] of Object.entries(valueObject).sort()) {
     if (label === "value") {
@@ -223,33 +239,25 @@ function labelsToString(valueObject: ValueObject): string{
   return `${s.join("___")}`;
 }
 
-<<<<<<< HEAD:src/ParamTools.ts
-export function convertToFormik(data: APIData): [
-  InitialValues, 
+export function convertToFormik(
+  data: APIData
+): [
+  InitialValues,
   Sects,
   APIData["model_parameters"],
   APIData["meta_parameters"],
   yup.Schema<any>,
   Array<string>
 ] {
-  let initialValues: InitialValues = {adjustment: {}, meta_parameters: {}};
-  let sects: Sects = {};
-  let section_1: string;
-  let section_2: string;
-  let adjShape: {[msect: string]: yup.Schema<any>} = {};
-=======
-export function convertToFormik(data) {
-  // TODO: handle schema.
   if ("schema" in data.meta_parameters) {
     delete data.meta_parameters["schema"];
   }
 
-  var initialValues = { adjustment: {}, meta_parameters: {} };
-  var sects = {};
-  var section_1 = "";
-  var section_2 = "";
-  var adjShape = {};
->>>>>>> origin/master:src/ParamTools.js
+  let initialValues: InitialValues = { adjustment: {}, meta_parameters: {} };
+  let sects: Sects = {};
+  let section_1: string;
+  let section_2: string;
+  let adjShape: { [msect: string]: yup.Schema<any> } = {};
   // TODO: move these into formal spec!
   const extend: boolean = "extend" in data ? data.extend : false;
   let label_to_extend: string =
@@ -347,7 +355,7 @@ export function convertToFormik(data) {
 
     adjShape[msect] = yup.object().shape(msectShape);
   }
-  let mpShape: {[mpName: string]: yup.Schema<any>} = {};
+  let mpShape: { [mpName: string]: yup.Schema<any> } = {};
   for (const [mp_name, mp_data] of Object.entries(data.meta_parameters)) {
     let yupObj = yupValidator(data.meta_parameters, mp_data);
     let mpVal = mp_data.value[0].value;
@@ -375,18 +383,22 @@ export interface FormData {
   adjustment: {
     [msect: string]: {
       [paramName: string]: {
-        [voStr: string]: any
-      }
-    }
-   },
-  meta_parameters: {[key: string]: Array<any>},
+        [voStr: string]: any;
+      };
+    };
+  };
+  meta_parameters: { [key: string]: Array<any> };
 }
 
-
-export function formikToJSON(values: {[key: string]: any}, schema: yup.Schema<any>, labelSchema: yup.Schema<any>, extend: boolean = false) {
+export function formikToJSON(
+  values: { [key: string]: any },
+  schema: yup.Schema<any>,
+  labelSchema: yup.Schema<any>,
+  extend: boolean = false
+) {
   let data: FormData = schema.cast(values);
-  var meta_parameters: {[key: string]: any} = {};
-  var adjustment: {[key: string]: {[key: string]: Array<ValueObject>}} = {};
+  var meta_parameters: { [key: string]: any } = {};
+  var adjustment: { [key: string]: { [key: string]: Array<ValueObject> } } = {};
 
   for (const [mp_name, mp_val] of Object.entries(data.meta_parameters)) {
     meta_parameters[mp_name] = mp_val;
@@ -397,7 +409,7 @@ export function formikToJSON(values: {[key: string]: any}, schema: yup.Schema<an
     for (const [paramName, paramData] of Object.entries(params)) {
       var voList: Array<ValueObject> = [];
       for (const [voStr, val] of Object.entries(paramData)) {
-        var vo: FormValueObject = {value: []};
+        var vo: FormValueObject = { value: [] };
         if (
           val == null ||
           (typeof val === "string" && !val) ||
