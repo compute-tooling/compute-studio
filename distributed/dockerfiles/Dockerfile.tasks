@@ -7,7 +7,6 @@ RUN pip install -r requirements.txt
 
 ARG TITLE
 ARG OWNER
-ARG SIM_TIME_LIMIT
 ARG REPO_URL
 ARG RAW_REPO_URL
 ARG AWS_ACCESS_KEY_ID=""
@@ -31,6 +30,7 @@ RUN pip install cs-kit
 RUN py.test /home/test_functions.py -v -s
 ######################
 
+ARG SIM_TIME_LIMIT
 COPY tasks_template.py tasks_template.py
 COPY tasks_writer.py tasks_writer.py
 RUN mkdir /home/distributed/api/celery_app
