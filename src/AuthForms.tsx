@@ -1,6 +1,6 @@
 import * as React from "react";
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import axios from 'axios';
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import axios from "axios";
 import { Button } from "react-bootstrap";
 import * as yup from "yup";
 
@@ -28,7 +28,7 @@ let SignupSchema = yup.object().shape({
 });
 
 const tos = (
-  <p class="text-muted mt-3">
+  <p className="text-muted mt-3">
     By creating an account, you agree to the
     <a href="/terms/">Terms of Service</a>. For more information about Compute
     Studio's privacy practices, see the Compute Studio{" "}
