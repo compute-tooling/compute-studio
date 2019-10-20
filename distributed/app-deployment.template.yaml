@@ -12,6 +12,15 @@ spec:
       labels:
         app: {{SAFEOWNER}}-{{SAFETITLE}}-{{ACTION}}
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: size
+                    operator: In
+                    values:
+                      - {{AFFINITY_SIZE}}
       containers:
       - name: {{SAFEOWNER}}-{{SAFETITLE}}-{{ACTION}}
         image: gcr.io/{{PROJECT}}/{{SAFEOWNER}}_{{SAFETITLE}}_tasks:{{TAG}}

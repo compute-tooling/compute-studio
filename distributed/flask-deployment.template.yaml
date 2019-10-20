@@ -27,3 +27,12 @@ spec:
                 secretKeyRef:
                   name: worker-secret
                   key: COMP_URL
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: size
+                    operator: In
+                    values:
+                      - small

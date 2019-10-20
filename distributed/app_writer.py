@@ -89,9 +89,11 @@ if __name__ == "__main__":
                     "requests": {"cpu": "700m", "memory": "250Mi"},
                     "limits": {"cpu": "1000m", "memory": "700Mi"},
                 }
+                affinity_size = "small"
             else:
                 resources = {"requests": {"memory": "1000Mi", "cpu": "1000m"}}
                 resources = dict(resources, **copy.deepcopy(obj["resources"]))
+                affinity_size = obj.get("affinity_size", "medium")
 
             with open(kubeout, "w") as f:
                 f.write(
@@ -107,6 +109,7 @@ if __name__ == "__main__":
                         REQUEST_CPU=resources["requests"]["cpu"],
                         MAX_MEMORY=resources["limits"]["memory"],
                         MAX_CPU=resources["limits"]["cpu"],
+                        AFFINITY_SIZE=affinity_size,
                         **obj["environment"],
                     )
                 )
