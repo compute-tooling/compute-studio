@@ -1,9 +1,7 @@
-{% load utility %}
-
 <div style="margin:0 auto;">
   <p class="loading">Loading...</p>
   <img
-    src="data:image/png;base64, {{ output.data | pic_encode }}"
+    src="data:image/png;base64, {{ output.data }}"
     alt="{{ output.title }}"
   />
 </div>
