@@ -10,8 +10,7 @@ kube-config:
 
 workers:
 	cd distributed && \
-	    docker-compose -f docker-compose.yml `python app_writer.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS)` build && \
-	    python gcr_tag.py --tag $(TAG) --host gcr.io --project $(PROJECT) --config $(CONFIG) --models $(MODELS)
+	    python app_writer.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS)
 
 workers-apply:
 	cd distributed && \
