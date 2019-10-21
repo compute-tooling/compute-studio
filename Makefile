@@ -6,11 +6,11 @@ MODELS ?= ""
 
 kube-config:
 	cd distributed && \
-	    python app_writer.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS) --dry-run
+	    python cs_cluster.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS) --dry-run
 
 workers:
 	cd distributed && \
-	    python app_writer.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS) --build
+	    python cs_cluster.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS) --build
 
 workers-apply:
 	cd distributed && \
