@@ -26,7 +26,7 @@ def run(cmd):
     return res
 
 
-class ComputeStudioCluster:
+class Cluster:
 
     k8s_target = "kubernetes/"
     k8s_app_target = "kubernetes/apps"
@@ -220,7 +220,7 @@ if __name__ == "__main__":
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
-    cluster = ComputeStudioCluster(
+    cluster = Cluster(
         config=args.config, tag=args.tag, project=args.project, models=args.models
     )
 
