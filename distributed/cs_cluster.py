@@ -57,8 +57,8 @@ class ComputeStudioCluster:
         self.build_apps()
 
     def apply(self):
-        run("kubectl apply -f {self.k8s_target}")
-        run("kubectl apply -f {self.k8s_app_target}")
+        run(f"kubectl apply -f {self.k8s_target}")
+        run(f"kubectl apply -f {self.k8s_app_target}")
 
     def dry_run(self):
         self.write_flask_deployment()
