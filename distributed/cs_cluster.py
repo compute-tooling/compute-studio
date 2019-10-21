@@ -27,12 +27,31 @@ def run(cmd):
 
 
 class Cluster:
+    """
+    Deploy and manage Compute Studio compute cluster:
+        - build, tag, and push the docker images for the flask app and
+        compute.studio modeling apps.
+        - write k8s config files for the flask deployment and the
+        compute.studio modeling app deployments.
+        - apply k8s config files to an existing compute cluster.
+
+        TODO:
+        - teardown, update, add new models to cluster.
+
+    args:
+        - config: configuration for the apps powering C/S.
+        - tag: image version, defined as [c/s version].[mm][dd].[n]
+        - project: GCP project that the compute cluster is under.
+        - models (optional): only build a subset of the models in
+        the config.
+
+    """
 
     k8s_target = "kubernetes/"
     k8s_app_target = "kubernetes/apps"
     cr = "gcr.io"
 
-    def __init__(self, config, tag, project, models):
+    def __init__(self, config, tag, project, models=None):
         self.tag = tag
         self.project = project
         self.models = models if models and models[0] else None
@@ -52,11 +71,18 @@ class Cluster:
             self.app_template = yaml.safe_load(f.read())
 
     def build(self):
+        """
+        Wrap all methods that build, tag, and push the images as well as
+        write the k8s config fiels.
+        """
         self.build_base_images()
         self.write_flask_deployment()
         self.build_apps()
 
     def apply(self):
+        """
+        Experimental. Apply k8s config files to existing k8s cluster.
+        """
         run(f"kubectl apply -f {self.k8s_target}")
         run(f"kubectl apply -f {self.k8s_app_target}")
 
@@ -67,6 +93,12 @@ class Cluster:
                 self.write_app_deployment(app, action)
 
     def build_base_images(self):
+        """
+        Build, tag, and push base images for the flask app and modeling apps.
+
+        Note: distributed and celerybase are tagged as "latest." All other apps
+        pull from either distributed:latest or celerybase:latest.
+        """
         run("docker build -t distributed:latest -f dockerfiles/Dockerfile ./")
         run("docker build -t celerybase:latest -f dockerfiles/Dockerfile.celerybase ./")
         run(f"docker build -t flask:{self.tag} -f dockerfiles/Dockerfile.flask ./")
@@ -79,6 +111,9 @@ class Cluster:
         run(f"docker push {self.cr}/{self.project}/flask:{self.tag}")
 
     def write_flask_deployment(self):
+        """
+        Write flask deployment file. Only step is filling in the image uri.
+        """
         flask_deployment = copy.deepcopy(self.flask_template)
         flask_deployment["spec"]["template"]["spec"]["containers"][0][
             "image"
@@ -90,7 +125,14 @@ class Cluster:
         return flask_deployment
 
     def build_apps(self):
+        """
+        Build, tag, and push images and write k8s config files
+        for all apps in config. Filters out those not in models
+        list, if applicable.
+        """
         for app in self.config:
+            if self.models and app["title"] not in self.models[0]:
+                continue
             try:
                 self.build_app_image(app)
             except Exception as e:
@@ -105,6 +147,9 @@ class Cluster:
                 self.write_app_deployment(app, action)
 
     def build_app_image(self, app):
+        """
+        Build, tag, and pus the image for a single app.
+        """
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])
         img_name = f"{safeowner}_{safetitle}_tasks"
@@ -139,6 +184,13 @@ class Cluster:
         run(f"docker push {self.cr}/{self.project}/{img_name}:{self.tag}")
 
     def write_app_deployment(self, app, action):
+        """
+        Write k8s config file for an app.
+
+        Note: Dask uses a dot notation for specifying paths
+            in their config. It could be helpful for us to
+            do that, too.
+        """
         app_deployment = copy.deepcopy(self.app_template)
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])
@@ -211,7 +263,7 @@ class Cluster:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Write tasks modules from template.")
+    parser = argparse.ArgumentParser(description="Deploy C/S compute cluster.")
     parser.add_argument("--config", required=True)
     parser.add_argument("--tag", required=False, default=TAG)
     parser.add_argument("--project", required=False, default=PROJECT)
