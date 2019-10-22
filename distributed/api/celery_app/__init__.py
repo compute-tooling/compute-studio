@@ -45,13 +45,18 @@ def get_task_routes():
         owner = clean(project["owner"])
         title = clean(project["title"])
         model = f"{owner}_{title}"
-        task_routes.update(
-            {
-                f"{model}_tasks.sim": {"queue": f"{model}_queue"},
-                f"{model}_tasks.inputs_get": {"queue": f"{model}_inputs_queue"},
-                f"{model}_tasks.inputs_parse": {"queue": f"{model}_inputs_queue"},
-            }
-        )
+
+        # all apps use celery workers for handling their inputs.
+        routes = {
+            f"{model}_tasks.inputs_get": {"queue": f"{model}_inputs_queue"},
+            f"{model}_tasks.inputs_parse": {"queue": f"{model}_inputs_queue"},
+        }
+
+        # only add sim routes for models that use celery workers.
+        if project["cluster_type"] == "single-core":
+            routes[f"{model}_tasks.sim"] = {"queue": f"{model}_queue"}
+
+        task_routes.update(routes)
     return task_routes
 
 

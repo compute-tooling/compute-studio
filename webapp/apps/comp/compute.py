@@ -83,19 +83,25 @@ class Compute(object):
 
         return job_id, queue_length
 
-    def results_ready(self, job_id):
-        result_url = f"http://{WORKER_HN}/query_job"
-        job_response = self.remote_query_job(result_url, params={"job_id": job_id})
-        msg = "{0} failed on host: {1}".format(job_id, WORKER_HN)
+    def results_ready(self, sim):
+        result_url = (
+            f"http://{WORKER_HN}/{sim.owner.user.username}/{sim.project.title}"
+            f"/query_job/{sim.job_id}/"
+        )
+        job_response = self.remote_query_job(result_url)
+        msg = "{0} failed on host: {1}".format(sim.job_id, WORKER_HN)
         if job_response.status_code == 200:  # Valid response
             return job_response.text
         else:
             print("did not expect response with status_code", job_response.status_code)
             raise JobFailError(msg)
 
-    def get_results(self, job_id):
-        result_url = f"http://{WORKER_HN}/get_job"
-        job_response = self.remote_get_job(result_url, params={"job_id": job_id})
+    def get_results(self, sim):
+        result_url = (
+            f"http://{WORKER_HN}/{sim.owner.user.username}/{sim.project.title}"
+            f"/get_job/{sim.job_id}/"
+        )
+        job_response = self.remote_get_job(result_url, params={"job_id": sim.job_id})
         if job_response.status_code == 200:  # Valid response
             try:
                 return job_response.json()

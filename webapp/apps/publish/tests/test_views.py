@@ -55,7 +55,8 @@ class TestPublishViews:
         resp = client.get("/publish/api/modeler/Detail-Test/detail/")
         assert resp.status_code == 200
         data = resp.json()
-        del data["owner"]
+        data.pop("owner")
+        data.pop("cluster_type")
         serializer = PublishSerializer(project, data=data)
         assert serializer.is_valid()
         assert serializer.validated_data == exp

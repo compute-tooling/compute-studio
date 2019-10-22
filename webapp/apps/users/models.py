@@ -162,6 +162,8 @@ class Project(models.Model):
 
     listed = models.BooleanField(default=True)
 
+    cluster_type = models.CharField(default="single-core", max_length=32)
+
     objects = ProjectManager()
 
     @staticmethod
