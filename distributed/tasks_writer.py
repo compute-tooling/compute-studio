@@ -1,5 +1,5 @@
 import argparse
-import json
+import yaml
 import re
 import os
 
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     models = args.models if args.models and args.models[0] else None
     if args.config:
         with open(args.config) as f:
-            config = json.loads(f.read())
+            config = yaml.safe_load(f.read())
         for obj in config:
             if models and obj["title"] not in models:
                 continue

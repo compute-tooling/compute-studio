@@ -29,3 +29,12 @@ spec:
             requests:
               memory: "95Mi"
               cpu: "75m"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: size
+                    operator: In
+                    values:
+                      - small
