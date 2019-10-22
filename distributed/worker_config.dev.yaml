@@ -1,0 +1,18 @@
+- owner: hdoupe
+  title: Matchups
+  branch: master
+  repo_url: https://github.com/hdoupe/Matchups
+  env:
+    BUILD_NUM: 0
+  affinity:
+    - size: medium
+  secrets:
+    some_secret: hello world
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 4000Mi
+    requests:
+      cpu: 500m
+      memory: 300Mi
+  sim_time_limit: 60
