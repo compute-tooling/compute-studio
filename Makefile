@@ -12,6 +12,10 @@ workers:
 	cd distributed && \
 	    python cs_cluster.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS) --build
 
+workers-base-only:
+	cd distributed && \
+	    python cs_cluster.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS) --build-base-only
+
 workers-apply:
 	cd distributed && \
 		kubectl apply -f kubernetes/ && \

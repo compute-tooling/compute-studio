@@ -36,6 +36,7 @@ def get_task_routes():
     def clean(name):
         return re.sub("[^0-9a-zA-Z]+", "", name).lower()
 
+    print(f"getting config from: {COMP_URL}/publish/api/")
     resp = requests.get(f"{COMP_URL}/publish/api/")
     if resp.status_code != 200:
         raise Exception(f"Response status code: {resp.status_code}")

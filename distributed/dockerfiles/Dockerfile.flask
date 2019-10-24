@@ -19,9 +19,12 @@ ENV IS_FLASK True
 EXPOSE 80
 EXPOSE 5050
 
+RUN conda install -c conda-forge dask distributed
 RUN pip install -r requirements.txt
 
 COPY ./api /home/distributed/api
+COPY ./api/endpoints.py /home/distributed/api
+COPY ./api/celery_app/__init__.py /home/distributed/api/celery_app/__init__.py
 COPY ./setup.py /home/distributed
 RUN cd /home/distributed && pip install -e .
 

@@ -1,0 +1,25 @@
+scheduler:
+  name: # [owner]-[title]-scheduler
+  image:
+    repository: # gcr.io/[project]/[owner]_[title]_tasks
+    tag: # [c/s tag].[mm][dd].[n]
+
+worker:
+  name: # [owner]-[title]-worker
+  image:
+    repository: # gcr.io/[project]/[owner]_[title]_tasks
+    tag: # [c/s tag].[mm][dd].[n]
+  replicas: 1
+  resources:
+    requests:
+      memory: 16G
+      cpu: 3
+    limits:
+      memory: 23G
+      cpu: 4
+  env:
+    - name: DASK_DISTRIBUTED__DAEMON
+      value: "false"
+
+jupyter:
+  enabled: true

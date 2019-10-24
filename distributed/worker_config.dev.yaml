@@ -2,10 +2,11 @@
   title: Matchups
   branch: master
   repo_url: https://github.com/hdoupe/Matchups
+  cluster_type: single-core
   env:
     BUILD_NUM: 0
   affinity:
-    - size: medium
+    size: small
   secrets:
     some_secret: hello world
   resources:
@@ -16,3 +17,19 @@
       cpu: 500m
       memory: 300Mi
   sim_time_limit: 60
+- owner: PSLmodels
+  title: OG-USA
+  sim_time_limit: 10000
+  repo_url: https://github.com/PSLmodels/OG-USA
+  branch: master
+  cluster_type: dask
+  resources:
+    requests:
+      memory: 16G
+      cpu: 3
+    limits:
+      memory: 23G
+      cpu: 4
+  env:
+    BUILD_NUM: 2
+    INSTALL_NUM: 0

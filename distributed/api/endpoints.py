@@ -32,17 +32,18 @@ def clean(word):
 
 
 def get_cs_config():
+    print(f"getting config from: {COMP_URL}/publish/api/")
     resp = requests.get(f"{COMP_URL}/publish/api/")
     if resp.status_code != 200:
         raise Exception(f"Response status code: {resp.status_code}")
     data = resp.json()
-
+    print("got config: ", data)
     config = {}
 
     for model in data:
         model_id = clean(model["owner"]), clean(model["title"])
         config[model_id] = model["cluster_type"]
-
+    print("made config: ", config)
     return config
 
 
@@ -169,7 +170,7 @@ def endpoint_parse(owner, app_name):
 def endpoint_sim(owner, app_name):
     action = "sim"
     cluster_type = get_cluster_type(owner, app_name)
-    if cluster_type == "single-process":
+    if cluster_type == "single-core":
         endpoint = async_endpoint
     elif cluster_type == "dask":
         endpoint = dask_endpoint
@@ -182,7 +183,7 @@ def endpoint_sim(owner, app_name):
 @bp.route("/<owner>/<app_name>/get/<job_id>/", methods=["GET"])
 def results(owner, app_name, job_id):
     cluster_type = get_cluster_type(owner, app_name)
-    if cluster_type == "single-process":
+    if cluster_type == "single-core":
         async_result = AsyncResult(job_id)
         if async_result.ready() and async_result.successful():
             return json.dumps(async_result.result)
@@ -213,7 +214,7 @@ def results(owner, app_name, job_id):
 def query_results(owner, app_name, job_id):
 
     cluster_type = get_cluster_type(owner, app_name)
-    if cluster_type == "single-process":
+    if cluster_type == "single-core":
         async_result = AsyncResult(job_id)
         print("celery result", async_result.state)
         if async_result.ready() and async_result.successful():
