@@ -39,12 +39,12 @@ class Compute(object):
         response = requests.post(url, data=data, timeout=timeout)
         return response
 
-    def remote_query_job(self, theurl, params):
-        job_response = requests.get(theurl, params=params)
+    def remote_query_job(self, theurl):
+        job_response = requests.get(theurl)
         return job_response
 
-    def remote_get_job(self, theurl, params):
-        job_response = requests.get(theurl, params=params)
+    def remote_get_job(self, theurl):
+        job_response = requests.get(theurl)
         return job_response
 
     def submit_job(self, tasks, endpoint):
@@ -85,8 +85,8 @@ class Compute(object):
 
     def results_ready(self, sim):
         result_url = (
-            f"http://{WORKER_HN}/{sim.owner.user.username}/{sim.project.title}"
-            f"/query_job/{sim.job_id}/"
+            f"http://{WORKER_HN}/{sim.project.owner.user.username}/{sim.project.title}"
+            f"/query/{sim.job_id}/"
         )
         job_response = self.remote_query_job(result_url)
         msg = "{0} failed on host: {1}".format(sim.job_id, WORKER_HN)
@@ -98,10 +98,10 @@ class Compute(object):
 
     def get_results(self, sim):
         result_url = (
-            f"http://{WORKER_HN}/{sim.owner.user.username}/{sim.project.title}"
+            f"http://{WORKER_HN}/{sim.project.owner.user.username}/{sim.project.title}"
             f"/get_job/{sim.job_id}/"
         )
-        job_response = self.remote_get_job(result_url, params={"job_id": sim.job_id})
+        job_response = self.remote_get_job(result_url)
         if job_response.status_code == 200:  # Valid response
             try:
                 return job_response.json()
