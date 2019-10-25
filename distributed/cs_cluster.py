@@ -49,7 +49,6 @@ class Cluster:
 
     k8s_target = "kubernetes/"
     k8s_app_target = "kubernetes/apps"
-    k8s_app_values_target = "kubernetes/apps/values"
     cr = "gcr.io"
 
     def __init__(self, config, tag, project, models=None):
@@ -66,8 +65,14 @@ class Cluster:
         with open("templates/sc-deployment.template.yaml", "r") as f:
             self.sc_template = yaml.safe_load(f.read())
 
-        with open("templates/dask-deployment.template.yaml", "r") as f:
-            self.dask_template = yaml.safe_load(f.read())
+        with open("templates/dask/scheduler-deployment.template.yaml", "r") as f:
+            self.dask_scheduler_template = yaml.safe_load(f.read())
+
+        with open("templates/dask/scheduler-service.template.yaml", "r") as f:
+            self.dask_scheduler_service_template = yaml.safe_load(f.read())
+
+        with open("templates/dask/worker-deployment.template.yaml", "r") as f:
+            self.dask_worker_template = yaml.safe_load(f.read())
 
     def build(self):
         """
@@ -131,11 +136,6 @@ class Cluster:
         """
         # ensure clean path.
         path = Path(self.k8s_app_target)
-        path.mkdir(exist_ok=True)
-        stale_files = path.glob("*yaml")
-        _ = [sf.unlink() for sf in stale_files]
-
-        path = Path(self.k8s_app_values_target)
         path.mkdir(exist_ok=True)
         stale_files = path.glob("*yaml")
         _ = [sf.unlink() for sf in stale_files]
@@ -215,37 +215,93 @@ class Cluster:
 
     def write_dask_app(self, app, action):
         print(app, action)
-        app_deployment = copy.deepcopy(self.dask_template)
+        self._write_dask_worker_app(app)
+        self._write_dask_scheduler_app(app)
+        self._write_dask_scheduler_service(app)
+
+    def _write_dask_worker_app(self, app):
+        app_deployment = copy.deepcopy(self.dask_worker_template)
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])
-        name = f"{safeowner}-{safetitle}"
+        name = f"{safeowner}-{safetitle}-dask-worker"
+        image = f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{self.tag}"
 
-        image_repo = f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks"
+        app_deployment["metadata"]["name"] = name
+        app_deployment["metadata"]["labels"]["app"] = name
+        app_deployment["spec"]["replicas"] = app.get("replicas", 1)
+        app_deployment["spec"]["selector"]["matchLabels"]["app"] = name
+        app_deployment["spec"]["template"]["metadata"]["labels"]["app"] = name
 
-        app_deployment["scheduler"] = {
-            "name": f"{name}-scheduler",
-            "image": {"repository": image_repo, "tag": self.tag},
-        }
+        container_config = app_deployment["spec"]["template"]["spec"]["containers"][0]
 
-        app_deployment["worker"].update(
+        resources, _ = self._resources(app, action="sim")
+        container_config.update(
             {
-                "name": f"{name}-worker",
-                "image": {"repository": image_repo, "tag": self.tag},
-                "replicas": app.get("replicas", 1),
-                "resources": self._resources(app, action)[0],
+                "name": name,
+                "image": image,
+                "args": [
+                    "dask-worker",
+                    f"{safeowner}-{safetitle}-dask-scheduler:8786",
+                    "--nthreads",
+                    str(resources["limits"]["cpu"]),
+                    "--memory-limit",
+                    str(resources["limits"]["memory"]),
+                    "--no-bokeh",
+                ],
+                "resources": resources,
+            }
+        )
+        container_config["env"].append(
+            {
+                "name": "DASK_SCHEDULER_ADDRESS",
+                "value": f"{safeowner}-{safetitle}-dask-scheduler:8786",
             }
         )
 
-        app_deployment["worker"]["env"].append(
-            {"name": "DASK_SCHEDULER_ADDRESS", "value": f"{name}-dask-scheduler:8786"}
-        )
+        self._set_secrets(app, container_config)
 
-        self._set_secrets(app, app_deployment["worker"])
-
-        with open(f"{self.k8s_app_values_target}/{name}-values.yaml", "w") as f:
+        with open(f"{self.k8s_app_target}/{name}-deployment.yaml", "w") as f:
             f.write(yaml.dump(app_deployment))
 
         return app_deployment
+
+    def _write_dask_scheduler_app(self, app):
+        app_deployment = copy.deepcopy(self.dask_scheduler_template)
+        safeowner = clean(app["owner"])
+        safetitle = clean(app["title"])
+        name = f"{safeowner}-{safetitle}-dask-scheduler"
+        image = f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{self.tag}"
+
+        app_deployment["metadata"]["name"] = name
+        app_deployment["metadata"]["labels"]["app"] = name
+        app_deployment["spec"]["selector"]["matchLabels"]["app"] = name
+        app_deployment["spec"]["template"]["metadata"]["labels"]["app"] = name
+
+        container_config = app_deployment["spec"]["template"]["spec"]["containers"][0]
+        container_config.update({"name": name, "image": image})
+
+        with open(f"{self.k8s_app_target}/{name}-deployment.yaml", "w") as f:
+            f.write(yaml.dump(app_deployment))
+
+        return app_deployment
+
+    def _write_dask_scheduler_service(self, app):
+        app_service = copy.deepcopy(self.dask_scheduler_service_template)
+        safeowner = clean(app["owner"])
+        safetitle = clean(app["title"])
+        name = f"{safeowner}-{safetitle}-dask-scheduler"
+
+        app_service["metadata"]["name"] = name
+        app_service["metadata"]["labels"]["app"] = name
+        app_service["spec"]["selector"]["app"] = name
+
+        app_service["spec"]["ports"][0]["name"] = name
+        app_service["spec"]["ports"][1]["name"] = f"{safeowner}-{safetitle}-dask-webui"
+
+        with open(f"{self.k8s_app_target}/{name}-service.yaml", "w") as f:
+            f.write(yaml.dump(app_service))
+
+        return app_service
 
     def write_sc_app(self, app, action):
         app_deployment = copy.deepcopy(self.sc_template)

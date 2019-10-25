@@ -25,10 +25,10 @@
   cluster_type: dask
   resources:
     requests:
-      memory: 16G
+      memory: 18G
       cpu: 3
     limits:
-      memory: 23G
+      memory: 22G
       cpu: 4
   env:
     BUILD_NUM: 2
