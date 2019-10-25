@@ -1,3 +1,4 @@
+import functools
 import json
 import os
 import re
@@ -14,6 +15,7 @@ import redis
 import requests
 
 from api.celery_app import celery_app
+from cs_dask_sim import dask_sim, done_callback
 
 
 COMP_URL = os.environ.get("COMP_URL")
@@ -82,60 +84,32 @@ def sync_endpoint(compute_task):
     return json.dumps(result)
 
 
-def done_callback(future):
-    print(f"task_id: {future.key}")
-    print(f"from dask")
-    print(f"state: {future.status}")
-    res = future.result()
-    res["job_id"] = future.key
-    if res["task"].name.endswith("sim"):
-        print(f"posting data to {COMP_URL}/outputs/api/")
-        resp = requests.put(
-            f"{COMP_URL}/outputs/api/",
-            json=res["retval"],
-            headers={"Authorization": f"Token {COMP_API_TOKEN}"},
-        )
-        print("resp", resp.status_code)
-        if resp.status_code == 400:
-            print("errors", resp.json())
-
-
-def dask_sim(meta_param_dict, adjustment):
-    from cs_config import functions
-
-    start = time.time()
-    traceback_str = None
-    res = {}
-    with Client() as c:
-        print("c", c)
-        # TODO: add and handle timeout
-        fut = c.submit(functions.run_model, meta_param_dict, adjustment)
-        print("waiting on result", fut)
-        try:
-            output = fut.result()
-            res = {"output": output, "version": "v1"}
-        except Exception:
-            traceback_str = traceback.format_exc()
-
-    finish = time.time()
-    if "meta" not in res:
-        res["meta"] = {}
-    res["meta"]["task_times"] = [finish - start]
-    if traceback_str is None:
-        res["status"] = "SUCCESS"
-    else:
-        res["status"] = "FAIL"
-        res["traceback"] = traceback_str
-    return res
-
-
 def dask_endpoint(owner, app_name, action):
+    """
+    Route dask simulation to appropriate dask scheduluer.
+    """
+    print(f"dask endpoint: {owner}/{app_name}/{action}")
     data = request.get_data()
     inputs = json.loads(data)
+    print("inputs", inputs)
     addr = dask_scheduler_address(owner, app_name)
+    job_id = str(uuid.uuid4())
+
+    # Worker needs the job_id to push the results back to the
+    # webapp.
+    # The url and api token are passed as args insted of env
+    # variables because the model doesn't need to have
+    # access to them.
+    inputs.update(
+        {
+            "job_id": job_id,
+            "comp_url": os.environ.get("COMP_URL"),
+            "comp_api_token": os.environ.get("COMP_API_TOKEN"),
+        }
+    )
+
     with Client(addr) as c:
-        fut = c.submit(dask_sim, key=uuid.uuid4(), **inputs)
-        fut.add_done_callback(done_callback)
+        fut = c.submit(dask_sim, key=job_id, **inputs)
         fire_and_forget(fut)
         return {"job_id": fut.key, "qlength": 1}
 
@@ -169,15 +143,15 @@ def endpoint_parse(owner, app_name):
 @bp.route("/<owner>/<app_name>/sim", methods=["POST"])
 def endpoint_sim(owner, app_name):
     action = "sim"
+    print("owner, app_name", owner, app_name)
     cluster_type = get_cluster_type(owner, app_name)
+    print(f"cluster type is {cluster_type}")
     if cluster_type == "single-core":
-        endpoint = async_endpoint
+        return route_to_task(owner, app_name, async_endpoint, action)
     elif cluster_type == "dask":
-        endpoint = dask_endpoint
+        return dask_endpoint(owner, app_name, action)
     else:
         return json.dumps({"error": "model does not exist."}), 404
-
-    return route_to_task(owner, app_name, endpoint, action)
 
 
 @bp.route("/<owner>/<app_name>/get/<job_id>/", methods=["GET"])
@@ -236,3 +210,9 @@ def query_results(owner, app_name, job_id):
                 return "NO"
     else:
         return json.dumps({"error": "model does not exist."}), 404
+
+
+@bp.route("/reset-config/", methods=["GET"])
+def reset_config():
+    CONFIG.update(get_cs_config())
+    return json.dumps({"status": "SUCCESS"}), 200

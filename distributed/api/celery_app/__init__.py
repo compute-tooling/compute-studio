@@ -92,9 +92,14 @@ def task_wrapper(func):
                     res["model_version"] = "NA"
                     res.update(dict(outputs, **{"version": version}))
                 else:
-                    res["model_version"] = functions.get_version()
                     outputs = cs_storage.write(task_id, outputs)
-                    res.update({"outputs": outputs, "version": version})
+                    res.update(
+                        {
+                            "model_version": functions.get_version(),
+                            "outputs": outputs,
+                            "version": version,
+                        }
+                    )
             else:
                 res.update(outputs)
         except Exception:

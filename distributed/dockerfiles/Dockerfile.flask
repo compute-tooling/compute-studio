@@ -22,6 +22,9 @@ EXPOSE 5050
 RUN conda install -c conda-forge dask distributed
 RUN pip install -r requirements.txt
 
+COPY ./cs-dask-sim /home/distributed/cs-dask-sim
+RUN cd /home/distributed/cs-dask-sim && pip install -e .
+
 COPY ./api /home/distributed/api
 COPY ./api/endpoints.py /home/distributed/api
 COPY ./api/celery_app/__init__.py /home/distributed/api/celery_app/__init__.py
