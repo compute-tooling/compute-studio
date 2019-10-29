@@ -44,7 +44,10 @@ def get_cs_config():
 
     for model in data:
         model_id = clean(model["owner"]), clean(model["title"])
-        config[model_id] = model["cluster_type"]
+        config[model_id] = {
+            "cluster_type": model["cluster_type"],
+            "time_out": model["exp_task_time"] * 1.25,
+        }
     print("made config: ", config)
     return config
 
@@ -54,7 +57,13 @@ CONFIG = get_cs_config()
 
 def get_cluster_type(owner, app_name):
     model_id = clean(owner), clean(app_name)
-    return CONFIG.get(model_id, None)
+    # allowed to return None
+    return CONFIG.get(model_id, {}).get("cluster_type")
+
+
+def get_time_out(owner, app_name):
+    model_id = clean(owner), clean(app_name)
+    return CONFIG[model_id]["time_out"]
 
 
 def dask_scheduler_address(owner, app_name):
@@ -105,6 +114,7 @@ def dask_endpoint(owner, app_name, action):
             "job_id": job_id,
             "comp_url": os.environ.get("COMP_URL"),
             "comp_api_token": os.environ.get("COMP_API_TOKEN"),
+            "time_out": get_time_out(owner, app_name),
         }
     )
 

@@ -4,10 +4,8 @@ import traceback
 from functools import partial
 
 import cs_storage
-
-print("using cs_storage version", cs_storage.__version__)
 import requests
-from distributed import Client
+from distributed import worker_client
 
 try:
     from cs_config import functions
@@ -49,6 +47,8 @@ def done_callback(future, job_id, comp_url, comp_api_token, start_time):
         )
     except Exception:
         traceback_str = traceback.format_exc()
+        print(f"exception in callback with job_id: {job_id}")
+        print(traceback_str)
 
     if "meta" not in res:
         res["meta"] = {}
@@ -72,7 +72,7 @@ def done_callback(future, job_id, comp_url, comp_api_token, start_time):
         print("errors", resp.json())
 
 
-def dask_sim(meta_param_dict, adjustment, job_id, comp_url, comp_api_token):
+def dask_sim(meta_param_dict, adjustment, job_id, comp_url, comp_api_token, time_out):
     """
     Wraps the functions.run_model function with a dask future and adds a
     callback for pushing the results back to the webapp. The callback is
@@ -87,17 +87,17 @@ def dask_sim(meta_param_dict, adjustment, job_id, comp_url, comp_api_token):
         comp_api_token=comp_api_token,
         start_time=start_time,
     )
-    with Client() as c:
+    with worker_client() as c:
         print("c", c)
         # TODO: add and handle timeout
         fut = c.submit(functions.run_model, meta_param_dict, adjustment)
         fut.add_done_callback(partialled_cb)
         try:
             print("waiting on future", fut)
-            _ = fut.result()
+            _ = fut.result(time_out=time_out)
         except Exception:
             # Exceptions are picked up by the callback. We just
             # log them here.
             traceback_str = traceback.format_exc()
-            print("exception executing job", job_id)
+            print(f"exception in task with job_id: {job_id}")
             print(traceback_str)
