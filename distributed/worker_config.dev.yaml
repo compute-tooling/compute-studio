@@ -23,13 +23,15 @@
   repo_url: https://github.com/PSLmodels/OG-USA
   branch: master
   cluster_type: dask
+  replicas: 2
   resources:
     requests:
-      memory: 18G
-      cpu: 3
+      memory: 7G
+      cpu: 2
     limits:
-      memory: 22G
-      cpu: 4
+      memory: 7G
+      cpu: 2
   env:
-    BUILD_NUM: 2
-    INSTALL_NUM: 0
+    {}
+    # BUILD_NUM: 2
+    # INSTALL_NUM: 0
