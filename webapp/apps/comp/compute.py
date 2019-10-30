@@ -7,7 +7,7 @@ import requests_mock
 requests_mock.Mocker.TEST_PREFIX = "test"
 
 WORKER_HN = os.environ.get("WORKERS")
-TIMEOUT_IN_SECONDS = 1.2
+TIMEOUT_IN_SECONDS = 1.7
 MAX_ATTEMPTS_SUBMIT_JOB = 4
 
 
