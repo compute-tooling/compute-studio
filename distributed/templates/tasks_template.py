@@ -36,4 +36,15 @@ def inputs_parse(self, meta_param_dict, adjustment, errors_warnings):
 )
 @task_wrapper
 def sim(self, meta_param_dict, adjustment):
+    if os.environ.get("DASK_SCHEDULER_ADDRESS") is not None:
+        from distributed import Client
+        from dask import delayed
+
+        print("submitting data")
+        with Client() as c:
+            print("c", c)
+            fut = c.submit(functions.run_model, meta_param_dict, adjustment)
+            print("waiting on result", fut)
+            return fut.result()
+
     return functions.run_model(meta_param_dict, adjustment)

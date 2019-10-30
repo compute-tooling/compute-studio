@@ -7,20 +7,8 @@ import requests_mock
 requests_mock.Mocker.TEST_PREFIX = "test"
 
 WORKER_HN = os.environ.get("WORKERS")
-TIMEOUT_IN_SECONDS = 1.2
+TIMEOUT_IN_SECONDS = 1.7
 MAX_ATTEMPTS_SUBMIT_JOB = 4
-
-
-# class Future:
-#     def __init__(self, job_id, model, **kwargs):
-#         self.job_id = job_id
-#         self.model = model
-
-#     def status(self):
-#         return self.model.get(job_id=self.job_id).status
-
-#     def ready(self):
-#         return self.status() != "PENDING"
 
 
 class JobFailError(Exception):
@@ -39,12 +27,12 @@ class Compute(object):
         response = requests.post(url, data=data, timeout=timeout)
         return response
 
-    def remote_query_job(self, theurl, params):
-        job_response = requests.get(theurl, params=params)
+    def remote_query_job(self, theurl):
+        job_response = requests.get(theurl)
         return job_response
 
-    def remote_get_job(self, theurl, params):
-        job_response = requests.get(theurl, params=params)
+    def remote_get_job(self, theurl):
+        job_response = requests.get(theurl)
         return job_response
 
     def submit_job(self, tasks, endpoint):
@@ -83,19 +71,25 @@ class Compute(object):
 
         return job_id, queue_length
 
-    def results_ready(self, job_id):
-        result_url = f"http://{WORKER_HN}/query_job"
-        job_response = self.remote_query_job(result_url, params={"job_id": job_id})
-        msg = "{0} failed on host: {1}".format(job_id, WORKER_HN)
+    def results_ready(self, sim):
+        result_url = (
+            f"http://{WORKER_HN}/{sim.project.owner.user.username}/{sim.project.title}"
+            f"/query/{sim.job_id}/"
+        )
+        job_response = self.remote_query_job(result_url)
+        msg = "{0} failed on host: {1}".format(sim.job_id, WORKER_HN)
         if job_response.status_code == 200:  # Valid response
             return job_response.text
         else:
             print("did not expect response with status_code", job_response.status_code)
             raise JobFailError(msg)
 
-    def get_results(self, job_id):
-        result_url = f"http://{WORKER_HN}/get_job"
-        job_response = self.remote_get_job(result_url, params={"job_id": job_id})
+    def get_results(self, sim):
+        result_url = (
+            f"http://{WORKER_HN}/{sim.project.owner.user.username}/{sim.project.title}"
+            f"/get_job/{sim.job_id}/"
+        )
+        job_response = self.remote_get_job(result_url)
         if job_response.status_code == 200:  # Valid response
             try:
                 return job_response.json()

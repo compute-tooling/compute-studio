@@ -56,19 +56,23 @@ class Cluster:
         self.project = project
         self.models = models if models and models[0] else None
 
-        # ensure clean path.
-        path = Path(self.k8s_app_target)
-        path.mkdir(exist_ok=True)
-        shutil.rmtree(path / "*", ignore_errors=True)
-
         with open(config, "r") as f:
             self.config = yaml.safe_load(f.read())
 
-        with open("flask-deployment.template.yaml", "r") as f:
+        with open("templates/flask-deployment.template.yaml", "r") as f:
             self.flask_template = yaml.safe_load(f.read())
 
-        with open("app-deployment.template.yaml", "r") as f:
-            self.app_template = yaml.safe_load(f.read())
+        with open("templates/sc-deployment.template.yaml", "r") as f:
+            self.sc_template = yaml.safe_load(f.read())
+
+        with open("templates/dask/scheduler-deployment.template.yaml", "r") as f:
+            self.dask_scheduler_template = yaml.safe_load(f.read())
+
+        with open("templates/dask/scheduler-service.template.yaml", "r") as f:
+            self.dask_scheduler_service_template = yaml.safe_load(f.read())
+
+        with open("templates/dask/worker-deployment.template.yaml", "r") as f:
+            self.dask_worker_template = yaml.safe_load(f.read())
 
     def build(self):
         """
@@ -130,6 +134,12 @@ class Cluster:
         for all apps in config. Filters out those not in models
         list, if applicable.
         """
+        # ensure clean path.
+        path = Path(self.k8s_app_target)
+        path.mkdir(exist_ok=True)
+        stale_files = path.glob("*yaml")
+        _ = [sf.unlink() for sf in stale_files]
+
         for app in self.config:
             if self.models and app["title"] not in self.models[0]:
                 continue
@@ -190,45 +200,125 @@ class Cluster:
         Note: Dask uses a dot notation for specifying paths
             in their config. It could be helpful for us to
             do that, too.
+
+            Also, all io (inputs) apps are deployed as a
+            single-core cluster.
         """
-        app_deployment = copy.deepcopy(self.app_template)
+        if action == "io":
+            self.write_sc_app(app, action)
+        elif app["cluster_type"] == "dask":
+            self.write_dask_app(app, action)
+        elif app["cluster_type"] == "single-core":
+            self.write_sc_app(app, action)
+        else:
+            raise RuntimeError(f"Cluster type {app['cluster_type']} unknown.")
+
+    def write_dask_app(self, app, action):
+        self._write_dask_worker_app(app)
+        self._write_dask_scheduler_app(app)
+        self._write_dask_scheduler_service(app)
+
+    def _write_dask_worker_app(self, app):
+        app_deployment = copy.deepcopy(self.dask_worker_template)
+        safeowner = clean(app["owner"])
+        safetitle = clean(app["title"])
+        name = f"{safeowner}-{safetitle}-dask-worker"
+        image = f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{self.tag}"
+
+        app_deployment["metadata"]["name"] = name
+        app_deployment["metadata"]["labels"]["app"] = name
+        app_deployment["spec"]["replicas"] = app.get("replicas", 1)
+        app_deployment["spec"]["selector"]["matchLabels"]["app"] = name
+        app_deployment["spec"]["template"]["metadata"]["labels"]["app"] = name
+
+        container_config = app_deployment["spec"]["template"]["spec"]["containers"][0]
+
+        resources, _ = self._resources(app, action="sim")
+        container_config.update(
+            {
+                "name": name,
+                "image": image,
+                "args": [
+                    "dask-worker",
+                    f"{safeowner}-{safetitle}-dask-scheduler:8786",
+                    "--nthreads",
+                    str(resources["limits"]["cpu"]),
+                    "--memory-limit",
+                    str(resources["limits"]["memory"]),
+                    "--no-bokeh",
+                ],
+                "resources": resources,
+            }
+        )
+        container_config["env"].append(
+            {
+                "name": "DASK_SCHEDULER_ADDRESS",
+                "value": f"{safeowner}-{safetitle}-dask-scheduler:8786",
+            }
+        )
+
+        self._set_secrets(app, container_config)
+
+        with open(f"{self.k8s_app_target}/{name}-deployment.yaml", "w") as f:
+            f.write(yaml.dump(app_deployment))
+
+        return app_deployment
+
+    def _write_dask_scheduler_app(self, app):
+        app_deployment = copy.deepcopy(self.dask_scheduler_template)
+        safeowner = clean(app["owner"])
+        safetitle = clean(app["title"])
+        name = f"{safeowner}-{safetitle}-dask-scheduler"
+
+        app_deployment["metadata"]["name"] = name
+        app_deployment["metadata"]["labels"]["app"] = name
+        app_deployment["spec"]["selector"]["matchLabels"]["app"] = name
+        app_deployment["spec"]["template"]["metadata"]["labels"]["app"] = name
+        app_deployment["spec"]["template"]["spec"]["containers"][0]["name"] = name
+
+        with open(f"{self.k8s_app_target}/{name}-deployment.yaml", "w") as f:
+            f.write(yaml.dump(app_deployment))
+
+        return app_deployment
+
+    def _write_dask_scheduler_service(self, app):
+        app_service = copy.deepcopy(self.dask_scheduler_service_template)
+        safeowner = clean(app["owner"])
+        safetitle = clean(app["title"])
+        name = f"{safeowner}-{safetitle}-dask-scheduler"
+
+        app_service["metadata"]["name"] = name
+        app_service["metadata"]["labels"]["app"] = name
+        app_service["spec"]["selector"]["app"] = name
+
+        app_service["spec"]["ports"][0]["name"] = name
+        app_service["spec"]["ports"][1]["name"] = f"{safeowner}-{safetitle}-dask-webui"
+
+        with open(f"{self.k8s_app_target}/{name}-service.yaml", "w") as f:
+            f.write(yaml.dump(app_service))
+
+        return app_service
+
+    def write_sc_app(self, app, action):
+        app_deployment = copy.deepcopy(self.sc_template)
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])
         name = f"{safeowner}-{safetitle}-{action}"
 
-        if action == "io":
-            resources = {
-                "requests": {"cpu": "700m", "memory": "250Mi"},
-                "limits": {"cpu": "1000m", "memory": "700Mi"},
-            }
-            affinity_size = ["small", "medium"]
-        else:
-            resources = {"requests": {"memory": "1000Mi", "cpu": "1000m"}}
-            resources = dict(resources, **copy.deepcopy(app["resources"]))
-            affinity_size = app.get("affinity", {}).get("size", ["small", "medium"])
+        resources, affinity_size = self._resources(app, action)
 
         if not isinstance(affinity_size, list):
             affinity_size = [affinity_size]
 
         app_deployment["metadata"]["name"] = name
         app_deployment["spec"]["selector"]["matchLabels"]["app"] = name
-        app_deployment["spec"]["template"]["metadata"]["labels"] = name
-        if "affinity" in app:
+        app_deployment["spec"]["template"]["metadata"]["labels"]["app"] = name
+        if "affinity" in app and action == "sim":
+            affinity_exp = {"key": "size", "operator": "In", "values": affinity_size}
             app_deployment["spec"]["template"]["spec"]["affinity"] = {
                 "nodeAffinity": {
                     "requiredDuringSchedulingIgnoredDuringExecution": {
-                        "nodeSelectorTerms": [
-                            {
-                                "matchExpressions": [
-                                    # only size for now.
-                                    {
-                                        "key": "size",
-                                        "operator": "In",
-                                        "values": affinity_size,
-                                    }
-                                ]
-                            }
-                        ]
+                        "nodeSelectorTerms": [{"matchExpressions": [affinity_exp]}]
                     }
                 }
             }
@@ -236,30 +326,46 @@ class Cluster:
         container_config = app_deployment["spec"]["template"]["spec"]["containers"][0]
 
         container_config.update(
-            dict(
-                name=name,
-                image=f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{self.tag}",
-                command=[f"./celery_{action}.sh"],
-                args=[
+            {
+                "name": name,
+                "image": f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{self.tag}",
+                "command": [f"./celery_{action}.sh"],
+                "args": [
                     app["owner"],
                     app["title"],
                 ],  # TODO: pass safe names to docker file at build and run time
-                resources=resources,
-            )
+                "resources": resources,
+            }
         )
 
         container_config["env"].append({"name": "TITLE", "value": app["title"]})
         container_config["env"].append({"name": "OWNER", "value": app["owner"]})
 
-        # TODO: write secrets to secret config files instead of env.
-        if app.get("secret"):
-            for var, val in app.get("secret", {}).items():
-                container_config["env"].append({"name": var.upper(), "value": val})
+        self._set_secrets(app, container_config)
 
         with open(f"{self.k8s_app_target}/{name}-deployment.yaml", "w") as f:
             f.write(yaml.dump(app_deployment))
 
         return app_deployment
+
+    def _resources(self, app, action):
+        if action == "io":
+            resources = {
+                "requests": {"cpu": 0.7, "memory": "0.25G"},
+                "limits": {"cpu": 1, "memory": "0.7G"},
+            }
+            affinity_size = ["small", "medium"]
+        else:
+            resources = {"requests": {"memory": "1G", "cpu": 1}}
+            resources = dict(resources, **copy.deepcopy(app["resources"]))
+            affinity_size = app.get("affinity", {}).get("size", ["small", "medium"])
+        return resources, affinity_size
+
+    def _set_secrets(self, app, config):
+        # TODO: write secrets to secret config files instead of env.
+        if app.get("secret"):
+            for var, val in app["secret"].items():
+                config["env"].append({"name": var.upper(), "value": val})
 
 
 if __name__ == "__main__":
@@ -270,6 +376,7 @@ if __name__ == "__main__":
     parser.add_argument("--models", nargs="+", type=str, required=False, default=None)
     parser.add_argument("--build", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--build-base-only", action="store_true")
     args = parser.parse_args()
 
     cluster = Cluster(
@@ -280,3 +387,5 @@ if __name__ == "__main__":
         cluster.build()
     elif args.dry_run:
         cluster.dry_run()
+    elif args.build_base_only:
+        cluster.build_base_images()

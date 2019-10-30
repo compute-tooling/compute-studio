@@ -36,6 +36,7 @@ def get_task_routes():
     def clean(name):
         return re.sub("[^0-9a-zA-Z]+", "", name).lower()
 
+    print(f"getting config from: {COMP_URL}/publish/api/")
     resp = requests.get(f"{COMP_URL}/publish/api/")
     if resp.status_code != 200:
         raise Exception(f"Response status code: {resp.status_code}")
@@ -45,13 +46,18 @@ def get_task_routes():
         owner = clean(project["owner"])
         title = clean(project["title"])
         model = f"{owner}_{title}"
-        task_routes.update(
-            {
-                f"{model}_tasks.sim": {"queue": f"{model}_queue"},
-                f"{model}_tasks.inputs_get": {"queue": f"{model}_inputs_queue"},
-                f"{model}_tasks.inputs_parse": {"queue": f"{model}_inputs_queue"},
-            }
-        )
+
+        # all apps use celery workers for handling their inputs.
+        routes = {
+            f"{model}_tasks.inputs_get": {"queue": f"{model}_inputs_queue"},
+            f"{model}_tasks.inputs_parse": {"queue": f"{model}_inputs_queue"},
+        }
+
+        # only add sim routes for models that use celery workers.
+        if project["cluster_type"] == "single-core":
+            routes[f"{model}_tasks.sim"] = {"queue": f"{model}_queue"}
+
+        task_routes.update(routes)
     return task_routes
 
 
@@ -86,9 +92,14 @@ def task_wrapper(func):
                     res["model_version"] = "NA"
                     res.update(dict(outputs, **{"version": version}))
                 else:
-                    res["model_version"] = functions.get_version()
                     outputs = cs_storage.write(task_id, outputs)
-                    res.update({"outputs": outputs, "version": version})
+                    res.update(
+                        {
+                            "model_version": functions.get_version(),
+                            "outputs": outputs,
+                            "version": version,
+                        }
+                    )
             else:
                 res.update(outputs)
         except Exception:
