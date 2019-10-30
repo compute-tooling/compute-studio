@@ -269,15 +269,12 @@ class Cluster:
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])
         name = f"{safeowner}-{safetitle}-dask-scheduler"
-        image = f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{self.tag}"
 
         app_deployment["metadata"]["name"] = name
         app_deployment["metadata"]["labels"]["app"] = name
         app_deployment["spec"]["selector"]["matchLabels"]["app"] = name
         app_deployment["spec"]["template"]["metadata"]["labels"]["app"] = name
-
-        container_config = app_deployment["spec"]["template"]["spec"]["containers"][0]
-        container_config.update({"name": name, "image": image})
+        app_deployment["spec"]["template"]["spec"]["containers"][0]["name"] = name
 
         with open(f"{self.k8s_app_target}/{name}-deployment.yaml", "w") as f:
             f.write(yaml.dump(app_deployment))
