@@ -11,18 +11,6 @@ TIMEOUT_IN_SECONDS = 1.7
 MAX_ATTEMPTS_SUBMIT_JOB = 4
 
 
-# class Future:
-#     def __init__(self, job_id, model, **kwargs):
-#         self.job_id = job_id
-#         self.model = model
-
-#     def status(self):
-#         return self.model.get(job_id=self.job_id).status
-
-#     def ready(self):
-#         return self.status() != "PENDING"
-
-
 class JobFailError(Exception):
     """An Exception to raise when a remote jobs has failed"""
 
