@@ -214,7 +214,6 @@ class Cluster:
             raise RuntimeError(f"Cluster type {app['cluster_type']} unknown.")
 
     def write_dask_app(self, app, action):
-        print(app, action)
         self._write_dask_worker_app(app)
         self._write_dask_scheduler_app(app)
         self._write_dask_scheduler_service(app)
@@ -368,7 +367,7 @@ class Cluster:
     def _set_secrets(self, app, config):
         # TODO: write secrets to secret config files instead of env.
         if app.get("secret"):
-            for var, val in app.get("secret", {}).items():
+            for var, val in app["secret"].items():
                 config["env"].append({"name": var.upper(), "value": val})
 
 
