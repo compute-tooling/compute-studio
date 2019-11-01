@@ -7,7 +7,13 @@ import { isEqual, isEmpty } from "lodash/lang";
 
 import { makeID, valForForm } from "./utils";
 import { RedMessage, getField, CPIField } from "./fields";
-import { Card, Button, Overlay, OverlayTrigger, Tooltip } from "react-bootstrap";
+import {
+  Card,
+  Button,
+  Overlay,
+  OverlayTrigger,
+  Tooltip
+} from "react-bootstrap";
 
 export const ParamElement = ({
   param_data,
@@ -18,13 +24,19 @@ export const ParamElement = ({
   let tooltip = <div />;
   if (param_data.description) {
     tooltip = (
-      <OverlayTrigger trigger={["hover", "click"]} overlay={<Tooltip id={`${id}-tooltip`}>{param_data.description}</Tooltip>}>
+      <OverlayTrigger
+        trigger={["hover", "click"]}
+        overlay={
+          <Tooltip id={`${id}-tooltip`}>{param_data.description}</Tooltip>
+        }
+      >
         <span className="d-inline-block">
           <label>
             <i className="fas fa-info-circle" />
           </label>
         </span>
-      </OverlayTrigger>);
+      </OverlayTrigger>
+    );
   }
   return (
     <div className={classes}>
@@ -102,7 +114,7 @@ export const MetaParameters = React.memo(
       <div className="card card-body card-outer">
         <div className="form-group">
           <ul className="list-unstyled components">
-            {Object.entries(meta_parameters).map(function (mp_item, ix) {
+            {Object.entries(meta_parameters).map(function(mp_item, ix) {
               let paramName = `${mp_item[0]}`;
               let fieldName = `meta_parameters.${paramName}`;
               return (
@@ -130,8 +142,8 @@ export const MetaParameters = React.memo(
                   Click Reset to update the default values of the parameters.
                 </p>
               ) : (
-                  <div />
-                )}
+                <div />
+              )}
             </li>
           </ul>
         </div>
@@ -213,12 +225,15 @@ export const Param = React.memo(
       <div className="container mb-3" style={{ padding: "left 0" }} key={param}>
         {paramElement}
         <div className="form-row has-statuses" style={{ marginLeft: "-20px" }}>
-          {Object.entries(data.form_fields).map(function (form_field, ix) {
+          {Object.entries(data.form_fields).map(function(form_field, ix) {
             let labels = form_field[0];
             let vo = data.value[ix];
             let commaSepLabs = Object.entries(vo)
-              .filter(item => item[0] != "value" && !(item[0] in meta_parameters))
-              .map(item => item[1]).join(",");
+              .filter(
+                item => item[0] != "value" && !(item[0] in meta_parameters)
+              )
+              .map(item => item[1])
+              .join(",");
             let fieldName = `adjustment.${msect}.${param}.${labels}`;
             let placeholder = valForForm(form_field[1]);
             let isTouched = false;
@@ -250,12 +265,20 @@ export const Param = React.memo(
 );
 
 const Section2 = React.memo(
-  ({ section_2, param_list, msect, model_parameters, values, extend, meta_parameters }) => {
+  ({
+    section_2,
+    param_list,
+    msect,
+    model_parameters,
+    values,
+    extend,
+    meta_parameters
+  }) => {
     let section_2_id = makeID(section_2);
     return (
       <div key={section_2_id} className="mb-2">
         <h3 className="mb-1">{section_2}</h3>
-        {param_list.map(function (param) {
+        {param_list.map(function(param) {
           return (
             <Param
               key={`${param}-component`}
@@ -282,7 +305,15 @@ const Section2 = React.memo(
 );
 
 const Section1 = React.memo(
-  ({ section_1, section_2_dict, msect, model_parameters, values, extend, meta_parameters }) => {
+  ({
+    section_1,
+    section_2_dict,
+    msect,
+    model_parameters,
+    values,
+    extend,
+    meta_parameters
+  }) => {
     let section_1_id = makeID(section_1);
     return (
       <div className="inputs-block" id={section_1_id} key={section_1_id}>
@@ -303,7 +334,7 @@ const Section1 = React.memo(
               className="card card-body card-inner mb-3"
               style={{ padding: "0rem" }}
             >
-              {Object.entries(section_2_dict).map(function (
+              {Object.entries(section_2_dict).map(function(
                 param_list_item,
                 ix
               ) {
@@ -356,7 +387,7 @@ export const MajorSection = React.memo(
             className="card card-body card-inner"
             style={{ padding: "0rem" }}
           >
-            {Object.entries(section_1_dict).map(function (section_2_item, ix) {
+            {Object.entries(section_1_dict).map(function(section_2_item, ix) {
               let section_1 = section_2_item[0];
               let section_2_dict = section_2_item[1];
               return (
@@ -497,6 +528,7 @@ export const ErrorCard = ({ errorMsg, errors, model_parameters = null }) => {
       return [false, paramName];
     }
   };
+  console.log(errors);
   return (
     <Card className="card-outer">
       <Card.Body>
@@ -507,6 +539,9 @@ export const ErrorCard = ({ errorMsg, errors, model_parameters = null }) => {
               <h5>{msect}</h5>
               {Object.entries(errors.errors).map(([paramName, msgs], ix) => {
                 let [exists, title] = getTitle(msect, paramName);
+                if (!Array.isArray(msgs)) {
+                  msgs = [msgs];
+                }
                 return (
                   <div key={`${msect}-${paramName}-error`}>
                     <p>
@@ -515,11 +550,15 @@ export const ErrorCard = ({ errorMsg, errors, model_parameters = null }) => {
                     <ul className="list-unstyled">
                       <li className="ml-2">
                         <ul>
-                          {msgs.map((msg, ix) => <li key={`msg-${ix}`}>{msg}</li>)}{" "}
+                          {msgs.map((msg, ix) => (
+                            <li key={`msg-${ix}`}>{msg}</li>
+                          ))}{" "}
                           {exists ? (
-                            <li className="list-unstyled"><a href={`#adjustment.${msect}.${paramName}`}>
-                              [link]
-                          </a></li>
+                            <li className="list-unstyled">
+                              <a href={`#adjustment.${msect}.${paramName}`}>
+                                [link]
+                              </a>
+                            </li>
                           ) : null}
                         </ul>
                       </li>
@@ -529,8 +568,8 @@ export const ErrorCard = ({ errorMsg, errors, model_parameters = null }) => {
               })}
             </div>
           ) : (
-              <div key={`${msect}-error`} />
-            );
+            <div key={`${msect}-error`} />
+          );
         })}
       </Card.Body>
     </Card>
