@@ -104,7 +104,8 @@ class InputsView(InputsMixin, View):
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET, kwargs)
         project = self.projects.get(
-            owner__user__username=kwargs["username"], title=kwargs["title"]
+            owner__user__username__iexact=kwargs["username"],
+            title__iexact=kwargs["title"],
         )
         context = self.project_context(request, project)
         return render(request, self.template_name, context)

@@ -67,8 +67,8 @@ class AbstractRouter:
         print("router handle", args, kwargs)
         project = get_object_or_404(
             self.projects,
-            owner__user__username=kwargs["username"],
-            title=kwargs["title"],
+            owner__user__username__iexact=kwargs["username"],
+            title__iexact=kwargs["title"],
         )
         if project.status in ["updating", "live"]:
             if project.sponsor is None:
@@ -108,8 +108,8 @@ class GetOutputsObjectMixin:
         return get_object_or_404(
             self.model,
             model_pk=model_pk,
-            project__title=title,
-            project__owner__user__username=username,
+            project__title__iexact=title,
+            project__owner__user__username__iexact=username,
         )
 
 

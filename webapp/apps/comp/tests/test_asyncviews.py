@@ -48,7 +48,7 @@ class CoreTestMixin:
     def project(self):
         if getattr(self, "_project", None) is None:
             self._project = Project.objects.get(
-                owner__user__username=self.owner, title=self.title
+                owner__user__username__iexact=self.owner, title__iexact=self.title
             )
         return self._project
 
@@ -80,6 +80,7 @@ class RunMockModel(CoreTestMixin):
         comp_api_user: User,
         monkeypatch,
         mockcompute: MockCompute,
+        test_lower: bool,
     ):
         self.owner = owner
         self.title = title
@@ -92,6 +93,10 @@ class RunMockModel(CoreTestMixin):
         self.comp_api_user = comp_api_user
         self.monkeypatch = monkeypatch
         self.mockcompute = mockcompute
+
+        if test_lower:
+            self.title = self.title.lower()
+            self.owner = self.owner.lower()
 
     def run(self):
         defaults_resp_data = {"status": "SUCCESS", **self.defaults}
@@ -299,8 +304,16 @@ class TestAsyncAPI(CoreTestMixin):
             exp = ioutils.displayer.package_defaults()
             assert exp == resp.data
 
+    @pytest.mark.parametrize("test_lower", [False, True])
     def test_runmodel(
-        self, monkeypatch, client, api_client, profile, worker_url, comp_api_user
+        self,
+        monkeypatch,
+        client,
+        api_client,
+        profile,
+        worker_url,
+        comp_api_user,
+        test_lower,
     ):
         """
         Test lifetime of submitting a model.
@@ -319,6 +332,7 @@ class TestAsyncAPI(CoreTestMixin):
             comp_api_user=comp_api_user,
             monkeypatch=monkeypatch,
             mockcompute=self.mockcompute,
+            test_lower=test_lower,
         )
         rmm.run()
 
@@ -347,6 +361,7 @@ class TestAsyncAPI(CoreTestMixin):
             comp_api_user=comp_api_user,
             monkeypatch=monkeypatch,
             mockcompute=self.mockcompute,
+            test_lower=False,
         )
         rmm = RunMockModel(**kwargs)
         with pytest.raises(ResponseStatusException) as excinfo:
@@ -355,7 +370,9 @@ class TestAsyncAPI(CoreTestMixin):
         assert excinfo.value.exp_status == 201
         assert excinfo.value.act_status == 403
 
-        proj = Project.objects.get(title=self.title, owner__user__username=self.owner)
+        proj = Project.objects.get(
+            title__iexact=self.title, owner__user__username__iexact=self.owner
+        )
         proj.sponsor = None
         proj.save()
 
@@ -385,7 +402,9 @@ class TestAsyncAPI(CoreTestMixin):
 def test_placeholder_page(db, client):
     title = "Matchups"
     owner = "hdoupe"
-    project = Project.objects.get(title=title, owner__user__username=owner)
+    project = Project.objects.get(
+        title__iexact=title, owner__user__username__iexact=owner
+    )
     project.status = "pending"
     project.save()
     resp = client.get(f"/{owner}/{title}/")

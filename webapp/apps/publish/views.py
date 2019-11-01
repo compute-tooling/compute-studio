@@ -22,7 +22,9 @@ from .utils import title_fixup
 
 class GetProjectMixin:
     def get_object(self, username, title):
-        return get_object_or_404(Project, title=title, owner__user__username=username)
+        return get_object_or_404(
+            Project, title__iexact=title, owner__user__username__iexact=username
+        )
 
 
 class ProjectView(View):
@@ -97,7 +99,7 @@ class ProjectAPIView(GetProjectMixin, APIView):
                 username = request.user.username
                 if (
                     Project.objects.filter(
-                        owner__user__username=username, title=title
+                        owner__user__username__iexact=username, title__iexact=title
                     ).count()
                     > 0
                 ):

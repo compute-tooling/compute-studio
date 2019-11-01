@@ -38,8 +38,8 @@ class InputsAPIView(APIView):
     def get_inputs(self, kwargs, meta_parameters=None):
         project = get_object_or_404(
             self.queryset,
-            owner__user__username=kwargs["username"],
-            title=kwargs["title"],
+            owner__user__username__iexact=kwargs["username"],
+            title__iexact=kwargs["title"],
         )
         ioutils = get_ioutils(project)
         if meta_parameters is not None:
@@ -88,8 +88,8 @@ class DetailMyInputsAPIView(APIView):
             inputs = get_object_or_404(
                 self.queryset,
                 outputs__model_pk=kwargs["model_pk"],
-                project__title=kwargs["title"],
-                project__owner__user__username=kwargs["username"],
+                project__title__iexact=kwargs["title"],
+                project__owner__user__username__iexact=kwargs["username"],
             )
         else:
             inputs = self.queryset.get_object_from_hashid_or_404(kwargs["hashid"])
@@ -108,8 +108,8 @@ class BaseCreateAPIView(APIView):
         compute = Compute()
         project = get_object_or_404(
             self.queryset,
-            owner__user__username=kwargs["username"],
-            title=kwargs["title"],
+            owner__user__username__iexact=kwargs["username"],
+            title__iexact=kwargs["title"],
         )
         ioutils = get_ioutils(project, Parser=APIParser)
 
@@ -172,10 +172,9 @@ class DetailAPIView(GetOutputsObjectMixin, APIView):
         elif self.object.traceback is not None:
             return Response(sim.data, status=status.HTTP_200_OK)
 
-        job_id = str(self.object.job_id)
         compute = Compute()
         try:
-            job_ready = compute.results_ready(sim)
+            job_ready = compute.results_ready(self.object)
         except JobFailError:
             self.object.traceback = ""
             self.object.save()
@@ -184,7 +183,7 @@ class DetailAPIView(GetOutputsObjectMixin, APIView):
             )
         # something happened and the exception was not caught
         if job_ready == "FAIL":
-            result = compute.get_results(sim)
+            result = compute.get_results(self.object)
             if result["traceback"]:
                 traceback_ = result["traceback"]
             else:
