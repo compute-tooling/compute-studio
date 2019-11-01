@@ -172,10 +172,9 @@ class DetailAPIView(GetOutputsObjectMixin, APIView):
         elif self.object.traceback is not None:
             return Response(sim.data, status=status.HTTP_200_OK)
 
-        job_id = str(self.object.job_id)
         compute = Compute()
         try:
-            job_ready = compute.results_ready(sim)
+            job_ready = compute.results_ready(self.object)
         except JobFailError:
             self.object.traceback = ""
             self.object.save()
@@ -184,7 +183,7 @@ class DetailAPIView(GetOutputsObjectMixin, APIView):
             )
         # something happened and the exception was not caught
         if job_ready == "FAIL":
-            result = compute.get_results(sim)
+            result = compute.get_results(self.object)
             if result["traceback"]:
                 traceback_ = result["traceback"]
             else:
