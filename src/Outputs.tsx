@@ -19,7 +19,6 @@ import {
   TableOutput,
   BokehOutput
 } from "./types";
-import { makeID } from "./utils";
 
 interface OutputsProps {
   fetchRemoteOutputs: () => Promise<SimAPIData<RemoteOutputs>>;
@@ -41,18 +40,19 @@ const TableComponent: React.FC<{ output: TableOutput }> = ({ output }) => (
 const BokehComponent: React.FC<{ output: BokehOutput }> = ({ output }) => {
   let js = output.data.javascript;
   let exp = RegExp('{"roots":.+"version":"[0-9].[0-9].[0-9]"}');
-  let res = exp.exec(js); //.split("\\\\n").join("\\n"));
-  console.log(res);
-  console.log(JSON.parse(res[0]));
-  let parsed = JSON.parse(res[0]);
+  let res = exp.exec(js);
+  let unescaped = res[0]
+    .replace(/&gt;/g, ">")
+    .replace(/&lt;/g, "<")
+    .replace(/\\\\n/g, "\\n")
+    .replace(/\\\\\"/g, '\\"');
+  let parsed = JSON.parse(unescaped);
   let root_id = parsed.roots.root_ids[0];
   let json_item = {
     target_id: output.id,
     root_id: root_id,
     doc: parsed
   };
-  console.log(output.data.html);
-  console.log(output.id);
   // @ts-ignore
   window.Bokeh.embed.embed_item(json_item);
   return (
