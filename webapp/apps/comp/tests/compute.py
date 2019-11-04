@@ -28,7 +28,7 @@ class MockCompute(Compute):
             self.last_posted = data
             return Compute.remote_submit_job(self, url, data, timeout)
 
-    def remote_query_job(self, url, params):
+    def remote_query_job(self, url):
         # Need to login as the comp-api-user
         self.client.login(username=self.user, password=self.password)
         if isinstance(self.client, APIClient):
@@ -46,13 +46,13 @@ class MockCompute(Compute):
         with requests_mock.Mocker() as mock:
             text = "NO"
             mock.register_uri("GET", url, text=text)
-            return Compute.remote_query_job(self, url, params)
+            return Compute.remote_query_job(self, url)
 
-    def remote_get_job(self, url, params):
+    def remote_get_job(self, url):
         self.count += 1
         with requests_mock.Mocker() as mock:
             mock.register_uri("GET", url, text=self.outputs)
-            return Compute.remote_get_job(self, url, params)
+            return Compute.remote_get_job(self, url)
 
     def reset_count(self):
         """
@@ -65,11 +65,11 @@ class MockComputeWorkerFailure(MockCompute):
     next_response = None
     outputs = json.dumps({"status": "WORKER_FAILURE", "traceback": "Error: whoops"})
 
-    def remote_query_job(self, url, params):
+    def remote_query_job(self, url):
         self.client = None
         self.sim = None
         with requests_mock.Mocker() as mock:
             print("mocking: ", url)
             text = "FAIL"
             mock.register_uri("GET", url, text=text)
-            return Compute.remote_query_job(self, url, params)
+            return Compute.remote_query_job(self, url)

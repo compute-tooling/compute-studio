@@ -5,6 +5,7 @@ from webapp.apps.users.models import Project
 
 class PublishSerializer(serializers.ModelSerializer):
     owner = serializers.StringRelatedField(read_only=True)
+    cluster_type = serializers.CharField(required=False)
 
     class Meta:
         model = Project
@@ -18,4 +19,5 @@ class PublishSerializer(serializers.ModelSerializer):
             "server_cost",
             "listed",
             "owner",
+            "cluster_type",
         )

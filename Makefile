@@ -1,28 +1,25 @@
-PROJECT ?= comp-workers
-CONFIG ?= worker_config.prod.json
+PROJECT ?= cs-workers-dev
+CONFIG ?= worker_config.dev.yaml
 MODE ?= test
 NEW_RELIC_TOKEN ?= `cat ~/.newrelic-$(MODE)`
 MODELS ?= ""
 
 kube-config:
 	cd distributed && \
-		python app_writer.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS)
+	    python cs_cluster.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS) --dry-run
 
 workers:
 	cd distributed && \
-	    docker-compose -f docker-compose.yml `python app_writer.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS)` build && \
-	    python gcr_tag.py --tag $(TAG) --host gcr.io --project $(PROJECT) --config $(CONFIG) --models $(MODELS)
+	    python cs_cluster.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS) --build
+
+workers-base-only:
+	cd distributed && \
+	    python cs_cluster.py --config $(CONFIG) --project $(PROJECT) --models $(MODELS) --build-base-only
 
 workers-apply:
 	cd distributed && \
 		kubectl apply -f kubernetes/ && \
 		kubectl apply -f kubernetes/apps/
-
-dist-test:
-	cd distributed && \
-	docker-compose rm -f && \
-	docker-compose run flask py.test -s -v && \
-	docker-compose rm -f
 
 webapp-build:
 	docker build -t webbase:latest -f Dockerfile.base ./ && \

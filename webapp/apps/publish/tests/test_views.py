@@ -55,10 +55,14 @@ class TestPublishViews:
         resp = client.get("/publish/api/modeler/Detail-Test/detail/")
         assert resp.status_code == 200
         data = resp.json()
-        del data["owner"]
+        data.pop("owner")
+        data.pop("cluster_type")
         serializer = PublishSerializer(project, data=data)
         assert serializer.is_valid()
         assert serializer.validated_data == exp
+
+        resp = client.get("/publish/api/moDeler/detail-test/detail/")
+        assert resp.status_code == 200
 
     def test_put_detail_api(self, client, test_models, profile, password):
         put_data = {
@@ -79,7 +83,7 @@ class TestPublishViews:
         # not the owner --> not authorized
         client.login(username="sponsor", password="sponsor2222")
         resp = client.put(
-            "/publish/api/modeler/Used-for-testing/detail/",
+            "/publish/api/Modeler/Used-FOR-testing/detail/",
             data=put_data,
             content_type="application/json",
         )
@@ -137,6 +141,9 @@ class TestPublishViews:
 
     def test_get_detail_page(self, client, test_models):
         resp = client.get("/modeler/Used-for-testing/detail/")
+        assert resp.status_code == 200
+
+        resp = client.get("/Modeler/used-for-testing/detail/")
         assert resp.status_code == 200
 
     def test_get_projects(self, client, test_models):

@@ -33,7 +33,7 @@ secret-docker-compose.yml
 
 *credentials.sh
 
-*worker_config.prod.json
+*worker_config.prod.yaml
 *docker-compose-apps*
 
 distributed/kubernetes/apps/*

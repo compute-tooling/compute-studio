@@ -49,7 +49,7 @@ class UserProfile(View):
     def get(self, request, *args, **kwargs):
         username = kwargs["username"]
         User = get_user_model()
-        get_object_or_404(User, username=username)
+        get_object_or_404(User, username__iexact=username)
         return render(request, self.template_name, {"username": username})
 
 

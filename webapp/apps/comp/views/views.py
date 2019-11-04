@@ -104,7 +104,8 @@ class InputsView(InputsMixin, View):
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET, kwargs)
         project = self.projects.get(
-            owner__user__username=kwargs["username"], title=kwargs["title"]
+            owner__user__username__iexact=kwargs["username"],
+            title__iexact=kwargs["title"],
         )
         context = self.project_context(request, project)
         return render(request, self.template_name, context)
@@ -225,14 +226,14 @@ class OutputsView(GetOutputsObjectMixin, DetailView):
         else:
             job_id = str(self.object.job_id)
             try:
-                job_ready = compute.results_ready(job_id)
+                job_ready = compute.results_ready(self.object)
             except JobFailError as jfe:
                 self.object.traceback = ""
                 self.object.save()
                 return self.fail(model_pk, username, title)
             # something happened and the exception was not caught
             if job_ready == "FAIL":
-                result = compute.get_results(job_id)
+                result = compute.get_results(self.object)
                 if result["traceback"]:
                     traceback_ = result["traceback"]
                 else:

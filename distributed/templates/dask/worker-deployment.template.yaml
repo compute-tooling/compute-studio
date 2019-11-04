@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: # [owner]-[title]-dask-worker
+  labels:
+    app: # [owner]-[title]-dask-worker
+    component: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: # [owner]-[title]-dask-worker
+      component: worker
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: # [owner]-[title]-worker
+        component: worker
+    spec:
+      containers:
+        - name: # [owner]-[tutle]-dask-worker
+          image: # gcr.io/[project]/[owner]_[title]_tasks:[tag]
+          imagePullPolicy: Always
+          args:
+            - dask-worker
+            -  # [owner]-[title]-dask-scheduler:8786
+            - --nthreads
+            -  # cpus
+            - --memory-limit
+            -  # memory limit
+            - --no-bokeh
+          ports:
+            - containerPort: 8789
+          resources:
+          env:
+            - name: DASK_DISTRIBUTED__DAEMON
+              value: "false"
+            - name: BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: BUCKET
+      # affinity:
