@@ -582,6 +582,9 @@ export const ErrorCard: React.FC<{
               <h5>{sect}</h5>
               {Object.entries(sect_errors.errors).map(([paramName, msgs]) => {
                 let [exists, title] = getTitle(sect, paramName);
+                if (!Array.isArray(msgs)) {
+                  msgs = [msgs];
+                }
                 return (
                   <div key={`${sect}-${paramName}-error`}>
                     <p>
