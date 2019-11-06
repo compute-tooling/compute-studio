@@ -44,6 +44,8 @@ const BokehComponent: React.FC<{ output: BokehOutput }> = ({ output }) => {
   let unescaped = res[0]
     .replace(/&gt;/g, ">")
     .replace(/&lt;/g, "<")
+    .replace(/&amp;gt;/g, "&gt;")
+    .replace(/&amp;lt;/g, "&lt;")
     .replace(/\\\\n/g, "\\n")
     .replace(/\\\\\"/g, '\\"');
   let parsed = JSON.parse(unescaped);
@@ -56,11 +58,7 @@ const BokehComponent: React.FC<{ output: BokehOutput }> = ({ output }) => {
   // @ts-ignore
   window.Bokeh.embed.embed_item(json_item);
   return (
-    <Card>
-      <Card.Body>
-        <div id={output.id} data-root-id={root_id} className="bk-root"></div>
-      </Card.Body>
-    </Card>
+    <div id={output.id} data-root-id={root_id} className="bk-root"></div>
   );
 };
 
@@ -85,7 +83,7 @@ const OutputModal: React.FC<{
 
   return (
     <>
-      <Button variant="outline-light" onClick={() => setShow(true)}>
+      <Button variant="outline-light" style={{ border: 0 }} onClick={() => setShow(true)}>
         {children}
       </Button>
       <Modal
@@ -97,7 +95,13 @@ const OutputModal: React.FC<{
         <Modal.Header closeButton>
           <Modal.Title>{output.title}</Modal.Title>
         </Modal.Header>
-        <Modal.Body>{el}</Modal.Body>
+        <Modal.Body>
+          <Card>
+            <Card.Body className="d-flex justify-content-center" style={{ overflow: "auto" }}>
+              {el}
+            </Card.Body>
+          </Card>
+        </Modal.Body>
         <Modal.Footer>
           <Button variant="outline-primary" onClick={() => setShow(false)}>
             Close
@@ -111,7 +115,7 @@ const OutputModal: React.FC<{
 export default class OutputsComponent extends React.Component<
   OutputsProps,
   OutputsState
-> {
+  > {
   constructor(props) {
     super(props);
     this.state = {
@@ -169,8 +173,20 @@ export default class OutputsComponent extends React.Component<
                 } else if (outputs !== null && media_type == "bokeh") {
                   output = outputs.renderable[ix];
                 }
+                let img = new Image();
+                img.src = remoteOutput.screenshot;
+                let [height, width] = [img.height, img.width];
+                let factor = 1;
+                if (height > width) {
+                  factor = height / 600;
+                } else {
+                  factor = width / 600;
+                }
+                height = Math.floor(height / factor);
+                width = Math.floor(width / factor);
+
                 return (
-                  <Col style={{ padding: 0 }} key={`output-${ix}`}>
+                  <Col style={{ margin: "1rem", maxWidth: width }} key={`output-${ix}`}>
                     <OverlayTrigger
                       trigger={["hover", "click"]}
                       overlay={
@@ -185,19 +201,19 @@ export default class OutputsComponent extends React.Component<
                             style={{ objectFit: "contain" }}
                             src={remoteOutput.screenshot}
                             alt={remoteOutput.title}
-                            height={500}
-                            width={500}
+                            height={height}
+                            width={width}
                           />
                         </OutputModal>
                       ) : (
-                        <img
-                          style={{ objectFit: "contain" }}
-                          src={remoteOutput.screenshot}
-                          alt={remoteOutput.title}
-                          height={500}
-                          width={500}
-                        />
-                      )}
+                          <img
+                            style={{ objectFit: "contain" }}
+                            src={remoteOutput.screenshot}
+                            alt={remoteOutput.title}
+                            height={height}
+                            width={width}
+                          />
+                        )}
                     </OverlayTrigger>
                   </Col>
                 );

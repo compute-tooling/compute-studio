@@ -258,6 +258,13 @@ span.default-value {
   color: inherit;
 }
 
+
+/* output modal styling */
 .output-modal.modal.show .modal-content {
   min-width: 1200px;
+
+}
+
+.output-modal.modal.show div.modal-dialog.modal-xl {
+  max-width: 1400px;
 }
