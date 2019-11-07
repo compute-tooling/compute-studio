@@ -72,7 +72,7 @@ def done_callback(future, job_id, comp_url, comp_api_token, start_time):
         print("errors", resp.json())
 
 
-def dask_sim(meta_param_dict, adjustment, job_id, comp_url, comp_api_token, time_out):
+def dask_sim(meta_param_dict, adjustment, job_id, comp_url, comp_api_token, timeout):
     """
     Wraps the functions.run_model function with a dask future and adds a
     callback for pushing the results back to the webapp. The callback is
@@ -89,12 +89,11 @@ def dask_sim(meta_param_dict, adjustment, job_id, comp_url, comp_api_token, time
     )
     with worker_client() as c:
         print("c", c)
-        # TODO: add and handle timeout
         fut = c.submit(functions.run_model, meta_param_dict, adjustment)
         fut.add_done_callback(partialled_cb)
         try:
             print("waiting on future", fut)
-            _ = fut.result(time_out=time_out)
+            _ = fut.result(timeout=timeout)
         except Exception:
             # Exceptions are picked up by the callback. We just
             # log them here.
