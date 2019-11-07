@@ -107,8 +107,8 @@ def dask_endpoint(owner, app_name, action):
     # Worker needs the job_id to push the results back to the
     # webapp.
     # The url and api token are passed as args insted of env
-    # variables because the model doesn't need to have
-    # access to them.
+    # variables so that the wrapper has access to them
+    # but the model does not.
     inputs.update(
         {
             "job_id": job_id,
@@ -119,9 +119,9 @@ def dask_endpoint(owner, app_name, action):
     )
 
     with Client(addr) as c:
-        fut = c.submit(dask_sim, key=job_id, **inputs)
+        fut = c.submit(dask_sim, **inputs)
         fire_and_forget(fut)
-        return {"job_id": fut.key, "qlength": 1}
+        return {"job_id": job_id, "qlength": 1}
 
 
 def route_to_task(owner, app_name, endpoint, action):
