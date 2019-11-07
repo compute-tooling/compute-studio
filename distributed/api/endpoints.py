@@ -114,7 +114,7 @@ def dask_endpoint(owner, app_name, action):
             "job_id": job_id,
             "comp_url": os.environ.get("COMP_URL"),
             "comp_api_token": os.environ.get("COMP_API_TOKEN"),
-            "time_out": get_time_out(owner, app_name),
+            "timeout": get_time_out(owner, app_name),
         }
     )
 
