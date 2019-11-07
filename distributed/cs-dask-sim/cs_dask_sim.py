@@ -78,6 +78,11 @@ def dask_sim(meta_param_dict, adjustment, job_id, comp_url, comp_api_token, time
     callback for pushing the results back to the webapp. The callback is
     necessary becuase it will be called no matter what kinds of exceptions
     are thrown in this function.
+
+    This wrapper function is called with fire_and_forget. Since dask
+    "forgets" about this function but keeps track of the run_model task,
+    we give the run_model task the job_id. This makes it possible for the
+    webapp to query the job status.
     """
     start_time = time.time()
     partialled_cb = partial(
@@ -89,7 +94,7 @@ def dask_sim(meta_param_dict, adjustment, job_id, comp_url, comp_api_token, time
     )
     with worker_client() as c:
         print("c", c)
-        fut = c.submit(functions.run_model, meta_param_dict, adjustment)
+        fut = c.submit(functions.run_model, meta_param_dict, adjustment, key=job_id)
         fut.add_done_callback(partialled_cb)
         try:
             print("waiting on future", fut)
