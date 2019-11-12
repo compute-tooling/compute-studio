@@ -86,7 +86,7 @@ A full example can be found in the [Matchups package](https://github.com/hdoupe/
 
 ```python
 from bokeh.plotting import figure
-from bokeh.embed import components
+from bokeh.embed import json_items
 
 # see: https://bokeh.pydata.org/en/latest/docs/user_guide/quickstart.html#getting-started
 
@@ -101,15 +101,12 @@ p = figure(title="simple line example", x_axis_label='x', y_axis_label='y')
 p.line(x, y, legend="Temp.", line_width=2)
 
 # get the results
-js, div = components(p)
+data = json_items(p)
 
 output = {
   "media_type": "bokeh",
   "title": "simple line example",
-  "data": {
-    "html": div,
-    "js": js
-  }
+  "data": data
 }
 ```
 
