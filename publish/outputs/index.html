@@ -196,8 +196,9 @@ append_output(my_other_df, &quot;My other results&quot;, renderable, downloadabl
   &quot;media_type&quot;: &quot;bokeh&quot;,
   &quot;title&quot;: &quot;My Bokeh Plot&quot;,
   &quot;data&quot;: {
-    &quot;html&quot;: &quot;&lt;div&gt;...&lt;/div&gt;&quot;,
-    &quot;js&quot;: &quot;&lt;script&gt;...&lt;/script&gt;&quot;
+    &quot;root_id&quot;: &quot;abc&quot;,
+    &quot;target_id&quot;: &quot;123&quot;,
+    &quot;doc&quot;: &quot;&lt;script&gt;...&lt;/script&gt;&quot;
   }
 }
 </code></pre>
@@ -206,7 +207,7 @@ append_output(my_other_df, &quot;My other results&quot;, renderable, downloadabl
 <li><strong>Python example:</strong></li>
 </ul>
 <pre><code class="python">from bokeh.plotting import figure
-from bokeh.embed import components
+from bokeh.embed import json_item
 
 # see: https://bokeh.pydata.org/en/latest/docs/user_guide/quickstart.html#getting-started
 
@@ -221,15 +222,12 @@ p = figure(title=&quot;simple line example&quot;, x_axis_label='x', y_axis_label
 p.line(x, y, legend=&quot;Temp.&quot;, line_width=2)
 
 # get the results
-js, div = components(p)
+data = json_item(p)
 
 output = {
   &quot;media_type&quot;: &quot;bokeh&quot;,
   &quot;title&quot;: &quot;simple line example&quot;,
-  &quot;data&quot;: {
-    &quot;html&quot;: div,
-    &quot;js&quot;: js
-  }
+  &quot;data&quot;: data
 }
 </code></pre>
 
