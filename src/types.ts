@@ -117,17 +117,17 @@ export interface RemoteOutput {
   screenshot: string;
   title: string;
   media_type:
-    | "bokeh"
-    | "table"
-    | "CSV"
-    | "PNG"
-    | "JPEG"
-    | "MP3"
-    | "MP4"
-    | "HDF5"
-    | "PDF"
-    | "Markdown"
-    | "Text";
+  | "bokeh"
+  | "table"
+  | "CSV"
+  | "PNG"
+  | "JPEG"
+  | "MP3"
+  | "MP4"
+  | "HDF5"
+  | "PDF"
+  | "Markdown"
+  | "Text";
 }
 
 export interface Output extends RemoteOutput {
@@ -138,8 +138,12 @@ export interface TableOutput extends RemoteOutput {
   data: string;
 }
 
-export interface BokehOutput extends RemoteOutput {
+export interface BokehLegacyOutput extends RemoteOutput {
   data: { html: string; javascript: string };
+}
+
+export interface BokehOutput extends RemoteOutput {
+  data: { target_id: string; root_id: string, doc: string };
 }
 
 export interface RemoteOutputs {

@@ -38,27 +38,10 @@ const TableComponent: React.FC<{ output: TableOutput }> = ({ output }) => (
 );
 
 const BokehComponent: React.FC<{ output: BokehOutput }> = ({ output }) => {
-  let js = output.data.javascript;
-  let exp = RegExp('{"roots":.+"version":"[0-9].[0-9].[0-9]"}');
-  let res = exp.exec(js);
-  let unescaped = res[0]
-    .replace(/&gt;/g, ">")
-    .replace(/&lt;/g, "<")
-    .replace(/&amp;gt;/g, "&gt;")
-    .replace(/&amp;lt;/g, "&lt;")
-    .replace(/\\\\n/g, "\\n")
-    .replace(/\\\\\"/g, '\\"');
-  let parsed = JSON.parse(unescaped);
-  let root_id = parsed.roots.root_ids[0];
-  let json_item = {
-    target_id: output.id,
-    root_id: root_id,
-    doc: parsed
-  };
   // @ts-ignore
-  window.Bokeh.embed.embed_item(json_item);
+  window.Bokeh.embed.embed_item(output.data, output.id);
   return (
-    <div id={output.id} data-root-id={root_id} className="bk-root"></div>
+    <div id={output.id} data-root-id={output.id} className="bk-root"></div>
   );
 };
 
@@ -96,7 +79,7 @@ const OutputModal: React.FC<{
           <Modal.Title>{output.title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Card>
+          <Card style={{ backgroundColor: "white" }} >
             <Card.Body className="d-flex justify-content-center" style={{ overflow: "auto" }}>
               {el}
             </Card.Body>
@@ -111,6 +94,35 @@ const OutputModal: React.FC<{
     </>
   );
 };
+
+
+const Pending: React.FC<> = () => (
+  <Card className="card-outer">
+    <Card.Body>
+      <div className="d-flex justify-content-center">
+        <ReactLoading type="spokes" color="#2b2c2d" />
+      </div>
+    </Card.Body>
+  </Card>
+);
+
+
+const Traceback: React.FC<{ remoteSim: SimAPIData<RemoteOutputs> }> = ({ remoteSim }) => (
+  <Card className="card-outer">
+    <Card className="card-inner">
+      <Card.Body>
+        <Card.Title><h2>Your calculation failed. You may re-enter your parameters and try again.</h2></Card.Title>
+        <p className="lead">Compute Studio developers have already been notified about this failure. You are welcome to email me at <a href="mailto:hank@compute.studio">hank@compute.studio</a> if you would like to get in touch about this error.</p>
+        <h4>Traceback:</h4>
+        <pre>
+          <code>
+            {remoteSim.traceback}
+          </code>
+        </pre>
+      </Card.Body>
+    </Card>
+  </Card>
+);
 
 export default class OutputsComponent extends React.Component<
   OutputsProps,
@@ -134,16 +146,11 @@ export default class OutputsComponent extends React.Component<
   }
 
   render() {
-    if (!this.state.remoteSim) {
-      return (
-        <Card className="card-outer">
-          <Card.Body>
-            <div className="d-flex justify-content-center">
-              <ReactLoading type="spokes" color="#2b2c2d" />
-            </div>
-          </Card.Body>
-        </Card>
-      );
+    let remoteSim = this.state.remoteSim;
+    if (!remoteSim || (remoteSim && remoteSim.status === "PENDING")) {
+      return <Pending />;
+    } else if (remoteSim.traceback) {
+      return <Traceback remoteSim={remoteSim} />;
     }
     let creation_date = moment(this.state.remoteSim.creation_date).format(
       "MMMM Do YYYY, h:mm:ss a"
