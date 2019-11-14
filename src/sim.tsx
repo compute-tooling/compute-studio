@@ -36,7 +36,7 @@ interface InputsAppProps extends URLProps {
   type: "inputs" | "edit_sim" | "edit_inputs";
 }
 
-interface SimAppProps extends URLProps {}
+interface SimAppProps extends URLProps { }
 
 class InputsApp extends React.Component<InputsAppProps, {}> {
   constructor(props) {
@@ -126,7 +126,7 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
     const app_name = this.props.match.params.app_name;
     return axios
       .post(`/${username}/${app_name}/api/v1/inputs/`, metaParameters)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
         let data: APIData = response.data;
         return data;
@@ -140,7 +140,7 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
     console.log(data);
     return axios
       .post(`/${username}/${app_name}/api/v1/`, data)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
         return response;
       });

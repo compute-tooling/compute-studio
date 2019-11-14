@@ -16,7 +16,7 @@ import {
 import { ValidatingModal, RunModal, AuthModal } from "./modal";
 import { formikToJSON, convertToFormik } from "./ParamTools";
 import { hasServerErrors } from "./utils";
-import {APIData, AccessStatus, Sects, InitialValues} from "./types";
+import { APIData, AccessStatus, Sects, InitialValues } from "./types";
 
 // need to require schema in model_parameters!
 const tbLabelSchema = yup.object().shape({
@@ -41,7 +41,7 @@ type InputsFormState = Readonly<{
   modelVersion?: string,
   detailAPIURL?: string,
   editInputsUrl?: string,
-  initialServerErrors?: {[msect: string]: {errors: {[paramName: string]: any}}},
+  initialServerErrors?: { [msect: string]: { errors: { [paramName: string]: any } } },
   accessStatus?: AccessStatus,
   resetting?: boolean,
   error?: any,
@@ -50,7 +50,7 @@ type InputsFormState = Readonly<{
 
 interface InputsFormProps {
   fetchInitialValues: () => Promise<any>;
-  resetInitialValues: (metaParameters: {[metaParam: string]: any}) => any,
+  resetInitialValues: (metaParameters: { [metaParam: string]: any }) => any,
   doSubmit: (data: FormData) => Promise<any>
 }
 
@@ -209,7 +209,7 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
     let sects = this.state.sects;
     let extend = this.state.extend;
     let hasUnknownParams = this.state.unknownParams.length > 0;
-    let unknownParamsErrors: {[sect: string]: {errors: any}} = { "Unknown Parameters": { errors: {} } };
+    let unknownParamsErrors: { [sect: string]: { errors: any } } = { "Unknown Parameters": { errors: {} } };
     if (hasUnknownParams) {
       for (const param of this.state.unknownParams) {
         unknownParamsErrors["Unknown Parameters"].errors[param] =
@@ -288,98 +288,98 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
             setFieldValue,
             touched
           }) => (
-            <Form>
-              {isSubmitting ? <ValidatingModal /> : <div />}
-              {status && status.auth ? <AuthModal /> : <div />}
+              <Form>
+                {isSubmitting ? <ValidatingModal /> : <div />}
+                {status && status.auth ? <AuthModal /> : <div />}
 
-              <div className="row">
-                <div className="col-sm-4">
-                  <ul className="list-unstyled components sticky-top scroll-y">
-                    <li>
-                      <MetaParameters
-                        meta_parameters={meta_parameters}
-                        values={values.meta_parameters}
-                        touched={touched}
-                        resetInitialValues={this.resetInitialValues}
-                      />
-                    </li>
-                    <li>
-                      <SectionHeaderList sects={sects} />
-                    </li>
-                    <li>
-                      <RunModal
-                        handleSubmit={handleSubmit}
-                        accessStatus={this.state.accessStatus}
-                      />
-                    </li>
-                  </ul>
-                </div>
-                <div className="col-sm-8">
-                  {status &&
-                  status.status === "INVALID" &&
-                  status.serverErrors ? (
-                    <ErrorCard
-                      errorMsg={
-                        <p>
-                          Some fields have errors. These must be fixed before
-                          the simulation can be submitted. You may re-visit this
+                <div className="row">
+                  <div className="col-sm-4">
+                    <ul className="list-unstyled components sticky-top scroll-y">
+                      <li>
+                        <MetaParameters
+                          meta_parameters={meta_parameters}
+                          values={values.meta_parameters}
+                          touched={touched}
+                          resetInitialValues={this.resetInitialValues}
+                        />
+                      </li>
+                      <li>
+                        <SectionHeaderList sects={sects} />
+                      </li>
+                      <li>
+                        <RunModal
+                          handleSubmit={handleSubmit}
+                          accessStatus={this.state.accessStatus}
+                        />
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="col-sm-8">
+                    {status &&
+                      status.status === "INVALID" &&
+                      status.serverErrors ? (
+                        <ErrorCard
+                          errorMsg={
+                            <p>
+                              Some fields have errors. These must be fixed before
+                              the simulation can be submitted. You may re-visit this
                           page a later time by entering the following link:{" "}
-                          <a href={status.editInputsUrl}>
-                            {status.editInputsUrl}
-                          </a>
-                        </p>
-                      }
-                      errors={status.serverErrors}
-                      model_parameters={model_parameters}
-                    />
-                  ) : (
-                    <div />
-                  )}
+                              <a href={status.editInputsUrl}>
+                                {status.editInputsUrl}
+                              </a>
+                            </p>
+                          }
+                          errors={status.serverErrors}
+                          model_parameters={model_parameters}
+                        />
+                      ) : (
+                        <div />
+                      )}
 
-                  {hasUnknownParams ? (
-                    <ErrorCard
-                      errorMsg={
-                        <p>
-                          {"One or more parameters have been renamed or " +
-                            "removed since this simulation was run on " +
-                            `${this.state.creationDate} with version ${this.state.modelVersion}. You may view the full simulation detail `}
-                          <a href={this.state.detailAPIURL}>here.</a>
-                        </p>
-                      }
-                      errors={unknownParamsErrors}
-                      model_parameters={{}}
-                    />
-                  ) : (
-                    <div />
-                  )}
-
-                  <Preview
-                    values={values}
-                    schema={schema}
-                    tbLabelSchema={tbLabelSchema}
-                    transformfunc={formikToJSON}
-                    extend={extend}
-                  />
-                  {Object.entries(sects).map(function(msect_item, ix) {
-                    // msect --> section_1: dict(dict) --> section_2: dict(dict)
-                    let msect = msect_item[0];
-                    let section_1_dict = msect_item[1];
-                    return (
-                      <MajorSection
-                        key={msect}
-                        msect={msect}
-                        section_1_dict={section_1_dict}
-                        meta_parameters={meta_parameters}
-                        model_parameters={model_parameters}
-                        values={values}
-                        extend={extend}
+                    {hasUnknownParams ? (
+                      <ErrorCard
+                        errorMsg={
+                          <p>
+                            {"One or more parameters have been renamed or " +
+                              "removed since this simulation was run on " +
+                              `${this.state.creationDate} with version ${this.state.modelVersion}. You may view the full simulation detail `}
+                            <a href={this.state.detailAPIURL}>here.</a>
+                          </p>
+                        }
+                        errors={unknownParamsErrors}
+                        model_parameters={{}}
                       />
-                    );
-                  })}
+                    ) : (
+                        <div />
+                      )}
+
+                    <Preview
+                      values={values}
+                      schema={schema}
+                      tbLabelSchema={tbLabelSchema}
+                      transformfunc={formikToJSON}
+                      extend={extend}
+                    />
+                    {Object.entries(sects).map(function (msect_item, ix) {
+                      // msect --> section_1: dict(dict) --> section_2: dict(dict)
+                      let msect = msect_item[0];
+                      let section_1_dict = msect_item[1];
+                      return (
+                        <MajorSection
+                          key={msect}
+                          msect={msect}
+                          section_1_dict={section_1_dict}
+                          meta_parameters={meta_parameters}
+                          model_parameters={model_parameters}
+                          values={values}
+                          extend={extend}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            </Form>
-          )}
+              </Form>
+            )}
         />
       </div>
     );
