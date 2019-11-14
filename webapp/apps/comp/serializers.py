@@ -72,6 +72,7 @@ class SimulationSerializer(serializers.ModelSerializer):
     api_url = serializers.CharField(source="get_absolute_api_url")
     gui_url = serializers.CharField(source="get_absolute_url")
     eta = serializers.FloatField(source="compute_eta")
+    original_eta = serializers.FloatField(source="compute_original_eta")
     project = PublishSerializer()
 
     class Meta:
@@ -83,6 +84,7 @@ class SimulationSerializer(serializers.ModelSerializer):
             "api_url",
             "gui_url",
             "eta",
+            "original_eta",
             "model_pk",
             "status",
             "model_version",
