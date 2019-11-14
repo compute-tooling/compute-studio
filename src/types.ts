@@ -182,6 +182,7 @@ export interface SimAPIData<T> {
   api_url: string;
   gui_url: string;
   eta: number;
+  original_eta: number;
   model_pk: number;
   status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS";
   model_version: string;

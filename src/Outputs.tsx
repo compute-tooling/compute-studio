@@ -8,7 +8,8 @@ import {
   OverlayTrigger,
   Tooltip,
   Modal,
-  Button
+  Button,
+  ProgressBar
 } from "react-bootstrap";
 import * as moment from "moment";
 import {
@@ -19,6 +20,7 @@ import {
   TableOutput,
   BokehOutput
 } from "./types";
+import { imgDims } from "./utils";
 
 interface OutputsProps {
   fetchRemoteOutputs: () => Promise<SimAPIData<RemoteOutputs>>;
@@ -28,6 +30,7 @@ interface OutputsProps {
 type OutputsState = Readonly<{
   remoteSim: SimAPIData<RemoteOutputs>;
   sim: SimAPIData<Outputs>;
+  timer?: NodeJS.Timer;
 }>;
 
 const TableComponent: React.FC<{ output: TableOutput }> = ({ output }) => (
@@ -96,15 +99,33 @@ const OutputModal: React.FC<{
 };
 
 
-const Pending: React.FC<> = () => (
-  <Card className="card-outer">
-    <Card.Body>
+const Pending: React.FC<{ eta?: number, originalEta?: number }> = ({ eta, originalEta }) => {
+  let el;
+  if (eta !== null && originalEta !== null) {
+    let percent = 100 * (1 - eta / originalEta);
+    el = (
+      <div>
+        <Card.Title>
+          <h3 className="text-center">Estimated time remaining: {moment.duration(eta, "seconds").humanize()}</h3>
+        </Card.Title>
+        <ProgressBar className="mt-5 mb-5" now={percent} style={{ height: "1.8rem" }} label={`${percent}%`} srOnly animated />
+      </div>
+    );
+  } else {
+    el = (
       <div className="d-flex justify-content-center">
         <ReactLoading type="spokes" color="#2b2c2d" />
       </div>
-    </Card.Body>
-  </Card>
-);
+    );
+  }
+  return (<Card className="card-outer">
+    <Card className="card-inner">
+      <Card.Body>
+        {el}
+      </Card.Body>
+    </Card>
+  </Card>);
+}
 
 
 const Traceback: React.FC<{ remoteSim: SimAPIData<RemoteOutputs> }> = ({ remoteSim }) => (
@@ -124,6 +145,7 @@ const Traceback: React.FC<{ remoteSim: SimAPIData<RemoteOutputs> }> = ({ remoteS
   </Card>
 );
 
+
 export default class OutputsComponent extends React.Component<
   OutputsProps,
   OutputsState
@@ -132,37 +154,69 @@ export default class OutputsComponent extends React.Component<
     super(props);
     this.state = {
       remoteSim: null,
-      sim: null
+      sim: null,
+      timer: null,
     };
+    this.killTimer = this.killTimer.bind(this);
   }
 
   componentDidMount() {
-    this.props.fetchRemoteOutputs().then(data => {
-      this.setState({ remoteSim: data });
+    let timer;
+    this.props.fetchRemoteOutputs().then(initRem => {
+      this.setState({ remoteSim: initRem });
+      if (initRem.status !== "PENDING") {
+        this.props.fetchOutputs().then(initSim => {
+          this.setState({ sim: initSim });
+        });
+      } else {
+        timer = setInterval(() => {
+          this.props.fetchRemoteOutputs().then(detRem => {
+            if (detRem.status !== "PENDING") {
+              this.props.fetchOutputs().then(detSim => {
+                this.setState({
+                  sim: detSim,
+                  remoteSim: detRem,
+                });
+                this.killTimer();
+              });
+            } else {
+              this.setState({ remoteSim: detRem })
+            }
+          })
+        }, 5000);
+      };
+      this.setState({ timer: timer });
     });
-    this.props.fetchOutputs().then(data => {
-      this.setState({ sim: data });
-    });
+  }
+
+  killTimer() {
+    if (!!this.state.timer) {
+      clearInterval(this.state.timer);
+      this.setState({ timer: null });
+    }
   }
 
   render() {
     let remoteSim = this.state.remoteSim;
-    if (!remoteSim || (remoteSim && remoteSim.status === "PENDING")) {
+    let sim = this.state.sim;
+    if (!remoteSim) {
       return <Pending />;
-    } else if (remoteSim.traceback) {
+    } else if (remoteSim && remoteSim.status === "PENDING") {
+      return <Pending eta={remoteSim.eta} originalEta={remoteSim.original_eta} />
+    } else if (remoteSim.traceback || (sim && sim.traceback)) {
       return <Traceback remoteSim={remoteSim} />;
     }
-    let creation_date = moment(this.state.remoteSim.creation_date).format(
+
+    let creation_date = moment(remoteSim.creation_date).format(
       "MMMM Do YYYY, h:mm:ss a"
     );
-    let model_version = this.state.remoteSim.model_version;
-    let project = this.state.remoteSim.project;
-    let remoteOutputs = this.state.remoteSim.outputs.outputs;
+    let model_version = remoteSim.model_version;
+    let project = remoteSim.project;
+    let remoteOutputs = remoteSim.outputs.outputs;
 
     let outputs: Outputs = null;
-    if (this.state.sim !== null) {
-      outputs = this.state.sim.outputs;
-      console.log("outputs", outputs);
+    if (sim !== null) {
+      outputs = sim.outputs;
     }
     return (
       <Card className="card-outer" style={{ overflow: "auto" }}>
@@ -180,17 +234,8 @@ export default class OutputsComponent extends React.Component<
                 } else if (outputs !== null && media_type == "bokeh") {
                   output = outputs.renderable[ix];
                 }
-                let img = new Image();
-                img.src = remoteOutput.screenshot;
-                let [height, width] = [img.height, img.width];
-                let factor = 1;
-                if (height > width) {
-                  factor = height / 600;
-                } else {
-                  factor = width / 600;
-                }
-                height = Math.floor(height / factor);
-                width = Math.floor(width / factor);
+
+                let [width, height] = imgDims(remoteOutput.screenshot);
 
                 return (
                   <Col style={{ margin: "1rem", maxWidth: width }} key={`output-${ix}`}>
