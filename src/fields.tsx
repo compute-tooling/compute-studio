@@ -24,16 +24,16 @@ const inputStyle = {
 };
 
 var md = new Remarkable({
-  highlight: function(str, lang) {
+  highlight: function (str, lang) {
     if ((lang && hljs.getLanguage(lang)) || true) {
       try {
         return hljs.highlight(lang, str).value;
-      } catch (err) {}
+      } catch (err) { }
     }
 
     try {
       return hljs.highlightAuto(str).value;
-    } catch (err) {}
+    } catch (err) { }
     return ""; // use external default escaping
   }
 });
@@ -286,6 +286,7 @@ export const SelectField = ({ field, form, ...props }) => {
         onBlur={handleBlur}
         value={value}
         style={props.style}
+        disabled={props.disabled}
       />
       <datalist id={`datalist-${field.name}`}>{props.options}</datalist>
     </>
@@ -296,8 +297,9 @@ export function getField(
   fieldName,
   data,
   placeholder,
+  readOnly = false,
   style = {},
-  isMulti = false
+  isMulti = false,
 ) {
   const makeOptions = choices => {
     let opts = choices.map(choice => (
@@ -328,6 +330,7 @@ export function getField(
           options={makeOptions(choices)}
           placeholder={placeholder}
           style={style}
+          disabled={readOnly}
         />
       );
     } else {
@@ -338,6 +341,7 @@ export function getField(
           component="select"
           placeholder={placeholder}
           style={style}
+          disabled={readOnly}
         >
           {makeOptions(data.validators.choice.choices)}
         </FastField>
@@ -350,6 +354,7 @@ export function getField(
         name={fieldName}
         placeholder={placeholder}
         style={style}
+        disabled={readOnly}
       />
     );
   }

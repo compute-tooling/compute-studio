@@ -34,6 +34,7 @@ interface URLProps {
 
 interface InputsAppProps extends URLProps {
   type: "inputs" | "edit_sim" | "edit_inputs";
+  readOnly: boolean;
 }
 
 interface SimAppProps extends URLProps { }
@@ -157,6 +158,7 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
           fetchInitialValues={this.fetchInitialValues}
           resetInitialValues={this.resetInitialValues}
           doSubmit={this.doSubmit}
+          readOnly={this.props.readOnly}
         />
       </ErrorBoundary>
     );
@@ -244,7 +246,7 @@ const SimTabs: React.FC<
       </Nav>
       <Tab.Content>
         <Tab.Pane eventKey="inputs">
-          <InputsApp match={props.match} type="edit_sim" />
+          <InputsApp readOnly={true} match={props.match} type="edit_sim" />
         </Tab.Pane>
         <Tab.Pane eventKey="outputs">
           <OutputsApp match={props.match} />
@@ -260,12 +262,17 @@ ReactDOM.render(
       <Route
         exact
         path="/:username/:app_name/"
-        render={routeProps => <InputsApp type="inputs" {...routeProps} />}
+        render={routeProps => <InputsApp readOnly={false} type="inputs" {...routeProps} />}
       />
       <Route
         exact
         path="/:username/:app_name/inputs/:inputs_hashid/"
-        render={routeProps => <InputsApp type="edit_inputs" {...routeProps} />}
+        render={routeProps => <InputsApp readOnly={false} type="edit_inputs" {...routeProps} />}
+      />
+      <Route
+        exact
+        path="/:username/:app_name/:model_pk/edit/"
+        render={routeProps => <InputsApp readOnly={false} type="edit_sim" {...routeProps} />}
       />
       <Route
         exact
@@ -274,7 +281,7 @@ ReactDOM.render(
       />
       <Route
         exact
-        path="/:username/:app_name/:model_pk/edit/"
+        path="/:username/:app_name/:model_pk/inputs/"
         render={routeProps => <SimTabs type="inputs" {...routeProps} />}
       />
     </Switch>

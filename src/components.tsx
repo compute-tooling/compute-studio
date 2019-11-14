@@ -108,13 +108,14 @@ const MetaParametersComponent: React.FC<{
   values: InitialValues["meta_parameters"];
   touched: FormikTouched<InitialValues>;
   resetInitialValues: (metaParameters: { [metaParam: string]: any }) => any;
-}> = ({ meta_parameters, values, touched, resetInitialValues }) => {
+  readOnly: boolean
+}> = ({ meta_parameters, values, touched, resetInitialValues, readOnly }) => {
   let isTouched = "meta_parameters" in touched;
   return (
     <div className="card card-body card-outer">
       <div className="form-group">
         <ul className="list-unstyled components">
-          {Object.entries(meta_parameters).map(function(mp_item, ix) {
+          {Object.entries(meta_parameters).map(function (mp_item, ix) {
             let paramName = `${mp_item[0]}`;
             let fieldName = `meta_parameters.${paramName}`;
             return (
@@ -127,7 +128,8 @@ const MetaParametersComponent: React.FC<{
                 {getField(
                   fieldName,
                   mp_item[1],
-                  valForForm(mp_item[1].value[0].value)
+                  valForForm(mp_item[1].value[0].value),
+                  readOnly
                 )}
                 <ErrorMessage
                   name={fieldName}
@@ -142,8 +144,8 @@ const MetaParametersComponent: React.FC<{
                 Click Reset to update the default values of the parameters.
               </p>
             ) : (
-              <div />
-            )}
+                <div />
+              )}
           </li>
         </ul>
       </div>
@@ -176,12 +178,13 @@ const ValueComponent: React.FC<{
   isTouched: boolean;
   extend: boolean;
   label: string;
-}> = ({ fieldName, placeholder, colClass, data, isTouched, extend, label }) => {
+  readOnly: boolean;
+}> = ({ fieldName, placeholder, colClass, data, isTouched, extend, label, readOnly }) => {
   let style = isTouched ? { backgroundColor: "rgba(102, 175, 233, 0.2)" } : {};
   return (
     <div className={colClass} key={makeID(fieldName)}>
       {label ? <small style={{ padding: 0 }}>{label}</small> : null}
-      {getField(fieldName, data, placeholder, style, extend)}
+      {getField(fieldName, data, placeholder, readOnly, style, extend)}
       {isTouched ? (
         <small className="ml-2" style={{ color: "#869191" }}>
           Default: {placeholder}
@@ -201,7 +204,8 @@ const ParamComponent: React.FC<{
   values: InitialValues["adjustment"]["msect"]["paramName"];
   extend: boolean;
   meta_parameters: ParamToolsConfig;
-}> = ({ param, msect, data, values, extend, meta_parameters }) => {
+  readOnly: boolean;
+}> = ({ param, msect, data, values, extend, meta_parameters, readOnly }) => {
   let checkbox;
   let colClass;
   if (Object.keys(data.form_fields).length == 1) {
@@ -236,7 +240,7 @@ const ParamComponent: React.FC<{
     <div className="container mb-3" style={{ padding: "left 0" }} key={param}>
       {paramElement}
       <div className="form-row has-statuses" style={{ marginLeft: "-20px" }}>
-        {Object.entries(data.form_fields).map(function(form_field, ix) {
+        {Object.entries(data.form_fields).map(function (form_field, ix) {
           let labels = form_field[0];
           let vo = data.value[ix];
           let commaSepLabs = Object.entries(vo)
@@ -261,6 +265,7 @@ const ParamComponent: React.FC<{
               isTouched={isTouched}
               extend={extend}
               label={commaSepLabs}
+              readOnly={readOnly}
             />
           );
         })}
@@ -281,6 +286,7 @@ const Section2Component: React.FC<{
   values: InitialValues["adjustment"]["msect"];
   extend: boolean;
   meta_parameters: APIData["meta_parameters"];
+  readOnly: boolean;
 }> = ({
   section_2,
   param_list,
@@ -288,28 +294,30 @@ const Section2Component: React.FC<{
   model_parameters,
   values,
   extend,
-  meta_parameters
+  meta_parameters,
+  readOnly
 }) => {
-  let section_2_id = makeID(section_2);
-  return (
-    <div key={section_2_id} className="mb-2">
-      <h3 className="mb-1">{section_2}</h3>
-      {param_list.map(function(param) {
-        return (
-          <Param
-            key={`${param}-component`}
-            param={param}
-            msect={msect}
-            data={model_parameters[msect][param]}
-            values={values[param]}
-            extend={extend}
-            meta_parameters={meta_parameters}
-          />
-        );
-      })}
-    </div>
-  );
-};
+    let section_2_id = makeID(section_2);
+    return (
+      <div key={section_2_id} className="mb-2">
+        <h3 className="mb-1">{section_2}</h3>
+        {param_list.map(function (param) {
+          return (
+            <Param
+              key={`${param}-component`}
+              param={param}
+              msect={msect}
+              data={model_parameters[msect][param]}
+              values={values[param]}
+              extend={extend}
+              meta_parameters={meta_parameters}
+              readOnly={readOnly}
+            />
+          );
+        })}
+      </div>
+    );
+  };
 
 const Section2 = React.memo(Section2Component, (prevProps, nextProps) => {
   for (const param of prevProps.param_list) {
@@ -328,6 +336,7 @@ const Section1Component: React.FC<{
   values: InitialValues["adjustment"]["msect"];
   extend: boolean;
   meta_parameters: APIData["meta_parameters"];
+  readOnly: boolean;
 }> = ({
   section_1,
   section_2_dict,
@@ -335,50 +344,52 @@ const Section1Component: React.FC<{
   model_parameters,
   values,
   extend,
-  meta_parameters
+  meta_parameters,
+  readOnly,
 }) => {
-  let section_1_id = makeID(section_1);
-  return (
-    <div className="inputs-block" id={section_1_id} key={section_1_id}>
-      <div
-        className="card card-body card-outer mb-3 shadow-sm"
-        style={{ padding: "1rem" }}
-      >
-        <SectionHeader
-          title={section_1}
-          titleSize={"2.5rem"}
-          label="section-1"
-        />
+    let section_1_id = makeID(section_1);
+    return (
+      <div className="inputs-block" id={section_1_id} key={section_1_id}>
         <div
-          className="collapse show collapse-plus-minus"
-          id={`${makeID(section_1)}-collapse-section-1`}
+          className="card card-body card-outer mb-3 shadow-sm"
+          style={{ padding: "1rem" }}
         >
+          <SectionHeader
+            title={section_1}
+            titleSize={"2.5rem"}
+            label="section-1"
+          />
           <div
-            className="card card-body card-inner mb-3"
-            style={{ padding: "0rem" }}
+            className="collapse show collapse-plus-minus"
+            id={`${makeID(section_1)}-collapse-section-1`}
           >
-            {Object.entries(section_2_dict).map(function(param_list_item, ix) {
-              let section_2 = param_list_item[0];
-              let param_list = param_list_item[1];
-              return (
-                <Section2
-                  key={`${makeID(section_2)}-component`}
-                  section_2={section_2}
-                  param_list={param_list}
-                  msect={msect}
-                  model_parameters={model_parameters}
-                  values={values}
-                  extend={extend}
-                  meta_parameters={meta_parameters}
-                />
-              );
-            })}
+            <div
+              className="card card-body card-inner mb-3"
+              style={{ padding: "0rem" }}
+            >
+              {Object.entries(section_2_dict).map(function (param_list_item, ix) {
+                let section_2 = param_list_item[0];
+                let param_list = param_list_item[1];
+                return (
+                  <Section2
+                    key={`${makeID(section_2)}-component`}
+                    section_2={section_2}
+                    param_list={param_list}
+                    msect={msect}
+                    model_parameters={model_parameters}
+                    values={values}
+                    extend={extend}
+                    meta_parameters={meta_parameters}
+                    readOnly={readOnly}
+                  />
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 const Section1 = React.memo(Section1Component, (prevProps, nextProps) => {
   for (const [section2, paramList] of Object.entries(
@@ -402,44 +413,47 @@ const MajorSectionComponent: React.FC<{
   model_parameters: APIData["model_parameters"];
   values: InitialValues;
   extend: boolean;
+  readOnly: boolean;
 }> = ({
   msect,
   section_1_dict,
   meta_parameters,
   model_parameters,
   values,
-  extend
+  extend,
+  readOnly,
 }) => {
-  return (
-    <div className="card card-body card-outer" key={msect} id={makeID(msect)}>
-      <SectionHeader title={msect} titleSize="2.9rem" label="major" />
-      <hr className="mb-1" style={{ borderTop: "0" }} />
-      <div
-        className="collapse show collapse-plus-minus"
-        id={`${makeID(msect)}-collapse-major`}
-      >
-        <div className="card card-body card-inner" style={{ padding: "0rem" }}>
-          {Object.entries(section_1_dict).map(function(section_2_item, ix) {
-            let section_1 = section_2_item[0];
-            let section_2_dict = section_2_item[1];
-            return (
-              <Section1
-                key={`${makeID(section_1)}-component`}
-                section_1={section_1}
-                section_2_dict={section_2_dict}
-                msect={msect}
-                model_parameters={model_parameters}
-                values={values.adjustment[msect]}
-                extend={extend}
-                meta_parameters={meta_parameters}
-              />
-            );
-          })}
+    return (
+      <div className="card card-body card-outer" key={msect} id={makeID(msect)}>
+        <SectionHeader title={msect} titleSize="2.9rem" label="major" />
+        <hr className="mb-1" style={{ borderTop: "0" }} />
+        <div
+          className="collapse show collapse-plus-minus"
+          id={`${makeID(msect)}-collapse-major`}
+        >
+          <div className="card card-body card-inner" style={{ padding: "0rem" }}>
+            {Object.entries(section_1_dict).map(function (section_2_item, ix) {
+              let section_1 = section_2_item[0];
+              let section_2_dict = section_2_item[1];
+              return (
+                <Section1
+                  key={`${makeID(section_1)}-component`}
+                  section_1={section_1}
+                  section_2_dict={section_2_dict}
+                  msect={msect}
+                  model_parameters={model_parameters}
+                  values={values.adjustment[msect]}
+                  extend={extend}
+                  meta_parameters={meta_parameters}
+                  readOnly={readOnly}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 export const MajorSection = React.memo(
   MajorSectionComponent,
@@ -611,8 +625,8 @@ export const ErrorCard: React.FC<{
               })}
             </div>
           ) : (
-            <div key={`${sect}-error`} />
-          );
+              <div key={`${sect}-error`} />
+            );
         })}
       </Card.Body>
     </Card>

@@ -50,8 +50,9 @@ type InputsFormState = Readonly<{
 
 interface InputsFormProps {
   fetchInitialValues: () => Promise<any>;
-  resetInitialValues: (metaParameters: { [metaParam: string]: any }) => any,
-  doSubmit: (data: FormData) => Promise<any>
+  resetInitialValues: (metaParameters: { [metaParam: string]: any }) => any;
+  doSubmit: (data: FormData) => Promise<any>;
+  readOnly: boolean;
 }
 
 export default class InputsForm extends React.Component<InputsFormProps, InputsFormState> {
@@ -301,6 +302,7 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
                           values={values.meta_parameters}
                           touched={touched}
                           resetInitialValues={this.resetInitialValues}
+                          readOnly={this.props.readOnly}
                         />
                       </li>
                       <li>
@@ -360,7 +362,7 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
                       transformfunc={formikToJSON}
                       extend={extend}
                     />
-                    {Object.entries(sects).map(function (msect_item, ix) {
+                    {Object.entries(sects).map((msect_item, ix) => {
                       // msect --> section_1: dict(dict) --> section_2: dict(dict)
                       let msect = msect_item[0];
                       let section_1_dict = msect_item[1];
@@ -373,6 +375,7 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
                           model_parameters={model_parameters}
                           values={values}
                           extend={extend}
+                          readOnly={this.props.readOnly}
                         />
                       );
                     })}
