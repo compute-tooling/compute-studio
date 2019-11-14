@@ -64,7 +64,7 @@ function testReverseOp(value: any): boolean {
   return true;
 }
 
-yup.number.prototype._typeCheck = function(value: any): boolean {
+yup.number.prototype._typeCheck = function (value: any): boolean {
   if (value instanceof Number) value = value.valueOf();
 
   return (
@@ -73,7 +73,7 @@ yup.number.prototype._typeCheck = function(value: any): boolean {
   );
 };
 
-yup.bool.prototype._typeCheck = function(value) {
+yup.bool.prototype._typeCheck = function (value) {
   if (value instanceof Boolean) value = value.valueOf();
   return (
     (typeof value === "string" && (value === "*" || value === "<")) ||
@@ -242,13 +242,13 @@ function labelsToString(valueObject: ValueObject): string {
 export function convertToFormik(
   data: APIData
 ): [
-  InitialValues,
-  Sects,
-  APIData["model_parameters"],
-  APIData["meta_parameters"],
-  yup.Schema<any>,
-  Array<string>
-] {
+    InitialValues,
+    Sects,
+    APIData["model_parameters"],
+    APIData["meta_parameters"],
+    yup.Schema<any>,
+    Array<string>
+  ] {
   if ("schema" in data.meta_parameters) {
     delete data.meta_parameters["schema"];
   }
@@ -330,7 +330,9 @@ export function convertToFormik(
           let matches = select(adjustment[msect][param], labels);
           initialValue = parseToOps(matches, meta_parameters, label_to_extend);
         }
-
+        if (!extend && Array.isArray(initialValue)) {
+          initialValue = initialValue[0];
+        }
         initialValues.adjustment[msect][param][fieldName] = initialValue;
         param_data.form_fields[fieldName] = placeholder;
         paramYupShape[fieldName] = yupObj;
