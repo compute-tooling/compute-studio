@@ -108,6 +108,7 @@ class InputsView(InputsMixin, View):
             title__iexact=kwargs["title"],
         )
         context = self.project_context(request, project)
+        context["show_readme"] = True
         return render(request, self.template_name, context)
 
 
@@ -159,6 +160,7 @@ class EditSimView(GetOutputsObjectMixin, InputsMixin, View):
         )
         project = self.object.project
         context = self.project_context(request, project)
+        context["show_readme"] = False
         return render(request, self.template_name, context)
 
 
@@ -170,6 +172,7 @@ class EditInputsView(InputsMixin, View):
         self.object = self.model.objects.get_object_from_hashid_or_404(kwargs["hashid"])
         project = self.object.project
         context = self.project_context(request, project)
+        context["show_readme"] = False
         return render(request, self.template_name, context)
 
 
