@@ -3,7 +3,7 @@
 import * as ReactDOM from "react-dom";
 import * as React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { Nav, Tabs, Tab, Row, Col } from "react-bootstrap";
+import { Nav, Tabs, Tab, Row, Col, Card } from "react-bootstrap";
 import axios from "axios";
 import * as Sentry from "@sentry/browser";
 
@@ -11,6 +11,7 @@ import InputsForm from "./InputsForm";
 import OutputsComponent from "./Outputs";
 import ErrorBoundary from "./ErrorBoundary";
 import { APIData, RemoteOutputs, Outputs, SimAPIData } from "./types";
+import DescriptionComponent from "./Description";
 
 Sentry.init({
   dsn: "https://fde6bcb39fda4af38471b16e2c1711af@sentry.io/1530834"
@@ -38,6 +39,7 @@ interface InputsAppProps extends URLProps {
 }
 
 interface SimAppProps extends URLProps { }
+interface DescriptionProps extends URLProps { }
 
 class InputsApp extends React.Component<InputsAppProps, {}> {
   constructor(props) {
@@ -139,6 +141,11 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
     const app_name = this.props.match.params.app_name;
     console.log("posting...");
     console.log(data);
+    if (this.props.type == "edit_sim") {
+      data.set("parent_model_pk", this.props.match.params.model_pk.toString());
+    } else if (this.props.type == "edit_inputs") {
+      data.set("parent_inputs_hashid", this.props.match.params.inputs_hashid)
+    }
     return axios
       .post(`/${username}/${app_name}/api/v1/`, data)
       .then(function (response) {
@@ -206,6 +213,55 @@ class OutputsApp extends React.Component<SimAppProps, {}> {
   }
 }
 
+class DescriptionApp extends React.Component<DescriptionProps, {}> {
+  constructor(props) {
+    super(props);
+    this.fetchRemoteOutputs = this.fetchRemoteOutputs.bind(this);
+    this.putDescription = this.putDescription.bind(this);
+
+  }
+
+  fetchRemoteOutputs(): Promise<SimAPIData<RemoteOutputs>> {
+    const username = this.props.match.params.username;
+    const app_name = this.props.match.params.app_name;
+    const model_pk = this.props.match.params.model_pk;
+    return axios
+      .get(`/${username}/${app_name}/api/v1/${model_pk}/remote/`)
+      .then(resp => {
+        let data: SimAPIData<RemoteOutputs> = resp.data;
+        return data;
+      });
+  }
+
+  putDescription(data: FormData): Promise<SimAPIData<RemoteOutputs>> {
+    const username = this.props.match.params.username;
+    const app_name = this.props.match.params.app_name;
+    const model_pk = this.props.match.params.model_pk;
+    console.log("put", data);
+    return axios.put(
+      `/${username}/${app_name}/api/v1/${model_pk}/`,
+      data
+    ).then(resp => {
+      let data: SimAPIData<RemoteOutputs> = resp.data;
+      return data;
+    })
+  }
+  render() {
+    const username = this.props.match.params.username;
+    const app_name = this.props.match.params.app_name;
+    const modelPk = this.props.match.params.model_pk;
+    return (
+      <DescriptionComponent
+        fetchRemoteOutputs={this.fetchRemoteOutputs}
+        putDescription={this.putDescription}
+        username={username}
+        appname={app_name}
+        modelPk={parseInt(modelPk)}
+      />
+    );
+  }
+}
+
 const SimTabs: React.FC<
   SimAppProps & { type: "inputs" | "outputs" }
 > = props => {
@@ -223,36 +279,39 @@ const SimTabs: React.FC<
     }
   };
   return (
-    <Tab.Container
-      id="sim-tabs"
-      defaultActiveKey={key}
-      onSelect={(k: "inputs" | "outputs") => setKey(k)}
-    >
-      <Nav variant="pills" className="mb-4">
-        <Col style={style}>
-          <Nav.Item className="sim-nav-item">
-            <Nav.Link style={buttonGroupStyle.left} eventKey="inputs">
-              Inputs
+    <>
+      <DescriptionApp match={props.match} />
+      <Tab.Container
+        id="sim-tabs"
+        defaultActiveKey={key}
+        onSelect={(k: "inputs" | "outputs") => setKey(k)}
+      >
+        <Nav variant="pills" className="mb-4">
+          <Col style={style}>
+            <Nav.Item className="sim-nav-item">
+              <Nav.Link style={buttonGroupStyle.left} eventKey="inputs">
+                Inputs
             </Nav.Link>
-          </Nav.Item>
-        </Col>
-        <Col style={style}>
-          <Nav.Item className="sim-nav-item">
-            <Nav.Link style={buttonGroupStyle.right} eventKey="outputs">
-              Outputs
+            </Nav.Item>
+          </Col>
+          <Col style={style}>
+            <Nav.Item className="sim-nav-item">
+              <Nav.Link style={buttonGroupStyle.right} eventKey="outputs">
+                Outputs
             </Nav.Link>
-          </Nav.Item>
-        </Col>
-      </Nav>
-      <Tab.Content>
-        <Tab.Pane eventKey="inputs">
-          <InputsApp readOnly={true} match={props.match} type="edit_sim" />
-        </Tab.Pane>
-        <Tab.Pane eventKey="outputs">
-          <OutputsApp match={props.match} />
-        </Tab.Pane>
-      </Tab.Content>
-    </Tab.Container>
+            </Nav.Item>
+          </Col>
+        </Nav>
+        <Tab.Content>
+          <Tab.Pane eventKey="inputs">
+            <InputsApp readOnly={false} match={props.match} type="edit_sim" />
+          </Tab.Pane>
+          <Tab.Pane eventKey="outputs">
+            <OutputsApp match={props.match} />
+          </Tab.Pane>
+        </Tab.Content>
+      </Tab.Container>
+    </>
   );
 };
 

@@ -52,6 +52,9 @@ class InputsQuerySet(models.QuerySet):
 
 
 class Inputs(models.Model):
+    parent_sim = models.ForeignKey(
+        "Simulation", null=True, related_name="child_inputs", on_delete=models.SET_NULL
+    )
     meta_parameters = JSONField(default=None, blank=True, null=True)
     raw_gui_inputs = JSONField(default=None, blank=True, null=True)
     gui_inputs = JSONField(default=None, blank=True, null=True)
@@ -146,6 +149,12 @@ class Inputs(models.Model):
     def get_hashid(self):
         return hashids.encode(self.pk)
 
+    def parent_model_pk(self):
+        if self.parent_sim is not None:
+            return self.parent_sim.model_pk
+        else:
+            return None
+
 
 class SimulationManager(models.Manager):
     def next_model_pk(self, project):
@@ -161,7 +170,12 @@ class SimulationManager(models.Manager):
 class Simulation(models.Model):
     # TODO: dimension needs to go
     dimension_name = "Dimension--needs to go"
-
+    title = models.CharField(default="Untitled Simulation", max_length=500)
+    readme = models.CharField(null=True, default=None, blank=True, max_length=10000)
+    last_modified = models.DateTimeField(default=timezone.now)
+    parent_sim = models.ForeignKey(
+        "self", null=True, related_name="child_sims", on_delete=models.SET_NULL
+    )
     inputs = models.OneToOneField(
         Inputs, on_delete=models.CASCADE, related_name="outputs"
     )
@@ -263,6 +277,20 @@ class Simulation(models.Model):
     @property
     def effective_cost(self):
         return self.project.run_cost(self.run_time, adjust=True)
+
+    def __str__(self):
+        return (
+            f"{self.project.owner.user.username}/{self.project.title}/{self.model_pk}"
+        )
+
+    def parent_sims(self):
+        """Recursively walk back up to the original simulation"""
+        parent_sims = [self]
+        sim = self
+        while sim.parent_sim != None:
+            parent_sims.append(sim.parent_sim)
+            sim = sim.parent_sim
+        return parent_sims
 
 
 @dataclass

@@ -3,11 +3,17 @@ import pytest
 from hashids import Hashids
 
 from django.http import Http404
+from django.contrib import auth
 
 from webapp.settings import INPUTS_SALT
 from webapp.apps.users.models import Project, Profile
 
 from webapp.apps.comp.models import Inputs, Simulation
+
+from .test_asyncsubmit import _submit_inputs, _submit_sim
+
+
+User = auth.get_user_model()
 
 
 def test_get_next_model_pk(db):
@@ -51,3 +57,30 @@ def test_hashids(db, test_models):
         Inputs.objects.get_object_from_hashid_or_404(hashids.encode(1000))
     with pytest.raises(Http404):
         Inputs.objects.get_object_from_hashid_or_404("a")
+
+
+def test_parent_sims(db, get_inputs, meta_param_dict, profile):
+    modeler = User.objects.get(username="modeler").profile
+    inputs = _submit_inputs("Used-for-testing", get_inputs, meta_param_dict, modeler)
+
+    sims = []
+    for i in range(0, 10):
+        submit_inputs, submit_sim = _submit_sim(inputs)
+        sims.append(submit_sim.submit())
+        inputs = _submit_inputs(
+            "Used-for-testing",
+            get_inputs,
+            meta_param_dict,
+            profile if i % 3 else modeler,  # swap profiles every three sims.
+            parent_model_pk=sims[-1].model_pk,
+        )
+
+    child_sim = sims[-1]
+    assert child_sim.parent_sims() == list(reversed(sims))
+
+    init_sim = sims[0]
+    assert init_sim.parent_sims() == [init_sim]
+
+    for ix in range(1, 10):
+        middle_sim = sims[ix]
+        assert middle_sim.parent_sims() == list(reversed(sims[: ix + 1]))

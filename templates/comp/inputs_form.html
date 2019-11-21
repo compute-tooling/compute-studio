@@ -2,6 +2,7 @@
 {% load utility %} {% block content %} {% csrf_token %}
 <input type="hidden" name="has_errors" value="{{ has_errors }}" />
 <div class="container-fluid">
+  {% if show_readme %}
   <div class="row">
     <div class="col">
       <div class="jumbotron shadow" style="background-color:white;">
@@ -37,6 +38,7 @@
       </div>
     </div>
   </div>
+  {% endif %}
   <!-- Sidebar -->
   <div id="inputs-container"></div>
   <script src="{% static 'js/core.js' %}"></script>

@@ -30,8 +30,8 @@ cs-white-color {
 }
 
 div.card.publish.markdown {
-  background-color: rgba(27, 31, 35, 0.05);
-  padding: 0.8rem;
+  /* background-color: rgba(27, 31, 35, 0.05); */
+  padding: .375rem .75rem;
 }
 
 code {
@@ -60,6 +60,7 @@ code {
 
 /* change the color of active or hovered links */
 .navbar-custom .navbar-nav .nav-link,
+.navbar-custom .nav-item,
 .navbar-custom .nav-item.active .nav-link,
 .navbar-custom .navbar-brand,
 .navbar-custom .navbar-text,

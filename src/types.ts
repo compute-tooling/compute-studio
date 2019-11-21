@@ -176,7 +176,21 @@ export interface Project {
   listed: boolean;
 }
 
+export interface SimDescription {
+  title: string;
+  readme: string;
+  owner: string;
+  last_modified: Date;
+  api_url: string;
+  gui_url: string;
+}
+
 export interface SimAPIData<T> {
+  title?: string;
+  readme?: string;
+  owner?: string;
+  last_modified: Date;
+  parent_sims?: Array<SimDescription>;
   traceback?: string;
   creation_date: Date;
   api_url: string;
@@ -188,7 +202,6 @@ export interface SimAPIData<T> {
   model_version: string;
   run_time: 322;
   exp_comp_datetime: Date;
-  owner: number;
   project: Project;
   outputs: T;
 }

@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
+from django.utils import timezone
 
 from rest_framework.authentication import (
     BasicAuthentication,
@@ -24,6 +25,7 @@ from webapp.apps.comp.parser import APIParser
 from webapp.apps.comp.permissions import RequiresActive, RequiresPayment
 from webapp.apps.comp.serializers import (
     SimulationSerializer,
+    SimDescriptionSerializer,
     InputsSerializer,
     OutputsSerializer,
 )
@@ -158,6 +160,25 @@ class APIRouterView(AbstractRouterAPIView):
 
 class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
     model = Simulation
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    def put(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            self.object = self.get_object(
+                kwargs["model_pk"], kwargs["username"], kwargs["title"]
+            )
+            if self.object.owner.user == request.user:
+                print("got data", request.data)
+                serializer = SimDescriptionSerializer(self.object, data=request.data)
+                if serializer.is_valid():
+                    serializer.save(last_modified=timezone.now())
+                    return Response(serializer.data)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
 
     def get(self, request, as_remote, *args, **kwargs):
         self.object = self.get_object(

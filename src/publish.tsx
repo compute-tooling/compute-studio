@@ -13,9 +13,14 @@ import {
   Message,
   CheckboxField
 } from "./fields";
+import { input } from "bokehjs/build/js/types/core/dom";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
+
+const inputStyle = {
+  width: "50rem"
+};
 
 const domContainer = document.querySelector("#publish-container");
 const requiredMessage = "This field is required.";
@@ -142,15 +147,15 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                   {status.project_exists}
                 </div>
               ) : (
-                <div />
-              )}
+                  <div />
+                )}
               {status && status.auth ? (
                 <div className="alert alert-danger" role="alert">
                   {status.auth}
                 </div>
               ) : (
-                <div />
-              )}
+                  <div />
+                )}
               <div className="mt-5">
                 <h3>About</h3>
                 <hr className="my-3" />
@@ -162,6 +167,9 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                     placeholder="Name of the app"
                     label="App Name"
                     preview={this.state.preview}
+                    exitPreview={() => this.setState({ preview: false })}
+                    allowSpecialChars={false}
+                    style={inputStyle}
                   />
                   <ErrorMessage
                     name="title"
@@ -176,6 +184,8 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                     placeholder="Short description of this app"
                     label="One-Liner"
                     preview={this.state.preview}
+                    exitPreview={() => this.setState({ preview: false })}
+                    style={inputStyle}
                   />
                   <ErrorMessage
                     name="oneliner"
@@ -190,6 +200,8 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                     placeholder="Description of this app"
                     label="README"
                     preview={this.state.preview}
+                    exitPreview={() => this.setState({ preview: false })}
+                    style={inputStyle}
                   />
                   <ErrorMessage
                     name="description"
@@ -273,13 +285,13 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
   }
 }
 
-class CreateApp extends React.Component<{doSubmit: PublishProps["doSubmit"]}, {}> {
+class CreateApp extends React.Component<{ doSubmit: PublishProps["doSubmit"] }, {}> {
   constructor(props) {
     super(props);
     this.doSubmit = this.doSubmit.bind(this);
   }
   doSubmit(data) {
-    return axios.post("/publish/api/", data).then(function(response) {
+    return axios.post("/publish/api/", data).then(function (response) {
       console.log("post", response);
       window.location.replace("/");
     });
@@ -312,7 +324,7 @@ class CreateApp extends React.Component<{doSubmit: PublishProps["doSubmit"]}, {}
 interface Match {
   params: { username: string, app_name: string }
 }
-class AppDetail extends React.Component<{match: Match}, {}> {
+class AppDetail extends React.Component<{ match: Match }, {}> {
   constructor(props) {
     super(props);
     this.doSubmit = this.doSubmit.bind(this);
@@ -324,12 +336,12 @@ class AppDetail extends React.Component<{match: Match}, {}> {
     const app_name = this.props.match.params.app_name;
     return axios
       .get(`/publish/api/${username}/${app_name}/detail/`)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
         let data: PublishValues = response.data;
         return data;
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.log(error);
       });
   }
@@ -340,7 +352,7 @@ class AppDetail extends React.Component<{match: Match}, {}> {
     console.log(data);
     return axios
       .put(`/publish/api/${username}/${app_name}/detail/`, data)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
         window.location.replace("/");
       });

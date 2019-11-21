@@ -8,6 +8,10 @@ from rest_framework.test import APIClient
 from webapp.apps.comp.compute import Compute
 
 
+class CallbackException(Exception):
+    pass
+
+
 class MockCompute(Compute):
     outputs = None
     client = None
@@ -38,9 +42,12 @@ class MockCompute(Compute):
         resp = self.client.put(
             "/outputs/api/",
             data=dict(json.loads(self.outputs), **{"job_id": self.sim.job_id}),
-            **format_kwarg
+            **format_kwarg,
         )
-        assert resp.status_code == 200
+        if resp.status_code != 200:
+            raise CallbackException(
+                f"Status code: {resp.status_code}\n {json.dumps(resp.data, indent=4)}"
+            )
         self.client = None
         self.sim = None
         with requests_mock.Mocker() as mock:

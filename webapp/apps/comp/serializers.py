@@ -42,7 +42,8 @@ class InputsSerializer(serializers.ModelSerializer):
         required=False,
     )
     sim = MiniSimulationSerializer(source="outputs", required=False)
-
+    parent_model_pk = serializers.IntegerField(required=False)
+    parent_inputs_hashid = serializers.CharField(required=False)
     job_id = serializers.UUIDField(required=False)
     status = serializers.ChoiceField(
         choices=(("SUCCESS", "Success"), ("FAIL", "Fail")), required=False
@@ -62,10 +63,24 @@ class InputsSerializer(serializers.ModelSerializer):
             "status",
             "traceback",
             "sim",
+            "parent_model_pk",
+            "parent_inputs_hashid",
             "api_url",
             "edit_inputs_url",
             "client",
         )
+
+
+class SimDescriptionSerializer(serializers.ModelSerializer):
+    owner = serializers.StringRelatedField(required=False)
+    title = serializers.CharField(required=False)
+    readme = serializers.CharField(required=False)
+    api_url = serializers.CharField(required=False, source="get_absolute_api_url")
+    gui_url = serializers.CharField(required=False, source="get_absolute_url")
+
+    class Meta:
+        model = Simulation
+        fields = ("title", "readme", "owner", "last_modified", "api_url", "gui_url")
 
 
 class SimulationSerializer(serializers.ModelSerializer):
@@ -73,11 +88,19 @@ class SimulationSerializer(serializers.ModelSerializer):
     gui_url = serializers.CharField(source="get_absolute_url")
     eta = serializers.FloatField(source="compute_eta")
     original_eta = serializers.FloatField(source="compute_original_eta")
+    title = serializers.CharField(required=False)
+    readme = serializers.CharField(required=False)
+    owner = serializers.StringRelatedField(required=False)
     project = PublishSerializer()
+    parent_sims = SimDescriptionSerializer(many=True)
 
     class Meta:
         model = Simulation
         fields = (
+            "title",
+            "readme",
+            "last_modified",
+            "parent_sims",
             "outputs",
             "traceback",
             "creation_date",

@@ -32,14 +32,22 @@ def read_outputs(outputs_name):
 
 def login_client(client, user, password):
     """
-    Helper function to login client
+    Helper function to login client. Calling logout
+    ensures that previous credentials are cleared out.
     """
+    client.logout()
     success = client.login(username=user.username, password=password)
     assert success
     return success
 
 
 def set_auth_token(api_client: APIClient, user: User):
+    """
+    Set user's authentication credentials on the api_client object.
+    Logout ensures that all credentials are cleared prior to logging
+    in the new user.
+    """
+    api_client.logout()
     api_client.credentials(HTTP_AUTHORIZATION=f"Token {user.auth_token.key}")
 
 
@@ -123,6 +131,8 @@ class RunMockModel(CoreTestMixin):
 
         # test get inputs from model_pk
         self.view_inputs_from_model_pk(model_pk, inputs_hashid)
+
+        self.set_sim_description(model_pk)
 
     def post_adjustment(
         self,
@@ -216,6 +226,38 @@ class RunMockModel(CoreTestMixin):
 
         edit_page = self.client.get(f"/{self.owner}/{self.title}/{model_pk}/edit/")
         assert_status(200, edit_page.status_code, "view_inputs_from_model_pk")
+
+    def set_sim_description(self, model_pk: int):
+        sim = Simulation.objects.get(
+            project__owner__user__username__iexact=self.owner,
+            project__title__iexact=self.title,
+            model_pk=model_pk,
+        )
+        set_auth_token(self.api_client, sim.owner.user)
+        get_sim_resp = self.api_client.get(
+            f"/{self.owner}/{self.title}/api/v1/{model_pk}/remote/"
+        )
+        assert_status(200, get_sim_resp.status_code, "set_sim_description")
+        data = get_sim_resp.data
+
+        assert data["title"] == sim.title == "Untitled Simulation"
+        assert data["owner"] == str(sim.owner)
+        assert sim.parent_sim == None
+
+        put_desc_resp = self.api_client.put(
+            f"/{self.owner}/{self.title}/api/v1/{model_pk}/",
+            data={"title": "My sim", "readme": "hello world"},
+        )
+        assert_status(200, put_desc_resp.status_code, "set_sim_description")
+        sim = Simulation.objects.get(
+            project__owner__user__username__iexact=self.owner,
+            project__title__iexact=self.title,
+            model_pk=model_pk,
+        )
+        assert sim.title == "My sim"
+        assert sim.readme == "hello world"
+        assert str(sim.owner)
+        assert sim.parent_sim == None
 
 
 @pytest.fixture

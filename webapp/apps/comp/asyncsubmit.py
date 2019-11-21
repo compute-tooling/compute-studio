@@ -50,6 +50,17 @@ class SubmitInputs:
         validated_data = self.ser.validated_data
         meta_parameters = validated_data.get("meta_parameters", {})
         adjustment = validated_data.get("adjustment", {})
+        parent_model_pk = validated_data.pop("parent_model_pk", None)
+        parent_inputs_hashid = validated_data.pop("parent_inputs_hashid", None)
+        if parent_model_pk is not None:
+            parent_sim = Simulation.objects.get(
+                project=self.project, model_pk=parent_model_pk
+            )
+        elif parent_inputs_hashid is not None:
+            parent_sim = Inputs.objects.from_hashid(parent_inputs_hashid).parent_sim
+        else:
+            parent_sim = None
+
         try:
             self.valid_meta_params = self.meta_parameters.validate(meta_parameters)
             errors = None
@@ -77,6 +88,7 @@ class SubmitInputs:
             owner=getattr(self.request.user, "profile", None),
             job_id=result["job_id"],
             status="PENDING",
+            parent_sim=parent_sim,
         )
         return self.inputs
 
@@ -115,6 +127,10 @@ class SubmitSim:
         sim.model_vers = None
         sim.webapp_vers = WEBAPP_VERSION
         sim.model_pk = Simulation.objects.next_model_pk(sim.project)
+        sim.parent_sim = self.inputs.parent_sim
+        if sim.parent_sim is not None:
+            sim.title = sim.parent_sim.title
+            sim.readme = sim.parent_sim.readme
 
         cur_dt = timezone.now()
         future_offset_seconds = (self.max_q_length) * sim.project.exp_task_time
@@ -122,4 +138,5 @@ class SubmitSim:
         expected_completion = cur_dt + future_offset
         sim.exp_comp_datetime = expected_completion
         sim.save()
+        self.sim = sim
         return sim
