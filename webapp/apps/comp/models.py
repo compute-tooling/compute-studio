@@ -247,10 +247,11 @@ class Simulation(models.Model):
             reference_time = timezone.now()
         exp_comp_dt = self.exp_comp_datetime
         dt = exp_comp_dt - reference_time
-        exp_num_minutes = dt.total_seconds() / 60.0
-        exp_num_minutes = round(exp_num_minutes, 2)
-        exp_num_minutes = exp_num_minutes if exp_num_minutes > 0 else 0
-        return exp_num_minutes
+        eta = dt.total_seconds()
+        return eta if eta > 0 else 0
+
+    def compute_original_eta(self):
+        return self.compute_eta(self.creation_date)
 
     @cached_property
     def dimension(self):

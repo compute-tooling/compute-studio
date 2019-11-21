@@ -108,6 +108,7 @@ class InputsView(InputsMixin, View):
             title__iexact=kwargs["title"],
         )
         context = self.project_context(request, project)
+        context["show_readme"] = True
         return render(request, self.template_name, context)
 
 
@@ -159,6 +160,7 @@ class EditSimView(GetOutputsObjectMixin, InputsMixin, View):
         )
         project = self.object.project
         context = self.project_context(request, project)
+        context["show_readme"] = False
         return render(request, self.template_name, context)
 
 
@@ -170,6 +172,7 @@ class EditInputsView(InputsMixin, View):
         self.object = self.model.objects.get_object_from_hashid_or_404(kwargs["hashid"])
         project = self.object.project
         context = self.project_context(request, project)
+        context["show_readme"] = False
         return render(request, self.template_name, context)
 
 
@@ -271,13 +274,15 @@ class OutputsView(GetOutputsObjectMixin, DetailView):
         )
 
     def render_v1(self, request):
-        renderable = {"renderable": self.object.outputs["outputs"]["renderable"]}
-        outputs = cs_storage.read(renderable)
+        renderable = {
+            "renderable": self.object.outputs["outputs"]["renderable"]["outputs"]
+        }
+        # outputs = s3like.read_from_s3like(renderable)
         return render(
             request,
             "comp/outputs/v1/sim_detail.html",
             {
-                "outputs": outputs,
+                "outputs": renderable,
                 "object": self.object,
                 "result_header": "Results",
                 "bokeh_scripts": {

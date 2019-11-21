@@ -25,17 +25,24 @@
           <div class="row">
 
             {% if outputs %}
-            <div class="col-md-12" id="aggr-totals-container">
+            <div class="col-md-12">
                 {% for output in outputs.renderable %}
                 <div class="card card-body card-inner text-center" style="overflow:auto">
-                  <h4>{{output.title}}</h4>
-                  {% if output.media_type == 'bokeh' %}
+                  <!-- <h4>{{output.title}}</h4> -->
+                  <img style="object-fit:contain;" src="https://storage.cloud.google.com/cs-outputs-dev/{{output.id}}.png">
+                  <!-- {% if output.media_type == 'bokeh' %}
                     {% include 'comp/outputs/bokeh.html' with output=output %}
                   {% elif output.media_type == 'table' %}
-                    {% include 'comp/outputs/table.html' with output=output %}
+                  <div style="margin:0 auto;">
+                    <p class="loading">Loading...</p>
+                    {{output.data|safe}}
+                  </div>
+
+                  {% endif %} -->
+                    <!-- {% include 'comp/outputs/table.html' with output=output %}
                   {% elif output.media_type == 'PNG' %}
                     {% include 'comp/outputs/picture.html' with output=output %}
-                  {% endif %}
+                  {% endif %} -->
                 </div>
                 {% endfor %}
               </div>

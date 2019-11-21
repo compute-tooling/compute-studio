@@ -17,8 +17,10 @@ psycopg2-binary
 ipython
 markdown
 django-guardian
-cs-storage
+# cs-storage
 newrelic
 hashids
 django-rest-auth
 django-allauth
+
+git+https://github.com/compute-tooling/compute-studio-storage@add-screenshot

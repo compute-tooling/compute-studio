@@ -5,6 +5,22 @@ body {
   font-size: 17px;
 }
 
+cs-black-background-color {
+  background-color: #2b2c2d;
+}
+
+cs-white-background-color {
+  background-color: #ffffff;
+}
+
+cs-black-color {
+  color: #2b2c2d;
+}
+
+cs-white-color {
+  color: #ffffff;
+}
+
 .explainer {
   color: #2b2c2d;
 }
@@ -58,6 +74,23 @@ code {
   color: rgb(238, 238, 238, 0.9) !important;
 }
 
+.sim-nav-item .nav-link.active,
+.sim-nav-item .show {
+  /* background-color: rgba(42, 44, 43, 1); */
+  /* darker ==> background-color: rgba(35, 36, 36, 1); */
+  background-color: rgba(60, 62, 62, 1);
+  color: #ffffff;
+  border: 1px solid #2b2c2d;
+}
+
+.sim-nav-item .nav-link,
+.sim-nav-item .show {
+  color: #ffffff;
+  /*darker ==> background-color: rgba(75, 77, 78, 1); */
+  background-color: rgba(87, 90, 91, 1);
+  border: 1px solid #2b2c2d;
+}
+
 /* Large devices (desktops, 992px and up) */
 @media (min-width: 992px) {
   .dropdown-menu.desktop-menu-right.show {
@@ -87,7 +120,7 @@ code {
 /* buttons with navbar color scheme */
 
 .btn-match-nav,
-.nav-pills .nav-link.active {
+.main-navbar .nav-pills .nav-link.active {
   background-color: #2b2c2d !important;
   color: #ffffff !important;
 }
@@ -99,7 +132,7 @@ code {
 }
 
 .inverse-btn-match-nav,
-.nav-pills .nav-link {
+.main-navbar .nav-pills .nav-link {
   color: #2b2c2d !important;
   background-color: #ffffff !important;
 }
@@ -223,4 +256,15 @@ span.default-value {
 
 .color-inherit {
   color: inherit;
+}
+
+
+/* output modal styling */
+.output-modal.modal.show .modal-content {
+  min-width: 1200px;
+
+}
+
+.output-modal.modal.show div.modal-dialog.modal-xl {
+  max-width: 1400px;
 }

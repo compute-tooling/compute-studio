@@ -156,10 +156,10 @@ class APIRouterView(AbstractRouterAPIView):
     projects = Project.objects.all()
 
 
-class DetailAPIView(GetOutputsObjectMixin, APIView):
+class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
     model = Simulation
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, as_remote, *args, **kwargs):
         self.object = self.get_object(
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
@@ -167,7 +167,12 @@ class DetailAPIView(GetOutputsObjectMixin, APIView):
         if self.object.outputs:
             data = sim.data
             outputs = data["outputs"]["outputs"]
-            data["outputs"] = cs_storage.read(outputs)
+            if not as_remote:
+                data["outputs"] = cs_storage.read(outputs)
+            else:
+                data["outputs"]["outputs"] = cs_storage.add_screenshot_links(
+                    data["outputs"]["outputs"]
+                )
             return Response(data, status=status.HTTP_200_OK)
         elif self.object.traceback is not None:
             return Response(sim.data, status=status.HTTP_200_OK)
@@ -196,6 +201,18 @@ class DetailAPIView(GetOutputsObjectMixin, APIView):
             )
 
         return Response(sim.data, status=status.HTTP_202_ACCEPTED)
+
+
+class DetailAPIView(BaseDetailAPIView):
+    def get(self, request, *args, **kwargs):
+        as_remote = False
+        return super().get(request, as_remote, *args, **kwargs)
+
+
+class RemoteDetailAPIView(BaseDetailAPIView):
+    def get(self, request, *args, **kwargs):
+        as_remote = True
+        return super().get(request, as_remote, *args, **kwargs)
 
 
 class OutputsAPIView(RecordOutputsMixin, APIView):
