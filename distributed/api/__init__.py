@@ -15,3 +15,9 @@ def create_app(test_config=None):
     app.register_blueprint(endpoints.bp)
 
     return app
+
+try:
+    app = create_app()
+except Exception as e:
+    print("got exception on import: ", e)
+    app = None

@@ -47,3 +47,6 @@ COPY celery_io.sh /home/distributed/api/celery_io.sh
 
 COPY ./cs-dask-sim /home/distributed/cs-dask-sim
 RUN cd /home/distributed/cs-dask-sim && pip install -e .
+
+RUN pip install git+https://github.com/compute-tooling/compute-studio-storage.git@add-screenshot && \
+    conda install -c conda-forge jinja2 pyppeteer && pyppeteer-install
