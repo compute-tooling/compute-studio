@@ -160,6 +160,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                 <h3>About</h3>
                 <hr className="my-3" />
                 <div className="mt-1 mb-1">
+                  <label><b>Title</b></label>
                   <Field
                     type="text"
                     name="title"
@@ -177,6 +178,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                   />
                 </div>
                 <div className="mt-1 mb-1">
+                  <label><b>Oneliner</b></label>
                   <Field
                     type="text"
                     name="oneliner"
@@ -193,6 +195,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                   />
                 </div>
                 <div className="mt-1 mb-1">
+                  <label><b>README</b></label>
                   <Field
                     type="text"
                     name="description"
@@ -210,7 +213,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                 </div>
                 <div className="mt-1 mb-1">
                   <label>
-                    <b>Repo URL:</b>
+                    <b>Repo URL</b>
                   </label>
                   <p className="mt-1 mb-1">
                     <Field
@@ -226,6 +229,8 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                   </p>
                 </div>
                 <div className="mt-3 mb-1">
+                  <label><b>Listed:</b>Include this app in the public list of apps</label>
+
                   <Field
                     component={CheckboxField}
                     label="Listed: "

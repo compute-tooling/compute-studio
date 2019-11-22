@@ -37,7 +37,7 @@ var md = new Remarkable({
   }
 });
 
-function markdownElement(markdownText, exitPreview: () => void, style: any = {}) {
+export function markdownElement(markdownText, exitPreview: () => void, style: any = {}) {
   // Box is not displayed if markdownText is an empty string.
   if (!markdownText) {
     markdownText = "&#8203;"; // space character
@@ -69,20 +69,19 @@ export const TextField = (fieldProps: FieldProps<any> & CustomFieldProps) => {
   } = fieldProps;
   let allowSpecialChars = props.allowSpecialChars !== null ? true : props.allowSpecialChars;
   let style = props.style ? props.style : {};
-  return (
-    <>
-      <b>{props.label}:</b>
-      {props.preview ? markdownElement(field.value, props.exitPreview, style = props.style) : (
-        <input
-          className="form-control"
-          {...field}
-          {...props}
-          style={style}
-          onChange={e => allowSpecialChars ? field.onChange(e) : titleChange(e, field.onChange)}
-        />
-      )}
-    </>
-  );
+  if (props.preview) {
+    return markdownElement(field.value, props.exitPreview, style = props.style);
+  } else {
+    return (
+      <input
+        className="form-control"
+        {...field}
+        {...props}
+        style={style}
+        onChange={e => allowSpecialChars ? field.onChange(e) : titleChange(e, field.onChange)}
+      />
+    );
+  }
 };
 
 function checkboxChange(e: React.ChangeEvent<HTMLInputElement>, onChange, placeholder = null) {
@@ -108,18 +107,14 @@ export const CheckboxField = (fieldProps: FieldProps<any> & CustomFieldProps) =>
     ...props
   } = fieldProps;
   return (
-    <>
-      <b>{props.label}</b>
-      {props.description ? props.description : ""}
-      <input
-        className="form-check mt-1"
-        type="checkbox"
-        {...field}
-        {...props}
-        checked={field.value}
-        onChange={e => checkboxChange(e, field.onChange)}
-      />
-    </>
+    <input
+      className="form-check mt-1"
+      type="checkbox"
+      {...field}
+      {...props}
+      checked={field.value}
+      onChange={e => checkboxChange(e, field.onChange)}
+    />
   );
 };
 
@@ -155,9 +150,9 @@ export const TextAreaField = ({
 }) => {
   let style = props.style ? props.style : {};
   if (props.preview) {
-    var element = markdownElement(field.value, props.exitPreview, style);
+    return markdownElement(field.value, props.exitPreview, style);
   } else {
-    var element = (
+    return (
       <textarea
         className="form-control"
         {...field}
@@ -167,12 +162,6 @@ export const TextAreaField = ({
       />
     );
   }
-  return (
-    <>
-      <b>{props.label}:</b>
-      {element}
-    </>
-  );
 };
 
 export const Message = ({ msg }) => (
@@ -197,9 +186,9 @@ export const CodeSnippetField = ({
   if (props.preview) {
     const ticks = "```";
     const markdownText = `${ticks}${props.language}\n${field.value}\n${ticks}`;
-    var element = markdownElement(markdownText, props.exitPreview, style);
+    return markdownElement(markdownText, props.exitPreview, style);
   } else {
-    var element = (
+    return (
       <textarea
         className="form-control"
         {...field}
@@ -209,12 +198,6 @@ export const CodeSnippetField = ({
       />
     );
   }
-  return (
-    <>
-      <b>{props.label + ":"}</b> {props.description}
-      {element}
-    </>
-  );
 };
 
 export const ServerSizeField = ({
