@@ -4,9 +4,9 @@ import * as React from "react";
 import { Card, Jumbotron, Row, Col, Dropdown } from "react-bootstrap";
 import ReactLoading from "react-loading";
 import * as yup from "yup";
-import { SimAPIData, RemoteOutputs, SimDescription } from "./types";
+import { SimAPIData, RemoteOutputs, SimDescription, AccessStatus } from "./types";
 import { FormikActions, Formik, ErrorMessage, Field, Form } from "formik";
-import { markdownElement, Message, TextAreaField } from "./fields";
+import { Message } from "./fields";
 import moment = require("moment");
 
 interface DescriptionProps {
@@ -15,24 +15,23 @@ interface DescriptionProps {
   username: string;
   appname: string;
   modelPk: number;
+  isNew: Boolean;
+  accessStatus: AccessStatus;
 }
 
 interface DescriptionValues {
   title: string,
-  readme: string,
 }
 
 
 let Schema = yup.object().shape({
   title: yup.string(),
-  readme: yup.string(),
 });
 
 
 type DescriptionState = Readonly<{
   initialValues: DescriptionValues
   owner: string;
-  lastModified: Date;
   preview: boolean;
   parentSims?: Array<SimDescription>;
 }>;
@@ -74,30 +73,49 @@ export default class DescriptionComponent extends React.Component<
       owner: "",
       preview: true,
       parentSims: null,
-      lastModified: null,
     };
     this.togglePreview = this.togglePreview.bind(this);
+    this.writable = this.writable.bind(this);
   }
 
   componentDidMount() {
     // fetch title, description, version
-    this.props.fetchRemoteOutputs().then(data => {
-      console.log("got data", data);
+    console.log("this.props.isNew", this.props.isNew, this.props.accessStatus)
+    if (this.props.isNew) {
       this.setState({
         initialValues: {
-          title: data.title,
-          readme: data.readme,
+          title: "Untitled Simulation",
         },
-        owner: data.owner,
-        parentSims: data.parent_sims,
-        lastModified: data.last_modified,
+        owner: this.props.accessStatus && this.props.accessStatus.username ?
+          this.props.accessStatus.username : "anon",
+        parentSims: [],
+      })
+    } else {
+      this.props.fetchRemoteOutputs().then(data => {
+        console.log("got data", data);
+        this.setState({
+          initialValues: {
+            title: data.title,
+          },
+          owner: data.owner,
+          parentSims: data.parent_sims,
+        });
       });
-    });
+    }
+  }
+
+  writable() {
+    return (
+      ["profile", "customer"].includes(this.props.accessStatus.user_status) &&
+      this.props.accessStatus.username === this.state.owner
+    );
   }
 
   togglePreview() {
     event.preventDefault();
-    this.setState({ preview: !this.state.preview });
+    if (this.writable()) {
+      this.setState({ preview: !this.state.preview });
+    }
   }
 
   render() {
@@ -114,9 +132,6 @@ export default class DescriptionComponent extends React.Component<
         </Card>
       );
     }
-    let lastModified = moment(this.state.lastModified).format(
-      "MMMM Do YYYY, h:mm:ss a"
-    );
     let style = this.state.preview ? { border: 0 } : {}
     return (
       <Jumbotron className="shadow" style={{ backgroundColor: "white" }}>
@@ -131,11 +146,11 @@ export default class DescriptionComponent extends React.Component<
             formdata.append("model_pk", this.props.modelPk.toString());
             this.props.putDescription(formdata).then(data => {
               console.log("success");
-              this.setState({ preview: true, lastModified: data.last_modified })
+              this.setState({ preview: true })
             })
           }}
           validationSchema={Schema}
-          render={({ status, values }) => (
+          render={({ status, values, handleSubmit }) => (
             <Form>
               {console.log("rendering with", values)}
               <Row className="mt-1 mb-1 justify-content-start">
@@ -147,11 +162,11 @@ export default class DescriptionComponent extends React.Component<
                       meta,
                     }) => (
                         this.state.preview ?
-                          <Card style={style} onClick={() => this.setState({ preview: false })}>
+                          <Card style={style} onClick={this.togglePreview}>
                             <h1>{field.value}</h1>
                           </Card> :
                           <Card style={{ border: 0 }}>
-                            <input type="text" placeholder="Untitled Simulation" {...field} className="form-cotnrol" />
+                            <input type="text" placeholder="Untitled Simulation" {...field} className="form-cotnrol" onBlur={handleSubmit} />
                           </Card>
                       )}
                   </Field>
@@ -169,47 +184,6 @@ export default class DescriptionComponent extends React.Component<
                   <Card style={{ border: 0 }}>
                     <h5 className="mt-1">by {this.state.owner}</h5>
                   </Card>
-                </Col>
-              </Row>
-              <Row className="mt-1 mb-1 justify-content-start">
-                <Col className="col-9">
-                  <hr className="my-3" />
-                </Col>
-              </Row>
-              <Row className="mt-1 mb-1 justify-content-start">
-                <Col className="col-9">
-                  <Field
-                    type="text"
-                    name="readme"
-                    component={TextAreaField}
-                    placeholder="Readme"
-                    label="README"
-                    preview={this.state.preview}
-                    exitPreview={() => this.setState({ preview: false })}
-                    style={style}
-                  />
-                  <ErrorMessage
-                    name="readme"
-                    render={msg => <Message msg={msg} />}
-                  />
-                </Col>
-              </Row>
-              <Row className="justify-content-start">
-                <Col className="col-3">
-                  <button
-                    className="btn inline-block btn-outline-primary mr-2"
-                    onClick={this.togglePreview}
-                  >
-                    {this.state.preview ? "Edit" : "Preview"}
-                  </button>
-                  <button className="btn inline-block btn-success ml-2" type="submit">
-                    Save
-                  </button>
-                </Col>
-              </Row>
-              <Row className="mt-2">
-                <Col>
-                  <p className="text-muted">Last modified: {lastModified}</p>
                 </Col>
               </Row>
             </Form>

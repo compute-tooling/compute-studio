@@ -74,13 +74,13 @@ class InputsSerializer(serializers.ModelSerializer):
 class SimDescriptionSerializer(serializers.ModelSerializer):
     owner = serializers.StringRelatedField(required=False)
     title = serializers.CharField(required=False)
-    readme = serializers.CharField(required=False)
     api_url = serializers.CharField(required=False, source="get_absolute_api_url")
     gui_url = serializers.CharField(required=False, source="get_absolute_url")
 
     class Meta:
         model = Simulation
-        fields = ("title", "readme", "owner", "last_modified", "creation_date", "api_url", "gui_url")
+        fields = ("title", "owner", "creation_date", "api_url", "gui_url")
+        read_only = ("owner", "api_url", "gui_url", "creation_date")
 
 
 class SimulationSerializer(serializers.ModelSerializer):
@@ -89,7 +89,6 @@ class SimulationSerializer(serializers.ModelSerializer):
     eta = serializers.FloatField(source="compute_eta")
     original_eta = serializers.FloatField(source="compute_original_eta")
     title = serializers.CharField(required=False)
-    readme = serializers.CharField(required=False)
     owner = serializers.StringRelatedField(required=False)
     project = PublishSerializer()
     parent_sims = SimDescriptionSerializer(many=True)
@@ -98,8 +97,24 @@ class SimulationSerializer(serializers.ModelSerializer):
         model = Simulation
         fields = (
             "title",
-            "readme",
-            "last_modified",
+            "parent_sims",
+            "outputs",
+            "traceback",
+            "creation_date",
+            "api_url",
+            "gui_url",
+            "eta",
+            "original_eta",
+            "model_pk",
+            "status",
+            "model_version",
+            "run_time",
+            "exp_comp_datetime",
+            "traceback",
+            "owner",
+            "project",
+        )
+        read_only = (
             "parent_sims",
             "outputs",
             "traceback",

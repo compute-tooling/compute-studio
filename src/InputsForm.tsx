@@ -42,7 +42,6 @@ type InputsFormState = Readonly<{
   detailAPIURL?: string,
   editInputsUrl?: string,
   initialServerErrors?: { [msect: string]: { errors: { [paramName: string]: any } } },
-  accessStatus?: AccessStatus,
   resetting?: boolean,
   error?: any,
   timer?: number,
@@ -53,6 +52,7 @@ interface InputsFormProps {
   resetInitialValues: (metaParameters: { [metaParam: string]: any }) => any;
   doSubmit: (data: FormData) => Promise<any>;
   readOnly: boolean;
+  accessStatus: AccessStatus;
 }
 
 export default class InputsForm extends React.Component<InputsFormProps, InputsFormState> {
@@ -99,7 +99,6 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
               !!data.detail && hasServerErrors(data.detail.errors_warnings)
                 ? data.detail.errors_warnings
                 : null,
-            accessStatus: data.accessStatus
           });
         })
         .catch(err => {
@@ -311,7 +310,7 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
                       <li>
                         <RunModal
                           handleSubmit={handleSubmit}
-                          accessStatus={this.state.accessStatus}
+                          accessStatus={this.props.accessStatus}
                         />
                       </li>
                     </ul>

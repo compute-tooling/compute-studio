@@ -108,6 +108,21 @@ class InputsView(InputsMixin, View):
             title__iexact=kwargs["title"],
         )
         context = self.project_context(request, project)
+        context["show_readme"] = False
+        return render(request, self.template_name, context)
+
+
+class ModelView(InputsMixin, View):
+    projects = Project.objects.all()
+    template_name = "comp/home.html"
+
+    def get(self, request, *args, **kwargs):
+        print("method=GET", request.GET, kwargs)
+        project = self.projects.get(
+            owner__user__username__iexact=kwargs["username"],
+            title__iexact=kwargs["title"],
+        )
+        context = self.project_context(request, project)
         context["show_readme"] = True
         return render(request, self.template_name, context)
 

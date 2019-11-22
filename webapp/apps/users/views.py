@@ -129,8 +129,10 @@ class AccessStatusAPI(GetProjectMixin, APIView):
         user = request.user
         if user.is_authenticated and user.profile:
             user_status = user.profile.status
+            username = user.username
         else:
             user_status = "anon"
+            username = None
 
         if kwargs:
             project = self.get_object(**kwargs)
@@ -149,9 +151,10 @@ class AccessStatusAPI(GetProjectMixin, APIView):
                     "exp_cost": exp_cost,
                     "exp_time": exp_time,
                     "api_url": reverse("access_project", kwargs=kwargs),
+                    "username": username,
                 }
             )
         else:
             return Response(
-                {"user_status": user_status, "api_url": reverse("access_status")}
+                {"user_status": user_status, "api_url": reverse("access_status"), "username": username}
             )

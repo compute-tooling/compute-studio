@@ -1,4 +1,5 @@
 from .views import (
+    ModelView,
     RouterView,
     EditInputsView,
     EditSimView,

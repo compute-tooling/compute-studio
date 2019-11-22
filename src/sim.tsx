@@ -10,7 +10,7 @@ import * as Sentry from "@sentry/browser";
 import InputsForm from "./InputsForm";
 import OutputsComponent from "./Outputs";
 import ErrorBoundary from "./ErrorBoundary";
-import { APIData, RemoteOutputs, Outputs, SimAPIData } from "./types";
+import { APIData, RemoteOutputs, Outputs, SimAPIData, AccessStatus } from "./types";
 import DescriptionComponent from "./Description";
 
 Sentry.init({
@@ -34,12 +34,13 @@ interface URLProps {
 }
 
 interface InputsAppProps extends URLProps {
-  type: "inputs" | "edit_sim" | "edit_inputs";
+  type: "new" | "edit_sim" | "edit_inputs";
   readOnly: boolean;
+  accessStatus: AccessStatus;
 }
 
 interface SimAppProps extends URLProps { }
-interface DescriptionProps extends URLProps { }
+interface DescriptionProps extends URLProps { accessStatus: AccessStatus }
 
 class InputsApp extends React.Component<InputsAppProps, {}> {
   constructor(props) {
@@ -54,71 +55,48 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
     const app_name = this.props.match.params.app_name;
     let data: APIData;
     console.log("router", username, app_name, this.props.type);
-    if (this.props.type === "inputs") {
+    if (this.props.type === "new") {
       console.log("fresh page");
-      return axios
-        .all([
-          axios.get(`/${username}/${app_name}/api/v1/inputs/`),
-          axios.get(`/users/status/${username}/${app_name}/`)
-        ])
-        .then(
-          axios.spread((inputsResp, statusResp) => {
-            console.log("inputsResp", inputsResp);
-            console.log("statusResp", statusResp);
-            data = inputsResp.data;
-            data["accessStatus"] = statusResp.data;
-            return data;
-          })
-        );
+      return axios.get(`/${username}/${app_name}/api/v1/inputs/`)
+        .then(inputsResp => {
+          console.log("inputsResp", inputsResp);
+          data = inputsResp.data;
+          return data;
+        });
     } else if (this.props.type === "edit_sim") {
       let model_pk = this.props.match.params.model_pk;
       console.log("edit sim");
-      return axios
-        .all([
-          axios.get(`/${username}/${app_name}/api/v1/${model_pk}/edit/`),
-          axios.get(`/users/status/${username}/${app_name}/`)
-        ])
-        .then(
-          axios.spread((detailResp, statusResp) => {
-            console.log("detailResp", detailResp);
-            console.log("statusResp", statusResp);
-            return axios
-              .post(`/${username}/${app_name}/api/v1/inputs/`, {
-                meta_parameters: detailResp.data.meta_parameters
-              })
-              .then(inputsResp => {
-                console.log("inputsResp", inputsResp);
-                data = inputsResp.data;
-                data["detail"] = detailResp.data;
-                data["accessStatus"] = statusResp.data;
-                return data;
-              });
+      return axios.get(`/${username}/${app_name}/api/v1/${model_pk}/edit/`).then(detailResp => {
+        console.log("detailResp", detailResp);
+        return axios
+          .post(`/${username}/${app_name}/api/v1/inputs/`, {
+            meta_parameters: detailResp.data.meta_parameters
           })
-        );
+          .then(inputsResp => {
+            console.log("inputsResp", inputsResp);
+            data = inputsResp.data;
+            data["detail"] = detailResp.data;
+            return data;
+          });
+      })
+      );
     } else if (this.props.type === "edit_inputs") {
       let inputs_hashid = this.props.match.params.inputs_hashid;
       console.log("edit inputs");
-      return axios
-        .all([
-          axios.get(`/${username}/${app_name}/api/v1/inputs/${inputs_hashid}/`),
-          axios.get(`/users/status/${username}/${app_name}/`)
-        ])
-        .then(
-          axios.spread((detailResp, statusResp) => {
-            console.log("detailResp", detailResp);
-            console.log("statusResp", statusResp);
-            return axios
-              .post(`/${username}/${app_name}/api/v1/inputs/`, {
-                meta_parameters: detailResp.data.meta_parameters
-              })
-              .then(inputsResp => {
-                console.log("inputsResp", inputsResp);
-                (data = inputsResp.data), (data["detail"] = detailResp.data);
-                data["accessStatus"] = statusResp.data;
-                return data;
-              });
-          })
-        );
+      return axios.get(`/${username}/${app_name}/api/v1/inputs/${inputs_hashid}/`).then(
+        detailResp => {
+          console.log("detailResp", detailResp);
+          return axios
+            .post(`/${username}/${app_name}/api/v1/inputs/`, {
+              meta_parameters: detailResp.data.meta_parameters
+            })
+            .then(inputsResp => {
+              console.log("inputsResp", inputsResp);
+              (data = inputsResp.data), (data["detail"] = detailResp.data);
+              return data;
+            });
+        })
+      );
     } else {
       console.log(`type: ${this.props.type} is not allowed.`);
     }
@@ -166,17 +144,21 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
           resetInitialValues={this.resetInitialValues}
           doSubmit={this.doSubmit}
           readOnly={this.props.readOnly}
+          accessStatus={this.props.accessStatus}
         />
       </ErrorBoundary>
     );
   }
 }
 
-class OutputsApp extends React.Component<SimAppProps, {}> {
+class OutputsApp extends React.Component<SimAppProps, { isNew: Boolean }> {
   constructor(props) {
     super(props);
     this.fetchRemoteOutputs = this.fetchRemoteOutputs.bind(this);
     this.fetchOutputs = this.fetchOutputs.bind(this);
+    this.state = {
+      isNew: this.props.match.params.model_pk ? false : true
+    }
   }
 
   fetchRemoteOutputs(): Promise<SimAPIData<RemoteOutputs>> {
@@ -206,6 +188,7 @@ class OutputsApp extends React.Component<SimAppProps, {}> {
   render() {
     return (
       <OutputsComponent
+        isNew={this.state.isNew}
         fetchRemoteOutputs={this.fetchRemoteOutputs}
         fetchOutputs={this.fetchOutputs}
       />
@@ -213,12 +196,14 @@ class OutputsApp extends React.Component<SimAppProps, {}> {
   }
 }
 
-class DescriptionApp extends React.Component<DescriptionProps, {}> {
+class DescriptionApp extends React.Component<DescriptionProps, { isNew: Boolean }> {
   constructor(props) {
     super(props);
     this.fetchRemoteOutputs = this.fetchRemoteOutputs.bind(this);
     this.putDescription = this.putDescription.bind(this);
-
+    this.state = {
+      isNew: this.props.match.params.model_pk ? false : true
+    }
   }
 
   fetchRemoteOutputs(): Promise<SimAPIData<RemoteOutputs>> {
@@ -246,12 +231,15 @@ class DescriptionApp extends React.Component<DescriptionProps, {}> {
       return data;
     })
   }
+
   render() {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     const modelPk = this.props.match.params.model_pk;
     return (
       <DescriptionComponent
+        isNew={this.state.isNew}
+        accessStatus={this.props.accessStatus}
         fetchRemoteOutputs={this.fetchRemoteOutputs}
         putDescription={this.putDescription}
         username={username}
@@ -262,57 +250,80 @@ class DescriptionApp extends React.Component<DescriptionProps, {}> {
   }
 }
 
-const SimTabs: React.FC<
-  SimAppProps & { type: "inputs" | "outputs" }
-> = props => {
-  const [key, setKey] = React.useState(props.type);
-
-  const style = { padding: 0 };
-  const buttonGroupStyle = {
-    left: {
-      borderTopRightRadius: 0,
-      borderBottomRightRadius: 0
-    },
-    right: {
-      borderTopLeftRadius: 0,
-      borderBottomLeftRadius: 0
+class SimTabs extends React.Component<
+  SimAppProps & { tabName: "inputs" | "outputs", type: "new" | "edit_inputs" | "edit_sim" },
+  { key: "inputs" | "outputs", accessStatus: AccessStatus }> {
+  constructor(props) {
+    super(props);
+    this.state = {
+      key: props.tabName,
+      accessStatus: null,
     }
+  }
+
+  componentDidMount() {
+    const username = this.props.match.params.username;
+    const app_name = this.props.match.params.app_name;
+
+    return axios.get(`/users/status/${username}/${app_name}/`).then(resp => {
+      this.setState({
+        accessStatus: resp.data
+      })
+      return resp.data
+    })
+  }
+
+  render() {
+    if (!this.state.accessStatus) {
+      return <Card className="card-outer">Loading....</Card>
+    }
+    const style = { padding: 0 };
+    const buttonGroupStyle = {
+      left: {
+        borderTopRightRadius: 0,
+        borderBottomRightRadius: 0
+      },
+      right: {
+        borderTopLeftRadius: 0,
+        borderBottomLeftRadius: 0
+      }
+    };
+    return (
+      <>
+        <DescriptionApp match={this.props.match} accessStatus={this.state.accessStatus} />
+        <Tab.Container
+          id="sim-tabs"
+          defaultActiveKey={this.state.key}
+          onSelect={(k: "inputs" | "outputs") => this.setState({ key: k })}
+        >
+          <Nav variant="pills" className="mb-4">
+            <Col style={style}>
+              <Nav.Item className="sim-nav-item">
+                <Nav.Link style={buttonGroupStyle.left} eventKey="inputs">
+                  Inputs
+            </Nav.Link>
+              </Nav.Item>
+            </Col>
+            <Col style={style}>
+              <Nav.Item className="sim-nav-item">
+                <Nav.Link style={buttonGroupStyle.right} eventKey="outputs">
+                  Outputs
+            </Nav.Link>
+              </Nav.Item>
+            </Col>
+          </Nav>
+          <Tab.Content>
+            <Tab.Pane eventKey="inputs">
+              <InputsApp readOnly={false} match={this.props.match} type="new" accessStatus={this.state.accessStatus} />
+            </Tab.Pane>
+            <Tab.Pane eventKey="outputs">
+              <OutputsApp match={this.props.match} />
+            </Tab.Pane>
+          </Tab.Content>
+        </Tab.Container>
+      </>
+    );
   };
-  return (
-    <>
-      <DescriptionApp match={props.match} />
-      <Tab.Container
-        id="sim-tabs"
-        defaultActiveKey={key}
-        onSelect={(k: "inputs" | "outputs") => setKey(k)}
-      >
-        <Nav variant="pills" className="mb-4">
-          <Col style={style}>
-            <Nav.Item className="sim-nav-item">
-              <Nav.Link style={buttonGroupStyle.left} eventKey="inputs">
-                Inputs
-            </Nav.Link>
-            </Nav.Item>
-          </Col>
-          <Col style={style}>
-            <Nav.Item className="sim-nav-item">
-              <Nav.Link style={buttonGroupStyle.right} eventKey="outputs">
-                Outputs
-            </Nav.Link>
-            </Nav.Item>
-          </Col>
-        </Nav>
-        <Tab.Content>
-          <Tab.Pane eventKey="inputs">
-            <InputsApp readOnly={false} match={props.match} type="edit_sim" />
-          </Tab.Pane>
-          <Tab.Pane eventKey="outputs">
-            <OutputsApp match={props.match} />
-          </Tab.Pane>
-        </Tab.Content>
-      </Tab.Container>
-    </>
-  );
 };
 
 ReactDOM.render(
@@ -320,28 +331,23 @@ ReactDOM.render(
     <Switch>
       <Route
         exact
-        path="/:username/:app_name/"
-        render={routeProps => <InputsApp readOnly={false} type="inputs" {...routeProps} />}
+        path="/:username/:app_name/new/"
+        render={routeProps => <SimTabs tabName="inputs" type="new" {...routeProps} />}
       />
       <Route
         exact
         path="/:username/:app_name/inputs/:inputs_hashid/"
-        render={routeProps => <InputsApp readOnly={false} type="edit_inputs" {...routeProps} />}
+        render={routeProps => <SimTabs tabName="outputs" type="edit_inputs" {...routeProps} />}
       />
       <Route
         exact
         path="/:username/:app_name/:model_pk/edit/"
-        render={routeProps => <InputsApp readOnly={false} type="edit_sim" {...routeProps} />}
+        render={routeProps => <SimTabs tabName="inputs" type="edit_sim" {...routeProps} />}
       />
       <Route
         exact
         path="/:username/:app_name/:model_pk/"
-        render={routeProps => <SimTabs type="outputs" {...routeProps} />}
-      />
-      <Route
-        exact
-        path="/:username/:app_name/:model_pk/inputs/"
-        render={routeProps => <SimTabs type="inputs" {...routeProps} />}
+        render={routeProps => <SimTabs tabName="outputs" type="edit_sim" {...routeProps} />}
       />
     </Switch>
   </BrowserRouter>,

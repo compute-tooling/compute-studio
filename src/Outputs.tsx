@@ -23,6 +23,7 @@ import {
 import { imgDims } from "./utils";
 
 interface OutputsProps {
+  isNew: Boolean;
   fetchRemoteOutputs: () => Promise<SimAPIData<RemoteOutputs>>;
   fetchOutputs: () => Promise<SimAPIData<Outputs>>;
 }
@@ -145,6 +146,16 @@ const Traceback: React.FC<{ remoteSim: SimAPIData<RemoteOutputs> }> = ({ remoteS
   </Card>
 );
 
+const NewSimulation: React.FC<{}> = () => (
+  <Card className="card-outer">
+    <Card className="card-inner">
+      <Card.Body>
+        <Card.Title><h2>You have not run your simulation yet.</h2></Card.Title>
+      </Card.Body>
+    </Card>
+  </Card>
+)
+
 
 export default class OutputsComponent extends React.Component<
   OutputsProps,
@@ -199,6 +210,9 @@ export default class OutputsComponent extends React.Component<
   }
 
   render() {
+    if (this.props.isNew) {
+      return <NewSimulation />
+    }
     let remoteSim = this.state.remoteSim;
     let sim = this.state.sim;
     if (!remoteSim) {

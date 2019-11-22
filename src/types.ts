@@ -78,7 +78,8 @@ export interface APIDetail {
 
 export interface AccessStatus {
   user_status: "inactive" | "customer" | "profile" | "anon";
-  api_url: "string";
+  username?: string;
+  api_url: string;
   is_sponsored?: boolean;
   can_run?: boolean;
   server_cost?: number;
@@ -180,7 +181,6 @@ export interface SimDescription {
   title: string;
   readme: string;
   owner: string;
-  last_modified: Date;
   creation_date: Date;
   api_url: string;
   gui_url: string;
@@ -190,7 +190,6 @@ export interface SimAPIData<T> {
   title?: string;
   readme?: string;
   owner?: string;
-  last_modified: Date;
   parent_sims?: Array<SimDescription>;
   traceback?: string;
   creation_date: Date;

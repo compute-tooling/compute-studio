@@ -185,8 +185,13 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
         sim = SimulationSerializer(self.object)
+        write_access = (
+            request.user.is_authenticated
+            and request.user == self.object.owner.user
+        )
+        data = {"write_access": write_access}
         if self.object.outputs:
-            data = sim.data
+            data.update(sim.data)
             outputs = data["outputs"]["outputs"]
             if not as_remote:
                 data["outputs"] = cs_storage.read(outputs)
@@ -196,7 +201,8 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
                 )
             return Response(data, status=status.HTTP_200_OK)
         elif self.object.traceback is not None:
-            return Response(sim.data, status=status.HTTP_200_OK)
+            data.update(sim.data)
+            return Response(data, status=status.HTTP_200_OK)
 
         compute = Compute()
         try:
@@ -220,8 +226,8 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
             return Response(
                 {"error": "model error"}, status=status.HTTP_400_BAD_REQUEST
             )
-
-        return Response(sim.data, status=status.HTTP_202_ACCEPTED)
+        data.update(sim.data)
+        return Response(data, status=status.HTTP_202_ACCEPTED)
 
 
 class DetailAPIView(BaseDetailAPIView):

@@ -2,6 +2,7 @@ from django.conf.urls import url
 from django.urls import path
 
 from webapp.apps.comp.views import (
+    ModelView,
     RouterView,
     EditInputsView,
     EditSimView,
@@ -23,7 +24,8 @@ from webapp.apps.comp.views import (
 # api/v1/<int:model_pk>/ - get all data related to sim, including inputs and outputs.
 
 urlpatterns = [
-    path("", RouterView.as_view(), name="app"),
+    path("", ModelView.as_view(), name="app"),
+    path("new/", RouterView.as_view(), name="simulation"),
     path("api/v1/", APIRouterView.as_view(), name="create_api"),
     path("api/v1/inputs/", InputsAPIView.as_view(), name="inputs_api"),
     path(
