@@ -175,12 +175,11 @@ export default class OutputsComponent extends React.Component<
               this.setState({
                 remoteSim: detRem
               });
+              this.killTimer();
               this.props.fetchOutputs().then(detSim => {
                 this.setState({
                   sim: detSim,
-                  remoteSim: detRem,
                 });
-                this.killTimer();
               });
             } else {
               this.setState({ remoteSim: detRem })
@@ -239,7 +238,8 @@ export default class OutputsComponent extends React.Component<
                 }
 
                 let [width, height] = imgDims(remoteOutput.screenshot);
-
+                width = width ? width : 500;
+                height = height ? height : 500;
                 return (
                   <Col style={{ margin: "1rem", maxWidth: width }} key={`output-${ix}`}>
                     <OverlayTrigger
