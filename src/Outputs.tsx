@@ -172,6 +172,9 @@ export default class OutputsComponent extends React.Component<
         timer = setInterval(() => {
           this.props.fetchRemoteOutputs().then(detRem => {
             if (detRem.status !== "PENDING") {
+              this.setState({
+                remoteSim: detRem
+              });
               this.props.fetchOutputs().then(detSim => {
                 this.setState({
                   sim: detSim,
