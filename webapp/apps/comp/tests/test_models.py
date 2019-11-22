@@ -76,11 +76,11 @@ def test_parent_sims(db, get_inputs, meta_param_dict, profile):
         )
 
     child_sim = sims[-1]
-    assert child_sim.parent_sims() == list(reversed(sims))
+    assert child_sim.parent_sims() == list(reversed(sims[:-1]))
 
     init_sim = sims[0]
-    assert init_sim.parent_sims() == [init_sim]
+    assert init_sim.parent_sims() == []
 
     for ix in range(1, 10):
         middle_sim = sims[ix]
-        assert middle_sim.parent_sims() == list(reversed(sims[: ix + 1]))
+        assert middle_sim.parent_sims() == list(reversed(sims[:ix]))

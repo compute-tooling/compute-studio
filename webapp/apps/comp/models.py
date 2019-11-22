@@ -285,7 +285,7 @@ class Simulation(models.Model):
 
     def parent_sims(self):
         """Recursively walk back up to the original simulation"""
-        parent_sims = [self]
+        parent_sims = []
         sim = self
         while sim.parent_sim != None:
             parent_sims.append(sim.parent_sim)
