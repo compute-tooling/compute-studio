@@ -181,6 +181,7 @@ export interface SimDescription {
   readme: string;
   owner: string;
   last_modified: Date;
+  creation_date: Date;
   api_url: string;
   gui_url: string;
 }

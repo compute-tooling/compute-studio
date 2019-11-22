@@ -6,7 +6,7 @@ import ReactLoading from "react-loading";
 import * as yup from "yup";
 import { SimAPIData, RemoteOutputs, SimDescription } from "./types";
 import { FormikActions, Formik, ErrorMessage, Field, Form } from "formik";
-import { TextField, Message, TextAreaField } from "./fields";
+import { markdownElement, Message, TextAreaField } from "./fields";
 import moment = require("moment");
 
 interface DescriptionProps {
@@ -42,13 +42,22 @@ const HistoryDropDown: React.FC<{ history: Array<SimDescription> }> = ({ history
 
   return (
     < Dropdown >
-      <Dropdown.Toggle variant="success" id="dropdown-basic">
+      <Dropdown.Toggle variant="outline-dark" id="dropdown-basic">
         History
       </Dropdown.Toggle>
       <Dropdown.Menu>
-        {history.map(sim => <Dropdown.Item href={sim.gui_url}>{`${sim.title} ${sim.owner} ${moment(sim.last_modified).format(
-          "YYYY-MM-DD, h:mm:ss a"
-        )}`}</Dropdown.Item>)}
+        {history.map((sim, ix) => {
+
+          return (
+            <Dropdown.Item key={ix} href={sim.gui_url} style={{ minWidth: "500px" }}>
+              <Row>
+                <Col className="col-4">{sim.title}</Col>
+                <Col className="col-4">by {sim.owner}</Col>
+                <Col className="col-4">on {moment(sim.creation_date).format("YYYY-MM-DD")}</Col>
+              </Row>
+            </Dropdown.Item>
+          );
+        })}
       </Dropdown.Menu>
     </Dropdown >
   );
@@ -108,6 +117,7 @@ export default class DescriptionComponent extends React.Component<
     let lastModified = moment(this.state.lastModified).format(
       "MMMM Do YYYY, h:mm:ss a"
     );
+    let style = this.state.preview ? { border: 0 } : {}
     return (
       <Jumbotron className="shadow" style={{ backgroundColor: "white" }}>
         <Formik
@@ -129,31 +139,45 @@ export default class DescriptionComponent extends React.Component<
             <Form>
               {console.log("rendering with", values)}
               <Row className="mt-1 mb-1 justify-content-start">
-                <Col className="col-3">
-                  <Field
-                    type="text"
-                    name="title"
-                    component={TextField}
-                    placeholder="Untitled"
-                    label="Title"
-                    preview={this.state.preview}
-                    exitPreview={() => this.setState({ preview: false })}
-                    allowSpecialChars={false}
-                  />
+                <Col className="col-5">
+                  <Field name="title">
+                    {({
+                      field, // { name, value, onChange, onBlur }
+                      form: { touched, errors }, // also values, setXXXX, handleXXXX, dirty, isValid, status, etc.
+                      meta,
+                    }) => (
+                        this.state.preview ?
+                          <Card style={style} onClick={() => this.setState({ preview: false })}>
+                            <h1>{field.value}</h1>
+                          </Card> :
+                          <Card style={{ border: 0 }}>
+                            <input type="text" placeholder="Untitled Simulation" {...field} className="form-cotnrol" />
+                          </Card>
+                      )}
+                  </Field>
                   <ErrorMessage
                     name="title"
                     render={msg => <Message msg={msg} />}
                   />
                 </Col>
-                <Col className="col-3">
-                  <label><b>Author:</b><p>{this.state.owner}</p></label>
-                </Col>
-                <Col>
+                <Col className="col-1 offset-md-2">
                   <HistoryDropDown history={this.state.parentSims} />
                 </Col>
               </Row>
-              <Row className="mt-1 mb-1">
-                <Col className="col-8">
+              <Row className="justify-content-start">
+                <Col className="col-4">
+                  <Card style={{ border: 0 }}>
+                    <h5 className="mt-1">by {this.state.owner}</h5>
+                  </Card>
+                </Col>
+              </Row>
+              <Row className="mt-1 mb-1 justify-content-start">
+                <Col className="col-9">
+                  <hr className="my-3" />
+                </Col>
+              </Row>
+              <Row className="mt-1 mb-1 justify-content-start">
+                <Col className="col-9">
                   <Field
                     type="text"
                     name="readme"
@@ -162,7 +186,7 @@ export default class DescriptionComponent extends React.Component<
                     label="README"
                     preview={this.state.preview}
                     exitPreview={() => this.setState({ preview: false })}
-                  // style={{ maxWidth: "800px" }}
+                    style={style}
                   />
                   <ErrorMessage
                     name="readme"

@@ -80,7 +80,7 @@ class SimDescriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Simulation
-        fields = ("title", "readme", "owner", "last_modified", "api_url", "gui_url")
+        fields = ("title", "readme", "owner", "last_modified", "creation_date", "api_url", "gui_url")
 
 
 class SimulationSerializer(serializers.ModelSerializer):
