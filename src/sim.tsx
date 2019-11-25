@@ -78,8 +78,7 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
             data["detail"] = detailResp.data;
             return data;
           });
-      })
-      );
+      });
     } else if (this.props.type === "edit_inputs") {
       let inputs_hashid = this.props.match.params.inputs_hashid;
       console.log("edit inputs");
@@ -95,8 +94,7 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
               (data = inputsResp.data), (data["detail"] = detailResp.data);
               return data;
             });
-        })
-      );
+        });
     } else {
       console.log(`type: ${this.props.type} is not allowed.`);
     }
@@ -314,7 +312,7 @@ class SimTabs extends React.Component<
           </Nav>
           <Tab.Content>
             <Tab.Pane eventKey="inputs">
-              <InputsApp readOnly={false} match={this.props.match} type="new" accessStatus={this.state.accessStatus} />
+              <InputsApp readOnly={false} match={this.props.match} type={this.props.type} accessStatus={this.state.accessStatus} />
             </Tab.Pane>
             <Tab.Pane eventKey="outputs">
               <OutputsApp match={this.props.match} />
