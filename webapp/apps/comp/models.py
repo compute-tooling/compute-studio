@@ -4,7 +4,6 @@ import json
 
 from dataclasses import dataclass, field
 from typing import List, Union
-from hashids import Hashids
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
@@ -19,36 +18,6 @@ from django.utils import timezone
 
 from webapp.apps.comp import utils
 from webapp.settings import INPUTS_SALT
-
-
-hashids = Hashids(INPUTS_SALT, min_length=6)
-
-
-class InputsQuerySet(models.QuerySet):
-    def from_hashid(self, hashid):
-        """
-        Get inputs object from a hash of its pk. Return None
-        if the decode does not resolve to a pk.
-        """
-        pk = hashids.decode(hashid)
-        if not pk:
-            return None
-        else:
-            return self.get(pk=pk[0])
-
-    def get_object_from_hashid_or_404(self, hashid):
-        """
-        Get inputs object from a hash of its pk and
-        raise 404 exception if it does not exist.
-        """
-        try:
-            obj = self.from_hashid(hashid)
-        except ObjectDoesNotExist:
-            raise Http404("Object matching query does not exist")
-        if obj:
-            return obj
-        else:
-            raise Http404("Object matching query does not exist")
 
 
 class Inputs(models.Model):
@@ -85,6 +54,7 @@ class Inputs(models.Model):
     job_id = models.UUIDField(blank=True, default=None, null=True)
     status = models.CharField(
         choices=(
+            ("STARTED", "Started"),
             ("PENDING", "Pending"),
             ("SUCCESS", "Success"),
             ("INVALID", "Invalid"),
@@ -102,8 +72,6 @@ class Inputs(models.Model):
         ),
         max_length=32,
     )
-
-    objects = InputsQuerySet.as_manager()
 
     @property
     def deserialized_inputs(self):
@@ -130,30 +98,19 @@ class Inputs(models.Model):
     def pretty_meta_parameters(self):
         return json.dumps(self.meta_parameters, indent=4)
 
-    def get_absolute_api_url(self):
-        kwargs = {
-            "hashid": self.get_hashid(),
-            "title": self.project.title,
-            "username": self.project.owner.user.username,
-        }
-        return reverse("detail_myinputs_api", kwargs=kwargs)
-
-    def get_edit_url(self):
-        kwargs = {
-            "hashid": self.get_hashid(),
-            "title": self.project.title,
-            "username": self.project.owner.user.username,
-        }
-        return reverse("edit_inputs", kwargs=kwargs)
-
-    def get_hashid(self):
-        return hashids.encode(self.pk)
-
     def parent_model_pk(self):
         if self.parent_sim is not None:
             return self.parent_sim.model_pk
         else:
             return None
+
+    def get_absolute_api_url(self):
+        kwargs = {
+            "model_pk": self.outputs.model_pk,
+            "title": self.project.title,
+            "username": self.project.owner.user.username,
+        }
+        return reverse("detail_myinputs_api_model_pk", kwargs=kwargs)
 
 
 class SimulationManager(models.Manager):
@@ -165,6 +122,19 @@ class SimulationManager(models.Manager):
             return 1
         else:
             return curr_max + 1
+
+    def new_sim(self, user, project):
+        inputs = Inputs.objects.create(
+            owner=user.profile, project=project, status="STARTED"
+        )
+        sim = self.create(
+            owner=user.profile,
+            project=project,
+            model_pk=self.next_model_pk(project),
+            inputs=inputs,
+            status="STARTED",
+        )
+        return sim
 
 
 class Simulation(models.Model):
@@ -208,6 +178,7 @@ class Simulation(models.Model):
 
     status = models.CharField(
         choices=(
+            ("STARTED", "Started"),
             ("PENDING", "Pending"),
             ("SUCCESS", "Success"),
             ("FAIL", "Fail"),
@@ -291,6 +262,9 @@ class Simulation(models.Model):
             parent_sims.append(sim.parent_sim)
             sim = sim.parent_sim
         return parent_sims
+
+    def has_write_access(self, user):
+        return user.is_authenticated and user == self.owner.user
 
 
 @dataclass

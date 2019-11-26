@@ -62,16 +62,19 @@ class CoreTestMixin:
 
 
 class ResponseStatusException(Exception):
-    def __init__(self, exp_status, act_status, stage):
+    def __init__(self, exp_status, act_resp, stage):
         self.exp_status = exp_status
-        self.act_status = act_status
+        self.act_resp = act_resp
+        self.act_status = act_resp.status_code
         self.stage = stage
-        super().__init__(f"{stage}: expected {exp_status}, got {act_status}")
+        super().__init__(
+            f"{stage}: expected {exp_status}, got {self.act_status}\n\n{getattr(self.act_resp, 'data', None)}"
+        )
 
 
-def assert_status(exp_status, act_status, stage):
-    if exp_status != act_status:
-        raise ResponseStatusException(exp_status, act_status, stage)
+def assert_status(exp_status, act_resp, stage):
+    if exp_status != act_resp.status_code:
+        raise ResponseStatusException(exp_status, act_resp, stage)
 
 
 class RunMockModel(CoreTestMixin):
@@ -120,17 +123,17 @@ class RunMockModel(CoreTestMixin):
             init_resp = self.post_adjustment(
                 mock, defaults_resp_data, adj_resp_data, adj
             )
-            inputs_hashid = init_resp.data["hashid"]
-            self.poll_adjustment(mock, inputs_hashid)
+            model_pk = init_resp.data["sim"]["model_pk"]
+            self.poll_adjustment(mock, model_pk)
             self.put_adjustment(adj_callback_data)
-            inputs = self.check_adjustment_finished(inputs_hashid)
+            inputs = self.check_adjustment_finished(model_pk)
             self.poll_simulation(inputs)
 
         model_pk = inputs.outputs.model_pk
         self.check_simulation_finished(model_pk)
 
         # test get inputs from model_pk
-        self.view_inputs_from_model_pk(model_pk, inputs_hashid)
+        self.view_inputs_from_model_pk(model_pk)
 
         self.set_sim_description(model_pk)
 
@@ -155,21 +158,20 @@ class RunMockModel(CoreTestMixin):
         init_resp = self.api_client.post(
             f"/{self.owner}/{self.title}/api/v1/", data=adj, format="json"
         )
-        assert_status(201, init_resp.status_code, "post_adjustment")
+        assert_status(201, init_resp, "post_adjustment")
         return init_resp
 
-    def poll_adjustment(self, mock: requests_mock.Mocker, inputs_hashid: str):
+    def poll_adjustment(self, mock: requests_mock.Mocker, model_pk: int):
         get_resp_pend = self.api_client.get(
-            f"/{self.owner}/{self.title}/api/v1/inputs/{inputs_hashid}/"
+            f"/{self.owner}/{self.title}/api/v1/{model_pk}/edit/"
         )
-        assert_status(200, get_resp_pend.status_code, "poll_adjustment")
+        assert_status(200, get_resp_pend, "poll_adjustment")
         assert get_resp_pend.data["status"] == "PENDING"
-        assert get_resp_pend.data["hashid"] == inputs_hashid
 
         edit_inputs_resp = self.client.get(
-            f"/{self.owner}/{self.title}/inputs/{inputs_hashid}/"
+            f"/{self.owner}/{self.title}/{model_pk}/edit/"
         )
-        assert_status(200, edit_inputs_resp.status_code, "poll_adjustment")
+        assert_status(200, edit_inputs_resp, "poll_adjustment")
 
     def put_adjustment(self, adj_callback_data: dict) -> Response:
         set_auth_token(self.api_client, self.comp_api_user.user)
@@ -178,19 +180,19 @@ class RunMockModel(CoreTestMixin):
         put_adj_resp = self.api_client.put(
             f"/inputs/api/", data=adj_callback_data, format="json"
         )
-        assert_status(200, put_adj_resp.status_code, "put_adjustment")
+        assert_status(200, put_adj_resp, "put_adjustment")
         return put_adj_resp
 
-    def check_adjustment_finished(self, inputs_hashid: str) -> Inputs:
+    def check_adjustment_finished(self, model_pk: str) -> Inputs:
         get_resp_succ = self.api_client.get(
-            f"/{self.owner}/{self.title}/api/v1/inputs/{inputs_hashid}/"
+            f"/{self.owner}/{self.title}/api/v1/{model_pk}/edit/"
         )
-        assert_status(200, get_resp_succ.status_code, "check_adjustment_finished")
+        assert_status(200, get_resp_succ, "check_adjustment_finished")
         assert get_resp_succ.data["status"] == "SUCCESS"
         assert get_resp_succ.data["sim"]["model_pk"]
 
         model_pk = get_resp_succ.data["sim"]["model_pk"]
-        inputs = Inputs.objects.from_hashid(inputs_hashid)
+        inputs = Inputs.objects.get(project=self.project, outputs__model_pk=model_pk)
         assert inputs.outputs.model_pk == model_pk
         assert inputs.outputs.status == "PENDING"
         return inputs
@@ -201,31 +203,30 @@ class RunMockModel(CoreTestMixin):
         get_resp_pend = self.api_client.get(
             f"/{self.owner}/{self.title}/api/v1/{model_pk}/"
         )
-        assert_status(202, get_resp_pend.status_code, "poll_simulation")
+        assert_status(202, get_resp_pend, "poll_simulation")
 
     def check_simulation_finished(self, model_pk: int):
         get_resp_succ = self.api_client.get(
             f"/{self.owner}/{self.title}/api/v1/{model_pk}/"
         )
-        assert_status(200, get_resp_succ.status_code, "check_simulation_finished")
+        assert_status(200, get_resp_succ, "check_simulation_finished")
         model_pk = get_resp_succ.data["model_pk"]
-        sim = Simulation.objects.get(project=self.project, model_pk=model_pk)
-        assert sim.status == "SUCCESS"
-        assert sim.outputs
-        assert sim.traceback is None
+        self.sim = Simulation.objects.get(project=self.project, model_pk=model_pk)
+        assert self.sim.status == "SUCCESS"
+        assert self.sim.outputs
+        assert self.sim.traceback is None
 
-    def view_inputs_from_model_pk(self, model_pk: int, inputs_hashid: str):
+    def view_inputs_from_model_pk(self, model_pk: int):
         get_resp_inputs = self.api_client.get(
             f"/{self.owner}/{self.title}/api/v1/{model_pk}/edit/"
         )
-        assert_status(200, get_resp_inputs.status_code, "view_inputs_from_model_pk")
+        assert_status(200, get_resp_inputs, "view_inputs_from_model_pk")
         data = get_resp_inputs.data
         assert "adjustment" in data
         assert data["sim"]["model_pk"] == model_pk
-        assert data["hashid"] == inputs_hashid
 
         edit_page = self.client.get(f"/{self.owner}/{self.title}/{model_pk}/edit/")
-        assert_status(200, edit_page.status_code, "view_inputs_from_model_pk")
+        assert_status(200, edit_page, "view_inputs_from_model_pk")
 
     def set_sim_description(self, model_pk: int):
         sim = Simulation.objects.get(
@@ -237,7 +238,7 @@ class RunMockModel(CoreTestMixin):
         get_sim_resp = self.api_client.get(
             f"/{self.owner}/{self.title}/api/v1/{model_pk}/remote/"
         )
-        assert_status(200, get_sim_resp.status_code, "set_sim_description")
+        assert_status(200, get_sim_resp, "set_sim_description")
         data = get_sim_resp.data
 
         assert data["title"] == sim.title == "Untitled Simulation"
@@ -245,17 +246,15 @@ class RunMockModel(CoreTestMixin):
         assert sim.parent_sim == None
 
         put_desc_resp = self.api_client.put(
-            f"/{self.owner}/{self.title}/api/v1/{model_pk}/",
-            data={"title": "My sim", "readme": "hello world"},
+            f"/{self.owner}/{self.title}/api/v1/{model_pk}/", data={"title": "My sim"},
         )
-        assert_status(200, put_desc_resp.status_code, "set_sim_description")
+        assert_status(200, put_desc_resp, "set_sim_description")
         sim = Simulation.objects.get(
             project__owner__user__username__iexact=self.owner,
             project__title__iexact=self.title,
             model_pk=model_pk,
         )
         assert sim.title == "My sim"
-        assert sim.readme == "hello world"
         assert str(sim.owner)
         assert sim.parent_sim == None
 
@@ -322,6 +321,76 @@ class TestAsyncAPI(CoreTestMixin):
             ioutils = get_ioutils(self.project)
             exp = ioutils.displayer.package_defaults()
             assert exp == resp.data
+
+    def test_new_sim(self, client, api_client, profile, worker_url):
+        resp = client.get(f"/{self.owner}/{self.title}/")
+        assert_status(200, resp, "test_new_sim")
+
+        new_resp = client.get(f"/{self.owner}/{self.title}/new/")
+        assert_status(200, new_resp, "test_new_sim")
+
+        client.force_login(profile.user)
+        auth_resp = client.get(f"/{self.owner}/{self.title}/new/")
+        assert_status(302, auth_resp, "test_new_sim")
+
+        sim_url = auth_resp.url
+        sim_resp = client.get(sim_url)
+        assert_status(200, sim_resp, sim_url)
+
+        model_pk = int(sim_url.split("/")[3])
+
+        sim = Simulation.objects.get(
+            project__title=self.title,
+            project__owner__user__username=self.owner,
+            model_pk=model_pk,
+        )
+
+        assert sim.status == "STARTED"
+        assert sim.inputs.status == "STARTED"
+
+        api_client.logout()
+        anon_resp = api_client.post(
+            sim.get_absolute_api_url(),
+            data={"adjustment": {}, "meta_parameters": {}},
+            format="json",
+        )
+        assert_status(403, anon_resp, "test_new_sim_anon")
+
+        u = User.objects.get(username="hdoupe")
+        set_auth_token(api_client, u)
+        anon_resp = api_client.post(
+            sim.get_absolute_api_url(),
+            data={"adjustment": {}, "meta_parameters": {}},
+            format="json",
+        )
+        assert_status(403, anon_resp, "test_new_sim_oth_user")
+
+        defaults = self.defaults()
+        inputs_resp_data = {"status": "SUCCESS", **defaults}
+        adj_resp_data = {"job_id": str(uuid.uuid4()), "qlength": 1}
+        with requests_mock.Mocker() as mock:
+            mock.register_uri(
+                "POST",
+                f"{worker_url}{self.owner}/{self.title}/inputs",
+                text=json.dumps(inputs_resp_data),
+            )
+            mock.register_uri(
+                "POST",
+                f"{worker_url}{self.owner}/{self.title}/parse",
+                text=json.dumps(adj_resp_data),
+            )
+            resp = api_client.get(sim.inputs.get_absolute_api_url())
+            assert_status(200, resp, "test_new_sim_inputs")
+            resp = api_client.get(sim.get_absolute_api_url())
+            assert_status(200, resp, "test_new_sim_outputs")
+
+            set_auth_token(api_client, profile.user)
+            anon_resp = api_client.post(
+                sim.get_absolute_api_url(),
+                data={"adjustment": {}, "meta_parameters": {}},
+                format="json",
+            )
+            assert_status(201, anon_resp, "test_new_sim_owner")
 
     def test_post_inputs(self, api_client, worker_url):
         defaults = self.defaults()
@@ -456,7 +525,7 @@ def test_placeholder_page(db, client):
     project.save()
     resp = client.get(f"/{owner}/{title}/")
     assert resp.status_code == 200
-    assert "comp/inputs_form.html" in [t.name for t in resp.templates]
+    assert "comp/home.html" in [t.name for t in resp.templates]
 
 
 def test_outputs_api(db, api_client, profile, password):
@@ -469,7 +538,6 @@ def test_outputs_api(db, api_client, profile, password):
 
     # Test data errors return 400
     user = User.objects.get(username="comp-api-user")
-    # api_client.login(username=user.username, password="heyhey2222")
     api_client.credentials(HTTP_AUTHORIZATION=f"Token {user.auth_token.key}")
     assert (
         api_client.put("/outputs/api/", data={"bad": "data"}, format="json").status_code
@@ -482,4 +550,11 @@ def test_anon_get_create_api(db, api_client):
     assert not anon_user.is_authenticated
 
     resp = api_client.get("/hdoupe/Matchups/api/v1/")
+    assert resp.status_code == 405
+
+    resp = api_client.post(
+        "/hdoupe/Matchups/api/v1/",
+        data={"adjustment": {}, "meta_parameters": {}},
+        format="json",
+    )
     assert resp.status_code == 403

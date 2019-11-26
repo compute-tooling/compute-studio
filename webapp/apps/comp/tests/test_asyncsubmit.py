@@ -39,14 +39,16 @@ def _submit_inputs(title, get_inputs, meta_param_dict, profile, parent_model_pk=
     mockrequest.user = profile.user
     mockrequest.data = data
 
+    sim = Simulation.objects.new_sim(profile.user, project)
+
     compute = MockCompute()
-    return SubmitInputs(mockrequest, project, ioutils, compute)
+    return SubmitInputs(mockrequest, project, ioutils, compute, sim)
 
 
 def _submit_sim(submit_inputs):
     compute = MockCompute()
     result = submit_inputs.submit()
-    submit_sim = SubmitSim(result, compute, sim=None)
+    submit_sim = SubmitSim(result.outputs, compute)
     return submit_inputs, submit_sim
 
 
@@ -69,7 +71,9 @@ def test_submit_inputs(db, submit_inputs):
     assert inputs.project
     assert inputs.owner
     assert inputs.job_id
-    assert not hasattr(inputs, "outputs")
+    assert inputs.outputs
+    assert inputs.status == "PENDING"
+    assert inputs.outputs.status == "STARTED"
 
 
 def test_submit_outputs(db, submit_sim):
@@ -87,7 +91,6 @@ def test_parents_submit(db, get_inputs, meta_param_dict, profile):
     submit_inputs0, submit_sim0 = _submit_sim(inputs)
     _ = submit_sim0.submit()
     submit_sim0.sim.title = "hello world"
-    submit_sim0.sim.readme = "a readme..."
     submit_sim0.sim.save()
 
     assert submit_inputs0.inputs.parent_sim == None
@@ -107,4 +110,3 @@ def test_parents_submit(db, get_inputs, meta_param_dict, profile):
     assert submit_inputs1.inputs.parent_sim == submit_sim0.sim
     assert submit_sim1.sim.parent_sim == submit_sim0.sim
     assert submit_sim1.sim.title == "hello world"
-    assert submit_sim1.sim.readme == "a readme..."

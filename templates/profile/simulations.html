@@ -57,6 +57,8 @@
         node.addClass("text-success");
       } else if (node.text() == "PENDING") {
         node.addClass("text-warning");
+      } else if (node.text() == "STARTED") {
+        node.addClass("text-primary");
       } else {
         node.addClass("text-danger");
       }

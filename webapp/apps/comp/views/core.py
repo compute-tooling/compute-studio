@@ -3,6 +3,8 @@ from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from webapp.apps.comp.permissions import RequiresActive, RequiresPayment
 
 from webapp.apps.billing.utils import has_payment_method, ChargeRunMixin, USE_STRIPE
 from webapp.apps.users.models import is_profile_active
@@ -63,32 +65,36 @@ class AbstractRouter:
     payment_view = None
     login_view = None
 
-    def handle(self, request, is_get, *args, **kwargs):
+    def handle(self, request, action, *args, **kwargs):
         print("router handle", args, kwargs)
         project = get_object_or_404(
             self.projects,
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
+
         if project.status in ["updating", "live"]:
             if project.sponsor is None:
                 return self.payment_view.as_view()(request, *args, **kwargs)
             else:
                 return self.login_view.as_view()(request, *args, **kwargs)
         else:
-            if is_get:
-                return self.unauthorized_get(request, project)
+            if action == "GET":
+                return self.unauthenticated_get(request, *args, **kwargs)
             else:
                 raise PermissionDenied()
 
-    def unauthorized_get(self, request, project):
+    def unauthenticated_get(self, request, *args, **kwargs):
         return PermissionDenied()
 
     def get(self, request, *args, **kwargs):
-        return self.handle(request, True, *args, **kwargs)
+        return self.handle(request, "GET", *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        return self.handle(request, False, *args, **kwargs)
+        return self.handle(request, "POST", *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.handle(request, "PUT", *args, **kwargs)
 
 
 class AbstractRouterView(AbstractRouter, View):
@@ -101,6 +107,9 @@ class AbstractRouterAPIView(AbstractRouter, APIView):
 
     def post(self, request, *args, **kwargs):
         return AbstractRouter.post(self, request._request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return AbstractRouter.put(self, request._request, *args, **kwargs)
 
 
 class GetOutputsObjectMixin:
@@ -130,3 +139,11 @@ class RecordOutputsMixin(ChargeRunMixin):
             if isinstance(sim.traceback, str) and len(sim.traceback) > 8000:
                 sim.traceback = sim.traceback[:8000]
             sim.save()
+
+
+class RequiresLoginPermissions:
+    permission_classes = (IsAuthenticatedOrReadOnly & RequiresActive,)
+
+
+class RequiresPmtPermissions:
+    permission_classes = (IsAuthenticatedOrReadOnly & RequiresActive & RequiresPayment,)

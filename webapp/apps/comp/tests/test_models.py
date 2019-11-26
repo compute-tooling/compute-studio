@@ -16,6 +16,15 @@ from .test_asyncsubmit import _submit_inputs, _submit_sim
 User = auth.get_user_model()
 
 
+def test_new_sim(db, profile):
+    project = Project.objects.get(
+        title="Used-for-testing", owner__user__username="modeler"
+    )
+    sim = Simulation.objects.new_sim(profile.user, project)
+    assert sim
+    assert sim.inputs
+
+
 def test_get_next_model_pk(db):
     owner = Profile.objects.get(user__username="modeler")
     project = Project.objects.get(title="Used-for-testing", owner=owner)
@@ -33,30 +42,6 @@ def test_get_next_model_pk(db):
     sim.save()
     assert sim.model_pk == naive_next_model_pk
     assert Simulation.objects.next_model_pk(project) == sim.model_pk + 1
-
-
-def test_hashids(db, test_models):
-    hashids = Hashids(salt=INPUTS_SALT, min_length=6)
-    inputs = test_models[0].inputs
-    pk = inputs.pk
-    hashid = hashids.encode(pk)
-
-    # test get_hashid returns encoded pk and encoded pk
-    # can be used to return the correct inputs object.
-    assert hashid == inputs.get_hashid()
-    assert Inputs.objects.from_hashid(hashid) == inputs
-    assert Inputs.objects.get_object_from_hashid_or_404(hashid) == inputs
-
-    # Test situation where item cannot be encoded to a number
-    # and situation where pk does not exist.
-    assert Inputs.objects.from_hashid("a") == None
-    with pytest.raises(Inputs.DoesNotExist):
-        Inputs.objects.from_hashid(hashids.encode(1000))
-
-    with pytest.raises(Http404):
-        Inputs.objects.get_object_from_hashid_or_404(hashids.encode(1000))
-    with pytest.raises(Http404):
-        Inputs.objects.get_object_from_hashid_or_404("a")
 
 
 def test_parent_sims(db, get_inputs, meta_param_dict, profile):

@@ -18,17 +18,35 @@ class OutputsSerializer(serializers.Serializer):
 
 
 class MiniSimulationSerializer(serializers.ModelSerializer):
-    api_url = serializers.CharField(source="get_absolute_api_url")
-    gui_url = serializers.CharField(source="get_absolute_url")
-    creation_date = serializers.DateTimeField(format="%Y-%m-%d")
+    owner = serializers.StringRelatedField(required=False)
+    title = serializers.CharField(required=False)
+    api_url = serializers.CharField(required=False, source="get_absolute_api_url")
+    gui_url = serializers.CharField(required=False, source="get_absolute_url")
+    model_pk = serializers.IntegerField(required=False)
 
     class Meta:
         model = Simulation
-        fields = ("model_pk", "api_url", "gui_url", "creation_date", "model_version")
+        fields = (
+            "title",
+            "owner",
+            "creation_date",
+            "api_url",
+            "gui_url",
+            "model_version",
+            "model_pk",
+        )
+        read_only = (
+            "owner",
+            "api_url",
+            "gui_url",
+            "creation_date",
+            "model_version",
+            "model_pk",
+        )
 
 
 class InputsSerializer(serializers.ModelSerializer):
-    hashid = serializers.CharField(source="get_hashid", required=False)
+    # hashid = serializers.CharField(source="get_hashid", required=False)
     job_id = serializers.UUIDField(required=False)
     status = serializers.ChoiceField(
         choices=(("SUCCESS", "Success"), ("FAIL", "Fail")), required=False
@@ -43,7 +61,7 @@ class InputsSerializer(serializers.ModelSerializer):
     )
     sim = MiniSimulationSerializer(source="outputs", required=False)
     parent_model_pk = serializers.IntegerField(required=False)
-    parent_inputs_hashid = serializers.CharField(required=False)
+    # parent_inputs_hashid = serializers.CharField(required=False)
     job_id = serializers.UUIDField(required=False)
     status = serializers.ChoiceField(
         choices=(("SUCCESS", "Success"), ("FAIL", "Fail")), required=False
@@ -54,7 +72,7 @@ class InputsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inputs
         fields = (
-            "hashid",
+            # "hashid",
             "meta_parameters",
             "adjustment",
             "custom_adjustment",
@@ -64,23 +82,11 @@ class InputsSerializer(serializers.ModelSerializer):
             "traceback",
             "sim",
             "parent_model_pk",
-            "parent_inputs_hashid",
+            # "parent_inputs_hashid",
             "api_url",
             "edit_inputs_url",
             "client",
         )
-
-
-class SimDescriptionSerializer(serializers.ModelSerializer):
-    owner = serializers.StringRelatedField(required=False)
-    title = serializers.CharField(required=False)
-    api_url = serializers.CharField(required=False, source="get_absolute_api_url")
-    gui_url = serializers.CharField(required=False, source="get_absolute_url")
-
-    class Meta:
-        model = Simulation
-        fields = ("title", "owner", "creation_date", "api_url", "gui_url")
-        read_only = ("owner", "api_url", "gui_url", "creation_date")
 
 
 class SimulationSerializer(serializers.ModelSerializer):
@@ -91,7 +97,7 @@ class SimulationSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=False)
     owner = serializers.StringRelatedField(required=False)
     project = PublishSerializer()
-    parent_sims = SimDescriptionSerializer(many=True)
+    parent_sims = MiniSimulationSerializer(many=True)
 
     class Meta:
         model = Simulation

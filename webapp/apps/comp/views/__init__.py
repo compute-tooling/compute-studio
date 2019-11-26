@@ -1,7 +1,6 @@
 from .views import (
-    ModelView,
-    RouterView,
-    EditInputsView,
+    ModelPageView,
+    NewSimView,
     EditSimView,
     OutputsDownloadView,
     OutputsView,
@@ -9,7 +8,7 @@ from .views import (
 
 from .api import (
     InputsAPIView,
-    APIRouterView,
+    CreateAPIView,
     DetailAPIView,
     RemoteDetailAPIView,
     OutputsAPIView,

@@ -7,7 +7,6 @@ from rest_framework.authentication import (
     SessionAuthentication,
     TokenAuthentication,
 )
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -22,16 +21,21 @@ from webapp.apps.comp.exceptions import AppError, ValidationError, BadPostExcept
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.models import Inputs, Simulation
 from webapp.apps.comp.parser import APIParser
-from webapp.apps.comp.permissions import RequiresActive, RequiresPayment
 from webapp.apps.comp.serializers import (
     SimulationSerializer,
-    SimDescriptionSerializer,
+    MiniSimulationSerializer,
     InputsSerializer,
     OutputsSerializer,
 )
 from webapp.apps.comp.utils import is_valid
 
-from .core import GetOutputsObjectMixin, RecordOutputsMixin, AbstractRouterAPIView
+from .core import (
+    GetOutputsObjectMixin,
+    RecordOutputsMixin,
+    AbstractRouterAPIView,
+    RequiresLoginPermissions,
+    RequiresPmtPermissions,
+)
 
 
 class InputsAPIView(APIView):
@@ -86,16 +90,46 @@ class DetailMyInputsAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         print("myinputs api method=GET", request.GET, kwargs)
-        if "model_pk" in kwargs:
-            inputs = get_object_or_404(
-                self.queryset,
-                outputs__model_pk=kwargs["model_pk"],
-                project__title__iexact=kwargs["title"],
-                project__owner__user__username__iexact=kwargs["username"],
-            )
-        else:
-            inputs = self.queryset.get_object_from_hashid_or_404(kwargs["hashid"])
+        inputs = get_object_or_404(
+            self.queryset,
+            outputs__model_pk=kwargs["model_pk"],
+            project__title__iexact=kwargs["title"],
+            project__owner__user__username__iexact=kwargs["username"],
+        )
         return Response(InputsSerializer(inputs).data)
+
+
+def submit(request, success_status, project, sim):
+    compute = Compute()
+    ioutils = get_ioutils(project, Parser=APIParser)
+
+    try:
+        submit_inputs = SubmitInputs(request, project, ioutils, compute, sim)
+        result = submit_inputs.submit()
+    except BadPostException as bpe:
+        return Response(bpe.errors, status=status.HTTP_400_BAD_REQUEST)
+    except AppError as ae:
+        try:
+            send_mail(
+                f"Compute Studio AppError",
+                (
+                    f"An error has occurred:\n {ae.parameters}\n causing: "
+                    f"{ae.traceback}\n user:{request.user.username}\n "
+                    f"project: {project.app_url}."
+                ),
+                "hank@compute.studio",
+                ["hank@compute.studio"],
+                fail_silently=True,
+            )
+        # Http 401 exception if mail credentials are not set up.
+        except Exception:
+            pass
+
+        return Response(ae.traceback, status=success_status)
+
+    inputs = InputsSerializer(result)
+
+    return Response(inputs.data, status=status.HTTP_201_CREATED)
 
 
 class BaseCreateAPIView(APIView):
@@ -107,52 +141,24 @@ class BaseCreateAPIView(APIView):
     queryset = Project.objects.all()
 
     def post(self, request, *args, **kwargs):
-        compute = Compute()
         project = get_object_or_404(
             self.queryset,
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
-        ioutils = get_ioutils(project, Parser=APIParser)
-
-        try:
-            submit_inputs = SubmitInputs(request, project, ioutils, compute)
-            result = submit_inputs.submit()
-        except BadPostException as bpe:
-            return Response(bpe.errors, status=status.HTTP_400_BAD_REQUEST)
-        except AppError as ae:
-            try:
-                send_mail(
-                    f"Compute Studio AppError",
-                    (
-                        f"An error has occurred:\n {ae.parameters}\n causing: "
-                        f"{ae.traceback}\n user:{request.user.username}\n "
-                        f"project: {project.app_url}."
-                    ),
-                    "hank@compute.studio",
-                    ["hank@compute.studio"],
-                    fail_silently=True,
-                )
-            # Http 401 exception if mail credentials are not set up.
-            except Exception:
-                pass
-
-            return Response(ae.traceback, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        inputs = InputsSerializer(result)
-
-        return Response(inputs.data, status=status.HTTP_201_CREATED)
+        sim = Simulation.objects.new_sim(request.user, project)
+        return submit(request, status.HTTP_201_CREATED, project, sim)
 
 
-class RequiresLoginAPIView(BaseCreateAPIView):
-    permission_classes = (IsAuthenticatedOrReadOnly & RequiresActive,)
+class RequiresLoginAPIView(RequiresLoginPermissions, BaseCreateAPIView):
+    pass
 
 
-class RequiresPmtAPIView(BaseCreateAPIView):
-    permission_classes = (IsAuthenticatedOrReadOnly & RequiresActive & RequiresPayment,)
+class RequiresPmtAPIView(RequiresPmtPermissions, BaseCreateAPIView):
+    pass
 
 
-class APIRouterView(AbstractRouterAPIView):
+class CreateAPIView(AbstractRouterAPIView):
     payment_view = RequiresPmtAPIView
     login_view = RequiresLoginAPIView
     projects = Project.objects.all()
@@ -173,23 +179,37 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
             )
             if self.object.owner.user == request.user:
                 print("got data", request.data)
-                serializer = SimDescriptionSerializer(self.object, data=request.data)
+                serializer = MiniSimulationSerializer(self.object, data=request.data)
                 if serializer.is_valid():
                     serializer.save(last_modified=timezone.now())
                     return Response(serializer.data)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response(status=status.HTTP_403_FORBIDDEN)
         return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-    def get(self, request, as_remote, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         self.object = self.get_object(
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
+        write_access = self.object.has_write_access(request.user)
+        if not write_access:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        if self.object.status == "STARTED":
+            return submit(request, status.HTTP_200_OK, self.object.project, self.object)
+        else:
+            return Response(
+                {
+                    "status": "This simulation is either pending or in a terminated state."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    def get_sim_data(self, user, as_remote, username, title, model_pk):
+        self.object = self.get_object(model_pk, username, title)
         sim = SimulationSerializer(self.object)
-        write_access = (
-            request.user.is_authenticated
-            and request.user == self.object.owner.user
-        )
-        data = {"write_access": write_access}
+        write_access = self.object.has_write_access(user)
+        data = {"has_write_access": write_access}
         if self.object.outputs:
             data.update(sim.data)
             outputs = data["outputs"]["outputs"]
@@ -201,6 +221,9 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
                 )
             return Response(data, status=status.HTTP_200_OK)
         elif self.object.traceback is not None:
+            data.update(sim.data)
+            return Response(data, status=status.HTTP_200_OK)
+        elif self.object.status == "STARTED":
             data.update(sim.data)
             return Response(data, status=status.HTTP_200_OK)
 
@@ -229,17 +252,34 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
         data.update(sim.data)
         return Response(data, status=status.HTTP_202_ACCEPTED)
 
-
-class DetailAPIView(BaseDetailAPIView):
     def get(self, request, *args, **kwargs):
-        as_remote = False
-        return super().get(request, as_remote, *args, **kwargs)
+        print("Ok here")
+        return self.get_sim_data(request.user, as_remote=False, **kwargs)
+
+
+class RequiresLoginDetailAPIView(RequiresLoginPermissions, BaseDetailAPIView):
+    pass
+
+
+class RequiresPmtDetailAPIView(RequiresPmtPermissions, BaseDetailAPIView):
+    pass
+
+
+class DetailAPIView(AbstractRouterAPIView):
+    payment_view = RequiresPmtDetailAPIView
+    login_view = RequiresLoginDetailAPIView
+    projects = Project.objects.all()
 
 
 class RemoteDetailAPIView(BaseDetailAPIView):
     def get(self, request, *args, **kwargs):
-        as_remote = True
-        return super().get(request, as_remote, *args, **kwargs)
+        return self.get_sim_data(request.user, as_remote=True, **kwargs)
+
+    def post(self, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def put(self, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class OutputsAPIView(RecordOutputsMixin, APIView):
@@ -287,7 +327,7 @@ class MyInputsAPIView(APIView):
                         inputs.status = "SUCCESS" if is_valid(inputs) else "INVALID"
                         inputs.save()
                         if inputs.status == "SUCCESS":
-                            submit_sim = SubmitSim(inputs, compute=Compute())
+                            submit_sim = SubmitSim(inputs.outputs, compute=Compute())
                             submit_sim.submit()
                     # failed run, exception was caught
                     else:
