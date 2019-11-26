@@ -10,7 +10,7 @@ import * as Sentry from "@sentry/browser";
 import InputsForm from "./InputsForm";
 import OutputsComponent from "./Outputs";
 import ErrorBoundary from "./ErrorBoundary";
-import { APIData, RemoteOutputs, Outputs, SimAPIData, AccessStatus } from "./types";
+import { InputsAPIData, RemoteOutputs, Outputs, SimAPIData, AccessStatus } from "./types";
 import DescriptionComponent from "./Description";
 
 Sentry.init({
@@ -53,7 +53,7 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
   fetchInitialValues() {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
-    let data: APIData;
+    let data: InputsAPIData;
     console.log("router", username, app_name, this.props.type);
     if (this.props.type === "new") {
       console.log("fresh page");
@@ -79,22 +79,6 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
             return data;
           });
       });
-    } else if (this.props.type === "edit_inputs") {
-      let inputs_hashid = this.props.match.params.inputs_hashid;
-      console.log("edit inputs");
-      return axios.get(`/${username}/${app_name}/api/v1/inputs/${inputs_hashid}/`).then(
-        detailResp => {
-          console.log("detailResp", detailResp);
-          return axios
-            .post(`/${username}/${app_name}/api/v1/inputs/`, {
-              meta_parameters: detailResp.data.meta_parameters
-            })
-            .then(inputsResp => {
-              console.log("inputsResp", inputsResp);
-              (data = inputsResp.data), (data["detail"] = detailResp.data);
-              return data;
-            });
-        });
     } else {
       console.log(`type: ${this.props.type} is not allowed.`);
     }
@@ -107,23 +91,14 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
       .post(`/${username}/${app_name}/api/v1/inputs/`, metaParameters)
       .then(function (response) {
         console.log(response);
-        let data: APIData = response.data;
+        let data: InputsAPIData = response.data;
         return data;
       });
   }
 
-  doSubmit(data: FormData) {
-    const username = this.props.match.params.username;
-    const app_name = this.props.match.params.app_name;
-    console.log("posting...");
-    console.log(data);
-    if (this.props.type == "edit_sim") {
-      data.set("parent_model_pk", this.props.match.params.model_pk.toString());
-    } else if (this.props.type == "edit_inputs") {
-      data.set("parent_inputs_hashid", this.props.match.params.inputs_hashid)
-    }
+  doSubmit(url: string, data: FormData) {
     return axios
-      .post(`/${username}/${app_name}/api/v1/`, data)
+      .post(url, data)
       .then(function (response) {
         console.log(response);
         return response;
@@ -134,7 +109,6 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     const id = `${username}/${app_name}`;
-    console.log("let's render!");
     return (
       <ErrorBoundary>
         <InputsForm
@@ -143,6 +117,7 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
           doSubmit={this.doSubmit}
           readOnly={this.props.readOnly}
           accessStatus={this.props.accessStatus}
+          defaultURL={`/${username}/${app_name}/api/v1/`}
         />
       </ErrorBoundary>
     );

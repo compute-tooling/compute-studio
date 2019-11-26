@@ -112,6 +112,9 @@ class Inputs(models.Model):
         }
         return reverse("detail_myinputs_api_model_pk", kwargs=kwargs)
 
+    def has_write_access(self, user):
+        return user.is_authenticated and user == self.owner.user
+
 
 class SimulationManager(models.Manager):
     def next_model_pk(self, project):
@@ -125,7 +128,12 @@ class SimulationManager(models.Manager):
 
     def new_sim(self, user, project):
         inputs = Inputs.objects.create(
-            owner=user.profile, project=project, status="STARTED"
+            owner=user.profile,
+            project=project,
+            status="STARTED",
+            adjustment={},
+            meta_parameters={},
+            errors_warnings={},
         )
         sim = self.create(
             owner=user.profile,

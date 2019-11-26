@@ -7,7 +7,7 @@ import axios from "axios";
 import { AccessStatus } from "./types";
 
 
-export const ValidatingModal: React.FC<{defaultShow?: boolean}> = ({defaultShow = true}) => {
+export const ValidatingModal: React.FC<{ defaultShow?: boolean }> = ({ defaultShow = true }) => {
   const [show, setShow] = React.useState(defaultShow);
 
   return (
@@ -26,7 +26,7 @@ export const ValidatingModal: React.FC<{defaultShow?: boolean}> = ({defaultShow 
   );
 }
 
-const PricingInfoCollapse: React.FC<{accessStatus: AccessStatus}> = ({ accessStatus }) => {
+const PricingInfoCollapse: React.FC<{ accessStatus: AccessStatus }> = ({ accessStatus }) => {
   const [collapseOpen, setCollapseOpen] = React.useState(false);
 
   return (
@@ -56,11 +56,11 @@ const PricingInfoCollapse: React.FC<{accessStatus: AccessStatus}> = ({ accessSta
   );
 }
 
-const RequireLoginDialog: React.FC<{
-  accessStatus: AccessStatus, 
-  show: boolean, 
-  setShow?: React.Dispatch<any>, 
-  handleSubmit: ()=>void
+export const RequireLoginDialog: React.FC<{
+  accessStatus: AccessStatus,
+  show: boolean,
+  setShow?: React.Dispatch<any>,
+  handleSubmit: () => void
 }> = ({ accessStatus, show, setShow, handleSubmit }) => {
   const [authenticated, setAuthStatus] = React.useState(false);
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
@@ -73,14 +73,14 @@ const RequireLoginDialog: React.FC<{
     ).then(resp => {
       let accessStatus = resp.data;
       let dialog = <Dialog accessStatus={accessStatus} show={show} setShow={null} handleSubmit={handleSubmit} />
-      updateNewDialog(dialog)
+      updateNewDialog(dialog);
     });
     setHasSubmitted(true);
   }
   if (newDialog !== null) {
     return newDialog;
   }
-  
+
   return (
     <Modal show={show} onHide={() => setShow(false)}>
       <Modal.Header closeButton>
@@ -107,10 +107,10 @@ const RequireLoginDialog: React.FC<{
 }
 
 const RequirePmtDialog: React.FC<{
-  accessStatus: AccessStatus, 
-  show: boolean, 
-  setShow?: React.Dispatch<any>, 
-  handleSubmit: ()=>void
+  accessStatus: AccessStatus,
+  show: boolean,
+  setShow?: React.Dispatch<any>,
+  handleSubmit: () => void
 }> = ({ accessStatus, show, setShow, handleSubmit }) => {
   const handleCloseWithRedirect = (e, redirectLink) => {
     e.preventDefault();
@@ -142,10 +142,10 @@ const RequirePmtDialog: React.FC<{
 }
 
 const RunDialog: React.FC<{
-  accessStatus: AccessStatus, 
-  show: boolean, 
-  setShow?: React.Dispatch<any>, 
-  handleSubmit: ()=>void
+  accessStatus: AccessStatus,
+  show: boolean,
+  setShow?: React.Dispatch<any>,
+  handleSubmit: () => void
 }> = ({ accessStatus, show, setShow, handleSubmit }) => {
   const handleCloseWithSubmit = () => {
     setShow(false);
@@ -189,10 +189,10 @@ const RunDialog: React.FC<{
 }
 
 const Dialog: React.FC<{
-  accessStatus: AccessStatus, 
-  show: boolean, 
-  setShow?: React.Dispatch<any>, 
-  handleSubmit: ()=>void
+  accessStatus: AccessStatus,
+  show: boolean,
+  setShow?: React.Dispatch<any>,
+  handleSubmit: () => void
 }> = ({ accessStatus, show, setShow, handleSubmit }) => {
   if (setShow == null) {
     [show, setShow] = React.useState(show);
@@ -207,7 +207,7 @@ const Dialog: React.FC<{
 }
 
 
-export const RunModal: React.FC<{handleSubmit: () => void, accessStatus: AccessStatus}> = ({ handleSubmit, accessStatus }) => {
+export const RunModal: React.FC<{ handleSubmit: () => void, accessStatus: AccessStatus }> = ({ handleSubmit, accessStatus }) => {
   const [show, setShow] = React.useState(false);
 
   let runbuttontext: string;
@@ -233,11 +233,10 @@ export const RunModal: React.FC<{handleSubmit: () => void, accessStatus: AccessS
   );
 };
 
-export const AuthModal: React.FC<{}> = () => {
+export const AuthModal: React.FC<{ msg?: string }> = ({ msg = "You must be logged in to run simulations." }) => {
   const [show, setShow] = React.useState(true);
 
   const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
   const handleCloseWithRedirect = (e, redirectLink) => {
     e.preventDefault();
     setShow(false);
@@ -249,7 +248,7 @@ export const AuthModal: React.FC<{}> = () => {
         <Modal.Header closeButton>
           <Modal.Title>Sign up</Modal.Title>
         </Modal.Header>
-        <Modal.Body>You must be logged in to run simulations.</Modal.Body>
+        <Modal.Body>{msg}</Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>
             Close

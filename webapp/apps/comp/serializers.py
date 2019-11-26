@@ -23,6 +23,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
     api_url = serializers.CharField(required=False, source="get_absolute_api_url")
     gui_url = serializers.CharField(required=False, source="get_absolute_url")
     model_pk = serializers.IntegerField(required=False)
+    status = serializers.CharField(required=False)
 
     class Meta:
         model = Simulation
@@ -34,6 +35,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
             "gui_url",
             "model_version",
             "model_pk",
+            "status",
         )
         read_only = (
             "owner",
@@ -42,6 +44,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
             "creation_date",
             "model_version",
             "model_pk",
+            "status",
         )
 
 

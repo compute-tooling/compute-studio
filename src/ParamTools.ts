@@ -8,8 +8,8 @@ import {
   ParamToolsConfig,
   ParamToolsParam,
   FormValueObject,
-  APIData,
-  APIDetail,
+  InputsAPIData,
+  InputsDetail,
   InitialValues,
   Sects
 } from "./types";
@@ -240,12 +240,12 @@ function labelsToString(valueObject: ValueObject): string {
 }
 
 export function convertToFormik(
-  data: APIData
+  data: InputsAPIData
 ): [
     InitialValues,
     Sects,
-    APIData["model_parameters"],
-    APIData["meta_parameters"],
+    InputsAPIData["model_parameters"],
+    InputsAPIData["meta_parameters"],
     yup.Schema<any>,
     Array<string>
   ] {
@@ -264,8 +264,8 @@ export function convertToFormik(
     "label_to_extend" in data ? data.label_to_extend : "year";
   // end TODO
   const hasInitialValues: boolean = "detail" in data;
-  let adjustment: APIDetail["adjustment"] = {};
-  let meta_parameters: APIDetail["meta_parameters"] = {};
+  let adjustment: InputsDetail["adjustment"] = {};
+  let meta_parameters: InputsDetail["meta_parameters"] = {};
   let unknownParams = [];
   if (hasInitialValues) {
     adjustment = data.detail.adjustment;
@@ -363,7 +363,7 @@ export function convertToFormik(
     let mpVal = mp_data.value[0].value;
     mpShape[mp_name] = yupObj;
     initialValues["meta_parameters"][mp_name] = yupObj.cast(
-      mp_name in meta_parameters ? meta_parameters[mp_name] : mpVal
+      (meta_parameters && mp_name in meta_parameters) ? meta_parameters[mp_name] : mpVal
     );
   }
   let schema = yup.object().shape({

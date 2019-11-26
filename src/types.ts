@@ -71,11 +71,6 @@ export interface ParamToolsConfig {
   [paramName: string]: ParamToolsParam;
 }
 
-export interface APIDetail {
-  adjustment: { [msect: string]: { [paramName: string]: Array<ValueObject> } };
-  meta_parameters: { [paramName: string]: Array<ValueObject> };
-}
-
 export interface AccessStatus {
   user_status: "inactive" | "customer" | "profile" | "anon";
   username?: string;
@@ -85,15 +80,6 @@ export interface AccessStatus {
   server_cost?: number;
   exp_cost?: number;
   exp_time?: number;
-}
-
-export interface APIData {
-  model_parameters: { [msect: string]: ParamToolsConfig };
-  meta_parameters: ParamToolsConfig;
-  label_to_extend?: string;
-  extend?: boolean;
-  detail: APIDetail;
-  accessStatus?: AccessStatus;
 }
 
 export interface InitialValues {
@@ -182,8 +168,28 @@ export interface SimDescription {
   readme: string;
   owner: string;
   creation_date: Date;
+  model_pk: number;
   api_url: string;
   gui_url: string;
+  status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
+}
+
+
+export interface InputsDetail {
+  adjustment?: { [msect: string]: { [paramName: string]: Array<ValueObject> } };
+  meta_parameters?: { [paramName: string]: Array<ValueObject> };
+  sim: SimDescription;
+  status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
+  has_write_access: Boolean;
+}
+
+export interface InputsAPIData {
+  model_parameters: { [msect: string]: ParamToolsConfig };
+  meta_parameters: ParamToolsConfig;
+  label_to_extend?: string;
+  extend?: boolean;
+  detail: InputsDetail;
+  accessStatus?: AccessStatus;
 }
 
 export interface SimAPIData<T> {
@@ -198,7 +204,7 @@ export interface SimAPIData<T> {
   eta: number;
   original_eta: number;
   model_pk: number;
-  status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS";
+  status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
   model_version: string;
   run_time: 322;
   exp_comp_datetime: Date;

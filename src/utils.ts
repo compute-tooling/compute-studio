@@ -17,9 +17,11 @@ export function valForForm(val) {
 
 
 export function hasServerErrors(errorsWarnings: { [msect: string]: { errors: { [paramName: string]: any } } }): boolean {
-  for (const [msect, ew] of Object.entries(errorsWarnings)) {
-    if (!isEmpty(ew.errors)) {
-      return true
+  if (errorsWarnings) {
+    for (const [msect, ew] of Object.entries(errorsWarnings)) {
+      if (!isEmpty(ew.errors)) {
+        return true
+      }
     }
   }
   return false;

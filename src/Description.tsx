@@ -8,6 +8,7 @@ import { SimAPIData, RemoteOutputs, SimDescription, AccessStatus } from "./types
 import { FormikActions, Formik, ErrorMessage, Field, Form } from "formik";
 import { Message } from "./fields";
 import moment = require("moment");
+import { RequireLoginDialog } from "./modal";
 
 interface DescriptionProps {
   fetchRemoteOutputs: () => Promise<SimAPIData<RemoteOutputs>>;
@@ -32,7 +33,8 @@ let Schema = yup.object().shape({
 type DescriptionState = Readonly<{
   initialValues: DescriptionValues
   owner: string;
-  preview: boolean;
+  preview: Boolean;
+  showAuth: Boolean;
   parentSims?: Array<SimDescription>;
 }>;
 
@@ -73,6 +75,7 @@ export default class DescriptionComponent extends React.Component<
       owner: "",
       preview: true,
       parentSims: null,
+      showAuth: false,
     };
     this.togglePreview = this.togglePreview.bind(this);
     this.writable = this.writable.bind(this);
@@ -115,6 +118,8 @@ export default class DescriptionComponent extends React.Component<
     event.preventDefault();
     if (this.writable()) {
       this.setState({ preview: !this.state.preview });
+    } else if (this.props.accessStatus.user_status == "anon") {
+      this.setState({ showAuth: true })
     }
   }
 
@@ -132,7 +137,17 @@ export default class DescriptionComponent extends React.Component<
         </Card>
       );
     }
-    let style = this.state.preview ? { border: 0 } : {}
+    if (this.state.showAuth) {
+      return <RequireLoginDialog
+        accessStatus={this.props.accessStatus}
+        show={true}
+        setShow={show => this.setState({ showAuth: !show })}
+        handleSubmit={() => null}
+      />
+    }
+    let style = this.state.preview ? {
+      border: 0
+    } : {}
     return (
       <Jumbotron className="shadow" style={{ backgroundColor: "white" }}>
         <Formik

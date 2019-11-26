@@ -16,7 +16,7 @@ import {
 import { ValidatingModal, RunModal, AuthModal } from "./modal";
 import { formikToJSON, convertToFormik } from "./ParamTools";
 import { hasServerErrors } from "./utils";
-import { APIData, AccessStatus, Sects, InitialValues } from "./types";
+import { InputsAPIData, AccessStatus, Sects, InitialValues, SimDescription, InputsDetail } from "./types";
 
 // need to require schema in model_parameters!
 const tbLabelSchema = yup.object().shape({
@@ -32,15 +32,18 @@ const tbLabelSchema = yup.object().shape({
 type InputsFormState = Readonly<{
   initialValues?: InitialValues,
   sects?: Sects,
-  model_parameters?: APIData["model_parameters"],
-  meta_parameters?: APIData["meta_parameters"],
+  model_parameters?: InputsAPIData["model_parameters"],
+  meta_parameters?: InputsAPIData["meta_parameters"],
   schema?: yup.Schema<any>,
   extend?: boolean,
   unknownParams?: Array<string>,
   creationDate?: Date,
+  status: InputsDetail["status"];
+  has_write_access: InputsDetail["has_write_access"];
   modelVersion?: string,
   detailAPIURL?: string,
   editInputsUrl?: string,
+  sim?: SimDescription,
   initialServerErrors?: { [msect: string]: { errors: { [paramName: string]: any } } },
   resetting?: boolean,
   error?: any,
@@ -50,9 +53,10 @@ type InputsFormState = Readonly<{
 interface InputsFormProps {
   fetchInitialValues: () => Promise<any>;
   resetInitialValues: (metaParameters: { [metaParam: string]: any }) => any;
-  doSubmit: (data: FormData) => Promise<any>;
+  doSubmit: (url, data) => Promise<any>;
   readOnly: boolean;
   accessStatus: AccessStatus;
+  defaultURL: string;
 }
 
 export default class InputsForm extends React.Component<InputsFormProps, InputsFormState> {
@@ -63,6 +67,8 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
       error: null,
       model_parameters: null,
       initialValues: null,
+      status: "STARTED",
+      has_write_access: false
     }
     this.resetInitialValues = this.resetInitialValues.bind(this);
     this.poll = this.poll.bind(this);
@@ -91,6 +97,9 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
             schema: schema,
             extend: "extend" in data ? data.extend : false,
             unknownParams: unknownParams,
+            has_write_access: data.detail ? data.detail.has_write_access : false,
+            status: data.detail ? data.detail.stauts : "STARTED",
+            sim: hasSimData ? data.detail.sim : null,
             creationDate: hasSimData ? data.detail.sim.creation_date : null,
             modelVersion: hasSimData ? data.detail.sim.model_version : null,
             detailAPIURL: !!data.detail ? data.detail.api_url : null,
@@ -249,11 +258,18 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
             formdata.append("adjustment", JSON.stringify(adjustment));
             formdata.append("meta_parameters", JSON.stringify(meta_parameters));
             formdata.append("client", "web-beta");
+            let url = this.props.defaultURL;
+            let sim = this.state.sim;
+            // clicked new simulation button
+            if (sim && this.state.has_write_access && sim.status == "STARTED") {
+              url = this.state.sim.api_url;
+            } else if (sim) { // sim is completed or user does not have write access
+              formdata.append("parent_model_pk", sim.model_pk.toString());
+            }
             this.props
-              .doSubmit(formdata)
+              .doSubmit(url, formdata)
               .then(response => {
                 console.log("success");
-                console.log(response.data.hashid);
                 // update url so that user can come back to inputs later on
                 // model errors or some type of unforeseen error in Compute Studio.
                 history.pushState(null, null, response.data.edit_inputs_url);

@@ -210,12 +210,12 @@ export default class OutputsComponent extends React.Component<
   }
 
   render() {
-    if (this.props.isNew) {
-      return <NewSimulation />
-    }
     let remoteSim = this.state.remoteSim;
     let sim = this.state.sim;
-    if (!remoteSim) {
+    console.log("remote sim", remoteSim)
+    if (this.props.isNew || (remoteSim && remoteSim.status === "STARTED")) {
+      return <NewSimulation />
+    } else if (!remoteSim) {
       return <Pending />;
     } else if (remoteSim && remoteSim.status === "PENDING") {
       return <Pending eta={remoteSim.eta} originalEta={remoteSim.original_eta} />

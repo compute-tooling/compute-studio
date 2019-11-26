@@ -96,7 +96,10 @@ class DetailMyInputsAPIView(APIView):
             project__title__iexact=kwargs["title"],
             project__owner__user__username__iexact=kwargs["username"],
         )
-        return Response(InputsSerializer(inputs).data)
+        ser = InputsSerializer(inputs)
+        data = {"has_write_access": inputs.has_write_access(request.user)}
+        data.update(ser.data)
+        return Response(data)
 
 
 def submit(request, success_status, project, sim):
@@ -319,7 +322,7 @@ class MyInputsAPIView(APIView):
                 inputs = get_object_or_404(Inputs, job_id=data["job_id"])
                 print("data")
                 print(data)
-                if inputs.status == "PENDING":
+                if inputs.status in ("PENDING", "INVALID"):
                     # successful run
                     if data["status"] == "SUCCESS":
                         inputs.errors_warnings = data["errors_warnings"]
