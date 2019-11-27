@@ -270,3 +270,40 @@ export const AuthModal: React.FC<{ msg?: string }> = ({ msg = "You must be logge
     </>
   );
 };
+
+
+export const UnsavedChangesModal: React.FC<{ handleClose: () => void }> = ({ handleClose }) => {
+  const [show, setShow] = React.useState(true);
+  const close = () => {
+    setShow(false)
+    handleClose()
+  };
+
+  return (
+    <>
+      <Modal show={show} onHide={close}>
+        <Modal.Header closeButton>
+          <Modal.Title>Unsaved Changes</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>You have unsaved changes in the inputs form.</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={close}>
+            Close
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={close}
+          >
+            <b>Close</b>
+          </Button>
+          <Button
+            variant="success"
+            onClick={close}
+          >
+            <b>Save</b>
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
+};
