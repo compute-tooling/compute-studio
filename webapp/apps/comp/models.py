@@ -106,7 +106,7 @@ class Inputs(models.Model):
 
     def get_absolute_api_url(self):
         kwargs = {
-            "model_pk": self.outputs.model_pk,
+            "model_pk": self.sim.model_pk,
             "title": self.project.title,
             "username": self.project.owner.user.username,
         }
@@ -155,7 +155,7 @@ class Simulation(models.Model):
         "self", null=True, related_name="child_sims", on_delete=models.SET_NULL
     )
     inputs = models.OneToOneField(
-        Inputs, on_delete=models.CASCADE, related_name="outputs"
+        Inputs, on_delete=models.CASCADE, related_name="sim"
     )
     meta_data = JSONField(default=None, blank=True, null=True)
     outputs = JSONField(default=None, blank=True, null=True)

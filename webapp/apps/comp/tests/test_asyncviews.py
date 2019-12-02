@@ -129,7 +129,7 @@ class RunMockModel(CoreTestMixin):
             inputs = self.check_adjustment_finished(model_pk)
             self.poll_simulation(inputs)
 
-        model_pk = inputs.outputs.model_pk
+        model_pk = inputs.sim.model_pk
         self.check_simulation_finished(model_pk)
 
         # test get inputs from model_pk
@@ -192,14 +192,14 @@ class RunMockModel(CoreTestMixin):
         assert get_resp_succ.data["sim"]["model_pk"]
 
         model_pk = get_resp_succ.data["sim"]["model_pk"]
-        inputs = Inputs.objects.get(project=self.project, outputs__model_pk=model_pk)
-        assert inputs.outputs.model_pk == model_pk
-        assert inputs.outputs.status == "PENDING"
+        inputs = Inputs.objects.get(project=self.project, sim__model_pk=model_pk)
+        assert inputs.sim.model_pk == model_pk
+        assert inputs.sim.status == "PENDING"
         return inputs
 
     def poll_simulation(self, inputs: Inputs):
-        model_pk = inputs.outputs.model_pk
-        self.mockcompute.sim = inputs.outputs
+        model_pk = inputs.sim.model_pk
+        self.mockcompute.sim = inputs.sim
         get_resp_pend = self.api_client.get(
             f"/{self.owner}/{self.title}/api/v1/{model_pk}/"
         )

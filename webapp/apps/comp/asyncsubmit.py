@@ -90,11 +90,11 @@ class SubmitInputs:
             status="PENDING",
             parent_sim=parent_sim,
         )
-        self.inputs.outputs.parent_sim = parent_sim
-        self.inputs.outputs.title = (
-            parent_sim.title if parent_sim else self.inputs.outputs.title
+        self.inputs.sim.parent_sim = parent_sim
+        self.inputs.sim.title = (
+            parent_sim.title if parent_sim else self.inputs.sim.title
         )
-        self.inputs.outputs.save()
+        self.inputs.sim.save()
         return self.inputs
 
 

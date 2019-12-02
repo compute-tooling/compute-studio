@@ -48,7 +48,7 @@ def _submit_inputs(title, get_inputs, meta_param_dict, profile, parent_model_pk=
 def _submit_sim(submit_inputs):
     compute = MockCompute()
     result = submit_inputs.submit()
-    submit_sim = SubmitSim(result.outputs, compute)
+    submit_sim = SubmitSim(result.sim, compute)
     return submit_inputs, submit_sim
 
 
@@ -71,9 +71,9 @@ def test_submit_inputs(db, submit_inputs):
     assert inputs.project
     assert inputs.owner
     assert inputs.job_id
-    assert inputs.outputs
+    assert inputs.sim
     assert inputs.status == "PENDING"
-    assert inputs.outputs.status == "STARTED"
+    assert inputs.sim.status == "STARTED"
 
 
 def test_submit_outputs(db, submit_sim):

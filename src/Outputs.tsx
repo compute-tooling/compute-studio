@@ -15,7 +15,7 @@ import * as moment from "moment";
 import {
   RemoteOutputs,
   Outputs,
-  SimAPIData,
+  Simulation,
   Output,
   TableOutput,
   BokehOutput
@@ -24,13 +24,13 @@ import { imgDims } from "./utils";
 
 interface OutputsProps {
   isNew: Boolean;
-  fetchRemoteOutputs: () => Promise<SimAPIData<RemoteOutputs>>;
-  fetchOutputs: () => Promise<SimAPIData<Outputs>>;
+  fetchRemoteOutputs: () => Promise<Simulation<RemoteOutputs>>;
+  fetchOutputs: () => Promise<Simulation<Outputs>>;
 }
 
 type OutputsState = Readonly<{
-  remoteSim: SimAPIData<RemoteOutputs>;
-  sim: SimAPIData<Outputs>;
+  remoteSim: Simulation<RemoteOutputs>;
+  sim: Simulation<Outputs>;
   timer?: NodeJS.Timer;
 }>;
 
@@ -129,7 +129,7 @@ const Pending: React.FC<{ eta?: number, originalEta?: number }> = ({ eta, origin
 }
 
 
-const Traceback: React.FC<{ remoteSim: SimAPIData<RemoteOutputs> }> = ({ remoteSim }) => (
+const Traceback: React.FC<{ remoteSim: Simulation<RemoteOutputs> }> = ({ remoteSim }) => (
   <Card className="card-outer">
     <Card className="card-inner">
       <Card.Body>

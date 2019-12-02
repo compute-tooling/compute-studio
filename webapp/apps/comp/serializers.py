@@ -6,6 +6,10 @@ from .models import Inputs, Simulation
 
 
 class OutputsSerializer(serializers.Serializer):
+    """
+    Serialze data from the simulation complete callback.
+    """
+
     job_id = serializers.UUIDField()
     status = serializers.ChoiceField(choices=(("SUCCESS", "Success"), ("FAIL", "Fail")))
     traceback = serializers.CharField(required=False)
@@ -18,38 +22,47 @@ class OutputsSerializer(serializers.Serializer):
 
 
 class MiniSimulationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for data about simulations. This does not include
+    the simulation results. This data is helpful for getting/
+    setting the title and viewing the simulation's status.
+    """
+
     owner = serializers.StringRelatedField(required=False)
     title = serializers.CharField(required=False)
-    api_url = serializers.CharField(required=False, source="get_absolute_api_url")
-    gui_url = serializers.CharField(required=False, source="get_absolute_url")
     model_pk = serializers.IntegerField(required=False)
     status = serializers.CharField(required=False)
+    api_url = serializers.CharField(required=False, source="get_absolute_api_url")
+    gui_url = serializers.CharField(required=False, source="get_absolute_url")
 
     class Meta:
         model = Simulation
         fields = (
-            "title",
-            "owner",
-            "creation_date",
             "api_url",
+            "creation_date",
             "gui_url",
-            "model_version",
             "model_pk",
+            "model_version",
+            "owner",
             "status",
+            "title",
         )
         read_only = (
-            "owner",
             "api_url",
-            "gui_url",
             "creation_date",
-            "model_version",
+            "gui_url",
             "model_pk",
+            "model_version",
+            "owner",
             "status",
         )
 
 
 class InputsSerializer(serializers.ModelSerializer):
-    # hashid = serializers.CharField(source="get_hashid", required=False)
+    """
+    Serializer for the Inputs object.
+    """
+
     job_id = serializers.UUIDField(required=False)
     status = serializers.ChoiceField(
         choices=(("SUCCESS", "Success"), ("FAIL", "Fail")), required=False
@@ -62,9 +75,7 @@ class InputsSerializer(serializers.ModelSerializer):
         ),
         required=False,
     )
-    sim = MiniSimulationSerializer(source="outputs", required=False)
     parent_model_pk = serializers.IntegerField(required=False)
-    # parent_inputs_hashid = serializers.CharField(required=False)
     job_id = serializers.UUIDField(required=False)
     status = serializers.ChoiceField(
         choices=(("SUCCESS", "Success"), ("FAIL", "Fail")), required=False
@@ -72,27 +83,34 @@ class InputsSerializer(serializers.ModelSerializer):
     api_url = serializers.CharField(source="get_absolute_api_url", required=False)
     edit_inputs_url = serializers.CharField(source="get_edit_url", required=False)
 
+    sim = MiniSimulationSerializer(required=False)
+
     class Meta:
         model = Inputs
         fields = (
-            # "hashid",
-            "meta_parameters",
             "adjustment",
+            "api_url",
+            "client",
             "custom_adjustment",
+            "edit_inputs_url",
             "errors_warnings",
             "job_id",
+            "meta_parameters",
+            "parent_model_pk",
+            "sim",
             "status",
             "traceback",
-            "sim",
-            "parent_model_pk",
-            # "parent_inputs_hashid",
-            "api_url",
-            "edit_inputs_url",
-            "client",
         )
 
 
 class SimulationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for entire Simulation object. This contains meta
+    data about simulations as well as the outputs. The outputs
+    can be either the full outputs or references to their
+    location in the storage bucket.
+    """
+
     api_url = serializers.CharField(source="get_absolute_api_url")
     gui_url = serializers.CharField(source="get_absolute_url")
     eta = serializers.FloatField(source="compute_eta")
@@ -105,39 +123,37 @@ class SimulationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Simulation
         fields = (
-            "title",
-            "parent_sims",
-            "outputs",
-            "traceback",
-            "creation_date",
             "api_url",
-            "gui_url",
+            "creation_date",
             "eta",
-            "original_eta",
-            "model_pk",
-            "status",
-            "model_version",
-            "run_time",
             "exp_comp_datetime",
-            "traceback",
+            "gui_url",
+            "model_pk",
+            "model_version",
+            "original_eta",
+            "outputs",
             "owner",
+            "parent_sims",
             "project",
+            "run_time",
+            "status",
+            "title",
+            "traceback",
         )
         read_only = (
-            "parent_sims",
-            "outputs",
-            "traceback",
-            "creation_date",
             "api_url",
-            "gui_url",
+            "creation_date",
             "eta",
-            "original_eta",
-            "model_pk",
-            "status",
-            "model_version",
-            "run_time",
             "exp_comp_datetime",
-            "traceback",
+            "gui_url",
+            "model_pk",
+            "model_version",
+            "original_eta",
+            "outputs",
             "owner",
+            "parent_sims",
             "project",
+            "run_time",
+            "status",
+            "traceback",
         )

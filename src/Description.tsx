@@ -4,15 +4,15 @@ import * as React from "react";
 import { Card, Jumbotron, Row, Col, Dropdown } from "react-bootstrap";
 import ReactLoading from "react-loading";
 import * as yup from "yup";
-import { SimAPIData, RemoteOutputs, SimDescription, AccessStatus } from "./types";
+import { RemoteOutputs, AccessStatus, Simulation, MiniSimulation } from "./types";
 import { FormikActions, Formik, ErrorMessage, Field, Form } from "formik";
 import { Message } from "./fields";
 import moment = require("moment");
 import { RequireLoginDialog } from "./modal";
 
 interface DescriptionProps {
-  fetchRemoteOutputs: () => Promise<SimAPIData<RemoteOutputs>>;
-  putDescription: (data: FormData) => Promise<SimAPIData<RemoteOutputs>>;
+  fetchRemoteOutputs: () => Promise<Simulation<RemoteOutputs>>;
+  putDescription: (data: FormData) => Promise<Simulation<RemoteOutputs>>;
   username: string;
   appname: string;
   modelPk: number;
@@ -35,11 +35,11 @@ type DescriptionState = Readonly<{
   owner: string;
   preview: Boolean;
   showAuth: Boolean;
-  parentSims?: Array<SimDescription>;
+  parentSims?: Array<MiniSimulation>;
 }>;
 
 
-const HistoryDropDown: React.FC<{ history: Array<SimDescription> }> = ({ history }) => {
+const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history }) => {
 
   return (
     < Dropdown >

@@ -10,7 +10,7 @@ import * as Sentry from "@sentry/browser";
 import InputsForm from "./InputsForm";
 import OutputsComponent from "./Outputs";
 import ErrorBoundary from "./ErrorBoundary";
-import { InputsAPIData, RemoteOutputs, Outputs, SimAPIData, AccessStatus } from "./types";
+import { RemoteOutputs, Outputs, AccessStatus, Inputs, Simulation } from "./types";
 import DescriptionComponent from "./Description";
 
 Sentry.init({
@@ -50,10 +50,10 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
     this.resetInitialValues = this.resetInitialValues.bind(this);
   }
 
-  fetchInitialValues() {
+  fetchInitialValues(): Promise<Inputs> {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
-    let data: InputsAPIData;
+    let data: Inputs;
     console.log("router", username, app_name, this.props.type);
     if (this.props.type === "new") {
       console.log("fresh page");
@@ -91,7 +91,7 @@ class InputsApp extends React.Component<InputsAppProps, {}> {
       .post(`/${username}/${app_name}/api/v1/inputs/`, metaParameters)
       .then(function (response) {
         console.log(response);
-        let data: InputsAPIData = response.data;
+        let data: Inputs = response.data;
         return data;
       });
   }
@@ -134,26 +134,26 @@ class OutputsApp extends React.Component<SimAppProps, { isNew: Boolean }> {
     }
   }
 
-  fetchRemoteOutputs(): Promise<SimAPIData<RemoteOutputs>> {
+  fetchRemoteOutputs(): Promise<Simulation<RemoteOutputs>> {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     const model_pk = this.props.match.params.model_pk;
     return axios
       .get(`/${username}/${app_name}/api/v1/${model_pk}/remote/`)
       .then(resp => {
-        let data: SimAPIData<RemoteOutputs> = resp.data;
+        let data: Simulation<RemoteOutputs> = resp.data;
         return data;
       });
   }
 
-  fetchOutputs(): Promise<SimAPIData<Outputs>> {
+  fetchOutputs(): Promise<Simulation<Outputs>> {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     let model_pk = this.props.match.params.model_pk;
     return axios
       .get(`/${username}/${app_name}/api/v1/${model_pk}/`)
       .then(resp => {
-        let data: SimAPIData<Outputs> = resp.data;
+        let data: Simulation<Outputs> = resp.data;
         return data;
       });
   }
@@ -179,19 +179,19 @@ class DescriptionApp extends React.Component<DescriptionProps, { isNew: Boolean 
     }
   }
 
-  fetchRemoteOutputs(): Promise<SimAPIData<RemoteOutputs>> {
+  fetchRemoteOutputs(): Promise<Simulation<RemoteOutputs>> {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     const model_pk = this.props.match.params.model_pk;
     return axios
       .get(`/${username}/${app_name}/api/v1/${model_pk}/remote/`)
       .then(resp => {
-        let data: SimAPIData<RemoteOutputs> = resp.data;
+        let data: Simulation<RemoteOutputs> = resp.data;
         return data;
       });
   }
 
-  putDescription(data: FormData): Promise<SimAPIData<RemoteOutputs>> {
+  putDescription(data: FormData): Promise<Simulation<RemoteOutputs>> {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     const model_pk = this.props.match.params.model_pk;
@@ -200,7 +200,7 @@ class DescriptionApp extends React.Component<DescriptionProps, { isNew: Boolean 
       `/${username}/${app_name}/api/v1/${model_pk}/`,
       data
     ).then(resp => {
-      let data: SimAPIData<RemoteOutputs> = resp.data;
+      let data: Simulation<RemoteOutputs> = resp.data;
       return data;
     })
   }

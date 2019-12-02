@@ -12,7 +12,7 @@ import {
   ParamToolsParam,
   ParamToolsConfig,
   InitialValues,
-  InputsAPIData,
+  Inputs,
   Sects
 } from "./types";
 import { Card, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
@@ -104,7 +104,7 @@ export const LoadingElement: React.FC<{}> = () => {
 };
 
 const MetaParametersComponent: React.FC<{
-  meta_parameters: InputsAPIData["meta_parameters"];
+  meta_parameters: Inputs["meta_parameters"];
   values: InitialValues["meta_parameters"];
   touched: FormikTouched<InitialValues>;
   resetInitialValues: (metaParameters: { [metaParam: string]: any }) => any;
@@ -282,10 +282,10 @@ const Section2Component: React.FC<{
   section_2: string;
   param_list: Array<string>;
   msect: string;
-  model_parameters: InputsAPIData["model_parameters"];
+  model_parameters: Inputs["model_parameters"];
   values: InitialValues["adjustment"]["msect"];
   extend: boolean;
-  meta_parameters: InputsAPIData["meta_parameters"];
+  meta_parameters: Inputs["meta_parameters"];
   readOnly: boolean;
 }> = ({
   section_2,
@@ -332,10 +332,10 @@ const Section1Component: React.FC<{
   section_1: string;
   section_2_dict: { [section_2: string]: Array<string> };
   msect: string;
-  model_parameters: InputsAPIData["model_parameters"];
+  model_parameters: Inputs["model_parameters"];
   values: InitialValues["adjustment"]["msect"];
   extend: boolean;
-  meta_parameters: InputsAPIData["meta_parameters"];
+  meta_parameters: Inputs["meta_parameters"];
   readOnly: boolean;
 }> = ({
   section_1,
@@ -409,8 +409,8 @@ const MajorSectionComponent: React.FC<{
   section_1_dict: {
     [section_1: string]: { [section_2: string]: Array<string> };
   };
-  meta_parameters: InputsAPIData["meta_parameters"];
-  model_parameters: InputsAPIData["model_parameters"];
+  meta_parameters: Inputs["meta_parameters"];
+  model_parameters: Inputs["model_parameters"];
   values: InitialValues;
   extend: boolean;
   readOnly: boolean;
@@ -573,7 +573,7 @@ export const ErrorCard: React.FC<{
       errors: { [paramName: string]: Array<string> };
     };
   };
-  model_parameters: InputsAPIData["model_parameters"];
+  model_parameters: Inputs["model_parameters"];
 }> = ({ errorMsg, errors, model_parameters = null }) => {
   const getTitle = (sect, paramName) => {
     if (

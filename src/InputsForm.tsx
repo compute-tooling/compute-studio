@@ -16,7 +16,7 @@ import {
 import { ValidatingModal, RunModal, AuthModal } from "./modal";
 import { formikToJSON, convertToFormik } from "./ParamTools";
 import { hasServerErrors } from "./utils";
-import { InputsAPIData, AccessStatus, Sects, InitialValues, SimDescription, InputsDetail } from "./types";
+import { AccessStatus, Sects, InitialValues, MiniSimulation, Inputs } from "./types";
 
 // need to require schema in model_parameters!
 const tbLabelSchema = yup.object().shape({
@@ -32,22 +32,17 @@ const tbLabelSchema = yup.object().shape({
 type InputsFormState = Readonly<{
   initialValues?: InitialValues,
   sects?: Sects,
-  model_parameters?: InputsAPIData["model_parameters"],
-  meta_parameters?: InputsAPIData["meta_parameters"],
   schema?: yup.Schema<any>,
   extend?: boolean,
   unknownParams?: Array<string>,
-  creationDate?: Date,
-  status: InputsDetail["status"];
-  has_write_access: InputsDetail["has_write_access"];
-  modelVersion?: string,
-  detailAPIURL?: string,
-  editInputsUrl?: string,
-  sim?: SimDescription,
   initialServerErrors?: { [msect: string]: { errors: { [paramName: string]: any } } },
   resetting?: boolean,
-  error?: any,
   timer?: number,
+  error: any,
+
+  // data from api endpoints.
+  inputs: Inputs;
+  sim?: MiniSimulation,
 }>
 
 interface InputsFormProps {
@@ -64,11 +59,9 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
     super(props);
     this.state = {
       resetting: false,
-      error: null,
-      model_parameters: null,
       initialValues: null,
-      status: "STARTED",
-      has_write_access: false
+      inputs: null,
+      error: null,
     }
     this.resetInitialValues = this.resetInitialValues.bind(this);
     this.poll = this.poll.bind(this);
@@ -83,31 +76,22 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
           const [
             initialValues,
             sects,
-            model_parameters,
-            meta_parameters,
+            inputs,
             schema,
             unknownParams
           ] = convertToFormik(data);
-          let hasSimData = !!data.detail && !!data.detail.sim;
           this.setState({
             initialValues: initialValues,
             sects: sects,
-            model_parameters: model_parameters,
-            meta_parameters: meta_parameters,
             schema: schema,
-            extend: "extend" in data ? data.extend : false,
+            extend: "extend" in inputs ? inputs.extend : false,
             unknownParams: unknownParams,
-            has_write_access: data.detail ? data.detail.has_write_access : false,
-            status: data.detail ? data.detail.stauts : "STARTED",
-            sim: hasSimData ? data.detail.sim : null,
-            creationDate: hasSimData ? data.detail.sim.creation_date : null,
-            modelVersion: hasSimData ? data.detail.sim.model_version : null,
-            detailAPIURL: !!data.detail ? data.detail.api_url : null,
-            editInputsUrl: !!data.detail ? data.detail.edit_inputs_url : null,
             initialServerErrors:
-              !!data.detail && hasServerErrors(data.detail.errors_warnings)
+              data.detail && hasServerErrors(data.detail.errors_warnings)
                 ? data.detail.errors_warnings
                 : null,
+            inputs: inputs,
+            sim: inputs.detail?.sim,
           });
         })
         .catch(err => {
@@ -126,20 +110,19 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
         const [
           initialValues,
           sects,
-          model_parameters,
-          meta_parameters,
+          inputs,
           schema,
           unknownParams
         ] = convertToFormik(data);
         this.setState({
           initialValues: initialValues,
           sects: sects,
-          model_parameters: model_parameters,
-          meta_parameters: meta_parameters,
           schema: schema,
           extend: "extend" in data ? data.extend : false,
           resetting: false,
-          unknownParams: unknownParams
+          unknownParams: unknownParams,
+          inputs: inputs,
+          sim: inputs.detail?.sim,
         });
       })
       .catch(err => {
@@ -199,11 +182,8 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
   }
 
   render() {
-    if (this.state.error !== null) {
-      throw this.state.error;
-    }
     if (
-      !this.state.model_parameters ||
+      !this.state.inputs ||
       !this.state.initialValues ||
       this.state.resetting
     ) {
@@ -211,8 +191,8 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
     }
     console.log("rendering");
 
-    let meta_parameters = this.state.meta_parameters;
-    let model_parameters = this.state.model_parameters;
+    let meta_parameters = this.state.inputs.meta_parameters;
+    let model_parameters = this.state.inputs.model_parameters;
     let initialValues = this.state.initialValues;
     let schema = this.state.schema;
     let sects = this.state.sects;
@@ -230,7 +210,7 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
       initialStatus = {
         serverErrors: this.state.initialServerErrors,
         status: "INVALID",
-        editInputsUrl: this.state.editInputsUrl
+        editInputsUrl: this.state.inputs.detail.api_url,
       };
     }
 
@@ -261,7 +241,7 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
             let url = this.props.defaultURL;
             let sim = this.state.sim;
             // clicked new simulation button
-            if (sim && this.state.has_write_access && sim.status == "STARTED") {
+            if (sim && this.state.inputs.has_write_access && sim.status == "STARTED") {
               url = this.state.sim.api_url;
             } else if (sim) { // sim is completed or user does not have write access
               formdata.append("parent_model_pk", sim.model_pk.toString());
@@ -303,11 +283,11 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
             values,
             setFieldValue,
             touched
-          }) => (
+          }) => {
+            return (
               <Form>
                 {isSubmitting ? <ValidatingModal /> : <div />}
                 {status && status.auth ? <AuthModal /> : <div />}
-
                 <div className="row">
                   <div className="col-sm-4">
                     <ul className="list-unstyled components sticky-top scroll-y">
@@ -359,8 +339,8 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
                           <p>
                             {"One or more parameters have been renamed or " +
                               "removed since this simulation was run on " +
-                              `${this.state.creationDate} with version ${this.state.modelVersion}. You may view the full simulation detail `}
-                            <a href={this.state.detailAPIURL}>here.</a>
+                              `${this.state.sim.creation_date} with version ${this.state.sim.model_version}. You may view the full simulation detail `}
+                            <a href={this.state.sim.api_url}>here.</a>
                           </p>
                         }
                         errors={unknownParamsErrors}
@@ -397,7 +377,8 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
                   </div>
                 </div>
               </Form>
-            )}
+            )
+          }}
         />
       </div>
     );

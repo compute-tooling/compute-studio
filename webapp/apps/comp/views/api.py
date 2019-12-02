@@ -92,7 +92,7 @@ class DetailMyInputsAPIView(APIView):
         print("myinputs api method=GET", request.GET, kwargs)
         inputs = get_object_or_404(
             self.queryset,
-            outputs__model_pk=kwargs["model_pk"],
+            sim__model_pk=kwargs["model_pk"],
             project__title__iexact=kwargs["title"],
             project__owner__user__username__iexact=kwargs["username"],
         )
@@ -330,7 +330,7 @@ class MyInputsAPIView(APIView):
                         inputs.status = "SUCCESS" if is_valid(inputs) else "INVALID"
                         inputs.save()
                         if inputs.status == "SUCCESS":
-                            submit_sim = SubmitSim(inputs.outputs, compute=Compute())
+                            submit_sim = SubmitSim(inputs.sim, compute=Compute())
                             submit_sim.submit()
                     # failed run, exception was caught
                     else:

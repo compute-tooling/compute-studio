@@ -8,10 +8,10 @@ import {
   ParamToolsConfig,
   ParamToolsParam,
   FormValueObject,
-  InputsAPIData,
   InputsDetail,
   InitialValues,
-  Sects
+  Sects,
+  Inputs
 } from "./types";
 
 const integerMsg: string = "Must be an integer.";
@@ -240,12 +240,11 @@ function labelsToString(valueObject: ValueObject): string {
 }
 
 export function convertToFormik(
-  data: InputsAPIData
+  data: Inputs
 ): [
     InitialValues,
     Sects,
-    InputsAPIData["model_parameters"],
-    InputsAPIData["meta_parameters"],
+    Inputs,
     yup.Schema<any>,
     Array<string>
   ] {
@@ -370,12 +369,10 @@ export function convertToFormik(
     adjustment: yup.object().shape(adjShape),
     meta_parameters: yup.object().shape(mpShape)
   });
-
   return [
     initialValues,
     sects,
-    data.model_parameters,
-    data.meta_parameters,
+    data,
     schema,
     unknownParams
   ];
