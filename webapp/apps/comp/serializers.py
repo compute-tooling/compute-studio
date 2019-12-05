@@ -81,7 +81,7 @@ class InputsSerializer(serializers.ModelSerializer):
         choices=(("SUCCESS", "Success"), ("FAIL", "Fail")), required=False
     )
     api_url = serializers.CharField(source="get_absolute_api_url", required=False)
-    edit_inputs_url = serializers.CharField(source="get_edit_url", required=False)
+    gui_url = serializers.CharField(source="get_absolute_url", required=False)
 
     sim = MiniSimulationSerializer(required=False)
 
@@ -92,8 +92,8 @@ class InputsSerializer(serializers.ModelSerializer):
             "api_url",
             "client",
             "custom_adjustment",
-            "edit_inputs_url",
             "errors_warnings",
+            "gui_url",
             "job_id",
             "meta_parameters",
             "parent_model_pk",

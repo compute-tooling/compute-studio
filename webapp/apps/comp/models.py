@@ -112,6 +112,14 @@ class Inputs(models.Model):
         }
         return reverse("detail_myinputs_api_model_pk", kwargs=kwargs)
 
+    def get_absolute_url(self):
+        kwargs = {
+            "model_pk": self.sim.model_pk,
+            "title": self.project.title,
+            "username": self.project.owner.user.username,
+        }
+        return reverse("edit", kwargs=kwargs)
+
     def has_write_access(self, user):
         return user.is_authenticated and user == self.owner.user
 
@@ -154,9 +162,7 @@ class Simulation(models.Model):
     parent_sim = models.ForeignKey(
         "self", null=True, related_name="child_sims", on_delete=models.SET_NULL
     )
-    inputs = models.OneToOneField(
-        Inputs, on_delete=models.CASCADE, related_name="sim"
-    )
+    inputs = models.OneToOneField(Inputs, on_delete=models.CASCADE, related_name="sim")
     meta_data = JSONField(default=None, blank=True, null=True)
     outputs = JSONField(default=None, blank=True, null=True)
     aggr_outputs = JSONField(default=None, blank=True, null=True)

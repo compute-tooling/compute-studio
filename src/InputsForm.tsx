@@ -17,6 +17,7 @@ import { ValidatingModal, RunModal, AuthModal } from "./modal";
 import { formikToJSON, convertToFormik } from "./ParamTools";
 import { hasServerErrors } from "./utils";
 import { AccessStatus, Sects, InitialValues, MiniSimulation, Inputs } from "./types";
+import API from "./API";
 
 // need to require schema in model_parameters!
 const tbLabelSchema = yup.object().shape({
@@ -46,9 +47,7 @@ type InputsFormState = Readonly<{
 }>
 
 interface InputsFormProps {
-  fetchInitialValues: () => Promise<any>;
-  resetInitialValues: (metaParameters: { [metaParam: string]: any }) => any;
-  doSubmit: (url, data) => Promise<any>;
+  api: API;
   readOnly: boolean;
   accessStatus: AccessStatus;
   defaultURL: string;
@@ -69,9 +68,9 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
   }
 
   componentDidMount() {
-    if (this.props.fetchInitialValues) {
-      this.props
-        .fetchInitialValues()
+    if (this.props.api) {
+      this.props.api
+        .getInitialValues()
         .then(data => {
           const [
             initialValues,
@@ -102,7 +101,7 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
 
   resetInitialValues(metaParameters) {
     this.setState({ resetting: true });
-    this.props
+    this.props.api
       .resetInitialValues({
         meta_parameters: tbLabelSchema.cast(metaParameters)
       })
@@ -141,14 +140,15 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
             response.data.status === "SUCCESS" &&
             response.data.sim !== null
           ) {
+            this.killTimer();
             actions.setSubmitting(false);
             actions.setStatus({
               status: response.data.status,
               simUrl: response.data.sim.gui_url
             });
-            this.killTimer();
             window.location.href = response.data.sim.gui_url;
           } else if (response.data.status === "INVALID") {
+            this.killTimer();
             actions.setSubmitting(false);
             actions.setStatus({
               status: response.data.status,
@@ -156,7 +156,6 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
               editInputsUrl: response.data.edit_inputs_url
             });
             window.scroll(0, 0);
-            this.killTimer();
           }
         })
         .catch(error => {
@@ -191,26 +190,23 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
     }
     console.log("rendering");
 
-    let meta_parameters = this.state.inputs.meta_parameters;
-    let model_parameters = this.state.inputs.model_parameters;
-    let initialValues = this.state.initialValues;
-    let schema = this.state.schema;
-    let sects = this.state.sects;
-    let extend = this.state.extend;
-    let hasUnknownParams = this.state.unknownParams.length > 0;
+    let { initialValues, schema, sects, extend, unknownParams, initialServerErrors, inputs } = this.state;
+    let { meta_parameters, model_parameters } = inputs;
+
+    let hasUnknownParams = unknownParams.length > 0;
     let unknownParamsErrors: { [sect: string]: { errors: any } } = { "Unknown Parameters": { errors: {} } };
     if (hasUnknownParams) {
-      for (const param of this.state.unknownParams) {
+      for (const param of unknownParams) {
         unknownParamsErrors["Unknown Parameters"].errors[param] =
           "This parameter is no longer used.";
       }
     }
     let initialStatus;
-    if (this.state.initialServerErrors) {
+    if (initialServerErrors) {
       initialStatus = {
-        serverErrors: this.state.initialServerErrors,
+        serverErrors: initialServerErrors,
         status: "INVALID",
-        editInputsUrl: this.state.inputs.detail.api_url,
+        editInputsUrl: inputs.detail.api_url,
       };
     }
 
@@ -241,26 +237,26 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
             let url = this.props.defaultURL;
             let sim = this.state.sim;
             // clicked new simulation button
-            if (sim && this.state.inputs.has_write_access && sim.status == "STARTED") {
+            if (sim && this.state.inputs.detail.has_write_access && sim.status === "STARTED") {
               url = this.state.sim.api_url;
             } else if (sim) { // sim is completed or user does not have write access
               formdata.append("parent_model_pk", sim.model_pk.toString());
             }
-            this.props
-              .doSubmit(url, formdata)
-              .then(response => {
+            this.props.api
+              .postAdjustment(url, formdata)
+              .then(data => {
                 console.log("success");
                 // update url so that user can come back to inputs later on
                 // model errors or some type of unforeseen error in Compute Studio.
-                history.pushState(null, null, response.data.edit_inputs_url);
+                history.pushState(null, null, data.gui_url);
                 actions.setStatus({
                   status: "PENDING",
-                  inputs_hashid: response.data.hashid,
-                  api_url: response.data.api_url,
-                  editInputsUrl: response.data.edit_inputs_url
+                  api_url: data.api_url,
+                  editInputsUrl: data.gui_url,
+                  inputsDetail: data, // TODO: necessary
                 });
                 // set submitting as false in poll func.
-                this.poll(actions, response.data);
+                this.poll(actions, data);
               })
               .catch(error => {
                 console.log("error", error);
@@ -275,13 +271,9 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
           }}
           render={({
             handleSubmit,
-            handleChange,
-            handleBlur,
             status,
             isSubmitting,
-            errors,
             values,
-            setFieldValue,
             touched
           }) => {
             return (

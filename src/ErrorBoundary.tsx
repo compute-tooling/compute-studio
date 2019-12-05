@@ -15,7 +15,7 @@ export default class ErrorBoundary extends React.Component<{}, ErrorState> {
   }
 
   componentDidCatch(error, errorInfo) {
-    if (process.env.NODE_ENV === "production") {
+    if (false && process.env.NODE_ENV === "production") {
       Sentry.withScope(scope => {
         scope.setExtras(errorInfo);
         const eventId = Sentry.captureException(error);

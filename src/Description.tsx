@@ -9,15 +9,11 @@ import { FormikActions, Formik, ErrorMessage, Field, Form } from "formik";
 import { Message } from "./fields";
 import moment = require("moment");
 import { RequireLoginDialog } from "./modal";
+import API from "./API";
 
 interface DescriptionProps {
-  fetchRemoteOutputs: () => Promise<Simulation<RemoteOutputs>>;
-  putDescription: (data: FormData) => Promise<Simulation<RemoteOutputs>>;
-  username: string;
-  appname: string;
-  modelPk: number;
-  isNew: Boolean;
   accessStatus: AccessStatus;
+  api: API;
 }
 
 interface DescriptionValues {
@@ -83,8 +79,9 @@ export default class DescriptionComponent extends React.Component<
 
   componentDidMount() {
     // fetch title, description, version
-    console.log("this.props.isNew", this.props.isNew, this.props.accessStatus)
-    if (this.props.isNew) {
+    let api = this.props.api;
+    console.log("this.props.isNew", !api.modelpk, this.props.accessStatus)
+    if (!api.modelpk) {
       this.setState({
         initialValues: {
           title: "Untitled Simulation",
@@ -94,7 +91,7 @@ export default class DescriptionComponent extends React.Component<
         parentSims: [],
       })
     } else {
-      this.props.fetchRemoteOutputs().then(data => {
+      this.props.api.getRemoteOutputs().then(data => {
         console.log("got data", data);
         this.setState({
           initialValues: {
@@ -118,8 +115,6 @@ export default class DescriptionComponent extends React.Component<
     event.preventDefault();
     if (this.writable()) {
       this.setState({ preview: !this.state.preview });
-    } else if (this.props.accessStatus.user_status == "anon") {
-      this.setState({ showAuth: true })
     }
   }
 
@@ -148,6 +143,8 @@ export default class DescriptionComponent extends React.Component<
     let style = this.state.preview ? {
       border: 0
     } : {}
+    let api = this.props.api;
+    let { parentSims, owner, preview } = this.state;
     return (
       <Jumbotron className="shadow" style={{ backgroundColor: "white" }}>
         <Formik
@@ -158,25 +155,25 @@ export default class DescriptionComponent extends React.Component<
             for (const field in values) {
               formdata.append(field, values[field]);
             }
-            formdata.append("model_pk", this.props.modelPk.toString());
-            this.props.putDescription(formdata).then(data => {
+            formdata.append("model_pk", api.modelpk.toString());
+            this.props.api.putDescription(formdata).then(data => {
               console.log("success");
               this.setState({ preview: true })
             })
           }}
           validationSchema={Schema}
-          render={({ status, values, handleSubmit }) => (
+          render={({ values, handleSubmit }) => (
             <Form>
               {console.log("rendering with", values)}
               <Row className="mt-1 mb-1 justify-content-start">
                 <Col className="col-5">
                   <Field name="title">
                     {({
-                      field, // { name, value, onChange, onBlur }
-                      form: { touched, errors }, // also values, setXXXX, handleXXXX, dirty, isValid, status, etc.
+                      field,
+                      form: { touched, errors },
                       meta,
                     }) => (
-                        this.state.preview ?
+                        preview ?
                           <Card style={style} onClick={this.togglePreview}>
                             <h1>{field.value}</h1>
                           </Card> :
@@ -191,13 +188,13 @@ export default class DescriptionComponent extends React.Component<
                   />
                 </Col>
                 <Col className="col-1 offset-md-2">
-                  <HistoryDropDown history={this.state.parentSims} />
+                  <HistoryDropDown history={parentSims} />
                 </Col>
               </Row>
               <Row className="justify-content-start">
                 <Col className="col-4">
                   <Card style={{ border: 0 }}>
-                    <h5 className="mt-1">by {this.state.owner}</h5>
+                    <h5 className="mt-1">by {owner}</h5>
                   </Card>
                 </Col>
               </Row>

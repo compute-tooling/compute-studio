@@ -183,8 +183,8 @@ export interface InputsDetail {
   api_url: string;
   client: string;
   custom_adjustment: any;
-  edit_inputs_url: string;
   errors_warnings: { [msect: string]: { errors: { [paramName: string]: Array<string> } } };
+  gui_url: string;
   job_id: string;
   meta_parameters: { [paramName: string]: Array<ValueObject> };
   parent_model_pk: number;

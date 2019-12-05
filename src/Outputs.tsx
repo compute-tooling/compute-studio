@@ -21,11 +21,10 @@ import {
   BokehOutput
 } from "./types";
 import { imgDims } from "./utils";
+import API from "./API";
 
 interface OutputsProps {
-  isNew: Boolean;
-  fetchRemoteOutputs: () => Promise<Simulation<RemoteOutputs>>;
-  fetchOutputs: () => Promise<Simulation<Outputs>>;
+  api: API;
 }
 
 type OutputsState = Readonly<{
@@ -173,21 +172,22 @@ export default class OutputsComponent extends React.Component<
 
   componentDidMount() {
     let timer;
-    this.props.fetchRemoteOutputs().then(initRem => {
+    let api = this.props.api;
+    api.getRemoteOutputs().then(initRem => {
       this.setState({ remoteSim: initRem });
       if (initRem.status !== "PENDING") {
-        this.props.fetchOutputs().then(initSim => {
+        api.getOutputs().then(initSim => {
           this.setState({ sim: initSim });
         });
       } else {
         timer = setInterval(() => {
-          this.props.fetchRemoteOutputs().then(detRem => {
+          api.getRemoteOutputs().then(detRem => {
             if (detRem.status !== "PENDING") {
               this.setState({
                 remoteSim: detRem
               });
               this.killTimer();
-              this.props.fetchOutputs().then(detSim => {
+              api.getOutputs().then(detSim => {
                 this.setState({
                   sim: detSim,
                 });
@@ -210,10 +210,9 @@ export default class OutputsComponent extends React.Component<
   }
 
   render() {
-    let remoteSim = this.state.remoteSim;
-    let sim = this.state.sim;
-    console.log("remote sim", remoteSim)
-    if (this.props.isNew || (remoteSim && remoteSim.status === "STARTED")) {
+    let { remoteSim, sim } = this.state;
+    let api = this.props.api;
+    if (!api.modelpk || (remoteSim && remoteSim.status === "STARTED")) {
       return <NewSimulation />
     } else if (!remoteSim) {
       return <Pending />;
@@ -234,6 +233,7 @@ export default class OutputsComponent extends React.Component<
     if (sim !== null) {
       outputs = sim.outputs;
     }
+
     return (
       <Card className="card-outer" style={{ overflow: "auto" }}>
         <Card className="card-inner">

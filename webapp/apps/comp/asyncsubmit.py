@@ -54,7 +54,8 @@ class SubmitInputs:
         meta_parameters = validated_data.get("meta_parameters", {})
         adjustment = validated_data.get("adjustment", {})
         parent_model_pk = validated_data.pop("parent_model_pk", None)
-        if parent_model_pk is not None:
+
+        if parent_model_pk is not None and self.sim.parent_sim is None:
             parent_sim = get_object_or_404(
                 Simulation, project=self.project, model_pk=parent_model_pk
             )
@@ -84,17 +85,18 @@ class SubmitInputs:
             adjustment=result["adjustment"],
             errors_warnings=result["errors_warnings"],
             custom_adjustment=result["custom_adjustment"],
-            # project=self.project,
-            # owner=getattr(self.request.user, "profile", None),
             job_id=result["job_id"],
             status="PENDING",
-            parent_sim=parent_sim,
+            # parent_sim=self.sim.parent_sim or parent_sim,
         )
-        self.inputs.sim.parent_sim = parent_sim
-        self.inputs.sim.title = (
-            parent_sim.title if parent_sim else self.inputs.sim.title
-        )
-        self.inputs.sim.save()
+        # case where parent sim exists and has not yet been assigned
+        if not self.sim.parent_sim and parent_sim:
+            self.sim.parent_sim = parent_sim
+            self.sim.title = parent_sim.title
+            self.sim.save()
+
+        # TODO: remove assertion in productin code.
+        assert self.inputs.sim == self.sim
         return self.inputs
 
 
