@@ -173,6 +173,9 @@ export default class OutputsComponent extends React.Component<
   componentDidMount() {
     let timer;
     let api = this.props.api;
+    if (!api.modelpk) {
+      return;
+    }
     api.getRemoteOutputs().then(initRem => {
       this.setState({ remoteSim: initRem });
       if (initRem.status !== "PENDING") {

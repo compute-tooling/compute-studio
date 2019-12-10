@@ -48,9 +48,10 @@ const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history
           return (
             <Dropdown.Item key={ix} href={sim.gui_url} style={{ minWidth: "500px" }}>
               <Row>
-                <Col className="col-4">{sim.title}</Col>
-                <Col className="col-4">by {sim.owner}</Col>
-                <Col className="col-4">on {moment(sim.creation_date).format("YYYY-MM-DD")}</Col>
+                <Col className="col-3">{sim.model_pk}</Col>
+                <Col className="col-3">{sim.title}</Col>
+                <Col className="col-3">by {sim.owner}</Col>
+                <Col className="col-3">on {moment(sim.creation_date).format("YYYY-MM-DD")}</Col>
               </Row>
             </Dropdown.Item>
           );
@@ -80,7 +81,6 @@ export default class DescriptionComponent extends React.Component<
   componentDidMount() {
     // fetch title, description, version
     let api = this.props.api;
-    console.log("this.props.isNew", !api.modelpk, this.props.accessStatus)
     if (!api.modelpk) {
       this.setState({
         initialValues: {
@@ -92,7 +92,6 @@ export default class DescriptionComponent extends React.Component<
       })
     } else {
       this.props.api.getRemoteOutputs().then(data => {
-        console.log("got data", data);
         this.setState({
           initialValues: {
             title: data.title,

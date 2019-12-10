@@ -16,7 +16,14 @@ import {
 import { ValidatingModal, RunModal, AuthModal } from "./modal";
 import { formikToJSON, convertToFormik } from "./ParamTools";
 import { hasServerErrors } from "./utils";
-import { AccessStatus, Sects, InitialValues, MiniSimulation, Inputs } from "./types";
+import {
+  AccessStatus,
+  Sects,
+  InitialValues,
+  MiniSimulation,
+  Inputs,
+  InputsDetail
+} from "./types";
 import API from "./API";
 
 // need to require schema in model_parameters!
@@ -29,22 +36,23 @@ const tbLabelSchema = yup.object().shape({
   use_full_sample: yup.bool()
 });
 
-
 type InputsFormState = Readonly<{
-  initialValues?: InitialValues,
-  sects?: Sects,
-  schema?: yup.Schema<any>,
-  extend?: boolean,
-  unknownParams?: Array<string>,
-  initialServerErrors?: { [msect: string]: { errors: { [paramName: string]: any } } },
-  resetting?: boolean,
-  timer?: number,
-  error: any,
+  initialValues?: InitialValues;
+  sects?: Sects;
+  schema?: yup.Schema<any>;
+  extend?: boolean;
+  unknownParams?: Array<string>;
+  initialServerErrors?: {
+    [msect: string]: { errors: { [paramName: string]: any } };
+  };
+  resetting?: boolean;
+  timer?: number;
+  error: any;
 
   // data from api endpoints.
   inputs: Inputs;
-  sim?: MiniSimulation,
-}>
+  sim?: MiniSimulation;
+}>;
 
 interface InputsFormProps {
   api: API;
@@ -53,15 +61,18 @@ interface InputsFormProps {
   defaultURL: string;
 }
 
-export default class InputsForm extends React.Component<InputsFormProps, InputsFormState> {
+export default class InputsForm extends React.Component<
+  InputsFormProps,
+  InputsFormState
+  > {
   constructor(props) {
     super(props);
     this.state = {
       resetting: false,
       initialValues: null,
       inputs: null,
-      error: null,
-    }
+      error: null
+    };
     this.resetInitialValues = this.resetInitialValues.bind(this);
     this.poll = this.poll.bind(this);
     this.killTimer = this.killTimer.bind(this);
@@ -90,8 +101,19 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
                 ? data.detail.errors_warnings
                 : null,
             inputs: inputs,
-            sim: inputs.detail?.sim,
+            sim: inputs.detail?.sim
           });
+          if (inputs.detail?.status === "PENDING") {
+            this.poll(
+              inputs.detail,
+              (data: InputsDetail) => {
+                window.location.href = data.api_url;
+              },
+              (data: InputsDetail) => {
+                window.location.href = data.api_url;
+              }
+            );
+          }
         })
         .catch(err => {
           this.setState({ error: err });
@@ -121,7 +143,7 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
           resetting: false,
           unknownParams: unknownParams,
           inputs: inputs,
-          sim: inputs.detail?.sim,
+          sim: inputs.detail?.sim
         });
       })
       .catch(err => {
@@ -129,32 +151,25 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
       });
   }
 
-  poll(actions, respData) {
+  poll(
+    respData: InputsDetail,
+    onSuccess: (data: InputsDetail) => void,
+    onInvalid: (data: InputsDetail) => void
+  ) {
     let timer = setInterval(() => {
       axios
         .get(respData.api_url)
         .then(response => {
           // be careful with race condidition where status is SUCCESS but
           // sim has not yet been submitted and saved!
-          if (
-            response.data.status === "SUCCESS" &&
-            response.data.sim !== null
-          ) {
+          let data: InputsDetail = response.data;
+          if (data.status === "SUCCESS" && data.sim !== null) {
             this.killTimer();
-            actions.setSubmitting(false);
-            actions.setStatus({
-              status: response.data.status,
-              simUrl: response.data.sim.gui_url
-            });
+            onSuccess(data);
             window.location.href = response.data.sim.gui_url;
           } else if (response.data.status === "INVALID") {
             this.killTimer();
-            actions.setSubmitting(false);
-            actions.setStatus({
-              status: response.data.status,
-              serverErrors: response.data.errors_warnings,
-              editInputsUrl: response.data.edit_inputs_url
-            });
+            onInvalid(data);
             window.scroll(0, 0);
           }
         })
@@ -162,13 +177,13 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
           console.log("polling error:");
           console.log(error);
           this.killTimer();
-          actions.setSubmitting(false);
+          // actions.setSubmitting(false); TODO
           // request likely cancelled because timer was killed.
           if (error.message && error.message != "Request aborted") {
             this.setState({ error: error });
           }
         });
-    }, 500);
+    }, 1000);
     // @ts-ignore
     this.setState({ timer: timer });
   }
@@ -190,11 +205,21 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
     }
     console.log("rendering");
 
-    let { initialValues, schema, sects, extend, unknownParams, initialServerErrors, inputs } = this.state;
+    let {
+      initialValues,
+      schema,
+      sects,
+      extend,
+      unknownParams,
+      initialServerErrors,
+      inputs
+    } = this.state;
     let { meta_parameters, model_parameters } = inputs;
 
     let hasUnknownParams = unknownParams.length > 0;
-    let unknownParamsErrors: { [sect: string]: { errors: any } } = { "Unknown Parameters": { errors: {} } };
+    let unknownParamsErrors: { [sect: string]: { errors: any } } = {
+      "Unknown Parameters": { errors: {} }
+    };
     if (hasUnknownParams) {
       for (const param of unknownParams) {
         unknownParamsErrors["Unknown Parameters"].errors[param] =
@@ -206,7 +231,7 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
       initialStatus = {
         serverErrors: initialServerErrors,
         status: "INVALID",
-        editInputsUrl: inputs.detail.api_url,
+        editInputsUrl: inputs.detail.api_url
       };
     }
 
@@ -237,26 +262,54 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
             let url = this.props.defaultURL;
             let sim = this.state.sim;
             // clicked new simulation button
-            if (sim && this.state.inputs.detail.has_write_access && sim.status === "STARTED") {
-              url = this.state.sim.api_url;
-            } else if (sim) { // sim is completed or user does not have write access
+            console.log("sim", sim)
+            if (
+              sim &&
+              this.state.inputs.detail.has_write_access &&
+              sim.status === "STARTED"
+            ) {
+              url = sim.api_url;
+            } else if (sim) {
+              // sim is completed or user does not have write access
               formdata.append("parent_model_pk", sim.model_pk.toString());
             }
             this.props.api
               .postAdjustment(url, formdata)
               .then(data => {
-                console.log("success");
-                // update url so that user can come back to inputs later on
-                // model errors or some type of unforeseen error in Compute Studio.
-                history.pushState(null, null, data.gui_url);
-                actions.setStatus({
-                  status: "PENDING",
-                  api_url: data.api_url,
-                  editInputsUrl: data.gui_url,
-                  inputsDetail: data, // TODO: necessary
-                });
-                // set submitting as false in poll func.
-                this.poll(actions, data);
+                console.log("success", data.gui_url);
+                if (data.sim.owner !== sim?.owner) {
+                  window.location.href = data.gui_url;
+                } else {
+                  history.pushState(null, null, data.gui_url);
+                  actions.setStatus({
+                    status: "PENDING",
+                    api_url: data.api_url,
+                    editInputsUrl: data.gui_url,
+                    inputsDetail: data // TODO: necessary
+                  });
+                  // set submitting as false in poll func.
+                  if (data.status === "PENDING") {
+                    this.poll(
+                      data,
+                      (data: InputsDetail) => {
+                        actions.setStatus({
+                          status: data.status,
+                          simUrl: data.sim.gui_url
+                        });
+                        actions.setSubmitting(false);
+                      },
+                      (data: InputsDetail) => {
+                        actions.setSubmitting(false);
+                        actions.setStatus({
+                          status: data.status,
+                          serverErrors: data.errors_warnings,
+                          editInputsUrl: data.gui_url
+                        });
+                        actions.setSubmitting(false);
+                      }
+                    );
+                  }
+                }
               })
               .catch(error => {
                 console.log("error", error);
@@ -269,16 +322,14 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
                 }
               });
           }}
-          render={({
-            handleSubmit,
-            status,
-            isSubmitting,
-            values,
-            touched
-          }) => {
+          render={({ handleSubmit, status, isSubmitting, values, touched }) => {
             return (
               <Form>
-                {isSubmitting ? <ValidatingModal /> : <div />}
+                {isSubmitting || inputs.detail?.status === "PENDING" ? (
+                  <ValidatingModal />
+                ) : (
+                    <div />
+                  )}
                 {status && status.auth ? <AuthModal /> : <div />}
                 <div className="row">
                   <div className="col-sm-4">
@@ -311,8 +362,9 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
                           errorMsg={
                             <p>
                               Some fields have errors. These must be fixed before
-                              the simulation can be submitted. You may re-visit this
-                          page a later time by entering the following link:{" "}
+                              the simulation can be submitted. You may re-visit
+                              this page a later time by entering the following
+                            link:{" "}
                               <a href={status.editInputsUrl}>
                                 {status.editInputsUrl}
                               </a>
@@ -369,7 +421,7 @@ export default class InputsForm extends React.Component<InputsFormProps, InputsF
                   </div>
                 </div>
               </Form>
-            )
+            );
           }}
         />
       </div>
