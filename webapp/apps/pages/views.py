@@ -19,6 +19,7 @@ class HomeView(View):
                     "username": request.user.username,
                     "runs": profile.sims_breakdown(self.projects),
                     "cost_breakdown": profile.costs_breakdown(self.projects),
+                    "show_readme": False,
                 },
             )
         return render(request, self.home_template)

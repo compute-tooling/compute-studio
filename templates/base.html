@@ -55,7 +55,7 @@
               {% endfor %}
             </div>
           </li>
-          {% if not show_readme %}
+          {% if not show_readme and owner and project_name %}
           <li class="nav-item">
             <a class="nav-link" href="/{{owner}}/{{project_name}}">{{owner}}/{{project_name}}</a>
           </li>

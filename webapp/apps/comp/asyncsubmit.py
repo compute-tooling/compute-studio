@@ -94,7 +94,6 @@ class SubmitInputs:
             self.sim.parent_sim = parent_sim
             self.sim.title = parent_sim.title
             self.sim.save()
-
         # TODO: remove assertion in productin code.
         assert self.inputs.sim == self.sim
         return self.inputs
