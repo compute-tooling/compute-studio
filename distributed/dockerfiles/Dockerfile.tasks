@@ -2,8 +2,9 @@ ARG TAG
 FROM celerybase
 
 # install packages here
-# install packages necessary for celery,
+# install packages necessary for celery and dask.
 RUN pip install -r requirements.txt
+RUN conda install -c conda-forge lz4
 
 ARG TITLE
 ARG OWNER
