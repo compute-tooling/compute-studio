@@ -4,7 +4,7 @@ import * as React from "react";
 import { Card, Jumbotron, Row, Col, Dropdown } from "react-bootstrap";
 import ReactLoading from "react-loading";
 import * as yup from "yup";
-import { RemoteOutputs, AccessStatus, Simulation, MiniSimulation } from "./types";
+import { AccessStatus, MiniSimulation } from "./types";
 import { FormikActions, Formik, ErrorMessage, Field, Form } from "formik";
 import { Message } from "./fields";
 import moment = require("moment");
@@ -61,7 +61,7 @@ const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history
   );
 }
 
-export default class DescriptionComponent extends React.Component<
+export default class DescriptionComponent extends React.PureComponent<
   DescriptionProps,
   DescriptionState
   > {
@@ -149,21 +149,18 @@ export default class DescriptionComponent extends React.Component<
         <Formik
           initialValues={this.state.initialValues}
           onSubmit={(values: DescriptionValues, actions: FormikActions<DescriptionValues>) => {
-            console.log(values);
             let formdata = new FormData();
             for (const field in values) {
               formdata.append(field, values[field]);
             }
             formdata.append("model_pk", api.modelpk.toString());
             this.props.api.putDescription(formdata).then(data => {
-              console.log("success");
               this.setState({ preview: true })
             })
           }}
           validationSchema={Schema}
           render={({ values, handleSubmit }) => (
             <Form>
-              {console.log("rendering with", values)}
               <Row className="mt-1 mb-1 justify-content-start">
                 <Col className="col-5">
                   <Field name="title">

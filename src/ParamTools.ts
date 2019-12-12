@@ -245,7 +245,7 @@ export function convertToFormik(
     InitialValues,
     Sects,
     Inputs,
-    yup.Schema<any>,
+    { adjustment: yup.Schema<any>, meta_parameters: yup.Schema<any> },
     Array<string>
   ] {
   if ("schema" in data.meta_parameters) {
@@ -365,10 +365,10 @@ export function convertToFormik(
       (meta_parameters && mp_name in meta_parameters) ? meta_parameters[mp_name] : mpVal
     );
   }
-  let schema = yup.object().shape({
+  let schema = {
     adjustment: yup.object().shape(adjShape),
     meta_parameters: yup.object().shape(mpShape)
-  });
+  };
   return [
     initialValues,
     sects,

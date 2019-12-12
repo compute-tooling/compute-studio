@@ -156,7 +156,7 @@ const NewSimulation: React.FC<{}> = () => (
 )
 
 
-export default class OutputsComponent extends React.Component<
+export default class OutputsComponent extends React.PureComponent<
   OutputsProps,
   OutputsState
   > {
