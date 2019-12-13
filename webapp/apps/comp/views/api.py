@@ -256,7 +256,6 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
         return Response(data, status=status.HTTP_202_ACCEPTED)
 
     def get(self, request, *args, **kwargs):
-        print("Ok here")
         return self.get_sim_data(request.user, as_remote=False, **kwargs)
 
 
