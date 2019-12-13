@@ -4,7 +4,7 @@ import * as React from "react";
 import { Card, Jumbotron, Row, Col, Dropdown } from "react-bootstrap";
 import ReactLoading from "react-loading";
 import * as yup from "yup";
-import { AccessStatus, MiniSimulation } from "./types";
+import { AccessStatus, MiniSimulation, Simulation, RemoteOutput, RemoteOutputs } from "./types";
 import { FormikActions, Formik, ErrorMessage, Field, Form } from "formik";
 import { Message } from "./fields";
 import moment = require("moment");
@@ -14,6 +14,7 @@ import API from "./API";
 interface DescriptionProps {
   accessStatus: AccessStatus;
   api: API;
+  remoteSim: Simulation<RemoteOutputs>;
 }
 
 interface DescriptionValues {
@@ -28,7 +29,6 @@ let Schema = yup.object().shape({
 
 type DescriptionState = Readonly<{
   initialValues: DescriptionValues
-  owner: string;
   preview: Boolean;
   showAuth: Boolean;
   parentSims?: Array<MiniSimulation>;
@@ -69,7 +69,6 @@ export default class DescriptionComponent extends React.PureComponent<
     super(props);
     this.state = {
       initialValues: null,
-      owner: "",
       preview: true,
       parentSims: null,
       showAuth: false,
@@ -78,35 +77,10 @@ export default class DescriptionComponent extends React.PureComponent<
     this.writable = this.writable.bind(this);
   }
 
-  componentDidMount() {
-    // fetch title, description, version
-    let api = this.props.api;
-    if (!api.modelpk) {
-      this.setState({
-        initialValues: {
-          title: "Untitled Simulation",
-        },
-        owner: this.props.accessStatus && this.props.accessStatus.username ?
-          this.props.accessStatus.username : "anon",
-        parentSims: [],
-      })
-    } else {
-      this.props.api.getRemoteOutputs().then(data => {
-        this.setState({
-          initialValues: {
-            title: data.title,
-          },
-          owner: data.owner,
-          parentSims: data.parent_sims,
-        });
-      });
-    }
-  }
-
   writable() {
     return (
       ["profile", "customer"].includes(this.props.accessStatus.user_status) &&
-      this.props.accessStatus.username === this.state.owner
+      this.user() === this.props.remoteSim?.owner
     );
   }
 
@@ -117,37 +91,30 @@ export default class DescriptionComponent extends React.PureComponent<
     }
   }
 
+  user() {
+    return this.props.accessStatus && this.props.accessStatus.username ?
+      this.props.accessStatus.username : "anon"
+  }
+
   render() {
-    if (!this.state.initialValues) {
-      return (
-        <Card className="card-outer">
-          <Card className="card-inner">
-            <Card.Body>
-              <div className="d-flex justify-content-center">
-                <ReactLoading type="spokes" color="#2b2c2d" />
-              </div>
-            </Card.Body>
-          </Card>
-        </Card>
-      );
-    }
-    if (this.state.showAuth) {
-      return <RequireLoginDialog
-        accessStatus={this.props.accessStatus}
-        show={true}
-        setShow={show => this.setState({ showAuth: !show })}
-        handleSubmit={() => null}
-      />
-    }
     let style = this.state.preview ? {
       border: 0
     } : {}
     let api = this.props.api;
-    let { parentSims, owner, preview } = this.state;
+    let { preview } = this.state;
+
+    let title, owner;
+    if (this.props.remoteSim) {
+      title = this.props.remoteSim.title;
+      owner = this.props.remoteSim.owner;
+    } else {
+      title = "Untitled Simulation";
+      owner = this.user();
+    }
     return (
       <Jumbotron className="shadow" style={{ backgroundColor: "white" }}>
         <Formik
-          initialValues={this.state.initialValues}
+          initialValues={{ title: title }}
           onSubmit={(values: DescriptionValues, actions: FormikActions<DescriptionValues>) => {
             let formdata = new FormData();
             for (const field in values) {
@@ -184,7 +151,7 @@ export default class DescriptionComponent extends React.PureComponent<
                   />
                 </Col>
                 <Col className="col-1 offset-md-2">
-                  <HistoryDropDown history={parentSims} />
+                  <HistoryDropDown history={this.props.remoteSim?.parent_sims || []} />
                 </Col>
               </Row>
               <Row className="justify-content-start">

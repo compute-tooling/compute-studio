@@ -1,6 +1,5 @@
 import * as React from "react";
 import ReactLoading from "react-loading";
-import * as Bokeh from "bokehjs";
 import {
   Card,
   Row,
@@ -25,12 +24,11 @@ import API from "./API";
 
 interface OutputsProps {
   api: API;
+  remoteSim?: Simulation<RemoteOutputs>;
+  sim?: Simulation<Outputs>;
 }
 
 type OutputsState = Readonly<{
-  remoteSim: Simulation<RemoteOutputs>;
-  sim: Simulation<Outputs>;
-  timer?: NodeJS.Timer;
 }>;
 
 const TableComponent: React.FC<{ output: TableOutput }> = ({ output }) => (
@@ -156,72 +154,27 @@ const NewSimulation: React.FC<{}> = () => (
 )
 
 
-export default class OutputsComponent extends React.PureComponent<
+export default class OutputsComponent extends React.Component<
   OutputsProps,
   OutputsState
   > {
   constructor(props) {
     super(props);
-    this.state = {
-      remoteSim: null,
-      sim: null,
-      timer: null,
-    };
-    this.killTimer = this.killTimer.bind(this);
   }
 
-  componentDidMount() {
-    let timer;
-    let api = this.props.api;
-    if (!api.modelpk) {
-      return;
-    }
-    api.getRemoteOutputs().then(initRem => {
-      this.setState({ remoteSim: initRem });
-      if (initRem.status !== "PENDING") {
-        api.getOutputs().then(initSim => {
-          this.setState({ sim: initSim });
-        });
-      } else {
-        timer = setInterval(() => {
-          api.getRemoteOutputs().then(detRem => {
-            if (detRem.status !== "PENDING") {
-              this.setState({
-                remoteSim: detRem
-              });
-              this.killTimer();
-              api.getOutputs().then(detSim => {
-                this.setState({
-                  sim: detSim,
-                });
-              });
-            } else {
-              this.setState({ remoteSim: detRem })
-            }
-          })
-        }, 5000);
-      };
-      this.setState({ timer: timer });
-    });
-  }
-
-  killTimer() {
-    if (!!this.state.timer) {
-      clearInterval(this.state.timer);
-      this.setState({ timer: null });
-    }
-  }
 
   render() {
-    let { remoteSim, sim } = this.state;
-    let api = this.props.api;
-    if (!api.modelpk || (remoteSim && remoteSim.status === "STARTED")) {
+    let { api, remoteSim, sim } = this.props;
+
+    if (api.modelpk !== remoteSim?.model_pk.toString()) {
+      return <Pending />
+    } else if (!api.modelpk || (remoteSim?.status === "STARTED")) {
       return <NewSimulation />
     } else if (!remoteSim) {
       return <Pending />;
-    } else if (remoteSim && remoteSim.status === "PENDING") {
+    } else if (remoteSim?.status === "PENDING") {
       return <Pending eta={remoteSim.eta} originalEta={remoteSim.original_eta} />
-    } else if (remoteSim.traceback || (sim && sim.traceback)) {
+    } else if (remoteSim.traceback || (sim?.traceback)) {
       return <Traceback remoteSim={remoteSim} />;
     }
 
@@ -233,7 +186,7 @@ export default class OutputsComponent extends React.PureComponent<
     let remoteOutputs = remoteSim.outputs.outputs;
 
     let outputs: Outputs = null;
-    if (sim !== null) {
+    if (sim) {
       outputs = sim.outputs;
     }
 

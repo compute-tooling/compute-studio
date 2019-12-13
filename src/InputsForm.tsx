@@ -54,7 +54,6 @@ interface InputsProps {
   schema?: {
     adjustment: yup.Schema<any>,
     meta_parameters: yup.Schema<any>,
-    // title: yup.Schema<string>
   };
   extend?: boolean;
   unknownParams?: Array<string>;
@@ -72,9 +71,7 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
   let {
     accessStatus,
     inputs,
-
     resetInitialValues,
-
     schema,
     sects,
     extend,
@@ -82,7 +79,6 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
     readOnly,
   } = props;
   let { meta_parameters, model_parameters } = inputs;
-  let { sim } = inputs.detail;
 
   let hasUnknownParams = unknownParams.length > 0;
   let unknownParamsErrors: { [sect: string]: { errors: any } } = {
@@ -96,7 +92,6 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
   }
 
   let { isSubmitting, values, touched, handleSubmit, status } = props.formikProps;
-  console.log(props.formikProps.values, model_parameters, meta_parameters)
   return (
     <div>
       {isSubmitting ? (
@@ -139,8 +134,8 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
                     the simulation can be submitted. You may re-visit
                     this page a later time by entering the following
                             link:{" "}
-                    <a href={status.editInputsUrl}>
-                      {status.editInputsUrl}
+                    <a href={inputs.detail.gui_url}>
+                      {inputs.detail.gui_url}
                     </a>
                   </p>
                 }
@@ -157,8 +152,8 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
                 <p>
                   {"One or more parameters have been renamed or " +
                     "removed since this simulation was run on " +
-                    `${sim.creation_date} with version ${sim.model_version}. You may view the full simulation detail `}
-                  <a href={sim.api_url}>here.</a>
+                    `${inputs.detail.sim.creation_date} with version ${inputs.detail.sim.model_version}. You may view the full simulation detail `}
+                  <a href={inputs.detail.sim.api_url}>here.</a>
                 </p>
               }
               errors={unknownParamsErrors}

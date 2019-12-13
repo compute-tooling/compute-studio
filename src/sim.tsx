@@ -7,6 +7,7 @@ import { Nav, Tab, Col, Card } from "react-bootstrap";
 import axios from "axios";
 import * as Sentry from "@sentry/browser";
 import * as yup from "yup";
+import ReactLoading from "react-loading";
 
 import InputsForm, { tbLabelSchema } from "./InputsForm";
 import OutputsComponent from "./Outputs";
@@ -15,7 +16,7 @@ import DescriptionComponent from "./Description";
 import API from "./API";
 import ErrorBoundary from "./ErrorBoundary";
 import { convertToFormik, formikToJSON } from "./ParamTools";
-import { Formik, Form, FormikProps } from "formik";
+import { Formik, Form, FormikProps, FormikActions } from "formik";
 import { hasServerErrors } from "./utils";
 
 Sentry.init({
@@ -50,7 +51,12 @@ interface SimAppState {
   // all meta data for the inputs of a sim.
   inputs?: Inputs;
 
-  timer?: NodeJS.Timer;
+  // all meta data for the outputs of a sim.
+  remoteSim?: Simulation<RemoteOutputs>;
+  sim?: Simulation<Outputs>;
+
+  inputsTimer?: NodeJS.Timer | null;
+  outputsTimer?: NodeJS.Timer | null;
 
   // necessary for form state
   initialValues?: InitialValues;
@@ -79,7 +85,8 @@ class SimTabs extends React.Component<
 
     this.handleTabChange = this.handleTabChange.bind(this);
     this.resetInitialValues = this.resetInitialValues.bind(this);
-    this.poll = this.poll.bind(this);
+    this.pollInputs = this.pollInputs.bind(this);
+    this.setOutputs = this.setOutputs.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
@@ -106,14 +113,9 @@ class SimTabs extends React.Component<
         extend: "extend" in data ? data.extend : false,
       })
     })
-    // if (!this.api.modelpk) {
-    //   this.api.getRemoteOutputs().then(data => {
-    //     this.setState({
-    //       remoteSim: data
-    //     })
-    //   })
-    // }
-
+    if (this.api.modelpk) {
+      this.setOutputs()
+    }
   }
 
   resetInitialValues(metaParameters: InputsDetail["meta_parameters"]) {
@@ -130,9 +132,9 @@ class SimTabs extends React.Component<
           schema,
           unknownParams
         ] = convertToFormik(data);
-        this.setState({
+        this.setState((prevState) => ({
           inputs: {
-            ...this.state.inputs,
+            ...prevState.inputs,
             ...{
               meta_parameters: meta_parameters,
               model_parameters: model_parameters,
@@ -143,7 +145,7 @@ class SimTabs extends React.Component<
           schema: schema,
           unknownParams: unknownParams,
           resetting: false
-        });
+        }));
       })
   }
 
@@ -154,9 +156,6 @@ class SimTabs extends React.Component<
       tbLabelSchema,
       this.state.extend
     );
-    console.log("submitting");
-    console.log(adjustment);
-    console.log(meta_parameters);
 
     let formdata = new FormData();
     formdata.append("adjustment", JSON.stringify(adjustment));
@@ -178,40 +177,22 @@ class SimTabs extends React.Component<
     this.api
       .postAdjustment(url, formdata)
       .then(data => {
-        console.log("success", data.gui_url);
-        if (data.sim.owner !== sim?.owner) {
-          window.location.href = data.gui_url;
-        } else {
-          history.pushState(null, null, data.gui_url);
-          actions.setStatus({
-            status: "PENDING",
-            api_url: data.api_url,
-            editInputsUrl: data.gui_url,
-            inputsDetail: data // TODO: necessary
-          });
-          // set submitting as false in poll func.
-          if (data.status === "PENDING") {
-            this.poll(
-              data,
-              (data: InputsDetail) => {
-                actions.setStatus({
-                  status: data.status,
-                  simUrl: data.sim.gui_url,
-                  key: "outputs",
-                });
-                actions.setSubmitting(false);
-              },
-              (data: InputsDetail) => {
-                actions.setSubmitting(false);
-                actions.setStatus({
-                  status: data.status,
-                  serverErrors: data.errors_warnings,
-                  editInputsUrl: data.gui_url,
-                  key: "inputs",
-                });
-              }
-            );
-          }
+        history.pushState(null, null, data.gui_url);
+        this.api.modelpk = data.sim.model_pk.toString();
+        this.setOutputs();
+        this.api.getAccessStatus().then(accessStatus => {
+          this.setState((prevState) => ({
+            inputs: { ...prevState.inputs, ...{ detail: data } },
+            key: "inputs",
+            accessStatus: accessStatus,
+          }));
+        });
+        actions.setStatus({
+          status: "PENDING",
+        });
+        // set submitting as false in poll func.
+        if (data.status === "PENDING") {
+          this.pollInputs(data, actions, values);
         }
       })
       .catch(error => {
@@ -225,11 +206,7 @@ class SimTabs extends React.Component<
       });
   }
 
-  poll(
-    respData: InputsDetail,
-    onSuccess: (data: InputsDetail) => void,
-    onInvalid: (data: InputsDetail) => void
-  ) {
+  pollInputs(respData: InputsDetail, actions: FormikActions<InitialValues>, values) {
     let timer = setInterval(() => {
       axios
         .get(respData.api_url)
@@ -238,34 +215,89 @@ class SimTabs extends React.Component<
           // sim has not yet been submitted and saved!
           let data: InputsDetail = response.data;
           if (data.status === "SUCCESS" && data.sim !== null) {
-            this.killTimer();
-            onSuccess(data);
+            this.killTimer("inputsTimer");
+            this.api.modelpk = data.sim.model_pk.toString();
+            this.setOutputs();
+            this.api.getAccessStatus().then(accessStatus => {
+              this.setState((prevState) => ({
+                initialValues: values, // reset form with updated init vals.
+                inputs: { ...prevState.inputs, ...{ detail: data } },
+                key: "outputs",
+                accessStatus: accessStatus,
+              }));
+            });
+            actions.setStatus({
+              status: data.status,
+            });
+            actions.setSubmitting(false);
+
             history.pushState(null, null, data.sim.gui_url);
           } else if (response.data.status === "INVALID") {
-            this.killTimer();
-            onInvalid(data);
+            this.killTimer("inputsTimer");
+            this.api.getAccessStatus().then(accessStatus => {
+              this.setState((prevState) => ({
+                inputs: { ...prevState.inputs, ...{ detail: data } },
+                key: "inputs",
+                accessStatus: accessStatus,
+              }));
+            });
+            actions.setStatus({
+              status: data.status,
+              serverErrors: data.errors_warnings,
+            });
+            actions.setSubmitting(false);
             window.scroll(0, 0);
           }
         })
         .catch(error => {
           console.log("polling error:");
           console.log(error);
-          this.killTimer();
-          // actions.setSubmitting(false); TODO
-          // request likely cancelled because timer was killed.
-          // if (error.message && error.message != "Request aborted") {
-          //   this.setState({ error: error });
-          // }
+          this.killTimer("inputsTimer");
         });
     }, 1000);
     // @ts-ignore
-    this.setState({ timer: timer });
+    this.setState({ inputsTimer: timer });
   }
 
-  killTimer() {
-    if (!!this.state.timer) {
-      clearInterval(this.state.timer);
-      this.setState({ timer: null });
+  setOutputs() {
+    let timer;
+    let api = this.api;
+    if (!api.modelpk) {
+      return;
+    }
+    api.getRemoteOutputs().then(initRem => {
+      console.log("new remoteSim", initRem.model_pk)
+      this.setState({ remoteSim: initRem });
+      if (initRem.status !== "PENDING") {
+        api.getOutputs().then(initSim => {
+          this.setState({ sim: initSim });
+        });
+      } else {
+        timer = setInterval(() => {
+          api.getRemoteOutputs().then(detRem => {
+            if (detRem.status !== "PENDING") {
+              this.setState({ remoteSim: detRem })
+              this.killTimer("outputsTimer");
+              api.getOutputs().then(detSim => {
+                this.setState({ sim: detSim })
+              });
+            } else {
+              this.setState({ remoteSim: detRem })
+            }
+          })
+        }, 5000);
+      };
+      this.setState({ outputsTimer: timer });
+    });
+  }
+
+  killTimer(timerName: "inputsTimer" | "outputsTimer") {
+    console.log("killTimer", timerName, this.state[timerName])
+    if (this.state[timerName]) {
+      console.log("clearning state for timer", timerName, this.state[timerName])
+      clearInterval(this.state[timerName]);
+      // @ts-ignore
+      this.setState({ [timerName]: null });
     }
   }
 
@@ -281,8 +313,21 @@ class SimTabs extends React.Component<
   }
 
   render() {
-    if (!(this.state.accessStatus && this.state.inputs)) {
-      return <Card className="card-outer">Loading....</Card>
+    // TODO be able to drop inputs from this if statement
+    // currently causes error with formik.
+    if (!this.state.accessStatus || (!this.state.remoteSim && this.api.modelpk)) {
+      return <div></div>;
+    } else if (this.state.accessStatus && (this.state.remoteSim || !this.api.modelpk) && !this.state.inputs) {
+      return (<ErrorBoundary>
+        <DescriptionComponent
+          api={this.api}
+          accessStatus={this.state.accessStatus}
+          remoteSim={this.state.remoteSim}
+        />
+        <div className="d-flex justify-content-center">
+          <ReactLoading type="spokes" color="#2b2c2d" />
+        </div>
+      </ErrorBoundary>)
     }
     const style = { padding: 0 };
     const buttonGroupStyle = {
@@ -305,21 +350,21 @@ class SimTabs extends React.Component<
       extend,
       sects,
     } = this.state;
-    let initialServerErrors = hasServerErrors(inputs.detail?.errors_warnings) ?
+    let initialServerErrors = hasServerErrors(inputs?.detail?.errors_warnings) ?
       inputs.detail.errors_warnings : null;
     let initialStatus;
     if (initialServerErrors) {
       initialStatus = {
         serverErrors: initialServerErrors,
         status: "INVALID",
-        editInputsUrl: inputs.detail.api_url
       };
     }
+    console.log("initialValues", initialValues, this.state.inputs)
     return (
       <>
         <Formik
           initialValues={initialValues}
-          validationSchema={yup.object().shape(schema)}
+          validationSchema={schema}
           validateOnChange={false}
           validateOnBlur={true}
           enableReinitialize={true}
@@ -332,12 +377,13 @@ class SimTabs extends React.Component<
                 <DescriptionComponent
                   api={this.api}
                   accessStatus={accessStatus}
+                  remoteSim={this.state.remoteSim}
                 />
               </ErrorBoundary>
               <Tab.Container
                 id="sim-tabs"
                 defaultActiveKey={this.state.key}
-                activeKey={formikProps.status?.key ? formikProps.status.key : this.state.key}
+                activeKey={this.state.key}
                 onSelect={(k: "inputs" | "outputs") => this.handleTabChange(k, formikProps)}
               >
                 <Nav variant="pills" className="mb-4">
@@ -385,6 +431,8 @@ class SimTabs extends React.Component<
                     <ErrorBoundary>
                       <OutputsComponent
                         api={this.api}
+                        remoteSim={this.state.remoteSim}
+                        sim={this.state.sim}
                       />
                     </ErrorBoundary>
                   </Tab.Pane>
