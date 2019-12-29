@@ -150,9 +150,14 @@ const RunDialog = ({ show, setShow, handleSubmit, accessStatus }) => {
     handleSubmit();
   };
 
+  let message = "This model's simulations are sponsored and thus, are free for you.";
+  if (accessStatus.sponsor_message) {
+    message = accessStatus.sponsor_message;
+  }
+
   let body;
   if (accessStatus.is_sponsored) {
-    body = <Modal.Body> This model's simulations are sponsored and thus, are free for you.</Modal.Body>;
+    body = <Modal.Body><div dangerouslySetInnerHTML={{ __html: message }} /></Modal.Body>;
   } else {
     body = (
       <Modal.Body>

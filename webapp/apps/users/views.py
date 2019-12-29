@@ -125,7 +125,6 @@ class DeleteUserDone(generic.TemplateView):
 
 class AccessStatusAPI(GetProjectMixin, APIView):
     def get(self, request, *args, **kwargs):
-        data = {}
         user = request.user
         if user.is_authenticated and user.profile:
             user_status = user.profile.status
@@ -143,6 +142,7 @@ class AccessStatusAPI(GetProjectMixin, APIView):
             return Response(
                 {
                     "is_sponsored": project.is_sponsored,
+                    "sponsor_message": project.sponsor_message,
                     "user_status": user_status,
                     "can_run": can_run,
                     "server_cost": project.server_cost,
