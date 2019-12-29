@@ -177,6 +177,7 @@ class TestUsersViews:
         assert resp.data == {
             "user_status": "anon",
             "is_sponsored": False,
+            "sponsor_message": None,
             "can_run": False,
             "exp_cost": project.exp_job_info(adjust=True)[0],
             "exp_time": project.exp_job_info(adjust=True)[1],
@@ -190,6 +191,7 @@ class TestUsersViews:
         assert resp.data == {
             "user_status": "anon",
             "is_sponsored": True,
+            "sponsor_message": None,
             "can_run": False,
             "exp_cost": sponsored_project.exp_job_info(adjust=True)[0],
             "exp_time": sponsored_project.exp_job_info(adjust=True)[1],
