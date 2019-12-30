@@ -17,7 +17,7 @@ class ChargeRunMixin:
     def charge_run(self, sim, meta_dict, use_stripe=True):
         sim.run_time = sum(meta_dict["task_times"])
         sim.run_cost = sim.project.run_cost(sim.run_time)
-        if use_stripe:
+        if use_stripe and sim.project.pay_per_sim:
             quantity = sim.project.run_cost(sim.run_time, adjust=True)
             plan = sim.project.product.plans.get(usage_type="metered")
             # The sponsor is also stored on the Simulation object. However, the
