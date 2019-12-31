@@ -170,6 +170,7 @@ export interface MiniSimulation {
   api_url: string;
   creation_date: Date;
   gui_url: string;
+  is_public: boolean;
   model_pk: number;
   model_version: string;
   owner: string;
@@ -210,6 +211,7 @@ export interface Simulation<T> {
   eta: number;
   exp_comp_datetime: Date;
   gui_url: string;
+  is_public: boolean;
   has_write_access: Boolean;
   model_pk: number;
   model_version: string;

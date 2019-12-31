@@ -38,7 +38,6 @@ urlpatterns = [
         name="remote_detail_api",
     ),
     path("<int:model_pk>/edit/", EditSimView.as_view(), name="edit"),
-    path("<int:model_pk>/inputs/", EditSimView.as_view(), name="view_inputs"),
     path("<int:model_pk>/download/", OutputsDownloadView.as_view(), name="download"),
     path("<int:model_pk>/", EditSimView.as_view(), name="outputs"),
     # path("<int:model_pk>/v0/", OutputsView.as_view(), name="outputs_v0"), TODO: handle v0

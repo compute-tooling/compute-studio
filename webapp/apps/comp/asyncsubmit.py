@@ -87,7 +87,7 @@ class SubmitInputs:
             custom_adjustment=result["custom_adjustment"],
             job_id=result["job_id"],
             status="PENDING",
-            # parent_sim=self.sim.parent_sim or parent_sim,
+            parent_sim=self.sim.parent_sim or parent_sim,
         )
         # case where parent sim exists and has not yet been assigned
         if not self.sim.parent_sim and parent_sim:

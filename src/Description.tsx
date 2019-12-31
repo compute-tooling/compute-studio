@@ -1,7 +1,7 @@
 "use strict";
 
 import * as React from "react";
-import { Card, Jumbotron, Row, Col, Dropdown } from "react-bootstrap";
+import { Card, Jumbotron, Row, Col, Dropdown, Button } from "react-bootstrap";
 import ReactLoading from "react-loading";
 import * as yup from "yup";
 import { AccessStatus, MiniSimulation, Simulation, RemoteOutput, RemoteOutputs } from "./types";
@@ -18,7 +18,8 @@ interface DescriptionProps {
 }
 
 interface DescriptionValues {
-  title: string,
+  title: string;
+  is_public: boolean;
 }
 
 
@@ -28,7 +29,7 @@ let Schema = yup.object().shape({
 
 
 type DescriptionState = Readonly<{
-  initialValues: DescriptionValues
+  initialValues: DescriptionValues;
   preview: Boolean;
   showAuth: Boolean;
   parentSims?: Array<MiniSimulation>;
@@ -36,9 +37,8 @@ type DescriptionState = Readonly<{
 
 
 const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history }) => {
-
   return (
-    < Dropdown >
+    < Dropdown>
       <Dropdown.Toggle variant="outline-dark" id="dropdown-basic">
         History
       </Dropdown.Toggle>
@@ -103,18 +103,20 @@ export default class DescriptionComponent extends React.PureComponent<
     let api = this.props.api;
     let { preview } = this.state;
 
-    let title, owner;
+    let title, owner, is_public;
     if (this.props.remoteSim) {
       title = this.props.remoteSim.title;
       owner = this.props.remoteSim.owner;
+      is_public = this.props.remoteSim.is_public;
     } else {
       title = "Untitled Simulation";
       owner = this.user();
+      is_public = false;
     }
     return (
       <Jumbotron className="shadow" style={{ backgroundColor: "white" }}>
         <Formik
-          initialValues={{ title: title }}
+          initialValues={{ title: title, is_public: is_public }}
           onSubmit={(values: DescriptionValues, actions: FormikActions<DescriptionValues>) => {
             let formdata = new FormData();
             for (const field in values) {
@@ -126,7 +128,7 @@ export default class DescriptionComponent extends React.PureComponent<
             })
           }}
           validationSchema={Schema}
-          render={({ values, handleSubmit }) => (
+          render={({ values, handleSubmit, setFieldValue }) => (
             <Form>
               <Row className="mt-1 mb-1 justify-content-start">
                 <Col className="col-5">
@@ -135,15 +137,17 @@ export default class DescriptionComponent extends React.PureComponent<
                       field,
                       form: { touched, errors },
                       meta,
-                    }) => (
-                        preview ?
-                          <Card style={style} onClick={this.togglePreview}>
-                            <h1>{field.value}</h1>
-                          </Card> :
-                          <Card style={{ border: 0 }}>
-                            <input type="text" placeholder="Untitled Simulation" {...field} className="form-cotnrol" onBlur={handleSubmit} />
-                          </Card>
-                      )}
+                    }) => {
+                      const inline = { display: "inline-block" }
+
+                      return (preview ?
+                        <Card style={style} >
+                          <h1 style={inline} onClick={this.togglePreview}>{field.value}</h1>
+                        </Card> :
+                        <Card style={{ border: 0 }} >
+                          <input type="text" placeholder="Untitled Simulation" {...field} className="form-cotnrol" onBlur={handleSubmit} />
+                        </Card>);
+                    }}
                   </Field>
                   <ErrorMessage
                     name="title"
@@ -159,6 +163,25 @@ export default class DescriptionComponent extends React.PureComponent<
                   <Card style={{ border: 0 }}>
                     <h5 className="mt-1">by {owner}</h5>
                   </Card>
+                </Col>
+              </Row>
+              <Row className="justify-content-start">
+                <Col className="col-4">
+                  {this.writable() ?
+                    <Button variant="outline-dark" className="mb-4" onClick={e => {
+                      e.target.value = !values.is_public;
+                      setFieldValue("is_public", !values.is_public);
+                      // put handleSubmit in setTimeout since setFieldValue is async
+                      // but does not return a promise
+                      // https://github.com/jaredpalmer/formik/issues/529
+                      setTimeout(() => handleSubmit(e), 0);
+                    }}>
+                      {values.is_public ?
+                        <><img className="mr-1" src="https://cdnjs.cloudflare.com/ajax/libs/octicons/8.5.0/svg/eye.svg" alt="public" /> public</> :
+                        <><img className="mr-1" src="https://cdnjs.cloudflare.com/ajax/libs/octicons/8.5.0/svg/eye-closed.svg" alt="private" />private</>}
+                    </Button> :
+                    null
+                  }
                 </Col>
               </Row>
             </Form>

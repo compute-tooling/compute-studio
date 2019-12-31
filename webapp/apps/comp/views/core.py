@@ -114,12 +114,16 @@ class AbstractRouterAPIView(AbstractRouter, APIView):
 
 class GetOutputsObjectMixin:
     def get_object(self, model_pk, username, title):
-        return get_object_or_404(
+        obj = get_object_or_404(
             self.model,
             model_pk=model_pk,
             project__title__iexact=title,
             project__owner__user__username__iexact=username,
         )
+        if not obj.has_read_access(self.request.user):
+            raise PermissionDenied()
+        return obj
+
 
 
 class RecordOutputsMixin(ChargeRunMixin):

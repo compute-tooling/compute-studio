@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils import timezone
 from django.contrib.postgres.fields import JSONField
+from django.contrib.auth.models import Group
 from django.utils.timezone import make_aware
 from django.urls import reverse
 from django.utils import timezone
@@ -123,6 +124,8 @@ class Inputs(models.Model):
     def has_write_access(self, user):
         return user.is_authenticated and user == self.owner.user
 
+    def has_read_access(self, user):
+        return self.sim.has_read_access(user)
 
 class SimulationManager(models.Manager):
     def next_model_pk(self, project):
@@ -149,6 +152,7 @@ class SimulationManager(models.Manager):
             model_pk=self.next_model_pk(project),
             inputs=inputs,
             status="STARTED",
+            is_public=False,
         )
         return sim
 
@@ -189,6 +193,8 @@ class Simulation(models.Model):
     model_version = models.CharField(blank=True, default=None, null=True, max_length=50)
     webapp_vers = models.CharField(blank=True, default=None, null=True, max_length=50)
     model_pk = models.IntegerField()
+
+    is_public = models.BooleanField(default=True)
 
     status = models.CharField(
         choices=(
@@ -279,6 +285,9 @@ class Simulation(models.Model):
 
     def has_write_access(self, user):
         return user.is_authenticated and user == self.owner.user
+
+    def has_read_access(self, user):
+        return self.is_public or (user.is_authenticated and user == self.owner.user)
 
 
 @dataclass

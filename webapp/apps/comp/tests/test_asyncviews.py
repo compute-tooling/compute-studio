@@ -124,6 +124,12 @@ class RunMockModel(CoreTestMixin):
                 mock, defaults_resp_data, adj_resp_data, adj
             )
             model_pk = init_resp.data["sim"]["model_pk"]
+            sim = Simulation.objects.get(
+                project__title__iexact=self.title,
+                project__owner__user__username__iexact=self.owner,
+                model_pk=model_pk,
+            )
+            self.sim_owner = sim.owner
             self.poll_adjustment(mock, model_pk)
             self.put_adjustment(adj_callback_data)
             inputs = self.check_adjustment_finished(model_pk)
@@ -136,6 +142,8 @@ class RunMockModel(CoreTestMixin):
         self.view_inputs_from_model_pk(model_pk)
 
         self.set_sim_description(model_pk)
+
+        self.get_paths(model_pk)
 
     def post_adjustment(
         self,
@@ -162,6 +170,8 @@ class RunMockModel(CoreTestMixin):
         return init_resp
 
     def poll_adjustment(self, mock: requests_mock.Mocker, model_pk: int):
+        self.client.force_login(self.sim_owner.user)
+        self.api_client.force_login(self.sim_owner.user)
         get_resp_pend = self.api_client.get(
             f"/{self.owner}/{self.title}/api/v1/{model_pk}/edit/"
         )
@@ -184,6 +194,8 @@ class RunMockModel(CoreTestMixin):
         return put_adj_resp
 
     def check_adjustment_finished(self, model_pk: str) -> Inputs:
+        self.client.force_login(self.sim_owner.user)
+        self.api_client.force_login(self.sim_owner.user)
         get_resp_succ = self.api_client.get(
             f"/{self.owner}/{self.title}/api/v1/{model_pk}/edit/"
         )
@@ -206,6 +218,9 @@ class RunMockModel(CoreTestMixin):
         assert_status(202, get_resp_pend, "poll_simulation")
 
     def check_simulation_finished(self, model_pk: int):
+        self.client.force_login(self.sim_owner.user)
+        self.api_client.force_login(self.sim_owner.user)
+
         get_resp_succ = self.api_client.get(
             f"/{self.owner}/{self.title}/api/v1/{model_pk}/"
         )
@@ -257,6 +272,48 @@ class RunMockModel(CoreTestMixin):
         assert sim.title == "My sim"
         assert str(sim.owner)
         assert sim.parent_sim == None
+
+    def get_paths(self, model_pk: int):
+
+        def fetch_sims(exp_resp: int):
+            api_paths = [
+                f"/{self.owner}/{self.title}/api/v1/{model_pk}/remote/",
+                f"/{self.owner}/{self.title}/api/v1/{model_pk}/",
+                f"/{self.owner}/{self.title}/api/v1/{model_pk}/edit/",
+            ]
+            paths = [
+                f"/{self.owner}/{self.title}/{model_pk}/",
+                f"/{self.owner}/{self.title}/{model_pk}/edit/"
+            ]
+            for path in api_paths:
+                resp = self.api_client.get(path)
+                assert_status(exp_resp, resp, f"auth: {path}")
+            for path in paths:
+                resp = self.client.get(path)
+                assert_status(exp_resp, resp, f"auth: {path}")
+
+        # test with public sim
+        self.sim.is_public = True
+        self.sim.save()
+        set_auth_token(self.api_client, self.sim_owner.user)
+        self.client.force_login(self.sim_owner.user)
+        fetch_sims(200)
+
+        self.api_client.logout()
+        self.client.logout()
+        fetch_sims(200)
+
+        # test with private sim
+        self.sim.is_public = False
+        self.sim.save()
+        set_auth_token(self.api_client, self.sim.owner.user)
+        self.client.force_login(self.sim_owner.user)
+
+        fetch_sims(200)
+
+        self.api_client.logout()
+        self.client.logout()
+        fetch_sims(403)
 
 
 @pytest.fixture
@@ -379,6 +436,7 @@ class TestAsyncAPI(CoreTestMixin):
                 f"{worker_url}{self.owner}/{self.title}/parse",
                 text=json.dumps(adj_resp_data),
             )
+            api_client.force_login(sim.owner.user)
             resp = api_client.get(sim.inputs.get_absolute_api_url())
             assert_status(200, resp, "test_new_sim_inputs")
             resp = api_client.get(sim.get_absolute_api_url())

@@ -10,6 +10,7 @@ from rest_framework.authentication import (
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 
 import cs_storage
 
@@ -96,6 +97,8 @@ class DetailMyInputsAPIView(APIView):
             project__title__iexact=kwargs["title"],
             project__owner__user__username__iexact=kwargs["username"],
         )
+        if not inputs.has_read_access(request.user):
+            raise PermissionDenied()
         ser = InputsSerializer(inputs)
         data = {"has_write_access": inputs.has_write_access(request.user)}
         data.update(ser.data)
@@ -180,7 +183,7 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
             self.object = self.get_object(
                 kwargs["model_pk"], kwargs["username"], kwargs["title"]
             )
-            if self.object.owner.user == request.user:
+            if self.object.has_write_access(request.user):
                 print("got data", request.data)
                 serializer = MiniSimulationSerializer(self.object, data=request.data)
                 if serializer.is_valid():
