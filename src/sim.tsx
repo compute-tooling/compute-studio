@@ -203,7 +203,7 @@ class SimTabs extends React.Component<
         actions.setSubmitting(false);
         if (error.response.status == 403) {
           actions.setStatus({
-            auth: "You must be logged in to publish a model."
+            auth: "You must be logged in to create a simulation."
           });
         }
       });
