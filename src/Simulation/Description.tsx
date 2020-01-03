@@ -173,15 +173,15 @@ export default class DescriptionComponent extends React.PureComponent<
             </Card>
             <Card className="text-center" style={{ backgroundColor: "inherit", border: 0, paddingLeft: 0, paddingRight: 0 }}>
               <Card.Body style={{ paddingLeft: "1rem", paddingRight: "1rem" }}>
-                <Row className="justify-content-center">
-                  <Col className="col" style={{ paddingLeft: 0 }}>
+                <Row className="justify-content-left">
+                  <Col className="col-2" style={{ paddingLeft: 0 }}>
                     <AuthorDropDown author={owner} />
                   </Col>
-                  <Col className="col">
+                  <Col className="col-2" >
                     <HistoryDropDown history={this.props.remoteSim?.parent_sims || []} />
                   </Col>
-                  <Col className="col" style={{ paddingRight: 0 }}>
-                    {this.writable() ?
+                  {this.writable() ?
+                    <Col className="col-2" style={{ paddingRight: 0 }}>
                       <Button variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} className="mb-4 w-100" onClick={e => {
                         e.target.value = !values.is_public;
                         setFieldValue("is_public", !values.is_public);
@@ -193,10 +193,10 @@ export default class DescriptionComponent extends React.PureComponent<
                         {values.is_public ?
                           <><img className="mr-1" src="https://cdnjs.cloudflare.com/ajax/libs/octicons/8.5.0/svg/eye.svg" alt="public" /> public</> :
                           <><img className="mr-1" src="https://cdnjs.cloudflare.com/ajax/libs/octicons/8.5.0/svg/eye-closed.svg" alt="private" />private</>}
-                      </Button> :
-                      null
-                    }
-                  </Col>
+                      </Button>
+                    </Col> :
+                    null
+                  }
                 </Row>
               </Card.Body>
             </Card>
