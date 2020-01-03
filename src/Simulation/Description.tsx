@@ -90,6 +90,7 @@ export default class DescriptionComponent extends React.PureComponent<
     };
     this.togglePreview = this.togglePreview.bind(this);
     this.writable = this.writable.bind(this);
+    this.forkSimulation = this.forkSimulation.bind(this);
   }
 
   writable() {
@@ -100,7 +101,6 @@ export default class DescriptionComponent extends React.PureComponent<
   }
 
   togglePreview() {
-    event.preventDefault();
     if (this.writable()) {
       this.setState({ preview: !this.state.preview });
     }
@@ -109,6 +109,15 @@ export default class DescriptionComponent extends React.PureComponent<
   user() {
     return this.props.accessStatus && this.props.accessStatus.username ?
       this.props.accessStatus.username : "anon"
+  }
+
+  forkSimulation() {
+    let api = this.props.api;
+    if (api.modelpk) {
+      api.forkSimulation().then(data => {
+        window.location.href = data.gui_url;
+      }); // TODO: catch error on pending objs
+    }
   }
 
   render() {
@@ -182,6 +191,11 @@ export default class DescriptionComponent extends React.PureComponent<
                   </Col>
                   <Col className="col-2" >
                     <HistoryDropDown history={this.props.remoteSim?.parent_sims || []} />
+                  </Col>
+                  <Col className="col-2">
+                    <Button onClick={this.forkSimulation} variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} >
+                      Copy Simulation
+                    </Button>
                   </Col>
                   {this.writable() ?
                     <Col className="col-2" style={{ paddingRight: 0 }}>
