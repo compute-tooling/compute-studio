@@ -188,6 +188,7 @@ class SimTabs extends React.Component<
             inputs: { ...prevState.inputs, ...{ detail: data } },
             key: "inputs",
             accessStatus: accessStatus,
+            hasShownDirtyWarning: false,
           }));
         });
         actions.setStatus({
