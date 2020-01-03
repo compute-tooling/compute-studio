@@ -66,7 +66,7 @@ class Parser:
 
 
 class APIParser(BaseParser):
-    def parse_parameters(self):
+    def parse_parameters(self, save_only=False):
         errors_warnings, adjustment = super().parse_parameters()
         extra_keys = set(self.clean_inputs.keys() - self.grouped_defaults.keys())
         if extra_keys:
@@ -76,6 +76,13 @@ class APIParser(BaseParser):
 
         for sect in adjustment:
             adjustment[sect].update(self.clean_inputs.get(sect, {}))
+
+        if save_only:
+            return {
+                "adjustment": adjustment,
+                "errors_warnings": errors_warnings,
+                "custom_adjustment": None,
+            }
 
         # kick off async parsing
         job_id, queue_length = self.post(errors_warnings, adjustment)

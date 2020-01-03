@@ -105,13 +105,13 @@ class DetailMyInputsAPIView(APIView):
         return Response(data)
 
 
-def submit(request, success_status, project, sim):
+def submit(request, success_status, project, sim, save_only=False):
     compute = Compute()
     ioutils = get_ioutils(project, Parser=APIParser)
 
     try:
         submit_inputs = SubmitInputs(request, project, ioutils, compute, sim)
-        result = submit_inputs.submit()
+        result = submit_inputs.submit(save_only=save_only)
     except BadPostException as bpe:
         return Response(bpe.errors, status=status.HTTP_400_BAD_REQUEST)
     except AppError as ae:
@@ -146,6 +146,9 @@ class BaseCreateAPIView(APIView):
     )
     queryset = Project.objects.all()
 
+    # if true, save inputs without kicking off a sim.
+    save_only = False
+
     def post(self, request, *args, **kwargs):
         project = get_object_or_404(
             self.queryset,
@@ -153,20 +156,34 @@ class BaseCreateAPIView(APIView):
             title__iexact=kwargs["title"],
         )
         sim = Simulation.objects.new_sim(request.user, project)
-        return submit(request, status.HTTP_201_CREATED, project, sim)
+        return submit(request, status.HTTP_201_CREATED, project, sim, save_only=self.save_only)
 
 
-class RequiresLoginAPIView(RequiresLoginPermissions, BaseCreateAPIView):
-    pass
+class RequiresLoginCreateAPIView(RequiresLoginPermissions, BaseCreateAPIView):
+    save_only = False
 
 
-class RequiresPmtAPIView(RequiresPmtPermissions, BaseCreateAPIView):
-    pass
+class RequiresPmtCreateAPIView(RequiresPmtPermissions, BaseCreateAPIView):
+    save_only = False
 
 
 class CreateAPIView(AbstractRouterAPIView):
-    payment_view = RequiresPmtAPIView
-    login_view = RequiresLoginAPIView
+    payment_view = RequiresPmtCreateAPIView
+    login_view = RequiresLoginCreateAPIView
+    projects = Project.objects.all()
+
+
+class RequiresLoginSaveAPIView(RequiresLoginPermissions, BaseCreateAPIView):
+    save_only = True
+
+
+class RequiresPmtSaveAPIView(RequiresPmtPermissions, BaseCreateAPIView):
+    save_only = True
+
+
+class SaveAPIView(AbstractRouterAPIView):
+    payment_view = RequiresPmtSaveAPIView
+    login_view = RequiresLoginSaveAPIView
     projects = Project.objects.all()
 
 
@@ -177,6 +194,7 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
         BasicAuthentication,
         TokenAuthentication,
     )
+    save_only=False
 
     def put(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -194,7 +212,7 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
                 return Response(status=status.HTTP_403_FORBIDDEN)
         return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-    def post(self, request, *args, **kwargs):
+    def handle_submit(self, request, *args, **kwargs):
         self.object = self.get_object(
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
@@ -202,7 +220,7 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
         if not write_access:
             return Response(status=status.HTTP_403_FORBIDDEN)
         if self.object.status == "STARTED":
-            return submit(request, status.HTTP_200_OK, self.object.project, self.object)
+            return submit(request, status.HTTP_200_OK, self.object.project, self.object, save_only=self.save_only)
         else:
             return Response(
                 {
@@ -210,6 +228,9 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+    def post(self, request, *args, **kwargs):
+        return self.handle_submit(request, *args, **kwargs)
 
     def get_sim_data(self, user, as_remote, username, title, model_pk):
         self.object = self.get_object(model_pk, username, title)
@@ -285,6 +306,33 @@ class RemoteDetailAPIView(BaseDetailAPIView):
 
     def put(self, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class SaveDetailAPIView(BaseDetailAPIView):
+    save_only = True
+
+    def put(self, request, *args, **kwargs):
+        return self.handle_submit(request, *args, **kwargs)
+
+    def get(self, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def post(self, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class RequiresLoginSaveDetailAPIView(RequiresLoginPermissions, SaveDetailAPIView):
+    pass
+
+
+class RequiresPmtSaveDetailAPIView(RequiresPmtPermissions, SaveDetailAPIView):
+    pass
+
+
+class SaveDetailAPIView(AbstractRouterAPIView):
+    payment_view = RequiresPmtSaveDetailAPIView
+    login_view = RequiresLoginSaveDetailAPIView
+    projects = Project.objects.all()
 
 
 class OutputsAPIView(RecordOutputsMixin, APIView):

@@ -43,7 +43,7 @@ class SubmitInputs:
         self.meta_parameters = ioutils.displayer.parsed_meta_parameters()
         self.sim = sim
 
-    def submit(self):
+    def submit(self, save_only: bool = False):
         print(self.request.data)
         self.ser = InputsSerializer(instance=self.sim.inputs, data=self.request.data)
         is_valid = self.ser.is_valid()
@@ -79,14 +79,14 @@ class SubmitInputs:
             **self.valid_meta_params,
         )
 
-        result = parser.parse_parameters()
+        result = parser.parse_parameters(save_only=save_only)
         self.inputs = self.ser.save(
             meta_parameters=self.valid_meta_params,
             adjustment=result["adjustment"],
             errors_warnings=result["errors_warnings"],
             custom_adjustment=result["custom_adjustment"],
-            job_id=result["job_id"],
-            status="PENDING",
+            job_id=result.get("job_id", None),
+            status="STARTED" if save_only else "PENDING",
             parent_sim=self.sim.parent_sim or parent_sim,
         )
         # case where parent sim exists and has not yet been assigned
