@@ -11,13 +11,13 @@ import ReactLoading from "react-loading";
 
 import InputsForm, { tbLabelSchema } from "./InputsForm";
 import OutputsComponent from "./Outputs";
-import { AccessStatus, Inputs, InitialValues, Schema, Simulation, RemoteOutputs, Outputs, Sects, InputsDetail } from "./types";
+import { AccessStatus, Inputs, InitialValues, Schema, Simulation, RemoteOutputs, Outputs, Sects, InputsDetail } from "../types";
 import DescriptionComponent from "./Description";
 import API from "./API";
-import ErrorBoundary from "./ErrorBoundary";
-import { convertToFormik, formikToJSON } from "./ParamTools";
+import ErrorBoundary from "../ErrorBoundary";
+import { convertToFormik, formikToJSON } from "../ParamTools";
 import { Formik, Form, FormikProps, FormikActions } from "formik";
-import { hasServerErrors } from "./utils";
+import { hasServerErrors } from "../utils";
 import { UnsavedChangesModal } from "./modal";
 
 Sentry.init({

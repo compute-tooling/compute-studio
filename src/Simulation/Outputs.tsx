@@ -18,8 +18,8 @@ import {
   Output,
   TableOutput,
   BokehOutput
-} from "./types";
-import { imgDims } from "./utils";
+} from "../types";
+import { imgDims } from "../utils";
 import API from "./API";
 
 interface OutputsProps {

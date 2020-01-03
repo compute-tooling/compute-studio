@@ -6,15 +6,15 @@ import { FastField, ErrorMessage, FormikTouched } from "formik";
 import { isEqual, isEmpty } from "lodash/lang";
 import * as yup from "yup";
 
-import { makeID, valForForm } from "./utils";
-import { RedMessage, getField, CPIField } from "./fields";
+import { makeID, valForForm } from "../utils";
+import { RedMessage, getField, CPIField } from "../fields";
 import {
   ParamToolsParam,
   ParamToolsConfig,
   InitialValues,
   Inputs,
   Sects
-} from "./types";
+} from "../types";
 import { Card, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 
 export const ParamElement: React.FC<{

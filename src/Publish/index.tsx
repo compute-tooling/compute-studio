@@ -12,8 +12,7 @@ import {
   ServerSizeField,
   Message,
   CheckboxField
-} from "./fields";
-import { input } from "bokehjs/build/js/types/core/dom";
+} from "../fields";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";

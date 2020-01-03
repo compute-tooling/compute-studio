@@ -12,7 +12,7 @@ import {
   InitialValues,
   Sects,
   Inputs
-} from "./types";
+} from "../types";
 
 const integerMsg: string = "Must be an integer.";
 const floatMsg: string = "Must be a floating point number.";

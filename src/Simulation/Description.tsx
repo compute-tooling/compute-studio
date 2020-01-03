@@ -2,13 +2,11 @@
 
 import * as React from "react";
 import { Card, Jumbotron, Row, Col, Dropdown, Button } from "react-bootstrap";
-import ReactLoading from "react-loading";
 import * as yup from "yup";
-import { AccessStatus, MiniSimulation, Simulation, RemoteOutput, RemoteOutputs } from "./types";
+import { AccessStatus, MiniSimulation, Simulation, RemoteOutputs } from "../types";
 import { FormikActions, Formik, ErrorMessage, Field, Form } from "formik";
-import { Message } from "./fields";
+import { Message } from "../fields";
 import moment = require("moment");
-import { RequireLoginDialog } from "./modal";
 import API from "./API";
 
 interface DescriptionProps {

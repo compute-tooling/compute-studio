@@ -1,7 +1,6 @@
 "use strict";
 
 import { isEmpty } from "lodash/lang";
-import { Int } from "bokehjs/build/js/types/core/properties";
 
 export function makeID(title: string): string {
   return title.split(" ").join("-");

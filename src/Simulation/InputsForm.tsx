@@ -13,15 +13,14 @@ import {
   ErrorCard
 } from "./components";
 import { ValidatingModal, RunModal, AuthModal } from "./modal";
-import { formikToJSON, convertToFormik } from "./ParamTools";
-import { hasServerErrors } from "./utils";
+import { formikToJSON } from "../ParamTools";
 import {
   AccessStatus,
   Sects,
   InitialValues,
   Inputs,
   InputsDetail
-} from "./types";
+} from "../types";
 import API from "./API";
 
 // need to require schema in model_parameters!

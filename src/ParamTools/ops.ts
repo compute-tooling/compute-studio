@@ -1,4 +1,4 @@
-import { ValueObject, FormValueObject } from "./types";
+import { ValueObject, FormValueObject } from "../types";
 
 export function parseFromOps(value: FormValueObject, extendLabel: string = "year"): Array<ValueObject> {
   if (value.value[0] === "<") {
@@ -10,7 +10,7 @@ export function parseFromOps(value: FormValueObject, extendLabel: string = "year
     if (value.value[i] === "*") {
       continue;
     } else {
-      let newVo: ValueObject = {value: ""};
+      let newVo: ValueObject = { value: "" };
       Object.assign(newVo, value);
       newVo.value = value.value[i]
       newVo[extendLabel] = value[extendLabel] + i;
@@ -20,7 +20,7 @@ export function parseFromOps(value: FormValueObject, extendLabel: string = "year
   return valueObjects;
 }
 
-export function parseToOps(valueObjects: Array<ValueObject>, metaParameters: {[key: string]: any}, extendLabel: string = "year"): Array<any> {
+export function parseToOps(valueObjects: Array<ValueObject>, metaParameters: { [key: string]: any }, extendLabel: string = "year"): Array<any> {
   if (!valueObjects.length) return [];
   let res = [];
   for (let i = 0; i < valueObjects.length; i++) {

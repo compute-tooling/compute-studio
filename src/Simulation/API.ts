@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { Simulation, Outputs, RemoteOutputs, Inputs, InitialValues, AccessStatus, InputsDetail } from "./types"
+import { Simulation, Outputs, RemoteOutputs, Inputs, AccessStatus, InputsDetail } from "../types"
 
 export default class API {
     owner: string
