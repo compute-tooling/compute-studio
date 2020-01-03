@@ -156,7 +156,7 @@ export default class DescriptionComponent extends React.PureComponent<
 
                         return (preview ?
                           <Card style={style} >
-                            <h1 style={inline} onClick={this.togglePreview}>{field.value}</h1>
+                            <h3 style={inline} onClick={this.togglePreview}>{field.value}</h3>
                           </Card> :
                           <Card style={{ border: 0 }} >
                             <input type="text" placeholder="Untitled Simulation" {...field} className="form-cotnrol" onBlur={handleSubmit} />
