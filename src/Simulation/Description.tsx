@@ -36,8 +36,8 @@ type DescriptionState = Readonly<{
 
 const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history }) => {
   return (
-    < Dropdown>
-      <Dropdown.Toggle variant="outline-dark" id="dropdown-basic">
+    <Dropdown>
+      <Dropdown.Toggle variant="dark" id="dropdown-basic" className="w-100" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}>
         History
       </Dropdown.Toggle>
       <Dropdown.Menu>
@@ -54,6 +54,21 @@ const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history
             </Dropdown.Item>
           );
         })}
+      </Dropdown.Menu>
+    </Dropdown >
+  );
+}
+
+const AuthorDropDown: React.FC<{ author: string }> = ({ author }) => {
+  return (
+    <Dropdown>
+      <Dropdown.Toggle variant="dark" id="dropdown-basic" className="w-100" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}>
+        Author
+      </Dropdown.Toggle>
+      <Dropdown.Menu>
+        <Dropdown.Item key={0}>
+          {author}
+        </Dropdown.Item>
       </Dropdown.Menu>
     </Dropdown >
   );
@@ -112,80 +127,82 @@ export default class DescriptionComponent extends React.PureComponent<
       is_public = false;
     }
     return (
-      <Jumbotron className="shadow" style={{ backgroundColor: "white" }}>
-        <Formik
-          initialValues={{ title: title, is_public: is_public }}
-          onSubmit={(values: DescriptionValues, actions: FormikActions<DescriptionValues>) => {
-            let formdata = new FormData();
-            for (const field in values) {
-              formdata.append(field, values[field]);
-            }
-            formdata.append("model_pk", api.modelpk.toString());
-            this.props.api.putDescription(formdata).then(data => {
-              this.setState({ preview: true })
-            })
-          }}
-          validationSchema={Schema}
-          render={({ values, handleSubmit, setFieldValue }) => (
-            <Form>
-              <Row className="mt-1 mb-1 justify-content-start">
-                <Col className="col-5">
-                  <Field name="title">
-                    {({
-                      field,
-                      form: { touched, errors },
-                      meta,
-                    }) => {
-                      const inline = { display: "inline-block" }
+      <Formik
+        initialValues={{ title: title, is_public: is_public }}
+        onSubmit={(values: DescriptionValues, actions: FormikActions<DescriptionValues>) => {
+          let formdata = new FormData();
+          for (const field in values) {
+            formdata.append(field, values[field]);
+          }
+          formdata.append("model_pk", api.modelpk.toString());
+          this.props.api.putDescription(formdata).then(data => {
+            this.setState({ preview: true })
+          })
+        }}
+        validationSchema={Schema}
+        render={({ values, handleSubmit, setFieldValue }) => (
+          <Form>
+            <Card className="card-outer">
+              <Card.Body>
+                <Row className="mt-1 mb-1 justify-content-start">
+                  <Col className="col-5">
+                    <Field name="title">
+                      {({
+                        field,
+                        form: { touched, errors },
+                        meta,
+                      }) => {
+                        const inline = { display: "inline-block" }
 
-                      return (preview ?
-                        <Card style={style} >
-                          <h1 style={inline} onClick={this.togglePreview}>{field.value}</h1>
-                        </Card> :
-                        <Card style={{ border: 0 }} >
-                          <input type="text" placeholder="Untitled Simulation" {...field} className="form-cotnrol" onBlur={handleSubmit} />
-                        </Card>);
-                    }}
-                  </Field>
-                  <ErrorMessage
-                    name="title"
-                    render={msg => <Message msg={msg} />}
-                  />
-                </Col>
-                <Col className="col-1 offset-md-2">
-                  <HistoryDropDown history={this.props.remoteSim?.parent_sims || []} />
-                </Col>
-              </Row>
-              <Row className="justify-content-start">
-                <Col className="col-4">
-                  <Card style={{ border: 0 }}>
-                    <h5 className="mt-1">by {owner}</h5>
-                  </Card>
-                </Col>
-              </Row>
-              <Row className="justify-content-start">
-                <Col className="col-4">
-                  {this.writable() ?
-                    <Button variant="outline-dark" className="mb-4" onClick={e => {
-                      e.target.value = !values.is_public;
-                      setFieldValue("is_public", !values.is_public);
-                      // put handleSubmit in setTimeout since setFieldValue is async
-                      // but does not return a promise
-                      // https://github.com/jaredpalmer/formik/issues/529
-                      setTimeout(() => handleSubmit(e), 0);
-                    }}>
-                      {values.is_public ?
-                        <><img className="mr-1" src="https://cdnjs.cloudflare.com/ajax/libs/octicons/8.5.0/svg/eye.svg" alt="public" /> public</> :
-                        <><img className="mr-1" src="https://cdnjs.cloudflare.com/ajax/libs/octicons/8.5.0/svg/eye-closed.svg" alt="private" />private</>}
-                    </Button> :
-                    null
-                  }
-                </Col>
-              </Row>
-            </Form>
-          )}
-        />
-      </Jumbotron>
+                        return (preview ?
+                          <Card style={style} >
+                            <h1 style={inline} onClick={this.togglePreview}>{field.value}</h1>
+                          </Card> :
+                          <Card style={{ border: 0 }} >
+                            <input type="text" placeholder="Untitled Simulation" {...field} className="form-cotnrol" onBlur={handleSubmit} />
+                          </Card>);
+                      }}
+                    </Field>
+                    <ErrorMessage
+                      name="title"
+                      render={msg => <Message msg={msg} />}
+                    />
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
+            <Card className="text-center" style={{ backgroundColor: "inherit", border: 0, paddingLeft: 0, paddingRight: 0 }}>
+              <Card.Body style={{ paddingLeft: "1rem", paddingRight: "1rem" }}>
+                <Row className="justify-content-center">
+                  <Col className="col" style={{ paddingLeft: 0 }}>
+                    <AuthorDropDown author={owner} />
+                  </Col>
+                  <Col className="col">
+                    <HistoryDropDown history={this.props.remoteSim?.parent_sims || []} />
+                  </Col>
+                  <Col className="col" style={{ paddingRight: 0 }}>
+                    {this.writable() ?
+                      <Button variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} className="mb-4 w-100" onClick={e => {
+                        e.target.value = !values.is_public;
+                        setFieldValue("is_public", !values.is_public);
+                        // put handleSubmit in setTimeout since setFieldValue is async
+                        // but does not return a promise
+                        // https://github.com/jaredpalmer/formik/issues/529
+                        setTimeout(() => handleSubmit(e), 0);
+                      }}>
+                        {values.is_public ?
+                          <><img className="mr-1" src="https://cdnjs.cloudflare.com/ajax/libs/octicons/8.5.0/svg/eye.svg" alt="public" /> public</> :
+                          <><img className="mr-1" src="https://cdnjs.cloudflare.com/ajax/libs/octicons/8.5.0/svg/eye-closed.svg" alt="private" />private</>}
+                      </Button> :
+                      null
+                    }
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
+          </Form>
+        )}
+      />
     );
   }
 }
