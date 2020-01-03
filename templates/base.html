@@ -55,12 +55,25 @@
               {% endfor %}
             </div>
           </li>
-          {% if not show_readme and owner and project_name %}
-          <li class="nav-item">
-            <a class="nav-link" href="/{{owner}}/{{project_name}}">{{owner}}/{{project_name}}</a>
-          </li>
-          {% endif %}
         </ul>
+        {% if not show_readme and owner and project_name %}
+        <ul class="navbar-nav mr-auto mt-2 mt-lg-0 mobile-mb-3">
+          <li class="nav-item dropdown">
+            <h5>
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownModel" role="button" data-toggle="dropdown"
+                aria-haspopup="true" aria-expanded="false">
+                {{owner}}/{{project_name}}
+              </a>
+              <!-- </h1> -->
+              <div class="dropdown-menu" aria-labelledby="navbarDropdownModel">
+                <a class="dropdown-item" href="/{{owner}}/{{project_name}}/">README</a>
+                <a class="dropdown-item" href="/{{owner}}/{{project_name}}/new/">Create</a>
+              </div>
+            </h5>
+          </li>
+        </ul>
+        {% endif %}
+
         {% if user.is_authenticated %}
         <div class="dropdown mobile-mb-1">
           <a class="nav-link btn btn-outline-match-nav dropdown-toggle mb-1" style="display: inline-block;" href="#"
