@@ -21,6 +21,9 @@ from webapp.apps.comp import utils
 from webapp.settings import INPUTS_SALT
 
 
+class ForkObjectException(Exception):
+    pass
+
 class Inputs(models.Model):
     parent_sim = models.ForeignKey(
         "Simulation", null=True, related_name="child_inputs", on_delete=models.SET_NULL
@@ -146,7 +149,7 @@ class SimulationManager(models.Manager):
             meta_parameters={},
             errors_warnings={},
         )
-        sim = self.create(
+        return self.create(
             owner=user.profile,
             project=project,
             model_pk=self.next_model_pk(project),
@@ -154,10 +157,55 @@ class SimulationManager(models.Manager):
             status="STARTED",
             is_public=False,
         )
-        return sim
 
+    def fork(self, sim, user):
+        if sim.inputs.status == "PENDING":
+            raise ForkObjectException(
+                "Simulations may not be forked while they are in a pending state. "
+                "Please try again once validation has completed."
+            )
+        if sim.status == "PENDING":
+            raise ForkObjectException(
+                "Simulations may not be forked while they are in a pending state. "
+                "Please try again once the simulation has completed."
+            )
+
+        inputs = Inputs.objects.create(
+            owner=user.profile,
+            project=sim.project,
+            status=sim.inputs.status,
+            adjustment=sim.inputs.adjustment,
+            meta_parameters=sim.inputs.meta_parameters,
+            errors_warnings=sim.inputs.errors_warnings,
+            custom_adjustment=sim.inputs.custom_adjustment,
+            parent_sim=sim,
+            traceback=sim.inputs.traceback,
+            client=sim.inputs.client,
+        )
+        return self.create(
+            owner=user.profile,
+            title=sim.title,
+            readme=sim.readme,
+            last_modified=sim.last_modified,
+            parent_sim=sim,
+            inputs=inputs,
+            meta_data=sim.meta_data,
+            outputs=sim.outputs,
+            traceback=sim.traceback,
+            sponsor=sim.sponsor,
+            project=sim.project,
+            run_time=sim.run_time,
+            run_cost=0,
+            creation_date=sim.creation_date,
+            exp_comp_datetime=sim.exp_comp_datetime,
+            model_version=sim.model_version,
+            model_pk=self.next_model_pk(sim.project),
+            is_public=False,
+            status=sim.status,
+        )
 
 class Simulation(models.Model):
+
     # TODO: dimension needs to go
     dimension_name = "Dimension--needs to go"
     title = models.CharField(default="Untitled Simulation", max_length=500)

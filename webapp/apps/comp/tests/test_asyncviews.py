@@ -567,6 +567,69 @@ class TestAsyncAPI(CoreTestMixin):
             profile.customer = customer
             profile.save()
 
+    @pytest.mark.parametrize("test_lower", [False, True])
+    def test_fork(
+        self,
+        monkeypatch,
+        client,
+        api_client,
+        profile,
+        worker_url,
+        comp_api_user,
+        test_lower,
+    ):
+        """
+        Test creating and forking a sim.
+        """
+        set_auth_token(api_client, profile.user)
+
+        rmm = RunMockModel(
+            owner=self.owner,
+            title=self.title,
+            defaults=self.defaults(),
+            inputs=self.inputs_ok(),
+            errors_warnings=self.errors_warnings(),
+            client=client,
+            api_client=api_client,
+            worker_url=worker_url,
+            comp_api_user=comp_api_user,
+            monkeypatch=monkeypatch,
+            mockcompute=self.mockcompute,
+            test_lower=test_lower,
+        )
+        rmm.run()
+
+        set_auth_token(api_client, profile.user)
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/{rmm.sim.model_pk}/fork/"
+        )
+        assert resp.status_code == 201
+
+        u = User.objects.get(username="modeler")
+        assert profile.user != u
+        set_auth_token(api_client, u)
+        rmm.sim.is_public = True
+        rmm.sim.save()
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/{rmm.sim.model_pk}/fork/"
+        )
+        assert resp.status_code == 201
+
+        api_client.logout()
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/{rmm.sim.model_pk}/fork/",
+        )
+        assert resp.status_code == 403
+
+        set_auth_token(api_client, profile.user)
+        rmm.sim.status = "PENDING"
+        rmm.sim.save()
+        resp = api_client.post(
+            f"/{self.owner}/{self.title}/api/v1/{rmm.sim.model_pk}/fork/"
+        )
+        assert resp.status_code == 400
+        assert resp.data["fork"]
+
 
 def test_placeholder_page(db, client):
     title = "Matchups"

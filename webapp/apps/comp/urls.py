@@ -11,6 +11,7 @@ from webapp.apps.comp.views import (
     CreateAPIView,
     DetailAPIView,
     RemoteDetailAPIView,
+    ForkDetailAPIView,
     MyInputsAPIView,
     DetailMyInputsAPIView,
 )
@@ -36,6 +37,11 @@ urlpatterns = [
         "api/v1/<int:model_pk>/remote/",
         RemoteDetailAPIView.as_view(),
         name="remote_detail_api",
+    ),
+     path(
+        "api/v1/<int:model_pk>/fork/",
+        ForkDetailAPIView.as_view(),
+        name="fork_detail_api",
     ),
     path("<int:model_pk>/edit/", EditSimView.as_view(), name="edit"),
     path("<int:model_pk>/download/", OutputsDownloadView.as_view(), name="download"),

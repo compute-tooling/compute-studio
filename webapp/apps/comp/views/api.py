@@ -20,7 +20,7 @@ from webapp.apps.comp.asyncsubmit import SubmitInputs, SubmitSim
 from webapp.apps.comp.compute import Compute, JobFailError
 from webapp.apps.comp.exceptions import AppError, ValidationError, BadPostException
 from webapp.apps.comp.ioutils import get_ioutils
-from webapp.apps.comp.models import Inputs, Simulation
+from webapp.apps.comp.models import Inputs, Simulation, ForkObjectException
 from webapp.apps.comp.parser import APIParser
 from webapp.apps.comp.serializers import (
     SimulationSerializer,
@@ -285,6 +285,28 @@ class RemoteDetailAPIView(BaseDetailAPIView):
 
     def put(self, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class ForkDetailAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
+    model = Simulation
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object(
+            kwargs["model_pk"], kwargs["username"], kwargs["title"]
+        )
+        try:
+            sim = Simulation.objects.fork(self.object, request.user)
+        except ForkObjectException as e:
+            msg = str(e)
+            return Response({"fork": msg}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = MiniSimulationSerializer(sim).data
+        return Response(data, status=status.HTTP_201_CREATED)
 
 
 class OutputsAPIView(RecordOutputsMixin, APIView):

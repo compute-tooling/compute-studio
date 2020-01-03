@@ -11,6 +11,7 @@ from .api import (
     CreateAPIView,
     DetailAPIView,
     RemoteDetailAPIView,
+    ForkDetailAPIView,
     OutputsAPIView,
     DetailMyInputsAPIView,
     MyInputsAPIView,
