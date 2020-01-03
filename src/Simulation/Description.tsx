@@ -28,8 +28,9 @@ let Schema = yup.object().shape({
 
 type DescriptionState = Readonly<{
   initialValues: DescriptionValues;
-  preview: Boolean;
-  showAuth: Boolean;
+  preview: boolean;
+  showTitleBorder: boolean;
+  showAuth: boolean;
   parentSims?: Array<MiniSimulation>;
 }>;
 
@@ -85,6 +86,7 @@ export default class DescriptionComponent extends React.PureComponent<
       preview: true,
       parentSims: null,
       showAuth: false,
+      showTitleBorder: false,
     };
     this.togglePreview = this.togglePreview.bind(this);
     this.writable = this.writable.bind(this);
@@ -110,11 +112,8 @@ export default class DescriptionComponent extends React.PureComponent<
   }
 
   render() {
-    let style = this.state.preview ? {
-      border: 0
-    } : {}
     let api = this.props.api;
-    let { preview } = this.state;
+    let { preview, showTitleBorder } = this.state;
 
     let title, owner, is_public;
     if (this.props.remoteSim) {
@@ -155,7 +154,11 @@ export default class DescriptionComponent extends React.PureComponent<
                         const inline = { display: "inline-block" }
 
                         return (preview ?
-                          <Card style={style} >
+                          <Card
+                            style={showTitleBorder ? {} : { border: 0 }}
+                            onMouseEnter={() => this.writable() ? this.setState({ showTitleBorder: true }) : null}
+                            onMouseLeave={() => this.writable() ? this.setState({ showTitleBorder: false }) : null}
+                          >
                             <h3 style={inline} onClick={this.togglePreview}>{field.value}</h3>
                           </Card> :
                           <Card style={{ border: 0 }} >
@@ -200,7 +203,7 @@ export default class DescriptionComponent extends React.PureComponent<
                 </Row>
               </Card.Body>
             </Card>
-          </Form>
+          </ Form>
         )}
       />
     );
