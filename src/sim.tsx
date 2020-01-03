@@ -18,6 +18,7 @@ import ErrorBoundary from "./ErrorBoundary";
 import { convertToFormik, formikToJSON } from "./ParamTools";
 import { Formik, Form, FormikProps, FormikActions } from "formik";
 import { hasServerErrors } from "./utils";
+import { UnsavedChangesModal } from "./modal";
 
 Sentry.init({
   dsn: "https://fde6bcb39fda4af38471b16e2c1711af@sentry.io/1530834"
@@ -44,6 +45,7 @@ interface SimAppState {
   // keep track of which tab is open
   key: "inputs" | "outputs";
   hasShownDirtyWarning: boolean;
+  showDirtyWarning: boolean;
 
   // necessary for user id and write access
   accessStatus?: AccessStatus;
@@ -81,6 +83,7 @@ class SimTabs extends React.Component<
     this.state = {
       key: props.tabName,
       hasShownDirtyWarning: false,
+      showDirtyWarning: false,
     }
 
     this.handleTabChange = this.handleTabChange.bind(this);
@@ -305,8 +308,8 @@ class SimTabs extends React.Component<
     // TODO: only includes draft `alert` action to demonstrate new
     // approach
     if (formikProps.dirty && key === "outputs" && !this.state.hasShownDirtyWarning) {
-      this.setState({ hasShownDirtyWarning: true });
-      alert("you have unsaved inputs in the form.");
+      // this.setState({ hasShownDirtyWarning: true });
+      this.setState({ showDirtyWarning: true })
     } else {
       this.setState({ key })
     }
@@ -359,7 +362,6 @@ class SimTabs extends React.Component<
         status: "INVALID",
       };
     }
-    console.log("initialValues", initialValues, this.state.inputs)
     return (
       <>
         <Formik
@@ -373,6 +375,10 @@ class SimTabs extends React.Component<
         >
           {(formikProps: FormikProps<InitialValues>) => (
             <>
+              {this.state.showDirtyWarning ?
+                <UnsavedChangesModal handleClose={() => this.setState({ hasShownDirtyWarning: true, showDirtyWarning: false })} />
+                : null
+              }
               <ErrorBoundary>
                 <DescriptionComponent
                   api={this.api}

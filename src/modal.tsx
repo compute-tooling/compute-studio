@@ -285,22 +285,14 @@ export const UnsavedChangesModal: React.FC<{ handleClose: () => void }> = ({ han
         <Modal.Header closeButton>
           <Modal.Title>Unsaved Changes</Modal.Title>
         </Modal.Header>
-        <Modal.Body>You have unsaved changes in the inputs form.</Modal.Body>
+        <Modal.Body>
+          You have unsaved changes in the inputs form.
+          You must create a new simulation to get new
+          outputs corresponding to these changes.
+        </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={close}>
+          <Button variant="outline-primary" onClick={close}>
             Close
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={close}
-          >
-            <b>Close</b>
-          </Button>
-          <Button
-            variant="success"
-            onClick={close}
-          >
-            <b>Save</b>
           </Button>
         </Modal.Footer>
       </Modal>
