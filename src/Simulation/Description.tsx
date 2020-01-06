@@ -8,6 +8,7 @@ import { FormikActions, Formik, ErrorMessage, Field, Form } from "formik";
 import { Message } from "../fields";
 import moment = require("moment");
 import API from "./API";
+import { AxiosError } from "axios";
 
 interface DescriptionProps {
   accessStatus: AccessStatus;
@@ -32,6 +33,7 @@ type DescriptionState = Readonly<{
   showTitleBorder: boolean;
   showAuth: boolean;
   parentSims?: Array<MiniSimulation>;
+  forkError?: string;
 }>;
 
 
@@ -142,7 +144,13 @@ export default class DescriptionComponent extends React.PureComponent<
     if (api.modelpk) {
       api.forkSimulation().then(data => {
         window.location.href = data.gui_url;
-      }); // TODO: catch error on pending objs
+      })
+        .catch((err: AxiosError) => {
+          if (err.response.status == 400 && err.response.data.fork) {
+            this.setState({ forkError: err.response.data.fork })
+          }
+        }
+        );
     }
   }
 
@@ -221,6 +229,10 @@ export default class DescriptionComponent extends React.PureComponent<
             </Card>
             <Card className="text-center" style={{ backgroundColor: "inherit", border: 0, paddingLeft: 0, paddingRight: 0 }}>
               <Card.Body style={{ paddingLeft: "1rem", paddingRight: "1rem" }}>
+                {this.state.forkError ?
+                  <div className="alert alert-danger" role="alert">
+                    {this.state.forkError}
+                  </div> : null}
                 <Row className="justify-content-left">
                   <Col className="col-sm-2" style={{ paddingLeft: 0 }}>
                     <AuthorDropDown author={owner} />
