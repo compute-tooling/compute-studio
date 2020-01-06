@@ -160,6 +160,13 @@ export default class DescriptionComponent extends React.PureComponent<
       owner = this.user();
       is_public = false;
     }
+
+    let subtitle: string;
+    if (api.modelpk) {
+      subtitle = `${api.owner}/${api.title} #${api.modelpk.toString()}`;
+    } else {
+      subtitle = `New ${api.owner}/${api.title}`;
+    }
     return (
       <Formik
         initialValues={{ title: title, is_public: is_public }}
@@ -206,10 +213,8 @@ export default class DescriptionComponent extends React.PureComponent<
                       render={msg => <Message msg={msg} />}
                     />
                   </Col>
-                  <Col className="col-3 ml-sm-auto mt-1">
-                    <h5 style={{ color: "#6c757d" }}>
-                      {`${api.owner}/${api.title} ${api.modelpk ? "#" + api.modelpk.toString() : ""}`}
-                    </h5>
+                  <Col className={`col-3 ml-sm-auto mt-1`}>
+                    <h5 style={{ color: "#6c757d" }}>{subtitle}</h5>
                   </Col>
                 </Row>
               </Card.Body>
