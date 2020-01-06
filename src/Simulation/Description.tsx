@@ -192,11 +192,13 @@ export default class DescriptionComponent extends React.PureComponent<
                   <Col className="col-2" >
                     <HistoryDropDown history={this.props.remoteSim?.parent_sims || []} />
                   </Col>
-                  <Col className="col-2">
-                    <Button onClick={this.forkSimulation} variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} >
-                      Copy Simulation
+                  {this.user() !== "anon" ?
+                    <Col className="col-2">
+                      <Button className="w-100" onClick={this.forkSimulation} variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} >
+                        Copy Simulation
                     </Button>
-                  </Col>
+                    </Col>
+                    : null}
                   {this.writable() ?
                     <Col className="col-2" style={{ paddingRight: 0 }}>
                       <Button variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} className="mb-4 w-100" onClick={e => {
