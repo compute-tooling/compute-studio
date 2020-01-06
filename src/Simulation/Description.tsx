@@ -178,8 +178,8 @@ export default class DescriptionComponent extends React.PureComponent<
           <Form>
             <Card className="card-outer">
               <Card.Body>
-                <Row className="mt-1 mb-1 justify-content-start">
-                  <Col className="col-5">
+                <Row className="justify-content-start">
+                  <Col className="col-sm-5">
                     <Field name="title">
                       {({
                         field,
@@ -205,6 +205,11 @@ export default class DescriptionComponent extends React.PureComponent<
                       name="title"
                       render={msg => <Message msg={msg} />}
                     />
+                  </Col>
+                  <Col className="col-3 ml-sm-auto mt-1">
+                    <h5 style={{ color: "#6c757d" }}>
+                      {`${api.owner}/${api.title} ${api.modelpk ? "#" + api.modelpk.toString() : ""}`}
+                    </h5>
                   </Col>
                 </Row>
               </Card.Body>
