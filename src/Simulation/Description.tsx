@@ -36,25 +36,51 @@ type DescriptionState = Readonly<{
 
 
 const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history }) => {
+  let nsims = history.length;
+  let suffix;
+  switch (nsims) {
+    case 0:
+      suffix = "st";
+      break;
+    case 1:
+      suffix = "nd";
+      break;
+    case 2:
+      suffix = "rd";
+      break;
+    default:
+      suffix = "th";
+  }
+  let dropdownItems = [
+    <Dropdown.Header key={0} style={{ minWidth: "500px" }}>
+      <Row>
+        <Col>
+          {`${nsims + 1}${suffix} Simulation in line`}
+        </Col>
+      </Row>
+    </Dropdown.Header >
+  ]
+  dropdownItems.push(...history.map((sim, ix) => {
+    return (
+      <Dropdown.Item key={ix + 1} href={sim.gui_url} style={{ minWidth: "500px" }}>
+        <Row>
+          <Col className="col-3">{sim.model_pk}</Col>
+          <Col className="col-3 text-truncate">{sim.title}</Col>
+          <Col className="col-3">by {sim.owner}</Col>
+          <Col className="col-3">on {moment(sim.creation_date).format("YYYY-MM-DD")}</Col>
+        </Row>
+      </Dropdown.Item>
+    );
+  }));
+
+
   return (
     <Dropdown>
       <Dropdown.Toggle variant="dark" id="dropdown-basic" className="w-100" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}>
-        History
+        <><i className="fas fa-history mr-2"></i>History</>
       </Dropdown.Toggle>
       <Dropdown.Menu>
-        {history.map((sim, ix) => {
-
-          return (
-            <Dropdown.Item key={ix} href={sim.gui_url} style={{ minWidth: "500px" }}>
-              <Row>
-                <Col className="col-3">{sim.model_pk}</Col>
-                <Col className="col-3">{sim.title}</Col>
-                <Col className="col-3">by {sim.owner}</Col>
-                <Col className="col-3">on {moment(sim.creation_date).format("YYYY-MM-DD")}</Col>
-              </Row>
-            </Dropdown.Item>
-          );
-        })}
+        {dropdownItems}
       </Dropdown.Menu>
     </Dropdown >
   );
@@ -64,7 +90,7 @@ const AuthorDropDown: React.FC<{ author: string }> = ({ author }) => {
   return (
     <Dropdown>
       <Dropdown.Toggle variant="dark" id="dropdown-basic" className="w-100" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}>
-        Author
+        <><i className="fas fa-user-friends mr-2"></i>Author</>
       </Dropdown.Toggle>
       <Dropdown.Menu>
         <Dropdown.Item key={0}>
@@ -186,21 +212,21 @@ export default class DescriptionComponent extends React.PureComponent<
             <Card className="text-center" style={{ backgroundColor: "inherit", border: 0, paddingLeft: 0, paddingRight: 0 }}>
               <Card.Body style={{ paddingLeft: "1rem", paddingRight: "1rem" }}>
                 <Row className="justify-content-left">
-                  <Col className="col-2" style={{ paddingLeft: 0 }}>
+                  <Col className="col-sm-2" style={{ paddingLeft: 0 }}>
                     <AuthorDropDown author={owner} />
                   </Col>
-                  <Col className="col-2" >
+                  <Col className="col-sm-2" >
                     <HistoryDropDown history={this.props.remoteSim?.parent_sims || []} />
                   </Col>
                   {this.user() !== "anon" ?
-                    <Col className="col-2">
+                    <Col className="col-sm-2">
                       <Button className="w-100" onClick={this.forkSimulation} variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} >
-                        Copy Simulation
-                    </Button>
+                        <><i className="fas fa-code-branch mr-2"></i> Fork</>
+                      </Button>
                     </Col>
                     : null}
                   {this.writable() ?
-                    <Col className="col-2" style={{ paddingRight: 0 }}>
+                    <Col className="col-sm-2 ml-sm-auto" style={{ paddingRight: 0 }}>
                       <Button variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} className="mb-4 w-100" onClick={e => {
                         e.target.value = !values.is_public;
                         setFieldValue("is_public", !values.is_public);
@@ -210,8 +236,8 @@ export default class DescriptionComponent extends React.PureComponent<
                         setTimeout(() => handleSubmit(e), 0);
                       }}>
                         {values.is_public ?
-                          <><img className="mr-1" src="https://cdnjs.cloudflare.com/ajax/libs/octicons/8.5.0/svg/eye.svg" alt="public" /> public</> :
-                          <><img className="mr-1" src="https://cdnjs.cloudflare.com/ajax/libs/octicons/8.5.0/svg/eye-closed.svg" alt="private" />private</>}
+                          <><i className="fas fa-lock-open mr-2"></i>Public</> :
+                          <><i className="fas fa-lock mr-2"></i>Private</>}
                       </Button>
                     </Col> :
                     null
