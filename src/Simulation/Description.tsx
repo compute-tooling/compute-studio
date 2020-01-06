@@ -168,7 +168,7 @@ export default class DescriptionComponent extends React.PureComponent<
                             onMouseEnter={() => this.writable() ? this.setState({ showTitleBorder: true }) : null}
                             onMouseLeave={() => this.writable() ? this.setState({ showTitleBorder: false }) : null}
                           >
-                            <h3 style={inline} onClick={this.togglePreview}>{field.value}</h3>
+                            <h3 style={inline} onClick={this.togglePreview}>{field.value || "Untitled Simulation"}</h3>
                           </Card> :
                           <Card style={{ border: 0 }} >
                             <input type="text" placeholder="Untitled Simulation" {...field} className="form-cotnrol" onBlur={handleSubmit} />
