@@ -53,8 +53,9 @@ const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history
     default:
       suffix = "th";
   }
+  let style = { width: "300%" }
   let dropdownItems = [
-    <Dropdown.Header key={0} style={{ minWidth: "500px" }}>
+    <Dropdown.Header key={0}>
       <Row>
         <Col>
           {`${nsims + 1}${suffix} Simulation in this line`}
@@ -64,12 +65,12 @@ const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history
   ]
   dropdownItems.push(...history.map((sim, ix) => {
     return (
-      <Dropdown.Item key={ix + 1} href={sim.gui_url} style={{ minWidth: "500px" }}>
+      <Dropdown.Item key={ix + 1} href={sim.gui_url} className="w-100">
         <Row>
-          <Col className="col-3">{sim.model_pk}</Col>
-          <Col className="col-3 text-truncate">{sim.title}</Col>
-          <Col className="col-3">by {sim.owner}</Col>
-          <Col className="col-3">on {moment(sim.creation_date).format("YYYY-MM-DD")}</Col>
+          <Col className="col-1">{sim.model_pk}</Col>
+          <Col className="col-6 text-truncate">{sim.title}</Col>
+          <Col className="col-2">{sim.owner}</Col>
+          <Col className="col-3 text-truncate">{moment(sim.creation_date).format("YYYY-MM-DD")}</Col>
         </Row>
       </Dropdown.Item>
     );
@@ -81,7 +82,7 @@ const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history
       <Dropdown.Toggle variant="dark" id="dropdown-basic" className="w-100" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}>
         <><i className="fas fa-history mr-2"></i>History</>
       </Dropdown.Toggle>
-      <Dropdown.Menu>
+      <Dropdown.Menu style={style}>
         {dropdownItems}
       </Dropdown.Menu>
     </Dropdown >
