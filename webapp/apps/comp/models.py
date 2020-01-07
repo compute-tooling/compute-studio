@@ -24,6 +24,7 @@ from webapp.settings import INPUTS_SALT
 class ForkObjectException(Exception):
     pass
 
+
 class Inputs(models.Model):
     parent_sim = models.ForeignKey(
         "Simulation", null=True, related_name="child_inputs", on_delete=models.SET_NULL
@@ -130,6 +131,7 @@ class Inputs(models.Model):
     def has_read_access(self, user):
         return self.sim.has_read_access(user)
 
+
 class SimulationManager(models.Manager):
     def next_model_pk(self, project):
         curr_max = Simulation.objects.filter(project=project).aggregate(
@@ -203,6 +205,7 @@ class SimulationManager(models.Manager):
             is_public=False,
             status=sim.status,
         )
+
 
 class Simulation(models.Model):
 
@@ -322,20 +325,27 @@ class Simulation(models.Model):
             f"{self.project.owner.user.username}/{self.project.title}/{self.model_pk}"
         )
 
-    def parent_sims(self):
-        """Recursively walk back up to the original simulation"""
+    def parent_sims(self, user=None):
+        """
+        Recursively walk back up to the original simulation. All public simulations
+        are included, and private simulations are only included if the user is
+        provided and has read access.
+        """
         parent_sims = []
         sim = self
         while sim.parent_sim != None:
-            parent_sims.append(sim.parent_sim)
+            if sim.parent_sim.is_public or sim.parent_sim.has_read_access(user):
+                parent_sims.append(sim.parent_sim)
             sim = sim.parent_sim
         return parent_sims
 
     def has_write_access(self, user):
-        return user.is_authenticated and user == self.owner.user
+        return user and user.is_authenticated and user == self.owner.user
 
     def has_read_access(self, user):
-        return self.is_public or (user.is_authenticated and user == self.owner.user)
+        return self.is_public or (
+            user and user.is_authenticated and user == self.owner.user
+        )
 
 
 @dataclass

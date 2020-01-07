@@ -119,7 +119,19 @@ class SimulationSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=False)
     owner = serializers.StringRelatedField(required=False)
     project = PublishSerializer()
-    parent_sims = MiniSimulationSerializer(many=True)
+    # see to_representation for definition of parent_sims:
+    # parent_sims = MiniSimulationSerializer(many=True)
+
+    def to_representation(self, obj):
+        rep = super().to_representation(obj)
+        if self.context.get("request"):
+            user = self.context["request"].user
+        else:
+            user = None
+        rep["parent_sims"] = MiniSimulationSerializer(
+            obj.parent_sims(user=user), many=True
+        ).data
+        return rep
 
     class Meta:
         model = Simulation
@@ -135,7 +147,7 @@ class SimulationSerializer(serializers.ModelSerializer):
             "original_eta",
             "outputs",
             "owner",
-            "parent_sims",
+            # "parent_sims",
             "project",
             "run_time",
             "status",
@@ -153,7 +165,7 @@ class SimulationSerializer(serializers.ModelSerializer):
             "original_eta",
             "outputs",
             "owner",
-            "parent_sims",
+            # "parent_sims",
             "project",
             "run_time",
             "status",

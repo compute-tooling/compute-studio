@@ -53,6 +53,8 @@ def test_parent_sims(db, get_inputs, meta_param_dict, profile):
     for i in range(0, 10):
         submit_inputs, submit_sim = _submit_sim(inputs)
         sims.append(submit_sim.submit())
+        sims[-1].is_public = True
+        sims[-1].save()
         inputs = _submit_inputs(
             "Used-for-testing",
             get_inputs,
@@ -70,6 +72,36 @@ def test_parent_sims(db, get_inputs, meta_param_dict, profile):
     for ix in range(1, 10):
         middle_sim = sims[ix]
         assert middle_sim.parent_sims() == list(reversed(sims[:ix]))
+
+
+def test_private_parent_sims(db, get_inputs, meta_param_dict, profile):
+    modeler = User.objects.get(username="modeler").profile
+    inputs = _submit_inputs("Used-for-testing", get_inputs, meta_param_dict, modeler)
+
+    sims = []
+    modeler_sims = []
+    tester_sims = []
+    number_sims = 10
+    for i in range(0, number_sims):
+        submit_inputs, submit_sim = _submit_sim(inputs)
+        sim = submit_sim.submit()
+        sims.append(sim)
+        if i != number_sims - 1 and sim.owner == modeler:
+            modeler_sims.append(sim)
+        elif i != number_sims - 1 and sim.owner == profile:
+            tester_sims.append(sim)
+        inputs = _submit_inputs(
+            "Used-for-testing",
+            get_inputs,
+            meta_param_dict,
+            profile if i % 3 else modeler,  # swap profiles every three sims.
+            parent_model_pk=sims[-1].model_pk,
+        )
+
+    child_sim = sims[-1]
+    assert child_sim.parent_sims(user=None) == []
+    assert child_sim.parent_sims(user=modeler.user) == list(reversed(modeler_sims))
+    assert child_sim.parent_sims(user=profile.user) == list(reversed(tester_sims))
 
 
 def test_sim_fork(db, get_inputs, meta_param_dict, profile):
@@ -102,7 +134,6 @@ def test_sim_fork(db, get_inputs, meta_param_dict, profile):
             if field in fields_to_exclude:
                 continue
             assert data1[field] == data2[field]
-
 
     fields_to_exclude = ["id", "owner", "job_id", "parent_sim"]
     objects_eq(sim.inputs, newsim.inputs, fields_to_exclude)

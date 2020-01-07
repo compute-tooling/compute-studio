@@ -213,7 +213,7 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
 
     def get_sim_data(self, user, as_remote, username, title, model_pk):
         self.object = self.get_object(model_pk, username, title)
-        sim = SimulationSerializer(self.object)
+        sim = SimulationSerializer(self.object, context={"request": self.request})
         write_access = self.object.has_write_access(user)
         data = {"has_write_access": write_access}
         if self.object.outputs:
