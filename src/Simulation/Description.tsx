@@ -1,7 +1,7 @@
 "use strict";
 
 import * as React from "react";
-import { Card, Jumbotron, Row, Col, Dropdown, Button } from "react-bootstrap";
+import { Card, Row, Col, Dropdown, Button } from "react-bootstrap";
 import * as yup from "yup";
 import { AccessStatus, MiniSimulation, Simulation, RemoteOutputs } from "../types";
 import { FormikActions, Formik, ErrorMessage, Field, Form } from "formik";
@@ -37,8 +37,11 @@ type DescriptionState = Readonly<{
 }>;
 
 
-const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history }) => {
-  let nsims = history.length;
+const HistoryDropDownItems = (isOwner: boolean, historyType: "Public" | "Private", history: Array<MiniSimulation>): JSX.Element[] => {
+  let viewableHistory = history.filter(
+    sim => historyType === "Public" ? sim.is_public : true
+  );
+  let nsims = viewableHistory.length;
   let suffix;
   switch (nsims) {
     case 0:
@@ -53,35 +56,47 @@ const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history
     default:
       suffix = "th";
   }
+
+  let lock = <i className="fas fa-lock mr-2"></i>;
+  let lockOpen = <i className="fas fa-lock-open mr-2"></i>
   // Hides behind inputs form w/out z-index set to 10000.
-  let style = { width: "300%", zIndex: 10000 }
   let dropdownItems = [
-    <Dropdown.Header key={0}>
+    <Dropdown.Header key={historyType + "-0"}>
       <Row>
         <Col>
-          {`${nsims + 1}${suffix} Simulation in this line`}
+          {`${isOwner ? historyType + " History: " : ""}${nsims + 1}${suffix} Simulation in this line`}
         </Col>
       </Row>
     </Dropdown.Header >
   ]
-  dropdownItems.push(...history.map((sim, ix) => {
+  dropdownItems.push(...viewableHistory.map((sim, ix) => {
     return (
-      <Dropdown.Item key={ix + 1} href={sim.gui_url} className="w-100">
+      <Dropdown.Item key={historyType + "-" + ix.toString()} href={sim.gui_url} className="w-100">
         <Row>
+          <Col className="col-1">{sim.is_public ? lockOpen : lock}</Col>
           <Col className="col-1">{sim.model_pk}</Col>
-          <Col className="col-6 text-truncate">{sim.title}</Col>
+          <Col className="col-5 text-truncate">{sim.title}</Col>
           <Col className="col-2">{sim.owner}</Col>
           <Col className="col-3 text-truncate">{moment(sim.creation_date).format("YYYY-MM-DD")}</Col>
         </Row>
       </Dropdown.Item>
     );
   }));
+  return dropdownItems;
+}
 
 
+const HistoryDropDown: React.FC<{ isOwner: boolean, history: Array<MiniSimulation> }> = ({ isOwner, history }) => {
+  let style = { width: "300%", zIndex: 10000 }
+  let dropdownItems = HistoryDropDownItems(isOwner, "Public", history);
+  if (isOwner) {
+    dropdownItems.push(<Dropdown.Divider key="divider" />);
+    dropdownItems.push(...HistoryDropDownItems(isOwner, "Private", history));
+  }
   return (
-    <Dropdown>
+    <Dropdown id="history-dropdown">
       <Dropdown.Toggle variant="dark" id="dropdown-basic" className="w-100" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}>
-        <><i className="fas fa-history mr-2"></i>History</>
+        <>History</>
       </Dropdown.Toggle>
       <Dropdown.Menu style={style}>
         {dropdownItems}
@@ -263,7 +278,7 @@ export default class DescriptionComponent extends React.PureComponent<
                     <AuthorDropDown author={owner} />
                   </Col>
                   <Col className="col-sm-2" >
-                    <HistoryDropDown history={this.props.remoteSim?.parent_sims || []} />
+                    <HistoryDropDown isOwner={this.writable()} history={this.props.remoteSim?.parent_sims || []} />
                   </Col>
                   {this.user() !== "anon" ?
                     <Col className="col-sm-2">
