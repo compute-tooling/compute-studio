@@ -1,7 +1,7 @@
 "use strict";
 
 import * as React from "react";
-import { Card, Row, Col, Dropdown, Button } from "react-bootstrap";
+import { Card, Row, Col, Dropdown, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import * as yup from "yup";
 import { AccessStatus, MiniSimulation, Simulation, RemoteOutputs } from "../types";
 import { FormikActions, Formik, ErrorMessage, Field, Form } from "formik";
@@ -36,6 +36,14 @@ type DescriptionState = Readonly<{
   forkError?: string;
 }>;
 
+const Tip: React.FC<{ tip: string, children: JSX.Element }> = ({ tip, children }) => (
+  <OverlayTrigger
+    placement="bottom"
+    delay={{ show: 250, hide: 400 }}
+    overlay={(props) => <Tooltip {...props}>{tip}</Tooltip>}>
+    {children}
+  </OverlayTrigger>
+)
 
 const HistoryDropDownItems = (isOwner: boolean, historyType: "Public" | "Private", history: Array<MiniSimulation>): JSX.Element[] => {
   let viewableHistory = history.filter(
@@ -94,29 +102,33 @@ const HistoryDropDown: React.FC<{ isOwner: boolean, history: Array<MiniSimulatio
     dropdownItems.push(...HistoryDropDownItems(isOwner, "Private", history));
   }
   return (
-    <Dropdown id="history-dropdown">
-      <Dropdown.Toggle variant="dark" id="dropdown-basic" className="w-100" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}>
-        <>History</>
-      </Dropdown.Toggle>
-      <Dropdown.Menu style={style}>
-        {dropdownItems}
-      </Dropdown.Menu>
-    </Dropdown >
+    <Tip tip="List of previous simulations.">
+      <Dropdown >
+        <Dropdown.Toggle variant="dark" id="dropdown-basic" className="w-100" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}>
+          <>History</>
+        </Dropdown.Toggle>
+        <Dropdown.Menu style={style}>
+          {dropdownItems}
+        </Dropdown.Menu>
+      </Dropdown >
+    </Tip>
   );
 }
 
 const AuthorDropDown: React.FC<{ author: string }> = ({ author }) => {
   return (
-    <Dropdown>
-      <Dropdown.Toggle variant="dark" id="dropdown-basic" className="w-100" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}>
-        <><i className="fas fa-user-friends mr-2"></i>Author</>
-      </Dropdown.Toggle>
-      <Dropdown.Menu>
-        <Dropdown.Item key={0}>
-          {author}
-        </Dropdown.Item>
-      </Dropdown.Menu>
-    </Dropdown >
+    <Tip tip="Author(s) of the simulation.">
+      <Dropdown>
+        <Dropdown.Toggle variant="dark" id="dropdown-basic" className="w-100" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}>
+          <><i className="fas fa-user-friends mr-2"></i>Author</>
+        </Dropdown.Toggle>
+        <Dropdown.Menu>
+          <Dropdown.Item key={0}>
+            {author}
+          </Dropdown.Item>
+        </Dropdown.Menu>
+      </Dropdown>
+    </Tip>
   );
 }
 
@@ -250,7 +262,9 @@ export default class DescriptionComponent extends React.PureComponent<
                               onMouseEnter={() => this.writable() ? this.setState({ showTitleBorder: true }) : null}
                               onMouseLeave={() => this.writable() ? this.setState({ showTitleBorder: false }) : null}
                             >
-                              <h3 style={titleStyle} onClick={this.toggleEditMode}>{field.value || "Untitled Simulation"}</h3>
+                              <Tip tip="Rename.">
+                                <h3 style={titleStyle} onClick={this.toggleEditMode}>{field.value || "Untitled Simulation"}</h3>
+                              </Tip>
                             </Card>
                           </>
                         );
@@ -282,25 +296,29 @@ export default class DescriptionComponent extends React.PureComponent<
                   </Col>
                   {this.user() !== "anon" ?
                     <Col className="col-sm-2">
-                      <Button className="w-100" onClick={this.forkSimulation} variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} >
-                        <><i className="fas fa-code-branch mr-2"></i> Fork</>
-                      </Button>
+                      <Tip tip="Create a copy of this simulation.">
+                        <Button className="w-100" onClick={this.forkSimulation} variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} >
+                          <><i className="fas fa-code-branch mr-2"></i> Fork</>
+                        </Button>
+                      </Tip>
                     </Col>
                     : null}
                   {this.writable() ?
                     <Col className="col-sm-2 ml-sm-auto" style={{ paddingRight: 0 }}>
-                      <Button variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} className="mb-4 w-100" onClick={e => {
-                        e.target.value = !values.is_public;
-                        setFieldValue("is_public", !values.is_public);
-                        // put handleSubmit in setTimeout since setFieldValue is async
-                        // but does not return a promise
-                        // https://github.com/jaredpalmer/formik/issues/529
-                        setTimeout(() => handleSubmit(e), 0);
-                      }}>
-                        {values.is_public ?
-                          <><i className="fas fa-lock-open mr-2"></i>Public</> :
-                          <><i className="fas fa-lock mr-2"></i>Private</>}
-                      </Button>
+                      <Tip tip={`Make this simulation ${is_public ? "private" : "public"}.`}>
+                        <Button variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} className="mb-4 w-100" onClick={e => {
+                          e.target.value = !values.is_public;
+                          setFieldValue("is_public", !values.is_public);
+                          // put handleSubmit in setTimeout since setFieldValue is async
+                          // but does not return a promise
+                          // https://github.com/jaredpalmer/formik/issues/529
+                          setTimeout(() => handleSubmit(e), 0);
+                        }}>
+                          {values.is_public ?
+                            <><i className="fas fa-lock-open mr-2"></i>Public</> :
+                            <><i className="fas fa-lock mr-2"></i>Private</>}
+                        </Button>
+                      </Tip>
                     </Col> :
                     null
                   }
