@@ -53,7 +53,8 @@ const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history
     default:
       suffix = "th";
   }
-  let style = { width: "300%" }
+  // Hides behind inputs form w/out z-index set to 10000.
+  let style = { width: "300%", zIndex: 10000 }
   let dropdownItems = [
     <Dropdown.Header key={0}>
       <Row>
