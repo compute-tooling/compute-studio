@@ -163,7 +163,7 @@ export default class DescriptionComponent extends React.PureComponent<
 
   componentDidUpdate() {
     if (this.state.isEditMode) {
-      this.titleInput.current.focus();
+      this.titleInput.current.select();
     }
   }
 
