@@ -245,8 +245,8 @@ export default class DescriptionComponent extends React.PureComponent<
                       render={msg => <Message msg={msg} />}
                     />
                   </Col>
-                  <Col className={`col-3 ml-sm-auto mt-1`}>
-                    <h5 style={{ color: "#6c757d" }}>{subtitle}</h5>
+                  <Col className={`col-3 ml-sm-auto`}>
+                    <h5 style={{ color: "#6c757d", marginTop: "0.89rem" }}>{subtitle}</h5>
                   </Col>
                 </Row>
               </Card.Body>
