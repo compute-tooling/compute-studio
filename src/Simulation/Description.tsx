@@ -29,7 +29,7 @@ let Schema = yup.object().shape({
 
 type DescriptionState = Readonly<{
   initialValues: DescriptionValues;
-  preview: boolean;
+  isEditMode: boolean;
   showTitleBorder: boolean;
   showAuth: boolean;
   parentSims?: Array<MiniSimulation>;
@@ -107,18 +107,22 @@ export default class DescriptionComponent extends React.PureComponent<
   DescriptionProps,
   DescriptionState
   > {
+
+  titleInput: React.RefObject<HTMLInputElement>;
+
   constructor(props) {
     super(props);
     this.state = {
       initialValues: null,
-      preview: true,
+      isEditMode: false,
       parentSims: null,
       showAuth: false,
       showTitleBorder: false,
     };
-    this.togglePreview = this.togglePreview.bind(this);
+    this.toggleEditMode = this.toggleEditMode.bind(this);
     this.writable = this.writable.bind(this);
     this.forkSimulation = this.forkSimulation.bind(this);
+    this.titleInput = React.createRef<HTMLInputElement>();
   }
 
   writable() {
@@ -128,11 +132,20 @@ export default class DescriptionComponent extends React.PureComponent<
     );
   }
 
-  togglePreview() {
-    if (this.writable()) {
-      this.setState({ preview: !this.state.preview });
+  componentDidUpdate() {
+    if (this.state.isEditMode) {
+      this.titleInput.current.focus();
     }
   }
+
+  toggleEditMode() {
+    if (this.writable()) {
+      this.setState({
+        isEditMode: !this.state.isEditMode
+      });
+    }
+  }
+
 
   user() {
     return this.props.accessStatus && this.props.accessStatus.username ?
@@ -155,10 +168,10 @@ export default class DescriptionComponent extends React.PureComponent<
   }
 
   render() {
-    let api = this.props.api;
-    let { preview, showTitleBorder } = this.state;
-
+    const api = this.props.api;
+    const { isEditMode, showTitleBorder } = this.state;
     let title, owner, is_public;
+
     if (this.props.remoteSim) {
       title = this.props.remoteSim.title;
       owner = this.props.remoteSim.owner;
@@ -175,6 +188,8 @@ export default class DescriptionComponent extends React.PureComponent<
     } else {
       subtitle = `New ${api.owner}/${api.title}`;
     }
+
+    const titleStyle = { display: "inline-block", padding: "5px", margin: 0 }
     return (
       <Formik
         initialValues={{ title: title, is_public: is_public }}
@@ -185,7 +200,7 @@ export default class DescriptionComponent extends React.PureComponent<
           }
           formdata.append("model_pk", api.modelpk.toString());
           this.props.api.putDescription(formdata).then(data => {
-            this.setState({ preview: true })
+            this.setState({ isEditMode: false })
           })
         }}
         validationSchema={Schema}
@@ -198,22 +213,30 @@ export default class DescriptionComponent extends React.PureComponent<
                     <Field name="title">
                       {({
                         field,
-                        form: { touched, errors },
-                        meta,
                       }) => {
-                        const inline = { display: "inline-block" }
-
-                        return (preview ?
-                          <Card
-                            style={showTitleBorder ? {} : { border: 0 }}
-                            onMouseEnter={() => this.writable() ? this.setState({ showTitleBorder: true }) : null}
-                            onMouseLeave={() => this.writable() ? this.setState({ showTitleBorder: false }) : null}
-                          >
-                            <h3 style={inline} onClick={this.togglePreview}>{field.value || "Untitled Simulation"}</h3>
-                          </Card> :
-                          <Card style={{ border: 0 }} >
-                            <input type="text" placeholder="Untitled Simulation" {...field} className="form-cotnrol" onBlur={handleSubmit} />
-                          </Card>);
+                        return (
+                          <>
+                            <Card style={{ borderColor: "white" }} className={isEditMode ? "" : "d-none"}>
+                              <input
+                                ref={this.titleInput}
+                                disabled={!isEditMode}
+                                type="text"
+                                placeholder="Untitled Simulation"
+                                {...field}
+                                className="form-cotnrol h3"
+                                onBlur={handleSubmit}
+                                style={titleStyle} />
+                            </Card>
+                            <Card
+                              className={isEditMode ? "d-none" : ""}
+                              style={showTitleBorder ? {} : { borderColor: "white" }}
+                              onMouseEnter={() => this.writable() ? this.setState({ showTitleBorder: true }) : null}
+                              onMouseLeave={() => this.writable() ? this.setState({ showTitleBorder: false }) : null}
+                            >
+                              <h3 style={titleStyle} onClick={this.toggleEditMode}>{field.value || "Untitled Simulation"}</h3>
+                            </Card>
+                          </>
+                        );
                       }}
                     </Field>
                     <ErrorMessage
