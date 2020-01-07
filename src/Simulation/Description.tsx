@@ -57,7 +57,7 @@ const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history
     <Dropdown.Header key={0} style={{ minWidth: "500px" }}>
       <Row>
         <Col>
-          {`${nsims + 1}${suffix} Simulation in line`}
+          {`${nsims + 1}${suffix} Simulation in this line`}
         </Col>
       </Row>
     </Dropdown.Header >
