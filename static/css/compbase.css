@@ -132,6 +132,7 @@ code {
   color: #ffffff !important;
 }
 
+
 .inverse-btn-match-nav,
 .main-navbar .nav-pills .nav-link {
   color: #2b2c2d !important;
@@ -262,7 +263,7 @@ span.default-value {
 
 /* output modal styling */
 .output-modal.modal.show .modal-content {
-  min-width: 1200px;
+  min-width: 100%;
 
 }
 
