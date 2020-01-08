@@ -105,7 +105,7 @@ const HistoryDropDown: React.FC<{ isOwner: boolean, history: Array<MiniSimulatio
     <Tip tip="List of previous simulations.">
       <Dropdown >
         <Dropdown.Toggle variant="dark" id="dropdown-basic" className="w-100" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}>
-          <>History</>
+          <><i className="fa fa-history  mr-2"></i>History</>
         </Dropdown.Toggle>
         <Dropdown.Menu style={style}>
           {dropdownItems}
