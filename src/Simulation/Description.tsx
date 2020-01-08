@@ -39,7 +39,7 @@ type DescriptionState = Readonly<{
 const Tip: React.FC<{ tip: string, children: JSX.Element }> = ({ tip, children }) => (
   <OverlayTrigger
     placement="top"
-    delay={{ show: 250, hide: 400 }}
+    delay={{ show: 400, hide: 400 }}
     overlay={(props) => <Tooltip {...props}>{tip}</Tooltip>}>
     {children}
   </OverlayTrigger>
