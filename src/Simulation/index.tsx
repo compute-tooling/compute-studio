@@ -348,6 +348,8 @@ class SimTabs extends React.Component<
       accessStatus,
       inputs,
 
+      remoteSim,
+
       schema,
       initialValues,
       unknownParams,
@@ -384,7 +386,7 @@ class SimTabs extends React.Component<
                 <DescriptionComponent
                   api={this.api}
                   accessStatus={accessStatus}
-                  remoteSim={this.state.remoteSim}
+                  remoteSim={remoteSim}
                 />
               </ErrorBoundary>
               <Tab.Container
@@ -419,6 +421,7 @@ class SimTabs extends React.Component<
                           accessStatus={accessStatus}
                           inputs={inputs}
                           defaultURL={`/${this.api.owner}/${this.api.title}/api/v1/`}
+                          simStatus={remoteSim?.status || "STARTED"}
 
                           resetInitialValues={this.resetInitialValues}
                           resetting={this.state.resetting}

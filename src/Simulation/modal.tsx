@@ -207,14 +207,14 @@ const Dialog: React.FC<{
 }
 
 
-export const RunModal: React.FC<{ handleSubmit: () => void, accessStatus: AccessStatus }> = ({ handleSubmit, accessStatus }) => {
+export const RunModal: React.FC<{ action: "Run" | "Fork and Run", handleSubmit: () => void, accessStatus: AccessStatus }> = ({ action, handleSubmit, accessStatus }) => {
   const [show, setShow] = React.useState(false);
 
   let runbuttontext: string;
   if (!accessStatus.is_sponsored) {
-    runbuttontext = `Run ($${accessStatus.exp_cost})`;
+    runbuttontext = `${action} ($${accessStatus.exp_cost})`;
   } else {
-    runbuttontext = "Run";
+    runbuttontext = action;
   }
 
   return (

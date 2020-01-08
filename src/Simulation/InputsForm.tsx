@@ -19,7 +19,8 @@ import {
   Sects,
   InitialValues,
   Inputs,
-  InputsDetail
+  InputsDetail,
+  Simulation
 } from "../types";
 import API from "./API";
 
@@ -40,6 +41,7 @@ interface InputsFormProps {
   accessStatus: AccessStatus;
   inputs: Inputs;
   defaultURL: string;
+  simStatus: Simulation<any>["status"];
 
   resetInitialValues: (metaParameters: InputsDetail["meta_parameters"]) => void;
   resetting: boolean;
@@ -65,8 +67,6 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
   if (!props.inputs || props.resetting) {
     return <LoadingElement />;
   }
-  console.log("rendering InputsForm");
-
   let {
     accessStatus,
     inputs,
@@ -76,6 +76,7 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
     extend,
     unknownParams,
     readOnly,
+    simStatus,
   } = props;
   let { meta_parameters, model_parameters } = inputs;
 
@@ -116,6 +117,7 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
             </li>
             <li>
               <RunModal
+                action={simStatus === "STARTED" ? "Run" : "Fork and Run"}
                 handleSubmit={handleSubmit}
                 accessStatus={accessStatus}
               />
@@ -197,6 +199,7 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
 
 const InputsMemoed = React.memo(InputsForm, (prevProps, nextProps) => {
   return (
+    prevProps.simStatus === nextProps.simStatus &&
     prevProps.accessStatus === nextProps.accessStatus &&
     prevProps.formikProps === nextProps.formikProps
   )
