@@ -18,16 +18,9 @@ from webapp.apps.users.models import Project, Profile
 from webapp.apps.comp.models import Inputs, Simulation
 from webapp.apps.comp.ioutils import get_ioutils
 from .compute import MockCompute, MockComputeWorkerFailure
-
+from .utils import read_outputs, _submit_inputs, _submit_sim
 
 User = auth.get_user_model()
-
-
-def read_outputs(outputs_name):
-    curr = os.path.abspath(os.path.dirname(__file__))
-    with open(os.path.join(curr, f"{outputs_name}.json"), "r") as f:
-        outputs = f.read()
-    return outputs
 
 
 def login_client(client, user, password):
@@ -261,7 +254,7 @@ class RunMockModel(CoreTestMixin):
         assert sim.parent_sim == None
 
         put_desc_resp = self.api_client.put(
-            f"/{self.owner}/{self.title}/api/v1/{model_pk}/", data={"title": "My sim"},
+            f"/{self.owner}/{self.title}/api/v1/{model_pk}/", data={"title": "My sim"}
         )
         assert_status(200, put_desc_resp, "set_sim_description")
         sim = Simulation.objects.get(
@@ -274,7 +267,6 @@ class RunMockModel(CoreTestMixin):
         assert sim.parent_sim == None
 
     def get_paths(self, model_pk: int):
-
         def fetch_sims(exp_resp: int):
             api_paths = [
                 f"/{self.owner}/{self.title}/api/v1/{model_pk}/remote/",
@@ -283,7 +275,7 @@ class RunMockModel(CoreTestMixin):
             ]
             paths = [
                 f"/{self.owner}/{self.title}/{model_pk}/",
-                f"/{self.owner}/{self.title}/{model_pk}/edit/"
+                f"/{self.owner}/{self.title}/{model_pk}/edit/",
             ]
             for path in api_paths:
                 resp = self.api_client.get(path)
@@ -617,7 +609,7 @@ class TestAsyncAPI(CoreTestMixin):
 
         api_client.logout()
         resp = api_client.post(
-            f"/{self.owner}/{self.title}/api/v1/{rmm.sim.model_pk}/fork/",
+            f"/{self.owner}/{self.title}/api/v1/{rmm.sim.model_pk}/fork/"
         )
         assert resp.status_code == 403
 
@@ -679,3 +671,86 @@ def test_anon_get_create_api(db, api_client):
         format="json",
     )
     assert resp.status_code == 403
+
+
+def test_v0_urls(
+    db, sponsored_matchups, client, api_client, get_inputs, meta_param_dict
+):
+    """
+    Test responses on v0 outputs.
+    - public
+    - private
+    - title update
+    """
+    modeler = User.objects.get(username="hdoupe").profile
+    inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, modeler)
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.is_public = True
+    v0_outputs = json.loads(read_outputs("Matchups_v0"))
+    sim.outputs = v0_outputs
+    sim.save()
+
+    assert sim.outputs_version() == "v0"
+
+    # Test public responses.
+    resp = client.get(f"/{sim.project.owner}/{sim.project.title}/{sim.model_pk}/")
+    assert_status(302, resp, "v0-redirect")
+    resp = client.get(f"/{sim.project.owner}/{sim.project.title}/{sim.model_pk}/v0/")
+    assert_status(200, resp, "v0")
+    resp = client.get(f"/{sim.project.owner}/{sim.project.title}/{sim.model_pk}/edit/")
+    assert_status(200, resp, "v0-edit")
+    resp = api_client.get(
+        f"/{sim.project.owner}/{sim.project.title}/api/v1/{sim.model_pk}/"
+    )
+    assert_status(200, resp, "v0-api-get")
+    resp = api_client.get(
+        f"/{sim.project.owner}/{sim.project.title}/api/v1/{sim.model_pk}/edit/"
+    )
+    assert_status(200, resp, "v0-edit-api-get")
+
+    # Test private responses.
+    s = Simulation.objects.get(pk=sim.pk)
+    s.is_public = False
+    s.save()
+
+    resp = client.get(f"/{sim.project.owner}/{sim.project.title}/{sim.model_pk}/")
+    assert_status(403, resp, "v0-redirect")
+    resp = client.get(f"/{sim.project.owner}/{sim.project.title}/{sim.model_pk}/v0/")
+    assert_status(403, resp, "v0")
+    resp = client.get(f"/{sim.project.owner}/{sim.project.title}/{sim.model_pk}/edit/")
+    assert_status(403, resp, "v0-edit")
+    resp = api_client.get(
+        f"/{sim.project.owner}/{sim.project.title}/api/v1/{sim.model_pk}/"
+    )
+    assert_status(403, resp, "v0-api-get")
+
+    api_client.force_login(sim.owner.user)
+    client.force_login(sim.owner.user)
+    resp = client.get(f"/{sim.project.owner}/{sim.project.title}/{sim.model_pk}/v0/")
+    assert_status(200, resp, "v0-get-private")
+    resp = api_client.get(
+        f"/{sim.project.owner}/{sim.project.title}/api/v1/{sim.model_pk}/"
+    )
+    assert_status(200, resp, "v0-api-get")
+
+    # Test update title and public/private status.
+    resp = api_client.put(
+        f"/{sim.project.owner}/{sim.project.title}/api/v1/{sim.model_pk}/",
+        data={"title": "hello world"},
+        format="json",
+    )
+    assert_status(200, resp, "v0-api-put")
+    s = Simulation.objects.get(pk=sim.pk)
+    assert s.title == "hello world"
+
+    resp = api_client.put(
+        f"/{sim.project.owner}/{sim.project.title}/api/v1/{sim.model_pk}/",
+        data={"is_public": False},
+        format="json",
+    )
+    assert_status(200, resp, "v0-api-change-access")
+    s = Simulation.objects.get(pk=sim.pk)
+    assert s.is_public == False

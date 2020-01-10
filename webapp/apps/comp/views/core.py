@@ -125,7 +125,6 @@ class GetOutputsObjectMixin:
         return obj
 
 
-
 class RecordOutputsMixin(ChargeRunMixin):
     def record_outputs(self, sim, data):
         self.charge_run(sim, data["meta"], use_stripe=USE_STRIPE)

@@ -17,12 +17,8 @@ from django.utils.timezone import make_aware
 from django.urls import reverse
 from django.utils import timezone
 
-from webapp.apps.comp import utils
+from webapp.apps.comp import utils, exceptions
 from webapp.settings import INPUTS_SALT
-
-
-class ForkObjectException(Exception):
-    pass
 
 
 class Inputs(models.Model):
@@ -126,7 +122,7 @@ class Inputs(models.Model):
         return reverse("edit", kwargs=kwargs)
 
     def has_write_access(self, user):
-        return user.is_authenticated and user == self.owner.user
+        return self.sim.has_write_access(user)
 
     def has_read_access(self, user):
         return self.sim.has_read_access(user)
@@ -162,12 +158,12 @@ class SimulationManager(models.Manager):
 
     def fork(self, sim, user):
         if sim.inputs.status == "PENDING":
-            raise ForkObjectException(
+            raise exceptions.ForkObjectException(
                 "Simulations may not be forked while they are in a pending state. "
                 "Please try again once validation has completed."
             )
         if sim.status == "PENDING":
-            raise ForkObjectException(
+            raise exceptions.ForkObjectException(
                 "Simulations may not be forked while they are in a pending state. "
                 "Please try again once the simulation has completed."
             )
@@ -266,7 +262,10 @@ class Simulation(models.Model):
             "title": self.project.title,
             "username": self.project.owner.user.username,
         }
-        return reverse("outputs", kwargs=kwargs)
+        if self.outputs_version() == "v0":
+            return self.get_absolute_v0_url()
+        else:
+            return reverse("outputs", kwargs=kwargs)
 
     def get_absolute_api_url(self):
         kwargs = {
@@ -291,6 +290,19 @@ class Simulation(models.Model):
             "username": self.project.owner.user.username,
         }
         return reverse("download", kwargs=kwargs)
+
+    def get_absolute_v0_url(self):
+        kwargs = {
+            "model_pk": self.model_pk,
+            "title": self.project.title,
+            "username": self.project.owner.user.username,
+        }
+        if self.outputs_version() == "v0":
+            return reverse("v0_outputs", kwargs=kwargs)
+
+        raise exceptions.VersionMismatchException(
+            f"{self} is version {self.outputs_version()} != v0."
+        )
 
     def zip_filename(self):
         return f"{self.project.title}_{self.model_pk}.zip"
@@ -321,9 +333,7 @@ class Simulation(models.Model):
         return self.project.run_cost(self.run_time, adjust=True)
 
     def __str__(self):
-        return (
-            f"{self.project.owner.user.username}/{self.project.title}/{self.model_pk}"
-        )
+        return f"{self.project}#{self.model_pk} by {self.owner.user}"
 
     def parent_sims(self, user=None):
         """
@@ -346,6 +356,12 @@ class Simulation(models.Model):
         return self.is_public or (
             user and user.is_authenticated and user == self.owner.user
         )
+
+    def outputs_version(self):
+        if self.outputs:
+            return self.outputs["version"]
+        else:
+            return None
 
 
 @dataclass

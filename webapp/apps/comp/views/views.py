@@ -115,6 +115,8 @@ class EditSimView(GetOutputsObjectMixin, InputsMixin, View):
         self.object = self.get_object(
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
+        if self.object.outputs_version() == "v0" and not request.path.endswith("edit/"):
+            return redirect(self.object.get_absolute_url())
         project = self.object.project
         context = self.project_context(request, project)
         context["show_readme"] = False
@@ -160,7 +162,6 @@ class OutputsView(GetOutputsObjectMixin, DetailView):
         )
 
     def dispatch(self, request, *args, **kwargs):
-        compute = Compute()
         model_pk, username, title = (
             kwargs["model_pk"],
             kwargs["username"],
@@ -177,6 +178,9 @@ class OutputsView(GetOutputsObjectMixin, DetailView):
             self.object.outputs["version"]
         ](request)
 
+    def render_v1(self, request):
+        return redirect(self.object.get_absolute_url())
+
     def render_v0(self, request):
         return render(
             request,
@@ -185,27 +189,6 @@ class OutputsView(GetOutputsObjectMixin, DetailView):
                 "object": self.object,
                 "result_header": "Results",
                 "tags": TAGS[self.object.project.title],
-            },
-        )
-
-    def render_v1(self, request):
-        renderable = {
-            "renderable": self.object.outputs["outputs"]["renderable"]["outputs"]
-        }
-        # outputs = s3like.read_from_s3like(renderable)
-        return render(
-            request,
-            "comp/outputs/v1/sim_detail.html",
-            {
-                "outputs": renderable,
-                "object": self.object,
-                "result_header": "Results",
-                "bokeh_scripts": {
-                    "cdn_js": CDN.js_files[0],
-                    "cdn_css": CDN.css_files[0],
-                    "widget_js": CDN.js_files[1],
-                    "widget_css": CDN.css_files[1],
-                },
             },
         )
 

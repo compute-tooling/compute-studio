@@ -18,9 +18,14 @@ from webapp.apps.users.models import Project
 
 from webapp.apps.comp.asyncsubmit import SubmitInputs, SubmitSim
 from webapp.apps.comp.compute import Compute, JobFailError
-from webapp.apps.comp.exceptions import AppError, ValidationError, BadPostException
+from webapp.apps.comp.exceptions import (
+    AppError,
+    ValidationError,
+    BadPostException,
+    ForkObjectException,
+)
 from webapp.apps.comp.ioutils import get_ioutils
-from webapp.apps.comp.models import Inputs, Simulation, ForkObjectException
+from webapp.apps.comp.models import Inputs, Simulation
 from webapp.apps.comp.parser import APIParser
 from webapp.apps.comp.serializers import (
     SimulationSerializer,
@@ -216,7 +221,10 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
         sim = SimulationSerializer(self.object, context={"request": self.request})
         write_access = self.object.has_write_access(user)
         data = {"has_write_access": write_access}
-        if self.object.outputs:
+        if self.object.outputs_version() == "v0":
+            data.update(sim.data)
+            return Response(data, status=status.HTTP_200_OK)
+        elif self.object.outputs:
             data.update(sim.data)
             outputs = data["outputs"]["outputs"]
             if not as_remote:

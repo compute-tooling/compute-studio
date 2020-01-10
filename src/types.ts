@@ -217,6 +217,7 @@ export interface Simulation<T> {
   model_version: string;
   original_eta: number;
   outputs: T;
+  outputs_version: string;
   owner: string;
   parent_sims: Array<MiniSimulation>;
   project: Project;

@@ -1,3 +1,4 @@
+import json
 import pytest
 
 from hashids import Hashids
@@ -6,13 +7,12 @@ from django.http import Http404
 from django.contrib import auth
 from django.forms.models import model_to_dict
 
-from webapp.settings import INPUTS_SALT
 from webapp.apps.users.models import Project, Profile
 
-from webapp.apps.comp.models import Inputs, Simulation, ForkObjectException
+from webapp.apps.comp.models import Inputs, Simulation
+from webapp.apps.comp.exceptions import ForkObjectException, VersionMismatchException
 
-from .test_asyncsubmit import _submit_inputs, _submit_sim
-
+from .utils import _submit_inputs, _submit_sim, read_outputs
 
 User = auth.get_user_model()
 
@@ -150,3 +150,37 @@ def test_sim_fork(db, get_inputs, meta_param_dict, profile):
     sim.inputs.save()
     with pytest.raises(ForkObjectException):
         Simulation.objects.fork(sim, profile.user)
+
+
+def test_outputs_versions(db, get_inputs, meta_param_dict):
+    modeler = User.objects.get(username="modeler").profile
+    inputs = _submit_inputs("Used-for-testing", get_inputs, meta_param_dict, modeler)
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.save()
+
+    v0_outputs = json.loads(read_outputs("Matchups_v0"))
+    sim.outputs = v0_outputs
+    sim.save()
+
+    assert sim.outputs_version() == "v0"
+    assert (
+        sim.get_absolute_url()
+        == sim.get_absolute_v0_url()
+        == f"/{sim.project.owner}/{sim.project.title}/{sim.model_pk}/v0/"
+    )
+
+    v1_outputs = json.loads(read_outputs("Matchups_v1"))
+    sim.outputs = v1_outputs
+    sim.save()
+
+    assert sim.outputs_version() == "v1"
+    assert (
+        sim.get_absolute_url()
+        == f"/{sim.project.owner}/{sim.project.title}/{sim.model_pk}/"
+    )
+
+    with pytest.raises(VersionMismatchException):
+        sim.get_absolute_v0_url()

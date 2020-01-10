@@ -119,6 +119,7 @@ class SimulationSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=False)
     owner = serializers.StringRelatedField(required=False)
     project = PublishSerializer()
+    outputs_version = serializers.CharField()
     # see to_representation for definition of parent_sims:
     # parent_sims = MiniSimulationSerializer(many=True)
 
@@ -147,6 +148,7 @@ class SimulationSerializer(serializers.ModelSerializer):
             "original_eta",
             "outputs",
             "owner",
+            "outputs_version",
             # "parent_sims",
             "project",
             "run_time",
@@ -165,6 +167,7 @@ class SimulationSerializer(serializers.ModelSerializer):
             "original_eta",
             "outputs",
             "owner",
+            "outputs_version",
             # "parent_sims",
             "project",
             "run_time",
