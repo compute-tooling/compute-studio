@@ -2,12 +2,15 @@
 
 import * as React from "react";
 import { Card, Row, Col, Dropdown, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faHistory, faLock, faLockOpen, faUserFriends, faCodeBranch } from '@fortawesome/free-solid-svg-icons'
 import * as yup from "yup";
 import { AccessStatus, MiniSimulation, Simulation, RemoteOutputs } from "../types";
-import { FormikActions, Formik, ErrorMessage, Field, Form } from "formik";
+import { FormikActions, Formik, ErrorMessage, Field, Form, FormikProps } from "formik";
 import { Message } from "../fields";
 import moment = require("moment");
 import API from "./API";
+import ReadmeEditor from "./editor"
 import { AxiosError } from "axios";
 
 interface DescriptionProps {
@@ -18,6 +21,7 @@ interface DescriptionProps {
 
 interface DescriptionValues {
   title: string;
+  readme: Node[];
   is_public: boolean;
 }
 
@@ -36,11 +40,17 @@ type DescriptionState = Readonly<{
   forkError?: string;
 }>;
 
+
+const defaultReadme = [{
+  type: 'paragraph',
+  children: [{ text: 'Write your description here.' }],
+}];
+
 const Tip: React.FC<{ tip: string, children: JSX.Element }> = ({ tip, children }) => (
   <OverlayTrigger
     placement="top"
     delay={{ show: 400, hide: 400 }}
-    overlay={(props) => <Tooltip {...props}>{tip}</Tooltip>}>
+    overlay={(props) => <Tooltip {...props} show={props.show.toString()}>{tip}</Tooltip>}>
     {children}
   </OverlayTrigger>
 )
@@ -105,7 +115,7 @@ const HistoryDropDown: React.FC<{ isOwner: boolean, history: Array<MiniSimulatio
     <Tip tip="List of previous simulations.">
       <Dropdown >
         <Dropdown.Toggle variant="dark" id="dropdown-basic" className="w-100" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}>
-          <><i className="fa fa-history  mr-2"></i>History</>
+          <><FontAwesomeIcon icon={faHistory} className="mr-2" /> History</>
         </Dropdown.Toggle>
         <Dropdown.Menu style={style}>
           {dropdownItems}
@@ -120,7 +130,7 @@ const AuthorDropDown: React.FC<{ author: string }> = ({ author }) => {
     <Tip tip="Author(s) of the simulation.">
       <Dropdown>
         <Dropdown.Toggle variant="dark" id="dropdown-basic" className="w-100" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}>
-          <><i className="fas fa-user-friends mr-2"></i>Author</>
+          <><FontAwesomeIcon icon={faUserFriends} className="mr-2" /> Author</>
         </Dropdown.Toggle>
         <Dropdown.Menu>
           <Dropdown.Item key={0}>
@@ -199,14 +209,16 @@ export default class DescriptionComponent extends React.PureComponent<
   render() {
     const api = this.props.api;
     const { isEditMode, showTitleBorder } = this.state;
-    let title, owner, is_public;
+    let title, readme, owner, is_public;
 
     if (this.props.remoteSim) {
       title = this.props.remoteSim.title;
+      readme = this.props.remoteSim.readme || defaultReadme;
       owner = this.props.remoteSim.owner;
       is_public = this.props.remoteSim.is_public;
     } else {
       title = "Untitled Simulation";
+      readme = defaultReadme;
       owner = this.user();
       is_public = false;
     }
@@ -219,15 +231,17 @@ export default class DescriptionComponent extends React.PureComponent<
     }
 
     const titleStyle = { display: "inline-block", padding: "5px", margin: 0 }
+
     return (
       <Formik
-        initialValues={{ title: title, is_public: is_public }}
+        initialValues={{ title: title, readme: readme, is_public: is_public }}
         onSubmit={(values: DescriptionValues, actions: FormikActions<DescriptionValues>) => {
           let formdata = new FormData();
           for (const field in values) {
-            formdata.append(field, values[field]);
+            if (values[field]) formdata.append(field, values[field]);
           }
           formdata.append("model_pk", api.modelpk.toString());
+          formdata.append("readme", JSON.stringify(values.readme));
           this.props.api.putDescription(formdata).then(data => {
             this.setState({ isEditMode: false })
           })
@@ -281,6 +295,23 @@ export default class DescriptionComponent extends React.PureComponent<
                 </Row>
               </Card.Body>
             </Card>
+            <Card className="card-outer">
+              <Card.Body>
+                <Row className="justify-content-start">
+                  <Col>
+                    <Field name="readme">
+                      {({ field }) => <ReadmeEditor
+                        fieldName="readme"
+                        value={field.value}
+                        setFieldValue={setFieldValue}
+                        handleSubmit={handleSubmit}
+                        readOnly={!this.writable()}
+                      />}
+                    </Field>
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
             <Card className="text-center" style={{ backgroundColor: "inherit", border: 0, paddingLeft: 0, paddingRight: 0 }}>
               <Card.Body style={{ paddingLeft: "1rem", paddingRight: "1rem" }}>
                 {this.state.forkError ?
@@ -298,7 +329,7 @@ export default class DescriptionComponent extends React.PureComponent<
                     <Col className="col-sm-2">
                       <Tip tip="Create a copy of this simulation.">
                         <Button className="w-100" onClick={this.forkSimulation} variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} >
-                          <><i className="fas fa-code-branch mr-2"></i> Fork</>
+                          <><FontAwesomeIcon icon={faCodeBranch} className="mr-2" /> Fork</>
                         </Button>
                       </Tip>
                     </Col>
@@ -315,8 +346,8 @@ export default class DescriptionComponent extends React.PureComponent<
                           setTimeout(() => handleSubmit(e), 0);
                         }}>
                           {values.is_public ?
-                            <><i className="fas fa-lock-open mr-2"></i>Public</> :
-                            <><i className="fas fa-lock mr-2"></i>Private</>}
+                            <><FontAwesomeIcon icon={faLockOpen} className="mr-2" />Public</> :
+                            <><FontAwesomeIcon icon={faLock} className="mr-2" />Private</>}
                         </Button>
                       </Tip>
                     </Col> :

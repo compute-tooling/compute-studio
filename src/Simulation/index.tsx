@@ -331,7 +331,7 @@ class SimTabs extends React.Component<
         <div className="d-flex justify-content-center">
           <ReactLoading type="spokes" color="#2b2c2d" />
         </div>
-      </ErrorBoundary>)
+      </ErrorBoundary>);
     }
     const style = { padding: 0 };
     const buttonGroupStyle = {

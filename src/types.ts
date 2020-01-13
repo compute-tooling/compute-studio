@@ -174,6 +174,7 @@ export interface MiniSimulation {
   model_pk: number;
   model_version: string;
   owner: string;
+  readme: string;
   status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
   title: string;
 }
@@ -221,6 +222,7 @@ export interface Simulation<T> {
   owner: string;
   parent_sims: Array<MiniSimulation>;
   project: Project;
+  readme: Node[];
   run_time: number;
   status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
   title: string;
