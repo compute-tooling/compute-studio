@@ -2,7 +2,7 @@ import { Button, Modal, Collapse } from "react-bootstrap";
 import * as React from "react";
 import ReactLoading from "react-loading";
 
-import { LoginForm, SignupForm } from "../AuthForms";
+import { LoginForm, SignupForm } from "../auth";
 import axios from "axios";
 import { AccessStatus } from "../types";
 

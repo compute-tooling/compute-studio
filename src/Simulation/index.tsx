@@ -3,7 +3,7 @@
 import * as ReactDOM from "react-dom";
 import * as React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { Nav, Tab, Col, Card } from "react-bootstrap";
+import { Nav, Tab, Col } from "react-bootstrap";
 import axios from "axios";
 import * as Sentry from "@sentry/browser";
 import * as yup from "yup";
@@ -19,6 +19,7 @@ import { convertToFormik, formikToJSON } from "../ParamTools";
 import { Formik, Form, FormikProps, FormikActions } from "formik";
 import { hasServerErrors } from "../utils";
 import { UnsavedChangesModal } from "./modal";
+import { AuthButtons } from "../auth";
 
 Sentry.init({
   dsn: "https://fde6bcb39fda4af38471b16e2c1711af@sentry.io/1530834"
@@ -28,6 +29,7 @@ axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
 
 const domContainer = document.querySelector("#inputs-container");
+const authContainer = document.querySelector("#auth-group");
 
 interface URLProps {
   match: {
@@ -70,6 +72,34 @@ interface SimAppState {
 }
 
 
+class AuthPortal extends React.Component<{}> {
+  el: HTMLDivElement
+
+  constructor(props) {
+    super(props);
+    this.el = document.createElement("div");
+  }
+
+  componentDidMount() {
+    while (authContainer.firstChild) {
+      authContainer.removeChild(authContainer.firstChild);
+    }
+    authContainer.appendChild(this.el);
+  }
+
+  componentWillUnmount() {
+    authContainer.removeChild(this.el);
+  }
+
+  render() {
+    return ReactDOM.createPortal(
+      this.props.children,
+      this.el,
+    )
+  }
+}
+
+
 class SimTabs extends React.Component<
   SimAppProps & { tabName: "inputs" | "outputs" },
   SimAppState> {
@@ -88,6 +118,7 @@ class SimTabs extends React.Component<
 
     this.handleTabChange = this.handleTabChange.bind(this);
     this.resetInitialValues = this.resetInitialValues.bind(this);
+    this.resetAccessStatus = this.resetAccessStatus.bind(this);
     this.pollInputs = this.pollInputs.bind(this);
     this.setOutputs = this.setOutputs.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -150,6 +181,12 @@ class SimTabs extends React.Component<
           resetting: false
         }));
       })
+  }
+
+  resetAccessStatus() {
+    this.api.getAccessStatus().then(accessStatus => {
+      this.setState({ accessStatus })
+    });
   }
 
   handleSubmit(values, actions) {
@@ -378,6 +415,9 @@ class SimTabs extends React.Component<
         >
           {(formikProps: FormikProps<InitialValues>) => (
             <>
+              <AuthPortal>
+                <AuthButtons accessStatus={accessStatus} resetAccessStatus={this.resetAccessStatus} />
+              </AuthPortal>
               {this.state.showDirtyWarning ?
                 <UnsavedChangesModal handleClose={() => this.setState({ hasShownDirtyWarning: true, showDirtyWarning: false })} />
                 : null

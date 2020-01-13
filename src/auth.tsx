@@ -1,10 +1,11 @@
 import * as React from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import axios from "axios";
-import { Button } from "react-bootstrap";
+import { Button, Modal, Dropdown } from "react-bootstrap";
 import * as yup from "yup";
 
 import { Message } from "./fields";
+import { AccessStatus } from './types';
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
@@ -194,3 +195,118 @@ export const SignupForm = ({ setAuthStatus }) => (
     ></Formik>
   </div>
 );
+
+
+export const AuthDialog: React.FC<{
+  show: boolean;
+  setShow: (show: boolean) => void;
+  initialAction: "sign-in" | "sign-up";
+  resetAccessStatus: () => void;
+}> = ({ show, setShow, initialAction, resetAccessStatus }) => {
+  const [action, setAction] = React.useState(initialAction);
+  const [authenticated, setAuthenticated] = React.useState(false);
+  const getVariant = (action) => action === "sign-in" ? "outline-primary" : "outline-success";
+  const toggleAction = action => {
+    setAction(
+      action === "sign-in" ? "sign-up" : "sign-in"
+    );
+  };
+  if (authenticated) {
+    setShow(false);
+    resetAccessStatus();
+  }
+  return (
+    <Modal show={show} onHide={() => setShow(false)}>
+      <Modal.Header closeButton>
+        <Modal.Title>You must be logged in to run simulations.</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <div className="mt-2" >
+          {action === "sign-in" ?
+            <LoginForm setAuthStatus={setAuthenticated} />
+            :
+            <SignupForm setAuthStatus={setAuthenticated} />
+          }
+        </div>
+        <Button className="mt-3" variant={getVariant(action)} onClick={() => toggleAction(action)} >{action === "sign-in" ? "Log in" : "Sign in"}</Button>
+      </Modal.Body>
+
+      <Modal.Footer>
+        <Button variant="outline-secondary" onClick={() => setShow(false)}>
+          Close
+        </Button>
+      </Modal.Footer>
+    </Modal >
+  );
+}
+
+
+interface AuthButtonState {
+  show: boolean;
+  initialAction: "sign-in" | "sign-up";
+}
+
+export const AuthButtons: React.FC<{
+  accessStatus: AccessStatus,
+  resetAccessStatus: () => void
+}> = ({ accessStatus, resetAccessStatus }) => {
+  const [state, setState] = React.useState({
+    show: false,
+    initialAction: "sign-in",
+  } as AuthButtonState);
+
+  const setShow = show => {
+    setState({ ...state, ...{ show: show } })
+  }
+
+  if (accessStatus.username) {
+    return (
+      <Dropdown className="mobile-mb-1">
+        <Dropdown.Toggle
+          className="nav-link btn btn-outline-match-nav dropdown-toggle mb-1"
+          style={{ display: "inline-block" }}
+          id="navbarDropdown-prof"
+          variant={null}
+        >
+          {accessStatus.username}
+        </Dropdown.Toggle>
+        <Dropdown.Menu
+          className="desktop-menu-right"
+          style={{ width: "180px" }}
+        >
+          <Dropdown.Item href="/">Dashboard</Dropdown.Item>
+          <Dropdown.Item href="/publish/">Publish</Dropdown.Item>
+          <Dropdown.Divider />
+          <Dropdown.Item href="/users/settings/">Settings</Dropdown.Item>
+          <Dropdown.Item href="/users/logout/">Sign out</Dropdown.Item>
+        </Dropdown.Menu>
+      </Dropdown>
+    )
+  } else {
+    return (
+      <>
+        {state.show ? <AuthDialog setShow={setShow} {...state} resetAccessStatus={resetAccessStatus} /> : null}
+        <ul className="navbar-nav mr-auto mt-2 mt-lg-0">
+          <li className="nav-item mr-2 mobile-mb-3">
+            <Button
+              className="nav-link btn btn-match-nav"
+              style={{ display: "inline-block" }}
+              onClick={() => setState({ show: true, initialAction: "sign-in" })}
+            >
+              Sign in
+        </Button>
+          </li>
+          <li className="nav-item mobile-mb-1">
+            <Button
+              className="nav-link btn btn-outline-match-nav mb-1 mobile-p-1"
+              style={{ display: "inline-block" }}
+              onClick={() => setState({ show: true, initialAction: "sign-up" })}
+            >
+              Sign up
+           </Button>
+          </li>
+        </ul>
+      </>
+    )
+  }
+}
