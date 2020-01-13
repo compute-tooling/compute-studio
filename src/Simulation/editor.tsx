@@ -64,8 +64,8 @@ const ReadmeEditor: React.FC<{
         </div>}
       <Editable
         placeholder={readOnly ?
-          "No description provided for this simulation." :
-          "You may use this space to describe your simulation."}
+          "No notes provided for this simulation." :
+          "You may use this space to add notes to your simulation."}
         readOnly={readOnly}
         renderElement={renderElement}
         renderLeaf={renderLeaf}
