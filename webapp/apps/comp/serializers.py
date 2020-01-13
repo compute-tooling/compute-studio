@@ -31,6 +31,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
     owner = serializers.StringRelatedField(required=False)
     title = serializers.CharField(required=False)
     model_pk = serializers.IntegerField(required=False)
+    readme = serializers.JSONField(required=False)
     status = serializers.CharField(required=False)
     api_url = serializers.CharField(required=False, source="get_absolute_api_url")
     gui_url = serializers.CharField(required=False, source="get_absolute_url")
@@ -45,6 +46,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
             "model_pk",
             "model_version",
             "owner",
+            "readme",
             "status",
             "title",
         )
@@ -151,6 +153,7 @@ class SimulationSerializer(serializers.ModelSerializer):
             "outputs_version",
             # "parent_sims",
             "project",
+            "readme",
             "run_time",
             "status",
             "title",

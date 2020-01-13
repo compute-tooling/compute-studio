@@ -7,34 +7,44 @@ import django.utils.timezone
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('comp', '0016_auto_20191001_1236'),
-    ]
+    dependencies = [("comp", "0016_auto_20191001_1236")]
 
     operations = [
         migrations.AddField(
-            model_name='inputs',
-            name='parent_sim',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='child_inputs', to='comp.Simulation'),
+            model_name="inputs",
+            name="parent_sim",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="child_inputs",
+                to="comp.Simulation",
+            ),
         ),
         migrations.AddField(
-            model_name='simulation',
-            name='last_modified',
+            model_name="simulation",
+            name="last_modified",
             field=models.DateTimeField(default=django.utils.timezone.now),
         ),
         migrations.AddField(
-            model_name='simulation',
-            name='parent_sim',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='child_sims', to='comp.Simulation'),
+            model_name="simulation",
+            name="parent_sim",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="child_sims",
+                to="comp.Simulation",
+            ),
         ),
         migrations.AddField(
-            model_name='simulation',
-            name='readme',
-            field=models.CharField(blank=True, default=None, max_length=10000, null=True),
+            model_name="simulation",
+            name="readme",
+            field=models.CharField(
+                blank=True, default=None, max_length=10000, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='simulation',
-            name='title',
-            field=models.CharField(default='Untitled Simulation', max_length=500),
+            model_name="simulation",
+            name="title",
+            field=models.CharField(default="Untitled Simulation", max_length=500),
         ),
     ]

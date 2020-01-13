@@ -208,7 +208,7 @@ class Simulation(models.Model):
     # TODO: dimension needs to go
     dimension_name = "Dimension--needs to go"
     title = models.CharField(default="Untitled Simulation", max_length=500)
-    readme = models.CharField(null=True, default=None, blank=True, max_length=10000)
+    readme = JSONField(null=True, default=None, blank=True)
     last_modified = models.DateTimeField(default=timezone.now)
     parent_sim = models.ForeignKey(
         "self", null=True, related_name="child_sims", on_delete=models.SET_NULL

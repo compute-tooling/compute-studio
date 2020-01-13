@@ -5,19 +5,36 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('comp', '0017_auto_20191121_1443'),
-    ]
+    dependencies = [("comp", "0017_auto_20191121_1443")]
 
     operations = [
         migrations.AlterField(
-            model_name='inputs',
-            name='status',
-            field=models.CharField(choices=[('STARTED', 'Started'), ('PENDING', 'Pending'), ('SUCCESS', 'Success'), ('INVALID', 'Invalid'), ('FAIL', 'Fail'), ('WORKER_FAILURE', 'Worker Failure')], max_length=20),
+            model_name="inputs",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("STARTED", "Started"),
+                    ("PENDING", "Pending"),
+                    ("SUCCESS", "Success"),
+                    ("INVALID", "Invalid"),
+                    ("FAIL", "Fail"),
+                    ("WORKER_FAILURE", "Worker Failure"),
+                ],
+                max_length=20,
+            ),
         ),
         migrations.AlterField(
-            model_name='simulation',
-            name='status',
-            field=models.CharField(choices=[('STARTED', 'Started'), ('PENDING', 'Pending'), ('SUCCESS', 'Success'), ('FAIL', 'Fail'), ('WORKER_FAILURE', 'Worker Failure')], max_length=20),
+            model_name="simulation",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("STARTED", "Started"),
+                    ("PENDING", "Pending"),
+                    ("SUCCESS", "Success"),
+                    ("FAIL", "Fail"),
+                    ("WORKER_FAILURE", "Worker Failure"),
+                ],
+                max_length=20,
+            ),
         ),
     ]
