@@ -31,7 +31,7 @@ let SignupSchema = yup.object().shape({
 const tos = (
   <p className="text-muted mt-3">
     By creating an account, you agree to the
-    <a href="/terms/">Terms of Service</a>. For more information about Compute
+    <a href="/terms/">{" "}Terms of Service</a>. For more information about Compute
     Studio's privacy practices, see the Compute Studio{" "}
     <a href="/privacy/">Privacy Statement</a>. We'll occasionally send you
     account-related emails.
