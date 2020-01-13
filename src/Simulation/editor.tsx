@@ -7,11 +7,11 @@ import { createEditor, Transforms, Editor, Range } from 'slate';
 import { withHistory } from 'slate-history';
 import { Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faItalic, faCode, faBold, faUnderline, faListOl, faQuoteRight, faListUl, faHeading, faLink } from '@fortawesome/free-solid-svg-icons';
+import { faItalic, faBold, faUnderline, faListOl, faQuoteRight, faListUl, faHeading, faLink } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { isUrl } from "../utils";
 
-type Mark = "bold" | "italic" | "underline" | "strikethrough" | "code";
+type Mark = "bold" | "italic" | "underline" | "strikethrough";
 type Block = "heading-one" | "heading-two" | "block-quote" | "numbered-list" | "bulleted-list" | "link";
 
 
@@ -57,7 +57,6 @@ const ReadmeEditor: React.FC<{
           <MarkButton mark="bold" icon={faBold} />
           <MarkButton mark="italic" icon={faItalic} />
           <MarkButton mark="underline" icon={faUnderline} />
-          <MarkButton mark="code" icon={faCode} />
           <LinkButton icon={faLink} />
           <BlockButton block="heading-one" icon={faHeading} />
           <BlockButton block="block-quote" icon={faQuoteRight} />
@@ -137,10 +136,6 @@ const Element = ({ attributes, children, element }) => {
 const Leaf = ({ attributes, children, leaf }) => {
   if (leaf.bold) {
     children = <strong>{children}</strong>
-  }
-
-  if (leaf.code) {
-    children = <code>{children}</code>
   }
 
   if (leaf.italic) {
