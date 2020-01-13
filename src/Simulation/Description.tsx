@@ -43,7 +43,7 @@ type DescriptionState = Readonly<{
 
 const defaultReadme = [{
   type: 'paragraph',
-  children: [{ text: 'Write your description here.' }],
+  children: [{ text: '' }],
 }];
 
 const Tip: React.FC<{ tip: string, children: JSX.Element }> = ({ tip, children }) => (
