@@ -63,6 +63,9 @@ const ReadmeEditor: React.FC<{
           <BlockButton block="bulleted-list" icon={faListUl} />
         </div>}
       <Editable
+        placeholder={readOnly ?
+          "No description provided for this simulation." :
+          "You may use this space to describe your simulation."}
         readOnly={readOnly}
         renderElement={renderElement}
         renderLeaf={renderLeaf}
