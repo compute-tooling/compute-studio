@@ -1,15 +1,18 @@
+"use strict";
+
 import * as React from "react";
 import isHotkey from 'is-hotkey'
 import { Editable, withReact, Slate, useSlate } from 'slate-react';
-import { createEditor, Transforms, Editor, Text } from 'slate';
+import { createEditor, Transforms, Editor, Range } from 'slate';
 import { withHistory } from 'slate-history';
 import { Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faItalic, faCode, faBold, faUnderline, faListOl, faQuoteRight, faListUl, faHeading } from '@fortawesome/free-solid-svg-icons';
+import { faItalic, faCode, faBold, faUnderline, faListOl, faQuoteRight, faListUl, faHeading, faLink } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
+import { isUrl } from "../utils";
 
 type Mark = "bold" | "italic" | "underline" | "strikethrough" | "code";
-type Block = "heading-one" | "heading-two" | "block-quote" | "numbered-list" | "bulleted-list";
+type Block = "heading-one" | "heading-two" | "block-quote" | "numbered-list" | "bulleted-list" | "link";
 
 
 interface SlateValue {
@@ -22,6 +25,7 @@ const HOTKEYS = {
   'mod+i': 'italic',
   'mod+u': 'underline',
   'mod+`': 'code',
+  // 'mod+k': 'link', TODO
 }
 
 const LIST_TYPES = ['numbered-list', 'bulleted-list']
@@ -35,7 +39,10 @@ const ReadmeEditor: React.FC<{
 }> = ({ fieldName, value, setFieldValue, handleSubmit, readOnly }) => {
   const renderElement = React.useCallback(props => <Element {...props} />, [])
   const renderLeaf = React.useCallback(props => <Leaf {...props} />, [])
-  const editor = React.useMemo(() => withHistory(withReact(createEditor())), [])
+  const editor = React.useMemo(
+    () => withLinks(withHistory(withReact(createEditor()))),
+    []
+  )
   return (
     <Slate
       editor={editor}
@@ -51,6 +58,7 @@ const ReadmeEditor: React.FC<{
           <MarkButton mark="italic" icon={faItalic} />
           <MarkButton mark="underline" icon={faUnderline} />
           <MarkButton mark="code" icon={faCode} />
+          <LinkButton icon={faLink} />
           <BlockButton block="heading-one" icon={faHeading} />
           <BlockButton block="block-quote" icon={faQuoteRight} />
           <BlockButton block="numbered-list" icon={faListOl} />
@@ -75,6 +83,35 @@ const ReadmeEditor: React.FC<{
   )
 }
 
+
+const withLinks = editor => {
+  const { insertData, insertText, isInline } = editor;
+
+  editor.isInline = element => {
+    return element.type === 'link' ? true : isInline(element);
+  }
+
+  editor.insertText = text => {
+    if (text && isUrl(text)) {
+      Controller.wrapLink(editor, text);
+    } else {
+      insertText(text);
+    }
+  }
+
+  editor.insertData = data => {
+    const text = data.getData('text/plain');
+
+    if (text && isUrl(text)) {
+      Controller.wrapLink(editor, text);
+    } else {
+      insertData(data);
+    }
+  }
+
+  return editor;
+}
+
 const Element = ({ attributes, children, element }) => {
   switch (element.type) {
     case 'block-quote':
@@ -87,6 +124,12 @@ const Element = ({ attributes, children, element }) => {
       return <li {...attributes}>{children}</li>
     case 'numbered-list':
       return <ol {...attributes}>{children}</ol>
+    case 'link':
+      return (
+        <a {...attributes} href={element.url}>
+          {children}
+        </a>
+      );
     default:
       return <p {...attributes}>{children}</p>
   }
@@ -147,6 +190,26 @@ const MarkButton: React.FC<{ mark: Mark, icon: IconDefinition }> = ({ mark, icon
   )
 }
 
+const LinkButton: React.FC<{ icon: IconDefinition }> = ({ icon }) => {
+  const editor = useSlate();
+  const active = Controller.isBlockActive(editor, "link");
+  return (
+    <Button
+      size="sm"
+      variant={active ? "dark" : "light"}
+      style={{ border: 0, backgroundColor: active ? "rgba(60, 62, 62, 1)" : "white" }}
+      onMouseDown={event => {
+        event.preventDefault()
+        const url = window.prompt('Enter the URL of the link:')
+        if (!url) return
+        Controller.insertLink(editor, url);
+      }}
+    >
+      <FontAwesomeIcon icon={icon} />
+    </Button>
+  )
+}
+
 const Controller = {
   isMarkActive(editor: Editor, mark: Mark) {
     const marks = Editor.marks(editor);
@@ -171,7 +234,7 @@ const Controller = {
     }
   },
 
-  toggleBlock(editor, block: Block) {
+  toggleBlock(editor: Editor, block: Block) {
     const isActive = Controller.isBlockActive(editor, block);
     const isList = LIST_TYPES.includes(block);
 
@@ -189,6 +252,37 @@ const Controller = {
       Transforms.wrapNodes(editor, el);
     }
   },
+
+  insertLink(editor: Editor, url: string | URL) {
+    if (editor.selection) {
+      Controller.wrapLink(editor, url);
+    }
+  },
+
+  unwrapLink(editor: Editor) {
+    Transforms.unwrapNodes(editor, { match: n => n.type === 'link' });
+  },
+
+  wrapLink(editor, url) {
+    if (Controller.isBlockActive(editor, "link")) {
+      Controller.unwrapLink(editor);
+    }
+
+    const { selection } = editor
+    const isCollapsed = selection && Range.isCollapsed(selection);
+    const link = {
+      type: 'link',
+      url,
+      children: isCollapsed ? [{ text: url }] : [],
+    }
+
+    if (isCollapsed) {
+      Transforms.insertNodes(editor, link);
+    } else {
+      Transforms.wrapNodes(editor, link, { split: true });
+      Transforms.collapse(editor, { edge: 'end' });
+    }
+  }
 }
 
 

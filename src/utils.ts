@@ -41,3 +41,33 @@ export function imgDims(url: string): [number, number] {
   width = Math.floor(width / factor);
   return [width, height]
 }
+
+
+// https://github.com/segmentio/is-url
+let protocolAndDomainRE = /^(?:\w+:)?\/\/(\S+)$/;
+
+let localhostDomainRE = /^localhost[\:?\d]*(?:[^\:?\d]\S*)?$/
+let nonLocalhostDomainRE = /^[^\s\.]+\.\S{2,}$/;
+
+export function isUrl(string: string): boolean {
+  if (typeof string !== 'string') {
+    return false;
+  }
+
+  let match = string.match(protocolAndDomainRE);
+  if (!match) {
+    return false;
+  }
+
+  let everythingAfterProtocol = match[1];
+  if (!everythingAfterProtocol) {
+    return false;
+  }
+
+  if (localhostDomainRE.test(everythingAfterProtocol) ||
+    nonLocalhostDomainRE.test(everythingAfterProtocol)) {
+    return true;
+  }
+
+  return false;
+}
