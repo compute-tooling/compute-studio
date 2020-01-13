@@ -42,8 +42,8 @@ type DescriptionState = Readonly<{
 
 
 const defaultReadme = [{
-  type: 'paragraph',
-  children: [{ text: '' }],
+  type: "paragraph",
+  children: [{ text: "" }],
 }];
 
 const Tip: React.FC<{ tip: string, children: JSX.Element }> = ({ tip, children }) => (
@@ -184,7 +184,6 @@ export default class DescriptionComponent extends React.PureComponent<
       });
     }
   }
-
 
   user() {
     return this.props.accessStatus && this.props.accessStatus.username ?
