@@ -13,7 +13,7 @@ from webapp.apps.comp.serializers import (
 from .utils import _submit_inputs, _submit_sim
 
 
-def test_owner_anonymity(db, get_inputs, meta_param_dict):
+def test_owner_unsigned(db, get_inputs, meta_param_dict):
     modeler = User.objects.get(username="modeler").profile
     inputs = _submit_inputs("Used-for-testing", get_inputs, meta_param_dict, modeler)
 
@@ -32,15 +32,15 @@ def test_owner_anonymity(db, get_inputs, meta_param_dict):
     data = MiniSimulationSerializer(instance=sim).data
     assert data["owner"] == str(modeler)
 
-    # get_owner gives "anonymous" before ANON_BEFORE
+    # get_owner gives "unsigned" before ANON_BEFORE
     sim.creation_date = ANON_BEFORE - datetime.timedelta(days=2)
     sim.save()
-    assert sim.get_owner() == "anonymous"
+    assert sim.get_owner() == "unsigned"
 
     data = SimulationSerializer(instance=sim).data
-    assert data["owner"] == "anonymous"
+    assert data["owner"] == "unsigned"
     data = MiniSimulationSerializer(instance=sim).data
-    assert data["owner"] == "anonymous"
+    assert data["owner"] == "unsigned"
 
 
 def test_write_access(db, get_inputs, meta_param_dict):

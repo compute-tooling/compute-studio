@@ -369,16 +369,16 @@ class Simulation(models.Model):
 
     def get_owner(self):
         """
-        Return owner or "anonymous" depending on whether the simulation
+        Return owner or "unsigned" depending on whether the simulation
         was created before the ANON_BEFORE cutoff date. This should
         be used instead of 'owner' on serializer classes for
         Simulation.
 
         This ensures that simulations created under the assumption that
-        the creator's identity is anonymous remain anonymous.
+        they are unsigned remain unsigned.
         """
         if self.creation_date < ANON_BEFORE:
-            return "anonymous"
+            return "unsigned"
         else:
             return self.owner
 

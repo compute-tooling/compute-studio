@@ -201,10 +201,10 @@ def test_get_owner(db, get_inputs, meta_param_dict):
     sim.save()
     assert sim.get_owner() == modeler
 
-    # get_owner gives "anonymous" before ANON_BEFORE
+    # get_owner gives "unsigned" before ANON_BEFORE
     sim.creation_date = ANON_BEFORE - datetime.timedelta(days=2)
     sim.save()
-    assert sim.get_owner() == "anonymous"
+    assert sim.get_owner() == "unsigned"
 
 
 def test_has_read_write_access(db, get_inputs, meta_param_dict, profile):
