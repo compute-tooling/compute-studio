@@ -148,8 +148,8 @@ export interface AccessStatus {
   user_status: "inactive" | "customer" | "profile" | "anon";
   username: string;
   api_url: string;
-  is_sponsored?: Boolean;
-  can_run?: Boolean;
+  is_sponsored?: boolean;
+  can_run?: boolean;
   server_cost?: number;
   exp_cost?: number;
   exp_time?: number;
@@ -192,7 +192,7 @@ export interface InputsDetail {
   parent_model_pk: number;
   sim: MiniSimulation;
   status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
-  has_write_access: Boolean;
+  has_write_access: boolean;
   traceback: string;
 }
 
@@ -203,7 +203,6 @@ export interface Inputs {
   extend?: boolean;
   detail?: InputsDetail;
   accessStatus?: AccessStatus;
-  has_write_access: Boolean;
 }
 
 export interface Simulation<T> {
@@ -213,7 +212,7 @@ export interface Simulation<T> {
   exp_comp_datetime: Date;
   gui_url: string;
   is_public: boolean;
-  has_write_access: Boolean;
+  has_write_access: boolean;
   model_pk: number;
   model_version: string;
   original_eta: number;
