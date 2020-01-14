@@ -285,9 +285,9 @@ export const AuthButtons: React.FC<{
   } else {
     return (
       <>
-        {state.show ? <AuthDialog setShow={setShow} {...state} resetAccessStatus={resetAccessStatus} /> : null}
-        <Navbar className="mr-auto mt-2 mt-lg-0">
-          <Nav.Link className="mr-2 mobile-mb-3">
+        <AuthDialog setShow={setShow} {...state} resetAccessStatus={resetAccessStatus} />
+        <ul className="navbar-nav mr-auto mt-2 mt-lg-0">
+          <li className="nav-item mr-2 mobile-mb-3">
             <Button
               className="btn-match-nav"
               style={{ display: "inline-block", "border": 0 }}
@@ -295,8 +295,8 @@ export const AuthButtons: React.FC<{
             >
               Sign in
             </Button>
-          </Nav.Link>
-          <Nav.Link className="nav-item mobile-mb-1">
+          </li>
+          <li className="nav-item mobile-mb-1">
             <Button
               className="btn-outline-match-nav mb-1 mobile-p-1"
               style={{ display: "inline-block" }}
@@ -304,8 +304,8 @@ export const AuthButtons: React.FC<{
             >
               Sign up
            </Button>
-          </Nav.Link>
-        </Navbar>
+          </li>
+        </ul>
       </>
     );
   }
