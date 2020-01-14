@@ -94,7 +94,7 @@ export const RequireLoginDialog: React.FC<{
             <SignupForm setAuthStatus={setAuthStatus} />
           }
         </div>
-        <Button className="mt-3" variant={getVariant(isLogIn)} onClick={() => setIsLogIn(!isLogIn)} >{!isLogIn ? "Log in" : "Sign up"}</Button>
+        <Button className="mt-3" variant={getVariant(isLogIn)} onClick={() => setIsLogIn(!isLogIn)} >{!isLogIn ? "Sign in" : "Sign up"}</Button>
       </Modal.Body>
 
       <Modal.Footer>
@@ -257,7 +257,7 @@ export const AuthModal: React.FC<{ msg?: string }> = ({ msg = "You must be logge
             variant="secondary"
             onClick={e => handleCloseWithRedirect(e, "/users/login")}
           >
-            <b>Log in</b>
+            <b>Sign in</b>
           </Button>
           <Button
             variant="success"
