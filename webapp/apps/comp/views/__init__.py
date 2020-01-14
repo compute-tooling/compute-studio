@@ -15,4 +15,5 @@ from .api import (
     OutputsAPIView,
     DetailMyInputsAPIView,
     MyInputsAPIView,
+    NewSimulationAPIView,
 )

@@ -309,6 +309,29 @@ class ForkDetailAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView
         return Response(data, status=status.HTTP_201_CREATED)
 
 
+class NewSimulationAPIView(RequiresLoginPermissions, APIView):
+    projects = Project.objects.all()
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    def post(self, request, *args, **kwargs):
+        project = get_object_or_404(
+            self.projects,
+            owner__user__username__iexact=kwargs["username"],
+            title__iexact=kwargs["title"],
+        )
+        sim = Simulation.objects.new_sim(user=request.user, project=project)
+        context = {"request": request}
+        data = {
+            "inputs": InputsSerializer(sim.inputs, context=context).data,
+            "sim": SimulationSerializer(sim, context=context).data,
+        }
+        return Response(data, status=status.HTTP_201_CREATED)
+
+
 class OutputsAPIView(RecordOutputsMixin, APIView):
     """
     API endpoint used by the workers to update the Simulation object with the

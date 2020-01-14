@@ -371,18 +371,25 @@ class TestAsyncAPI(CoreTestMixin):
             exp = ioutils.displayer.package_defaults()
             assert exp == resp.data
 
-    def test_new_sim(self, client, api_client, profile, worker_url):
+    @pytest.mark.parametrize("use_api", [True, False])
+    def test_new_sim(self, use_api, client, api_client, profile, worker_url):
         resp = client.get(f"/{self.owner}/{self.title}/")
         assert_status(200, resp, "test_new_sim")
 
         new_resp = client.get(f"/{self.owner}/{self.title}/new/")
         assert_status(200, new_resp, "test_new_sim")
 
+        api_client.force_login(profile.user)
         client.force_login(profile.user)
-        auth_resp = client.get(f"/{self.owner}/{self.title}/new/")
-        assert_status(302, auth_resp, "test_new_sim")
+        if use_api:
+            auth_resp = api_client.post(f"/{self.owner}/{self.title}/api/v1/new/")
+            assert_status(201, auth_resp, "test_new_sim_api")
+            sim_url = auth_resp.data["sim"]["gui_url"]
+        else:
+            auth_resp = client.get(f"/{self.owner}/{self.title}/new/")
+            assert_status(302, auth_resp, "test_new_sim_gui")
+            sim_url = auth_resp.url
 
-        sim_url = auth_resp.url
         sim_resp = client.get(sim_url)
         assert_status(200, sim_resp, sim_url)
 
