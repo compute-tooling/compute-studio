@@ -93,7 +93,7 @@ export const LoginForm = ({ setAuthStatus }) => (
             className="mt-2"
           >
             {" "}
-            Login{" "}
+            Sign in{" "}
           </Button>
         </Form>
       )}
@@ -228,7 +228,7 @@ export const AuthDialog: React.FC<{
             <SignupForm setAuthStatus={setAuthenticated} />
           }
         </div>
-        <Button className="mt-3" variant={getVariant(action)} onClick={() => toggleAction(action)} >{action === "sign-in" ? "Log in" : "Sign in"}</Button>
+        <Button className="mt-3" variant={getVariant(action)} onClick={() => toggleAction(action)} >{action === "sign-in" ? "Sign up" : "Sign in"}</Button>
       </Modal.Body>
 
       <Modal.Footer>
