@@ -205,7 +205,7 @@ export const AuthDialog: React.FC<{
 }> = ({ show, setShow, initialAction, resetAccessStatus }) => {
   const [action, setAction] = React.useState(initialAction);
   const [authenticated, setAuthenticated] = React.useState(false);
-  const getVariant = (action) => action === "sign-in" ? "outline-primary" : "outline-success";
+  const getVariant = (action) => action === "sign-in" ? "outline-success" : "outline-primary";
   const toggleAction = action => {
     setAction(
       action === "sign-in" ? "sign-up" : "sign-in"
