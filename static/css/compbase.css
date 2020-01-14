@@ -126,12 +126,21 @@ code {
   color: #ffffff !important;
 }
 
+.btn-match-nav:hover {
+  background-color: transparent;
+  color: rgb(238, 238, 238, 0.9) !important;
+}
+
 .btn-outline-match-nav {
   border-color: #ffffff;
   background-color: transparent;
   color: #ffffff !important;
 }
 
+.btn-outline-match-nav:hover {
+  border-color: #ffffff;
+  background-color: transparent;
+}
 
 .inverse-btn-match-nav,
 .main-navbar .nav-pills .nav-link {

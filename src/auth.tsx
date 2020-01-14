@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import axios from "axios";
-import { Button, Modal, Dropdown } from "react-bootstrap";
+import { Button, Modal, Dropdown, Nav, Navbar } from "react-bootstrap";
 import * as yup from "yup";
 
 import { Message } from "./fields";
@@ -281,32 +281,32 @@ export const AuthButtons: React.FC<{
           <Dropdown.Item href="/users/logout/">Sign out</Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown>
-    )
+    );
   } else {
     return (
       <>
         {state.show ? <AuthDialog setShow={setShow} {...state} resetAccessStatus={resetAccessStatus} /> : null}
-        <ul className="navbar-nav mr-auto mt-2 mt-lg-0">
-          <li className="nav-item mr-2 mobile-mb-3">
+        <Navbar className="mr-auto mt-2 mt-lg-0">
+          <Nav.Link className="mr-2 mobile-mb-3">
             <Button
-              className="nav-link btn btn-match-nav"
-              style={{ display: "inline-block" }}
+              className="btn-match-nav"
+              style={{ display: "inline-block", "border": 0 }}
               onClick={() => setState({ show: true, initialAction: "sign-in" })}
             >
               Sign in
-        </Button>
-          </li>
-          <li className="nav-item mobile-mb-1">
+            </Button>
+          </Nav.Link>
+          <Nav.Link className="nav-item mobile-mb-1">
             <Button
-              className="nav-link btn btn-outline-match-nav mb-1 mobile-p-1"
+              className="btn-outline-match-nav mb-1 mobile-p-1"
               style={{ display: "inline-block" }}
               onClick={() => setState({ show: true, initialAction: "sign-up" })}
             >
               Sign up
            </Button>
-          </li>
-        </ul>
+          </Nav.Link>
+        </Navbar>
       </>
-    )
+    );
   }
 }
