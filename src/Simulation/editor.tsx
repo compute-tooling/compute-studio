@@ -41,16 +41,19 @@ const ReadmeEditor: React.FC<{
   const editor = React.useMemo(
     () => withLinks(withHistory(withReact(createEditor()))),
     []
-  )
+  );
   return (
     <Slate
       editor={editor}
       value={value}
       onChange={(value: SlateValue[]) => {
-        // setValue(value);
         setFieldValue(fieldName, value);
         setTimeout(handleSubmit, 0);
-      }}>
+      }}
+      // remove once https://github.com/ianstormtaylor/slate/issues/3321
+      // is resolved.
+      key={readOnly.toString()}
+    >
       {readOnly ? null :
         <div className="mb-3">
           <MarkButton mark="bold" icon={faBold} />

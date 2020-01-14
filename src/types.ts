@@ -202,7 +202,6 @@ export interface Inputs {
   label_to_extend?: string;
   extend?: boolean;
   detail?: InputsDetail;
-  accessStatus?: AccessStatus;
 }
 
 export interface Simulation<T> {

@@ -41,6 +41,13 @@ export default class API {
     })
   }
 
+  getInputsDetail(): Promise<InputsDetail> {
+    if (!this.modelpk) return;
+    return axios.get(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/edit/`).then(
+      resp => resp.data
+    );
+  }
+
   getInitialValues(): Promise<Inputs> {
     let data: Inputs;
     if (!this.modelpk) {
@@ -87,6 +94,12 @@ export default class API {
   forkSimulation(): Promise<MiniSimulation> {
     return axios
       .post(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/fork/`)
+      .then(response => response.data);
+  }
+
+  createNewSimulation(): Promise<{ inputs: InputsDetail, sim: Simulation<RemoteOutputs> }> {
+    return axios
+      .post(`/${this.owner}/${this.title}/api/v1/new/`)
       .then(response => response.data);
   }
 };

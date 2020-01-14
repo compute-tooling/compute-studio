@@ -119,6 +119,7 @@ class SimTabs extends React.Component<
     this.handleTabChange = this.handleTabChange.bind(this);
     this.resetInitialValues = this.resetInitialValues.bind(this);
     this.resetAccessStatus = this.resetAccessStatus.bind(this);
+    this.authenticateAndCreateSimulation = this.authenticateAndCreateSimulation.bind(this);
     this.pollInputs = this.pollInputs.bind(this);
     this.setOutputs = this.setOutputs.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -184,8 +185,44 @@ class SimTabs extends React.Component<
   }
 
   resetAccessStatus() {
+    // Update authentication status, then the output
+    // and inputs access statuses.
     this.api.getAccessStatus().then(accessStatus => {
-      this.setState({ accessStatus })
+      this.setState({ accessStatus });
+    }).then(
+      () => { this.setOutputs() }
+    ).then(() => {
+      this.api.getInputsDetail().then(inputsDetail => {
+        this.setState((prevState) => ({
+          inputs: {
+            ...prevState.inputs,
+            ...{ detail: inputsDetail }
+          }
+        }));
+      });
+    });
+  }
+
+  authenticateAndCreateSimulation() {
+    // Update authentication status, create a new
+    // and blank simulation, update the inputs and
+    // outputs data.
+
+    this.api.getAccessStatus().then(accessStatus => {
+      if (accessStatus.username !== "anon") {
+        this.api.createNewSimulation().then(newSim => {
+          this.api.modelpk = newSim.sim.model_pk.toString();
+          history.pushState(null, null, newSim.inputs.gui_url);
+          this.setState((prevState) => ({
+            accessStatus: accessStatus,
+            inputs: {
+              ...prevState.inputs,
+              ...{ detail: newSim.inputs },
+            },
+            remoteSim: newSim.sim,
+          }));
+        });
+      }
     });
   }
 
@@ -307,7 +344,6 @@ class SimTabs extends React.Component<
       return;
     }
     api.getRemoteOutputs().then(initRem => {
-      console.log("new remoteSim", initRem.model_pk)
       this.setState({ remoteSim: initRem });
       if (initRem.status !== "PENDING") {
         api.getOutputs().then(initSim => {
@@ -416,7 +452,12 @@ class SimTabs extends React.Component<
           {(formikProps: FormikProps<InitialValues>) => (
             <>
               <AuthPortal>
-                <AuthButtons accessStatus={accessStatus} resetAccessStatus={this.resetAccessStatus} />
+                <AuthButtons
+                  accessStatus={accessStatus}
+                  resetAccessStatus={
+                    this.api.modelpk ? this.resetAccessStatus : this.authenticateAndCreateSimulation
+                  }
+                />
               </AuthPortal>
               {this.state.showDirtyWarning ?
                 <UnsavedChangesModal handleClose={() => this.setState({ hasShownDirtyWarning: true, showDirtyWarning: false })} />
