@@ -28,7 +28,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
     setting the title and viewing the simulation's status.
     """
 
-    owner = serializers.StringRelatedField(required=False)
+    owner = serializers.StringRelatedField(source="get_owner", required=False)
     title = serializers.CharField(required=False)
     model_pk = serializers.IntegerField(required=False)
     readme = serializers.JSONField(required=False)
@@ -88,6 +88,18 @@ class InputsSerializer(serializers.ModelSerializer):
 
     sim = MiniSimulationSerializer(required=False)
 
+    # see to_representation
+    # has_write_access = serializers.BooleanField(source="has_write_access")
+
+    def to_representation(self, obj):
+        rep = super().to_representation(obj)
+        if self.context.get("request"):
+            user = self.context["request"].user
+        else:
+            user = None
+        rep["has_write_access"] = obj.has_write_access(user)
+        return rep
+
     class Meta:
         model = Inputs
         fields = (
@@ -97,6 +109,7 @@ class InputsSerializer(serializers.ModelSerializer):
             "custom_adjustment",
             "errors_warnings",
             "gui_url",
+            # "has_write_access",
             "job_id",
             "meta_parameters",
             "parent_model_pk",
@@ -119,11 +132,12 @@ class SimulationSerializer(serializers.ModelSerializer):
     eta = serializers.FloatField(source="compute_eta")
     original_eta = serializers.FloatField(source="compute_original_eta")
     title = serializers.CharField(required=False)
-    owner = serializers.StringRelatedField(required=False)
+    owner = serializers.StringRelatedField(source="get_owner", required=False)
     project = PublishSerializer()
     outputs_version = serializers.CharField()
     # see to_representation for definition of parent_sims:
     # parent_sims = MiniSimulationSerializer(many=True)
+    # has_write_access = serializers.BooleanField(source="has_write_access")
 
     def to_representation(self, obj):
         rep = super().to_representation(obj)
@@ -134,6 +148,7 @@ class SimulationSerializer(serializers.ModelSerializer):
         rep["parent_sims"] = MiniSimulationSerializer(
             obj.parent_sims(user=user), many=True
         ).data
+        rep["has_write_access"] = obj.has_write_access(user)
         return rep
 
     class Meta:
@@ -144,6 +159,7 @@ class SimulationSerializer(serializers.ModelSerializer):
             "eta",
             "exp_comp_datetime",
             "gui_url",
+            # "has_write_access",
             "is_public",
             "model_pk",
             "model_version",
@@ -165,6 +181,7 @@ class SimulationSerializer(serializers.ModelSerializer):
             "eta",
             "exp_comp_datetime",
             "gui_url",
+            # "has_write_access",
             "model_pk",
             "model_version",
             "original_eta",

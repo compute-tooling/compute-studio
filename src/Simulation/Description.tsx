@@ -167,7 +167,7 @@ export default class DescriptionComponent extends React.PureComponent<
   writable() {
     return (
       ["profile", "customer"].includes(this.props.accessStatus.user_status) &&
-      this.user() === this.props.remoteSim?.owner
+      this.props.remoteSim?.has_write_access
     );
   }
 

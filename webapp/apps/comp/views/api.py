@@ -104,10 +104,8 @@ class DetailMyInputsAPIView(APIView):
         )
         if not inputs.has_read_access(request.user):
             raise PermissionDenied()
-        ser = InputsSerializer(inputs)
-        data = {"has_write_access": inputs.has_write_access(request.user)}
-        data.update(ser.data)
-        return Response(data)
+        ser = InputsSerializer(inputs, context={"request": self.request})
+        return Response(ser.data)
 
 
 def submit(request, success_status, project, sim):
@@ -203,8 +201,7 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
         self.object = self.get_object(
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
-        write_access = self.object.has_write_access(request.user)
-        if not write_access:
+        if not self.object.has_write_access(request.user):
             return Response(status=status.HTTP_403_FORBIDDEN)
         if self.object.status == "STARTED":
             return submit(request, status.HTTP_200_OK, self.object.project, self.object)
@@ -219,13 +216,10 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
     def get_sim_data(self, user, as_remote, username, title, model_pk):
         self.object = self.get_object(model_pk, username, title)
         sim = SimulationSerializer(self.object, context={"request": self.request})
-        write_access = self.object.has_write_access(user)
-        data = {"has_write_access": write_access}
+        data = sim.data
         if self.object.outputs_version() == "v0":
-            data.update(sim.data)
             return Response(data, status=status.HTTP_200_OK)
         elif self.object.outputs:
-            data.update(sim.data)
             outputs = data["outputs"]["outputs"]
             if not as_remote:
                 data["outputs"] = cs_storage.read(outputs)
@@ -235,10 +229,8 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
                 )
             return Response(data, status=status.HTTP_200_OK)
         elif self.object.traceback is not None:
-            data.update(sim.data)
             return Response(data, status=status.HTTP_200_OK)
         elif self.object.status == "STARTED":
-            data.update(sim.data)
             return Response(data, status=status.HTTP_200_OK)
 
         compute = Compute()

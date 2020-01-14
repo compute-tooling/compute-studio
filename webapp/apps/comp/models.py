@@ -21,6 +21,11 @@ from webapp.apps.comp import utils, exceptions
 from webapp.settings import INPUTS_SALT
 
 
+# TODO: Update to deploy date.
+# (set to nye for testing)
+ANON_BEFORE = timezone.make_aware(datetime.datetime(2019, 12, 31))
+
+
 class Inputs(models.Model):
     parent_sim = models.ForeignKey(
         "Simulation", null=True, related_name="child_inputs", on_delete=models.SET_NULL
@@ -194,7 +199,6 @@ class SimulationManager(models.Manager):
             project=sim.project,
             run_time=sim.run_time,
             run_cost=0,
-            creation_date=sim.creation_date,
             exp_comp_datetime=sim.exp_comp_datetime,
             model_version=sim.model_version,
             model_pk=self.next_model_pk(sim.project),
@@ -350,10 +354,10 @@ class Simulation(models.Model):
         return parent_sims
 
     def has_write_access(self, user):
-        return user and user.is_authenticated and user == self.owner.user
+        return bool(user and user.is_authenticated and user == self.owner.user)
 
     def has_read_access(self, user):
-        return self.is_public or (
+        return self.is_public or bool(
             user and user.is_authenticated and user == self.owner.user
         )
 
@@ -362,6 +366,21 @@ class Simulation(models.Model):
             return self.outputs["version"]
         else:
             return None
+
+    def get_owner(self):
+        """
+        Return owner or "anonymous" depending on whether the simulation
+        was created before the ANON_BEFORE cutoff date. This should
+        be used instead of 'owner' on serializer classes for
+        Simulation.
+
+        This ensures that simulations created under the assumption that
+        the creator's identity is anonymous remain anonymous.
+        """
+        if self.creation_date < ANON_BEFORE:
+            return "anonymous"
+        else:
+            return self.owner
 
 
 @dataclass

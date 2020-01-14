@@ -1,3 +1,4 @@
+import datetime
 import json
 import pytest
 
@@ -9,7 +10,7 @@ from django.forms.models import model_to_dict
 
 from webapp.apps.users.models import Project, Profile
 
-from webapp.apps.comp.models import Inputs, Simulation
+from webapp.apps.comp.models import Inputs, Simulation, ANON_BEFORE
 from webapp.apps.comp.exceptions import ForkObjectException, VersionMismatchException
 
 from .utils import _submit_inputs, _submit_sim, read_outputs
@@ -138,7 +139,7 @@ def test_sim_fork(db, get_inputs, meta_param_dict, profile):
     fields_to_exclude = ["id", "owner", "job_id", "parent_sim"]
     objects_eq(sim.inputs, newsim.inputs, fields_to_exclude)
 
-    fields_to_exclude += ["inputs", "run_cost", "model_pk"]
+    fields_to_exclude += ["inputs", "run_cost", "model_pk", "creation_date"]
     objects_eq(sim, newsim, fields_to_exclude)
 
     sim.status = "PENDING"
@@ -184,3 +185,48 @@ def test_outputs_versions(db, get_inputs, meta_param_dict):
 
     with pytest.raises(VersionMismatchException):
         sim.get_absolute_v0_url()
+
+
+def test_get_owner(db, get_inputs, meta_param_dict):
+    modeler = User.objects.get(username="modeler").profile
+    inputs = _submit_inputs("Used-for-testing", get_inputs, meta_param_dict, modeler)
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.save()
+
+    # get_owner gives sim owner after ANON_BEFORE
+    sim.creation_date = ANON_BEFORE + datetime.timedelta(days=2)
+    sim.save()
+    assert sim.get_owner() == modeler
+
+    # get_owner gives "anonymous" before ANON_BEFORE
+    sim.creation_date = ANON_BEFORE - datetime.timedelta(days=2)
+    sim.save()
+    assert sim.get_owner() == "anonymous"
+
+
+def test_has_read_write_access(db, get_inputs, meta_param_dict, profile):
+    modeler = User.objects.get(username="modeler").profile
+    inputs = _submit_inputs("Used-for-testing", get_inputs, meta_param_dict, modeler)
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.save()
+
+    assert sim.has_write_access(modeler.user)
+    assert not sim.has_write_access(profile.user)
+    assert sim.has_write_access(None) is False
+
+    assert sim.is_public == False
+    assert sim.has_read_access(modeler.user)
+    assert not sim.has_read_access(profile.user)
+    assert sim.has_read_access(None) is False
+
+    sim.is_public = True
+    sim.save()
+    assert sim.has_read_access(modeler.user)
+    assert sim.has_read_access(profile.user)
+    assert sim.has_read_access(None) is True
