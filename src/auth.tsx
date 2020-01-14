@@ -212,8 +212,8 @@ export const AuthDialog: React.FC<{
     );
   };
   if (authenticated) {
-    setShow(false);
     resetAccessStatus();
+    setShow(false);
   }
   return (
     <Modal show={show} onHide={() => setShow(false)}>
@@ -285,7 +285,7 @@ export const AuthButtons: React.FC<{
   } else {
     return (
       <>
-        <AuthDialog setShow={setShow} {...state} resetAccessStatus={resetAccessStatus} />
+        {state.show ? <AuthDialog setShow={setShow} {...state} resetAccessStatus={resetAccessStatus} /> : null}
         <ul className="navbar-nav mr-auto mt-2 mt-lg-0">
           <li className="nav-item mr-2 mobile-mb-3">
             <Button
