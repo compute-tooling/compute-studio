@@ -19,6 +19,7 @@ class HomeView(View):
                     "username": request.user.username,
                     "runs": profile.sims_breakdown(self.projects, public_only=False),
                     "show_readme": False,
+                    "projects": self.projects.filter(owner=profile),
                 },
             )
         return render(request, self.home_template)
@@ -38,6 +39,7 @@ class ProfileView(View):
                 "username": request.user.username,
                 "runs": profile.sims_breakdown(self.projects, public_only=True),
                 "show_readme": False,
+                "projects": self.projects.filter(owner=profile, listed=True),
             },
         )
 
