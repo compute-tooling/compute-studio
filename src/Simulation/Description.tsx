@@ -275,7 +275,11 @@ export default class DescriptionComponent extends React.PureComponent<
                               onMouseEnter={() => this.writable() ? this.setState({ showTitleBorder: true }) : null}
                               onMouseLeave={() => this.writable() ? this.setState({ showTitleBorder: false }) : null}
                             >
-                              <Tip tip="Rename.">
+                              <Tip tip={
+                                this.writable() ?
+                                  "Rename." : this.user() !== "anon" ?
+                                    "You must have write access to edit the title." :
+                                    "You must be logged in to edit the title."}>
                                 <h3 style={titleStyle} onClick={this.toggleEditMode}>{field.value || "Untitled Simulation"}</h3>
                               </Tip>
                             </Card>
