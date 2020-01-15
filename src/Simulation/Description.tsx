@@ -191,9 +191,11 @@ export default class DescriptionComponent extends React.PureComponent<
   }
 
   toggleEditMode() {
-    this.setState({
-      isEditMode: !this.state.isEditMode
-    });
+    if (this.writable()) {
+      this.setState({
+        isEditMode: !this.state.isEditMode
+      });
+    }
   }
 
   user() {
@@ -293,9 +295,8 @@ export default class DescriptionComponent extends React.PureComponent<
                             >
                               <Tip tip={
                                 this.writable() ?
-                                  "Rename." : this.user() !== "anon" ?
-                                    "You must have write access to edit the title." :
-                                    "Login to edit."}>
+                                  "Rename." :
+                                  "You be an owner of this simulation to edit the title."}>
                                 <h3 style={titleStyle} onClick={this.toggleEditMode}>{field.value || "Untitled Simulation"}</h3>
                               </Tip>
                             </Card>
