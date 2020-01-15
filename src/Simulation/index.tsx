@@ -442,7 +442,7 @@ class SimTabs extends React.Component<
       <>
         <Formik
           initialValues={initialValues}
-          validationSchema={schema}
+          validationSchema={yup.object().shape(schema)}
           validateOnChange={false}
           validateOnBlur={true}
           enableReinitialize={true}
