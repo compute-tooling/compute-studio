@@ -13,7 +13,17 @@ class TestPageViews:
         resp = client.get("/")
         assert resp.status_code == 200
         assert "project_list" in resp.context
-        assert "pages/about.html" in [t.name for t in resp.templates]
+        assert "pages/getting_started.html" in [t.name for t in resp.templates]
+
+    def test_get_user_profile(
+        self, monkeypatch, client, profile, password, test_models
+    ):
+        resp = client.get(f"/{profile.user.username}/")
+        assert resp.status_code == 200
+
+    def test_get_user_does_not_exist(self, client, profile, password):
+        resp = client.get(f"/notarealuser/")
+        assert resp.status_code == 404
 
     def test_home_page_auth(self, client):
         # check profile page rendered if logged in
@@ -21,7 +31,7 @@ class TestPageViews:
         resp = client.get("/")
         assert resp.status_code == 200
         assert "project_list" in resp.context
-        assert "profile/profile_base.html" in [t.name for t in resp.templates]
+        assert "profile/home_base.html" in [t.name for t in resp.templates]
 
     def test_get_pages(self, client):
         for page in ["about", "privacy", "terms"]:

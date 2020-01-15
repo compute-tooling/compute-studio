@@ -80,20 +80,6 @@ class TestUsersViews:
         resp = client.get("/users/settings/")
         assert resp.status_code == 200
 
-    def test_get_user_profile(
-        self, monkeypatch, client, profile, password, test_models
-    ):
-        resp = client.get(f"/{profile.user.username}/")
-        assert resp.status_code == 200
-
-    def test_get_other_user_profile(self, client, profile, password):
-        resp = client.get(f"/tester/")
-        assert resp.status_code == 200
-
-    def test_get_user_does_not_exist(self, client, profile, password):
-        resp = client.get(f"/notarealuser/")
-        assert resp.status_code == 404
-
     def test_change_password(self, client, profile, password):
         success = client.login(username=profile.user.username, password=password)
         assert success
