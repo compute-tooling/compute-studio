@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="card card-body card-outer">
+  <div class="container-fluid" style="margin:20px;" id="profileTab" role="tablist">
+    {% csrf_token %}
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" id="simulations-tab" data-toggle="tab" href="#simulations" role="tab"
+          aria-controls="models" aria-selected="false">My Simulations</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="models-tab" data-toggle="tab" href="#models" role="tab" aria-controls="simulations"
+          aria-selected="true">My Models</a>
+      </li>
+    </ul>
+    <div class="tab-content" id="profileTab">
+      <div class="tab-pane fade show active" id="simulations" role="tabpanel" aria-labelledby="simulations-tab">
+        <div class="profile-tab-content">
+          {% include 'profile/simulations.html' %}
+        </div>
+      </div>
+      <div class="tab-pane fade" id="models" role="tabpanel" aria-labelledby="models-tab">
+        <div class="profile-tab-content">
+          {% include 'profile/models.html' %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block below_body %}
+<script src="{% static 'js/core.js' %}"></script>
+{% endblock %}

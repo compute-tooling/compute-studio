@@ -1,0 +1,41 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+<meta name="google-site-verification" content="h3jtZFV_6rLJy0vEsJiOSK9BmSzb8YWefGHhOJkzE4M" />
+
+<div class="row align-items-center" style="height: 75vh">
+  <div class="col">
+    <div class="card mx-auto" style="max-width: 50vw; min-height: 50vh;">
+      <div class="card-body card-outer text-center h-100">
+        <div class="row mt-5">
+          <div class="col">
+            <p>
+              <strong>Compute Studio</strong> is an open-source platform for sharing
+              models and simulations.
+            </p>
+          </div>
+        </div>
+        <div class="row" style="min-height: 40vh;">
+          <div class="col align-self-center">
+            <div class="dropdown">
+              <a class="dropdown-toggle btn btn-match-nav btn-lg" href="#" id="getting-started-dropdown" role="button"
+                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Create a Simulation
+              </a>
+              <div class="dropdown-menu" aria-labelledby="getting-started-dropdown">
+                <!-- Add new projects to the dropdown menu here! -->
+                {% for owner, project, url in project_list %}
+                <a class="dropdown-item" href="{{url}}new/">{{owner}}/{{project}}</a>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          <div class="col align-self-center">
+            <a class="btn btn-match-nav btn-lg" href="/publish/">
+              Upload a Model
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
