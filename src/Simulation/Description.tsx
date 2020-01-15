@@ -21,7 +21,7 @@ interface DescriptionProps {
 
 interface DescriptionValues {
   title: string;
-  readme: Node[];
+  readme: { [key: string]: any }[] | Node[];
   is_public: boolean;
 }
 
@@ -33,6 +33,7 @@ let Schema = yup.object().shape({
 
 type DescriptionState = Readonly<{
   initialValues: DescriptionValues;
+  dirty: boolean;
   isEditMode: boolean;
   showTitleBorder: boolean;
   showAuth: boolean;
@@ -41,7 +42,7 @@ type DescriptionState = Readonly<{
 }>;
 
 
-const defaultReadme = [{
+const defaultReadme: { [key: string]: any }[] = [{
   type: "paragraph",
   children: [{ text: "" }],
 }];
@@ -151,38 +152,48 @@ export default class DescriptionComponent extends React.PureComponent<
 
   constructor(props) {
     super(props);
+    let initialValues: DescriptionValues = {
+      title: this.props.remoteSim?.title || "Untitled Simulation",
+      readme: this.props.remoteSim?.readme || defaultReadme,
+      is_public: this.props.remoteSim?.is_public || false,
+    }
     this.state = {
-      initialValues: null,
+      initialValues: initialValues,
       isEditMode: false,
       parentSims: null,
       showAuth: false,
       showTitleBorder: false,
+      dirty: false,
     };
+
     this.toggleEditMode = this.toggleEditMode.bind(this);
     this.writable = this.writable.bind(this);
     this.forkSimulation = this.forkSimulation.bind(this);
     this.titleInput = React.createRef<HTMLInputElement>();
+    this.save = this.save.bind(this);
   }
 
   writable() {
-    return (
-      ["profile", "customer"].includes(this.props.accessStatus.user_status) &&
-      this.props.remoteSim?.has_write_access
-    );
+    if (this.props.remoteSim) {
+      return this.props.remoteSim.has_write_access;
+    } else {
+      return true;
+    }
   }
 
   componentDidUpdate() {
     if (this.state.isEditMode) {
       this.titleInput.current.select();
     }
+    if (this.state.dirty && this.props.api.modelpk) {
+      this.save(this.state.initialValues);
+    }
   }
 
   toggleEditMode() {
-    if (this.writable()) {
-      this.setState({
-        isEditMode: !this.state.isEditMode
-      });
-    }
+    this.setState({
+      isEditMode: !this.state.isEditMode
+    });
   }
 
   user() {
@@ -205,22 +216,24 @@ export default class DescriptionComponent extends React.PureComponent<
     }
   }
 
+  save(values: DescriptionValues) {
+    let formdata = new FormData();
+    for (const field in values) {
+      if (values[field]) formdata.append(field, values[field]);
+    }
+    formdata.append("model_pk", this.props.api.modelpk.toString());
+    formdata.append("readme", JSON.stringify(values.readme));
+    this.props.api.putDescription(formdata).then(data => {
+      this.setState({ isEditMode: false, dirty: false, initialValues: values })
+    });
+  }
+
   render() {
     const api = this.props.api;
     const { isEditMode, showTitleBorder } = this.state;
-    let title, readme, owner, is_public;
+    let is_public;
 
-    if (this.props.remoteSim) {
-      title = this.props.remoteSim.title;
-      readme = this.props.remoteSim.readme || defaultReadme;
-      owner = this.props.remoteSim.owner;
-      is_public = this.props.remoteSim.is_public;
-    } else {
-      title = "Untitled Simulation";
-      readme = defaultReadme;
-      owner = this.user();
-      is_public = false;
-    }
+    let owner = this.props.remoteSim?.owner || this.user();
 
     let subtitle: string;
     if (api.modelpk) {
@@ -233,17 +246,20 @@ export default class DescriptionComponent extends React.PureComponent<
 
     return (
       <Formik
-        initialValues={{ title: title, readme: readme, is_public: is_public }}
+        initialValues={this.state.initialValues}
         onSubmit={(values: DescriptionValues, actions: FormikActions<DescriptionValues>) => {
-          let formdata = new FormData();
-          for (const field in values) {
-            if (values[field]) formdata.append(field, values[field]);
+          if (!api.modelpk) {
+            this.setState((prevState) => ({
+              initialValues: {
+                ...prevState.initialValues,
+                ...values,
+              },
+              dirty: true,
+              isEditMode: false,
+            }));
+          } else {
+            this.save(values);
           }
-          formdata.append("model_pk", api.modelpk.toString());
-          formdata.append("readme", JSON.stringify(values.readme));
-          this.props.api.putDescription(formdata).then(data => {
-            this.setState({ isEditMode: false })
-          });
         }}
         validationSchema={Schema}
         render={({ values, handleSubmit, setFieldValue }) => (
