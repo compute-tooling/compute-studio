@@ -243,7 +243,7 @@ export default class DescriptionComponent extends React.PureComponent<
           formdata.append("readme", JSON.stringify(values.readme));
           this.props.api.putDescription(formdata).then(data => {
             this.setState({ isEditMode: false })
-          })
+          });
         }}
         validationSchema={Schema}
         render={({ values, handleSubmit, setFieldValue }) => (
@@ -279,7 +279,7 @@ export default class DescriptionComponent extends React.PureComponent<
                                 this.writable() ?
                                   "Rename." : this.user() !== "anon" ?
                                     "You must have write access to edit the title." :
-                                    "You must be logged in to edit the title."}>
+                                    "Login to edit."}>
                                 <h3 style={titleStyle} onClick={this.toggleEditMode}>{field.value || "Untitled Simulation"}</h3>
                               </Tip>
                             </Card>
