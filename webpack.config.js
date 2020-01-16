@@ -6,7 +6,7 @@ const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
 module.exports = [
   {
     devtool: "source-map",
-    entry: "./src/publish.tsx",
+    entry: "./src/Publish/index.tsx",
     output: {
       filename: "publish.js",
       path: path.resolve(__dirname, "static/js")
@@ -35,7 +35,7 @@ module.exports = [
   },
   {
     devtool: "source-map",
-    entry: "./src/sim.tsx",
+    entry: "./src/Simulation/index.tsx",
     output: {
       filename: "sim.js",
       path: path.resolve(__dirname, "static/js")
