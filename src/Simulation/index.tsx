@@ -69,6 +69,8 @@ interface SimAppState {
   unknownParams?: Array<string>;
   extend?: boolean;
   resetting?: boolean;
+
+  error?: Error;
 }
 
 
@@ -147,7 +149,9 @@ class SimTabs extends React.Component<
         unknownParams: unknownParams,
         extend: "extend" in data ? data.extend : false,
       })
-    })
+    }).catch(error => {
+      this.setState({ error });
+    });
     if (this.api.modelpk) {
       this.setOutputs()
     }
@@ -389,21 +393,24 @@ class SimTabs extends React.Component<
   }
 
   render() {
+    if (this.state.error) throw this.state.error;
     // TODO be able to drop inputs from this if statement
     // currently causes error with formik.
     if (!this.state.accessStatus || (!this.state.remoteSim && this.api.modelpk)) {
       return <div></div>;
     } else if (this.state.accessStatus && (this.state.remoteSim || !this.api.modelpk) && !this.state.inputs) {
-      return (<ErrorBoundary>
-        <DescriptionComponent
-          api={this.api}
-          accessStatus={this.state.accessStatus}
-          remoteSim={this.state.remoteSim}
-        />
-        <div className="d-flex justify-content-center">
-          <ReactLoading type="spokes" color="#2b2c2d" />
-        </div>
-      </ErrorBoundary>);
+      return (
+        <ErrorBoundary>
+          <DescriptionComponent
+            api={this.api}
+            accessStatus={this.state.accessStatus}
+            remoteSim={this.state.remoteSim}
+          />
+          <div className="d-flex justify-content-center">
+            <ReactLoading type="spokes" color="#2b2c2d" />
+          </div>
+        </ErrorBoundary>
+      );
     }
     const style = { padding: 0 };
     const buttonGroupStyle = {
@@ -545,17 +552,17 @@ ReactDOM.render(
       <Route
         exact
         path="/:owner/:title/new/"
-        render={routeProps => <SimTabs tabName="inputs" {...routeProps} />}
+        render={routeProps => <ErrorBoundary><SimTabs tabName="inputs" {...routeProps} /></ErrorBoundary>}
       />
       <Route
         exact
         path="/:owner/:title/:modelpk/edit/"
-        render={routeProps => <SimTabs tabName="inputs" {...routeProps} />}
+        render={routeProps => <ErrorBoundary><SimTabs tabName="inputs" {...routeProps} /></ErrorBoundary>}
       />
       <Route
         exact
         path="/:owner/:title/:modelpk/"
-        render={routeProps => <SimTabs tabName="outputs" {...routeProps} />}
+        render={routeProps => <ErrorBoundary><SimTabs tabName="outputs" {...routeProps} /></ErrorBoundary>}
       />
     </Switch>
   </BrowserRouter>,
