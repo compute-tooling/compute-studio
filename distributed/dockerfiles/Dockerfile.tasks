@@ -4,9 +4,7 @@ FROM celerybase
 # install packages here
 # install packages necessary for celery and creating screenshots
 RUN pip install -r requirements.txt
-
-RUN pip install cs-storage>=1.8.0 && \
-    conda install -c conda-forge jinja2 pyppeteer && pyppeteer-install
+RUN conda install -c conda-forge jinja2 pyppeteer && pyppeteer-install
 
 ARG TITLE
 ARG OWNER

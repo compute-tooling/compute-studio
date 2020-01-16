@@ -1,4 +1,4 @@
-django>=2.1.2
+django>=3
 djangorestframework
 msgpack
 requests>=2.20
@@ -22,5 +22,4 @@ newrelic
 hashids
 django-rest-auth
 django-allauth
-
-git+https://github.com/compute-tooling/compute-studio-storage@add-screenshot
+cs-storage>=1.8.1
