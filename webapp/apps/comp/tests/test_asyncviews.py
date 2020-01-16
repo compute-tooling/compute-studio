@@ -112,7 +112,7 @@ class RunMockModel(CoreTestMixin):
             "job_id": adj_job_id,
             **{"errors_warnings": self.errors_warnings},
         }
-        with requests_mock.Mocker() as mock:
+        with requests_mock.Mocker(real_http=True) as mock:
             init_resp = self.post_adjustment(
                 mock, defaults_resp_data, adj_resp_data, adj
             )

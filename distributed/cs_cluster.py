@@ -230,6 +230,15 @@ class Cluster:
         app_deployment["spec"]["replicas"] = app.get("replicas", 1)
         app_deployment["spec"]["selector"]["matchLabels"]["app"] = name
         app_deployment["spec"]["template"]["metadata"]["labels"]["app"] = name
+        if "affinity" in app:
+            affinity_exp = {"key": "model", "operator": "In", "values": [app["affinity"]["model"]]}
+            app_deployment["spec"]["template"]["spec"]["affinity"] = {
+                "nodeAffinity": {
+                    "requiredDuringSchedulingIgnoredDuringExecution": {
+                        "nodeSelectorTerms": [{"matchExpressions": [affinity_exp]}]
+                    }
+                }
+            }
 
         container_config = app_deployment["spec"]["template"]["spec"]["containers"][0]
 

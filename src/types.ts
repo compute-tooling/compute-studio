@@ -149,6 +149,7 @@ export interface AccessStatus {
   username: string;
   api_url: string;
   is_sponsored?: boolean;
+  sponsor_message?: string;
   can_run?: boolean;
   server_cost?: number;
   exp_cost?: number;

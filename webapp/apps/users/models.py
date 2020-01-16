@@ -133,6 +133,8 @@ class Project(models.Model):
     sponsor = models.ForeignKey(
         Profile, null=True, related_name="sponsored_projects", on_delete=models.SET_NULL
     )
+    sponsor_message = models.CharField(null=True, blank=True, max_length=10000)
+    pay_per_sim = models.BooleanField(default=True)
     is_public = models.BooleanField(default=True)
     status = models.CharField(
         choices=(

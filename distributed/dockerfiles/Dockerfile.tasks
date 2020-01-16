@@ -4,6 +4,7 @@ FROM celerybase
 # install packages here
 # install packages necessary for celery and creating screenshots
 RUN pip install -r requirements.txt
+RUN conda install -c conda-forge lz4
 RUN conda install -c conda-forge jinja2 pyppeteer && pyppeteer-install
 
 ARG TITLE
