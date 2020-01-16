@@ -640,12 +640,10 @@ def test_placeholder_page(db, client):
     project.save()
     resp = client.get(f"/{owner}/{title}/")
     assert resp.status_code == 200
-    assert "comp/model_placeholder.html" in [t.name for t in resp.templates]
     project.status = "live"
     project.save()
     resp = client.get(f"/{owner}/{title}/")
     assert resp.status_code == 200
-    assert "comp/home.html" in [t.name for t in resp.templates]
 
 
 def test_outputs_api(db, api_client, profile, password):

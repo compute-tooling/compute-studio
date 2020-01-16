@@ -17,6 +17,8 @@ from django.utils.timezone import make_aware
 from django.urls import reverse
 from django.utils import timezone
 
+import cs_storage
+
 from webapp.apps.comp import utils, exceptions
 from webapp.settings import INPUTS_SALT
 
@@ -381,6 +383,20 @@ class Simulation(models.Model):
             return "unsigned"
         else:
             return self.owner
+
+    def context(self, request=None):
+        url = self.get_absolute_url()
+        if request is not None:
+            url = f"https://{request.get_host()}{url}"
+        pic = None
+        if self.outputs and self.outputs_version != "v0":
+            output = self.outputs["outputs"]["renderable"]["outputs"][:1]
+            if output:
+                output = cs_storage.add_screenshot_links(
+                    {"renderable": {"outputs": output}}
+                )
+                pic = output["renderable"]["outputs"][0]["screenshot"]
+        return {"owner": self.get_owner(), "title": self.title, "url": url, "pic": pic}
 
 
 @dataclass

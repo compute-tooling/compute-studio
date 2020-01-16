@@ -24,6 +24,11 @@
                         aria-controls="project-desc-collapse">
                         README
                     </button>
+                    {% if project_status == "live" or project_status == "updating" %}
+                    <button class="btn btn-outline-success">live</button>
+                    {% else %}
+                    <button class="btn btn-outline-warning">pending</button>
+                    {% endif %}
                 </div>
                 <div class="collapse {%if show_readme %}show{% endif %}" id="project-desc-collapse">
                     <hr class="my-4" />
@@ -32,13 +37,14 @@
                         <p class="lead"></p>
                     </div>
                 </div>
-                <a class="btn btn-success" href="{{ app_url }}new/">Create Simulation</a>
+                {% if project_status == "live" or project_status == "updating" %}
+                <a class="btn btn-success mt-2" href="{{ app_url }}new/">Create Simulation</a>
+                {% else %}
+                <p class="mt-2"><strong>This project is not live right now.</strong></p>
+                {% endif %}
             </div>
         </div>
     </div>
-    <!-- Sidebar -->
-    <!-- <div id="inputs-container"></div> -->
     <script src="{% static 'js/core.js' %}"></script>
-    <!-- <script src="{% static 'js/sim.js' %}"></script> -->
     {% endblock %}
 </div>

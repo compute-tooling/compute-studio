@@ -48,30 +48,9 @@ from .core import InputsMixin, GetOutputsObjectMixin
 BUCKET = os.environ.get("BUCKET")
 
 
-class InputsMixin:
-    """
-    Define class attributes and common methods for inputs form views.
-    """
-
-    template_name = "comp/inputs_form.html"
-    has_errors = False
-    webapp_version = WEBAPP_VERSION
-
-    def project_context(self, request, project):
-        context = {
-            "project_name": project.title,
-            "owner": project.owner.user.username,
-            "app_description": project.safe_description,
-            "app_oneliner": project.oneliner,
-            "app_url": project.app_url,
-        }
-        return context
-
-
 class ModelPageView(InputsMixin, View):
     projects = Project.objects.all()
-    template_name = "comp/home.html"
-    placeholder_template = "comp/model_placeholder.html"
+    template_name = "comp/model.html"
 
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET, kwargs)
@@ -81,11 +60,7 @@ class ModelPageView(InputsMixin, View):
         )
         context = self.project_context(request, project)
         context["show_readme"] = True
-        if project.status in ("live", "updating"):
-            template = self.template_name
-        else:
-            template = self.placeholder_template
-        return render(request, template, context)
+        return render(request, self.template_name, context)
 
 
 class NewSimView(InputsMixin, View):
@@ -120,6 +95,7 @@ class EditSimView(GetOutputsObjectMixin, InputsMixin, View):
         project = self.object.project
         context = self.project_context(request, project)
         context["show_readme"] = False
+        context["sim"] = self.object.context(request=request)
         return render(request, self.template_name, context)
 
 

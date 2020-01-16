@@ -24,6 +24,15 @@
 
   <script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-1.3.4.min.js"></script>
   <script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-1.3.4.min.js"></script>
+  <meta property="og:site_name" content="Compute Studio" />
+  {% if sim %}
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="{{sim.title}} by {{sim.owner}}">
+  <meta property="og:url" content="{{sim.url}}">
+  {% if sim.pic %}
+  <meta property="og:image" content="{{sim.pic}}">
+  {% endif %}
+  {% endif %}
 
   {% block style %}
   {% endblock %}
