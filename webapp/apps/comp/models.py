@@ -1,6 +1,7 @@
 import datetime
 import uuid
 import json
+import pytz
 
 from dataclasses import dataclass, field
 from typing import List, Union
@@ -13,7 +14,6 @@ from django.utils.functional import cached_property
 from django.utils import timezone
 from django.contrib.postgres.fields import JSONField
 from django.contrib.auth.models import Group
-from django.utils.timezone import make_aware
 from django.urls import reverse
 from django.utils import timezone
 
@@ -25,7 +25,10 @@ from webapp.settings import INPUTS_SALT
 
 # TODO: Update to deploy date.
 # (set to nye for testing)
-ANON_BEFORE = timezone.make_aware(datetime.datetime(2019, 12, 31))
+# 11:59 tonight
+ANON_BEFORE = datetime.datetime(
+    2020, 1, 16, 23, 59, 59, tzinfo=pytz.timezone("US/Eastern")
+)
 
 
 class Inputs(models.Model):
