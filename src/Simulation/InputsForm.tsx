@@ -39,6 +39,7 @@ interface InputsFormProps {
   api: API;
   readOnly: boolean;
   accessStatus: AccessStatus;
+  resetAccessStatus: () => void;
   inputs: Inputs;
   defaultURL: string;
   simStatus: Simulation<any>["status"];
@@ -64,6 +65,9 @@ interface InputsProps {
 
 
 const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
+
+  const [showModal, setShowModal] = React.useState(false);
+
   if (!props.inputs || props.resetting) {
     return <LoadingElement />;
   }
@@ -120,6 +124,9 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
                 action={simStatus === "STARTED" ? "Run" : "Fork and Run"}
                 handleSubmit={handleSubmit}
                 accessStatus={accessStatus}
+                showModal={showModal}
+                setShowModal={setShowModal}
+                resetAccessStatus={props.resetAccessStatus}
               />
             </li>
           </ul>

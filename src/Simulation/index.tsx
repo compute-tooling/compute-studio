@@ -371,7 +371,6 @@ class SimTabs extends React.Component<
   killTimer(timerName: "inputsTimer" | "outputsTimer") {
     console.log("killTimer", timerName, this.state[timerName])
     if (this.state[timerName]) {
-      console.log("clearning state for timer", timerName, this.state[timerName])
       clearInterval(this.state[timerName]);
       // @ts-ignore
       this.setState({ [timerName]: null });
@@ -500,6 +499,9 @@ class SimTabs extends React.Component<
                           api={this.api}
                           readOnly={false}
                           accessStatus={accessStatus}
+                          resetAccessStatus={
+                            this.api.modelpk ? this.resetAccessStatus : this.authenticateAndCreateSimulation
+                          }
                           inputs={inputs}
                           defaultURL={`/${this.api.owner}/${this.api.title}/api/v1/`}
                           simStatus={remoteSim?.status || "STARTED"}
