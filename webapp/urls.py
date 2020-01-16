@@ -20,7 +20,7 @@ from rest_framework.authtoken import views as rf_views
 
 from webapp.apps.comp import views as compviews
 from webapp.apps.publish import views as publishviews
-from webapp.apps.users import views as userviews
+from webapp.apps.pages import views as pageviews
 
 
 urlpatterns = [
@@ -43,6 +43,5 @@ urlpatterns = [
     ),
     # add project URL's here
     path("<str:username>/<str:title>/", include("webapp.apps.comp.urls")),
-    # user/billing apps
-    path("<str:username>/", userviews.UserProfile.as_view(), name="userprofile"),
+    path("<str:username>/", pageviews.ProfileView.as_view(), name="userprofile"),
 ]

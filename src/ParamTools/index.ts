@@ -1,19 +1,30 @@
 import * as yup from "yup";
 import { parseFromOps, parseToOps } from "./ops";
 import { isEmpty } from "lodash/lang";
-import { union as lodashUnion, difference } from "lodash/array";
+import { union, difference } from "lodash/array";
 
-const integerMsg = "Must be an integer.";
-const floatMsg = "Must be a floating point number.";
-const dateMsg = "Must be a date.";
-const boolMsg = "Must be a boolean value.";
-const minMsg = "Must be greater than or equal to ${min}";
-const maxMsg = "Must be less than or equal to ${max}";
-const oneOfMsg = "Must be one of the following values: ${values}";
-const reverseOpMsg =
+import {
+  ValueObject,
+  ParamToolsConfig,
+  ParamToolsParam,
+  FormValueObject,
+  InputsDetail,
+  InitialValues,
+  Sects,
+  Inputs
+} from "../types";
+
+const integerMsg: string = "Must be an integer.";
+const floatMsg: string = "Must be a floating point number.";
+const dateMsg: string = "Must be a date.";
+const boolMsg: string = "Must be a boolean value.";
+const minMsg: string = "Must be greater than or equal to ${min}";
+const maxMsg: string = "Must be less than or equal to ${max}";
+const oneOfMsg: string = "Must be one of the following values: ${values}";
+const reverseOpMsg: string =
   "'<' can only be used as the first index and must be followed by one or more values.";
 
-function transform(value, originalValue) {
+function transform(value: any, originalValue: any) {
   if (typeof originalValue === "string") {
     let trimmed = originalValue.trim();
     if (trimmed === "") {
@@ -25,7 +36,7 @@ function transform(value, originalValue) {
   return value;
 }
 
-function transformArray(value, originalValue) {
+function transformArray(value: any, originalValue: any): Array<any> {
   if (Array.isArray(originalValue)) return originalValue;
 
   if (!(typeof originalValue === "string")) {
@@ -34,8 +45,8 @@ function transformArray(value, originalValue) {
   return originalValue.split(",");
 }
 
-function testReverseOp(value) {
-  if (!value || (Array.isArray(value) && value.lenghth === 0)) return true;
+function testReverseOp(value: any): boolean {
+  if (!value || (Array.isArray(value) && value.length === 0)) return true;
 
   const wildCardIndex = value.indexOf("<");
   // reverseOp can only be used as first index.
@@ -53,7 +64,7 @@ function testReverseOp(value) {
   return true;
 }
 
-yup.number.prototype._typeCheck = function(value) {
+yup.number.prototype._typeCheck = function (value: any): boolean {
   if (value instanceof Number) value = value.valueOf();
 
   return (
@@ -62,7 +73,7 @@ yup.number.prototype._typeCheck = function(value) {
   );
 };
 
-yup.bool.prototype._typeCheck = function(value) {
+yup.bool.prototype._typeCheck = function (value) {
   if (value instanceof Boolean) value = value.valueOf();
   return (
     (typeof value === "string" && (value === "*" || value === "<")) ||
@@ -87,7 +98,7 @@ const maxObj = max => {
     name: "contrib.max",
     exclusive: true,
     params: { max },
-    test: value =>
+    test: (value: any): boolean =>
       value == null || value === "*" || value === "<" || value <= max
   };
 };
@@ -109,7 +120,7 @@ const integerObj = {
     value == null || value === "*" || value === "<" || Number.isInteger(value)
 };
 
-export function yupType(type) {
+export function yupType(type: "int" | "float" | "bool" | "date" | "string") {
   if (type == "int") {
     return yup
       .number()
@@ -131,7 +142,7 @@ export function yupType(type) {
       .transform(transform);
   } else if (type == "date") {
     return yup
-      .date(dateMsg)
+      .date()
       .typeError(dateMsg)
       .nullable()
       .transform(transform);
@@ -140,7 +151,11 @@ export function yupType(type) {
   }
 }
 
-export function yupValidator(params, param_data, extend = false) {
+export function yupValidator(
+  params: ParamToolsConfig,
+  param_data: ParamToolsParam,
+  extend: boolean = false
+) {
   const ensureExtend = obj => {
     if (extend) {
       return yup
@@ -164,19 +179,23 @@ export function yupValidator(params, param_data, extend = false) {
     if ("min" in param_data.validators.range) {
       min_val = param_data.validators.range.min;
       if (!(min_val in params)) {
-        yupObj = yupObj.test(minObj(min_val));
+        let minValTest = minObj(min_val);
+        // @ts-ignore
+        yupObj = yupObj.test(minValTest);
       }
     }
     if ("max" in param_data.validators.range) {
       max_val = param_data.validators.range.max;
       if (!(max_val in params)) {
-        yupObj = yupObj.test(maxObj(max_val));
+        let maxValTest = maxObj(max_val);
+        //@ts-ignore
+        yupObj = yupObj.test(maxValTest);
       }
     }
   }
   if ("choice" in param_data.validators) {
     yupObj = yupObj.oneOf(
-      lodashUnion(param_data.validators.choice.choices, [null, ""]),
+      union(param_data.validators.choice.choices, [null, ""]),
       oneOfMsg
     );
   }
@@ -184,7 +203,10 @@ export function yupValidator(params, param_data, extend = false) {
   return ensureExtend(yupObj);
 }
 
-function select(valueObjects, labels) {
+function select(
+  valueObjects: Array<ValueObject>,
+  labels: { [key: string]: any }
+) {
   let ret = [];
   if (isEmpty(labels)) {
     return valueObjects;
@@ -203,7 +225,7 @@ function select(valueObjects, labels) {
   return ret;
 }
 
-function labelsToString(valueObject) {
+function labelsToString(valueObject: ValueObject): string {
   let s = [];
   for (const [label, label_val] of Object.entries(valueObject).sort()) {
     if (label === "value") {
@@ -217,24 +239,32 @@ function labelsToString(valueObject) {
   return `${s.join("___")}`;
 }
 
-export function convertToFormik(data) {
-  // TODO: handle schema.
+export function convertToFormik(
+  data: Inputs
+): [
+    InitialValues,
+    Sects,
+    Inputs,
+    { adjustment: yup.Schema<any>, meta_parameters: yup.Schema<any> },
+    Array<string>
+  ] {
   if ("schema" in data.meta_parameters) {
     delete data.meta_parameters["schema"];
   }
 
-  var initialValues = { adjustment: {}, meta_parameters: {} };
-  var sects = {};
-  var section_1 = "";
-  var section_2 = "";
-  var adjShape = {};
+  let initialValues: InitialValues = { adjustment: {}, meta_parameters: {} };
+  let sects: Sects = {};
+  let section_1: string;
+  let section_2: string;
+  let adjShape: { [msect: string]: yup.Schema<any> } = {};
   // TODO: move these into formal spec!
-  const extend = "extend" in data ? data.extend : false;
-  let label_to_extend =
+  const extend: boolean = "extend" in data ? data.extend : false;
+  let label_to_extend: string =
     "label_to_extend" in data ? data.label_to_extend : "year";
   // end TODO
-  const hasInitialValues = "detail" in data;
-  let [meta_parameters, adjustment] = [{}, {}];
+  const hasInitialValues: boolean = "detail" in data;
+  let adjustment: InputsDetail["adjustment"] = {};
+  let meta_parameters: InputsDetail["meta_parameters"] = {};
   let unknownParams = [];
   if (hasInitialValues) {
     adjustment = data.detail.adjustment;
@@ -250,7 +280,7 @@ export function convertToFormik(data) {
     if (hasInitialValues && msect in adjustment) {
       // Checkbox params are added to unkownParams and are removed in the
       // checkbox logic block later.
-      unknownParams = lodashUnion(
+      unknownParams = union(
         unknownParams,
         difference(Object.keys(adjustment[msect]), Object.keys(params))
       );
@@ -288,7 +318,7 @@ export function convertToFormik(data) {
       for (const vals of param_data.value) {
         let fieldName = labelsToString(vals);
         let placeholder = vals.value.toString();
-        let initialValue = "";
+        let initialValue: string | Array<any> = "";
         if (hasInitialValues && param in adjustment[msect]) {
           let labels = {};
           for (const [label, labelValue] of Object.entries(vals)) {
@@ -299,7 +329,9 @@ export function convertToFormik(data) {
           let matches = select(adjustment[msect][param], labels);
           initialValue = parseToOps(matches, meta_parameters, label_to_extend);
         }
-
+        if (!extend && Array.isArray(initialValue)) {
+          initialValue = initialValue[0];
+        }
         initialValues.adjustment[msect][param][fieldName] = initialValue;
         param_data.form_fields[fieldName] = placeholder;
         paramYupShape[fieldName] = yupObj;
@@ -324,33 +356,48 @@ export function convertToFormik(data) {
 
     adjShape[msect] = yup.object().shape(msectShape);
   }
-  let mpShape = {};
+  let mpShape: { [mpName: string]: yup.Schema<any> } = {};
   for (const [mp_name, mp_data] of Object.entries(data.meta_parameters)) {
     let yupObj = yupValidator(data.meta_parameters, mp_data);
     let mpVal = mp_data.value[0].value;
     mpShape[mp_name] = yupObj;
     initialValues["meta_parameters"][mp_name] = yupObj.cast(
-      mp_name in meta_parameters ? meta_parameters[mp_name] : mpVal
+      (meta_parameters && mp_name in meta_parameters) ? meta_parameters[mp_name] : mpVal
     );
   }
-  var schema = yup.object().shape({
+  let schema = {
     adjustment: yup.object().shape(adjShape),
     meta_parameters: yup.object().shape(mpShape)
-  });
+  };
   return [
     initialValues,
     sects,
-    data.model_parameters,
-    data.meta_parameters,
+    data,
     schema,
     unknownParams
   ];
 }
 
-export function formikToJSON(values, schema, labelSchema, extend = false) {
-  let data = schema.cast(values);
-  var meta_parameters = {};
-  var adjustment = {};
+export interface FormData {
+  adjustment: {
+    [msect: string]: {
+      [paramName: string]: {
+        [voStr: string]: any;
+      };
+    };
+  };
+  meta_parameters: { [key: string]: Array<any> };
+}
+
+export function formikToJSON(
+  values: { [key: string]: any },
+  schema: yup.Schema<any>,
+  labelSchema: yup.Schema<any>,
+  extend: boolean = false
+) {
+  let data: FormData = schema.cast(values);
+  var meta_parameters: { [key: string]: any } = {};
+  var adjustment: { [key: string]: { [key: string]: Array<ValueObject> } } = {};
 
   for (const [mp_name, mp_val] of Object.entries(data.meta_parameters)) {
     meta_parameters[mp_name] = mp_val;
@@ -359,9 +406,9 @@ export function formikToJSON(values, schema, labelSchema, extend = false) {
   for (const [msect, params] of Object.entries(data.adjustment)) {
     adjustment[msect] = {};
     for (const [paramName, paramData] of Object.entries(params)) {
-      var voList = [];
+      var voList: Array<ValueObject> = [];
       for (const [voStr, val] of Object.entries(paramData)) {
-        var vo = {};
+        var vo: FormValueObject = { value: [] };
         if (
           val == null ||
           (typeof val === "string" && !val) ||
@@ -375,9 +422,10 @@ export function formikToJSON(values, schema, labelSchema, extend = false) {
         }
         if (voStr == "nolabels") {
           if (extend && Array.isArray(val) && val.length) {
-            val = val[0];
+            vo.value = val[0];
+          } else {
+            vo.value = val;
           }
-          vo["value"] = val;
           voList.push(vo);
         } else {
           var labelsSplit = voStr.split("___");
@@ -390,7 +438,7 @@ export function formikToJSON(values, schema, labelSchema, extend = false) {
             }
           }
           vo = labelSchema.cast(vo);
-          vo["value"] = val;
+          vo.value = val;
           if (extend) {
             voList.push(...parseFromOps(vo));
           } else {

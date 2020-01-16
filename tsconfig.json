@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "sourceMap": true,
+        "jsx": "react",
+        "downlevelIteration": true,
+        "importHelpers": true,
+        "lib": [
+            "dom",
+            "es2017"
+        ],
+        "outDir": "./static/js/"
+    }
+}

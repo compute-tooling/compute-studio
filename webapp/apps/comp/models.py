@@ -4,7 +4,6 @@ import json
 
 from dataclasses import dataclass, field
 from typing import List, Union
-from hashids import Hashids
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
@@ -13,45 +12,26 @@ from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils import timezone
 from django.contrib.postgres.fields import JSONField
+from django.contrib.auth.models import Group
 from django.utils.timezone import make_aware
 from django.urls import reverse
 from django.utils import timezone
 
-from webapp.apps.comp import utils
+import cs_storage
+
+from webapp.apps.comp import utils, exceptions
 from webapp.settings import INPUTS_SALT
 
 
-hashids = Hashids(INPUTS_SALT, min_length=6)
-
-
-class InputsQuerySet(models.QuerySet):
-    def from_hashid(self, hashid):
-        """
-        Get inputs object from a hash of its pk. Return None
-        if the decode does not resolve to a pk.
-        """
-        pk = hashids.decode(hashid)
-        if not pk:
-            return None
-        else:
-            return self.get(pk=pk[0])
-
-    def get_object_from_hashid_or_404(self, hashid):
-        """
-        Get inputs object from a hash of its pk and
-        raise 404 exception if it does not exist.
-        """
-        try:
-            obj = self.from_hashid(hashid)
-        except ObjectDoesNotExist:
-            raise Http404("Object matching query does not exist")
-        if obj:
-            return obj
-        else:
-            raise Http404("Object matching query does not exist")
+# TODO: Update to deploy date.
+# (set to nye for testing)
+ANON_BEFORE = timezone.make_aware(datetime.datetime(2019, 12, 31))
 
 
 class Inputs(models.Model):
+    parent_sim = models.ForeignKey(
+        "Simulation", null=True, related_name="child_inputs", on_delete=models.SET_NULL
+    )
     meta_parameters = JSONField(default=None, blank=True, null=True)
     raw_gui_inputs = JSONField(default=None, blank=True, null=True)
     gui_inputs = JSONField(default=None, blank=True, null=True)
@@ -82,6 +62,7 @@ class Inputs(models.Model):
     job_id = models.UUIDField(blank=True, default=None, null=True)
     status = models.CharField(
         choices=(
+            ("STARTED", "Started"),
             ("PENDING", "Pending"),
             ("SUCCESS", "Success"),
             ("INVALID", "Invalid"),
@@ -99,8 +80,6 @@ class Inputs(models.Model):
         ),
         max_length=32,
     )
-
-    objects = InputsQuerySet.as_manager()
 
     @property
     def deserialized_inputs(self):
@@ -127,24 +106,33 @@ class Inputs(models.Model):
     def pretty_meta_parameters(self):
         return json.dumps(self.meta_parameters, indent=4)
 
+    def parent_model_pk(self):
+        if self.parent_sim is not None:
+            return self.parent_sim.model_pk
+        else:
+            return None
+
     def get_absolute_api_url(self):
         kwargs = {
-            "hashid": self.get_hashid(),
+            "model_pk": self.sim.model_pk,
             "title": self.project.title,
             "username": self.project.owner.user.username,
         }
-        return reverse("detail_myinputs_api", kwargs=kwargs)
+        return reverse("detail_myinputs_api_model_pk", kwargs=kwargs)
 
-    def get_edit_url(self):
+    def get_absolute_url(self):
         kwargs = {
-            "hashid": self.get_hashid(),
+            "model_pk": self.sim.model_pk,
             "title": self.project.title,
             "username": self.project.owner.user.username,
         }
-        return reverse("edit_inputs", kwargs=kwargs)
+        return reverse("edit", kwargs=kwargs)
 
-    def get_hashid(self):
-        return hashids.encode(self.pk)
+    def has_write_access(self, user):
+        return self.sim.has_write_access(user)
+
+    def has_read_access(self, user):
+        return self.sim.has_read_access(user)
 
 
 class SimulationManager(models.Manager):
@@ -157,14 +145,81 @@ class SimulationManager(models.Manager):
         else:
             return curr_max + 1
 
+    def new_sim(self, user, project):
+        inputs = Inputs.objects.create(
+            owner=user.profile,
+            project=project,
+            status="STARTED",
+            adjustment={},
+            meta_parameters={},
+            errors_warnings={},
+        )
+        return self.create(
+            owner=user.profile,
+            project=project,
+            model_pk=self.next_model_pk(project),
+            inputs=inputs,
+            status="STARTED",
+            is_public=False,
+        )
+
+    def fork(self, sim, user):
+        if sim.inputs.status == "PENDING":
+            raise exceptions.ForkObjectException(
+                "Simulations may not be forked while they are in a pending state. "
+                "Please try again once validation has completed."
+            )
+        if sim.status == "PENDING":
+            raise exceptions.ForkObjectException(
+                "Simulations may not be forked while they are in a pending state. "
+                "Please try again once the simulation has completed."
+            )
+
+        inputs = Inputs.objects.create(
+            owner=user.profile,
+            project=sim.project,
+            status=sim.inputs.status,
+            adjustment=sim.inputs.adjustment,
+            meta_parameters=sim.inputs.meta_parameters,
+            errors_warnings=sim.inputs.errors_warnings,
+            custom_adjustment=sim.inputs.custom_adjustment,
+            parent_sim=sim,
+            traceback=sim.inputs.traceback,
+            client=sim.inputs.client,
+        )
+        return self.create(
+            owner=user.profile,
+            title=sim.title,
+            readme=sim.readme,
+            last_modified=sim.last_modified,
+            parent_sim=sim,
+            inputs=inputs,
+            meta_data=sim.meta_data,
+            outputs=sim.outputs,
+            traceback=sim.traceback,
+            sponsor=sim.sponsor,
+            project=sim.project,
+            run_time=sim.run_time,
+            run_cost=0,
+            exp_comp_datetime=sim.exp_comp_datetime,
+            model_version=sim.model_version,
+            model_pk=self.next_model_pk(sim.project),
+            is_public=False,
+            status=sim.status,
+        )
+
 
 class Simulation(models.Model):
+
     # TODO: dimension needs to go
     dimension_name = "Dimension--needs to go"
-
-    inputs = models.OneToOneField(
-        Inputs, on_delete=models.CASCADE, related_name="outputs"
+    title = models.CharField(default="Untitled Simulation", max_length=500)
+    readme = JSONField(null=True, default=None, blank=True)
+    last_modified = models.DateTimeField(default=timezone.now)
+    parent_sim = models.ForeignKey(
+        "self", null=True, related_name="child_sims", on_delete=models.SET_NULL
     )
+    inputs = models.OneToOneField(Inputs, on_delete=models.CASCADE, related_name="sim")
     meta_data = JSONField(default=None, blank=True, null=True)
     outputs = JSONField(default=None, blank=True, null=True)
     aggr_outputs = JSONField(default=None, blank=True, null=True)
@@ -192,8 +247,11 @@ class Simulation(models.Model):
     webapp_vers = models.CharField(blank=True, default=None, null=True, max_length=50)
     model_pk = models.IntegerField()
 
+    is_public = models.BooleanField(default=True)
+
     status = models.CharField(
         choices=(
+            ("STARTED", "Started"),
             ("PENDING", "Pending"),
             ("SUCCESS", "Success"),
             ("FAIL", "Fail"),
@@ -210,7 +268,10 @@ class Simulation(models.Model):
             "title": self.project.title,
             "username": self.project.owner.user.username,
         }
-        return reverse("outputs", kwargs=kwargs)
+        if self.outputs_version() == "v0":
+            return self.get_absolute_v0_url()
+        else:
+            return reverse("outputs", kwargs=kwargs)
 
     def get_absolute_api_url(self):
         kwargs = {
@@ -236,6 +297,19 @@ class Simulation(models.Model):
         }
         return reverse("download", kwargs=kwargs)
 
+    def get_absolute_v0_url(self):
+        kwargs = {
+            "model_pk": self.model_pk,
+            "title": self.project.title,
+            "username": self.project.owner.user.username,
+        }
+        if self.outputs_version() == "v0":
+            return reverse("v0_outputs", kwargs=kwargs)
+
+        raise exceptions.VersionMismatchException(
+            f"{self} is version {self.outputs_version()} != v0."
+        )
+
     def zip_filename(self):
         return f"{self.project.title}_{self.model_pk}.zip"
 
@@ -247,10 +321,11 @@ class Simulation(models.Model):
             reference_time = timezone.now()
         exp_comp_dt = self.exp_comp_datetime
         dt = exp_comp_dt - reference_time
-        exp_num_minutes = dt.total_seconds() / 60.0
-        exp_num_minutes = round(exp_num_minutes, 2)
-        exp_num_minutes = exp_num_minutes if exp_num_minutes > 0 else 0
-        return exp_num_minutes
+        eta = dt.total_seconds()
+        return eta if eta > 0 else 0
+
+    def compute_original_eta(self):
+        return self.compute_eta(self.creation_date)
 
     @cached_property
     def dimension(self):
@@ -262,6 +337,66 @@ class Simulation(models.Model):
     @property
     def effective_cost(self):
         return self.project.run_cost(self.run_time, adjust=True)
+
+    def __str__(self):
+        return f"{self.project}#{self.model_pk} by {self.owner.user}"
+
+    def parent_sims(self, user=None):
+        """
+        Recursively walk back up to the original simulation. All public simulations
+        are included, and private simulations are only included if the user is
+        provided and has read access.
+        """
+        parent_sims = []
+        sim = self
+        while sim.parent_sim != None:
+            if sim.parent_sim.is_public or sim.parent_sim.has_read_access(user):
+                parent_sims.append(sim.parent_sim)
+            sim = sim.parent_sim
+        return parent_sims
+
+    def has_write_access(self, user):
+        return bool(user and user.is_authenticated and user == self.owner.user)
+
+    def has_read_access(self, user):
+        return self.is_public or bool(
+            user and user.is_authenticated and user == self.owner.user
+        )
+
+    def outputs_version(self):
+        if self.outputs:
+            return self.outputs["version"]
+        else:
+            return None
+
+    def get_owner(self):
+        """
+        Return owner or "unsigned" depending on whether the simulation
+        was created before the ANON_BEFORE cutoff date. This should
+        be used instead of 'owner' on serializer classes for
+        Simulation.
+
+        This ensures that simulations created under the assumption that
+        they are unsigned remain unsigned.
+        """
+        if self.creation_date < ANON_BEFORE:
+            return "unsigned"
+        else:
+            return self.owner
+
+    def context(self, request=None):
+        url = self.get_absolute_url()
+        if request is not None:
+            url = f"https://{request.get_host()}{url}"
+        pic = None
+        if self.outputs and self.outputs_version() != "v0":
+            output = self.outputs["outputs"]["renderable"]["outputs"][:1]
+            if output:
+                output = cs_storage.add_screenshot_links(
+                    {"renderable": {"outputs": output}}
+                )
+                pic = output["renderable"]["outputs"][0]["screenshot"]
+        return {"owner": self.get_owner(), "title": self.title, "url": url, "pic": pic}
 
 
 @dataclass

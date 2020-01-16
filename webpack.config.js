@@ -1,59 +1,65 @@
 var path = require("path");
 var webpack = require("webpack");
+const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
+  .BundleAnalyzerPlugin;
 
 module.exports = [
   {
-    context: __dirname,
-    entry: "./src/publish.js",
+    devtool: "source-map",
+    entry: "./src/Publish/index.tsx",
     output: {
-      path: path.resolve("./static/js/"),
-      filename: "publish.js"
+      filename: "publish.js",
+      path: path.resolve(__dirname, "static/js")
     },
     module: {
       rules: [
         {
-          // this is so that we can compile any React,
-          // ES6 and above into normal ES5 syntax
-          test: /\.(js|jsx)$/,
-          // we do not want anything from node_modules to be compiled
-          exclude: /node_modules/,
-          use: ["babel-loader"]
+          test: /\.tsx?$/,
+          loader: "ts-loader"
         },
         {
-          test: /\.(css|scss)$/,
-          use: [
-            "style-loader", // creates style nodes from JS strings
-            "css-loader" // translates CSS into CommonJS
-          ]
+          test: /\.css$/i,
+          use: ["style-loader", "css-loader"]
+        },
+        {
+          enforce: "pre",
+          test: /\.js$/,
+          loader: "source-map-loader"
         }
       ]
+    },
+    // plugins: [new BundleAnalyzerPlugin({ analyzerPort: 8001 })],
+    resolve: {
+      extensions: [".ts", ".tsx", ".js"]
     }
   },
   {
-    context: __dirname,
-    entry: "./src/inputs.js",
+    devtool: "source-map",
+    entry: "./src/Simulation/index.tsx",
     output: {
-      path: path.resolve("./static/js/"),
-      filename: "inputs.js"
+      filename: "sim.js",
+      path: path.resolve(__dirname, "static/js")
     },
     module: {
       rules: [
         {
-          // this is so that we can compile any React,
-          // ES6 and above into normal ES5 syntax
-          test: /\.(js|jsx)$/,
-          // we do not want anything from node_modules to be compiled
-          exclude: /node_modules/,
-          use: ["babel-loader"]
+          test: /\.tsx?$/,
+          loader: "ts-loader"
         },
         {
-          test: /\.(css|scss)$/,
-          use: [
-            "style-loader", // creates style nodes from JS strings
-            "css-loader" // translates CSS into CommonJS
-          ]
+          test: /\.css$/i,
+          use: ["style-loader", "css-loader"]
+        },
+        {
+          enforce: "pre",
+          test: /\.js$/,
+          loader: "source-map-loader"
         }
       ]
+    },
+    // plugins: [new BundleAnalyzerPlugin({ analyzerPort: 8002 })],
+    resolve: {
+      extensions: [".ts", ".tsx", ".js"]
     }
   }
 ];

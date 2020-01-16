@@ -80,20 +80,6 @@ class TestUsersViews:
         resp = client.get("/users/settings/")
         assert resp.status_code == 200
 
-    def test_get_user_profile(
-        self, monkeypatch, client, profile, password, test_models
-    ):
-        resp = client.get(f"/{profile.user.username}/")
-        assert resp.status_code == 200
-
-    def test_get_other_user_profile(self, client, profile, password):
-        resp = client.get(f"/tester/")
-        assert resp.status_code == 200
-
-    def test_get_user_does_not_exist(self, client, profile, password):
-        resp = client.get(f"/notarealuser/")
-        assert resp.status_code == 404
-
     def test_change_password(self, client, profile, password):
         success = client.login(username=profile.user.username, password=password)
         assert success
@@ -169,7 +155,11 @@ class TestUsersViews:
         project, sponsored_project = test_models[0].project, test_models[1].project
 
         resp = api_client.get("/users/status/")
-        assert resp.data == {"user_status": "anon", "api_url": "/users/status/"}
+        assert resp.data == {
+            "user_status": "anon",
+            "api_url": "/users/status/",
+            "username": None,
+        }
 
         resp = api_client.get(
             f"/users/status/{project.owner.user.username}/{project.title}/"
@@ -183,6 +173,7 @@ class TestUsersViews:
             "exp_time": project.exp_job_info(adjust=True)[1],
             "server_cost": project.server_cost,
             "api_url": f"/users/status/{project.owner.user.username}/{project.title}/",
+            "username": None,
         }
 
         resp = api_client.get(
@@ -197,8 +188,13 @@ class TestUsersViews:
             "exp_time": sponsored_project.exp_job_info(adjust=True)[1],
             "server_cost": sponsored_project.server_cost,
             "api_url": f"/users/status/{sponsored_project.owner.user.username}/{sponsored_project.title}/",
+            "username": None,
         }
 
         assert api_client.login(username=profile.user.username, password=password)
         resp = api_client.get("/users/status/")
-        assert resp.data == {"user_status": profile.status, "api_url": "/users/status/"}
+        assert resp.data == {
+            "user_status": profile.status,
+            "api_url": "/users/status/",
+            "username": profile.user.username,
+        }

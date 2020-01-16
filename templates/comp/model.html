@@ -1,0 +1,50 @@
+{% extends 'base.html' %} {% load static %} {% load strings %} {% load inputs %}
+{% load utility %} {% block content %} {% csrf_token %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            <div class="jumbotron shadow" style="background-color:white;">
+                <div>
+                    <h1 class="display-5">
+                        <a class="primary-text" href="{{ app_url }}">{{ owner }}/{{ project_name }}</a>
+                        <a href="{{ app_url }}detail/" class="btn btn-sm btn-outline-primary" style="font-size:0.85rem">
+                            <img src="https://cdnjs.cloudflare.com/ajax/libs/octicons/8.5.0/svg/note.svg" alt="Note" />
+                            publish details
+                        </a>
+                        <a class="btn btn-sm btn-outline-primary" style="font-size:0.85rem"
+                            href="https://docs.compute.studio/api/guide/">
+                            <img src="https://cdnjs.cloudflare.com/ajax/libs/octicons/8.5.0/svg/zap.svg" alt="Zap" />
+                            REST API
+                        </a>
+                    </h1>
+                    <p class="lead">{{ app_oneliner }}</p>
+                    <button
+                        class="btn collapse-button {% if show_readme %} btn-outline-primary {% else %} btn-primary {% endif %}"
+                        type="button" data-toggle="collapse" data-target="#project-desc-collapse" aria-expanded="false"
+                        aria-controls="project-desc-collapse">
+                        README
+                    </button>
+                    {% if project_status == "live" or project_status == "updating" %}
+                    <button class="btn btn-outline-success">live</button>
+                    {% else %}
+                    <button class="btn btn-outline-warning">pending</button>
+                    {% endif %}
+                </div>
+                <div class="collapse {%if show_readme %}show{% endif %}" id="project-desc-collapse">
+                    <hr class="my-4" />
+                    <div>{{ app_description }}</div>
+                    <div>
+                        <p class="lead"></p>
+                    </div>
+                </div>
+                {% if project_status == "live" or project_status == "updating" %}
+                <a class="btn btn-success mt-2" href="{{ app_url }}new/">Create Simulation</a>
+                {% else %}
+                <p class="mt-2"><strong>This project is not live right now.</strong></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/core.js' %}"></script>
+    {% endblock %}
+</div>

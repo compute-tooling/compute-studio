@@ -1,30 +1,27 @@
-<table class="table">
+<table class="container table table-responsive-md">
   <tr>
     <th>Name</th>
     <th>Expected run time</th>
     <th>Total number of runs</th>
-    <th>Sponsor</th>
     <th>Status</th>
     <th>Detail</th>
     <!-- <th>time</th> -->
   </tr>
-  {% for project in user.profile.projects.all %}
-    <tr>
-      {% if project.status == "live" or project.status == "updating" %}
-        <td><a href="{{project.app_url}}">{{project.title}}</a></td>
-        <td>{{project.exp_task_time}}</td>
-        <td>{{project.number_runs}}</td>
-        <td>{{project.display_sponsor}}</td>
-        <td>{{project.status}}</td>
-        <td><a href="{{project.app_url}}detail">Detail</a></td>
-      {% else %}
-        <td><a href="{{project.app_url}}">{{project.title}}</a></td>
-        <td>{{project.exp_task_time}}</td>
-        <td>NA</td>
-        <td>{{project.display_sponsor}}</td>
-        <td>{{project.status}}</td>
-        <td><a href="{{project.app_url}}detail">Detail</a></td>
-      {% endif %}
+  {% for project in projects.all %}
+  <tr>
+    {% if project.status == "live" or project.status == "updating" %}
+    <td><a href="{{project.app_url}}">{{project.title}}</a></td>
+    <td>{{project.exp_task_time}}</td>
+    <td>{{project.number_runs}}</td>
+    <td>{{project.status}}</td>
+    <td><a href="{{project.app_url}}detail">Detail</a></td>
+    {% else %}
+    <td><a href="{{project.app_url}}">{{project.title}}</a></td>
+    <td>{{project.exp_task_time}}</td>
+    <td>NA</td>
+    <td>{{project.status}}</td>
+    <td><a href="{{project.app_url}}detail">Detail</a></td>
+    {% endif %}
   </tr>
   {% endfor %}
 </table>

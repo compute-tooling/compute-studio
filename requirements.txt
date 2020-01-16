@@ -1,4 +1,4 @@
-django>=2.1.2
+django>=3
 djangorestframework
 msgpack
 requests>=2.20
@@ -17,8 +17,8 @@ psycopg2-binary
 ipython
 markdown
 django-guardian
-cs-storage
 newrelic
 hashids
 django-rest-auth
 django-allauth
+cs-storage>=1.8.1

@@ -1,10 +1,10 @@
 "use strict";
 
-import ReactDOM from "react-dom";
-import React from "react";
+import * as ReactDOM from "react-dom";
+import * as React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import axios from "axios";
-import { Formik, Field, Form, ErrorMessage } from "formik";
+import { Formik, Field, Form, ErrorMessage, FormikActions } from "formik";
 import * as yup from "yup";
 import {
   TextField,
@@ -12,10 +12,15 @@ import {
   ServerSizeField,
   Message,
   CheckboxField
-} from "./fields";
+} from "../fields";
+import { Card } from 'react-bootstrap';
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
+
+const inputStyle = {
+  width: "100%"
+};
 
 const domContainer = document.querySelector("#publish-container");
 const requiredMessage = "This field is required.";
@@ -32,16 +37,6 @@ var Schema = yup.object().shape({
   listed: yup.boolean().required(requiredMessage)
 });
 
-const initialValues = {
-  title: "",
-  description: "",
-  oneliner: "",
-  repo_url: "",
-  server_size: [4, 2],
-  exp_task_time: 0,
-  listed: true
-};
-
 const specialRequests = (
   <div>
     <p>
@@ -57,7 +52,40 @@ const specialRequests = (
   </div>
 );
 
-class PublishForm extends React.Component {
+interface PublishValues {
+  title: string,
+  description: string,
+  oneliner: string,
+  repo_url: string,
+  server_size: [number, number],
+  exp_task_time: number,
+  listed: boolean,
+}
+
+const initialValues: PublishValues = {
+  title: "",
+  description: "",
+  oneliner: "",
+  repo_url: "",
+  server_size: [4, 2],
+  exp_task_time: 0,
+  listed: true
+};
+
+interface PublishProps {
+  preview: boolean,
+  initialValues: PublishValues,
+  submitType: "Publish" | "Update",
+  fetchInitialValues: () => Promise<any>,
+  doSubmit: (data: FormData) => Promise<void>,
+}
+
+type PublishState = Readonly<{
+  preview: boolean,
+  initialValues: PublishValues,
+}>
+
+class PublishForm extends React.Component<PublishProps, PublishState> {
   constructor(props) {
     super(props);
     this.state = {
@@ -88,11 +116,10 @@ class PublishForm extends React.Component {
       <div>
         <Formik
           initialValues={this.state.initialValues}
-          onSubmit={(values, actions) => {
-            console.log(values, actions);
+          onSubmit={(values: PublishValues, actions: FormikActions<PublishValues>) => {
             var formdata = new FormData();
-            for (var field in values) {
-              formdata.append([field], values[field]);
+            for (const field in values) {
+              formdata.append(field, values[field]);
             }
             this.props
               .doSubmit(formdata)
@@ -110,29 +137,31 @@ class PublishForm extends React.Component {
                     auth: "You must be logged in to publish a model."
                   });
                 }
+                window.scroll(0, 0);
               });
           }}
           validationSchema={Schema}
-          render={({ onChange, status, errors }) => (
+          render={({ status }) => (
             <Form>
               {status && status.project_exists ? (
                 <div className="alert alert-danger" role="alert">
                   {status.project_exists}
                 </div>
               ) : (
-                <div />
-              )}
+                  <div />
+                )}
               {status && status.auth ? (
                 <div className="alert alert-danger" role="alert">
                   {status.auth}
                 </div>
               ) : (
-                <div />
-              )}
+                  <div />
+                )}
               <div className="mt-5">
                 <h3>About</h3>
                 <hr className="my-3" />
                 <div className="mt-1 mb-1">
+                  <label><b>Title</b></label>
                   <Field
                     type="text"
                     name="title"
@@ -140,7 +169,9 @@ class PublishForm extends React.Component {
                     placeholder="Name of the app"
                     label="App Name"
                     preview={this.state.preview}
-                    onChange={onChange}
+                    exitPreview={() => this.setState({ preview: false })}
+                    allowSpecialChars={false}
+                    style={inputStyle}
                   />
                   <ErrorMessage
                     name="title"
@@ -148,6 +179,7 @@ class PublishForm extends React.Component {
                   />
                 </div>
                 <div className="mt-1 mb-1">
+                  <label><b>Oneliner</b></label>
                   <Field
                     type="text"
                     name="oneliner"
@@ -155,7 +187,8 @@ class PublishForm extends React.Component {
                     placeholder="Short description of this app"
                     label="One-Liner"
                     preview={this.state.preview}
-                    onChange={onChange}
+                    exitPreview={() => this.setState({ preview: false })}
+                    style={inputStyle}
                   />
                   <ErrorMessage
                     name="oneliner"
@@ -163,6 +196,7 @@ class PublishForm extends React.Component {
                   />
                 </div>
                 <div className="mt-1 mb-1">
+                  <label><b>README</b></label>
                   <Field
                     type="text"
                     name="description"
@@ -170,7 +204,8 @@ class PublishForm extends React.Component {
                     placeholder="Description of this app"
                     label="README"
                     preview={this.state.preview}
-                    onChange={onChange}
+                    exitPreview={() => this.setState({ preview: false })}
+                    style={inputStyle}
                   />
                   <ErrorMessage
                     name="description"
@@ -179,7 +214,7 @@ class PublishForm extends React.Component {
                 </div>
                 <div className="mt-1 mb-1">
                   <label>
-                    <b>Repo URL:</b>
+                    <b>Repo URL</b>
                   </label>
                   <p className="mt-1 mb-1">
                     <Field
@@ -187,6 +222,7 @@ class PublishForm extends React.Component {
                       type="url"
                       name="repo_url"
                       placeholder="Link to the model's code repository"
+                      style={inputStyle}
                     />
                     <ErrorMessage
                       name="repo_url"
@@ -195,12 +231,13 @@ class PublishForm extends React.Component {
                   </p>
                 </div>
                 <div className="mt-3 mb-1">
+                  <label><b>Listed:</b>Include this app in the public list of apps</label>
+
                   <Field
                     component={CheckboxField}
                     label="Listed: "
                     description="Include this app in the public list of apps"
                     name="listed"
-                    onChange={onChange}
                   />
                   <ErrorMessage
                     name="listed"
@@ -221,6 +258,7 @@ class PublishForm extends React.Component {
                       className="form-control w-50rem"
                       type="number"
                       name="exp_task_time"
+                      style={inputStyle}
                     />
                     <ErrorMessage
                       name="exp_task_time"
@@ -240,7 +278,6 @@ class PublishForm extends React.Component {
               <button
                 className="btn inline-block"
                 onClick={this.togglePreview}
-                value
               >
                 {this.state.preview ? "Edit" : "Preview"}
               </button>
@@ -256,43 +293,50 @@ class PublishForm extends React.Component {
   }
 }
 
-class CreateApp extends React.Component {
+class CreateApp extends React.Component<{ doSubmit: PublishProps["doSubmit"] }, {}> {
   constructor(props) {
     super(props);
     this.doSubmit = this.doSubmit.bind(this);
   }
   doSubmit(data) {
-    return axios.post("/publish/api/", data).then(function(response) {
+    return axios.post("/publish/api/", data).then(function (response) {
       console.log("post", response);
-      window.location.replace("/");
+      let data: { title: string, owner: string };
+      data = response.data;
+      window.location.href = `/${data.owner}/${data.title}/detail/`;
     });
   }
   render() {
     return (
-      <div>
-        <h1 style={{ marginBottom: "2rem" }}>Publish</h1>
+      <Card className="card-outer">
+        <Card.Body>
+          <h1 style={{ marginBottom: "2rem" }}>Publish</h1>
 
-        <p className="lead">
-          Publish your model on Compute Studio. Check out the
+          <p className="lead">
+            Publish your model on Compute Studio. Check out the
           <a href="https://docs.compute.studio/publish/guide/">
-            {" "}
-            developer documentation
+              {" "}
+              developer documentation
           </a>{" "}
-          to learn more about the publishing criteria.
+            to learn more about the publishing criteria.
         </p>
-        <PublishForm
-          fetchInitialValues={null}
-          initialValues={initialValues}
-          preview={false}
-          submitType="Publish"
-          doSubmit={this.doSubmit}
-        />
-      </div>
+          <PublishForm
+            fetchInitialValues={null}
+            initialValues={initialValues}
+            preview={false}
+            submitType="Publish"
+            doSubmit={this.doSubmit}
+          />
+        </Card.Body>
+      </Card>
     );
   }
 }
 
-class AppDetail extends React.Component {
+interface Match {
+  params: { username: string, app_name: string }
+}
+class AppDetail extends React.Component<{ match: Match }, {}> {
   constructor(props) {
     super(props);
     this.doSubmit = this.doSubmit.bind(this);
@@ -304,24 +348,25 @@ class AppDetail extends React.Component {
     const app_name = this.props.match.params.app_name;
     return axios
       .get(`/publish/api/${username}/${app_name}/detail/`)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
-        return response.data;
+        let data: PublishValues = response.data;
+        return data;
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.log(error);
       });
   }
 
-  doSubmit(data) {
+  doSubmit(data: FormData) {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     console.log(data);
     return axios
       .put(`/publish/api/${username}/${app_name}/detail/`, data)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
-        window.location.replace("/");
+        window.location.href = `/${username}/${app_name}/detail/`;
       });
   }
 
@@ -330,20 +375,22 @@ class AppDetail extends React.Component {
     const app_name = this.props.match.params.app_name;
     const id = `${username}/${app_name}`;
     return (
-      <div>
-        <h2 style={{ marginBottom: "2rem" }}>
-          <a className="primary-text" href={`/${id}/`}>
-            {id}
-          </a>
-        </h2>
-        <PublishForm
-          fetchInitialValues={this.fetchInitialValues}
-          initialValues={null}
-          preview={true}
-          submitType="Update"
-          doSubmit={this.doSubmit}
-        />
-      </div>
+      <Card className="card-outer">
+        <Card.Body>
+          <h2 style={{ marginBottom: "2rem" }}>
+            <a className="primary-text" href={`/${id}/`}>
+              {id}
+            </a>
+          </h2>
+          <PublishForm
+            fetchInitialValues={this.fetchInitialValues}
+            initialValues={null}
+            preview={true}
+            submitType="Update"
+            doSubmit={this.doSubmit}
+          />
+        </Card.Body>
+      </Card>
     );
   }
 }

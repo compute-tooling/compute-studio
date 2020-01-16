@@ -4,6 +4,7 @@ from collections import namedtuple
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse, HttpRequest
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -31,6 +32,7 @@ class SubmitInputs:
         project: Project,
         ioutils: IOClasses,
         compute: Compute,
+        sim: Simulation,
     ):
         self.request = request
         self.user = self.request.user
@@ -39,10 +41,11 @@ class SubmitInputs:
         self.compute = compute
         self.badpost = None
         self.meta_parameters = ioutils.displayer.parsed_meta_parameters()
+        self.sim = sim
 
     def submit(self):
         print(self.request.data)
-        self.ser = InputsSerializer(data=self.request.data)
+        self.ser = InputsSerializer(instance=self.sim.inputs, data=self.request.data)
         is_valid = self.ser.is_valid()
         if not is_valid:
             raise BadPostException(self.ser.errors)
@@ -50,6 +53,15 @@ class SubmitInputs:
         validated_data = self.ser.validated_data
         meta_parameters = validated_data.get("meta_parameters", {})
         adjustment = validated_data.get("adjustment", {})
+        parent_model_pk = validated_data.pop("parent_model_pk", None)
+
+        if parent_model_pk is not None and self.sim.parent_sim is None:
+            parent_sim = get_object_or_404(
+                Simulation, project=self.project, model_pk=parent_model_pk
+            )
+        else:
+            parent_sim = None
+
         try:
             self.valid_meta_params = self.meta_parameters.validate(meta_parameters)
             errors = None
@@ -73,28 +85,34 @@ class SubmitInputs:
             adjustment=result["adjustment"],
             errors_warnings=result["errors_warnings"],
             custom_adjustment=result["custom_adjustment"],
-            project=self.project,
-            owner=getattr(self.request.user, "profile", None),
             job_id=result["job_id"],
             status="PENDING",
+            parent_sim=self.sim.parent_sim or parent_sim,
         )
+        # case where parent sim exists and has not yet been assigned
+        if not self.sim.parent_sim and parent_sim:
+            self.sim.parent_sim = parent_sim
+            self.sim.title = parent_sim.title
+            self.sim.save()
+        # TODO: remove assertion in productin code.
+        assert self.inputs.sim == self.sim
         return self.inputs
 
 
 class SubmitSim:
-    def __init__(self, inputs: Inputs, compute: Compute, sim: Simulation = None):
-        self.inputs = inputs
+    def __init__(self, sim: Simulation, compute: Compute):
         self.compute = compute
         self.sim = sim
 
     def submit(self):
+        inputs = self.sim.inputs
         data = {
-            "meta_param_dict": self.inputs.meta_parameters,
-            "adjustment": self.inputs.deserialized_inputs,
+            "meta_param_dict": inputs.meta_parameters,
+            "adjustment": inputs.deserialized_inputs,
         }
         print("submit", data)
         self.submitted_id, self.max_q_length = self.compute.submit_job(
-            data, self.inputs.project.worker_ext(action=actions.SIM)
+            data, inputs.project.worker_ext(action=actions.SIM)
         )
         print(f"job id: {self.submitted_id}")
         print(f"q lenghth: {self.max_q_length}")
@@ -103,23 +121,18 @@ class SubmitSim:
         return self.sim
 
     def save(self):
-        # create OutputUrl object
-        if self.sim is None:
-            sim = Simulation()
+        sim = self.sim
         sim.status = "PENDING"
         sim.job_id = self.submitted_id
-        sim.inputs = self.inputs
-        sim.owner = self.inputs.owner
-        sim.project = self.inputs.project
         sim.sponsor = sim.project.sponsor
-        sim.model_vers = None
-        sim.webapp_vers = WEBAPP_VERSION
-        sim.model_pk = Simulation.objects.next_model_pk(sim.project)
 
         cur_dt = timezone.now()
+
         future_offset_seconds = (self.max_q_length) * sim.project.exp_task_time
         future_offset = datetime.timedelta(seconds=future_offset_seconds)
         expected_completion = cur_dt + future_offset
         sim.exp_comp_datetime = expected_completion
+
+        sim.creation_date = cur_dt
         sim.save()
         return sim

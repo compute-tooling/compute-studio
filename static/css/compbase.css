@@ -5,6 +5,22 @@ body {
   font-size: 17px;
 }
 
+cs-black-background-color {
+  background-color: #2b2c2d;
+}
+
+cs-white-background-color {
+  background-color: #ffffff;
+}
+
+cs-black-color {
+  color: #2b2c2d;
+}
+
+cs-white-color {
+  color: #ffffff;
+}
+
 .explainer {
   color: #2b2c2d;
 }
@@ -14,8 +30,8 @@ body {
 }
 
 div.card.publish.markdown {
-  background-color: rgba(27, 31, 35, 0.05);
-  padding: 0.8rem;
+  /* background-color: rgba(27, 31, 35, 0.05); */
+  padding: .375rem .75rem;
 }
 
 code {
@@ -44,6 +60,7 @@ code {
 
 /* change the color of active or hovered links */
 .navbar-custom .navbar-nav .nav-link,
+.navbar-custom .nav-item,
 .navbar-custom .nav-item.active .nav-link,
 .navbar-custom .navbar-brand,
 .navbar-custom .navbar-text,
@@ -56,6 +73,23 @@ code {
 .navbar-custom .nav-link:hover,
 .btn-outline-match-nav:hover {
   color: rgb(238, 238, 238, 0.9) !important;
+}
+
+.sim-nav-item .nav-link.active,
+.sim-nav-item .show {
+  /* background-color: rgba(42, 44, 43, 1); */
+  /* darker ==> background-color: rgba(35, 36, 36, 1); */
+  background-color: rgba(60, 62, 62, 1);
+  color: #ffffff;
+  border: 1px solid #2b2c2d;
+}
+
+.sim-nav-item .nav-link,
+.sim-nav-item .show {
+  color: #ffffff;
+  /*darker ==> background-color: rgba(75, 77, 78, 1); */
+  background-color: rgba(87, 90, 91, 1);
+  border: 1px solid #2b2c2d;
 }
 
 /* Large devices (desktops, 992px and up) */
@@ -87,9 +121,14 @@ code {
 /* buttons with navbar color scheme */
 
 .btn-match-nav,
-.nav-pills .nav-link.active {
+.main-navbar .nav-pills .nav-link.active {
   background-color: #2b2c2d !important;
   color: #ffffff !important;
+}
+
+.btn-match-nav:hover {
+  background-color: transparent;
+  color: rgb(238, 238, 238, 0.9) !important;
 }
 
 .btn-outline-match-nav {
@@ -98,8 +137,13 @@ code {
   color: #ffffff !important;
 }
 
+.btn-outline-match-nav:hover {
+  border-color: #ffffff;
+  background-color: transparent;
+}
+
 .inverse-btn-match-nav,
-.nav-pills .nav-link {
+.main-navbar .nav-pills .nav-link {
   color: #2b2c2d !important;
   background-color: #ffffff !important;
 }
@@ -223,4 +267,25 @@ span.default-value {
 
 .color-inherit {
   color: inherit;
+}
+
+
+/* output modal styling */
+.output-modal.modal.show .modal-content {
+  min-width: 100%;
+
+}
+
+.output-modal.modal.show div.modal-dialog.modal-xl {
+  max-width: 1400px;
+}
+
+blockquote {
+  border-left: 2px solid #ddd;
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 10px;
+  color: #aaa;
+  font-style: italic;
+  font-size: 17px !important;
 }

@@ -1,15 +1,23 @@
-import React from "react";
+import * as React from "react";
 import { Card } from "react-bootstrap";
 import * as Sentry from "@sentry/browser";
 
-export default class ErrorBoundary extends React.Component {
+type ErrorState = Readonly<{
+  eventId: any,
+  error: any,
+  errorInfo: any
+}>
+
+export default class ErrorBoundary extends React.Component<{}, ErrorState> {
+  isProduction: boolean
   constructor(props) {
     super(props);
-    this.state = { error: null, errorInfo: null };
+    this.state = { error: null, errorInfo: null, eventId: null };
+    this.isProduction = process.env.NODE_ENV === "production";
   }
 
   componentDidCatch(error, errorInfo) {
-    if (process.env.NODE_ENV === "production") {
+    if (this.isProduction) {
       Sentry.withScope(scope => {
         scope.setExtras(errorInfo);
         const eventId = Sentry.captureException(error);
@@ -28,7 +36,8 @@ export default class ErrorBoundary extends React.Component {
   }
 
   render() {
-    if (this.state.errorInfo) {
+
+    if (this.state.errorInfo && this.isProduction) {
       // Error path
       return (
         <Card className="card-outer">
@@ -49,6 +58,19 @@ export default class ErrorBoundary extends React.Component {
           </Card.Body>
         </Card>
       );
+    } else if (this.state.errorInfo) {
+      return (
+        <Card>
+          <Card.Body>
+            <h2>Something went wrong.</h2>
+            <details style={{ whiteSpace: 'pre-wrap' }}>
+              {this.state.error && this.state.error.toString()}
+              <br />
+              {this.state.errorInfo.componentStack}
+            </details>
+          </Card.Body>
+        </Card>
+      )
     }
 
     return this.props.children;

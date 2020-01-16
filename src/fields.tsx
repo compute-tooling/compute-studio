@@ -1,38 +1,43 @@
-import hljs from "highlight.js/lib/highlight";
-import python from "highlight.js/lib/languages/python";
-import json from "highlight.js/lib/languages/json";
+import * as hljs from "highlight.js/lib/highlight";
+import * as python from "highlight.js/lib/languages/python";
+import * as json from "highlight.js/lib/languages/json";
 hljs.registerLanguage("python", python);
 hljs.registerLanguage("json", json);
 
 import "highlight.js/styles/default.css";
-import React from "react";
+import * as React from "react";
 import { Button } from "react-bootstrap";
-import { FastField } from "formik";
+import { FastField, FieldProps } from "formik";
+
+interface CustomFieldProps {
+  label: string,
+  preview: boolean,
+  exitPreview: () => void;
+  description?: string,
+  allowSpecialChars?: boolean,
+  style?: any,
+}
 
 var Remarkable = require("remarkable");
 
 hljs.initHighlightingOnLoad();
 
-const inputStyle = {
-  width: "50rem"
-};
-
 var md = new Remarkable({
-  highlight: function(str, lang) {
+  highlight: function (str, lang) {
     if ((lang && hljs.getLanguage(lang)) || true) {
       try {
         return hljs.highlight(lang, str).value;
-      } catch (err) {}
+      } catch (err) { }
     }
 
     try {
       return hljs.highlightAuto(str).value;
-    } catch (err) {}
+    } catch (err) { }
     return ""; // use external default escaping
   }
 });
 
-function markdownElement(markdownText) {
+export function markdownElement(markdownText, exitPreview: () => void, style: any = {}) {
   // Box is not displayed if markdownText is an empty string.
   if (!markdownText) {
     markdownText = "&#8203;"; // space character
@@ -41,81 +46,75 @@ function markdownElement(markdownText) {
     __html: md.render(markdownText)
   };
   return (
-    <div className="markdown-wrapper mt-2 mb-2">
+    <div className="markdown-wrapper" onClick={exitPreview}>
       <div
         dangerouslySetInnerHTML={marked} // needs to be sanitized somehow.
         className="card publish markdown"
-        style={inputStyle}
+        style={style}
       />
     </div>
   );
 }
 
-function titleChange(e, onChange) {
-  if (e.target.name == "title") {
-    e.target.value = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
-  }
+function titleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, onChange) {
+  e.target.value = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
   onChange(e);
 }
 
-export const TextField = ({ field, form: { touched, errors }, ...props }) => {
+export const TextField = (fieldProps: FieldProps<any> & CustomFieldProps) => {
+  const {
+    field,
+    form: { touched, errors },
+    ...props
+  } = fieldProps;
+  let allowSpecialChars = props.allowSpecialChars !== null ? true : props.allowSpecialChars;
+  let style = props.style ? props.style : {};
   if (props.preview) {
-    var element = markdownElement(field.value);
+    return markdownElement(field.value, props.exitPreview, style = props.style);
   } else {
-    var element = (
+    return (
       <input
         className="form-control"
         {...field}
         {...props}
-        preview=""
-        style={inputStyle}
-        onChange={e => titleChange(e, field.onChange)}
+        style={style}
+        onChange={e => allowSpecialChars ? field.onChange(e) : titleChange(e, field.onChange)}
       />
     );
   }
-  return (
-    <div>
-      <label>
-        <b>{props.label}:</b>
-        {element}
-      </label>
-    </div>
-  );
 };
 
-function checkboxChange(e, onChange, placeholder = null) {
+function checkboxChange(e: React.ChangeEvent<HTMLInputElement>, onChange, placeholder = null) {
   let value =
     e.target.value != null && e.target.value !== ""
       ? e.target.value
       : placeholder;
   if (typeof value === "boolean") {
+    // @ts-ignore
     e.target.value = !value;
   } else {
+    // TODO: what is this case
+    // @ts-ignore
     e.target.value = value === "true" ? false : true;
   }
   onChange(e);
 }
 
-export const CheckboxField = ({
-  field,
-  form: { touched, errors },
-  ...props
-}) => {
+export const CheckboxField = (fieldProps: FieldProps<any> & CustomFieldProps) => {
+  const {
+    field,
+    form: { touched, errors },
+    ...props
+  } = fieldProps;
   return (
-    <div>
-      <label>
-        <b>{props.label}</b>
-        {props.description ? props.description : ""}
-        <input
-          className="form-check mt-1"
-          type="checkbox"
-          {...field}
-          {...props}
-          checked={field.value}
-          onChange={e => checkboxChange(e, field.onChange)}
-        />
-      </label>
-    </div>
+    <input
+      className="form-check mt-1"
+      type="checkbox"
+      {...field}
+      {...props}
+      checked={field.value}
+      onChange={e => checkboxChange(e, field.onChange)}
+    />
   );
 };
 
@@ -149,35 +148,27 @@ export const TextAreaField = ({
   form: { touched, errors },
   ...props
 }) => {
+  let style = props.style ? props.style : {};
   if (props.preview) {
-    var element = markdownElement(field.value);
+    return markdownElement(field.value, props.exitPreview, style);
   } else {
-    var element = (
+    return (
       <textarea
         className="form-control"
         {...field}
         {...props}
         preview=""
-        style={inputStyle}
-        onChange={e => titleChange(e, field.onChange)}
+        style={style}
       />
     );
   }
-  return (
-    <div>
-      <label>
-        <b>{props.label}:</b>
-        {element}
-      </label>
-    </div>
-  );
 };
 
-export const Message = ({ msg, props }) => (
+export const Message = ({ msg }) => (
   <small className={`form-text text-muted`}>{msg}</small>
 );
 
-export const RedMessage = ({ msg, props }) => (
+export const RedMessage = ({ msg }) => (
   <p
     className={`form-text font-weight-bold`}
     style={{ color: "#dc3545", fontSize: "80%" }}
@@ -191,29 +182,22 @@ export const CodeSnippetField = ({
   form: { touched, errors },
   ...props
 }) => {
+  let style = props.style ? props.style : {};
   if (props.preview) {
     const ticks = "```";
     const markdownText = `${ticks}${props.language}\n${field.value}\n${ticks}`;
-    var element = markdownElement(markdownText);
+    return markdownElement(markdownText, props.exitPreview, style);
   } else {
-    var element = (
+    return (
       <textarea
         className="form-control"
         {...field}
         {...props}
         preview=""
-        style={inputStyle}
+        style={style}
       />
     );
   }
-  return (
-    <div>
-      <label>
-        <b>{props.label + ":"}</b> {props.description}
-        {element}
-      </label>
-    </div>
-  );
 };
 
 export const ServerSizeField = ({
@@ -229,17 +213,20 @@ export const ServerSizeField = ({
       </label>
       <p>
         <select name="server_size" onChange={field.onChange}>
-          <option multiple={true} value={[4, 2]}>
+          <
+            //@ts-ignore
+            option multiple={true} value={[4, 2]}>
             4 GB 2 vCPUs
           </option>
-          <option multiple={true} value={[8, 2]}>
+          <
+            //@ts-ignore
+            option multiple={true} value={[8, 2]}>
             8 GB 2 vCPUs
           </option>
-          <option multiple={true} value={[16, 4]}>
+          <
+            //@ts-ignore
+            option multiple={true} value={[16, 4]}>
             16 GB 4 vCPUs
-          </option>
-          <option multiple={true} value={[32, 8]}>
-            32 GB 8 vCPUs
           </option>
         </select>
       </p>
@@ -274,6 +261,7 @@ export const SelectField = ({ field, form, ...props }) => {
         onBlur={handleBlur}
         value={value}
         style={props.style}
+        disabled={props.disabled}
       />
       <datalist id={`datalist-${field.name}`}>{props.options}</datalist>
     </>
@@ -284,8 +272,9 @@ export function getField(
   fieldName,
   data,
   placeholder,
+  readOnly = false,
   style = {},
-  isMulti = false
+  isMulti = false,
 ) {
   const makeOptions = choices => {
     let opts = choices.map(choice => (
@@ -316,6 +305,7 @@ export function getField(
           options={makeOptions(choices)}
           placeholder={placeholder}
           style={style}
+          disabled={readOnly}
         />
       );
     } else {
@@ -326,6 +316,7 @@ export function getField(
           component="select"
           placeholder={placeholder}
           style={style}
+          disabled={readOnly}
         >
           {makeOptions(data.validators.choice.choices)}
         </FastField>
@@ -338,6 +329,7 @@ export function getField(
         name={fieldName}
         placeholder={placeholder}
         style={style}
+        disabled={readOnly}
       />
     );
   }

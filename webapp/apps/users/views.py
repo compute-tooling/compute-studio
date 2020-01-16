@@ -42,17 +42,6 @@ class SignUp(generic.CreateView):
         return context
 
 
-class UserProfile(View):
-    template_name = "profile/profile_visit.html"
-    projects = Project.objects.all()
-
-    def get(self, request, *args, **kwargs):
-        username = kwargs["username"]
-        User = get_user_model()
-        get_object_or_404(User, username__iexact=username)
-        return render(request, self.template_name, {"username": username})
-
-
 class UserSettings(View):
     template_name = ("registration/settings_base.html",)
 
@@ -128,8 +117,10 @@ class AccessStatusAPI(GetProjectMixin, APIView):
         user = request.user
         if user.is_authenticated and user.profile:
             user_status = user.profile.status
+            username = user.username
         else:
             user_status = "anon"
+            username = None
 
         if kwargs:
             project = self.get_object(**kwargs)
@@ -149,9 +140,14 @@ class AccessStatusAPI(GetProjectMixin, APIView):
                     "exp_cost": exp_cost,
                     "exp_time": exp_time,
                     "api_url": reverse("access_project", kwargs=kwargs),
+                    "username": username,
                 }
             )
         else:
             return Response(
-                {"user_status": user_status, "api_url": reverse("access_status")}
+                {
+                    "user_status": user_status,
+                    "api_url": reverse("access_status"),
+                    "username": username,
+                }
             )
