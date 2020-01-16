@@ -389,7 +389,7 @@ class Simulation(models.Model):
         if request is not None:
             url = f"https://{request.get_host()}{url}"
         pic = None
-        if self.outputs and self.outputs_version != "v0":
+        if self.outputs and self.outputs_version() != "v0":
             output = self.outputs["outputs"]["renderable"]["outputs"][:1]
             if output:
                 output = cs_storage.add_screenshot_links(
