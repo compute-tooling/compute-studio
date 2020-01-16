@@ -131,7 +131,7 @@ class ProjectAPIView(GetProjectMixin, APIView):
                 # Http 401 exception if mail credentials are not set up.
                 except Exception:
                     pass
-                return Response(status=status.HTTP_200_OK)
+                return Response(serializer.data, status=status.HTTP_200_OK)
             else:
                 print("error", request, serializer.errors)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

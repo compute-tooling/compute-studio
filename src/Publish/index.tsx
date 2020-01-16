@@ -12,10 +12,15 @@ import {
   ServerSizeField,
   Message,
   CheckboxField
-} from "./fields";
+} from "../fields";
+import { Card } from 'react-bootstrap';
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
+
+const inputStyle = {
+  width: "100%"
+};
 
 const domContainer = document.querySelector("#publish-container");
 const requiredMessage = "This field is required.";
@@ -132,6 +137,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                     auth: "You must be logged in to publish a model."
                   });
                 }
+                window.scroll(0, 0);
               });
           }}
           validationSchema={Schema}
@@ -142,19 +148,20 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                   {status.project_exists}
                 </div>
               ) : (
-                <div />
-              )}
+                  <div />
+                )}
               {status && status.auth ? (
                 <div className="alert alert-danger" role="alert">
                   {status.auth}
                 </div>
               ) : (
-                <div />
-              )}
+                  <div />
+                )}
               <div className="mt-5">
                 <h3>About</h3>
                 <hr className="my-3" />
                 <div className="mt-1 mb-1">
+                  <label><b>Title</b></label>
                   <Field
                     type="text"
                     name="title"
@@ -162,6 +169,9 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                     placeholder="Name of the app"
                     label="App Name"
                     preview={this.state.preview}
+                    exitPreview={() => this.setState({ preview: false })}
+                    allowSpecialChars={false}
+                    style={inputStyle}
                   />
                   <ErrorMessage
                     name="title"
@@ -169,6 +179,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                   />
                 </div>
                 <div className="mt-1 mb-1">
+                  <label><b>Oneliner</b></label>
                   <Field
                     type="text"
                     name="oneliner"
@@ -176,6 +187,8 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                     placeholder="Short description of this app"
                     label="One-Liner"
                     preview={this.state.preview}
+                    exitPreview={() => this.setState({ preview: false })}
+                    style={inputStyle}
                   />
                   <ErrorMessage
                     name="oneliner"
@@ -183,6 +196,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                   />
                 </div>
                 <div className="mt-1 mb-1">
+                  <label><b>README</b></label>
                   <Field
                     type="text"
                     name="description"
@@ -190,6 +204,8 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                     placeholder="Description of this app"
                     label="README"
                     preview={this.state.preview}
+                    exitPreview={() => this.setState({ preview: false })}
+                    style={inputStyle}
                   />
                   <ErrorMessage
                     name="description"
@@ -198,7 +214,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                 </div>
                 <div className="mt-1 mb-1">
                   <label>
-                    <b>Repo URL:</b>
+                    <b>Repo URL</b>
                   </label>
                   <p className="mt-1 mb-1">
                     <Field
@@ -206,6 +222,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                       type="url"
                       name="repo_url"
                       placeholder="Link to the model's code repository"
+                      style={inputStyle}
                     />
                     <ErrorMessage
                       name="repo_url"
@@ -214,6 +231,8 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                   </p>
                 </div>
                 <div className="mt-3 mb-1">
+                  <label><b>Listed:</b>Include this app in the public list of apps</label>
+
                   <Field
                     component={CheckboxField}
                     label="Listed: "
@@ -239,6 +258,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                       className="form-control w-50rem"
                       type="number"
                       name="exp_task_time"
+                      style={inputStyle}
                     />
                     <ErrorMessage
                       name="exp_task_time"
@@ -273,38 +293,42 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
   }
 }
 
-class CreateApp extends React.Component<{doSubmit: PublishProps["doSubmit"]}, {}> {
+class CreateApp extends React.Component<{ doSubmit: PublishProps["doSubmit"] }, {}> {
   constructor(props) {
     super(props);
     this.doSubmit = this.doSubmit.bind(this);
   }
   doSubmit(data) {
-    return axios.post("/publish/api/", data).then(function(response) {
+    return axios.post("/publish/api/", data).then(function (response) {
       console.log("post", response);
-      window.location.replace("/");
+      let data: { title: string, owner: string };
+      data = response.data;
+      window.location.href = `/${data.owner}/${data.title}/detail/`;
     });
   }
   render() {
     return (
-      <div>
-        <h1 style={{ marginBottom: "2rem" }}>Publish</h1>
+      <Card className="card-outer">
+        <Card.Body>
+          <h1 style={{ marginBottom: "2rem" }}>Publish</h1>
 
-        <p className="lead">
-          Publish your model on Compute Studio. Check out the
+          <p className="lead">
+            Publish your model on Compute Studio. Check out the
           <a href="https://docs.compute.studio/publish/guide/">
-            {" "}
-            developer documentation
+              {" "}
+              developer documentation
           </a>{" "}
-          to learn more about the publishing criteria.
+            to learn more about the publishing criteria.
         </p>
-        <PublishForm
-          fetchInitialValues={null}
-          initialValues={initialValues}
-          preview={false}
-          submitType="Publish"
-          doSubmit={this.doSubmit}
-        />
-      </div>
+          <PublishForm
+            fetchInitialValues={null}
+            initialValues={initialValues}
+            preview={false}
+            submitType="Publish"
+            doSubmit={this.doSubmit}
+          />
+        </Card.Body>
+      </Card>
     );
   }
 }
@@ -312,7 +336,7 @@ class CreateApp extends React.Component<{doSubmit: PublishProps["doSubmit"]}, {}
 interface Match {
   params: { username: string, app_name: string }
 }
-class AppDetail extends React.Component<{match: Match}, {}> {
+class AppDetail extends React.Component<{ match: Match }, {}> {
   constructor(props) {
     super(props);
     this.doSubmit = this.doSubmit.bind(this);
@@ -324,12 +348,12 @@ class AppDetail extends React.Component<{match: Match}, {}> {
     const app_name = this.props.match.params.app_name;
     return axios
       .get(`/publish/api/${username}/${app_name}/detail/`)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
         let data: PublishValues = response.data;
         return data;
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.log(error);
       });
   }
@@ -340,9 +364,9 @@ class AppDetail extends React.Component<{match: Match}, {}> {
     console.log(data);
     return axios
       .put(`/publish/api/${username}/${app_name}/detail/`, data)
-      .then(function(response) {
+      .then(function (response) {
         console.log(response);
-        window.location.replace("/");
+        window.location.href = `/${username}/${app_name}/detail/`;
       });
   }
 
@@ -351,20 +375,22 @@ class AppDetail extends React.Component<{match: Match}, {}> {
     const app_name = this.props.match.params.app_name;
     const id = `${username}/${app_name}`;
     return (
-      <div>
-        <h2 style={{ marginBottom: "2rem" }}>
-          <a className="primary-text" href={`/${id}/`}>
-            {id}
-          </a>
-        </h2>
-        <PublishForm
-          fetchInitialValues={this.fetchInitialValues}
-          initialValues={null}
-          preview={true}
-          submitType="Update"
-          doSubmit={this.doSubmit}
-        />
-      </div>
+      <Card className="card-outer">
+        <Card.Body>
+          <h2 style={{ marginBottom: "2rem" }}>
+            <a className="primary-text" href={`/${id}/`}>
+              {id}
+            </a>
+          </h2>
+          <PublishForm
+            fetchInitialValues={this.fetchInitialValues}
+            initialValues={null}
+            preview={true}
+            submitType="Update"
+            doSubmit={this.doSubmit}
+          />
+        </Card.Body>
+      </Card>
     );
   }
 }

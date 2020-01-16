@@ -238,6 +238,7 @@ def test_models(db, profile):
         inputs=inputs,
         creation_date=make_aware(datetime.datetime(2019, 2, 1)),
         model_pk=Simulation.objects.next_model_pk(project),
+        is_public=False,
     )
     assert obj0
 
@@ -252,6 +253,7 @@ def test_models(db, profile):
         inputs=inputs,
         creation_date=make_aware(datetime.datetime(2019, 1, 1)),
         model_pk=Simulation.objects.next_model_pk(project),
+        is_public=False,
     )
     assert obj1
     return obj0, obj1

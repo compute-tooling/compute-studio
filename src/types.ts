@@ -1,6 +1,3 @@
-import { Interface } from "readline";
-import { string } from "prop-types";
-
 export interface ValueObject {
   value: number | string | Date | Array<number | string | Date>;
   [key: string]: any;
@@ -71,30 +68,6 @@ export interface ParamToolsConfig {
   [paramName: string]: ParamToolsParam;
 }
 
-export interface APIDetail {
-  adjustment: { [msect: string]: { [paramName: string]: Array<ValueObject> } };
-  meta_parameters: { [paramName: string]: Array<ValueObject> };
-}
-
-export interface AccessStatus {
-  user_status: "inactive" | "customer" | "profile" | "anon";
-  api_url: "string";
-  is_sponsored?: boolean;
-  can_run?: boolean;
-  server_cost?: number;
-  exp_cost?: number;
-  exp_time?: number;
-}
-
-export interface APIData {
-  model_parameters: { [msect: string]: ParamToolsConfig };
-  meta_parameters: ParamToolsConfig;
-  label_to_extend?: string;
-  extend?: boolean;
-  detail: APIDetail;
-  accessStatus?: AccessStatus;
-}
-
 export interface InitialValues {
   adjustment: {
     [msect: string]: {
@@ -146,6 +119,11 @@ export interface BokehOutput extends RemoteOutput {
   data: { target_id: string; root_id: string, doc: string };
 }
 
+
+// Interfaces below correspond to interfaces defined in:
+// webapp/apps/comp/serializers.py
+// cs_storage/validate.py
+
 export interface RemoteOutputs {
   outputs: {
     renderable: {
@@ -165,6 +143,18 @@ export interface Outputs {
   downloadable: Array<Output | TableOutput | BokehOutput>;
 }
 
+
+export interface AccessStatus {
+  user_status: "inactive" | "customer" | "profile" | "anon";
+  username: string;
+  api_url: string;
+  is_sponsored?: boolean;
+  can_run?: boolean;
+  server_cost?: number;
+  exp_cost?: number;
+  exp_time?: number;
+}
+
 export interface Project {
   title: string;
   oneliner: string;
@@ -176,19 +166,63 @@ export interface Project {
   listed: boolean;
 }
 
-export interface SimAPIData<T> {
-  traceback?: string;
-  creation_date: Date;
+export interface MiniSimulation {
   api_url: string;
+  creation_date: Date;
   gui_url: string;
-  eta: number;
-  original_eta: number;
+  is_public: boolean;
   model_pk: number;
-  status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS";
   model_version: string;
-  run_time: 322;
+  owner: string;
+  readme: string;
+  status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
+  title: string;
+}
+
+
+export interface InputsDetail {
+  adjustment: { [msect: string]: { [paramName: string]: Array<ValueObject> } };
+  api_url: string;
+  client: string;
+  custom_adjustment: any;
+  errors_warnings: { [msect: string]: { errors: { [paramName: string]: Array<string> } } };
+  gui_url: string;
+  job_id: string;
+  meta_parameters: { [paramName: string]: Array<ValueObject> };
+  parent_model_pk: number;
+  sim: MiniSimulation;
+  status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
+  has_write_access: boolean;
+  traceback: string;
+}
+
+export interface Inputs {
+  model_parameters: { [msect: string]: ParamToolsConfig };
+  meta_parameters: ParamToolsConfig;
+  label_to_extend?: string;
+  extend?: boolean;
+  detail?: InputsDetail;
+}
+
+export interface Simulation<T> {
+  api_url: string;
+  creation_date: Date;
+  eta: number;
   exp_comp_datetime: Date;
-  owner: number;
-  project: Project;
+  gui_url: string;
+  is_public: boolean;
+  has_write_access: boolean;
+  model_pk: number;
+  model_version: string;
+  original_eta: number;
   outputs: T;
+  outputs_version: string;
+  owner: string;
+  parent_sims: Array<MiniSimulation>;
+  project: Project;
+  readme: Node[];
+  run_time: number;
+  status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
+  title: string;
+  traceback: string;
 }

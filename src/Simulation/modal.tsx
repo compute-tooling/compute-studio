@@ -2,12 +2,11 @@ import { Button, Modal, Collapse } from "react-bootstrap";
 import * as React from "react";
 import ReactLoading from "react-loading";
 
-import { LoginForm, SignupForm } from "./AuthForms";
-import axios from "axios";
-import { AccessStatus } from "./types";
+import { AuthDialog } from "../auth";
+import { AccessStatus } from "../types";
 
 
-export const ValidatingModal: React.FC<{defaultShow?: boolean}> = ({defaultShow = true}) => {
+export const ValidatingModal: React.FC<{ defaultShow?: boolean }> = ({ defaultShow = true }) => {
   const [show, setShow] = React.useState(defaultShow);
 
   return (
@@ -26,7 +25,7 @@ export const ValidatingModal: React.FC<{defaultShow?: boolean}> = ({defaultShow 
   );
 }
 
-const PricingInfoCollapse: React.FC<{accessStatus: AccessStatus}> = ({ accessStatus }) => {
+const PricingInfoCollapse: React.FC<{ accessStatus: AccessStatus }> = ({ accessStatus }) => {
   const [collapseOpen, setCollapseOpen] = React.useState(false);
 
   return (
@@ -56,61 +55,12 @@ const PricingInfoCollapse: React.FC<{accessStatus: AccessStatus}> = ({ accessSta
   );
 }
 
-const RequireLoginDialog: React.FC<{
-  accessStatus: AccessStatus, 
-  show: boolean, 
-  setShow?: React.Dispatch<any>, 
-  handleSubmit: ()=>void
-}> = ({ accessStatus, show, setShow, handleSubmit }) => {
-  const [authenticated, setAuthStatus] = React.useState(false);
-  const [hasSubmitted, setHasSubmitted] = React.useState(false);
-  const [newDialog, updateNewDialog] = React.useState(null);
-  const [isLogIn, setIsLogIn] = React.useState(true);
-  const getVariant = (isLogIn: boolean) => isLogIn ? "outline-primary" : "outline-success"
-  if (authenticated && !hasSubmitted) {
-    axios.get(
-      accessStatus.api_url
-    ).then(resp => {
-      let accessStatus = resp.data;
-      let dialog = <Dialog accessStatus={accessStatus} show={show} setShow={null} handleSubmit={handleSubmit} />
-      updateNewDialog(dialog)
-    });
-    setHasSubmitted(true);
-  }
-  if (newDialog !== null) {
-    return newDialog;
-  }
-  
-  return (
-    <Modal show={show} onHide={() => setShow(false)}>
-      <Modal.Header closeButton>
-        <Modal.Title>You must be logged in to run simulations.</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div className="mt-2" >
-          {isLogIn ?
-            <LoginForm setAuthStatus={setAuthStatus} />
-            :
-            <SignupForm setAuthStatus={setAuthStatus} />
-          }
-        </div>
-        <Button className="mt-3" variant={getVariant(isLogIn)} onClick={() => setIsLogIn(!isLogIn)} >{!isLogIn ? "Log in" : "Sign up"}</Button>
-      </Modal.Body>
-
-      <Modal.Footer>
-        <Button variant="outline-secondary" onClick={() => setShow(false)}>
-          Close
-        </Button>
-      </Modal.Footer>
-    </Modal >
-  );
-}
 
 const RequirePmtDialog: React.FC<{
-  accessStatus: AccessStatus, 
-  show: boolean, 
-  setShow?: React.Dispatch<any>, 
-  handleSubmit: ()=>void
+  accessStatus: AccessStatus,
+  show: boolean,
+  setShow?: React.Dispatch<any>,
+  handleSubmit: () => void
 }> = ({ accessStatus, show, setShow, handleSubmit }) => {
   const handleCloseWithRedirect = (e, redirectLink) => {
     e.preventDefault();
@@ -142,10 +92,10 @@ const RequirePmtDialog: React.FC<{
 }
 
 const RunDialog: React.FC<{
-  accessStatus: AccessStatus, 
-  show: boolean, 
-  setShow?: React.Dispatch<any>, 
-  handleSubmit: ()=>void
+  accessStatus: AccessStatus,
+  show: boolean,
+  setShow?: React.Dispatch<any>,
+  handleSubmit: () => void
 }> = ({ accessStatus, show, setShow, handleSubmit }) => {
   const handleCloseWithSubmit = () => {
     setShow(false);
@@ -189,32 +139,39 @@ const RunDialog: React.FC<{
 }
 
 const Dialog: React.FC<{
-  accessStatus: AccessStatus, 
-  show: boolean, 
-  setShow?: React.Dispatch<any>, 
-  handleSubmit: ()=>void
-}> = ({ accessStatus, show, setShow, handleSubmit }) => {
-  if (setShow == null) {
-    [show, setShow] = React.useState(show);
-  }
+  accessStatus: AccessStatus,
+  resetAccessStatus: () => void;
+  show: boolean,
+  setShow: React.Dispatch<any>,
+  handleSubmit: () => void
+}> = ({ accessStatus, resetAccessStatus, show, setShow, handleSubmit }) => {
+  // pass new show and setShow so main run dialog is not closed.
+  const [authShow, setAuthShow] = React.useState(true);
   if (accessStatus.can_run) {
     return <RunDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />;
   } else if (accessStatus.user_status === "anon") {
-    return <RequireLoginDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />;
+    // only consider showing AuthDialog if the run dialog is shown.
+    return <AuthDialog show={show ? authShow : false} setShow={setAuthShow} initialAction="sign-up" resetAccessStatus={resetAccessStatus} />;
   } else if (accessStatus.user_status === "profile") {
     return <RequirePmtDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />
   }
 }
 
 
-export const RunModal: React.FC<{handleSubmit: () => void, accessStatus: AccessStatus}> = ({ handleSubmit, accessStatus }) => {
-  const [show, setShow] = React.useState(false);
+export const RunModal: React.FC<{
+  showModal: boolean,
+  setShowModal: (showModal: boolean) => void,
+  action: "Run" | "Fork and Run",
+  handleSubmit: () => void,
+  accessStatus: AccessStatus,
+  resetAccessStatus: () => void,
+}> = ({ showModal, setShowModal, action, handleSubmit, accessStatus, resetAccessStatus }) => {
 
   let runbuttontext: string;
   if (!accessStatus.is_sponsored) {
-    runbuttontext = `Run ($${accessStatus.exp_cost})`;
+    runbuttontext = `${action} ($${accessStatus.exp_cost})`;
   } else {
-    runbuttontext = "Run";
+    runbuttontext = action;
   }
 
   return (
@@ -222,22 +179,21 @@ export const RunModal: React.FC<{handleSubmit: () => void, accessStatus: AccessS
       <div className="card card-body card-outer">
         <Button
           variant="primary"
-          onClick={() => setShow(true)}
+          onClick={() => setShowModal(true)}
           className="btn btn-block btn-success"
         >
           <b>{runbuttontext}</b>
         </Button>
       </div>
-      <Dialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />
+      <Dialog accessStatus={accessStatus} resetAccessStatus={resetAccessStatus} show={showModal} setShow={setShowModal} handleSubmit={handleSubmit} />
     </>
   );
 };
 
-export const AuthModal: React.FC<{}> = () => {
+export const AuthModal: React.FC<{ msg?: string }> = ({ msg = "You must be logged in to run simulations." }) => {
   const [show, setShow] = React.useState(true);
 
   const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
   const handleCloseWithRedirect = (e, redirectLink) => {
     e.preventDefault();
     setShow(false);
@@ -249,7 +205,7 @@ export const AuthModal: React.FC<{}> = () => {
         <Modal.Header closeButton>
           <Modal.Title>Sign up</Modal.Title>
         </Modal.Header>
-        <Modal.Body>You must be logged in to run simulations.</Modal.Body>
+        <Modal.Body>{msg}</Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>
             Close
@@ -258,13 +214,42 @@ export const AuthModal: React.FC<{}> = () => {
             variant="secondary"
             onClick={e => handleCloseWithRedirect(e, "/users/login")}
           >
-            <b>Log in</b>
+            <b>Sign in</b>
           </Button>
           <Button
             variant="success"
             onClick={e => handleCloseWithRedirect(e, "/users/signup")}
           >
             <b>Sign up</b>
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
+};
+
+
+export const UnsavedChangesModal: React.FC<{ handleClose: () => void }> = ({ handleClose }) => {
+  const [show, setShow] = React.useState(true);
+  const close = () => {
+    setShow(false)
+    handleClose()
+  };
+
+  return (
+    <>
+      <Modal show={show} onHide={close}>
+        <Modal.Header closeButton>
+          <Modal.Title>Unsaved Changes</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          You have unsaved changes in the inputs form.
+          You must create a new simulation to get new
+          outputs corresponding to these changes.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-primary" onClick={close}>
+            Close
           </Button>
         </Modal.Footer>
       </Modal>

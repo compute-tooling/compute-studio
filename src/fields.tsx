@@ -12,16 +12,15 @@ import { FastField, FieldProps } from "formik";
 interface CustomFieldProps {
   label: string,
   preview: boolean,
+  exitPreview: () => void;
   description?: string,
+  allowSpecialChars?: boolean,
+  style?: any,
 }
 
 var Remarkable = require("remarkable");
 
 hljs.initHighlightingOnLoad();
-
-const inputStyle = {
-  width: "50rem"
-};
 
 var md = new Remarkable({
   highlight: function (str, lang) {
@@ -38,7 +37,7 @@ var md = new Remarkable({
   }
 });
 
-function markdownElement(markdownText) {
+export function markdownElement(markdownText, exitPreview: () => void, style: any = {}) {
   // Box is not displayed if markdownText is an empty string.
   if (!markdownText) {
     markdownText = "&#8203;"; // space character
@@ -47,20 +46,18 @@ function markdownElement(markdownText) {
     __html: md.render(markdownText)
   };
   return (
-    <div className="markdown-wrapper mt-2 mb-2">
+    <div className="markdown-wrapper" onClick={exitPreview}>
       <div
         dangerouslySetInnerHTML={marked} // needs to be sanitized somehow.
         className="card publish markdown"
-        style={inputStyle}
+        style={style}
       />
     </div>
   );
 }
 
 function titleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, onChange) {
-  if (e.target.name == "title") {
-    e.target.value = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
-  }
+  e.target.value = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
   onChange(e);
 }
 
@@ -70,22 +67,21 @@ export const TextField = (fieldProps: FieldProps<any> & CustomFieldProps) => {
     form: { touched, errors },
     ...props
   } = fieldProps;
-  return (
-    <div>
-      <label>
-        <b>{props.label}:</b>
-        {props.preview ? markdownElement(field.value) : (
-          <input
-            className="form-control"
-            {...field}
-            {...props}
-            style={inputStyle}
-            onChange={e => titleChange(e, field.onChange)}
-          />
-        )}
-      </label>
-    </div>
-  );
+  let allowSpecialChars = props.allowSpecialChars !== null ? true : props.allowSpecialChars;
+  let style = props.style ? props.style : {};
+  if (props.preview) {
+    return markdownElement(field.value, props.exitPreview, style = props.style);
+  } else {
+    return (
+      <input
+        className="form-control"
+        {...field}
+        {...props}
+        style={style}
+        onChange={e => allowSpecialChars ? field.onChange(e) : titleChange(e, field.onChange)}
+      />
+    );
+  }
 };
 
 function checkboxChange(e: React.ChangeEvent<HTMLInputElement>, onChange, placeholder = null) {
@@ -111,20 +107,14 @@ export const CheckboxField = (fieldProps: FieldProps<any> & CustomFieldProps) =>
     ...props
   } = fieldProps;
   return (
-    <div>
-      <label>
-        <b>{props.label}</b>
-        {props.description ? props.description : ""}
-        <input
-          className="form-check mt-1"
-          type="checkbox"
-          {...field}
-          {...props}
-          checked={field.value}
-          onChange={e => checkboxChange(e, field.onChange)}
-        />
-      </label>
-    </div>
+    <input
+      className="form-check mt-1"
+      type="checkbox"
+      {...field}
+      {...props}
+      checked={field.value}
+      onChange={e => checkboxChange(e, field.onChange)}
+    />
   );
 };
 
@@ -158,28 +148,20 @@ export const TextAreaField = ({
   form: { touched, errors },
   ...props
 }) => {
+  let style = props.style ? props.style : {};
   if (props.preview) {
-    var element = markdownElement(field.value);
+    return markdownElement(field.value, props.exitPreview, style);
   } else {
-    var element = (
+    return (
       <textarea
         className="form-control"
         {...field}
         {...props}
         preview=""
-        style={inputStyle}
-        onChange={e => titleChange(e, field.onChange)}
+        style={style}
       />
     );
   }
-  return (
-    <div>
-      <label>
-        <b>{props.label}:</b>
-        {element}
-      </label>
-    </div>
-  );
 };
 
 export const Message = ({ msg }) => (
@@ -200,29 +182,22 @@ export const CodeSnippetField = ({
   form: { touched, errors },
   ...props
 }) => {
+  let style = props.style ? props.style : {};
   if (props.preview) {
     const ticks = "```";
     const markdownText = `${ticks}${props.language}\n${field.value}\n${ticks}`;
-    var element = markdownElement(markdownText);
+    return markdownElement(markdownText, props.exitPreview, style);
   } else {
-    var element = (
+    return (
       <textarea
         className="form-control"
         {...field}
         {...props}
         preview=""
-        style={inputStyle}
+        style={style}
       />
     );
   }
-  return (
-    <div>
-      <label>
-        <b>{props.label + ":"}</b> {props.description}
-        {element}
-      </label>
-    </div>
-  );
 };
 
 export const ServerSizeField = ({

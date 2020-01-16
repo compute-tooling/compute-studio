@@ -43,63 +43,14 @@ from webapp.apps.comp.exceptions import AppError, ValidationError
 from webapp.apps.comp.serializers import OutputsSerializer
 
 
-from .core import AbstractRouterView, InputsMixin, GetOutputsObjectMixin
+from .core import InputsMixin, GetOutputsObjectMixin
 
 BUCKET = os.environ.get("BUCKET")
 
 
-class InputsMixin:
-    """
-    Define class attributes and common methods for inputs form views.
-    """
-
-    template_name = "comp/inputs_form.html"
-    has_errors = False
-    webapp_version = WEBAPP_VERSION
-
-    def project_context(self, request, project):
-        user = request.user
-        provided_free = project.sponsor is not None
-        user_can_run = self.user_can_run(user, project)
-        rate = round(project.server_cost, 2)
-        exp_cost, exp_time = project.exp_job_info(adjust=True)
-
-        context = {
-            "rate": f"${rate}/hour",
-            "project_name": project.title,
-            "owner": project.owner.user.username,
-            "app_description": project.safe_description,
-            "app_oneliner": project.oneliner,
-            "user_can_run": user_can_run,
-            "exp_cost": f"${exp_cost}",
-            "exp_time": f"{exp_time} seconds",
-            "provided_free": provided_free,
-            "app_url": project.app_url,
-        }
-        return context
-
-    def user_can_run(self, user, project):
-        """
-        The user_can_run method determines if the user has sufficient
-        credentials for running this model. The result of this method is
-        used to determine which buttons and information is displayed to the
-        user regarding their credential status (not logged in v. logged in
-        without payment v. logged in with payment). Note that this is actually
-        enforced by RequiresLoginInputsView and RequiresPmtView.
-        """
-        # only requires login and active account.
-        if project.sponsor is not None:
-            return user.is_authenticated and is_profile_active(user)
-        else:  # requires payment method too.
-            return (
-                user.is_authenticated
-                and is_profile_active(user)
-                and has_payment_method(user)
-            )
-
-
-class InputsView(InputsMixin, View):
+class ModelPageView(InputsMixin, View):
     projects = Project.objects.all()
+    template_name = "comp/model.html"
 
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET, kwargs)
@@ -112,42 +63,23 @@ class InputsView(InputsMixin, View):
         return render(request, self.template_name, context)
 
 
-class RequiresLoginInputsView(InputsView):
-    @method_decorator(login_required)
-    @method_decorator(user_passes_test(is_profile_active, login_url="/users/login/"))
-    def post(self, request, *args, **kwargs):
-        return super().post(request, *args, **kwargs)
-
-
-class RequiresPmtInputsView(InputsView):
-    """
-    This class adds a paywall to the _InputsView class.
-    """
-
-    @method_decorator(login_required)
-    @method_decorator(user_passes_test(is_profile_active, login_url="/users/login/"))
-    @method_decorator(
-        user_passes_test(has_payment_method, login_url="/billing/update/")
-    )
-    def post(self, request, *args, **kwargs):
-        return super().post(request, *args, **kwargs)
-
-
-class RouterView(InputsMixin, AbstractRouterView):
+class NewSimView(InputsMixin, View):
     projects = Project.objects.all()
-    placeholder_template = "comp/model_placeholder.html"
-    payment_view = RequiresPmtInputsView
-    login_view = RequiresLoginInputsView
-
-    def unauthorized_get(self, request, project):
-        context = self.project_context(request, project)
-        return render(request, self.placeholder_template, context)
 
     def get(self, request, *args, **kwargs):
-        return self.handle(request, True, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        return self.handle(request, False, *args, **kwargs)
+        print("method=GET", request.GET, kwargs)
+        project = get_object_or_404(
+            self.projects,
+            owner__user__username__iexact=kwargs["username"],
+            title__iexact=kwargs["title"],
+        )
+        context = self.project_context(request, project)
+        context["show_readme"] = False
+        if request.user.is_authenticated and getattr(request.user, "profile", None):
+            sim = Simulation.objects.new_sim(user=request.user, project=project)
+            return redirect(sim.get_absolute_edit_url())
+        else:
+            return render(request, self.template_name, context)
 
 
 class EditSimView(GetOutputsObjectMixin, InputsMixin, View):
@@ -158,21 +90,12 @@ class EditSimView(GetOutputsObjectMixin, InputsMixin, View):
         self.object = self.get_object(
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
+        if self.object.outputs_version() == "v0" and not request.path.endswith("edit/"):
+            return redirect(self.object.get_absolute_url())
         project = self.object.project
         context = self.project_context(request, project)
         context["show_readme"] = False
-        return render(request, self.template_name, context)
-
-
-class EditInputsView(InputsMixin, View):
-    model = Inputs
-
-    def get(self, request, *args, **kwargs):
-        print("edit method=GET", request.GET)
-        self.object = self.model.objects.get_object_from_hashid_or_404(kwargs["hashid"])
-        project = self.object.project
-        context = self.project_context(request, project)
-        context["show_readme"] = False
+        context["sim"] = self.object.context(request=request)
         return render(request, self.template_name, context)
 
 
@@ -215,7 +138,6 @@ class OutputsView(GetOutputsObjectMixin, DetailView):
         )
 
     def dispatch(self, request, *args, **kwargs):
-        compute = Compute()
         model_pk, username, title = (
             kwargs["model_pk"],
             kwargs["username"],
@@ -226,41 +148,14 @@ class OutputsView(GetOutputsObjectMixin, DetailView):
             return self.render_outputs(request)
         elif self.object.traceback is not None:
             return self.fail(model_pk, username, title)
-        else:
-            job_id = str(self.object.job_id)
-            try:
-                job_ready = compute.results_ready(self.object)
-            except JobFailError as jfe:
-                self.object.traceback = ""
-                self.object.save()
-                return self.fail(model_pk, username, title)
-            # something happened and the exception was not caught
-            if job_ready == "FAIL":
-                result = compute.get_results(self.object)
-                if result["traceback"]:
-                    traceback_ = result["traceback"]
-                else:
-                    traceback_ = "Error: The traceback for this error is unavailable."
-                self.object.traceback = traceback_
-                self.object.status = "WORKER_FAILURE"
-                self.object.save()
-                return self.fail(model_pk, username, title)
-            else:
-                if request.method == "POST":
-                    # if not ready yet, insert number of minutes remaining
-                    exp_num_minutes = self.object.compute_eta()
-                    orig_eta = self.object.compute_eta(self.object.creation_date)
-                    return JsonResponse(
-                        {"eta": exp_num_minutes, "origEta": orig_eta}, status=202
-                    )
-                else:
-                    context = {"eta": "100", "origEta": "0"}
-                    return render(request, "comp/not_ready.html", context)
 
     def render_outputs(self, request):
         return {"v0": self.render_v0, "v1": self.render_v1}[
             self.object.outputs["version"]
         ](request)
+
+    def render_v1(self, request):
+        return redirect(self.object.get_absolute_url())
 
     def render_v0(self, request):
         return render(
@@ -270,27 +165,6 @@ class OutputsView(GetOutputsObjectMixin, DetailView):
                 "object": self.object,
                 "result_header": "Results",
                 "tags": TAGS[self.object.project.title],
-            },
-        )
-
-    def render_v1(self, request):
-        renderable = {
-            "renderable": self.object.outputs["outputs"]["renderable"]["outputs"]
-        }
-        # outputs = s3like.read_from_s3like(renderable)
-        return render(
-            request,
-            "comp/outputs/v1/sim_detail.html",
-            {
-                "outputs": renderable,
-                "object": self.object,
-                "result_header": "Results",
-                "bokeh_scripts": {
-                    "cdn_js": CDN.js_files[0],
-                    "cdn_css": CDN.css_files[0],
-                    "widget_js": CDN.js_files[1],
-                    "widget_css": CDN.css_files[1],
-                },
             },
         )
 

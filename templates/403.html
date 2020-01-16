@@ -3,9 +3,13 @@
 
 {% block content %}
 
-<div class="container-fluid" style="margin:20px;">
-    {% csrf_token %}
-    <h4>403: You do not have access to this page.</h4>
+<div class="card card-body card-outer">
+    <h2>You do not have access to this page.</h2>
+    <p class="lead">
+        If you think that you should have access to this page, make sure you that you are signed in.
+        If you still do not have access to this page, you may email <a href="mailto:hank@compute.studio">hank</a> to
+        resolve the problem.
+    </p>
 </div>
 
 {% endblock %}

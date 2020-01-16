@@ -7,4 +7,4 @@ flask
 toolz
 gunicorn
 boto3
-cs-storage
+cs-storage>=1.8.1

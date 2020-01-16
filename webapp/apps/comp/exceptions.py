@@ -1,22 +1,30 @@
 import json
 
 
-class COMPError(Exception):
+class CSError(Exception):
     pass
 
 
-class AppError(COMPError):
+class AppError(CSError):
     def __init__(self, parameters, traceback):
         self.parameters = json.dumps(parameters, indent=4)
         self.traceback = traceback
         super().__init__(traceback)
 
 
-class ValidationError(COMPError):
+class ValidationError(CSError):
     pass
 
 
-class BadPostException(COMPError):
+class BadPostException(CSError):
     def __init__(self, errors, *args, **kwargs):
         self.errors = errors
         super().__init__(*args, **kwargs)
+
+
+class ForkObjectException(CSError):
+    pass
+
+
+class VersionMismatchException(CSError):
+    pass

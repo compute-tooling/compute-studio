@@ -9,42 +9,36 @@
         "renderable": {
             "outputs": [
                 {
-                    "title": "Clayton Kershaw v. All batters",
-                    "filename": "4f6eba43-c36c-4b6d-8a3d-8117b6104f70_e2fa8528-5fbd-4934-98f3-3cc7429fdaa1.json",
+                    "id": "3da9cbab-e634-4381-b2a2-0fd8df28c414",
+                    "title": "Max Scherzer v. All batters",
+                    "filename": "Max Scherzer v. All batters.json",
                     "media_type": "bokeh"
                 },
                 {
-                    "title": "Clayton Kershaw v. Chipper Jones",
-                    "filename": "4f6eba43-c36c-4b6d-8a3d-8117b6104f70_554f0b0e-5d3a-4613-a5ed-f383493ab692.json",
-                    "media_type": "bokeh"
-                },
-                {
-                    "title": "Clayton Kershaw v. David Ortiz",
-                    "filename": "4f6eba43-c36c-4b6d-8a3d-8117b6104f70_c7456a98-8e14-434a-82af-247fd3136757.json",
+                    "id": "1dd082e9-bc92-43c6-ac55-62dadebefe76",
+                    "title": "Max Scherzer v. Brian McCann",
+                    "filename": "Max Scherzer v. Brian McCann.json",
                     "media_type": "bokeh"
                 }
             ],
-            "ziplocation": "4f6eba43-c36c-4b6d-8a3d-8117b6104f70_renderable.zip"
+            "ziplocation": "1d39e4e6-340c-4657-81c6-d294df789396_renderable.zip"
         },
         "downloadable": {
             "outputs": [
                 {
-                    "title": "Clayton Kershaw v. All batters",
-                    "filename": "4f6eba43-c36c-4b6d-8a3d-8117b6104f70_52879b0d-57d8-4a64-a9d9-11fd5e501a4e.csv",
+                    "id": "f575668c-8e14-4a3a-b62c-187c816471af",
+                    "title": "Max Scherzer v. All batters",
+                    "filename": "Max Scherzer v. All batters.csv",
                     "media_type": "CSV"
                 },
                 {
-                    "title": "Clayton Kershaw v. Chipper Jones",
-                    "filename": "4f6eba43-c36c-4b6d-8a3d-8117b6104f70_453d79b4-4873-4ad8-a98a-b7b7dea19804.csv",
-                    "media_type": "CSV"
-                },
-                {
-                    "title": "Clayton Kershaw v. David Ortiz",
-                    "filename": "4f6eba43-c36c-4b6d-8a3d-8117b6104f70_9ef3ae1c-eb26-49bf-8c9f-d03954864548.csv",
+                    "id": "c4e9d1d3-b1f3-47fe-b8dd-63ac5efe516d",
+                    "title": "Max Scherzer v. Brian McCann",
+                    "filename": "Max Scherzer v. Brian McCann.csv",
                     "media_type": "CSV"
                 }
             ],
-            "ziplocation": "4f6eba43-c36c-4b6d-8a3d-8117b6104f70_downloadable.zip"
+            "ziplocation": "1d39e4e6-340c-4657-81c6-d294df789396_downloadable.zip"
         }
     },
     "version": "v1",

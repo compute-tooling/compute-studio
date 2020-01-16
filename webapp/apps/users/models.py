@@ -15,7 +15,7 @@ from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
 from webapp.apps.billing.models import create_billing_objects
-from webapp.apps.comp.models import Inputs
+from webapp.apps.comp.models import Inputs, ANON_BEFORE
 from webapp.settings import DEBUG
 
 
@@ -75,12 +75,15 @@ class Profile(models.Model):
                 agg[month["month"]] += float(month["effective__sum"])
         return {k.strftime("%B %Y"): v for k, v in sorted(agg.items())}
 
-    def sims_breakdown(self, projects=None):
+    def sims_breakdown(self, projects=None, public_only=True):
         if projects is None:
             projects = Project.objects.all()
         runs = {}
+        kwargs = {}
+        if public_only:
+            kwargs.update({"creation_date__gt": ANON_BEFORE, "is_public": True})
         for project in projects:
-            queryset = self.sims.filter(project=project)
+            queryset = self.sims.filter(project=project, **kwargs)
             if queryset.count() > 0:
                 runs[
                     f"{project.owner.user.username}/{project.title}"
