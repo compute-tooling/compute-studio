@@ -1,3 +1,5 @@
 FROM webbase
 
+RUN conda install -c conda-forge pylint black --yes
+
 CMD gunicorn --bind 0.0.0.0:$PORT webapp.wsgi
