@@ -269,7 +269,7 @@ export default class DescriptionComponent extends React.PureComponent<
             <Card className="card-outer">
               <Card.Body>
                 <Row className="justify-content-start">
-                  <Col className="col-sm-5">
+                  <Col className="col-sm-9">
                     <Field name="title">
                       {({
                         field,
@@ -309,7 +309,7 @@ export default class DescriptionComponent extends React.PureComponent<
                       render={msg => <Message msg={msg} />}
                     />
                   </Col>
-                  <Col className={`col-3 ml-sm-auto`}>
+                  <Col className={`col-sm-3 ml-sm-auto`}>
                     <h5 style={{ color: "#6c757d", marginTop: "0.89rem" }}>{subtitle}</h5>
                   </Col>
                 </Row>
@@ -339,14 +339,14 @@ export default class DescriptionComponent extends React.PureComponent<
                     {this.state.forkError}
                   </div> : null}
                 <Row className="justify-content-left">
-                  <Col className="col-sm-2" style={{ paddingLeft: 0 }}>
+                  <Col className="col-sm-2 mt-1" style={{ paddingLeft: 0 }}>
                     <AuthorDropDown author={owner} />
                   </Col>
-                  <Col className="col-sm-2" >
+                  <Col className="col-sm-2 mt-1" >
                     <HistoryDropDown isOwner={this.writable()} history={this.props.remoteSim?.parent_sims || []} />
                   </Col>
                   {this.user() !== "anon" ?
-                    <Col className="col-sm-2">
+                    <Col className="col-sm-2 mt-1">
                       <Tip tip="Create a copy of this simulation.">
                         <Button className="w-100" onClick={this.forkSimulation} variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} >
                           <><FontAwesomeIcon icon={faCodeBranch} className="mr-2" /> Fork</>
@@ -355,9 +355,9 @@ export default class DescriptionComponent extends React.PureComponent<
                     </Col>
                     : null}
                   {this.writable() ?
-                    <Col className="col-sm-2 ml-sm-auto" style={{ paddingRight: 0 }}>
+                    <Col className="col-sm-2 ml-sm-auto mt-1" style={{ paddingRight: 0 }}>
                       <Tip tip={`Make this simulation ${values.is_public ? "private" : "public"}.`}>
-                        <Button variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} className="mb-4 w-100" onClick={e => {
+                        <Button variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} className="mb-4 w-100 mt-1" onClick={e => {
                           e.target.value = !values.is_public;
                           setFieldValue("is_public", !values.is_public);
                           // put handleSubmit in setTimeout since setFieldValue is async
