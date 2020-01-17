@@ -54,7 +54,8 @@ class ModelPageView(InputsMixin, View):
 
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET, kwargs)
-        project = self.projects.get(
+        project = get_object_or_404(
+            self.projects,
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
