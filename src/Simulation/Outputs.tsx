@@ -81,7 +81,7 @@ const OutputModal: React.FC<{
         </Modal.Header>
         <Modal.Body>
           <Card style={{ backgroundColor: "white" }} >
-            <Card.Body className="d-flex justify-content-center" style={{ overflow: "auto" }}>
+            <Card.Body className={`d-flex ${window.innerWidth < 992 ? "justify-content-left" : "justify-content-center"}`} style={{ overflow: "auto" }}>
               {el}
             </Card.Body>
           </Card>
