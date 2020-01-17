@@ -24,9 +24,7 @@
                         aria-controls="project-desc-collapse">
                         README
                     </button>
-                    {% if project_status == "live" or project_status == "updating" %}
-                    <button class="btn btn-outline-success">live</button>
-                    {% else %}
+                    {% if project_status == "pending" %}
                     <button class="btn btn-outline-warning">pending</button>
                     {% endif %}
                 </div>
