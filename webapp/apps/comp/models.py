@@ -23,9 +23,7 @@ from webapp.apps.comp import utils, exceptions
 from webapp.settings import INPUTS_SALT
 
 
-# TODO: Update to deploy date.
-# (set to nye for testing)
-# 11:59 tonight
+# 11:59 on night of deployment
 ANON_BEFORE = datetime.datetime(
     2020, 1, 16, 23, 59, 59, tzinfo=pytz.timezone("US/Eastern")
 )

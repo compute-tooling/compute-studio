@@ -356,7 +356,7 @@ export default class DescriptionComponent extends React.PureComponent<
                     : null}
                   {this.writable() ?
                     <Col className="col-sm-2 ml-sm-auto" style={{ paddingRight: 0 }}>
-                      <Tip tip={`Make this simulation ${is_public ? "private" : "public"}.`}>
+                      <Tip tip={`Make this simulation ${values.is_public ? "private" : "public"}.`}>
                         <Button variant="dark" style={{ backgroundColor: "rgba(60, 62, 62, 1)" }} className="mb-4 w-100" onClick={e => {
                           e.target.value = !values.is_public;
                           setFieldValue("is_public", !values.is_public);
