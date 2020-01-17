@@ -158,6 +158,7 @@ export interface AccessStatus {
 
 export interface Project {
   title: string;
+  owner: string;
   oneliner: string;
   description: string;
   repo_url: string;

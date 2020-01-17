@@ -269,9 +269,19 @@ export default class OutputsComponent extends React.Component<
                 );
               })}
             </Row>
+            <Row className="text-center">
+              <Col>
+                <a
+                  href={`/${project.owner}/${project.title}/${remoteSim.model_pk}/download/`}
+                  className="btn btn-lg btn-match-nav">
+                  Download Results</a>
+
+              </Col>
+            </Row>
+
           </Card.Body>
         </Card>
-      </Card>
+      </Card >
     );
   }
 }
