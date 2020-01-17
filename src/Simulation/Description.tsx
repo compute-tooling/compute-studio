@@ -269,7 +269,7 @@ export default class DescriptionComponent extends React.PureComponent<
             <Card className="card-outer">
               <Card.Body>
                 <Row className="justify-content-start">
-                  <Col className="col-sm-9">
+                  <Col className="col-md-9">
                     <Field name="title">
                       {({
                         field,
@@ -309,7 +309,7 @@ export default class DescriptionComponent extends React.PureComponent<
                       render={msg => <Message msg={msg} />}
                     />
                   </Col>
-                  <Col className={`col-sm-3 ml-sm-auto`}>
+                  <Col className={`col-md-3 ml-md-auto`}>
                     <h5 style={{ color: "#6c757d", marginTop: "0.89rem" }}>{subtitle}</h5>
                   </Col>
                 </Row>
