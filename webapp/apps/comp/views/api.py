@@ -155,7 +155,10 @@ class BaseCreateAPIView(APIView):
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
-        sim = Simulation.objects.new_sim(request.user, project)
+        # Setting inputs_status="PENDING" ensures that each request
+        # creates a new simulation. This is necessary if a user is submitting
+        # a batch of simulations.
+        sim = Simulation.objects.new_sim(request.user, project, inputs_status="PENDING")
         return submit(request, status.HTTP_201_CREATED, project, sim)
 
 

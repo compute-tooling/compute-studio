@@ -147,7 +147,7 @@ class SimulationManager(models.Manager):
         else:
             return curr_max + 1
 
-    def new_sim(self, user, project):
+    def new_sim(self, user, project, inputs_status=None):
         """
         Create a new simulation for the user and project. If multiple
         requests are made to the /new/ endpoint at once there may be
@@ -162,6 +162,11 @@ class SimulationManager(models.Manager):
 
         - Case 2: Multiple new simulations were created at once. In this
         case we try to create a new simulation again.
+
+        Methods submitting a batch of simulations at once, should set
+        inputs_status="PENDING". This creates inputs objects that are
+        PENDING by default and thus force new Simulation objects to be
+        created on each request even if they arrive at the same time.
         """
         model_pk = None
         try:
@@ -171,7 +176,7 @@ class SimulationManager(models.Manager):
                 inputs = Inputs.objects.create(
                     owner=user.profile,
                     project=project,
-                    status="STARTED",
+                    status=inputs_status or "STARTED",
                     adjustment={},
                     meta_parameters={},
                     errors_warnings={},
@@ -192,7 +197,7 @@ class SimulationManager(models.Manager):
                 if sim.owner.user == user and sim.inputs.status == "STARTED":
                     return sim
             # Case 2:
-            return self.new_sim(user, project)
+            return self.new_sim(user, project, inputs_status)
 
     def fork(self, sim, user):
         if sim.inputs.status == "PENDING":
