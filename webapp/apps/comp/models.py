@@ -8,6 +8,7 @@ from typing import List, Union
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db import IntegrityError, transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
@@ -146,23 +147,57 @@ class SimulationManager(models.Manager):
         else:
             return curr_max + 1
 
-    def new_sim(self, user, project):
-        inputs = Inputs.objects.create(
-            owner=user.profile,
-            project=project,
-            status="STARTED",
-            adjustment={},
-            meta_parameters={},
-            errors_warnings={},
-        )
-        return self.create(
-            owner=user.profile,
-            project=project,
-            model_pk=self.next_model_pk(project),
-            inputs=inputs,
-            status="STARTED",
-            is_public=False,
-        )
+    def new_sim(self, user, project, inputs_status=None):
+        """
+        Create a new simulation for the user and project. If multiple
+        requests are made to the /new/ endpoint at once there may be
+        a race condition where multiple simulations are created with
+        the same model specific primary key (model_pk) causing an
+        IntegrityError. The strategy for handling this is to check
+        the Simulation with the model_pk that caused the IntegrityError:
+
+        - Case 1: `user` is the owner of the other simulation. We assume
+        that this was caused by a double click or similar and return
+        the existing simulation with the same model_pk.
+
+        - Case 2: Multiple new simulations were created at once. In this
+        case we try to create a new simulation again.
+
+        Methods submitting a batch of simulations at once, should set
+        inputs_status="PENDING". This creates inputs objects that are
+        PENDING by default and thus force new Simulation objects to be
+        created on each request even if they arrive at the same time.
+        """
+        model_pk = None
+        try:
+            # transaction.atomic will roll back any changes
+            # if there is an integrity error.
+            with transaction.atomic():
+                inputs = Inputs.objects.create(
+                    owner=user.profile,
+                    project=project,
+                    status=inputs_status or "STARTED",
+                    adjustment={},
+                    meta_parameters={},
+                    errors_warnings={},
+                )
+                model_pk = self.next_model_pk(project)
+                return self.create(
+                    owner=user.profile,
+                    project=project,
+                    model_pk=model_pk,
+                    inputs=inputs,
+                    status="STARTED",
+                    is_public=False,
+                )
+        except IntegrityError:
+            # Case 1:
+            if model_pk is not None:
+                sim = Simulation.objects.get(project=project, model_pk=model_pk)
+                if sim.owner.user == user and sim.inputs.status == "STARTED":
+                    return sim
+            # Case 2:
+            return self.new_sim(user, project, inputs_status)
 
     def fork(self, sim, user):
         if sim.inputs.status == "PENDING":
@@ -262,6 +297,13 @@ class Simulation(models.Model):
     )
 
     objects = SimulationManager()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "model_pk"], name="unique_model_pk"
+            )
+        ]
 
     def get_absolute_url(self):
         kwargs = {
