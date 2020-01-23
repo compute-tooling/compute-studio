@@ -75,7 +75,7 @@ class Profile(models.Model):
                 agg[month["month"]] += float(month["effective__sum"])
         return {k.strftime("%B %Y"): v for k, v in sorted(agg.items())}
 
-    def sims_breakdown(self, projects=None, public_only=True):
+    def sims_breakdown(self, projects=None, public_only=True, limit=None):
         if projects is None:
             projects = Project.objects.all()
         runs = {}
@@ -85,9 +85,10 @@ class Profile(models.Model):
         for project in projects:
             queryset = self.sims.filter(project=project, **kwargs)
             if queryset.count() > 0:
-                runs[
-                    f"{project.owner.user.username}/{project.title}"
-                ] = queryset.all().order_by("-pk")
+                result = queryset.all().order_by("-pk")
+                if limit is not None:
+                    result = result[:limit]
+                runs[f"{project.owner.user.username}/{project.title}"] = result
         return dict(sorted(runs.items(), key=lambda item: -item[1].count()))
 
     def can_run(self, project):
@@ -246,6 +247,9 @@ class Project(models.Model):
     @property
     def safe_description(self):
         return mark_safe(markdown.markdown(self.description, extensions=["tables"]))
+
+    def __str__(self):
+        return f"{self.owner}/{self.title}"
 
     class Meta:
         permissions = (("write_project", "Write project"),)

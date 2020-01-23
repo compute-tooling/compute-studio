@@ -53,14 +53,22 @@
       <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
         <ul class="navbar-nav mr-auto mt-2 mt-lg-0 mobile-mb-3">
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
-              aria-haspopup="true" aria-expanded="false">
-              Models
+            <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+              aria-expanded="false">
+              <i class="fas fa-plus"></i>
             </a>
             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+              {% if recent_project_list %}
+              <h6 class="dropdown-header">Recents</h6>
+              {% for owner, project, url in recent_project_list %}
+              <a class="dropdown-item" href="{{url}}new/">{{owner}}/{{project}}</a>
+              {% endfor %}
+              <div class="dropdown-divider"></div>
+              <h6 class="dropdown-header">Suggested</h6>
+              {% endif %}
               <!-- Add new projects to the dropdown menu here! -->
               {% for owner, project, url in project_list %}
-              <a class="dropdown-item" href="{{url}}">{{owner}}/{{project}}</a>
+              <a class="dropdown-item" href="{{url}}new/">{{owner}}/{{project}}</a>
               {% endfor %}
             </div>
           </li>

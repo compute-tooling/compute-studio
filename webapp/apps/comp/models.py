@@ -382,7 +382,7 @@ class Simulation(models.Model):
         return self.project.run_cost(self.run_time, adjust=True)
 
     def __str__(self):
-        return f"{self.project}#{self.model_pk} by {self.owner.user}"
+        return f"{str(self.project)}#{self.model_pk} by {self.owner.user}"
 
     def parent_sims(self, user=None):
         """

@@ -12,12 +12,18 @@ class HomeView(View):
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             profile = request.user.profile
+            if request.GET.get("all") == "true":
+                limit = None
+            else:
+                limit = 50
             return render(
                 request,
                 self.profile_template,
                 context={
                     "username": request.user.username,
-                    "runs": profile.sims_breakdown(self.projects, public_only=False),
+                    "runs": profile.sims_breakdown(
+                        self.projects, public_only=False, limit=limit
+                    ),
                     "show_readme": False,
                     "projects": self.projects.filter(owner=profile),
                 },
@@ -32,12 +38,19 @@ class ProfileView(View):
     def get(self, request, *args, **kwargs):
         username = kwargs["username"]
         profile = get_object_or_404(Profile, user__username__iexact=username)
+        if request.GET.get("all") == "true":
+            limit = None
+        else:
+            limit = 50
+
         return render(
             request,
             self.profile_template,
             context={
                 "username": request.user.username,
-                "runs": profile.sims_breakdown(self.projects, public_only=True),
+                "runs": profile.sims_breakdown(
+                    self.projects, public_only=True, limit=limit
+                ),
                 "show_readme": False,
                 "projects": self.projects.filter(owner=profile, listed=True),
             },
