@@ -189,7 +189,7 @@ export default class DescriptionComponent extends React.Component<
       this.state !== nextState ||
       this.props.api.modelpk !== nextProps.api.modelpk ||
       this.props.accessStatus.username !== nextProps.accessStatus.username ||
-      this.props.remoteSim.model_pk !== nextProps.remoteSim.model_pk
+      this.props.remoteSim?.model_pk !== nextProps.remoteSim?.model_pk
     );
   }
 
