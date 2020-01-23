@@ -143,7 +143,7 @@ const AuthorDropDown: React.FC<{ author: string }> = ({ author }) => {
   );
 }
 
-export default class DescriptionComponent extends React.PureComponent<
+export default class DescriptionComponent extends React.Component<
   DescriptionProps,
   DescriptionState
   > {
@@ -179,6 +179,18 @@ export default class DescriptionComponent extends React.PureComponent<
     } else {
       return true;
     }
+  }
+
+  shouldComponentUpdate(nextProps: DescriptionProps, nextState: DescriptionState) {
+    // Only update on state changes, simulation id changes, or username changes.
+    // In the future, we may want to update the accessStatus check to compare more
+    // fields than just the username.
+    return (
+      this.state !== nextState ||
+      this.props.api.modelpk !== nextProps.api.modelpk ||
+      this.props.accessStatus.username !== nextProps.accessStatus.username ||
+      this.props.remoteSim.model_pk !== nextProps.remoteSim.model_pk
+    );
   }
 
   componentDidUpdate() {
