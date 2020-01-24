@@ -15,6 +15,7 @@ from webapp.apps.comp.views import (
     MyInputsAPIView,
     DetailMyInputsAPIView,
     NewSimulationAPIView,
+    CollabAPIView,
 )
 
 # API Routes:
@@ -44,6 +45,9 @@ urlpatterns = [
         "api/v1/<int:model_pk>/fork/",
         ForkDetailAPIView.as_view(),
         name="fork_detail_api",
+    ),
+    path(
+        "api/v1/<int:model_pk>/collaborators/", CollabAPIView.as_view(), name="collab"
     ),
     path("<int:model_pk>/edit/", EditSimView.as_view(), name="edit"),
     path("<int:model_pk>/download/", OutputsDownloadView.as_view(), name="download"),

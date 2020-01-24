@@ -182,7 +182,7 @@ class SimulationManager(models.Manager):
                     errors_warnings={},
                 )
                 model_pk = self.next_model_pk(project)
-                return self.create(
+                sim = self.create(
                     owner=user.profile,
                     project=project,
                     model_pk=model_pk,
@@ -190,6 +190,8 @@ class SimulationManager(models.Manager):
                     status="STARTED",
                     is_public=False,
                 )
+                sim.authors.set([user.profile])
+                return sim
         except IntegrityError:
             # Case 1:
             if model_pk is not None:
@@ -223,7 +225,7 @@ class SimulationManager(models.Manager):
             traceback=sim.inputs.traceback,
             client=sim.inputs.client,
         )
-        return self.create(
+        sim = self.create(
             owner=user.profile,
             title=sim.title,
             readme=sim.readme,
@@ -243,6 +245,8 @@ class SimulationManager(models.Manager):
             is_public=False,
             status=sim.status,
         )
+        sim.authors.set([user.profile])
+        return sim
 
 
 class Simulation(models.Model):
@@ -263,6 +267,7 @@ class Simulation(models.Model):
     owner = models.ForeignKey(
         "users.Profile", on_delete=models.CASCADE, null=True, related_name="sims"
     )
+    authors = models.ManyToManyField("users.Profile", related_name="authored_sims")
     sponsor = models.ForeignKey(
         "users.Profile",
         on_delete=models.SET_NULL,
@@ -382,7 +387,7 @@ class Simulation(models.Model):
         return self.project.run_cost(self.run_time, adjust=True)
 
     def __str__(self):
-        return f"{self.project}#{self.model_pk} by {self.owner.user}"
+        return f"{self.project}#{self.model_pk}"
 
     def parent_sims(self, user=None):
         """
@@ -427,6 +432,16 @@ class Simulation(models.Model):
         else:
             return self.owner
 
+    def get_authors(self):
+        """
+        This protects the identity of users who created simulations
+        before ANON_BEFORE. See get_owner for more information.
+        """
+        if self.creation_date < ANON_BEFORE:
+            return ["unsigned"]
+        else:
+            return self.authors
+
     def context(self, request=None):
         url = self.get_absolute_url()
         if request is not None:
@@ -440,6 +455,43 @@ class Simulation(models.Model):
                 )
                 pic = output["renderable"]["outputs"][0]["screenshot"]
         return {"owner": self.get_owner(), "title": self.title, "url": url, "pic": pic}
+
+
+def two_days_from_now():
+    return timezone.now() + datetime.timedelta(days=2)
+
+
+class PendingPermission(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sim = models.ForeignKey(
+        Simulation, on_delete=models.CASCADE, related_name="pending_permissions"
+    )
+    profile = models.ForeignKey(
+        "users.Profile", on_delete=models.CASCADE, related_name="pending_permissions"
+    )
+    permission_name = models.CharField(
+        choices=(("add_author", "Permission to add author."),), max_length=32
+    )
+    creation_date = models.DateTimeField(default=timezone.now)
+
+    expiration_date = models.DateTimeField(default=two_days_from_now)
+
+    def add_author(self):
+        if self.is_expired():
+            raise exceptions.PermissionExpiredException()
+        self.sim.authors.add(self.profile)
+        self.delete()
+
+    def is_expired(self):
+        return timezone.now() > self.expiration_date
+
+    def get_absolute_url(self):
+        kwargs = {"id": self.id}
+        return reverse("permissions_pending", kwargs=kwargs)
+
+    def get_absolute_grant_url(self):
+        kwargs = {"id": self.id}
+        return reverse("permissions_grant", kwargs=kwargs)
 
 
 @dataclass

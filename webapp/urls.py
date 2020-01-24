@@ -34,6 +34,16 @@ urlpatterns = [
     path("billing/", include("webapp.apps.billing.urls")),
     path("outputs/api/", compviews.OutputsAPIView.as_view(), name="outputs_api"),
     path("inputs/api/", compviews.MyInputsAPIView.as_view(), name="myinputs_api"),
+    path(
+        "simperms/<uuid:id>/grant/",
+        compviews.PermissionGrantedView.as_view(),
+        name="permissions_grant",
+    ),
+    path(
+        "simperms/<uuid:id>/",
+        compviews.PermissionPendingView.as_view(),
+        name="permissions_pending",
+    ),
     url(r"^rest-auth/", include("rest_auth.urls")),
     url(r"^rest-auth/registration/", include("rest_auth.registration.urls")),
     path(

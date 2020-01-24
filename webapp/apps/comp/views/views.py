@@ -35,7 +35,8 @@ from webapp.apps.billing.utils import has_payment_method
 from webapp.apps.users.models import Project, is_profile_active
 
 from webapp.apps.comp.constants import WEBAPP_VERSION
-from webapp.apps.comp.models import Inputs, Simulation
+from webapp.apps.comp import exceptions
+from webapp.apps.comp.models import Inputs, Simulation, PendingPermission
 from webapp.apps.comp.compute import Compute, JobFailError
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.tags import TAGS
@@ -81,6 +82,48 @@ class NewSimView(InputsMixin, View):
             return redirect(sim.get_absolute_edit_url())
         else:
             return render(request, self.template_name, context)
+
+
+class PermissionPendingView(View):
+    queryset = PendingPermission.objects.all()
+    template = "comp/permissions/confirm.html"
+    expired_template = "comp/permissions/expired.html"
+
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect(f"/users/login/?next={request.path}")
+        pp = get_object_or_404(self.queryset, id=kwargs["id"])
+        if (
+            getattr(request.user, "profile", None) is not None
+            and pp.profile == request.user.profile
+        ):
+            if pp.is_expired():
+                return render(request, self.expired_template)
+            else:
+                return render(request, self.template, context={"pp": pp})
+
+        raise PermissionDenied()
+
+
+class PermissionGrantedView(View):
+    queryset = PendingPermission.objects.all()
+    expired_template = "comp/permissions/expired.html"
+
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect(f"/users/login/?next={request.path}")
+        pp = get_object_or_404(self.queryset, id=kwargs["id"])
+        if (
+            getattr(request.user, "profile", None) is not None
+            and pp.profile == request.user.profile
+        ):
+            try:
+                pp.add_author()
+                return redirect(pp.sim.get_absolute_url())
+            except exceptions.PermissionExpiredException:
+                return render(request, self.expired_template)
+
+        raise PermissionDenied()
 
 
 class EditSimView(GetOutputsObjectMixin, InputsMixin, View):

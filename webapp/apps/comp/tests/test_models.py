@@ -10,7 +10,7 @@ from django.forms.models import model_to_dict
 
 from webapp.apps.users.models import Project, Profile
 
-from webapp.apps.comp.models import Inputs, Simulation, ANON_BEFORE
+from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
 from webapp.apps.comp.exceptions import ForkObjectException, VersionMismatchException
 
 from .utils import _submit_inputs, _submit_sim, read_outputs
@@ -139,7 +139,7 @@ def test_sim_fork(db, get_inputs, meta_param_dict, profile):
     fields_to_exclude = ["id", "owner", "job_id", "parent_sim"]
     objects_eq(sim.inputs, newsim.inputs, fields_to_exclude)
 
-    fields_to_exclude += ["inputs", "run_cost", "model_pk", "creation_date"]
+    fields_to_exclude += ["inputs", "run_cost", "model_pk", "creation_date", "authors"]
     objects_eq(sim, newsim, fields_to_exclude)
 
     sim.status = "PENDING"
@@ -230,3 +230,28 @@ def test_has_read_write_access(db, get_inputs, meta_param_dict, profile):
     assert sim.has_read_access(modeler.user)
     assert sim.has_read_access(profile.user)
     assert sim.has_read_access(None) is True
+
+
+def test_add_authors(db, get_inputs, meta_param_dict, profile):
+    modeler = User.objects.get(username="modeler").profile
+    inputs = _submit_inputs("Used-for-testing", get_inputs, meta_param_dict, modeler)
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.save()
+
+    pp = PendingPermission.objects.create(profile=profile, sim=sim)
+    assert not pp.is_expired()
+
+    sim = Simulation.objects.get(pk=sim.pk)
+    assert sim.pending_permissions.filter(id=pp.id).count() == 1
+
+    assert sim.authors.all().count() == 1 and sim.authors.get(pk=modeler.pk)
+
+    pp.add_author()
+
+    sim = Simulation.objects.get(pk=sim.pk)
+    assert sim.authors.all().count() == 2 and sim.authors.get(pk=profile.pk) == profile
+
+    assert PendingPermission.objects.filter(id=pp.id).count() == 0

@@ -759,3 +759,77 @@ def test_v0_urls(
     assert_status(200, resp, "v0-api-change-access")
     s = Simulation.objects.get(pk=sim.pk)
     assert s.is_public == False
+
+
+def test_collaborators(
+    db, sponsored_matchups, client, api_client, get_inputs, meta_param_dict, profile
+):
+    """
+    Test responses on v0 outputs.
+    - public
+    - private
+    - title update
+    """
+    modeler = User.objects.get(username="hdoupe").profile
+    inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, modeler)
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.is_public = True
+    sim.save()
+
+    assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
+
+    # Permission denied on unauthed user
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}collaborators/",
+        data={"authors": [profile.user.username]},
+        format="json",
+    )
+    assert_status(403, resp, "denied_collab")
+
+    # Permission denied if user is not owner of sim.
+    api_client.force_login(profile.user)
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}collaborators/",
+        data={"authors": [profile.user.username]},
+        format="json",
+    )
+    assert_status(403, resp, "denied_collab")
+
+    # Successful update
+    api_client.force_login(modeler.user)
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}collaborators/",
+        data={"authors": [profile.user.username]},
+        format="json",
+    )
+    assert_status(200, resp, "success_collab")
+
+    sim = Simulation.objects.get(pk=sim.pk)
+    assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
+    assert sim.pending_permissions.all().count() == 1 and sim.pending_permissions.all().get(
+        profile=profile
+    )
+    pp = sim.pending_permissions.first()
+
+    # Test user redirected to login if not authed.
+    resp = client.get(pp.get_absolute_url())
+    assert_status(302, resp, "pending_redirect_to_login")
+    assert resp.url == f"/users/login/?next={pp.get_absolute_url()}"
+
+    # Login profile, go to permission confirmation page.
+    client.force_login(user=profile.user)
+    resp = client.get(pp.get_absolute_url())
+    assert_status(200, resp, "get_permissions_pending")
+    assert "comp/permissions/confirm.html" in [t.name for t in resp.templates]
+    # GET link for granting permission.
+    resp = client.get(pp.get_absolute_grant_url())
+    assert_status(302, resp, "grant_permissions")
+    assert resp.url == sim.get_absolute_url()
+
+    sim = Simulation.objects.get(pk=sim.pk)
+    assert sim.authors.all().count() == 2
+    assert sim.authors.filter(pk__in=[modeler.pk, profile.pk]).count() == 2
+    assert sim.pending_permissions.count() == 0

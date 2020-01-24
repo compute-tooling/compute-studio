@@ -28,3 +28,7 @@ class ForkObjectException(CSError):
 
 class VersionMismatchException(CSError):
     pass
+
+
+class PermissionExpiredException(CSError):
+    pass

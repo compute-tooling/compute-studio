@@ -14,7 +14,7 @@ from rest_framework.exceptions import PermissionDenied
 
 import cs_storage
 
-from webapp.apps.users.models import Project
+from webapp.apps.users.models import Project, Profile
 
 from webapp.apps.comp.asyncsubmit import SubmitInputs, SubmitSim
 from webapp.apps.comp.compute import Compute, JobFailError
@@ -25,13 +25,14 @@ from webapp.apps.comp.exceptions import (
     ForkObjectException,
 )
 from webapp.apps.comp.ioutils import get_ioutils
-from webapp.apps.comp.models import Inputs, Simulation
+from webapp.apps.comp.models import Inputs, Simulation, PendingPermission
 from webapp.apps.comp.parser import APIParser
 from webapp.apps.comp.serializers import (
     SimulationSerializer,
     MiniSimulationSerializer,
     InputsSerializer,
     OutputsSerializer,
+    CollabSerializer,
 )
 from webapp.apps.comp.utils import is_valid
 
@@ -393,3 +394,59 @@ class MyInputsAPIView(APIView):
                 return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class CollabAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
+    model = Simulation
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    def put(self, request, *args, **kwargs):
+        self.object = self.get_object(
+            kwargs["model_pk"], kwargs["username"], kwargs["title"]
+        )
+        if not self.object.has_write_access(request.user):
+            raise PermissionDenied()
+
+        ser = CollabSerializer(data=request.data)
+
+        if ser.is_valid():
+            data = ser.validated_data
+            new_authors = set(data["authors"])
+            profiles = Profile.objects.filter(user__username__in=new_authors)
+            if profiles.count() < len(new_authors):
+                return Response(
+                    {"authors": "All authors must have an account on Compute Studio."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            for profile in profiles.all():
+                pp = PendingPermission.objects.create(
+                    sim=self.object, profile=profile, permission_name="add_author"
+                )
+                try:
+                    host = f"https://{request.get_host()}"
+                    sim_url = f"{host}{self.object.get_absolute_url()}"
+                    confirmation_url = f"{host}{pp.get_absolute_url()}"
+                    send_mail(
+                        f"Permission to add author",
+                        (
+                            f"{request.user.username} has requested that you be "
+                            f"added as an author on this simulation: {sim_url}.\n"
+                            f"Click the following link to confirm that you would "
+                            f"like to be added as an author on this simulation: \n"
+                            f"{confirmation_url}"
+                            f"\nPlease reply to this email if you have any questions."
+                        ),
+                        "hank@compute.studio",
+                        [profile.user.email],
+                        fail_silently=True,
+                    )
+                # Http 401 exception if mail credentials are not set up.
+                except Exception:
+                    pass
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(ser.data, status=status.HTTP_400_BAD_REQUEST)

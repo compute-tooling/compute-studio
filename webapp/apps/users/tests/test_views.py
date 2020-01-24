@@ -130,6 +130,23 @@ class TestUsersViews:
         user = auth.get_user(client)
         assert not user.is_authenticated
 
+    def test_user_lookup(self, api_client, profile):
+        resp = api_client.get("/users/autocomplete?username=hd")
+        assert resp.status_code == 403
+
+        api_client.force_login(profile.user)
+        resp = api_client.get("/users/autocomplete?username=hd")
+        assert resp.status_code == 200
+        assert {"username": "hdoupe"} in resp.data
+
+        resp = api_client.get("/users/autocomplete?username=''")
+        assert resp.status_code == 200
+        assert resp.data == []
+
+        resp = api_client.get("/users/autocomplete?username=")
+        assert resp.status_code == 200
+        assert resp.data == []
+
     def test_access_to_profile_pages(self, client):
         user = auth.get_user(client)
         assert not user.is_authenticated

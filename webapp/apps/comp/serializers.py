@@ -29,6 +29,9 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
     """
 
     owner = serializers.StringRelatedField(source="get_owner", required=False)
+    authors = serializers.StringRelatedField(
+        source="get_authors", many=True, required=False
+    )
     title = serializers.CharField(required=False)
     model_pk = serializers.IntegerField(required=False)
     readme = serializers.JSONField(required=False)
@@ -40,6 +43,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
         model = Simulation
         fields = (
             "api_url",
+            "authors",
             "creation_date",
             "gui_url",
             "is_public",
@@ -52,6 +56,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
         )
         read_only = (
             "api_url",
+            "authors",
             "creation_date",
             "gui_url",
             "model_pk",
@@ -133,6 +138,7 @@ class SimulationSerializer(serializers.ModelSerializer):
     original_eta = serializers.FloatField(source="compute_original_eta")
     title = serializers.CharField(required=False)
     owner = serializers.StringRelatedField(source="get_owner", required=False)
+    authors = serializers.StringRelatedField(source="get_authors", many=True)
     project = PublishSerializer()
     outputs_version = serializers.CharField()
     # see to_representation for definition of parent_sims:
@@ -155,6 +161,7 @@ class SimulationSerializer(serializers.ModelSerializer):
         model = Simulation
         fields = (
             "api_url",
+            "authors",
             "creation_date",
             "eta",
             "exp_comp_datetime",
@@ -177,6 +184,7 @@ class SimulationSerializer(serializers.ModelSerializer):
         )
         read_only = (
             "api_url",
+            "authors",
             "creation_date",
             "eta",
             "exp_comp_datetime",
@@ -194,3 +202,7 @@ class SimulationSerializer(serializers.ModelSerializer):
             "status",
             "traceback",
         )
+
+
+class CollabSerializer(serializers.Serializer):
+    authors = serializers.ListField(child=serializers.CharField(), max_length=10)

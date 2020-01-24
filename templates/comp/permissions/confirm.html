@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="card card-body card-outer">
+  <h2>Authorship Request</h2>
+  <p class="lead">{{pp.sim.owner}} has requested that you be added as an author to this simulation: <a
+      href="{pp.sim.get_absolute_url}">{{pp.sim}}</a></p>
+  <p>By clicking "Grant", you will be added as an author to this simulation:</p>
+  <div class="row">
+    <div class="col col-4">
+      <a class="btn btn-success btn-lg" href="{{pp.get_absolute_grant_url}}">Grant</a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
