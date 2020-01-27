@@ -102,4 +102,18 @@ export default class API {
       .post(`/${this.owner}/${this.title}/api/v1/new/`)
       .then(response => response.data);
   }
+
+  queryUsers(username: string): Promise<Array<{ username: string }>> {
+    return axios
+      .get(`/users/autocomplete?username=${username}`)
+      .then(resp => resp.data);
+  }
+
+  addAuthor(username: string): Promise<{}> {
+    return axios
+      .post(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/collaborators/`, {
+        "authors": [username]
+      })
+      .then(response => response.data);
+  }
 };
