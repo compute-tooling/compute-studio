@@ -1,12 +1,13 @@
-import { Button, Modal, Collapse } from "react-bootstrap";
+import { Button, Modal, Collapse, Row, Col } from "react-bootstrap";
 import * as React from "react";
 import ReactLoading from "react-loading";
 
 import { AuthDialog } from "../auth";
 import { AccessStatus } from "../types";
+import { NotifyOnCompletion } from './notify';
 
 
-export const ValidatingModal: React.FC<{ defaultShow?: boolean }> = ({ defaultShow = true }) => {
+export const ValidatingModal: React.FC<{ defaultShow?: boolean; }> = ({ defaultShow = true }) => {
   const [show, setShow] = React.useState(defaultShow);
 
   return (
@@ -23,9 +24,9 @@ export const ValidatingModal: React.FC<{ defaultShow?: boolean }> = ({ defaultSh
       </Modal>
     </div>
   );
-}
+};
 
-const PricingInfoCollapse: React.FC<{ accessStatus: AccessStatus }> = ({ accessStatus }) => {
+const PricingInfoCollapse: React.FC<{ accessStatus: AccessStatus; }> = ({ accessStatus }) => {
   const [collapseOpen, setCollapseOpen] = React.useState(false);
 
   return (
@@ -53,14 +54,14 @@ const PricingInfoCollapse: React.FC<{ accessStatus: AccessStatus }> = ({ accessS
       </Collapse>
     </>
   );
-}
+};
 
 
 const RequirePmtDialog: React.FC<{
   accessStatus: AccessStatus,
   show: boolean,
   setShow?: React.Dispatch<any>,
-  handleSubmit: () => void
+  handleSubmit: () => void;
 }> = ({ accessStatus, show, setShow, handleSubmit }) => {
   const handleCloseWithRedirect = (e, redirectLink) => {
     e.preventDefault();
@@ -89,14 +90,16 @@ const RequirePmtDialog: React.FC<{
       </Modal.Footer>
     </Modal >
   );
-}
+};
 
 const RunDialog: React.FC<{
   accessStatus: AccessStatus,
   show: boolean,
   setShow?: React.Dispatch<any>,
-  handleSubmit: () => void
-}> = ({ accessStatus, show, setShow, handleSubmit }) => {
+  handleSubmit: () => void;
+  setNotify: (notify: boolean) => void,
+  notify: boolean,
+}> = ({ accessStatus, show, setShow, handleSubmit, setNotify, notify }) => {
   const handleCloseWithSubmit = () => {
     setShow(false);
     handleSubmit();
@@ -127,40 +130,51 @@ const RunDialog: React.FC<{
     </Modal.Title>
       </Modal.Header>
       {body}
-      <Modal.Footer>
-        <Button variant="secondary" onClick={() => setShow(false)}>
-          Close
-    </Button>
-        <Button
-          variant="success"
-          onClick={handleCloseWithSubmit}
-          type="submit"
-        >
-          Run simulation
-    </Button>
+      <Modal.Footer style={{ justifyContent: "none" }}>
+        <Row className="align-items-center w-100">
+          <Col className="align-self-start col-7">
+            <NotifyOnCompletion setNotify={setNotify} notify={notify} />
+          </Col>
+          <Col className="align-self-end">
+            <Button className="mr-2" variant="secondary" onClick={() => setShow(false)}>
+              Close
+            </Button>
+            {/* </Col>
+          <Col className="align-self-end"> */}
+            <Button
+              variant="success"
+              onClick={handleCloseWithSubmit}
+              type="submit"
+            >
+              Run
+            </Button>
+          </Col>
+        </Row>
       </Modal.Footer>
     </Modal>
   );
-}
+};
 
 const Dialog: React.FC<{
   accessStatus: AccessStatus,
   resetAccessStatus: () => void;
   show: boolean,
   setShow: React.Dispatch<any>,
-  handleSubmit: () => void
-}> = ({ accessStatus, resetAccessStatus, show, setShow, handleSubmit }) => {
+  handleSubmit: () => void;
+  setNotify: (notify: boolean) => void,
+  notify: boolean,
+}> = ({ accessStatus, resetAccessStatus, show, setShow, handleSubmit, setNotify, notify }) => {
   // pass new show and setShow so main run dialog is not closed.
   const [authShow, setAuthShow] = React.useState(true);
   if (accessStatus.can_run) {
-    return <RunDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />;
+    return <RunDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} setNotify={setNotify} notify={notify} />;
   } else if (accessStatus.user_status === "anon") {
     // only consider showing AuthDialog if the run dialog is shown.
     return <AuthDialog show={show ? authShow : false} setShow={setAuthShow} initialAction="sign-up" resetAccessStatus={resetAccessStatus} />;
   } else if (accessStatus.user_status === "profile") {
-    return <RequirePmtDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />
+    return <RequirePmtDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />;
   }
-}
+};
 
 
 export const RunModal: React.FC<{
@@ -170,7 +184,9 @@ export const RunModal: React.FC<{
   handleSubmit: () => void,
   accessStatus: AccessStatus,
   resetAccessStatus: () => void,
-}> = ({ showModal, setShowModal, action, handleSubmit, accessStatus, resetAccessStatus }) => {
+  setNotify: (notify: boolean) => void,
+  notify: boolean,
+}> = ({ showModal, setShowModal, action, handleSubmit, accessStatus, resetAccessStatus, setNotify, notify }) => {
 
   let runbuttontext: string;
   if (!accessStatus.is_sponsored) {
@@ -190,12 +206,12 @@ export const RunModal: React.FC<{
           <b>{runbuttontext}</b>
         </Button>
       </div>
-      <Dialog accessStatus={accessStatus} resetAccessStatus={resetAccessStatus} show={showModal} setShow={setShowModal} handleSubmit={handleSubmit} />
+      <Dialog accessStatus={accessStatus} resetAccessStatus={resetAccessStatus} show={showModal} setShow={setShowModal} handleSubmit={handleSubmit} setNotify={setNotify} notify={notify} />
     </>
   );
 };
 
-export const AuthModal: React.FC<{ msg?: string }> = ({ msg = "You must be logged in to run simulations." }) => {
+export const AuthModal: React.FC<{ msg?: string; }> = ({ msg = "You must be logged in to run simulations." }) => {
   const [show, setShow] = React.useState(true);
 
   const handleClose = () => setShow(false);
@@ -234,11 +250,11 @@ export const AuthModal: React.FC<{ msg?: string }> = ({ msg = "You must be logge
 };
 
 
-export const UnsavedChangesModal: React.FC<{ handleClose: () => void }> = ({ handleClose }) => {
+export const UnsavedChangesModal: React.FC<{ handleClose: () => void; }> = ({ handleClose }) => {
   const [show, setShow] = React.useState(true);
   const close = () => {
-    setShow(false)
-    handleClose()
+    setShow(false);
+    handleClose();
   };
 
   return (

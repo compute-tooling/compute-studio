@@ -55,6 +55,10 @@ interface SimAppState {
   // all meta data for the inputs of a sim.
   inputs?: Inputs;
 
+  // Keep track of whether the user wants a
+  // notification on sim completion.
+  notifyOnCompletion: boolean;
+
   // all meta data for the outputs of a sim.
   remoteSim?: Simulation<RemoteOutputs>;
   sim?: Simulation<Outputs>;
@@ -64,7 +68,7 @@ interface SimAppState {
 
   // necessary for form state
   initialValues?: InitialValues;
-  schema?: { adjustment: yup.Schema<any>, meta_parameters: yup.Schema<any> }
+  schema?: { adjustment: yup.Schema<any>, meta_parameters: yup.Schema<any>; };
   sects?: Sects;
   unknownParams?: Array<string>;
   extend?: boolean;
@@ -75,7 +79,7 @@ interface SimAppState {
 
 
 class AuthPortal extends React.Component<{}> {
-  el: HTMLDivElement
+  el: HTMLDivElement;
 
   constructor(props) {
     super(props);
@@ -97,31 +101,34 @@ class AuthPortal extends React.Component<{}> {
     return ReactDOM.createPortal(
       this.props.children,
       this.el,
-    )
+    );
   }
 }
 
 
 class SimTabs extends React.Component<
-  SimAppProps & { tabName: "inputs" | "outputs" },
+  SimAppProps & { tabName: "inputs" | "outputs"; },
   SimAppState> {
 
-  api: API
+  api: API;
   constructor(props) {
     super(props);
     const { owner, title, modelpk } = this.props.match.params;
-    this.api = new API(owner, title, modelpk)
+    this.api = new API(owner, title, modelpk);
 
     this.state = {
       key: props.tabName,
       hasShownDirtyWarning: false,
       showDirtyWarning: false,
-    }
+      notifyOnCompletion: false,
+    };
 
     this.handleTabChange = this.handleTabChange.bind(this);
     this.resetInitialValues = this.resetInitialValues.bind(this);
     this.resetAccessStatus = this.resetAccessStatus.bind(this);
     this.authenticateAndCreateSimulation = this.authenticateAndCreateSimulation.bind(this);
+    this.setNotifyOnCompletion = this.setNotifyOnCompletion.bind(this);
+    this.submitWillCreateNewSim = this.submitWillCreateNewSim.bind(this);
     this.pollInputs = this.pollInputs.bind(this);
     this.setOutputs = this.setOutputs.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -131,8 +138,8 @@ class SimTabs extends React.Component<
     this.api.getAccessStatus().then(data => {
       this.setState({
         accessStatus: data
-      })
-    })
+      });
+    });
     this.api.getInitialValues().then(data => {
       const [
         initialValues,
@@ -148,12 +155,12 @@ class SimTabs extends React.Component<
         schema: schema,
         unknownParams: unknownParams,
         extend: "extend" in data ? data.extend : false,
-      })
+      });
     }).catch(error => {
       this.setState({ error });
     });
     if (this.api.modelpk) {
-      this.setOutputs()
+      this.setOutputs();
     }
   }
 
@@ -185,7 +192,7 @@ class SimTabs extends React.Component<
           unknownParams: unknownParams,
           resetting: false
         }));
-      })
+      });
   }
 
   resetAccessStatus() {
@@ -194,7 +201,7 @@ class SimTabs extends React.Component<
     this.api.getAccessStatus().then(accessStatus => {
       this.setState({ accessStatus });
     }).then(
-      () => { this.setOutputs() }
+      () => { this.setOutputs(); }
     ).then(() => {
       this.api.getInputsDetail().then(inputsDetail => {
         this.setState((prevState) => ({
@@ -230,6 +237,35 @@ class SimTabs extends React.Component<
     });
   }
 
+  setNotifyOnCompletion(notify: boolean, fromPage: "outputs" | "inputs") {
+    if (fromPage === "outputs") {
+      let data = new FormData();
+      data.append("notify_on_completion", notify.toString());
+      this.api.putDescription(data).then(() => {
+        this.setState(prevState => ({
+          notifyOnCompletion: notify,
+          remoteSim: {
+            ...prevState.remoteSim,
+            ...{ notify_on_completion: notify }
+          }
+        }));
+      });
+    } else {
+      this.setState({ notifyOnCompletion: notify });
+    }
+  }
+
+  submitWillCreateNewSim() {
+    // returns true if a sim exists, the user has write access,
+    // and the sim has not been kicked off yet.
+    let { sim, has_write_access } = this.state.inputs.detail;
+    return !(
+      sim &&
+      has_write_access &&
+      sim.status === "STARTED"
+    );
+  }
+
   handleSubmit(values, actions) {
     const [meta_parameters, adjustment] = formikToJSON(
       values,
@@ -242,14 +278,13 @@ class SimTabs extends React.Component<
     formdata.append("adjustment", JSON.stringify(adjustment));
     formdata.append("meta_parameters", JSON.stringify(meta_parameters));
     formdata.append("client", "web-beta");
+    formdata.append("notify_on_completion", this.state.notifyOnCompletion.toString());
+
     let url = `/${this.api.owner}/${this.api.title}/api/v1/`;
     let sim = this.state.inputs.detail?.sim;
+
     // clicked new simulation button
-    if (
-      sim &&
-      this.state.inputs.detail.has_write_access &&
-      sim.status === "STARTED"
-    ) {
+    if (!this.submitWillCreateNewSim()) {
       url = sim.api_url;
     } else if (sim) {
       // sim is completed or user does not have write access
@@ -357,15 +392,16 @@ class SimTabs extends React.Component<
         timer = setInterval(() => {
           api.getRemoteOutputs().then(detRem => {
             if (detRem.status !== "PENDING") {
-              this.setState({ remoteSim: detRem })
+              // return component state to default once outputs have loaded.
+              this.setState({ remoteSim: detRem, notifyOnCompletion: false });
               this.killTimer("outputsTimer");
               api.getOutputs().then(detSim => {
-                this.setState({ sim: detSim })
+                this.setState({ sim: detSim });
               });
             } else {
-              this.setState({ remoteSim: detRem })
+              this.setState({ remoteSim: detRem });
             }
-          })
+          });
         }, 5000);
       };
       this.setState({ outputsTimer: timer });
@@ -373,7 +409,7 @@ class SimTabs extends React.Component<
   }
 
   killTimer(timerName: "inputsTimer" | "outputsTimer") {
-    console.log("killTimer", timerName, this.state[timerName])
+    console.log("killTimer", timerName, this.state[timerName]);
     if (this.state[timerName]) {
       clearInterval(this.state[timerName]);
       // @ts-ignore
@@ -386,9 +422,9 @@ class SimTabs extends React.Component<
     // approach
     if (formikProps.dirty && key === "outputs" && !this.state.hasShownDirtyWarning) {
       // this.setState({ hasShownDirtyWarning: true });
-      this.setState({ showDirtyWarning: true })
+      this.setState({ showDirtyWarning: true });
     } else {
-      this.setState({ key })
+      this.setState({ key });
     }
   }
 
@@ -509,6 +545,8 @@ class SimTabs extends React.Component<
                           resetAccessStatus={
                             this.api.modelpk ? this.resetAccessStatus : this.authenticateAndCreateSimulation
                           }
+                          setNotifyOnCompletion={(notify: boolean) => this.setNotifyOnCompletion(notify, "inputs")}
+                          notifyOnCompletion={this.state.notifyOnCompletion}
                           inputs={inputs}
                           defaultURL={`/${this.api.owner}/${this.api.title}/api/v1/`}
                           simStatus={remoteSim?.status || "STARTED"}
@@ -533,6 +571,7 @@ class SimTabs extends React.Component<
                         api={this.api}
                         remoteSim={this.state.remoteSim}
                         sim={this.state.sim}
+                        setNotifyOnCompletion={(notify: boolean) => this.setNotifyOnCompletion(notify, "outputs")}
                       />
                     </ErrorBoundary>
                   </Tab.Pane>

@@ -40,6 +40,8 @@ interface InputsFormProps {
   readOnly: boolean;
   accessStatus: AccessStatus;
   resetAccessStatus: () => void;
+  setNotifyOnCompletion: (notify: boolean) => void;
+  notifyOnCompletion: boolean;
   inputs: Inputs;
   defaultURL: string;
   simStatus: Simulation<any>["status"];
@@ -47,7 +49,7 @@ interface InputsFormProps {
   resetInitialValues: (metaParameters: InputsDetail["meta_parameters"]) => void;
   resetting: boolean;
 
-  formikProps: FormikProps<InitialValues>
+  formikProps: FormikProps<InitialValues>;
 }
 
 interface InputsProps {
@@ -59,7 +61,7 @@ interface InputsProps {
   };
   extend?: boolean;
   unknownParams?: Array<string>;
-  initialServerErrors?: { [msect: string]: { errors: { [paramName: string]: any } } };
+  initialServerErrors?: { [msect: string]: { errors: { [paramName: string]: any; }; }; };
 }
 
 
@@ -73,6 +75,8 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
   }
   let {
     accessStatus,
+    setNotifyOnCompletion,
+    notifyOnCompletion,
     inputs,
     resetInitialValues,
     schema,
@@ -85,7 +89,7 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
   let { meta_parameters, model_parameters } = inputs;
 
   let hasUnknownParams = unknownParams.length > 0;
-  let unknownParamsErrors: { [sect: string]: { errors: any } } = {
+  let unknownParamsErrors: { [sect: string]: { errors: any; }; } = {
     "Unknown Parameters": { errors: {} }
   };
   if (hasUnknownParams) {
@@ -127,6 +131,8 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
                 showModal={showModal}
                 setShowModal={setShowModal}
                 resetAccessStatus={props.resetAccessStatus}
+                notify={notifyOnCompletion}
+                setNotify={setNotifyOnCompletion}
               />
             </li>
           </ul>
@@ -202,13 +208,13 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
       </div>
     </div>
   );
-}
+};
 
 const InputsMemoed = React.memo(InputsForm, (prevProps, nextProps) => {
   return (
     prevProps.simStatus === nextProps.simStatus &&
     prevProps.accessStatus === nextProps.accessStatus &&
     prevProps.formikProps === nextProps.formikProps
-  )
-})
+  );
+});
 export default InputsMemoed;

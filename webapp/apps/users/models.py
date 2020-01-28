@@ -171,6 +171,9 @@ class Project(models.Model):
 
     objects = ProjectManager()
 
+    def __str__(self):
+        return f"{self.owner}/{self.title}"
+
     @staticmethod
     def get_or_none(**kwargs):
         try:

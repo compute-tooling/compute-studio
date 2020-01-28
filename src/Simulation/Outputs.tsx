@@ -21,24 +21,25 @@ import {
 } from "../types";
 import { imgDims } from "../utils";
 import API from "./API";
+import { NotifyOnCompletion } from './notify';
 
 interface OutputsProps {
   api: API;
   remoteSim?: Simulation<RemoteOutputs>;
   sim?: Simulation<Outputs>;
+  setNotifyOnCompletion?: (notify: boolean) => void;
 }
 
-type OutputsState = Readonly<{
-}>;
+type OutputsState = Readonly<{}>;
 
-const TableComponent: React.FC<{ output: TableOutput }> = ({ output }) => (
+const TableComponent: React.FC<{ output: TableOutput; }> = ({ output }) => (
   <div
     dangerouslySetInnerHTML={{ __html: output.data }} // needs to be sanitized somehow.
     className="card publish markdown"
   />
 );
 
-const BokehComponent: React.FC<{ output: BokehOutput }> = ({ output }) => {
+const BokehComponent: React.FC<{ output: BokehOutput; }> = ({ output }) => {
   // @ts-ignore
   window.Bokeh.embed.embed_item(output.data, output.id);
   return (
@@ -67,7 +68,11 @@ const OutputModal: React.FC<{
 
   return (
     <>
-      <Button variant="outline-light" style={{ border: 0 }} onClick={() => setShow(true)}>
+      <Button
+        variant="outline-light"
+        style={{ border: 0 }}
+        onClick={() => setShow(true)}
+      >
         {children}
       </Button>
       <Modal
@@ -80,8 +85,15 @@ const OutputModal: React.FC<{
           <Modal.Title>{output.title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Card style={{ backgroundColor: "white" }} >
-            <Card.Body className={`d-flex ${window.innerWidth < 992 ? "justify-content-left" : "justify-content-center"}`} style={{ overflow: "auto" }}>
+          <Card style={{ backgroundColor: "white" }}>
+            <Card.Body
+              className={`d-flex ${
+                window.innerWidth < 992
+                  ? "justify-content-left"
+                  : "justify-content-center"
+                }`}
+              style={{ overflow: "auto" }}
+            >
               {el}
             </Card.Body>
           </Card>
@@ -97,16 +109,40 @@ const OutputModal: React.FC<{
 };
 
 
-const Pending: React.FC<{ eta?: number, originalEta?: number }> = ({ eta, originalEta }) => {
+const Pending: React.FC<{
+  eta?: number;
+  originalEta?: number;
+  notify?: boolean;
+  setNotify?: (notify: boolean) => void;
+  showNotify?: boolean;
+}> = ({ eta, originalEta, notify, setNotify, showNotify }) => {
   let el;
   if (eta !== null && originalEta !== null) {
     let percent = 100 * (1 - eta / originalEta);
     el = (
       <div>
         <Card.Title>
-          <h3 className="text-center">Estimated time remaining: {moment.duration(eta, "seconds").humanize()}</h3>
+          <h3 className="text-center">
+            Estimated time remaining:{" "}
+            {moment.duration(eta, "seconds").humanize()}
+          </h3>
+          {showNotify ?
+            <div className="text-center">
+              <NotifyOnCompletion
+                notify={notify}
+                setNotify={setNotify}
+              />
+            </div> : null
+          }
         </Card.Title>
-        <ProgressBar className="mt-5 mb-5" now={percent} style={{ height: "1.8rem" }} label={`${percent}%`} srOnly animated />
+        <ProgressBar
+          className="mt-5 mb-5"
+          now={percent}
+          style={{ height: "1.8rem" }}
+          label={`${percent}%`}
+          srOnly
+          animated
+        />
       </div>
     );
   } else {
@@ -116,44 +152,57 @@ const Pending: React.FC<{ eta?: number, originalEta?: number }> = ({ eta, origin
       </div>
     );
   }
-  return (<Card className="card-outer">
-    <Card className="card-inner">
-      <Card.Body>
-        {el}
-      </Card.Body>
+  return (
+    <Card className="card-outer">
+      <Card className="card-inner">
+        <Card.Body>{el}</Card.Body>
+      </Card>
     </Card>
-  </Card>);
-}
+  );
+};
 
-
-const Traceback: React.FC<{ remoteSim: Simulation<RemoteOutputs> }> = ({ remoteSim }) => (
-  <Card className="card-outer">
-    <Card className="card-inner">
-      <Card.Body>
-        <Card.Title><h2>Your calculation failed. You may re-enter your parameters and try again.</h2></Card.Title>
-        <p className="lead">Compute Studio developers have already been notified about this failure. You are welcome to email me at <a href="mailto:hank@compute.studio">hank@compute.studio</a> if you would like to get in touch about this error.</p>
-        <h4>Traceback:</h4>
-        <pre>
-          <code>
-            {remoteSim.traceback}
-          </code>
-        </pre>
-      </Card.Body>
+const Traceback: React.FC<{ remoteSim: Simulation<RemoteOutputs>; }> = ({
+  remoteSim
+}) => (
+    <Card className="card-outer">
+      <Card className="card-inner">
+        <Card.Body>
+          <Card.Title>
+            <h2>
+              Your calculation failed. You may re-enter your parameters and try
+              again.
+          </h2>
+          </Card.Title>
+          <p className="lead">
+            Compute Studio developers have already been notified about this
+          failure. You are welcome to email me at{" "}
+            <a href="mailto:hank@compute.studio">hank@compute.studio</a> if you
+            would like to get in touch about this error.
+        </p>
+          <h4>Traceback:</h4>
+          <pre>
+            <code>{remoteSim.traceback}</code>
+          </pre>
+        </Card.Body>
+      </Card>
     </Card>
-  </Card>
-);
+  );
 
 const NewSimulation: React.FC<{}> = () => (
   <Card className="card-outer">
     <Card className="card-inner">
       <Card.Body>
-        <Card.Title><h2>You have not run your simulation yet.</h2></Card.Title>
+        <Card.Title>
+          <h2>You have not run your simulation yet.</h2>
+        </Card.Title>
       </Card.Body>
     </Card>
   </Card>
-)
+);
 
-const V0Simulation: React.FC<{ remoteSim: Simulation<RemoteOutputs> }> = ({ remoteSim }) => {
+const V0Simulation: React.FC<{ remoteSim: Simulation<RemoteOutputs>; }> = ({
+  remoteSim
+}) => {
   let project = remoteSim.project;
   let { model_version, gui_url } = remoteSim;
   let creation_date = moment(remoteSim.creation_date).format(
@@ -164,18 +213,21 @@ const V0Simulation: React.FC<{ remoteSim: Simulation<RemoteOutputs> }> = ({ remo
     <Card>
       <Card.Body>
         <p>
-          These results were generated by {project.title} on {creation_date} using {model_version}.
-          Since the outputs data format has been updated since this simulation was created, they
-          must be viewed on the outputs page hosted at this link: <a href={gui_url}>{gui_url}</a>.
+          These results were generated by {project.title} on {creation_date}{" "}
+          using {model_version}. Since the outputs data format has been updated
+          since this simulation was created, they must be viewed on the outputs
+          page hosted at this link: <a href={gui_url}>{gui_url}</a>.
         </p>
         <div className="text-center">
-          <Button variant="success" href={gui_url}> Click to View Results</Button>
+          <Button variant="success" href={gui_url}>
+            {" "}
+            Click to View Results
+          </Button>
         </div>
       </Card.Body>
     </Card>
-  )
-}
-
+  );
+};
 
 export default class OutputsComponent extends React.Component<
   OutputsProps,
@@ -185,19 +237,26 @@ export default class OutputsComponent extends React.Component<
     super(props);
   }
 
-
   render() {
     let { api, remoteSim, sim } = this.props;
 
     if (api.modelpk !== remoteSim?.model_pk.toString()) {
-      return <Pending />
-    } else if (!api.modelpk || (remoteSim?.status === "STARTED")) {
-      return <NewSimulation />
+      return <Pending />;
+    } else if (!api.modelpk || remoteSim?.status === "STARTED") {
+      return <NewSimulation />;
     } else if (!remoteSim) {
       return <Pending />;
     } else if (remoteSim?.status === "PENDING") {
-      return <Pending eta={remoteSim.eta} originalEta={remoteSim.original_eta} />
-    } else if (remoteSim.traceback || (sim?.traceback)) {
+      return (
+        <Pending
+          eta={remoteSim.eta}
+          originalEta={remoteSim.original_eta}
+          showNotify={remoteSim.has_write_access}
+          notify={remoteSim.notify_on_completion}
+          setNotify={this.props.setNotifyOnCompletion}
+        />
+      );
+    } else if (remoteSim.traceback || sim?.traceback) {
       return <Traceback remoteSim={remoteSim} />;
     } else if (remoteSim?.outputs_version === "v0") {
       return <V0Simulation remoteSim={remoteSim} />;
@@ -236,7 +295,11 @@ export default class OutputsComponent extends React.Component<
                 width = width ? width : 500;
                 height = height ? height : 500;
                 return (
-                  <Col className="align-self-center" style={{ margin: "1rem", maxWidth: width }} key={`output-${ix}`}>
+                  <Col
+                    className="align-self-center"
+                    style={{ margin: "1rem", maxWidth: width }}
+                    key={`output-${ix}`}
+                  >
                     <OverlayTrigger
                       trigger={["hover", "click"]}
                       overlay={
@@ -273,15 +336,15 @@ export default class OutputsComponent extends React.Component<
               <Col>
                 <a
                   href={`/${project.owner}/${project.title}/${remoteSim.model_pk}/download/`}
-                  className="btn btn-lg btn-match-nav">
-                  Download Results</a>
-
+                  className="btn btn-lg btn-match-nav"
+                >
+                  Download Results
+                </a>
               </Col>
             </Row>
-
           </Card.Body>
         </Card>
-      </Card >
+      </Card>
     );
   }
 }

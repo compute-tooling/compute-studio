@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import ReactLoading from "react-loading";
-import { FastField, ErrorMessage, FormikTouched } from "formik";
+import { FastField, ErrorMessage, FormikTouched, Formik, FormikProps, Field } from "formik";
 import { isEqual, isEmpty } from "lodash/lang";
 import * as yup from "yup";
 
@@ -16,6 +16,7 @@ import {
   Sects
 } from "../types";
 import { Card, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
+import API from './API';
 
 export const ParamElement: React.FC<{
   param_data: ParamToolsParam;
@@ -107,8 +108,8 @@ const MetaParametersComponent: React.FC<{
   meta_parameters: Inputs["meta_parameters"];
   values: InitialValues["meta_parameters"];
   touched: FormikTouched<InitialValues>;
-  resetInitialValues: (metaParameters: { [metaParam: string]: any }) => any;
-  readOnly: boolean
+  resetInitialValues: (metaParameters: { [metaParam: string]: any; }) => any;
+  readOnly: boolean;
 }> = ({ meta_parameters, values, touched, resetInitialValues, readOnly }) => {
   let isTouched = "meta_parameters" in touched;
   return (
@@ -330,7 +331,7 @@ const Section2 = React.memo(Section2Component, (prevProps, nextProps) => {
 
 const Section1Component: React.FC<{
   section_1: string;
-  section_2_dict: { [section_2: string]: Array<string> };
+  section_2_dict: { [section_2: string]: Array<string>; };
   msect: string;
   model_parameters: Inputs["model_parameters"];
   values: InitialValues["adjustment"]["msect"];
@@ -407,7 +408,7 @@ const Section1 = React.memo(Section1Component, (prevProps, nextProps) => {
 const MajorSectionComponent: React.FC<{
   msect: string;
   section_1_dict: {
-    [section_1: string]: { [section_2: string]: Array<string> };
+    [section_1: string]: { [section_2: string]: Array<string>; };
   };
   meta_parameters: Inputs["meta_parameters"];
   model_parameters: Inputs["model_parameters"];
@@ -465,7 +466,7 @@ export const MajorSection = React.memo(
   }
 );
 
-export const SectionHeaderList: React.FC<{ sects: Sects }> = ({ sects }) => {
+export const SectionHeaderList: React.FC<{ sects: Sects; }> = ({ sects }) => {
   return (
     <div className="card card-body card-outer">
       {Object.entries(sects).map(([msect, section1], ix) => {
@@ -570,7 +571,7 @@ export const ErrorCard: React.FC<{
   errorMsg: JSX.Element;
   errors: {
     [sect: string]: {
-      errors: { [paramName: string]: Array<string> };
+      errors: { [paramName: string]: Array<string>; };
     };
   };
   model_parameters: Inputs["model_parameters"];
