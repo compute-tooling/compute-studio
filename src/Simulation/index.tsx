@@ -238,7 +238,7 @@ class SimTabs extends React.Component<
   }
 
   setNotifyOnCompletion(notify: boolean, fromPage: "outputs" | "inputs") {
-    if (!this.submitWillCreateNewSim() || fromPage === "outputs") {
+    if (fromPage === "outputs") {
       let data = new FormData();
       data.append("notify_on_completion", notify.toString());
       this.api.putDescription(data).then(() => {
@@ -278,15 +278,17 @@ class SimTabs extends React.Component<
     formdata.append("adjustment", JSON.stringify(adjustment));
     formdata.append("meta_parameters", JSON.stringify(meta_parameters));
     formdata.append("client", "web-beta");
+    formdata.append("notify_on_completion", this.state.notifyOnCompletion.toString());
+
     let url = `/${this.api.owner}/${this.api.title}/api/v1/`;
     let sim = this.state.inputs.detail?.sim;
+
     // clicked new simulation button
     if (!this.submitWillCreateNewSim()) {
       url = sim.api_url;
     } else if (sim) {
       // sim is completed or user does not have write access
       formdata.append("parent_model_pk", sim.model_pk.toString());
-      formdata.append("notify_on_completion", this.state.notifyOnCompletion.toString());
     }
     this.api
       .postAdjustment(url, formdata)
@@ -544,15 +546,7 @@ class SimTabs extends React.Component<
                             this.api.modelpk ? this.resetAccessStatus : this.authenticateAndCreateSimulation
                           }
                           setNotifyOnCompletion={(notify: boolean) => this.setNotifyOnCompletion(notify, "inputs")}
-                          // use component state if submit will create a new simulation.
-                          // use simulation state if submit will not create a new simulation, i.e. we have
-                          // an existing simulation in the database to store this value on.
-                          notifyOnCompletion={
-                            this.submitWillCreateNewSim() ?
-                              this.state.notifyOnCompletion :
-                              remoteSim ? remoteSim.notify_on_completion : false
-                          }
-                          //notifyOnCompletion={remoteSim ? remoteSim.notify_on_completion : false}
+                          notifyOnCompletion={this.state.notifyOnCompletion}
                           inputs={inputs}
                           defaultURL={`/${this.api.owner}/${this.api.title}/api/v1/`}
                           simStatus={remoteSim?.status || "STARTED"}
