@@ -114,7 +114,8 @@ const Pending: React.FC<{
   originalEta?: number;
   notify?: boolean;
   setNotify?: (notify: boolean) => void;
-}> = ({ eta, originalEta, notify, setNotify }) => {
+  showNotify?: boolean;
+}> = ({ eta, originalEta, notify, setNotify, showNotify }) => {
   let el;
   if (eta !== null && originalEta !== null) {
     let percent = 100 * (1 - eta / originalEta);
@@ -125,12 +126,14 @@ const Pending: React.FC<{
             Estimated time remaining:{" "}
             {moment.duration(eta, "seconds").humanize()}
           </h3>
-          <div className="text-center">
-            <NotifyOnCompletion
-              notify={notify}
-              setNotify={setNotify}
-            />
-          </div>
+          {showNotify ?
+            <div className="text-center">
+              <NotifyOnCompletion
+                notify={notify}
+                setNotify={setNotify}
+              />
+            </div> : null
+          }
         </Card.Title>
         <ProgressBar
           className="mt-5 mb-5"
@@ -248,6 +251,7 @@ export default class OutputsComponent extends React.Component<
         <Pending
           eta={remoteSim.eta}
           originalEta={remoteSim.original_eta}
+          showNotify={remoteSim.has_write_access}
           notify={remoteSim.notify_on_completion}
           setNotify={this.props.setNotifyOnCompletion}
         />
