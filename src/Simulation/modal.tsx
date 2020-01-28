@@ -4,7 +4,6 @@ import ReactLoading from "react-loading";
 
 import { AuthDialog } from "../auth";
 import { AccessStatus } from "../types";
-import API from './API';
 import { NotifyOnCompletion } from './notify';
 
 
