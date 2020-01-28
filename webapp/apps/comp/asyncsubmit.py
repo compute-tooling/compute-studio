@@ -44,7 +44,6 @@ class SubmitInputs:
         self.sim = sim
 
     def submit(self):
-        print(self.request.data)
         self.ser = InputsSerializer(instance=self.sim.inputs, data=self.request.data)
         is_valid = self.ser.is_valid()
         if not is_valid:
@@ -54,6 +53,7 @@ class SubmitInputs:
         meta_parameters = validated_data.get("meta_parameters", {})
         adjustment = validated_data.get("adjustment", {})
         parent_model_pk = validated_data.pop("parent_model_pk", None)
+        notify_on_completion = validated_data.pop("notify_on_completion", None)
 
         if parent_model_pk is not None and self.sim.parent_sim is None:
             parent_sim = get_object_or_404(
@@ -93,6 +93,11 @@ class SubmitInputs:
         if not self.sim.parent_sim and parent_sim:
             self.sim.parent_sim = parent_sim
             self.sim.title = parent_sim.title
+            if notify_on_completion is not None:
+                self.sim.notify_on_completion = notify_on_completion
+            self.sim.save()
+        elif notify_on_completion is not None:
+            self.sim.notify_on_completion = notify_on_completion
             self.sim.save()
 
         return self.inputs

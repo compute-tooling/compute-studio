@@ -19,7 +19,14 @@ def read_outputs(outputs_name):
     return outputs
 
 
-def _submit_inputs(title, get_inputs, meta_param_dict, profile, parent_model_pk=None):
+def _submit_inputs(
+    title,
+    get_inputs,
+    meta_param_dict,
+    profile,
+    parent_model_pk=None,
+    notify_on_completion=None,
+):
     class MockDisplayer(Displayer):
         def package_defaults(self):
             return get_inputs
@@ -32,6 +39,9 @@ def _submit_inputs(title, get_inputs, meta_param_dict, profile, parent_model_pk=
         "meta_parameters": {"metaparam": 3},
         "adjustment": {"majorsection1": {"intparam": 2}},
     }
+    if notify_on_completion is not None:
+        data["notify_on_completion"] = notify_on_completion
+
     if parent_model_pk is not None:
         data["parent_model_pk"] = parent_model_pk
     mockrequest = factory.post(
