@@ -19,7 +19,7 @@ export const NotifyOnCompletion: React.FC<{ notify: boolean; setNotify: (notify:
         onChange={toggleNotify}
         style={{ display: "inline" }}
       />
-      Notify me on completion
+      Email me when ready
     </p>
   );
 };
