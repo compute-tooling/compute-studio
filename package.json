@@ -8,7 +8,8 @@
   },
   "scripts": {
     "build": "webpack --mode production",
-    "start": "webpack --mode development --watch --progress --color"
+    "start": "webpack --mode development --watch --progress --color",
+    "format": "prettier \"./src/**/*.{js,jsx,ts,tsx}\" --write"
   },
   "repository": {
     "type": "git",
@@ -52,6 +53,8 @@
     "yup": "^0.26.10"
   },
   "devDependencies": {
+    "prettier": "^1.19.1",
+    "prettier-webpack-plugin": "^1.2.0",
     "ts-loader": "^5.0.0",
     "typescript": "^3.7.0",
     "webpack": "^4.0.0",

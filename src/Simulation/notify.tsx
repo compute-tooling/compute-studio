@@ -1,9 +1,9 @@
 import * as React from "react";
 
-export const NotifyOnCompletion: React.FC<{ notify: boolean; setNotify: (notify: boolean) => void; }> = ({
-  notify,
-  setNotify
-}) => {
+export const NotifyOnCompletion: React.FC<{
+  notify: boolean;
+  setNotify: (notify: boolean) => void;
+}> = ({ notify, setNotify }) => {
   console.log(notify);
   const toggleNotify = () => {
     setNotify(!notify);

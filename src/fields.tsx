@@ -10,12 +10,12 @@ import { Button } from "react-bootstrap";
 import { FastField, FieldProps } from "formik";
 
 interface CustomFieldProps {
-  label: string,
-  preview: boolean,
+  label: string;
+  preview: boolean;
   exitPreview: () => void;
-  description?: string,
-  allowSpecialChars?: boolean,
-  style?: any,
+  description?: string;
+  allowSpecialChars?: boolean;
+  style?: any;
 }
 
 var Remarkable = require("remarkable");
@@ -23,16 +23,16 @@ var Remarkable = require("remarkable");
 hljs.initHighlightingOnLoad();
 
 var md = new Remarkable({
-  highlight: function (str, lang) {
+  highlight: function(str, lang) {
     if ((lang && hljs.getLanguage(lang)) || true) {
       try {
         return hljs.highlight(lang, str).value;
-      } catch (err) { }
+      } catch (err) {}
     }
 
     try {
       return hljs.highlightAuto(str).value;
-    } catch (err) { }
+    } catch (err) {}
     return ""; // use external default escaping
   }
 });
@@ -70,7 +70,7 @@ export const TextField = (fieldProps: FieldProps<any> & CustomFieldProps) => {
   let allowSpecialChars = props.allowSpecialChars !== null ? true : props.allowSpecialChars;
   let style = props.style ? props.style : {};
   if (props.preview) {
-    return markdownElement(field.value, props.exitPreview, style = props.style);
+    return markdownElement(field.value, props.exitPreview, (style = props.style));
   } else {
     return (
       <input
@@ -78,17 +78,14 @@ export const TextField = (fieldProps: FieldProps<any> & CustomFieldProps) => {
         {...field}
         {...props}
         style={style}
-        onChange={e => allowSpecialChars ? field.onChange(e) : titleChange(e, field.onChange)}
+        onChange={e => (allowSpecialChars ? field.onChange(e) : titleChange(e, field.onChange))}
       />
     );
   }
 };
 
 function checkboxChange(e: React.ChangeEvent<HTMLInputElement>, onChange, placeholder = null) {
-  let value =
-    e.target.value != null && e.target.value !== ""
-      ? e.target.value
-      : placeholder;
+  let value = e.target.value != null && e.target.value !== "" ? e.target.value : placeholder;
   if (typeof value === "boolean") {
     // @ts-ignore
     e.target.value = !value;
@@ -143,91 +140,45 @@ export const CPIField = ({ field, form: { touched, errors }, ...props }) => {
   );
 };
 
-export const TextAreaField = ({
-  field,
-  form: { touched, errors },
-  ...props
-}) => {
+export const TextAreaField = ({ field, form: { touched, errors }, ...props }) => {
   let style = props.style ? props.style : {};
   if (props.preview) {
     return markdownElement(field.value, props.exitPreview, style);
   } else {
-    return (
-      <textarea
-        className="form-control"
-        {...field}
-        {...props}
-        preview=""
-        style={style}
-      />
-    );
+    return <textarea className="form-control" {...field} {...props} preview="" style={style} />;
   }
 };
 
-export const Message = ({ msg }) => (
-  <small className={`form-text text-muted`}>{msg}</small>
-);
+export const Message = ({ msg }) => <small className={`form-text text-muted`}>{msg}</small>;
 
 export const RedMessage = ({ msg }) => (
-  <p
-    className={`form-text font-weight-bold`}
-    style={{ color: "#dc3545", fontSize: "80%" }}
-  >
+  <p className={`form-text font-weight-bold`} style={{ color: "#dc3545", fontSize: "80%" }}>
     {msg}
   </p>
 );
 
-export const CodeSnippetField = ({
-  field,
-  form: { touched, errors },
-  ...props
-}) => {
+export const CodeSnippetField = ({ field, form: { touched, errors }, ...props }) => {
   let style = props.style ? props.style : {};
   if (props.preview) {
     const ticks = "```";
     const markdownText = `${ticks}${props.language}\n${field.value}\n${ticks}`;
     return markdownElement(markdownText, props.exitPreview, style);
   } else {
-    return (
-      <textarea
-        className="form-control"
-        {...field}
-        {...props}
-        preview=""
-        style={style}
-      />
-    );
+    return <textarea className="form-control" {...field} {...props} preview="" style={style} />;
   }
 };
 
-export const ServerSizeField = ({
-  field,
-  form: { touched, errors },
-  ...props
-}) => {
+export const ServerSizeField = ({ field, form: { touched, errors }, ...props }) => {
   return (
     <div>
       <label>
-        <b>Server size: </b>Choose the server size that best meets the
-        requirements of this app
+        <b>Server size: </b>Choose the server size that best meets the requirements of this app
       </label>
       <p>
         <select name="server_size" onChange={field.onChange}>
-          <
-            //@ts-ignore
-            option multiple={true} value={[4, 2]}>
-            4 GB 2 vCPUs
-          </option>
-          <
-            //@ts-ignore
-            option multiple={true} value={[8, 2]}>
-            8 GB 2 vCPUs
-          </option>
-          <
-            //@ts-ignore
-            option multiple={true} value={[16, 4]}>
-            16 GB 4 vCPUs
-          </option>
+          <option value={["4", "2"]}>4 GB 2 vCPUs</option>
+          <option value={["8", "2"]}>8 GB 2 vCPUs</option>
+          <option value={["16", "4"]}>16 GB 4 vCPUs</option>
         </select>
       </p>
     </div>
@@ -274,7 +225,7 @@ export function getField(
   placeholder,
   readOnly = false,
   style = {},
-  isMulti = false,
+  isMulti = false
 ) {
   const makeOptions = choices => {
     let opts = choices.map(choice => (
@@ -288,11 +239,7 @@ export function getField(
   let choices;
   if (data.type == "bool") {
     choices = ["true", "false"];
-  } else if (
-    data.validators &&
-    data.validators.choice &&
-    data.validators.choice.choices
-  ) {
+  } else if (data.validators && data.validators.choice && data.validators.choice.choices) {
     choices = data.validators.choice.choices;
   }
 

@@ -11,7 +11,17 @@ import ReactLoading from "react-loading";
 
 import InputsForm, { tbLabelSchema } from "./InputsForm";
 import OutputsComponent from "./Outputs";
-import { AccessStatus, Inputs, InitialValues, Schema, Simulation, RemoteOutputs, Outputs, Sects, InputsDetail } from "../types";
+import {
+  AccessStatus,
+  Inputs,
+  InitialValues,
+  Schema,
+  Simulation,
+  RemoteOutputs,
+  Outputs,
+  Sects,
+  InputsDetail
+} from "../types";
 import DescriptionComponent from "./Description";
 import API from "./API";
 import ErrorBoundary from "../ErrorBoundary";
@@ -41,7 +51,7 @@ interface URLProps {
   };
 }
 
-interface SimAppProps extends URLProps { }
+interface SimAppProps extends URLProps {}
 
 interface SimAppState {
   // keep track of which tab is open
@@ -68,7 +78,7 @@ interface SimAppState {
 
   // necessary for form state
   initialValues?: InitialValues;
-  schema?: { adjustment: yup.Schema<any>, meta_parameters: yup.Schema<any>; };
+  schema?: { adjustment: yup.Schema<any>; meta_parameters: yup.Schema<any> };
   sects?: Sects;
   unknownParams?: Array<string>;
   extend?: boolean;
@@ -76,7 +86,6 @@ interface SimAppState {
 
   error?: Error;
 }
-
 
 class AuthPortal extends React.Component<{}> {
   el: HTMLDivElement;
@@ -98,18 +107,14 @@ class AuthPortal extends React.Component<{}> {
   }
 
   render() {
-    return ReactDOM.createPortal(
-      this.props.children,
-      this.el,
-    );
+    return ReactDOM.createPortal(this.props.children, this.el);
   }
 }
 
-
 class SimTabs extends React.Component<
-  SimAppProps & { tabName: "inputs" | "outputs"; },
-  SimAppState> {
-
+  SimAppProps & { tabName: "inputs" | "outputs" },
+  SimAppState
+> {
   api: API;
   constructor(props) {
     super(props);
@@ -120,7 +125,7 @@ class SimTabs extends React.Component<
       key: props.tabName,
       hasShownDirtyWarning: false,
       showDirtyWarning: false,
-      notifyOnCompletion: false,
+      notifyOnCompletion: false
     };
 
     this.handleTabChange = this.handleTabChange.bind(this);
@@ -140,25 +145,22 @@ class SimTabs extends React.Component<
         accessStatus: data
       });
     });
-    this.api.getInitialValues().then(data => {
-      const [
-        initialValues,
-        sects,
-        inputs,
-        schema,
-        unknownParams
-      ] = convertToFormik(data);
-      this.setState({
-        inputs: inputs,
-        initialValues: initialValues,
-        sects: sects,
-        schema: schema,
-        unknownParams: unknownParams,
-        extend: "extend" in data ? data.extend : false,
+    this.api
+      .getInitialValues()
+      .then(data => {
+        const [initialValues, sects, inputs, schema, unknownParams] = convertToFormik(data);
+        this.setState({
+          inputs: inputs,
+          initialValues: initialValues,
+          sects: sects,
+          schema: schema,
+          unknownParams: unknownParams,
+          extend: "extend" in data ? data.extend : false
+        });
+      })
+      .catch(error => {
+        this.setState({ error });
       });
-    }).catch(error => {
-      this.setState({ error });
-    });
     if (this.api.modelpk) {
       this.setOutputs();
     }
@@ -178,12 +180,12 @@ class SimTabs extends React.Component<
           schema,
           unknownParams
         ] = convertToFormik(data);
-        this.setState((prevState) => ({
+        this.setState(prevState => ({
           inputs: {
             ...prevState.inputs,
             ...{
               meta_parameters: meta_parameters,
-              model_parameters: model_parameters,
+              model_parameters: model_parameters
             }
           },
           initialValues: initialValues,
@@ -198,20 +200,24 @@ class SimTabs extends React.Component<
   resetAccessStatus() {
     // Update authentication status, then the output
     // and inputs access statuses.
-    this.api.getAccessStatus().then(accessStatus => {
-      this.setState({ accessStatus });
-    }).then(
-      () => { this.setOutputs(); }
-    ).then(() => {
-      this.api.getInputsDetail().then(inputsDetail => {
-        this.setState((prevState) => ({
-          inputs: {
-            ...prevState.inputs,
-            ...{ detail: inputsDetail }
-          }
-        }));
+    this.api
+      .getAccessStatus()
+      .then(accessStatus => {
+        this.setState({ accessStatus });
+      })
+      .then(() => {
+        this.setOutputs();
+      })
+      .then(() => {
+        this.api.getInputsDetail().then(inputsDetail => {
+          this.setState(prevState => ({
+            inputs: {
+              ...prevState.inputs,
+              ...{ detail: inputsDetail }
+            }
+          }));
+        });
       });
-    });
   }
 
   authenticateAndCreateSimulation() {
@@ -224,13 +230,13 @@ class SimTabs extends React.Component<
         this.api.createNewSimulation().then(newSim => {
           this.api.modelpk = newSim.sim.model_pk.toString();
           history.pushState(null, null, newSim.inputs.gui_url);
-          this.setState((prevState) => ({
+          this.setState(prevState => ({
             accessStatus: accessStatus,
             inputs: {
               ...prevState.inputs,
-              ...{ detail: newSim.inputs },
+              ...{ detail: newSim.inputs }
             },
-            remoteSim: newSim.sim,
+            remoteSim: newSim.sim
           }));
         });
       }
@@ -259,11 +265,7 @@ class SimTabs extends React.Component<
     // returns true if a sim exists, the user has write access,
     // and the sim has not been kicked off yet.
     let { sim, has_write_access } = this.state.inputs.detail;
-    return !(
-      sim &&
-      has_write_access &&
-      sim.status === "STARTED"
-    );
+    return !(sim && has_write_access && sim.status === "STARTED");
   }
 
   handleSubmit(values, actions) {
@@ -297,15 +299,15 @@ class SimTabs extends React.Component<
         this.api.modelpk = data.sim.model_pk.toString();
         this.setOutputs();
         this.api.getAccessStatus().then(accessStatus => {
-          this.setState((prevState) => ({
+          this.setState(prevState => ({
             inputs: { ...prevState.inputs, ...{ detail: data } },
             key: "inputs",
             accessStatus: accessStatus,
-            hasShownDirtyWarning: false,
+            hasShownDirtyWarning: false
           }));
         });
         actions.setStatus({
-          status: "PENDING",
+          status: "PENDING"
         });
         // set submitting as false in poll func.
         if (data.status === "PENDING") {
@@ -336,15 +338,15 @@ class SimTabs extends React.Component<
             this.api.modelpk = data.sim.model_pk.toString();
             this.setOutputs();
             this.api.getAccessStatus().then(accessStatus => {
-              this.setState((prevState) => ({
+              this.setState(prevState => ({
                 initialValues: values, // reset form with updated init vals.
                 inputs: { ...prevState.inputs, ...{ detail: data } },
                 key: "outputs",
-                accessStatus: accessStatus,
+                accessStatus: accessStatus
               }));
             });
             actions.setStatus({
-              status: data.status,
+              status: data.status
             });
             actions.setSubmitting(false);
 
@@ -352,15 +354,15 @@ class SimTabs extends React.Component<
           } else if (response.data.status === "INVALID") {
             this.killTimer("inputsTimer");
             this.api.getAccessStatus().then(accessStatus => {
-              this.setState((prevState) => ({
+              this.setState(prevState => ({
                 inputs: { ...prevState.inputs, ...{ detail: data } },
                 key: "inputs",
-                accessStatus: accessStatus,
+                accessStatus: accessStatus
               }));
             });
             actions.setStatus({
               status: data.status,
-              serverErrors: data.errors_warnings,
+              serverErrors: data.errors_warnings
             });
             actions.setSubmitting(false);
             window.scroll(0, 0);
@@ -403,7 +405,7 @@ class SimTabs extends React.Component<
             }
           });
         }, 5000);
-      };
+      }
       this.setState({ outputsTimer: timer });
     });
   }
@@ -434,7 +436,11 @@ class SimTabs extends React.Component<
     // currently causes error with formik.
     if (!this.state.accessStatus || (!this.state.remoteSim && this.api.modelpk)) {
       return <div></div>;
-    } else if (this.state.accessStatus && (this.state.remoteSim || !this.api.modelpk) && !this.state.inputs) {
+    } else if (
+      this.state.accessStatus &&
+      (this.state.remoteSim || !this.api.modelpk) &&
+      !this.state.inputs
+    ) {
       return (
         <ErrorBoundary>
           <DescriptionComponent
@@ -469,15 +475,16 @@ class SimTabs extends React.Component<
       initialValues,
       unknownParams,
       extend,
-      sects,
+      sects
     } = this.state;
-    let initialServerErrors = hasServerErrors(inputs?.detail?.errors_warnings) ?
-      inputs.detail.errors_warnings : null;
+    let initialServerErrors = hasServerErrors(inputs?.detail?.errors_warnings)
+      ? inputs.detail.errors_warnings
+      : null;
     let initialStatus;
     if (initialServerErrors) {
       initialStatus = {
         serverErrors: initialServerErrors,
-        status: "INVALID",
+        status: "INVALID"
       };
     }
     return (
@@ -501,10 +508,13 @@ class SimTabs extends React.Component<
                   }
                 />
               </AuthPortal>
-              {this.state.showDirtyWarning ?
-                <UnsavedChangesModal handleClose={() => this.setState({ hasShownDirtyWarning: true, showDirtyWarning: false })} />
-                : null
-              }
+              {this.state.showDirtyWarning ? (
+                <UnsavedChangesModal
+                  handleClose={() =>
+                    this.setState({ hasShownDirtyWarning: true, showDirtyWarning: false })
+                  }
+                />
+              ) : null}
               <ErrorBoundary>
                 <DescriptionComponent
                   api={this.api}
@@ -530,7 +540,7 @@ class SimTabs extends React.Component<
                     <Nav.Item className="sim-nav-item">
                       <Nav.Link style={buttonGroupStyle.right} eventKey="outputs">
                         Outputs
-                    </Nav.Link>
+                      </Nav.Link>
                     </Nav.Item>
                   </Col>
                 </Nav>
@@ -543,24 +553,24 @@ class SimTabs extends React.Component<
                           readOnly={false}
                           accessStatus={accessStatus}
                           resetAccessStatus={
-                            this.api.modelpk ? this.resetAccessStatus : this.authenticateAndCreateSimulation
+                            this.api.modelpk
+                              ? this.resetAccessStatus
+                              : this.authenticateAndCreateSimulation
                           }
-                          setNotifyOnCompletion={(notify: boolean) => this.setNotifyOnCompletion(notify, "inputs")}
+                          setNotifyOnCompletion={(notify: boolean) =>
+                            this.setNotifyOnCompletion(notify, "inputs")
+                          }
                           notifyOnCompletion={this.state.notifyOnCompletion}
                           inputs={inputs}
                           defaultURL={`/${this.api.owner}/${this.api.title}/api/v1/`}
                           simStatus={remoteSim?.status || "STARTED"}
-
                           resetInitialValues={this.resetInitialValues}
                           resetting={this.state.resetting}
-
                           schema={schema}
                           unknownParams={unknownParams}
                           sects={sects}
                           extend={extend}
-
                           formikProps={formikProps}
-
                         />
                       </Form>
                     </ErrorBoundary>
@@ -571,7 +581,9 @@ class SimTabs extends React.Component<
                         api={this.api}
                         remoteSim={this.state.remoteSim}
                         sim={this.state.sim}
-                        setNotifyOnCompletion={(notify: boolean) => this.setNotifyOnCompletion(notify, "outputs")}
+                        setNotifyOnCompletion={(notify: boolean) =>
+                          this.setNotifyOnCompletion(notify, "outputs")
+                        }
                       />
                     </ErrorBoundary>
                   </Tab.Pane>
@@ -582,8 +594,8 @@ class SimTabs extends React.Component<
         </Formik>
       </>
     );
-  };
-};
+  }
+}
 
 ReactDOM.render(
   <BrowserRouter>
@@ -591,17 +603,29 @@ ReactDOM.render(
       <Route
         exact
         path="/:owner/:title/new/"
-        render={routeProps => <ErrorBoundary><SimTabs tabName="inputs" {...routeProps} /></ErrorBoundary>}
+        render={routeProps => (
+          <ErrorBoundary>
+            <SimTabs tabName="inputs" {...routeProps} />
+          </ErrorBoundary>
+        )}
       />
       <Route
         exact
         path="/:owner/:title/:modelpk/edit/"
-        render={routeProps => <ErrorBoundary><SimTabs tabName="inputs" {...routeProps} /></ErrorBoundary>}
+        render={routeProps => (
+          <ErrorBoundary>
+            <SimTabs tabName="inputs" {...routeProps} />
+          </ErrorBoundary>
+        )}
       />
       <Route
         exact
         path="/:owner/:title/:modelpk/"
-        render={routeProps => <ErrorBoundary><SimTabs tabName="outputs" {...routeProps} /></ErrorBoundary>}
+        render={routeProps => (
+          <ErrorBoundary>
+            <SimTabs tabName="outputs" {...routeProps} />
+          </ErrorBoundary>
+        )}
       />
     </Switch>
   </BrowserRouter>,

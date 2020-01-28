@@ -11,17 +11,10 @@ import {
   ProgressBar
 } from "react-bootstrap";
 import * as moment from "moment";
-import {
-  RemoteOutputs,
-  Outputs,
-  Simulation,
-  Output,
-  TableOutput,
-  BokehOutput
-} from "../types";
+import { RemoteOutputs, Outputs, Simulation, Output, TableOutput, BokehOutput } from "../types";
 import { imgDims } from "../utils";
 import API from "./API";
-import { NotifyOnCompletion } from './notify';
+import { NotifyOnCompletion } from "./notify";
 
 interface OutputsProps {
   api: API;
@@ -32,19 +25,17 @@ interface OutputsProps {
 
 type OutputsState = Readonly<{}>;
 
-const TableComponent: React.FC<{ output: TableOutput; }> = ({ output }) => (
+const TableComponent: React.FC<{ output: TableOutput }> = ({ output }) => (
   <div
     dangerouslySetInnerHTML={{ __html: output.data }} // needs to be sanitized somehow.
     className="card publish markdown"
   />
 );
 
-const BokehComponent: React.FC<{ output: BokehOutput; }> = ({ output }) => {
+const BokehComponent: React.FC<{ output: BokehOutput }> = ({ output }) => {
   // @ts-ignore
   window.Bokeh.embed.embed_item(output.data, output.id);
-  return (
-    <div id={output.id} data-root-id={output.id} className="bk-root"></div>
-  );
+  return <div id={output.id} data-root-id={output.id} className="bk-root"></div>;
 };
 
 const OutputModal: React.FC<{
@@ -68,19 +59,10 @@ const OutputModal: React.FC<{
 
   return (
     <>
-      <Button
-        variant="outline-light"
-        style={{ border: 0 }}
-        onClick={() => setShow(true)}
-      >
+      <Button variant="outline-light" style={{ border: 0 }} onClick={() => setShow(true)}>
         {children}
       </Button>
-      <Modal
-        show={show}
-        onHide={() => setShow(false)}
-        size="xl"
-        className="output-modal"
-      >
+      <Modal show={show} onHide={() => setShow(false)} size="xl" className="output-modal">
         <Modal.Header closeButton>
           <Modal.Title>{output.title}</Modal.Title>
         </Modal.Header>
@@ -88,10 +70,8 @@ const OutputModal: React.FC<{
           <Card style={{ backgroundColor: "white" }}>
             <Card.Body
               className={`d-flex ${
-                window.innerWidth < 992
-                  ? "justify-content-left"
-                  : "justify-content-center"
-                }`}
+                window.innerWidth < 992 ? "justify-content-left" : "justify-content-center"
+              }`}
               style={{ overflow: "auto" }}
             >
               {el}
@@ -108,7 +88,6 @@ const OutputModal: React.FC<{
   );
 };
 
-
 const Pending: React.FC<{
   eta?: number;
   originalEta?: number;
@@ -123,17 +102,13 @@ const Pending: React.FC<{
       <div>
         <Card.Title>
           <h3 className="text-center">
-            Estimated time remaining:{" "}
-            {moment.duration(eta, "seconds").humanize()}
+            Estimated time remaining: {moment.duration(eta, "seconds").humanize()}
           </h3>
-          {showNotify ?
+          {showNotify ? (
             <div className="text-center">
-              <NotifyOnCompletion
-                notify={notify}
-                setNotify={setNotify}
-              />
-            </div> : null
-          }
+              <NotifyOnCompletion notify={notify} setNotify={setNotify} />
+            </div>
+          ) : null}
         </Card.Title>
         <ProgressBar
           className="mt-5 mb-5"
@@ -161,32 +136,26 @@ const Pending: React.FC<{
   );
 };
 
-const Traceback: React.FC<{ remoteSim: Simulation<RemoteOutputs>; }> = ({
-  remoteSim
-}) => (
-    <Card className="card-outer">
-      <Card className="card-inner">
-        <Card.Body>
-          <Card.Title>
-            <h2>
-              Your calculation failed. You may re-enter your parameters and try
-              again.
-          </h2>
-          </Card.Title>
-          <p className="lead">
-            Compute Studio developers have already been notified about this
-          failure. You are welcome to email me at{" "}
-            <a href="mailto:hank@compute.studio">hank@compute.studio</a> if you
-            would like to get in touch about this error.
+const Traceback: React.FC<{ remoteSim: Simulation<RemoteOutputs> }> = ({ remoteSim }) => (
+  <Card className="card-outer">
+    <Card className="card-inner">
+      <Card.Body>
+        <Card.Title>
+          <h2>Your calculation failed. You may re-enter your parameters and try again.</h2>
+        </Card.Title>
+        <p className="lead">
+          Compute Studio developers have already been notified about this failure. You are welcome
+          to email me at <a href="mailto:hank@compute.studio">hank@compute.studio</a> if you would
+          like to get in touch about this error.
         </p>
-          <h4>Traceback:</h4>
-          <pre>
-            <code>{remoteSim.traceback}</code>
-          </pre>
-        </Card.Body>
-      </Card>
+        <h4>Traceback:</h4>
+        <pre>
+          <code>{remoteSim.traceback}</code>
+        </pre>
+      </Card.Body>
     </Card>
-  );
+  </Card>
+);
 
 const NewSimulation: React.FC<{}> = () => (
   <Card className="card-outer">
@@ -200,23 +169,18 @@ const NewSimulation: React.FC<{}> = () => (
   </Card>
 );
 
-const V0Simulation: React.FC<{ remoteSim: Simulation<RemoteOutputs>; }> = ({
-  remoteSim
-}) => {
+const V0Simulation: React.FC<{ remoteSim: Simulation<RemoteOutputs> }> = ({ remoteSim }) => {
   let project = remoteSim.project;
   let { model_version, gui_url } = remoteSim;
-  let creation_date = moment(remoteSim.creation_date).format(
-    "MMMM Do YYYY, h:mm:ss a"
-  );
+  let creation_date = moment(remoteSim.creation_date).format("MMMM Do YYYY, h:mm:ss a");
 
   return (
     <Card>
       <Card.Body>
         <p>
-          These results were generated by {project.title} on {creation_date}{" "}
-          using {model_version}. Since the outputs data format has been updated
-          since this simulation was created, they must be viewed on the outputs
-          page hosted at this link: <a href={gui_url}>{gui_url}</a>.
+          These results were generated by {project.title} on {creation_date} using {model_version}.
+          Since the outputs data format has been updated since this simulation was created, they
+          must be viewed on the outputs page hosted at this link: <a href={gui_url}>{gui_url}</a>.
         </p>
         <div className="text-center">
           <Button variant="success" href={gui_url}>
@@ -229,10 +193,7 @@ const V0Simulation: React.FC<{ remoteSim: Simulation<RemoteOutputs>; }> = ({
   );
 };
 
-export default class OutputsComponent extends React.Component<
-  OutputsProps,
-  OutputsState
-  > {
+export default class OutputsComponent extends React.Component<OutputsProps, OutputsState> {
   constructor(props) {
     super(props);
   }
@@ -262,9 +223,7 @@ export default class OutputsComponent extends React.Component<
       return <V0Simulation remoteSim={remoteSim} />;
     }
 
-    let creation_date = moment(remoteSim.creation_date).format(
-      "MMMM Do YYYY, h:mm:ss a"
-    );
+    let creation_date = moment(remoteSim.creation_date).format("MMMM Do YYYY, h:mm:ss a");
     let model_version = remoteSim.model_version;
     let project = remoteSim.project;
     let remoteOutputs = remoteSim.outputs.outputs;
@@ -302,11 +261,7 @@ export default class OutputsComponent extends React.Component<
                   >
                     <OverlayTrigger
                       trigger={["hover", "click"]}
-                      overlay={
-                        <Tooltip id={`${ix}-tooltip`}>
-                          {remoteOutput.title}
-                        </Tooltip>
-                      }
+                      overlay={<Tooltip id={`${ix}-tooltip`}>{remoteOutput.title}</Tooltip>}
                     >
                       {outputs !== null ? (
                         <OutputModal output={output}>
@@ -319,14 +274,14 @@ export default class OutputsComponent extends React.Component<
                           />
                         </OutputModal>
                       ) : (
-                          <img
-                            style={{ objectFit: "contain" }}
-                            src={remoteOutput.screenshot}
-                            alt={remoteOutput.title}
-                            height={height}
-                            width={width}
-                          />
-                        )}
+                        <img
+                          style={{ objectFit: "contain" }}
+                          src={remoteOutput.screenshot}
+                          alt={remoteOutput.title}
+                          height={height}
+                          width={width}
+                        />
+                      )}
                     </OverlayTrigger>
                   </Col>
                 );

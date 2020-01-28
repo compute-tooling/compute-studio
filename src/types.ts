@@ -55,7 +55,7 @@ export interface Operators {
 }
 
 export interface AdditionalMembers {
-  [key: string]: { [key: string]: any; };
+  [key: string]: { [key: string]: any };
 }
 
 export interface Schema {
@@ -76,12 +76,12 @@ export interface InitialValues {
       };
     };
   };
-  meta_parameters: { [mpName: string]: any; };
+  meta_parameters: { [mpName: string]: any };
 }
 
 export interface Sects {
   [msect: string]: {
-    [section_1: string]: { [section_2: string]: Array<string>; };
+    [section_1: string]: { [section_2: string]: Array<string> };
   };
 }
 
@@ -90,17 +90,17 @@ export interface RemoteOutput {
   screenshot: string;
   title: string;
   media_type:
-  | "bokeh"
-  | "table"
-  | "CSV"
-  | "PNG"
-  | "JPEG"
-  | "MP3"
-  | "MP4"
-  | "HDF5"
-  | "PDF"
-  | "Markdown"
-  | "Text";
+    | "bokeh"
+    | "table"
+    | "CSV"
+    | "PNG"
+    | "JPEG"
+    | "MP3"
+    | "MP4"
+    | "HDF5"
+    | "PDF"
+    | "Markdown"
+    | "Text";
 }
 
 export interface Output extends RemoteOutput {
@@ -112,13 +112,12 @@ export interface TableOutput extends RemoteOutput {
 }
 
 export interface BokehLegacyOutput extends RemoteOutput {
-  data: { html: string; javascript: string; };
+  data: { html: string; javascript: string };
 }
 
 export interface BokehOutput extends RemoteOutput {
-  data: { target_id: string; root_id: string, doc: string; };
+  data: { target_id: string; root_id: string; doc: string };
 }
-
 
 // Interfaces below correspond to interfaces defined in:
 // webapp/apps/comp/serializers.py
@@ -142,7 +141,6 @@ export interface Outputs {
   renderable: Array<Output | TableOutput | BokehOutput>;
   downloadable: Array<Output | TableOutput | BokehOutput>;
 }
-
 
 export interface AccessStatus {
   user_status: "inactive" | "customer" | "profile" | "anon";
@@ -182,16 +180,15 @@ export interface MiniSimulation {
   title: string;
 }
 
-
 export interface InputsDetail {
-  adjustment: { [msect: string]: { [paramName: string]: Array<ValueObject>; }; };
+  adjustment: { [msect: string]: { [paramName: string]: Array<ValueObject> } };
   api_url: string;
   client: string;
   custom_adjustment: any;
-  errors_warnings: { [msect: string]: { errors: { [paramName: string]: Array<string>; }; }; };
+  errors_warnings: { [msect: string]: { errors: { [paramName: string]: Array<string> } } };
   gui_url: string;
   job_id: string;
-  meta_parameters: { [paramName: string]: Array<ValueObject>; };
+  meta_parameters: { [paramName: string]: Array<ValueObject> };
   parent_model_pk: number;
   sim: MiniSimulation;
   status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
@@ -200,7 +197,7 @@ export interface InputsDetail {
 }
 
 export interface Inputs {
-  model_parameters: { [msect: string]: ParamToolsConfig; };
+  model_parameters: { [msect: string]: ParamToolsConfig };
   meta_parameters: ParamToolsConfig;
   label_to_extend?: string;
   extend?: boolean;
