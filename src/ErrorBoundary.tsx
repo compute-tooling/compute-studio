@@ -3,13 +3,13 @@ import { Card } from "react-bootstrap";
 import * as Sentry from "@sentry/browser";
 
 type ErrorState = Readonly<{
-  eventId: any,
-  error: any,
-  errorInfo: any
-}>
+  eventId: any;
+  error: any;
+  errorInfo: any;
+}>;
 
 export default class ErrorBoundary extends React.Component<{}, ErrorState> {
-  isProduction: boolean
+  isProduction: boolean;
   constructor(props) {
     super(props);
     this.state = { error: null, errorInfo: null, eventId: null };
@@ -36,7 +36,6 @@ export default class ErrorBoundary extends React.Component<{}, ErrorState> {
   }
 
   render() {
-
     if (this.state.errorInfo && this.isProduction) {
       // Error path
       return (
@@ -46,13 +45,11 @@ export default class ErrorBoundary extends React.Component<{}, ErrorState> {
               <h2>Whoops! Compute Studio has experienced an error.</h2>
             </Card.Title>
             <Card.Text>
-              The Compute Studio technical team has been notified of this error
-              and is working to fix it. In addition, you are welcome to discuss
-              this issue with the Compute Studio technical team by opening an{" "}
-              <a href="https://github.com/compute-tooling/compute-studio/issues/new">
-                issue
-              </a>{" "}
-              in the Compute Studio source code repository or{" "}
+              The Compute Studio technical team has been notified of this error and is working to
+              fix it. In addition, you are welcome to discuss this issue with the Compute Studio
+              technical team by opening an{" "}
+              <a href="https://github.com/compute-tooling/compute-studio/issues/new">issue</a> in
+              the Compute Studio source code repository or{" "}
               <a href="mailto:hank@compute.studio">emailing Hank</a>.
             </Card.Text>
           </Card.Body>
@@ -63,14 +60,14 @@ export default class ErrorBoundary extends React.Component<{}, ErrorState> {
         <Card>
           <Card.Body>
             <h2>Something went wrong.</h2>
-            <details style={{ whiteSpace: 'pre-wrap' }}>
+            <details style={{ whiteSpace: "pre-wrap" }}>
               {this.state.error && this.state.error.toString()}
               <br />
               {this.state.errorInfo.componentStack}
             </details>
           </Card.Body>
         </Card>
-      )
+      );
     }
 
     return this.props.children;

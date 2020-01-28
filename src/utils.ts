@@ -14,18 +14,18 @@ export function valForForm(val) {
   }
 }
 
-
-export function hasServerErrors(errorsWarnings: { [msect: string]: { errors: { [paramName: string]: any } } }): boolean {
+export function hasServerErrors(errorsWarnings: {
+  [msect: string]: { errors: { [paramName: string]: any } };
+}): boolean {
   if (errorsWarnings) {
     for (const [msect, ew] of Object.entries(errorsWarnings)) {
       if (!isEmpty(ew.errors)) {
-        return true
+        return true;
       }
     }
   }
   return false;
 }
-
 
 export function imgDims(url: string): [number, number] {
   let img = new Image();
@@ -39,18 +39,17 @@ export function imgDims(url: string): [number, number] {
   }
   height = Math.floor(height / factor);
   width = Math.floor(width / factor);
-  return [width, height]
+  return [width, height];
 }
-
 
 // https://github.com/segmentio/is-url
 let protocolAndDomainRE = /^(?:\w+:)?\/\/(\S+)$/;
 
-let localhostDomainRE = /^localhost[\:?\d]*(?:[^\:?\d]\S*)?$/
+let localhostDomainRE = /^localhost[\:?\d]*(?:[^\:?\d]\S*)?$/;
 let nonLocalhostDomainRE = /^[^\s\.]+\.\S{2,}$/;
 
 export function isUrl(string: string): boolean {
-  if (typeof string !== 'string') {
+  if (typeof string !== "string") {
     return false;
   }
 
@@ -64,8 +63,10 @@ export function isUrl(string: string): boolean {
     return false;
   }
 
-  if (localhostDomainRE.test(everythingAfterProtocol) ||
-    nonLocalhostDomainRE.test(everythingAfterProtocol)) {
+  if (
+    localhostDomainRE.test(everythingAfterProtocol) ||
+    nonLocalhostDomainRE.test(everythingAfterProtocol)
+  ) {
     return true;
   }
 

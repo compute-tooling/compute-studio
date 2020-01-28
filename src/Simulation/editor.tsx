@@ -1,19 +1,33 @@
 "use strict";
 
 import * as React from "react";
-import isHotkey from 'is-hotkey'
-import { Editable, withReact, Slate, useSlate } from 'slate-react';
-import { createEditor, Transforms, Editor, Range } from 'slate';
-import { withHistory } from 'slate-history';
-import { Button } from 'react-bootstrap';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faItalic, faBold, faUnderline, faListOl, faQuoteRight, faListUl, faHeading, faLink } from '@fortawesome/free-solid-svg-icons';
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
+import isHotkey from "is-hotkey";
+import { Editable, withReact, Slate, useSlate } from "slate-react";
+import { createEditor, Transforms, Editor, Range } from "slate";
+import { withHistory } from "slate-history";
+import { Button } from "react-bootstrap";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faItalic,
+  faBold,
+  faUnderline,
+  faListOl,
+  faQuoteRight,
+  faListUl,
+  faHeading,
+  faLink
+} from "@fortawesome/free-solid-svg-icons";
+import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { isUrl } from "../utils";
 
 type Mark = "bold" | "italic" | "underline" | "strikethrough";
-type Block = "heading-one" | "heading-two" | "block-quote" | "numbered-list" | "bulleted-list" | "link";
-
+type Block =
+  | "heading-one"
+  | "heading-two"
+  | "block-quote"
+  | "numbered-list"
+  | "bulleted-list"
+  | "link";
 
 interface SlateValue {
   type: string;
@@ -21,27 +35,24 @@ interface SlateValue {
 }
 
 const HOTKEYS = {
-  'mod+b': 'bold',
-  'mod+i': 'italic',
-  'mod+u': 'underline',
+  "mod+b": "bold",
+  "mod+i": "italic",
+  "mod+u": "underline"
   // 'mod+k': 'link', TODO
-}
+};
 
-const LIST_TYPES = ['numbered-list', 'bulleted-list']
+const LIST_TYPES = ["numbered-list", "bulleted-list"];
 
 const ReadmeEditor: React.FC<{
   fieldName: string;
   value: SlateValue[];
-  setFieldValue: (field: string, value: any) => void,
-  handleSubmit: (e?: any) => void,
-  readOnly: boolean,
+  setFieldValue: (field: string, value: any) => void;
+  handleSubmit: (e?: any) => void;
+  readOnly: boolean;
 }> = ({ fieldName, value, setFieldValue, handleSubmit, readOnly }) => {
-  const renderElement = React.useCallback(props => <Element {...props} />, [])
-  const renderLeaf = React.useCallback(props => <Leaf {...props} />, [])
-  const editor = React.useMemo(
-    () => withLinks(withHistory(withReact(createEditor()))),
-    []
-  );
+  const renderElement = React.useCallback(props => <Element {...props} />, []);
+  const renderLeaf = React.useCallback(props => <Leaf {...props} />, []);
+  const editor = React.useMemo(() => withLinks(withHistory(withReact(createEditor()))), []);
   return (
     <Slate
       editor={editor}
@@ -54,7 +65,7 @@ const ReadmeEditor: React.FC<{
       // is resolved.
       key={readOnly.toString()}
     >
-      {readOnly ? null :
+      {readOnly ? null : (
         <div className="mb-3">
           <MarkButton mark="bold" icon={faBold} />
           <MarkButton mark="italic" icon={faItalic} />
@@ -64,11 +75,14 @@ const ReadmeEditor: React.FC<{
           <BlockButton block="block-quote" icon={faQuoteRight} />
           <BlockButton block="numbered-list" icon={faListOl} />
           <BlockButton block="bulleted-list" icon={faListUl} />
-        </div>}
+        </div>
+      )}
       <Editable
-        placeholder={readOnly ?
-          "No notes provided for this simulation." :
-          "You may use this space to add notes to your simulation."}
+        placeholder={
+          readOnly
+            ? "No notes provided for this simulation."
+            : "You may use this space to add notes to your simulation."
+        }
         readOnly={readOnly}
         renderElement={renderElement}
         renderLeaf={renderLeaf}
@@ -80,20 +94,18 @@ const ReadmeEditor: React.FC<{
               Controller.toggleMark(editor, mark);
             }
           }
-        }
-        }
+        }}
       />
-    </Slate >
-  )
-}
-
+    </Slate>
+  );
+};
 
 const withLinks = editor => {
   const { insertData, insertText, isInline } = editor;
 
   editor.isInline = element => {
-    return element.type === 'link' ? true : isInline(element);
-  }
+    return element.type === "link" ? true : isInline(element);
+  };
 
   editor.insertText = text => {
     if (text && isUrl(text)) {
@@ -101,60 +113,64 @@ const withLinks = editor => {
     } else {
       insertText(text);
     }
-  }
+  };
 
   editor.insertData = data => {
-    const text = data.getData('text/plain');
+    const text = data.getData("text/plain");
 
     if (text && isUrl(text)) {
       Controller.wrapLink(editor, text);
     } else {
       insertData(data);
     }
-  }
+  };
 
   return editor;
-}
+};
 
 const Element = ({ attributes, children, element }) => {
   switch (element.type) {
-    case 'block-quote':
-      return <blockquote className="blockquote" {...attributes}>{children}</blockquote>
-    case 'bulleted-list':
-      return <ul {...attributes}>{children}</ul>
-    case 'heading-one':
-      return <h5 {...attributes}>{children}</h5>
-    case 'list-item':
-      return <li {...attributes}>{children}</li>
-    case 'numbered-list':
-      return <ol {...attributes}>{children}</ol>
-    case 'link':
+    case "block-quote":
+      return (
+        <blockquote className="blockquote" {...attributes}>
+          {children}
+        </blockquote>
+      );
+    case "bulleted-list":
+      return <ul {...attributes}>{children}</ul>;
+    case "heading-one":
+      return <h5 {...attributes}>{children}</h5>;
+    case "list-item":
+      return <li {...attributes}>{children}</li>;
+    case "numbered-list":
+      return <ol {...attributes}>{children}</ol>;
+    case "link":
       return (
         <a {...attributes} href={element.url}>
           {children}
         </a>
       );
     default:
-      return <p {...attributes}>{children}</p>
+      return <p {...attributes}>{children}</p>;
   }
-}
+};
 const Leaf = ({ attributes, children, leaf }) => {
   if (leaf.bold) {
-    children = <strong>{children}</strong>
+    children = <strong>{children}</strong>;
   }
 
   if (leaf.italic) {
-    children = <em>{children}</em>
+    children = <em>{children}</em>;
   }
 
   if (leaf.underline) {
-    children = <u>{children}</u>
+    children = <u>{children}</u>;
   }
 
-  return <span {...attributes}>{children}</span>
-}
+  return <span {...attributes}>{children}</span>;
+};
 
-const BlockButton: React.FC<{ block: Block, icon: IconDefinition }> = ({ block, icon }) => {
+const BlockButton: React.FC<{ block: Block; icon: IconDefinition }> = ({ block, icon }) => {
   const editor = useSlate();
   const active = Controller.isBlockActive(editor, block);
   return (
@@ -168,11 +184,11 @@ const BlockButton: React.FC<{ block: Block, icon: IconDefinition }> = ({ block, 
       }}
     >
       <FontAwesomeIcon icon={icon} />
-    </Button >
-  )
-}
+    </Button>
+  );
+};
 
-const MarkButton: React.FC<{ mark: Mark, icon: IconDefinition }> = ({ mark, icon }) => {
+const MarkButton: React.FC<{ mark: Mark; icon: IconDefinition }> = ({ mark, icon }) => {
   const editor = useSlate();
   const active = Controller.isMarkActive(editor, mark);
   return (
@@ -187,8 +203,8 @@ const MarkButton: React.FC<{ mark: Mark, icon: IconDefinition }> = ({ mark, icon
     >
       <FontAwesomeIcon icon={icon} />
     </Button>
-  )
-}
+  );
+};
 
 const LinkButton: React.FC<{ icon: IconDefinition }> = ({ icon }) => {
   const editor = useSlate();
@@ -199,16 +215,16 @@ const LinkButton: React.FC<{ icon: IconDefinition }> = ({ icon }) => {
       variant={active ? "dark" : "light"}
       style={{ border: 0, backgroundColor: active ? "rgba(60, 62, 62, 1)" : "white" }}
       onMouseDown={event => {
-        event.preventDefault()
-        const url = window.prompt('Enter the URL of the link:')
-        if (!url) return
+        event.preventDefault();
+        const url = window.prompt("Enter the URL of the link:");
+        if (!url) return;
         Controller.insertLink(editor, url);
       }}
     >
       <FontAwesomeIcon icon={icon} />
     </Button>
-  )
-}
+  );
+};
 
 const Controller = {
   isMarkActive(editor: Editor, mark: Mark) {
@@ -218,19 +234,19 @@ const Controller = {
 
   isBlockActive(editor: Editor, block: Block) {
     const [match] = Editor.nodes(editor, {
-      match: n => n.type === block,
+      match: n => n.type === block
     });
 
-    return !!match
+    return !!match;
   },
 
   toggleMark(editor: Editor, mark: Mark) {
-    const isActive = Controller.isMarkActive(editor, mark)
+    const isActive = Controller.isMarkActive(editor, mark);
 
     if (isActive) {
-      Editor.removeMark(editor, mark)
+      Editor.removeMark(editor, mark);
     } else {
-      Editor.addMark(editor, mark, true)
+      Editor.addMark(editor, mark, true);
     }
   },
 
@@ -240,11 +256,11 @@ const Controller = {
 
     Transforms.unwrapNodes(editor, {
       match: n => LIST_TYPES.includes(n.type),
-      split: true,
+      split: true
     });
 
     Transforms.setNodes(editor, {
-      type: isActive ? 'paragraph' : isList ? 'list-item' : block,
+      type: isActive ? "paragraph" : isList ? "list-item" : block
     });
 
     if (!isActive && isList) {
@@ -260,7 +276,7 @@ const Controller = {
   },
 
   unwrapLink(editor: Editor) {
-    Transforms.unwrapNodes(editor, { match: n => n.type === 'link' });
+    Transforms.unwrapNodes(editor, { match: n => n.type === "link" });
   },
 
   wrapLink(editor, url) {
@@ -268,22 +284,21 @@ const Controller = {
       Controller.unwrapLink(editor);
     }
 
-    const { selection } = editor
+    const { selection } = editor;
     const isCollapsed = selection && Range.isCollapsed(selection);
     const link = {
-      type: 'link',
+      type: "link",
       url,
-      children: isCollapsed ? [{ text: url }] : [],
-    }
+      children: isCollapsed ? [{ text: url }] : []
+    };
 
     if (isCollapsed) {
       Transforms.insertNodes(editor, link);
     } else {
       Transforms.wrapNodes(editor, link, { split: true });
-      Transforms.collapse(editor, { edge: 'end' });
+      Transforms.collapse(editor, { edge: "end" });
     }
   }
-}
-
+};
 
 export default ReadmeEditor;

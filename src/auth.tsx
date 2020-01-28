@@ -5,7 +5,7 @@ import { Button, Modal, Dropdown, Nav, Navbar } from "react-bootstrap";
 import * as yup from "yup";
 
 import { Message } from "./fields";
-import { AccessStatus } from './types';
+import { AccessStatus } from "./types";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
@@ -31,10 +31,9 @@ let SignupSchema = yup.object().shape({
 const tos = (
   <p className="text-muted mt-3">
     By creating an account, you agree to the
-    <a href="/terms/">{" "}Terms of Service</a>. For more information about Compute
-    Studio's privacy practices, see the Compute Studio{" "}
-    <a href="/privacy/">Privacy Statement</a>. We'll occasionally send you
-    account-related emails.
+    <a href="/terms/"> Terms of Service</a>. For more information about Compute Studio's privacy
+    practices, see the Compute Studio <a href="/privacy/">Privacy Statement</a>. We'll occasionally
+    send you account-related emails.
   </p>
 );
 
@@ -71,18 +70,12 @@ export const LoginForm = ({ setAuthStatus }) => (
           <div className="mt-1">
             <label> Username:</label>
             <Field name="username" className="form-control" />
-            <ErrorMessage
-              name="username"
-              render={msg => <Message msg={msg} />}
-            />
+            <ErrorMessage name="username" render={msg => <Message msg={msg} />} />
           </div>
           <div className="mt-1">
             <label> Password: </label>
             <Field name="password" type="password" className="form-control" />
-            <ErrorMessage
-              name="password"
-              render={msg => <Message msg={msg} />}
-            />
+            <ErrorMessage name="password" render={msg => <Message msg={msg} />} />
           </div>
           <Button
             onClick={e => {
@@ -152,10 +145,7 @@ export const SignupForm = ({ setAuthStatus }) => (
           <div className="mt-1">
             <label> Username:</label>
             <Field name="username" className="form-control" />
-            <ErrorMessage
-              name="username"
-              render={msg => <Message msg={msg} />}
-            />
+            <ErrorMessage name="username" render={msg => <Message msg={msg} />} />
           </div>
           <div className="mt-1">
             <label> Email:</label>
@@ -165,18 +155,12 @@ export const SignupForm = ({ setAuthStatus }) => (
           <div className="mt-1">
             <label> Password: </label>
             <Field name="password1" type="password" className="form-control" />
-            <ErrorMessage
-              name="password1"
-              render={msg => <Message msg={msg} />}
-            />
+            <ErrorMessage name="password1" render={msg => <Message msg={msg} />} />
           </div>
           <div className="mt-1">
             <label> Password confirmation: </label>
             <Field name="password2" type="password" className="form-control" />
-            <ErrorMessage
-              name="password2"
-              render={msg => <Message msg={msg} />}
-            />
+            <ErrorMessage name="password2" render={msg => <Message msg={msg} />} />
           </div>
           <Button
             onClick={e => {
@@ -196,7 +180,6 @@ export const SignupForm = ({ setAuthStatus }) => (
   </div>
 );
 
-
 export const AuthDialog: React.FC<{
   show: boolean;
   setShow: (show: boolean) => void;
@@ -205,11 +188,9 @@ export const AuthDialog: React.FC<{
 }> = ({ show, setShow, initialAction, resetAccessStatus }) => {
   const [action, setAction] = React.useState(initialAction);
   const [authenticated, setAuthenticated] = React.useState(false);
-  const getVariant = (action) => action === "sign-in" ? "outline-success" : "outline-primary";
+  const getVariant = action => (action === "sign-in" ? "outline-success" : "outline-primary");
   const toggleAction = action => {
-    setAction(
-      action === "sign-in" ? "sign-up" : "sign-in"
-    );
+    setAction(action === "sign-in" ? "sign-up" : "sign-in");
   };
   if (authenticated) {
     resetAccessStatus();
@@ -221,14 +202,16 @@ export const AuthDialog: React.FC<{
         <Modal.Title>You must be logged in to run simulations.</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <div className="mt-2" >
-          {action === "sign-in" ?
+        <div className="mt-2">
+          {action === "sign-in" ? (
             <LoginForm setAuthStatus={setAuthenticated} />
-            :
+          ) : (
             <SignupForm setAuthStatus={setAuthenticated} />
-          }
+          )}
         </div>
-        <Button className="mt-3" variant={getVariant(action)} onClick={() => toggleAction(action)} >{action === "sign-in" ? "Sign up" : "Sign in"}</Button>
+        <Button className="mt-3" variant={getVariant(action)} onClick={() => toggleAction(action)}>
+          {action === "sign-in" ? "Sign up" : "Sign in"}
+        </Button>
       </Modal.Body>
 
       <Modal.Footer>
@@ -236,10 +219,9 @@ export const AuthDialog: React.FC<{
           Close
         </Button>
       </Modal.Footer>
-    </Modal >
+    </Modal>
   );
-}
-
+};
 
 interface AuthButtonState {
   show: boolean;
@@ -247,17 +229,17 @@ interface AuthButtonState {
 }
 
 export const AuthButtons: React.FC<{
-  accessStatus: AccessStatus,
-  resetAccessStatus: () => void
+  accessStatus: AccessStatus;
+  resetAccessStatus: () => void;
 }> = ({ accessStatus, resetAccessStatus }) => {
   const [state, setState] = React.useState({
     show: false,
-    initialAction: "sign-in",
+    initialAction: "sign-in"
   } as AuthButtonState);
 
   const setShow = show => {
-    setState({ ...state, ...{ show: show } })
-  }
+    setState({ ...state, ...{ show: show } });
+  };
 
   if (accessStatus.username) {
     return (
@@ -270,10 +252,7 @@ export const AuthButtons: React.FC<{
         >
           {accessStatus.username}
         </Dropdown.Toggle>
-        <Dropdown.Menu
-          className="desktop-menu-right"
-          style={{ width: "180px" }}
-        >
+        <Dropdown.Menu className="desktop-menu-right" style={{ width: "180px" }}>
           <Dropdown.Item href="/">Dashboard</Dropdown.Item>
           <Dropdown.Item href="/publish/">Publish</Dropdown.Item>
           <Dropdown.Divider />
@@ -285,12 +264,14 @@ export const AuthButtons: React.FC<{
   } else {
     return (
       <>
-        {state.show ? <AuthDialog setShow={setShow} {...state} resetAccessStatus={resetAccessStatus} /> : null}
+        {state.show ? (
+          <AuthDialog setShow={setShow} {...state} resetAccessStatus={resetAccessStatus} />
+        ) : null}
         <ul className="navbar-nav mr-auto mt-2 mt-lg-0">
           <li className="nav-item mr-2 mobile-mb-3">
             <Button
               className="btn-match-nav"
-              style={{ display: "inline-block", "border": 0 }}
+              style={{ display: "inline-block", border: 0 }}
               onClick={() => setState({ show: true, initialAction: "sign-in" })}
             >
               Sign in
@@ -303,10 +284,10 @@ export const AuthButtons: React.FC<{
               onClick={() => setState({ show: true, initialAction: "sign-up" })}
             >
               Sign up
-           </Button>
+            </Button>
           </li>
         </ul>
       </>
     );
   }
-}
+};

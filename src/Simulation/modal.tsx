@@ -4,10 +4,9 @@ import ReactLoading from "react-loading";
 
 import { AuthDialog } from "../auth";
 import { AccessStatus } from "../types";
-import { NotifyOnCompletion } from './notify';
+import { NotifyOnCompletion } from "./notify";
 
-
-export const ValidatingModal: React.FC<{ defaultShow?: boolean; }> = ({ defaultShow = true }) => {
+export const ValidatingModal: React.FC<{ defaultShow?: boolean }> = ({ defaultShow = true }) => {
   const [show, setShow] = React.useState(defaultShow);
 
   return (
@@ -26,7 +25,7 @@ export const ValidatingModal: React.FC<{ defaultShow?: boolean; }> = ({ defaultS
   );
 };
 
-const PricingInfoCollapse: React.FC<{ accessStatus: AccessStatus; }> = ({ accessStatus }) => {
+const PricingInfoCollapse: React.FC<{ accessStatus: AccessStatus }> = ({ accessStatus }) => {
   const [collapseOpen, setCollapseOpen] = React.useState(false);
 
   return (
@@ -42,13 +41,18 @@ const PricingInfoCollapse: React.FC<{ accessStatus: AccessStatus; }> = ({ access
       </Button>
       <Collapse in={collapseOpen}>
         <div id="pricing-collapse-text">
-          The models are offered for free, but you pay for the computational
-          resources used to run them. The prices are equal to Google Cloud
-          Platform compute pricing, subject to costing at least one penny
-          for a single run.
-        <ul>
-            <li>The price per hour of a server running this model is: ${`${accessStatus.server_cost}`}/hour.</li>
-            <li>The expected time required for a single run of this model is: {`${accessStatus.exp_time}`} seconds.</li>
+          The models are offered for free, but you pay for the computational resources used to run
+          them. The prices are equal to Google Cloud Platform compute pricing, subject to costing at
+          least one penny for a single run.
+          <ul>
+            <li>
+              The price per hour of a server running this model is: ${`${accessStatus.server_cost}`}
+              /hour.
+            </li>
+            <li>
+              The expected time required for a single run of this model is:{" "}
+              {`${accessStatus.exp_time}`} seconds.
+            </li>
           </ul>
         </div>
       </Collapse>
@@ -56,11 +60,10 @@ const PricingInfoCollapse: React.FC<{ accessStatus: AccessStatus; }> = ({ access
   );
 };
 
-
 const RequirePmtDialog: React.FC<{
-  accessStatus: AccessStatus,
-  show: boolean,
-  setShow?: React.Dispatch<any>,
+  accessStatus: AccessStatus;
+  show: boolean;
+  setShow?: React.Dispatch<any>;
   handleSubmit: () => void;
 }> = ({ accessStatus, show, setShow, handleSubmit }) => {
   const handleCloseWithRedirect = (e, redirectLink) => {
@@ -81,24 +84,21 @@ const RequirePmtDialog: React.FC<{
         <Button variant="outline-secondary" onClick={() => setShow(false)}>
           Close
         </Button>
-        <Button
-          variant="success"
-          onClick={e => handleCloseWithRedirect(e, "/billing/update/")}
-        >
+        <Button variant="success" onClick={e => handleCloseWithRedirect(e, "/billing/update/")}>
           <b>Add payment method</b>
         </Button>
       </Modal.Footer>
-    </Modal >
+    </Modal>
   );
 };
 
 const RunDialog: React.FC<{
-  accessStatus: AccessStatus,
-  show: boolean,
-  setShow?: React.Dispatch<any>,
+  accessStatus: AccessStatus;
+  show: boolean;
+  setShow?: React.Dispatch<any>;
   handleSubmit: () => void;
-  setNotify: (notify: boolean) => void,
-  notify: boolean,
+  setNotify: (notify: boolean) => void;
+  notify: boolean;
 }> = ({ accessStatus, show, setShow, handleSubmit, setNotify, notify }) => {
   const handleCloseWithSubmit = () => {
     setShow(false);
@@ -112,11 +112,18 @@ const RunDialog: React.FC<{
 
   let body;
   if (accessStatus.is_sponsored) {
-    body = <Modal.Body><div dangerouslySetInnerHTML={{ __html: message }} /></Modal.Body>;
+    body = (
+      <Modal.Body>
+        <div dangerouslySetInnerHTML={{ __html: message }} />
+      </Modal.Body>
+    );
   } else {
     body = (
       <Modal.Body>
-        <p>This simulation will cost ${`${accessStatus.exp_cost}`}. You will be billed at the end of the monthly billing period.</p>
+        <p>
+          This simulation will cost ${`${accessStatus.exp_cost}`}. You will be billed at the end of
+          the monthly billing period.
+        </p>
         <PricingInfoCollapse accessStatus={accessStatus} />
       </Modal.Body>
     );
@@ -125,9 +132,7 @@ const RunDialog: React.FC<{
   return (
     <Modal show={show} onHide={() => setShow(false)}>
       <Modal.Header closeButton>
-        <Modal.Title>
-          Are you sure that you want to run this simulation?
-    </Modal.Title>
+        <Modal.Title>Are you sure that you want to run this simulation?</Modal.Title>
       </Modal.Header>
       {body}
       <Modal.Footer style={{ justifyContent: "none" }}>
@@ -141,11 +146,7 @@ const RunDialog: React.FC<{
             </Button>
             {/* </Col>
           <Col className="align-self-end"> */}
-            <Button
-              variant="success"
-              onClick={handleCloseWithSubmit}
-              type="submit"
-            >
+            <Button variant="success" onClick={handleCloseWithSubmit} type="submit">
               Run
             </Button>
           </Col>
@@ -156,38 +157,68 @@ const RunDialog: React.FC<{
 };
 
 const Dialog: React.FC<{
-  accessStatus: AccessStatus,
+  accessStatus: AccessStatus;
   resetAccessStatus: () => void;
-  show: boolean,
-  setShow: React.Dispatch<any>,
+  show: boolean;
+  setShow: React.Dispatch<any>;
   handleSubmit: () => void;
-  setNotify: (notify: boolean) => void,
-  notify: boolean,
+  setNotify: (notify: boolean) => void;
+  notify: boolean;
 }> = ({ accessStatus, resetAccessStatus, show, setShow, handleSubmit, setNotify, notify }) => {
   // pass new show and setShow so main run dialog is not closed.
   const [authShow, setAuthShow] = React.useState(true);
   if (accessStatus.can_run) {
-    return <RunDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} setNotify={setNotify} notify={notify} />;
+    return (
+      <RunDialog
+        accessStatus={accessStatus}
+        show={show}
+        setShow={setShow}
+        handleSubmit={handleSubmit}
+        setNotify={setNotify}
+        notify={notify}
+      />
+    );
   } else if (accessStatus.user_status === "anon") {
     // only consider showing AuthDialog if the run dialog is shown.
-    return <AuthDialog show={show ? authShow : false} setShow={setAuthShow} initialAction="sign-up" resetAccessStatus={resetAccessStatus} />;
+    return (
+      <AuthDialog
+        show={show ? authShow : false}
+        setShow={setAuthShow}
+        initialAction="sign-up"
+        resetAccessStatus={resetAccessStatus}
+      />
+    );
   } else if (accessStatus.user_status === "profile") {
-    return <RequirePmtDialog accessStatus={accessStatus} show={show} setShow={setShow} handleSubmit={handleSubmit} />;
+    return (
+      <RequirePmtDialog
+        accessStatus={accessStatus}
+        show={show}
+        setShow={setShow}
+        handleSubmit={handleSubmit}
+      />
+    );
   }
 };
 
-
 export const RunModal: React.FC<{
-  showModal: boolean,
-  setShowModal: (showModal: boolean) => void,
-  action: "Run" | "Fork and Run",
-  handleSubmit: () => void,
-  accessStatus: AccessStatus,
-  resetAccessStatus: () => void,
-  setNotify: (notify: boolean) => void,
-  notify: boolean,
-}> = ({ showModal, setShowModal, action, handleSubmit, accessStatus, resetAccessStatus, setNotify, notify }) => {
-
+  showModal: boolean;
+  setShowModal: (showModal: boolean) => void;
+  action: "Run" | "Fork and Run";
+  handleSubmit: () => void;
+  accessStatus: AccessStatus;
+  resetAccessStatus: () => void;
+  setNotify: (notify: boolean) => void;
+  notify: boolean;
+}> = ({
+  showModal,
+  setShowModal,
+  action,
+  handleSubmit,
+  accessStatus,
+  resetAccessStatus,
+  setNotify,
+  notify
+}) => {
   let runbuttontext: string;
   if (!accessStatus.is_sponsored) {
     runbuttontext = `${action} ($${accessStatus.exp_cost})`;
@@ -206,12 +237,22 @@ export const RunModal: React.FC<{
           <b>{runbuttontext}</b>
         </Button>
       </div>
-      <Dialog accessStatus={accessStatus} resetAccessStatus={resetAccessStatus} show={showModal} setShow={setShowModal} handleSubmit={handleSubmit} setNotify={setNotify} notify={notify} />
+      <Dialog
+        accessStatus={accessStatus}
+        resetAccessStatus={resetAccessStatus}
+        show={showModal}
+        setShow={setShowModal}
+        handleSubmit={handleSubmit}
+        setNotify={setNotify}
+        notify={notify}
+      />
     </>
   );
 };
 
-export const AuthModal: React.FC<{ msg?: string; }> = ({ msg = "You must be logged in to run simulations." }) => {
+export const AuthModal: React.FC<{ msg?: string }> = ({
+  msg = "You must be logged in to run simulations."
+}) => {
   const [show, setShow] = React.useState(true);
 
   const handleClose = () => setShow(false);
@@ -231,16 +272,10 @@ export const AuthModal: React.FC<{ msg?: string; }> = ({ msg = "You must be logg
           <Button variant="secondary" onClick={handleClose}>
             Close
           </Button>
-          <Button
-            variant="secondary"
-            onClick={e => handleCloseWithRedirect(e, "/users/login")}
-          >
+          <Button variant="secondary" onClick={e => handleCloseWithRedirect(e, "/users/login")}>
             <b>Sign in</b>
           </Button>
-          <Button
-            variant="success"
-            onClick={e => handleCloseWithRedirect(e, "/users/signup")}
-          >
+          <Button variant="success" onClick={e => handleCloseWithRedirect(e, "/users/signup")}>
             <b>Sign up</b>
           </Button>
         </Modal.Footer>
@@ -249,8 +284,7 @@ export const AuthModal: React.FC<{ msg?: string; }> = ({ msg = "You must be logg
   );
 };
 
-
-export const UnsavedChangesModal: React.FC<{ handleClose: () => void; }> = ({ handleClose }) => {
+export const UnsavedChangesModal: React.FC<{ handleClose: () => void }> = ({ handleClose }) => {
   const [show, setShow] = React.useState(true);
   const close = () => {
     setShow(false);
@@ -264,8 +298,7 @@ export const UnsavedChangesModal: React.FC<{ handleClose: () => void; }> = ({ ha
           <Modal.Title>Unsaved Changes</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          You have unsaved changes in the inputs form.
-          You must create a new simulation to get new
+          You have unsaved changes in the inputs form. You must create a new simulation to get new
           outputs corresponding to these changes.
         </Modal.Body>
         <Modal.Footer>

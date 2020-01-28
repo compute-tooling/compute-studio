@@ -14,14 +14,7 @@ import {
 } from "./components";
 import { ValidatingModal, RunModal, AuthModal } from "./modal";
 import { formikToJSON } from "../ParamTools";
-import {
-  AccessStatus,
-  Sects,
-  InitialValues,
-  Inputs,
-  InputsDetail,
-  Simulation
-} from "../types";
+import { AccessStatus, Sects, InitialValues, Inputs, InputsDetail, Simulation } from "../types";
 import API from "./API";
 
 // need to require schema in model_parameters!
@@ -33,7 +26,6 @@ export const tbLabelSchema = yup.object().shape({
   data_source: yup.string(),
   use_full_sample: yup.bool()
 });
-
 
 interface InputsFormProps {
   api: API;
@@ -56,18 +48,15 @@ interface InputsProps {
   initialValues?: InitialValues;
   sects?: Sects;
   schema?: {
-    adjustment: yup.Schema<any>,
-    meta_parameters: yup.Schema<any>,
+    adjustment: yup.Schema<any>;
+    meta_parameters: yup.Schema<any>;
   };
   extend?: boolean;
   unknownParams?: Array<string>;
-  initialServerErrors?: { [msect: string]: { errors: { [paramName: string]: any; }; }; };
+  initialServerErrors?: { [msect: string]: { errors: { [paramName: string]: any } } };
 }
 
-
-
 const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
-
   const [showModal, setShowModal] = React.useState(false);
 
   if (!props.inputs || props.resetting) {
@@ -84,29 +73,24 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
     extend,
     unknownParams,
     readOnly,
-    simStatus,
+    simStatus
   } = props;
   let { meta_parameters, model_parameters } = inputs;
 
   let hasUnknownParams = unknownParams.length > 0;
-  let unknownParamsErrors: { [sect: string]: { errors: any; }; } = {
+  let unknownParamsErrors: { [sect: string]: { errors: any } } = {
     "Unknown Parameters": { errors: {} }
   };
   if (hasUnknownParams) {
     for (const param of unknownParams) {
-      unknownParamsErrors["Unknown Parameters"].errors[param] =
-        "This parameter is no longer used.";
+      unknownParamsErrors["Unknown Parameters"].errors[param] = "This parameter is no longer used.";
     }
   }
 
   let { isSubmitting, values, touched, handleSubmit, status } = props.formikProps;
   return (
     <div>
-      {isSubmitting ? (
-        <ValidatingModal />
-      ) : (
-          <div />
-        )}
+      {isSubmitting ? <ValidatingModal /> : <div />}
       {status && status.auth ? <AuthModal /> : <div />}
       <div className="row">
         <div className="col-sm-4">
@@ -138,27 +122,21 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
           </ul>
         </div>
         <div className="col-sm-8">
-          {status &&
-            status.status === "INVALID" &&
-            status.serverErrors ? (
-              <ErrorCard
-                errorMsg={
-                  <p>
-                    Some fields have errors. These must be fixed before
-                    the simulation can be submitted. You may re-visit
-                    this page a later time by entering the following
-                            link:{" "}
-                    <a href={inputs.detail.gui_url}>
-                      {inputs.detail.gui_url}
-                    </a>
-                  </p>
-                }
-                errors={status.serverErrors}
-                model_parameters={model_parameters}
-              />
-            ) : (
-              <div />
-            )}
+          {status && status.status === "INVALID" && status.serverErrors ? (
+            <ErrorCard
+              errorMsg={
+                <p>
+                  Some fields have errors. These must be fixed before the simulation can be
+                  submitted. You may re-visit this page a later time by entering the following link:{" "}
+                  <a href={inputs.detail.gui_url}>{inputs.detail.gui_url}</a>
+                </p>
+              }
+              errors={status.serverErrors}
+              model_parameters={model_parameters}
+            />
+          ) : (
+            <div />
+          )}
 
           {hasUnknownParams ? (
             <ErrorCard
@@ -174,8 +152,8 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
               model_parameters={{}}
             />
           ) : (
-              <div />
-            )}
+            <div />
+          )}
 
           <Preview
             values={values}

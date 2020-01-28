@@ -1,6 +1,9 @@
 import { ValueObject, FormValueObject } from "../types";
 
-export function parseFromOps(value: FormValueObject, extendLabel: string = "year"): Array<ValueObject> {
+export function parseFromOps(
+  value: FormValueObject,
+  extendLabel: string = "year"
+): Array<ValueObject> {
   if (value.value[0] === "<") {
     value.value.shift();
     value[extendLabel] = value[extendLabel] - 1;
@@ -12,7 +15,7 @@ export function parseFromOps(value: FormValueObject, extendLabel: string = "year
     } else {
       let newVo: ValueObject = { value: "" };
       Object.assign(newVo, value);
-      newVo.value = value.value[i]
+      newVo.value = value.value[i];
       newVo[extendLabel] = value[extendLabel] + i;
       valueObjects.push(newVo);
     }
@@ -20,14 +23,15 @@ export function parseFromOps(value: FormValueObject, extendLabel: string = "year
   return valueObjects;
 }
 
-export function parseToOps(valueObjects: Array<ValueObject>, metaParameters: { [key: string]: any }, extendLabel: string = "year"): Array<any> {
+export function parseToOps(
+  valueObjects: Array<ValueObject>,
+  metaParameters: { [key: string]: any },
+  extendLabel: string = "year"
+): Array<any> {
   if (!valueObjects.length) return [];
   let res = [];
   for (let i = 0; i < valueObjects.length; i++) {
-    if (
-      i == 0 &&
-      valueObjects[i][extendLabel] === metaParameters[extendLabel] - 1
-    ) {
+    if (i == 0 && valueObjects[i][extendLabel] === metaParameters[extendLabel] - 1) {
       res.push("<", valueObjects[i].value);
       continue;
     } else if (i == 0) {
