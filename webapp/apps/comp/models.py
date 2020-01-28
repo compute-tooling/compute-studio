@@ -272,6 +272,7 @@ class Simulation(models.Model):
     project = models.ForeignKey(
         "users.Project", on_delete=models.SET_NULL, related_name="sims", null=True
     )
+    notify_on_completion = models.BooleanField(default=False)
     # run-time in seconds
     run_time = models.IntegerField(default=0)
     # run cost can be very small. ex: 4 sec * ($0.09/hr)/3600
@@ -304,6 +305,9 @@ class Simulation(models.Model):
                 fields=["project", "model_pk"], name="unique_model_pk"
             )
         ]
+
+    def __str__(self):
+        return f"{self.project}#{self.model_pk}"
 
     def get_absolute_url(self):
         kwargs = {
@@ -380,9 +384,6 @@ class Simulation(models.Model):
     @property
     def effective_cost(self):
         return self.project.run_cost(self.run_time, adjust=True)
-
-    def __str__(self):
-        return f"{self.project}#{self.model_pk} by {self.owner.user}"
 
     def parent_sims(self, user=None):
         """

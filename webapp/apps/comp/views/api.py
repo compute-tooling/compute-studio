@@ -190,10 +190,11 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
                 kwargs["model_pk"], kwargs["username"], kwargs["title"]
             )
             if self.object.has_write_access(request.user):
-                print("got data", request.data)
                 serializer = MiniSimulationSerializer(self.object, data=request.data)
                 if serializer.is_valid():
                     serializer.save(last_modified=timezone.now())
+                    print(serializer.data)
+
                     return Response(serializer.data)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             else:
@@ -351,6 +352,27 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
                 sim = get_object_or_404(Simulation, job_id=data["job_id"])
                 if sim.status == "PENDING":
                     self.record_outputs(sim, data)
+                    print("sim", sim.notify_on_completion)
+                    if sim.notify_on_completion:
+                        try:
+                            host = f"https://{request.get_host()}"
+                            sim_url = f"{host}{sim.get_absolute_url()}"
+                            send_mail(
+                                f"{sim} has finished!",
+                                (
+                                    f"Here's a link to your simulation:\n\n{sim_url}."
+                                    f"\n\nPlease write back if you have any questions or feedback!"
+                                ),
+                                "hank@compute.studio",
+                                [sim.owner.user.email],
+                                fail_silently=True,
+                            )
+                        # Http 401 exception if mail credentials are not set up.
+                        except Exception:
+                            import traceback
+
+                            traceback.print_exc()
+                            pass
                 return Response(status=status.HTTP_200_OK)
             else:
                 return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -370,8 +392,6 @@ class MyInputsAPIView(APIView):
             if ser.is_valid():
                 data = ser.validated_data
                 inputs = get_object_or_404(Inputs, job_id=data["job_id"])
-                print("data")
-                print(data)
                 if inputs.status in ("PENDING", "INVALID"):
                     # successful run
                     if data["status"] == "SUCCESS":
