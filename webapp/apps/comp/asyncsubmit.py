@@ -93,6 +93,7 @@ class SubmitInputs:
         if not self.sim.parent_sim and parent_sim:
             self.sim.parent_sim = parent_sim
             self.sim.title = parent_sim.title
+            self.sim.readme = parent_sim.readme
             if notify_on_completion is not None:
                 self.sim.notify_on_completion = notify_on_completion
             self.sim.save()

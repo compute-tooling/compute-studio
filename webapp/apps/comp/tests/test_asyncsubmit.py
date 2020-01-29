@@ -46,6 +46,7 @@ def test_parents_submit(db, get_inputs, meta_param_dict, profile):
     submit_inputs0, submit_sim0 = _submit_sim(inputs)
     _ = submit_sim0.submit()
     submit_sim0.sim.title = "hello world"
+    submit_sim0.sim.readme = [{"text": "readme"}]
     submit_sim0.sim.save()
 
     assert submit_inputs0.inputs.parent_sim == None
@@ -65,6 +66,7 @@ def test_parents_submit(db, get_inputs, meta_param_dict, profile):
     assert submit_inputs1.inputs.parent_sim == submit_sim0.sim
     assert submit_sim1.sim.parent_sim == submit_sim0.sim
     assert submit_sim1.sim.title == "hello world"
+    assert submit_sim1.sim.readme == [{"text": "readme"}]
 
 
 @pytest.mark.parametrize("notify_on_completion", [True, False])
