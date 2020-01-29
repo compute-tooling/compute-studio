@@ -53,6 +53,12 @@ const OutputModal: React.FC<{
       console.log("bokeh", output);
       el = <BokehComponent output={output as BokehOutput} />;
       break;
+    case "PNG":
+      el = <img src={`data:image/png;base64, ${output.data}`} />;
+      break;
+    case "JPEG":
+      el = <img src={`data:image/jpeg;base64, ${output.data}`} />;
+      break;
     default:
       el = <div dangerouslySetInnerHTML={{ __html: output.data }} />;
   }
@@ -243,11 +249,18 @@ export default class OutputsComponent extends React.Component<OutputsProps, Outp
             <Row className="align-items-center">
               {remoteOutputs.renderable.outputs.map((remoteOutput, ix) => {
                 let media_type = remoteOutput.media_type;
-                let output: TableOutput | BokehOutput;
-                if (outputs !== null && media_type == "table") {
-                  output = outputs.renderable[ix];
-                } else if (outputs !== null && media_type == "bokeh") {
-                  output = outputs.renderable[ix];
+                let output: TableOutput | BokehOutput | any;
+                if (outputs) {
+                  switch (media_type) {
+                    case "table":
+                      output = outputs.renderable[ix];
+                      break;
+                    case "bokeh":
+                      output = outputs.renderable[ix];
+                      break;
+                    default:
+                      output = outputs.renderable[ix];
+                  }
                 }
 
                 let [width, height] = imgDims(remoteOutput.screenshot);
