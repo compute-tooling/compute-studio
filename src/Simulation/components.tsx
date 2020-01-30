@@ -2,20 +2,13 @@
 
 import * as React from "react";
 import ReactLoading from "react-loading";
-import { FastField, ErrorMessage, FormikTouched } from "formik";
+import { FastField, ErrorMessage, FormikTouched, Formik, FormikProps, Field } from "formik";
 import { isEqual, isEmpty } from "lodash/lang";
-import * as yup from "yup";
 
 import { makeID, valForForm } from "../utils";
 import { RedMessage, getField, CPIField } from "../fields";
-import {
-  ParamToolsParam,
-  ParamToolsConfig,
-  InitialValues,
-  Inputs,
-  Sects
-} from "../types";
-import { Card, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { ParamToolsParam, ParamToolsConfig, InitialValues, Inputs, Sects } from "../types";
+import { Card, OverlayTrigger, Tooltip } from "react-bootstrap";
 
 export const ParamElement: React.FC<{
   param_data: ParamToolsParam;
@@ -28,9 +21,7 @@ export const ParamElement: React.FC<{
     tooltip = (
       <OverlayTrigger
         trigger={["hover", "click"]}
-        overlay={
-          <Tooltip id={`${id}-tooltip`}>{param_data.description}</Tooltip>
-        }
+        overlay={<Tooltip id={`${id}-tooltip`}>{param_data.description}</Tooltip>}
       >
         <span className="d-inline-block">
           <label>
@@ -58,10 +49,7 @@ export const SectionHeader: React.FC<{
 }> = ({ title, titleSize, titleClass, label, openDefault = true }) => {
   const [open, setOpen] = React.useState(openDefault);
   return (
-    <h1
-      style={{ fontSize: titleSize }}
-      className={titleClass ? titleClass : ""}
-    >
+    <h1 style={{ fontSize: titleSize }} className={titleClass ? titleClass : ""}>
       {title}
       <div className="float-right">
         <button
@@ -108,33 +96,21 @@ const MetaParametersComponent: React.FC<{
   values: InitialValues["meta_parameters"];
   touched: FormikTouched<InitialValues>;
   resetInitialValues: (metaParameters: { [metaParam: string]: any }) => any;
-  readOnly: boolean
+  readOnly: boolean;
 }> = ({ meta_parameters, values, touched, resetInitialValues, readOnly }) => {
   let isTouched = "meta_parameters" in touched;
   return (
     <div className="card card-body card-outer">
       <div className="form-group">
         <ul className="list-unstyled components">
-          {Object.entries(meta_parameters).map(function (mp_item, ix) {
+          {Object.entries(meta_parameters).map(function(mp_item, ix) {
             let paramName = `${mp_item[0]}`;
             let fieldName = `meta_parameters.${paramName}`;
             return (
               <li key={fieldName} className="mb-3 mt-1">
-                <ParamElement
-                  param_data={meta_parameters[paramName]}
-                  id={fieldName}
-                  classes=""
-                />
-                {getField(
-                  fieldName,
-                  mp_item[1],
-                  valForForm(mp_item[1].value[0].value),
-                  readOnly
-                )}
-                <ErrorMessage
-                  name={fieldName}
-                  render={msg => <RedMessage msg={msg} />}
-                />
+                <ParamElement param_data={meta_parameters[paramName]} id={fieldName} classes="" />
+                {getField(fieldName, mp_item[1], valForForm(mp_item[1].value[0].value), readOnly)}
+                <ErrorMessage name={fieldName} render={msg => <RedMessage msg={msg} />} />
               </li>
             );
           })}
@@ -144,8 +120,8 @@ const MetaParametersComponent: React.FC<{
                 Click Reset to update the default values of the parameters.
               </p>
             ) : (
-                <div />
-              )}
+              <div />
+            )}
           </li>
         </ul>
       </div>
@@ -163,15 +139,13 @@ const MetaParametersComponent: React.FC<{
   );
 };
 
-export const MetaParameters = React.memo(
-  MetaParametersComponent,
-  (prevProps, nextProps) => {
-    return isEqual(prevProps.values, nextProps.values);
-  }
-);
+export const MetaParameters = React.memo(MetaParametersComponent, (prevProps, nextProps) => {
+  return isEqual(prevProps.values, nextProps.values);
+});
 
 const ValueComponent: React.FC<{
   fieldName: string;
+  labelString: string;
   placeholder: string;
   colClass: string;
   data: ParamToolsParam;
@@ -179,12 +153,24 @@ const ValueComponent: React.FC<{
   extend: boolean;
   label: string;
   readOnly: boolean;
-}> = ({ fieldName, placeholder, colClass, data, isTouched, extend, label, readOnly }) => {
+  values: any;
+}> = ({
+  fieldName,
+  labelString,
+  placeholder,
+  colClass,
+  data,
+  isTouched,
+  extend,
+  label,
+  readOnly,
+  values
+}) => {
   let style = isTouched ? { backgroundColor: "rgba(102, 175, 233, 0.2)" } : {};
   return (
     <div className={colClass} key={makeID(fieldName)}>
       {label ? <small style={{ padding: 0 }}>{label}</small> : null}
-      {getField(fieldName, data, placeholder, readOnly, style, extend)}
+      {getField(fieldName, data, placeholder, readOnly, style, extend, values, labelString)}
       {isTouched ? (
         <small className="ml-2" style={{ color: "#869191" }}>
           Default: {placeholder}
@@ -210,10 +196,7 @@ const ParamComponent: React.FC<{
   let colClass;
   if (Object.keys(data.form_fields).length == 1) {
     colClass = "col-6";
-  } else if (
-    data.type === "bool" ||
-    (!!data.validators && data.validators.choice)
-  ) {
+  } else if (data.type === "bool" || (!!data.validators && data.validators.choice)) {
     colClass = "col-md-auto";
   } else {
     colClass = "col";
@@ -230,17 +213,13 @@ const ParamComponent: React.FC<{
     checkbox = null;
   }
   let paramElement = (
-    <ParamElement
-      param_data={data}
-      checkbox={checkbox}
-      id={`adjustment.${msect}.${param}`}
-    />
+    <ParamElement param_data={data} checkbox={checkbox} id={`adjustment.${msect}.${param}`} />
   );
   return (
     <div className="container mb-3" style={{ padding: "left 0" }} key={param}>
       {paramElement}
       <div className="form-row has-statuses" style={{ marginLeft: "-20px" }}>
-        {Object.entries(data.form_fields).map(function (form_field, ix) {
+        {Object.entries(data.form_fields).map(function(form_field, ix) {
           let labels = form_field[0];
           let vo = data.value[ix];
           let commaSepLabs = Object.entries(vo)
@@ -252,12 +231,14 @@ const ParamComponent: React.FC<{
           let isTouched = false;
           if (labels in values) {
             isTouched = Array.isArray(values[labels])
-              ? values[labels].length > 0
+              ? values[labels].length > 0 &&
+                !(values[labels].length === 1 && values[labels][0] === "")
               : !!values[labels];
           }
           return (
             <Value
               key={fieldName}
+              labelString={labels}
               fieldName={fieldName}
               placeholder={placeholder}
               colClass={colClass}
@@ -266,6 +247,7 @@ const ParamComponent: React.FC<{
               extend={extend}
               label={commaSepLabs}
               readOnly={readOnly}
+              values={values[labels]}
             />
           );
         })}
@@ -297,27 +279,27 @@ const Section2Component: React.FC<{
   meta_parameters,
   readOnly
 }) => {
-    let section_2_id = makeID(section_2);
-    return (
-      <div key={section_2_id} className="mb-2">
-        <h3 className="mb-1">{section_2}</h3>
-        {param_list.map(function (param) {
-          return (
-            <Param
-              key={`${param}-component`}
-              param={param}
-              msect={msect}
-              data={model_parameters[msect][param]}
-              values={values[param]}
-              extend={extend}
-              meta_parameters={meta_parameters}
-              readOnly={readOnly}
-            />
-          );
-        })}
-      </div>
-    );
-  };
+  let section_2_id = makeID(section_2);
+  return (
+    <div key={section_2_id} className="mb-2">
+      <h3 className="mb-1">{section_2}</h3>
+      {param_list.map(function(param) {
+        return (
+          <Param
+            key={`${param}-component`}
+            param={param}
+            msect={msect}
+            data={model_parameters[msect][param]}
+            values={values[param]}
+            extend={extend}
+            meta_parameters={meta_parameters}
+            readOnly={readOnly}
+          />
+        );
+      })}
+    </div>
+  );
+};
 
 const Section2 = React.memo(Section2Component, (prevProps, nextProps) => {
   for (const param of prevProps.param_list) {
@@ -345,56 +327,44 @@ const Section1Component: React.FC<{
   values,
   extend,
   meta_parameters,
-  readOnly,
+  readOnly
 }) => {
-    let section_1_id = makeID(section_1);
-    return (
-      <div className="inputs-block" id={section_1_id} key={section_1_id}>
+  let section_1_id = makeID(section_1);
+  return (
+    <div className="inputs-block" id={section_1_id} key={section_1_id}>
+      <div className="card card-body card-outer mb-3 shadow-sm" style={{ padding: "1rem" }}>
+        <SectionHeader title={section_1} titleSize={"2.5rem"} label="section-1" />
         <div
-          className="card card-body card-outer mb-3 shadow-sm"
-          style={{ padding: "1rem" }}
+          className="collapse show collapse-plus-minus"
+          id={`${makeID(section_1)}-collapse-section-1`}
         >
-          <SectionHeader
-            title={section_1}
-            titleSize={"2.5rem"}
-            label="section-1"
-          />
-          <div
-            className="collapse show collapse-plus-minus"
-            id={`${makeID(section_1)}-collapse-section-1`}
-          >
-            <div
-              className="card card-body card-inner mb-3"
-              style={{ padding: "0rem" }}
-            >
-              {Object.entries(section_2_dict).map(function (param_list_item, ix) {
-                let section_2 = param_list_item[0];
-                let param_list = param_list_item[1];
-                return (
-                  <Section2
-                    key={`${makeID(section_2)}-component`}
-                    section_2={section_2}
-                    param_list={param_list}
-                    msect={msect}
-                    model_parameters={model_parameters}
-                    values={values}
-                    extend={extend}
-                    meta_parameters={meta_parameters}
-                    readOnly={readOnly}
-                  />
-                );
-              })}
-            </div>
+          <div className="card card-body card-inner mb-3" style={{ padding: "0rem" }}>
+            {Object.entries(section_2_dict).map(function(param_list_item, ix) {
+              let section_2 = param_list_item[0];
+              let param_list = param_list_item[1];
+              return (
+                <Section2
+                  key={`${makeID(section_2)}-component`}
+                  section_2={section_2}
+                  param_list={param_list}
+                  msect={msect}
+                  model_parameters={model_parameters}
+                  values={values}
+                  extend={extend}
+                  meta_parameters={meta_parameters}
+                  readOnly={readOnly}
+                />
+              );
+            })}
           </div>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
 const Section1 = React.memo(Section1Component, (prevProps, nextProps) => {
-  for (const [section2, paramList] of Object.entries(
-    prevProps.section_2_dict
-  )) {
+  for (const [section2, paramList] of Object.entries(prevProps.section_2_dict)) {
     for (const param of paramList) {
       if (!isEqual(prevProps.values[param], nextProps.values[param])) {
         return false;
@@ -414,66 +384,49 @@ const MajorSectionComponent: React.FC<{
   values: InitialValues;
   extend: boolean;
   readOnly: boolean;
-}> = ({
-  msect,
-  section_1_dict,
-  meta_parameters,
-  model_parameters,
-  values,
-  extend,
-  readOnly,
-}) => {
-    return (
-      <div className="card card-body card-outer" key={msect} id={makeID(msect)}>
-        <SectionHeader title={msect} titleSize="2.9rem" label="major" />
-        <hr className="mb-1" style={{ borderTop: "0" }} />
-        <div
-          className="collapse show collapse-plus-minus"
-          id={`${makeID(msect)}-collapse-major`}
-        >
-          <div className="card card-body card-inner" style={{ padding: "0rem" }}>
-            {Object.entries(section_1_dict).map(function (section_2_item, ix) {
-              let section_1 = section_2_item[0];
-              let section_2_dict = section_2_item[1];
-              return (
-                <Section1
-                  key={`${makeID(section_1)}-component`}
-                  section_1={section_1}
-                  section_2_dict={section_2_dict}
-                  msect={msect}
-                  model_parameters={model_parameters}
-                  values={values.adjustment[msect]}
-                  extend={extend}
-                  meta_parameters={meta_parameters}
-                  readOnly={readOnly}
-                />
-              );
-            })}
-          </div>
+}> = ({ msect, section_1_dict, meta_parameters, model_parameters, values, extend, readOnly }) => {
+  return (
+    <div className="card card-body card-outer" key={msect} id={makeID(msect)}>
+      <SectionHeader title={msect} titleSize="2.9rem" label="major" />
+      <hr className="mb-1" style={{ borderTop: "0" }} />
+      <div className="collapse show collapse-plus-minus" id={`${makeID(msect)}-collapse-major`}>
+        <div className="card card-body card-inner" style={{ padding: "0rem" }}>
+          {Object.entries(section_1_dict).map(function(section_2_item, ix) {
+            let section_1 = section_2_item[0];
+            let section_2_dict = section_2_item[1];
+            return (
+              <Section1
+                key={`${makeID(section_1)}-component`}
+                section_1={section_1}
+                section_2_dict={section_2_dict}
+                msect={msect}
+                model_parameters={model_parameters}
+                values={values.adjustment[msect]}
+                extend={extend}
+                meta_parameters={meta_parameters}
+                readOnly={readOnly}
+              />
+            );
+          })}
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
-export const MajorSection = React.memo(
-  MajorSectionComponent,
-  (prevProps, nextProps) => {
-    return isEqual(
-      prevProps.values.adjustment[prevProps.msect],
-      nextProps.values.adjustment[prevProps.msect]
-    );
-  }
-);
+export const MajorSection = React.memo(MajorSectionComponent, (prevProps, nextProps) => {
+  return isEqual(
+    prevProps.values.adjustment[prevProps.msect],
+    nextProps.values.adjustment[prevProps.msect]
+  );
+});
 
 export const SectionHeaderList: React.FC<{ sects: Sects }> = ({ sects }) => {
   return (
     <div className="card card-body card-outer">
       {Object.entries(sects).map(([msect, section1], ix) => {
         return (
-          <div
-            className="card card-body card-inner mb-1 mr-1"
-            key={`${msect}-header-card`}
-          >
+          <div className="card card-body card-inner mb-1 mr-1" key={`${msect}-header-card`}>
             <div className="list-group">
               <a
                 className="list-group-item list-group-item-action mt-0"
@@ -487,24 +440,22 @@ export const SectionHeaderList: React.FC<{ sects: Sects }> = ({ sects }) => {
               >
                 <h3 style={{ color: "inherit" }}>{msect}</h3>
               </a>
-              {Object.entries(section1).map(
-                ([section1Title, section2Params], ix) => {
-                  return (
-                    <a
-                      className="list-group-item list-group-item-action"
-                      href={`#${makeID(section1Title)}`}
-                      key={`#${makeID(section1Title)}-section1-panel`}
-                      style={{
-                        padding: ".3rem 0rem",
-                        border: "0px",
-                        color: "inherit"
-                      }}
-                    >
-                      {section1Title}
-                    </a>
-                  );
-                }
-              )}
+              {Object.entries(section1).map(([section1Title, section2Params], ix) => {
+                return (
+                  <a
+                    className="list-group-item list-group-item-action"
+                    href={`#${makeID(section1Title)}`}
+                    key={`#${makeID(section1Title)}-section1-panel`}
+                    style={{
+                      padding: ".3rem 0rem",
+                      border: "0px",
+                      color: "inherit"
+                    }}
+                  >
+                    {section1Title}
+                  </a>
+                );
+              })}
             </div>
           </div>
         );
@@ -512,59 +463,6 @@ export const SectionHeaderList: React.FC<{ sects: Sects }> = ({ sects }) => {
     </div>
   );
 };
-
-export const PreviewComponent: React.FC<{
-  values: InitialValues;
-  schema: yup.Schema<any>;
-  tbLabelSchema: yup.Schema<any>;
-  transformfunc: any;
-  extend: boolean;
-}> = ({ values, schema, tbLabelSchema, transformfunc, extend }) => {
-  const [preview, setPreview] = React.useState({});
-  const parseValues = () => {
-    try {
-      return transformfunc(values, schema, tbLabelSchema, extend);
-    } catch (error) {
-      return ["Something went wrong while creating the preview.", ""];
-    }
-  };
-  const onClick = e => {
-    e.preventDefault();
-    const [meta_parameters, model_parameters] = parseValues();
-    setPreview({
-      meta_parameters: meta_parameters,
-      adjustment: model_parameters
-    });
-  };
-  return (
-    <Card className="card-outer">
-      <Card className="card-body card-inner mt-1 mb-1">
-        <SectionHeader
-          title="Preview"
-          titleSize="2.0rem"
-          titleClass="font-italic"
-          label="preview"
-          openDefault={false}
-        />
-        <div
-          className="collapse collapse-plus-minus"
-          id="Preview-collapse-preview"
-        >
-          <pre>
-            <code>{JSON.stringify(preview, null, 4)}</code>
-          </pre>
-          <Button variant="outline-success" className="col-3" onClick={onClick}>
-            Refresh
-          </Button>
-        </div>
-      </Card>
-    </Card>
-  );
-};
-
-export const Preview = React.memo(PreviewComponent, (prevProps, nextProps) => {
-  return isEqual(prevProps.values, nextProps.values);
-});
 
 export const ErrorCard: React.FC<{
   errorMsg: JSX.Element;
@@ -576,11 +474,7 @@ export const ErrorCard: React.FC<{
   model_parameters: Inputs["model_parameters"];
 }> = ({ errorMsg, errors, model_parameters = null }) => {
   const getTitle = (sect, paramName) => {
-    if (
-      !!model_parameters &&
-      sect in model_parameters &&
-      paramName in model_parameters[sect]
-    ) {
+    if (!!model_parameters && sect in model_parameters && paramName in model_parameters[sect]) {
       return [true, model_parameters[sect][paramName].title];
     } else {
       return [false, paramName];
@@ -612,9 +506,7 @@ export const ErrorCard: React.FC<{
                           ))}{" "}
                           {exists ? (
                             <li className="list-unstyled">
-                              <a href={`#adjustment.${sect}.${paramName}`}>
-                                [link]
-                              </a>
+                              <a href={`#adjustment.${sect}.${paramName}`}>[link]</a>
                             </li>
                           ) : null}
                         </ul>
@@ -625,8 +517,8 @@ export const ErrorCard: React.FC<{
               })}
             </div>
           ) : (
-              <div key={`${sect}-error`} />
-            );
+            <div key={`${sect}-error`} />
+          );
         })}
       </Card.Body>
     </Card>

@@ -6,16 +6,17 @@ hljs.registerLanguage("json", json);
 
 import "highlight.js/styles/default.css";
 import * as React from "react";
-import { Button } from "react-bootstrap";
-import { FastField, FieldProps } from "formik";
+import { Button, Row, Col } from "react-bootstrap";
+import { FastField, FieldProps, FieldArray } from "formik";
+import { ParamToolsParam } from "./types";
 
 interface CustomFieldProps {
-  label: string,
-  preview: boolean,
+  label: string;
+  preview: boolean;
   exitPreview: () => void;
-  description?: string,
-  allowSpecialChars?: boolean,
-  style?: any,
+  description?: string;
+  allowSpecialChars?: boolean;
+  style?: any;
 }
 
 var Remarkable = require("remarkable");
@@ -23,16 +24,16 @@ var Remarkable = require("remarkable");
 hljs.initHighlightingOnLoad();
 
 var md = new Remarkable({
-  highlight: function (str, lang) {
+  highlight: function(str, lang) {
     if ((lang && hljs.getLanguage(lang)) || true) {
       try {
         return hljs.highlight(lang, str).value;
-      } catch (err) { }
+      } catch (err) {}
     }
 
     try {
       return hljs.highlightAuto(str).value;
-    } catch (err) { }
+    } catch (err) {}
     return ""; // use external default escaping
   }
 });
@@ -70,7 +71,7 @@ export const TextField = (fieldProps: FieldProps<any> & CustomFieldProps) => {
   let allowSpecialChars = props.allowSpecialChars !== null ? true : props.allowSpecialChars;
   let style = props.style ? props.style : {};
   if (props.preview) {
-    return markdownElement(field.value, props.exitPreview, style = props.style);
+    return markdownElement(field.value, props.exitPreview, (style = props.style));
   } else {
     return (
       <input
@@ -78,17 +79,14 @@ export const TextField = (fieldProps: FieldProps<any> & CustomFieldProps) => {
         {...field}
         {...props}
         style={style}
-        onChange={e => allowSpecialChars ? field.onChange(e) : titleChange(e, field.onChange)}
+        onChange={e => (allowSpecialChars ? field.onChange(e) : titleChange(e, field.onChange))}
       />
     );
   }
 };
 
 function checkboxChange(e: React.ChangeEvent<HTMLInputElement>, onChange, placeholder = null) {
-  let value =
-    e.target.value != null && e.target.value !== ""
-      ? e.target.value
-      : placeholder;
+  let value = e.target.value != null && e.target.value !== "" ? e.target.value : placeholder;
   if (typeof value === "boolean") {
     // @ts-ignore
     e.target.value = !value;
@@ -143,91 +141,45 @@ export const CPIField = ({ field, form: { touched, errors }, ...props }) => {
   );
 };
 
-export const TextAreaField = ({
-  field,
-  form: { touched, errors },
-  ...props
-}) => {
+export const TextAreaField = ({ field, form: { touched, errors }, ...props }) => {
   let style = props.style ? props.style : {};
   if (props.preview) {
     return markdownElement(field.value, props.exitPreview, style);
   } else {
-    return (
-      <textarea
-        className="form-control"
-        {...field}
-        {...props}
-        preview=""
-        style={style}
-      />
-    );
+    return <textarea className="form-control" {...field} {...props} preview="" style={style} />;
   }
 };
 
-export const Message = ({ msg }) => (
-  <small className={`form-text text-muted`}>{msg}</small>
-);
+export const Message = ({ msg }) => <small className={`form-text text-muted`}>{msg}</small>;
 
 export const RedMessage = ({ msg }) => (
-  <p
-    className={`form-text font-weight-bold`}
-    style={{ color: "#dc3545", fontSize: "80%" }}
-  >
+  <p className={`form-text font-weight-bold`} style={{ color: "#dc3545", fontSize: "80%" }}>
     {msg}
   </p>
 );
 
-export const CodeSnippetField = ({
-  field,
-  form: { touched, errors },
-  ...props
-}) => {
+export const CodeSnippetField = ({ field, form: { touched, errors }, ...props }) => {
   let style = props.style ? props.style : {};
   if (props.preview) {
     const ticks = "```";
     const markdownText = `${ticks}${props.language}\n${field.value}\n${ticks}`;
     return markdownElement(markdownText, props.exitPreview, style);
   } else {
-    return (
-      <textarea
-        className="form-control"
-        {...field}
-        {...props}
-        preview=""
-        style={style}
-      />
-    );
+    return <textarea className="form-control" {...field} {...props} preview="" style={style} />;
   }
 };
 
-export const ServerSizeField = ({
-  field,
-  form: { touched, errors },
-  ...props
-}) => {
+export const ServerSizeField = ({ field, form: { touched, errors }, ...props }) => {
   return (
     <div>
       <label>
-        <b>Server size: </b>Choose the server size that best meets the
-        requirements of this app
+        <b>Server size: </b>Choose the server size that best meets the requirements of this app
       </label>
       <p>
         <select name="server_size" onChange={field.onChange}>
-          <
-            //@ts-ignore
-            option multiple={true} value={[4, 2]}>
-            4 GB 2 vCPUs
-          </option>
-          <
-            //@ts-ignore
-            option multiple={true} value={[8, 2]}>
-            8 GB 2 vCPUs
-          </option>
-          <
-            //@ts-ignore
-            option multiple={true} value={[16, 4]}>
-            16 GB 4 vCPUs
-          </option>
+          <option value={["4", "2"]}>4 GB 2 vCPUs</option>
+          <option value={["8", "2"]}>8 GB 2 vCPUs</option>
+          <option value={["16", "4"]}>16 GB 4 vCPUs</option>
         </select>
       </p>
     </div>
@@ -268,14 +220,16 @@ export const SelectField = ({ field, form, ...props }) => {
   );
 };
 
-export function getField(
+export const getField = (
   fieldName,
-  data,
+  data: ParamToolsParam,
   placeholder,
   readOnly = false,
   style = {},
   isMulti = false,
-) {
+  values = [],
+  labelString: string | null = null
+) => {
   const makeOptions = choices => {
     let opts = choices.map(choice => (
       <option key={choice.toString()} value={choice}>
@@ -288,11 +242,7 @@ export function getField(
   let choices;
   if (data.type == "bool") {
     choices = ["true", "false"];
-  } else if (
-    data.validators &&
-    data.validators.choice &&
-    data.validators.choice.choices
-  ) {
+  } else if (data.validators && data.validators.choice && data.validators.choice.choices) {
     choices = data.validators.choice.choices;
   }
 
@@ -303,7 +253,7 @@ export function getField(
           name={fieldName}
           component={SelectField}
           options={makeOptions(choices)}
-          placeholder={placeholder}
+          placeholder={placeholder.toString()}
           style={style}
           disabled={readOnly}
         />
@@ -314,7 +264,7 @@ export function getField(
           name={fieldName}
           className="form-control"
           component="select"
-          placeholder={placeholder}
+          placeholder={placeholder.toString()}
           style={style}
           disabled={readOnly}
         >
@@ -322,15 +272,77 @@ export function getField(
         </FastField>
       );
     }
+  } else if (data.number_dims === 1) {
+    let last;
+    let mapAcross;
+    if (values.length > 0 && !(values.length === 1 && values[0] === "")) {
+      mapAcross = values;
+    } else {
+      mapAcross = data.form_fields[labelString];
+    }
+    return (
+      <FieldArray
+        name={fieldName}
+        render={arrayHelpers => (
+          <div>
+            {mapAcross.map((value, ix) => {
+              last = value;
+              return (
+                <Row key={ix} className="justify-content-start mt-1">
+                  <Col>
+                    <FastField
+                      className="form-control"
+                      name={`${fieldName}.${ix}`}
+                      placeholder={
+                        ix <= placeholder.length - 1
+                          ? placeholder[ix].toString()
+                          : placeholder[placeholder.length - 1].toString()
+                      }
+                      style={style}
+                      disabled={readOnly}
+                    />
+                  </Col>
+                  <Col>
+                    <button
+                      className="btn btn-outline-danger btn-sm"
+                      type="button"
+                      onClick={() => {
+                        if (ix === 0) {
+                          // fixes gnarly uncontrolled to defined bug.
+                          arrayHelpers.form.setFieldValue(fieldName, "");
+                          return;
+                        }
+                        arrayHelpers.remove(ix);
+                      }}
+                    >
+                      <i className="fas fa-minus"></i>
+                    </button>
+                  </Col>
+                </Row>
+              );
+            })}
+            <button
+              className="btn btn-outline-success btn-sm mt-2"
+              type="button"
+              onClick={() => {
+                arrayHelpers.push(last);
+              }}
+            >
+              <i className="fas fa-plus"></i>
+            </button>
+          </div>
+        )}
+      />
+    );
   } else {
     return (
       <FastField
         className="form-control"
         name={fieldName}
-        placeholder={placeholder}
+        placeholder={placeholder.toString()}
         style={style}
         disabled={readOnly}
       />
     );
   }
-}
+};

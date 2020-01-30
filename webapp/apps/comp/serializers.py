@@ -49,6 +49,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
             "is_public",
             "model_pk",
             "model_version",
+            "notify_on_completion",
             "owner",
             "readme",
             "status",
@@ -93,6 +94,10 @@ class InputsSerializer(serializers.ModelSerializer):
 
     sim = MiniSimulationSerializer(required=False)
 
+    # Not part of Inputs model but is needed for setting sim completion
+    # notification status on sims created from /[owner]/[title]/api/v1/
+    notify_on_completion = serializers.BooleanField(required=False)
+
     # see to_representation
     # has_write_access = serializers.BooleanField(source="has_write_access")
 
@@ -117,6 +122,7 @@ class InputsSerializer(serializers.ModelSerializer):
             # "has_write_access",
             "job_id",
             "meta_parameters",
+            "notify_on_completion",
             "parent_model_pk",
             "sim",
             "status",
@@ -170,6 +176,7 @@ class SimulationSerializer(serializers.ModelSerializer):
             "is_public",
             "model_pk",
             "model_version",
+            "notify_on_completion",
             "original_eta",
             "outputs",
             "owner",

@@ -3,7 +3,7 @@ import json
 import pytest
 
 
-from webapp.apps.comp.models import Inputs
+from webapp.apps.comp.models import Inputs, Simulation
 from .utils import _submit_inputs, _submit_sim
 
 
@@ -46,6 +46,7 @@ def test_parents_submit(db, get_inputs, meta_param_dict, profile):
     submit_inputs0, submit_sim0 = _submit_sim(inputs)
     _ = submit_sim0.submit()
     submit_sim0.sim.title = "hello world"
+    submit_sim0.sim.readme = [{"text": "readme"}]
     submit_sim0.sim.save()
 
     assert submit_inputs0.inputs.parent_sim == None
@@ -65,3 +66,23 @@ def test_parents_submit(db, get_inputs, meta_param_dict, profile):
     assert submit_inputs1.inputs.parent_sim == submit_sim0.sim
     assert submit_sim1.sim.parent_sim == submit_sim0.sim
     assert submit_sim1.sim.title == "hello world"
+    assert submit_sim1.sim.readme == [{"text": "readme"}]
+
+
+@pytest.mark.parametrize("notify_on_completion", [True, False])
+def test_set_notification_on_completion(
+    db, get_inputs, meta_param_dict, profile, notify_on_completion
+):
+    inputs = _submit_inputs(
+        "Used-for-testing",
+        get_inputs,
+        meta_param_dict,
+        profile,
+        notify_on_completion=notify_on_completion,
+    )
+    inputs.submit()
+
+    assert inputs.sim.notify_on_completion is notify_on_completion
+
+    sim = Simulation.objects.get(pk=inputs.sim.pk)
+    assert sim.notify_on_completion is notify_on_completion

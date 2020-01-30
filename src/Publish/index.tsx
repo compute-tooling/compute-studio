@@ -4,16 +4,10 @@ import * as ReactDOM from "react-dom";
 import * as React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import axios from "axios";
-import { Formik, Field, Form, ErrorMessage, FormikActions } from "formik";
+import { Formik, Field, Form, ErrorMessage, FormikHelpers } from "formik";
 import * as yup from "yup";
-import {
-  TextField,
-  TextAreaField,
-  ServerSizeField,
-  Message,
-  CheckboxField
-} from "../fields";
-import { Card } from 'react-bootstrap';
+import { TextField, TextAreaField, ServerSizeField, Message, CheckboxField } from "../fields";
+import { Card } from "react-bootstrap";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
@@ -31,9 +25,7 @@ var Schema = yup.object().shape({
   description: yup.string().required(requiredMessage),
   repo_url: yup.string().url(),
   // server_size: yup.mixed().oneOf([[4, 2], [8, 4], [16, 8], [32, 16], [64, 32]]),
-  exp_task_time: yup
-    .number()
-    .min(0, "Expected task time must be greater than ${min}."),
+  exp_task_time: yup.number().min(0, "Expected task time must be greater than ${min}."),
   listed: yup.boolean().required(requiredMessage)
 });
 
@@ -41,8 +33,7 @@ const specialRequests = (
   <div>
     <p>
       You may contact the Compute Studio admin at
-      <a href="mailto:hank@compute.studio"> hank@compute.studio</a> to
-      discuss:
+      <a href="mailto:hank@compute.studio"> hank@compute.studio</a> to discuss:
     </p>
     <ul>
       <li>giving collaborators write-access to this app's publish details.</li>
@@ -53,13 +44,13 @@ const specialRequests = (
 );
 
 interface PublishValues {
-  title: string,
-  description: string,
-  oneliner: string,
-  repo_url: string,
-  server_size: [number, number],
-  exp_task_time: number,
-  listed: boolean,
+  title: string;
+  description: string;
+  oneliner: string;
+  repo_url: string;
+  server_size: [number, number];
+  exp_task_time: number;
+  listed: boolean;
 }
 
 const initialValues: PublishValues = {
@@ -73,17 +64,17 @@ const initialValues: PublishValues = {
 };
 
 interface PublishProps {
-  preview: boolean,
-  initialValues: PublishValues,
-  submitType: "Publish" | "Update",
-  fetchInitialValues: () => Promise<any>,
-  doSubmit: (data: FormData) => Promise<void>,
+  preview: boolean;
+  initialValues: PublishValues;
+  submitType: "Publish" | "Update";
+  fetchInitialValues: () => Promise<any>;
+  doSubmit: (data: FormData) => Promise<void>;
 }
 
 type PublishState = Readonly<{
-  preview: boolean,
-  initialValues: PublishValues,
-}>
+  preview: boolean;
+  initialValues: PublishValues;
+}>;
 
 class PublishForm extends React.Component<PublishProps, PublishState> {
   constructor(props) {
@@ -116,7 +107,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
       <div>
         <Formik
           initialValues={this.state.initialValues}
-          onSubmit={(values: PublishValues, actions: FormikActions<PublishValues>) => {
+          onSubmit={(values: PublishValues, actions: FormikHelpers<PublishValues>) => {
             var formdata = new FormData();
             for (const field in values) {
               formdata.append(field, values[field]);
@@ -148,20 +139,22 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                   {status.project_exists}
                 </div>
               ) : (
-                  <div />
-                )}
+                <div />
+              )}
               {status && status.auth ? (
                 <div className="alert alert-danger" role="alert">
                   {status.auth}
                 </div>
               ) : (
-                  <div />
-                )}
+                <div />
+              )}
               <div className="mt-5">
                 <h3>About</h3>
                 <hr className="my-3" />
                 <div className="mt-1 mb-1">
-                  <label><b>Title</b></label>
+                  <label>
+                    <b>Title</b>
+                  </label>
                   <Field
                     type="text"
                     name="title"
@@ -173,13 +166,12 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                     allowSpecialChars={false}
                     style={inputStyle}
                   />
-                  <ErrorMessage
-                    name="title"
-                    render={msg => <Message msg={msg} />}
-                  />
+                  <ErrorMessage name="title" render={msg => <Message msg={msg} />} />
                 </div>
                 <div className="mt-1 mb-1">
-                  <label><b>Oneliner</b></label>
+                  <label>
+                    <b>Oneliner</b>
+                  </label>
                   <Field
                     type="text"
                     name="oneliner"
@@ -190,13 +182,12 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                     exitPreview={() => this.setState({ preview: false })}
                     style={inputStyle}
                   />
-                  <ErrorMessage
-                    name="oneliner"
-                    render={msg => <Message msg={msg} />}
-                  />
+                  <ErrorMessage name="oneliner" render={msg => <Message msg={msg} />} />
                 </div>
                 <div className="mt-1 mb-1">
-                  <label><b>README</b></label>
+                  <label>
+                    <b>README</b>
+                  </label>
                   <Field
                     type="text"
                     name="description"
@@ -207,10 +198,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                     exitPreview={() => this.setState({ preview: false })}
                     style={inputStyle}
                   />
-                  <ErrorMessage
-                    name="description"
-                    render={msg => <Message msg={msg} />}
-                  />
+                  <ErrorMessage name="description" render={msg => <Message msg={msg} />} />
                 </div>
                 <div className="mt-1 mb-1">
                   <label>
@@ -224,14 +212,13 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                       placeholder="Link to the model's code repository"
                       style={inputStyle}
                     />
-                    <ErrorMessage
-                      name="repo_url"
-                      render={msg => <Message msg={msg} />}
-                    />
+                    <ErrorMessage name="repo_url" render={msg => <Message msg={msg} />} />
                   </p>
                 </div>
                 <div className="mt-3 mb-1">
-                  <label><b>Listed:</b>Include this app in the public list of apps</label>
+                  <label>
+                    <b>Listed:</b>Include this app in the public list of apps
+                  </label>
 
                   <Field
                     component={CheckboxField}
@@ -239,10 +226,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                     description="Include this app in the public list of apps"
                     name="listed"
                   />
-                  <ErrorMessage
-                    name="listed"
-                    render={msg => <Message msg={msg} />}
-                  />
+                  <ErrorMessage name="listed" render={msg => <Message msg={msg} />} />
                 </div>
               </div>
               <div className="mt-5">
@@ -250,8 +234,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                 <hr className="my-3" />
                 <div className="mt-1 mb-1">
                   <label>
-                    <b>Expected job time:</b> Time in seconds for simulation to
-                    complete
+                    <b>Expected job time:</b> Time in seconds for simulation to complete
                   </label>
                   <p className="mt-1 mb-1">
                     <Field
@@ -260,25 +243,16 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                       name="exp_task_time"
                       style={inputStyle}
                     />
-                    <ErrorMessage
-                      name="exp_task_time"
-                      render={msg => <Message msg={msg} />}
-                    />
+                    <ErrorMessage name="exp_task_time" render={msg => <Message msg={msg} />} />
                   </p>
                 </div>
                 <div className="mt-1 mb-1">
                   <Field name="server_size" component={ServerSizeField} />
-                  <ErrorMessage
-                    name="server_size"
-                    render={msg => <Message msg={msg} />}
-                  />
+                  <ErrorMessage name="server_size" render={msg => <Message msg={msg} />} />
                 </div>
               </div>
               {specialRequests}
-              <button
-                className="btn inline-block"
-                onClick={this.togglePreview}
-              >
+              <button className="btn inline-block" onClick={this.togglePreview}>
                 {this.state.preview ? "Edit" : "Preview"}
               </button>
               <div className="divider" />
@@ -299,9 +273,9 @@ class CreateApp extends React.Component<{ doSubmit: PublishProps["doSubmit"] }, 
     this.doSubmit = this.doSubmit.bind(this);
   }
   doSubmit(data) {
-    return axios.post("/publish/api/", data).then(function (response) {
+    return axios.post("/publish/api/", data).then(function(response) {
       console.log("post", response);
-      let data: { title: string, owner: string };
+      let data: { title: string; owner: string };
       data = response.data;
       window.location.href = `/${data.owner}/${data.title}/detail/`;
     });
@@ -314,12 +288,9 @@ class CreateApp extends React.Component<{ doSubmit: PublishProps["doSubmit"] }, 
 
           <p className="lead">
             Publish your model on Compute Studio. Check out the
-          <a href="https://docs.compute.studio/publish/guide/">
-              {" "}
-              developer documentation
-          </a>{" "}
-            to learn more about the publishing criteria.
-        </p>
+            <a href="https://docs.compute.studio/publish/guide/"> developer documentation</a> to
+            learn more about the publishing criteria.
+          </p>
           <PublishForm
             fetchInitialValues={null}
             initialValues={initialValues}
@@ -334,7 +305,7 @@ class CreateApp extends React.Component<{ doSubmit: PublishProps["doSubmit"] }, 
 }
 
 interface Match {
-  params: { username: string, app_name: string }
+  params: { username: string; app_name: string };
 }
 class AppDetail extends React.Component<{ match: Match }, {}> {
   constructor(props) {
@@ -348,12 +319,12 @@ class AppDetail extends React.Component<{ match: Match }, {}> {
     const app_name = this.props.match.params.app_name;
     return axios
       .get(`/publish/api/${username}/${app_name}/detail/`)
-      .then(function (response) {
+      .then(function(response) {
         console.log(response);
         let data: PublishValues = response.data;
         return data;
       })
-      .catch(function (error) {
+      .catch(function(error) {
         console.log(error);
       });
   }
@@ -362,12 +333,10 @@ class AppDetail extends React.Component<{ match: Match }, {}> {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     console.log(data);
-    return axios
-      .put(`/publish/api/${username}/${app_name}/detail/`, data)
-      .then(function (response) {
-        console.log(response);
-        window.location.href = `/${username}/${app_name}/detail/`;
-      });
+    return axios.put(`/publish/api/${username}/${app_name}/detail/`, data).then(function(response) {
+      console.log(response);
+      window.location.href = `/${username}/${app_name}/detail/`;
+    });
   }
 
   render() {

@@ -8,20 +8,11 @@ import {
   MetaParameters,
   MajorSection,
   LoadingElement,
-  Preview,
   SectionHeaderList,
   ErrorCard
 } from "./components";
-import { ValidatingModal, RunModal, AuthModal } from "./modal";
-import { formikToJSON } from "../ParamTools";
-import {
-  AccessStatus,
-  Sects,
-  InitialValues,
-  Inputs,
-  InputsDetail,
-  Simulation
-} from "../types";
+import { ValidatingModal, RunModal, AuthModal, PreviewModal } from "./modal";
+import { AccessStatus, Sects, InitialValues, Inputs, InputsDetail, Simulation } from "../types";
 import API from "./API";
 
 // need to require schema in model_parameters!
@@ -34,12 +25,13 @@ export const tbLabelSchema = yup.object().shape({
   use_full_sample: yup.bool()
 });
 
-
 interface InputsFormProps {
   api: API;
   readOnly: boolean;
   accessStatus: AccessStatus;
   resetAccessStatus: () => void;
+  setNotifyOnCompletion: (notify: boolean) => void;
+  notifyOnCompletion: boolean;
   inputs: Inputs;
   defaultURL: string;
   simStatus: Simulation<any>["status"];
@@ -47,25 +39,22 @@ interface InputsFormProps {
   resetInitialValues: (metaParameters: InputsDetail["meta_parameters"]) => void;
   resetting: boolean;
 
-  formikProps: FormikProps<InitialValues>
+  formikProps: FormikProps<InitialValues>;
 }
 
 interface InputsProps {
   initialValues?: InitialValues;
   sects?: Sects;
   schema?: {
-    adjustment: yup.Schema<any>,
-    meta_parameters: yup.Schema<any>,
+    adjustment: yup.Schema<any>;
+    meta_parameters: yup.Schema<any>;
   };
   extend?: boolean;
   unknownParams?: Array<string>;
   initialServerErrors?: { [msect: string]: { errors: { [paramName: string]: any } } };
 }
 
-
-
 const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
-
   const [showModal, setShowModal] = React.useState(false);
 
   if (!props.inputs || props.resetting) {
@@ -73,6 +62,8 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
   }
   let {
     accessStatus,
+    setNotifyOnCompletion,
+    notifyOnCompletion,
     inputs,
     resetInitialValues,
     schema,
@@ -80,9 +71,9 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
     extend,
     unknownParams,
     readOnly,
-    simStatus,
+    simStatus
   } = props;
-  let { meta_parameters, model_parameters } = inputs;
+  let { meta_parameters, model_parameters, label_to_extend } = inputs;
 
   let hasUnknownParams = unknownParams.length > 0;
   let unknownParamsErrors: { [sect: string]: { errors: any } } = {
@@ -90,19 +81,14 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
   };
   if (hasUnknownParams) {
     for (const param of unknownParams) {
-      unknownParamsErrors["Unknown Parameters"].errors[param] =
-        "This parameter is no longer used.";
+      unknownParamsErrors["Unknown Parameters"].errors[param] = "This parameter is no longer used.";
     }
   }
 
   let { isSubmitting, values, touched, handleSubmit, status } = props.formikProps;
   return (
     <div>
-      {isSubmitting ? (
-        <ValidatingModal />
-      ) : (
-          <div />
-        )}
+      {isSubmitting ? <ValidatingModal /> : <div />}
       {status && status.auth ? <AuthModal /> : <div />}
       <div className="row">
         <div className="col-sm-4">
@@ -117,6 +103,19 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
               />
             </li>
             <li>
+              <PreviewModal
+                values={values}
+                schema={yup.object().shape({
+                  adjustment: schema.adjustment,
+                  meta_parameters: schema.meta_parameters
+                })}
+                tbLabelSchema={tbLabelSchema}
+                model_parameters={model_parameters}
+                label_to_extend="year" // hard code until paramtools schema enforced
+                extend={extend}
+              />
+            </li>
+            <li>
               <SectionHeaderList sects={sects} />
             </li>
             <li>
@@ -127,32 +126,28 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
                 showModal={showModal}
                 setShowModal={setShowModal}
                 resetAccessStatus={props.resetAccessStatus}
+                notify={notifyOnCompletion}
+                setNotify={setNotifyOnCompletion}
               />
             </li>
           </ul>
         </div>
         <div className="col-sm-8">
-          {status &&
-            status.status === "INVALID" &&
-            status.serverErrors ? (
-              <ErrorCard
-                errorMsg={
-                  <p>
-                    Some fields have errors. These must be fixed before
-                    the simulation can be submitted. You may re-visit
-                    this page a later time by entering the following
-                            link:{" "}
-                    <a href={inputs.detail.gui_url}>
-                      {inputs.detail.gui_url}
-                    </a>
-                  </p>
-                }
-                errors={status.serverErrors}
-                model_parameters={model_parameters}
-              />
-            ) : (
-              <div />
-            )}
+          {status && status.status === "INVALID" && status.serverErrors ? (
+            <ErrorCard
+              errorMsg={
+                <p>
+                  Some fields have errors. These must be fixed before the simulation can be
+                  submitted. You may re-visit this page a later time by entering the following link:{" "}
+                  <a href={inputs.detail.gui_url}>{inputs.detail.gui_url}</a>
+                </p>
+              }
+              errors={status.serverErrors}
+              model_parameters={model_parameters}
+            />
+          ) : (
+            <div />
+          )}
 
           {hasUnknownParams ? (
             <ErrorCard
@@ -168,19 +163,9 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
               model_parameters={{}}
             />
           ) : (
-              <div />
-            )}
+            <div />
+          )}
 
-          <Preview
-            values={values}
-            schema={yup.object().shape({
-              adjustment: schema.adjustment,
-              meta_parameters: schema.meta_parameters
-            })}
-            tbLabelSchema={tbLabelSchema}
-            transformfunc={formikToJSON}
-            extend={extend}
-          />
           {Object.entries(sects).map((msect_item, ix) => {
             // msect --> section_1: dict(dict) --> section_2: dict(dict)
             let msect = msect_item[0];
@@ -202,13 +187,13 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
       </div>
     </div>
   );
-}
+};
 
 const InputsMemoed = React.memo(InputsForm, (prevProps, nextProps) => {
   return (
     prevProps.simStatus === nextProps.simStatus &&
     prevProps.accessStatus === nextProps.accessStatus &&
     prevProps.formikProps === nextProps.formikProps
-  )
-})
+  );
+});
 export default InputsMemoed;

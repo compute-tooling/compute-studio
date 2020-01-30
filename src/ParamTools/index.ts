@@ -11,7 +11,8 @@ import {
   InputsDetail,
   InitialValues,
   Sects,
-  Inputs
+  Inputs,
+  Schema
 } from "../types";
 
 const integerMsg: string = "Must be an integer.";
@@ -64,7 +65,7 @@ function testReverseOp(value: any): boolean {
   return true;
 }
 
-yup.number.prototype._typeCheck = function (value: any): boolean {
+yup.number.prototype._typeCheck = function(value: any): boolean {
   if (value instanceof Number) value = value.valueOf();
 
   return (
@@ -73,11 +74,10 @@ yup.number.prototype._typeCheck = function (value: any): boolean {
   );
 };
 
-yup.bool.prototype._typeCheck = function (value) {
+yup.bool.prototype._typeCheck = function(value) {
   if (value instanceof Boolean) value = value.valueOf();
   return (
-    (typeof value === "string" && (value === "*" || value === "<")) ||
-    typeof value === "boolean"
+    (typeof value === "string" && (value === "*" || value === "<")) || typeof value === "boolean"
   );
 };
 
@@ -87,8 +87,7 @@ const minObj = min => {
     name: "contrib.min",
     exclusive: true,
     params: { min },
-    test: value =>
-      value == null || value === "*" || value === "<" || value >= min
+    test: value => value == null || value === "*" || value === "<" || value >= min
   };
 };
 
@@ -98,8 +97,7 @@ const maxObj = max => {
     name: "contrib.max",
     exclusive: true,
     params: { max },
-    test: (value: any): boolean =>
-      value == null || value === "*" || value === "<" || value <= max
+    test: (value: any): boolean => value == null || value === "*" || value === "<" || value <= max
   };
 };
 
@@ -116,11 +114,12 @@ const integerObj = {
   name: "contrib.integer",
   exclusive: true,
   params: {},
-  test: value =>
-    value == null || value === "*" || value === "<" || Number.isInteger(value)
+  test: value => value == null || value === "*" || value === "<" || Number.isInteger(value)
 };
 
-export function yupType(type: "int" | "float" | "bool" | "date" | "string") {
+export function yupType(
+  type: "int" | "float" | "bool" | "date" | "string"
+): yup.Schema<number> | yup.Schema<boolean> | yup.Schema<Date> | yup.Schema<string> {
   if (type == "int") {
     return yup
       .number()
@@ -155,7 +154,9 @@ export function yupValidator(
   params: ParamToolsConfig,
   param_data: ParamToolsParam,
   extend: boolean = false
-) {
+):
+  | yup.Schema<number | boolean | Date | string>
+  | yup.ArraySchema<number | boolean | Date | string> {
   const ensureExtend = obj => {
     if (extend) {
       return yup
@@ -163,9 +164,9 @@ export function yupValidator(
         .of(obj)
         .transform(transformArray)
         .compact(v => v == null || v === "")
-        .test(reverseObj);
+        .test(reverseObj) as yup.Schema<any> | yup.ArraySchema<any>;
     } else {
-      return obj;
+      return obj as yup.Schema<any> | yup.ArraySchema<any>;
     }
   };
 
@@ -194,19 +195,20 @@ export function yupValidator(
     }
   }
   if ("choice" in param_data.validators) {
-    yupObj = yupObj.oneOf(
-      union(param_data.validators.choice.choices, [null, ""]),
-      oneOfMsg
-    );
+    yupObj = yupObj.oneOf(union(param_data.validators.choice.choices, [null, ""]), oneOfMsg);
   }
-
-  return ensureExtend(yupObj);
+  if (param_data.number_dims === 1) {
+    return yup
+      .array()
+      .of<number | boolean | Date | string>(yupObj)
+      .nullable()
+      .compact(v => v == null || v === "");
+  } else {
+    return ensureExtend(yupObj);
+  }
 }
 
-function select(
-  valueObjects: Array<ValueObject>,
-  labels: { [key: string]: any }
-) {
+function select(valueObjects: Array<ValueObject>, labels: { [key: string]: any }) {
   let ret = [];
   if (isEmpty(labels)) {
     return valueObjects;
@@ -242,12 +244,12 @@ function labelsToString(valueObject: ValueObject): string {
 export function convertToFormik(
   data: Inputs
 ): [
-    InitialValues,
-    Sects,
-    Inputs,
-    { adjustment: yup.Schema<any>, meta_parameters: yup.Schema<any> },
-    Array<string>
-  ] {
+  InitialValues,
+  Sects,
+  Inputs,
+  { adjustment: yup.Schema<any>; meta_parameters: yup.Schema<any> },
+  Array<string>
+] {
   if ("schema" in data.meta_parameters) {
     delete data.meta_parameters["schema"];
   }
@@ -259,8 +261,7 @@ export function convertToFormik(
   let adjShape: { [msect: string]: yup.Schema<any> } = {};
   // TODO: move these into formal spec!
   const extend: boolean = "extend" in data ? data.extend : false;
-  let label_to_extend: string =
-    "label_to_extend" in data ? data.label_to_extend : "year";
+  let label_to_extend: string = "label_to_extend" in data ? data.label_to_extend : "year";
   // end TODO
   const hasInitialValues: boolean = "detail" in data;
   let adjustment: InputsDetail["adjustment"] = {};
@@ -271,6 +272,7 @@ export function convertToFormik(
     meta_parameters = data.detail.meta_parameters;
   }
   for (const [msect, params] of Object.entries(data.model_parameters)) {
+    let ptSchema = (params.schema as unknown) as Schema;
     var msectShape = {};
     sects[msect] = {};
     initialValues.adjustment[msect] = {};
@@ -309,7 +311,7 @@ export function convertToFormik(
       }
       sects[msect][section_1][section_2].push(param);
 
-      var yupObj = yupValidator(params, param_data, extend);
+      var yupObj = yupValidator(params, param_data, extend && label_to_extend in ptSchema.labels);
 
       // Define form_fields from value objects.
       initialValues.adjustment[msect][param] = {};
@@ -317,7 +319,7 @@ export function convertToFormik(
 
       for (const vals of param_data.value) {
         let fieldName = labelsToString(vals);
-        let placeholder = vals.value.toString();
+        let placeholder = vals.value;
         let initialValue: string | Array<any> = "";
         if (hasInitialValues && param in adjustment[msect]) {
           let labels = {};
@@ -327,10 +329,13 @@ export function convertToFormik(
             }
           }
           let matches = select(adjustment[msect][param], labels);
-          initialValue = parseToOps(matches, meta_parameters, label_to_extend);
-        }
-        if (!extend && Array.isArray(initialValue)) {
-          initialValue = initialValue[0];
+          // only handle ops if the label_to_extend is used by the parameter section.
+          if (extend && label_to_extend in ptSchema.labels) {
+            initialValue = parseToOps(matches, meta_parameters, label_to_extend);
+          } else {
+            initialValue = matches.map((vo, ix) => vo.value);
+            initialValue = initialValue && initialValue[0];
+          }
         }
         initialValues.adjustment[msect][param][fieldName] = initialValue;
         param_data.form_fields[fieldName] = placeholder;
@@ -362,20 +367,14 @@ export function convertToFormik(
     let mpVal = mp_data.value[0].value;
     mpShape[mp_name] = yupObj;
     initialValues["meta_parameters"][mp_name] = yupObj.cast(
-      (meta_parameters && mp_name in meta_parameters) ? meta_parameters[mp_name] : mpVal
+      meta_parameters && mp_name in meta_parameters ? meta_parameters[mp_name] : mpVal
     );
   }
   let schema = {
     adjustment: yup.object().shape(adjShape),
     meta_parameters: yup.object().shape(mpShape)
   };
-  return [
-    initialValues,
-    sects,
-    data,
-    schema,
-    unknownParams
-  ];
+  return [initialValues, sects, data, schema, unknownParams];
 }
 
 export interface FormData {
@@ -393,7 +392,9 @@ export function formikToJSON(
   values: { [key: string]: any },
   schema: yup.Schema<any>,
   labelSchema: yup.Schema<any>,
-  extend: boolean = false
+  extend: boolean = false,
+  label_to_extend: string,
+  model_parameters: Inputs["model_parameters"]
 ) {
   let data: FormData = schema.cast(values);
   var meta_parameters: { [key: string]: any } = {};
@@ -402,8 +403,8 @@ export function formikToJSON(
   for (const [mp_name, mp_val] of Object.entries(data.meta_parameters)) {
     meta_parameters[mp_name] = mp_val;
   }
-
   for (const [msect, params] of Object.entries(data.adjustment)) {
+    const ptSchema = (model_parameters[msect].schema as unknown) as Schema;
     adjustment[msect] = {};
     for (const [paramName, paramData] of Object.entries(params)) {
       var voList: Array<ValueObject> = [];
@@ -421,7 +422,9 @@ export function formikToJSON(
           continue;
         }
         if (voStr == "nolabels") {
-          if (extend && Array.isArray(val) && val.length) {
+          // if in extend mode, all parameters are casted up a dimension and need to be
+          // brought down if they do not use the label 'label_to_extend'.
+          if (extend && label_to_extend in ptSchema.labels && Array.isArray(val) && val.length) {
             vo.value = val[0];
           } else {
             vo.value = val;
@@ -439,7 +442,8 @@ export function formikToJSON(
           }
           vo = labelSchema.cast(vo);
           vo.value = val;
-          if (extend) {
+          // only handle ops if the label_to_extend is used by the parameter section.
+          if (extend && label_to_extend in ptSchema.labels) {
             voList.push(...parseFromOps(vo));
           } else {
             voList.push(vo);

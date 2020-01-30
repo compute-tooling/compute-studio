@@ -90,17 +90,17 @@ export interface RemoteOutput {
   screenshot: string;
   title: string;
   media_type:
-  | "bokeh"
-  | "table"
-  | "CSV"
-  | "PNG"
-  | "JPEG"
-  | "MP3"
-  | "MP4"
-  | "HDF5"
-  | "PDF"
-  | "Markdown"
-  | "Text";
+    | "bokeh"
+    | "table"
+    | "CSV"
+    | "PNG"
+    | "JPEG"
+    | "MP3"
+    | "MP4"
+    | "HDF5"
+    | "PDF"
+    | "Markdown"
+    | "Text";
 }
 
 export interface Output extends RemoteOutput {
@@ -116,9 +116,8 @@ export interface BokehLegacyOutput extends RemoteOutput {
 }
 
 export interface BokehOutput extends RemoteOutput {
-  data: { target_id: string; root_id: string, doc: string };
+  data: { target_id: string; root_id: string; doc: string };
 }
-
 
 // Interfaces below correspond to interfaces defined in:
 // webapp/apps/comp/serializers.py
@@ -142,7 +141,6 @@ export interface Outputs {
   renderable: Array<Output | TableOutput | BokehOutput>;
   downloadable: Array<Output | TableOutput | BokehOutput>;
 }
-
 
 export interface AccessStatus {
   user_status: "inactive" | "customer" | "profile" | "anon";
@@ -175,12 +173,12 @@ export interface MiniSimulation {
   is_public: boolean;
   model_pk: number;
   model_version: string;
+  notify_on_completion: boolean;
   owner: string;
   readme: string;
   status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
   title: string;
 }
-
 
 export interface InputsDetail {
   adjustment: { [msect: string]: { [paramName: string]: Array<ValueObject> } };
@@ -216,6 +214,7 @@ export interface Simulation<T> {
   has_write_access: boolean;
   model_pk: number;
   model_version: string;
+  notify_on_completion: boolean;
   original_eta: number;
   outputs: T;
   outputs_version: string;
