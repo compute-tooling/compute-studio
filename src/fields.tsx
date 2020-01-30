@@ -6,8 +6,9 @@ hljs.registerLanguage("json", json);
 
 import "highlight.js/styles/default.css";
 import * as React from "react";
-import { Button } from "react-bootstrap";
-import { FastField, FieldProps } from "formik";
+import { Button, Row, Col } from "react-bootstrap";
+import { FastField, FieldProps, FieldArray } from "formik";
+import { ParamToolsParam } from "./types";
 
 interface CustomFieldProps {
   label: string;
@@ -219,14 +220,16 @@ export const SelectField = ({ field, form, ...props }) => {
   );
 };
 
-export function getField(
+export const getField = (
   fieldName,
-  data,
+  data: ParamToolsParam,
   placeholder,
   readOnly = false,
   style = {},
-  isMulti = false
-) {
+  isMulti = false,
+  values = [],
+  labelString: string | null = null
+) => {
   const makeOptions = choices => {
     let opts = choices.map(choice => (
       <option key={choice.toString()} value={choice}>
@@ -250,7 +253,7 @@ export function getField(
           name={fieldName}
           component={SelectField}
           options={makeOptions(choices)}
-          placeholder={placeholder}
+          placeholder={placeholder.toString()}
           style={style}
           disabled={readOnly}
         />
@@ -261,7 +264,7 @@ export function getField(
           name={fieldName}
           className="form-control"
           component="select"
-          placeholder={placeholder}
+          placeholder={placeholder.toString()}
           style={style}
           disabled={readOnly}
         >
@@ -269,15 +272,77 @@ export function getField(
         </FastField>
       );
     }
+  } else if (data.number_dims === 1) {
+    let last;
+    let mapAcross;
+    if (values.length > 0 && !(values.length === 1 && values[0] === "")) {
+      mapAcross = values;
+    } else {
+      mapAcross = data.form_fields[labelString];
+    }
+    return (
+      <FieldArray
+        name={fieldName}
+        render={arrayHelpers => (
+          <div>
+            {mapAcross.map((value, ix) => {
+              last = value;
+              return (
+                <Row key={ix} className="justify-content-start mt-1">
+                  <Col>
+                    <FastField
+                      className="form-control"
+                      name={`${fieldName}.${ix}`}
+                      placeholder={
+                        ix <= placeholder.length - 1
+                          ? placeholder[ix].toString()
+                          : placeholder[placeholder.length - 1].toString()
+                      }
+                      style={style}
+                      disabled={readOnly}
+                    />
+                  </Col>
+                  <Col>
+                    <button
+                      className="btn btn-outline-danger btn-sm"
+                      type="button"
+                      onClick={() => {
+                        if (ix === 0) {
+                          // fixes gnarly uncontrolled to defined bug.
+                          arrayHelpers.form.setFieldValue(fieldName, "");
+                          return;
+                        }
+                        arrayHelpers.remove(ix);
+                      }}
+                    >
+                      <i className="fas fa-minus"></i>
+                    </button>
+                  </Col>
+                </Row>
+              );
+            })}
+            <button
+              className="btn btn-outline-success btn-sm mt-2"
+              type="button"
+              onClick={() => {
+                arrayHelpers.push(last);
+              }}
+            >
+              <i className="fas fa-plus"></i>
+            </button>
+          </div>
+        )}
+      />
+    );
   } else {
     return (
       <FastField
         className="form-control"
         name={fieldName}
-        placeholder={placeholder}
+        placeholder={placeholder.toString()}
         style={style}
         disabled={readOnly}
       />
     );
   }
-}
+};

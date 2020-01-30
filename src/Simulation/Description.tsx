@@ -4,7 +4,7 @@ import * as React from "react";
 import { Card, Row, Col, Dropdown, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import * as yup from "yup";
 import { AccessStatus, MiniSimulation, Simulation, RemoteOutputs } from "../types";
-import { FormikActions, Formik, ErrorMessage, Field, Form, FormikProps } from "formik";
+import { Formik, FormikHelpers, ErrorMessage, Field, Form } from "formik";
 import { Message } from "../fields";
 import moment = require("moment");
 import API from "./API";
@@ -283,7 +283,7 @@ export default class DescriptionComponent extends React.Component<
     return (
       <Formik
         initialValues={this.state.initialValues}
-        onSubmit={(values: DescriptionValues, actions: FormikActions<DescriptionValues>) => {
+        onSubmit={(values: DescriptionValues, actions: FormikHelpers<DescriptionValues>) => {
           if (!api.modelpk) {
             this.setState(prevState => ({
               initialValues: {

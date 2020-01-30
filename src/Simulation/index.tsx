@@ -26,7 +26,7 @@ import DescriptionComponent from "./Description";
 import API from "./API";
 import ErrorBoundary from "../ErrorBoundary";
 import { convertToFormik, formikToJSON } from "../ParamTools";
-import { Formik, Form, FormikProps, FormikActions } from "formik";
+import { Formik, Form, FormikProps, FormikHelpers } from "formik";
 import { hasServerErrors } from "../utils";
 import { UnsavedChangesModal } from "./modal";
 import { AuthButtons } from "../auth";
@@ -273,7 +273,9 @@ class SimTabs extends React.Component<
       values,
       yup.object().shape(this.state.schema),
       tbLabelSchema,
-      this.state.extend
+      this.state.extend,
+      "year", // hard code until paramtools schema enforced.
+      this.state.inputs.model_parameters
     );
 
     let formdata = new FormData();
@@ -325,7 +327,7 @@ class SimTabs extends React.Component<
       });
   }
 
-  pollInputs(respData: InputsDetail, actions: FormikActions<InitialValues>, values) {
+  pollInputs(respData: InputsDetail, actions: FormikHelpers<InitialValues>, values) {
     let timer = setInterval(() => {
       axios
         .get(respData.api_url)

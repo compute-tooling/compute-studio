@@ -4,13 +4,11 @@ import * as React from "react";
 import ReactLoading from "react-loading";
 import { FastField, ErrorMessage, FormikTouched, Formik, FormikProps, Field } from "formik";
 import { isEqual, isEmpty } from "lodash/lang";
-import * as yup from "yup";
 
 import { makeID, valForForm } from "../utils";
 import { RedMessage, getField, CPIField } from "../fields";
 import { ParamToolsParam, ParamToolsConfig, InitialValues, Inputs, Sects } from "../types";
-import { Card, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
-import API from "./API";
+import { Card, OverlayTrigger, Tooltip } from "react-bootstrap";
 
 export const ParamElement: React.FC<{
   param_data: ParamToolsParam;
@@ -147,6 +145,7 @@ export const MetaParameters = React.memo(MetaParametersComponent, (prevProps, ne
 
 const ValueComponent: React.FC<{
   fieldName: string;
+  labelString: string;
   placeholder: string;
   colClass: string;
   data: ParamToolsParam;
@@ -154,12 +153,24 @@ const ValueComponent: React.FC<{
   extend: boolean;
   label: string;
   readOnly: boolean;
-}> = ({ fieldName, placeholder, colClass, data, isTouched, extend, label, readOnly }) => {
+  values: any;
+}> = ({
+  fieldName,
+  labelString,
+  placeholder,
+  colClass,
+  data,
+  isTouched,
+  extend,
+  label,
+  readOnly,
+  values
+}) => {
   let style = isTouched ? { backgroundColor: "rgba(102, 175, 233, 0.2)" } : {};
   return (
     <div className={colClass} key={makeID(fieldName)}>
       {label ? <small style={{ padding: 0 }}>{label}</small> : null}
-      {getField(fieldName, data, placeholder, readOnly, style, extend)}
+      {getField(fieldName, data, placeholder, readOnly, style, extend, values, labelString)}
       {isTouched ? (
         <small className="ml-2" style={{ color: "#869191" }}>
           Default: {placeholder}
@@ -220,12 +231,14 @@ const ParamComponent: React.FC<{
           let isTouched = false;
           if (labels in values) {
             isTouched = Array.isArray(values[labels])
-              ? values[labels].length > 0
+              ? values[labels].length > 0 &&
+                !(values[labels].length === 1 && values[labels][0] === "")
               : !!values[labels];
           }
           return (
             <Value
               key={fieldName}
+              labelString={labels}
               fieldName={fieldName}
               placeholder={placeholder}
               colClass={colClass}
@@ -234,6 +247,7 @@ const ParamComponent: React.FC<{
               extend={extend}
               label={commaSepLabs}
               readOnly={readOnly}
+              values={values[labels]}
             />
           );
         })}
@@ -449,56 +463,6 @@ export const SectionHeaderList: React.FC<{ sects: Sects }> = ({ sects }) => {
     </div>
   );
 };
-
-export const PreviewComponent: React.FC<{
-  values: InitialValues;
-  schema: yup.Schema<any>;
-  tbLabelSchema: yup.Schema<any>;
-  transformfunc: any;
-  extend: boolean;
-}> = ({ values, schema, tbLabelSchema, transformfunc, extend }) => {
-  const [preview, setPreview] = React.useState({});
-  const parseValues = () => {
-    try {
-      return transformfunc(values, schema, tbLabelSchema, extend);
-    } catch (error) {
-      return ["Something went wrong while creating the preview.", ""];
-    }
-  };
-  const onClick = e => {
-    e.preventDefault();
-    const [meta_parameters, model_parameters] = parseValues();
-    setPreview({
-      meta_parameters: meta_parameters,
-      adjustment: model_parameters
-    });
-  };
-  return (
-    <Card className="card-outer">
-      <Card className="card-body card-inner mt-1 mb-1">
-        <SectionHeader
-          title="Preview"
-          titleSize="2.0rem"
-          titleClass="font-italic"
-          label="preview"
-          openDefault={false}
-        />
-        <div className="collapse collapse-plus-minus" id="Preview-collapse-preview">
-          <pre>
-            <code>{JSON.stringify(preview, null, 4)}</code>
-          </pre>
-          <Button variant="outline-success" className="col-3" onClick={onClick}>
-            Refresh
-          </Button>
-        </div>
-      </Card>
-    </Card>
-  );
-};
-
-export const Preview = React.memo(PreviewComponent, (prevProps, nextProps) => {
-  return isEqual(prevProps.values, nextProps.values);
-});
 
 export const ErrorCard: React.FC<{
   errorMsg: JSX.Element;
