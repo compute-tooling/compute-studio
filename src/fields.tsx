@@ -282,6 +282,8 @@ export function getField(
       mapAcross = data.form_fields[suffix];
     }
 
+    let numberFields = mapAcross.length;
+
     return (
       <FieldArray
         name={fieldName}
@@ -300,22 +302,29 @@ export function getField(
                       disabled={readOnly}
                     />
                   </Col>
-                  <Col>
-                    <button
-                      className="btn btn-outline-danger btn-sm"
-                      type="button"
-                      onClick={() => arrayHelpers.remove(ix)}
-                    >
-                      -
-                    </button>
-                  </Col>
+                  {numberFields > 1 ? (
+                    <Col>
+                      <button
+                        className="btn btn-outline-danger btn-sm"
+                        type="button"
+                        onClick={() => arrayHelpers.remove(ix)}
+                      >
+                        -
+                      </button>
+                    </Col>
+                  ) : null}
                 </Row>
               );
             })}
             <button
               className="btn btn-outline-success btn-sm mt-1"
               type="button"
-              onClick={() => arrayHelpers.push(last)}
+              onClick={() => {
+                if (values.length === 0) {
+                  arrayHelpers.push(last);
+                }
+                arrayHelpers.push(last);
+              }}
             >
               +
             </button>
