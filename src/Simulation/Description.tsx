@@ -2,14 +2,6 @@
 
 import * as React from "react";
 import { Card, Row, Col, Dropdown, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faHistory,
-  faLock,
-  faLockOpen,
-  faUserFriends,
-  faCodeBranch
-} from "@fortawesome/free-solid-svg-icons";
 import * as yup from "yup";
 import { AccessStatus, MiniSimulation, Simulation, RemoteOutputs } from "../types";
 import { Formik, FormikHelpers, ErrorMessage, Field, Form } from "formik";
@@ -141,7 +133,7 @@ const HistoryDropDown: React.FC<{ isOwner: boolean; history: Array<MiniSimulatio
           style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}
         >
           <>
-            <FontAwesomeIcon icon={faHistory} className="mr-2" /> History
+            <i className="fas fa-history mr-2"></i> History
           </>
         </Dropdown.Toggle>
         <Dropdown.Menu style={style}>{dropdownItems}</Dropdown.Menu>
@@ -161,7 +153,7 @@ const AuthorDropDown: React.FC<{ author: string }> = ({ author }) => {
           style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}
         >
           <>
-            <FontAwesomeIcon icon={faUserFriends} className="mr-2" /> Author
+            <i className="fas fa-user-friends mr-2"></i> Author
           </>
         </Dropdown.Toggle>
         <Dropdown.Menu>
@@ -414,7 +406,7 @@ export default class DescriptionComponent extends React.Component<
                           style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}
                         >
                           <>
-                            <FontAwesomeIcon icon={faCodeBranch} className="mr-2" /> Fork
+                            <i className="fas fa-code-branch mr-2"></i> Fork
                           </>
                         </Button>
                       </Tip>
@@ -438,12 +430,12 @@ export default class DescriptionComponent extends React.Component<
                         >
                           {values.is_public ? (
                             <>
-                              <FontAwesomeIcon icon={faLockOpen} className="mr-2" />
+                              <i className="fas fa-lock-open mr-2"></i>
                               Public
                             </>
                           ) : (
                             <>
-                              <FontAwesomeIcon icon={faLock} className="mr-2" />
+                              <i className="fas fa-lock mr-2"></i>
                               Private
                             </>
                           )}
