@@ -315,7 +315,7 @@ export const getField = (
                         arrayHelpers.remove(ix);
                       }}
                     >
-                      -
+                      <i className="fas fa-minus"></i>
                     </button>
                   </Col>
                 </Row>
@@ -328,7 +328,7 @@ export const getField = (
                 arrayHelpers.push(last);
               }}
             >
-              +
+              <i className="fas fa-plus"></i>
             </button>
           </div>
         )}
