@@ -201,7 +201,8 @@ export function yupValidator(
     return yup
       .array()
       .of<number | boolean | Date | string>(yupObj)
-      .nullable();
+      .nullable()
+      .compact(v => v == null || v === "");
   } else {
     return ensureExtend(yupObj);
   }
