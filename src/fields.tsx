@@ -220,7 +220,7 @@ export const SelectField = ({ field, form, ...props }) => {
   );
 };
 
-export function getField(
+export const getField = (
   fieldName,
   data: ParamToolsParam,
   placeholder,
@@ -229,7 +229,7 @@ export function getField(
   isMulti = false,
   values = [],
   labelString: string | null = null
-) {
+) => {
   const makeOptions = choices => {
     let opts = choices.map(choice => (
       <option key={choice.toString()} value={choice}>
@@ -253,7 +253,7 @@ export function getField(
           name={fieldName}
           component={SelectField}
           options={makeOptions(choices)}
-          placeholder={placeholder}
+          placeholder={placeholder.toString()}
           style={style}
           disabled={readOnly}
         />
@@ -264,7 +264,7 @@ export function getField(
           name={fieldName}
           className="form-control"
           component="select"
-          placeholder={placeholder}
+          placeholder={placeholder.toString()}
           style={style}
           disabled={readOnly}
         >
@@ -280,7 +280,6 @@ export function getField(
     } else {
       mapAcross = data.form_fields[labelString];
     }
-
     return (
       <FieldArray
         name={fieldName}
@@ -289,12 +288,16 @@ export function getField(
             {mapAcross.map((value, ix) => {
               last = value;
               return (
-                <Row key={ix} className="justify-content-start">
+                <Row key={ix} className="justify-content-start mt-1">
                   <Col>
                     <FastField
                       className="form-control"
                       name={`${fieldName}.${ix}`}
-                      placeholder={ix <= placeholder.length - 1 ? placeholder[ix] : values[ix]}
+                      placeholder={
+                        ix <= placeholder.length - 1
+                          ? placeholder[ix].toString()
+                          : placeholder[placeholder.length - 1].toString()
+                      }
                       style={style}
                       disabled={readOnly}
                     />
@@ -303,7 +306,14 @@ export function getField(
                     <button
                       className="btn btn-outline-danger btn-sm"
                       type="button"
-                      onClick={() => arrayHelpers.remove(ix)}
+                      onClick={() => {
+                        if (ix === 0) {
+                          // fixes gnarly uncontrolled to defined bug.
+                          arrayHelpers.form.setFieldValue(fieldName, "");
+                          return;
+                        }
+                        arrayHelpers.remove(ix);
+                      }}
                     >
                       -
                     </button>
@@ -312,12 +322,9 @@ export function getField(
               );
             })}
             <button
-              className="btn btn-outline-success btn-sm mt-1"
+              className="btn btn-outline-success btn-sm mt-2"
               type="button"
               onClick={() => {
-                if (values.length === 0) {
-                  arrayHelpers.push(last);
-                }
                 arrayHelpers.push(last);
               }}
             >
@@ -332,10 +339,10 @@ export function getField(
       <FastField
         className="form-control"
         name={fieldName}
-        placeholder={placeholder}
+        placeholder={placeholder.toString()}
         style={style}
         disabled={readOnly}
       />
     );
   }
-}
+};
