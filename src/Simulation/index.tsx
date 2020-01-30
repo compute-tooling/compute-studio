@@ -273,7 +273,9 @@ class SimTabs extends React.Component<
       values,
       yup.object().shape(this.state.schema),
       tbLabelSchema,
-      this.state.extend
+      this.state.extend,
+      "year", // hard code until paramtools schema enforced.
+      this.state.inputs.model_parameters
     );
 
     let formdata = new FormData();

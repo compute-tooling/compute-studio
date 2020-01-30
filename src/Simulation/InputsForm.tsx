@@ -8,12 +8,10 @@ import {
   MetaParameters,
   MajorSection,
   LoadingElement,
-  Preview,
   SectionHeaderList,
   ErrorCard
 } from "./components";
-import { ValidatingModal, RunModal, AuthModal } from "./modal";
-import { formikToJSON } from "../ParamTools";
+import { ValidatingModal, RunModal, AuthModal, PreviewModal } from "./modal";
 import { AccessStatus, Sects, InitialValues, Inputs, InputsDetail, Simulation } from "../types";
 import API from "./API";
 
@@ -75,7 +73,7 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
     readOnly,
     simStatus
   } = props;
-  let { meta_parameters, model_parameters } = inputs;
+  let { meta_parameters, model_parameters, label_to_extend } = inputs;
 
   let hasUnknownParams = unknownParams.length > 0;
   let unknownParamsErrors: { [sect: string]: { errors: any } } = {
@@ -105,9 +103,6 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
               />
             </li>
             <li>
-              <SectionHeaderList sects={sects} />
-            </li>
-            <li>
               <RunModal
                 action={simStatus === "STARTED" ? "Run" : "Fork and Run"}
                 handleSubmit={handleSubmit}
@@ -118,6 +113,22 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
                 notify={notifyOnCompletion}
                 setNotify={setNotifyOnCompletion}
               />
+            </li>
+            <li>
+              <PreviewModal
+                values={values}
+                schema={yup.object().shape({
+                  adjustment: schema.adjustment,
+                  meta_parameters: schema.meta_parameters
+                })}
+                tbLabelSchema={tbLabelSchema}
+                model_parameters={model_parameters}
+                label_to_extend="year" // hard code until paramtools schema enforced
+                extend={extend}
+              />
+            </li>
+            <li>
+              <SectionHeaderList sects={sects} />
             </li>
           </ul>
         </div>
@@ -155,16 +166,6 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
             <div />
           )}
 
-          <Preview
-            values={values}
-            schema={yup.object().shape({
-              adjustment: schema.adjustment,
-              meta_parameters: schema.meta_parameters
-            })}
-            tbLabelSchema={tbLabelSchema}
-            transformfunc={formikToJSON}
-            extend={extend}
-          />
           {Object.entries(sects).map((msect_item, ix) => {
             // msect --> section_1: dict(dict) --> section_2: dict(dict)
             let msect = msect_item[0];

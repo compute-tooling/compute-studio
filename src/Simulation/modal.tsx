@@ -1,10 +1,13 @@
 import { Button, Modal, Collapse, Row, Col } from "react-bootstrap";
 import * as React from "react";
 import ReactLoading from "react-loading";
+import * as yup from "yup";
 
 import { AuthDialog } from "../auth";
-import { AccessStatus } from "../types";
+import { AccessStatus, InitialValues, Inputs } from "../types";
 import { NotifyOnCompletion } from "./notify";
+import { isEqual } from "lodash";
+import { formikToJSON } from "../ParamTools";
 
 export const ValidatingModal: React.FC<{ defaultShow?: boolean }> = ({ defaultShow = true }) => {
   const [show, setShow] = React.useState(defaultShow);
@@ -310,3 +313,72 @@ export const UnsavedChangesModal: React.FC<{ handleClose: () => void }> = ({ han
     </>
   );
 };
+
+const PreviewComponent: React.FC<{
+  values: InitialValues;
+  schema: yup.Schema<any>;
+  tbLabelSchema: yup.Schema<any>;
+  model_parameters: Inputs["model_parameters"];
+  label_to_extend: string;
+  extend: boolean;
+}> = ({ values, schema, tbLabelSchema, model_parameters, label_to_extend, extend }) => {
+  const [preview, setPreview] = React.useState({});
+
+  const [show, setShow] = React.useState(false);
+
+  const parseValues = () => {
+    try {
+      return formikToJSON(values, schema, tbLabelSchema, extend, label_to_extend, model_parameters);
+    } catch (error) {
+      return ["Something went wrong while creating the preview.", ""];
+    }
+  };
+
+  const refresh = () => {
+    const [meta_parameters, model_parameters] = parseValues();
+    setPreview({
+      meta_parameters: meta_parameters,
+      adjustment: model_parameters
+    });
+  };
+  const handleShow = show => {
+    if (show) {
+      refresh();
+    }
+    setShow(show);
+  };
+  return (
+    <>
+      <div className="card card-body card-outer">
+        <Button
+          variant="primary"
+          onClick={() => handleShow(true)}
+          className="btn btn-block btn-outline-primary"
+        >
+          Adjustment
+        </Button>
+      </div>
+      <Modal show={show} onHide={() => handleShow(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Preview JSON</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <pre>
+            <code>{JSON.stringify(preview, null, 4)}</code>
+          </pre>
+          <Button variant="outline-success" className="col-3" onClick={refresh}>
+            Refresh
+          </Button>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-primary" onClick={() => handleShow(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
+};
+export const PreviewModal = React.memo(PreviewComponent, (prevProps, nextProps) => {
+  return isEqual(prevProps.values, nextProps.values);
+});

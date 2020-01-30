@@ -6,8 +6,9 @@ hljs.registerLanguage("json", json);
 
 import "highlight.js/styles/default.css";
 import * as React from "react";
-import { Button } from "react-bootstrap";
-import { FastField, FieldProps } from "formik";
+import { Button, Row, Col } from "react-bootstrap";
+import { FastField, FieldProps, FieldArray } from "formik";
+import { ParamToolsParam } from "./types";
 
 interface CustomFieldProps {
   label: string;
@@ -221,11 +222,12 @@ export const SelectField = ({ field, form, ...props }) => {
 
 export function getField(
   fieldName,
-  data,
+  data: ParamToolsParam,
   placeholder,
   readOnly = false,
   style = {},
-  isMulti = false
+  isMulti = false,
+  values = []
 ) {
   const makeOptions = choices => {
     let opts = choices.map(choice => (
@@ -269,6 +271,58 @@ export function getField(
         </FastField>
       );
     }
+  } else if (data.number_dims === 1) {
+    let last;
+    let fieldNamePath = fieldName.split(".");
+    let suffix = fieldNamePath[fieldNamePath.length - 1];
+    let mapAcross;
+    if (values.length) {
+      mapAcross = values;
+    } else {
+      mapAcross = data.form_fields[suffix];
+    }
+
+    return (
+      <FieldArray
+        name={fieldName}
+        render={arrayHelpers => (
+          <div>
+            {mapAcross.map((value, ix) => {
+              last = value;
+              return (
+                <Row key={ix} className="justify-content-start">
+                  <Col>
+                    <FastField
+                      className="form-control"
+                      name={`${fieldName}.${ix}`}
+                      placeholder={ix <= placeholder.length - 1 ? placeholder[ix] : values[ix]}
+                      style={style}
+                      disabled={readOnly}
+                    />
+                  </Col>
+                  <Col>
+                    <button
+                      className="btn btn-outline-danger btn-sm"
+                      type="button"
+                      onClick={() => arrayHelpers.remove(ix)}
+                    >
+                      -
+                    </button>
+                  </Col>
+                </Row>
+              );
+            })}
+            <button
+              className="btn btn-outline-success btn-sm mt-1"
+              type="button"
+              onClick={() => arrayHelpers.push(last)}
+            >
+              +
+            </button>
+          </div>
+        )}
+      />
+    );
   } else {
     return (
       <FastField
