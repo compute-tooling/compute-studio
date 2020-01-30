@@ -155,7 +155,6 @@ const ValueComponent: React.FC<{
   values: any;
 }> = ({ fieldName, placeholder, colClass, data, isTouched, extend, label, readOnly, values }) => {
   let style = isTouched ? { backgroundColor: "rgba(102, 175, 233, 0.2)" } : {};
-  console.log("render", fieldName);
   return (
     <div className={colClass} key={makeID(fieldName)}>
       {label ? <small style={{ padding: 0 }}>{label}</small> : null}
