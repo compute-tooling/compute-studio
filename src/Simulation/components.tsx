@@ -219,7 +219,8 @@ const ParamComponent: React.FC<{
           let isTouched = false;
           if (labels in values) {
             isTouched = Array.isArray(values[labels])
-              ? values[labels].length > 1 || values[labels] === [""]
+              ? values[labels].length > 0 &&
+                !(values[labels].length === 1 && values[labels][0] === "")
               : !!values[labels];
           }
           return (
