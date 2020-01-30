@@ -6,18 +6,6 @@ import { Editable, withReact, Slate, useSlate } from "slate-react";
 import { createEditor, Transforms, Editor, Range } from "slate";
 import { withHistory } from "slate-history";
 import { Button } from "react-bootstrap";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faItalic,
-  faBold,
-  faUnderline,
-  faListOl,
-  faQuoteRight,
-  faListUl,
-  faHeading,
-  faLink
-} from "@fortawesome/free-solid-svg-icons";
-import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { isUrl } from "../utils";
 
 type Mark = "bold" | "italic" | "underline" | "strikethrough";
@@ -67,14 +55,14 @@ const ReadmeEditor: React.FC<{
     >
       {readOnly ? null : (
         <div className="mb-3">
-          <MarkButton mark="bold" icon={faBold} />
-          <MarkButton mark="italic" icon={faItalic} />
-          <MarkButton mark="underline" icon={faUnderline} />
-          <LinkButton icon={faLink} />
-          <BlockButton block="heading-one" icon={faHeading} />
-          <BlockButton block="block-quote" icon={faQuoteRight} />
-          <BlockButton block="numbered-list" icon={faListOl} />
-          <BlockButton block="bulleted-list" icon={faListUl} />
+          <MarkButton mark="bold" icon={"fas fa-bold"} />
+          <MarkButton mark="italic" icon={"fas fa-italic"} />
+          <MarkButton mark="underline" icon={"fas fa-underline"} />
+          <LinkButton icon={"fas fa-link"} />
+          <BlockButton block="heading-one" icon={"fas fa-heading"} />
+          <BlockButton block="block-quote" icon={"fas fa-quote-right"} />
+          <BlockButton block="numbered-list" icon={"fas fa-list-ol"} />
+          <BlockButton block="bulleted-list" icon={"fas fa-list-ul"} />
         </div>
       )}
       <Editable
@@ -170,7 +158,7 @@ const Leaf = ({ attributes, children, leaf }) => {
   return <span {...attributes}>{children}</span>;
 };
 
-const BlockButton: React.FC<{ block: Block; icon: IconDefinition }> = ({ block, icon }) => {
+const BlockButton: React.FC<{ block: Block; icon: string }> = ({ block, icon }) => {
   const editor = useSlate();
   const active = Controller.isBlockActive(editor, block);
   return (
@@ -183,12 +171,12 @@ const BlockButton: React.FC<{ block: Block; icon: IconDefinition }> = ({ block, 
         Controller.toggleBlock(editor, block);
       }}
     >
-      <FontAwesomeIcon icon={icon} />
+      <i className={icon}></i>
     </Button>
   );
 };
 
-const MarkButton: React.FC<{ mark: Mark; icon: IconDefinition }> = ({ mark, icon }) => {
+const MarkButton: React.FC<{ mark: Mark; icon: string }> = ({ mark, icon }) => {
   const editor = useSlate();
   const active = Controller.isMarkActive(editor, mark);
   return (
@@ -201,12 +189,12 @@ const MarkButton: React.FC<{ mark: Mark; icon: IconDefinition }> = ({ mark, icon
         Controller.toggleMark(editor, mark);
       }}
     >
-      <FontAwesomeIcon icon={icon} />
+      <i className={icon}></i>
     </Button>
   );
 };
 
-const LinkButton: React.FC<{ icon: IconDefinition }> = ({ icon }) => {
+const LinkButton: React.FC<{ icon: string }> = ({ icon }) => {
   const editor = useSlate();
   const active = Controller.isBlockActive(editor, "link");
   return (
@@ -221,7 +209,7 @@ const LinkButton: React.FC<{ icon: IconDefinition }> = ({ icon }) => {
         Controller.insertLink(editor, url);
       }}
     >
-      <FontAwesomeIcon icon={icon} />
+      <i className={icon}></i>
     </Button>
   );
 };
