@@ -103,18 +103,6 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
               />
             </li>
             <li>
-              <RunModal
-                action={simStatus === "STARTED" ? "Run" : "Fork and Run"}
-                handleSubmit={handleSubmit}
-                accessStatus={accessStatus}
-                showModal={showModal}
-                setShowModal={setShowModal}
-                resetAccessStatus={props.resetAccessStatus}
-                notify={notifyOnCompletion}
-                setNotify={setNotifyOnCompletion}
-              />
-            </li>
-            <li>
               <PreviewModal
                 values={values}
                 schema={yup.object().shape({
@@ -129,6 +117,18 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
             </li>
             <li>
               <SectionHeaderList sects={sects} />
+            </li>
+            <li>
+              <RunModal
+                action={simStatus === "STARTED" ? "Run" : "Fork and Run"}
+                handleSubmit={handleSubmit}
+                accessStatus={accessStatus}
+                showModal={showModal}
+                setShowModal={setShowModal}
+                resetAccessStatus={props.resetAccessStatus}
+                notify={notifyOnCompletion}
+                setNotify={setNotifyOnCompletion}
+              />
             </li>
           </ul>
         </div>
