@@ -145,6 +145,7 @@ export const MetaParameters = React.memo(MetaParametersComponent, (prevProps, ne
 
 const ValueComponent: React.FC<{
   fieldName: string;
+  labelString: string;
   placeholder: string;
   colClass: string;
   data: ParamToolsParam;
@@ -153,12 +154,23 @@ const ValueComponent: React.FC<{
   label: string;
   readOnly: boolean;
   values: any;
-}> = ({ fieldName, placeholder, colClass, data, isTouched, extend, label, readOnly, values }) => {
+}> = ({
+  fieldName,
+  labelString,
+  placeholder,
+  colClass,
+  data,
+  isTouched,
+  extend,
+  label,
+  readOnly,
+  values
+}) => {
   let style = isTouched ? { backgroundColor: "rgba(102, 175, 233, 0.2)" } : {};
   return (
     <div className={colClass} key={makeID(fieldName)}>
       {label ? <small style={{ padding: 0 }}>{label}</small> : null}
-      {getField(fieldName, data, placeholder, readOnly, style, extend, values)}
+      {getField(fieldName, data, placeholder, readOnly, style, extend, values, labelString)}
       {isTouched ? (
         <small className="ml-2" style={{ color: "#869191" }}>
           Default: {placeholder}
@@ -226,6 +238,7 @@ const ParamComponent: React.FC<{
           return (
             <Value
               key={fieldName}
+              labelString={labels}
               fieldName={fieldName}
               placeholder={placeholder}
               colClass={colClass}

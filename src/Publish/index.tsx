@@ -4,7 +4,7 @@ import * as ReactDOM from "react-dom";
 import * as React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import axios from "axios";
-import { Formik, Field, Form, ErrorMessage, FormikActions } from "formik";
+import { Formik, Field, Form, ErrorMessage, FormikHelpers } from "formik";
 import * as yup from "yup";
 import { TextField, TextAreaField, ServerSizeField, Message, CheckboxField } from "../fields";
 import { Card } from "react-bootstrap";
@@ -107,7 +107,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
       <div>
         <Formik
           initialValues={this.state.initialValues}
-          onSubmit={(values: PublishValues, actions: FormikActions<PublishValues>) => {
+          onSubmit={(values: PublishValues, actions: FormikHelpers<PublishValues>) => {
             var formdata = new FormData();
             for (const field in values) {
               formdata.append(field, values[field]);

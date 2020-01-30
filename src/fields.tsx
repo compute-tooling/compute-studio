@@ -227,7 +227,8 @@ export function getField(
   readOnly = false,
   style = {},
   isMulti = false,
-  values = []
+  values = [],
+  labelString: string | null = null
 ) {
   const makeOptions = choices => {
     let opts = choices.map(choice => (
@@ -273,16 +274,12 @@ export function getField(
     }
   } else if (data.number_dims === 1) {
     let last;
-    let fieldNamePath = fieldName.split(".");
-    let suffix = fieldNamePath[fieldNamePath.length - 1];
     let mapAcross;
-    if (values.length) {
+    if (values.length > 0 && !(values.length === 1 && values[0] === "")) {
       mapAcross = values;
     } else {
-      mapAcross = data.form_fields[suffix];
+      mapAcross = data.form_fields[labelString];
     }
-
-    let numberFields = mapAcross.length;
 
     return (
       <FieldArray
@@ -302,17 +299,15 @@ export function getField(
                       disabled={readOnly}
                     />
                   </Col>
-                  {numberFields > 1 ? (
-                    <Col>
-                      <button
-                        className="btn btn-outline-danger btn-sm"
-                        type="button"
-                        onClick={() => arrayHelpers.remove(ix)}
-                      >
-                        -
-                      </button>
-                    </Col>
-                  ) : null}
+                  <Col>
+                    <button
+                      className="btn btn-outline-danger btn-sm"
+                      type="button"
+                      onClick={() => arrayHelpers.remove(ix)}
+                    >
+                      -
+                    </button>
+                  </Col>
                 </Row>
               );
             })}
