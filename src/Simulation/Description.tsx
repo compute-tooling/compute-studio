@@ -1,15 +1,16 @@
 "use strict";
 
 import * as React from "react";
-import { Card, Row, Col, Dropdown, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Card, Row, Col, Dropdown, Button, OverlayTrigger, Tooltip, Modal } from "react-bootstrap";
 import * as yup from "yup";
 import { AccessStatus, MiniSimulation, Simulation, RemoteOutputs } from "../types";
-import { Formik, FormikHelpers, ErrorMessage, Field, Form } from "formik";
+import { Formik, FormikHelpers, ErrorMessage, Field, Form, FormikProps, FieldArray } from "formik";
 import { Message } from "../fields";
 import moment = require("moment");
 import API from "./API";
 import ReadmeEditor from "./editor";
 import { AxiosError } from "axios";
+import { parseToOps } from "../ParamTools/ops";
 
 interface DescriptionProps {
   accessStatus: AccessStatus;
@@ -164,6 +165,120 @@ const AuthorDropDown: React.FC<{ author: string }> = ({ author }) => {
   );
 };
 
+export const CollaborationSettings: React.FC<{
+  api: API;
+  user: string;
+  remoteSim?: Simulation<RemoteOutputs>;
+}> = ({ api, user, remoteSim }) => {
+  const [show, setShow] = React.useState(false);
+  const [query, setQuery] = React.useState<Array<{ username: string }>>([]);
+  const handleQuery = e => {
+    console.log(e.target.value);
+    api.queryUsers(e.target.value).then(data => {
+      setQuery(data);
+    });
+  };
+
+  return (
+    <>
+      <Button
+        variant="dark"
+        style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}
+        className="mb-4 w-100 mt-1"
+        onClick={() => setShow(true)}
+      >
+        <>
+          <i className="fas fa-lock mr-2"></i>
+          Share
+        </>
+      </Button>
+
+      <Modal show={show} onHide={() => setShow(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Collaboration Settings</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Formik
+            initialValues={{ authors: remoteSim.authors || [user] }}
+            validationSchema={yup.object().shape({ authors: yup.array().of(yup.string()) })}
+            onSubmit={values => {
+              alert(JSON.stringify(values, null, 4));
+            }}
+          >
+            {props => (
+              <Form>
+                <FieldArray name="authors">
+                  {arrayHelpers => (
+                    <div>
+                      {props.values.authors.map((author, ix) => (
+                        <Row key={ix}>
+                          <Col>{author}</Col>
+                          <Col>
+                            <button
+                              className="btn btn-outline-danger btn-sm"
+                              type="button"
+                              onClick={() => {
+                                if (ix === 0) {
+                                  // fixes gnarly uncontrolled to defined bug.
+                                  arrayHelpers.form.setFieldValue("authors", "");
+                                  return;
+                                }
+                                arrayHelpers.remove(ix);
+                              }}
+                            >
+                              <i className="fas fa-minus"></i>
+                            </button>
+                          </Col>
+                        </Row>
+                      ))}
+                      <Row key={props.values.authors.length}>
+                        <Col>
+                          <Field
+                            name={`authors.${props.values.authors.length}`}
+                            className="form-control"
+                            onChange={e => {
+                              handleQuery(e);
+                              props.setFieldValue(
+                                `authors.${props.values.authors.length}`,
+                                e.target.value
+                              );
+                            }}
+                          />
+                          <Dropdown.Menu show={!!query}>
+                            {query.map((user, ix) => {
+                              <Dropdown.Item key={ix}>user</Dropdown.Item>;
+                            })}
+                          </Dropdown.Menu>{" "}
+                        </Col>
+                        <Col>
+                          <button
+                            className="btn btn-outline-success btn-sm mt-2"
+                            type="button"
+                            onClick={() => {
+                              arrayHelpers.push("");
+                            }}
+                          >
+                            <i className="fas fa-plus"></i>
+                          </button>
+                        </Col>
+                      </Row>
+                    </div>
+                  )}
+                </FieldArray>
+              </Form>
+            )}
+          </Formik>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-primary" onClick={() => setShow(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
+};
+
 export default class DescriptionComponent extends React.Component<
   DescriptionProps,
   DescriptionState
@@ -267,7 +382,6 @@ export default class DescriptionComponent extends React.Component<
   render() {
     const api = this.props.api;
     const { isEditMode, showTitleBorder } = this.state;
-    let is_public;
 
     let owner = this.props.remoteSim?.owner || this.user();
 
@@ -298,7 +412,8 @@ export default class DescriptionComponent extends React.Component<
           }
         }}
         validationSchema={Schema}
-        render={({ values, handleSubmit, setFieldValue }) => (
+      >
+        {(formikProps: FormikProps<DescriptionValues>) => (
           <Form>
             <Card className="card-outer">
               <Card.Body>
@@ -319,7 +434,7 @@ export default class DescriptionComponent extends React.Component<
                                 placeholder="Untitled Simulation"
                                 {...field}
                                 className="form-cotnrol h3"
-                                onBlur={handleSubmit}
+                                onBlur={formikProps.handleSubmit}
                                 style={titleStyle}
                               />
                             </Card>
@@ -366,8 +481,8 @@ export default class DescriptionComponent extends React.Component<
                         <ReadmeEditor
                           fieldName="readme"
                           value={field.value}
-                          setFieldValue={setFieldValue}
-                          handleSubmit={handleSubmit}
+                          setFieldValue={formikProps.setFieldValue}
+                          handleSubmit={formikProps.handleSubmit}
                           readOnly={!this.writable()}
                         />
                       )}
@@ -414,32 +529,16 @@ export default class DescriptionComponent extends React.Component<
                   ) : null}
                   {this.writable() ? (
                     <Col className="col-sm-2 ml-sm-auto mt-1" style={{ paddingRight: 0 }}>
-                      <Tip tip={`Make this simulation ${values.is_public ? "private" : "public"}.`}>
-                        <Button
-                          variant="dark"
-                          style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}
-                          className="mb-4 w-100 mt-1"
-                          onClick={e => {
-                            e.target.value = !values.is_public;
-                            setFieldValue("is_public", !values.is_public);
-                            // put handleSubmit in setTimeout since setFieldValue is async
-                            // but does not return a promise
-                            // https://github.com/jaredpalmer/formik/issues/529
-                            setTimeout(() => handleSubmit(e), 0);
-                          }}
-                        >
-                          {values.is_public ? (
-                            <>
-                              <i className="fas fa-lock-open mr-2"></i>
-                              Public
-                            </>
-                          ) : (
-                            <>
-                              <i className="fas fa-lock mr-2"></i>
-                              Private
-                            </>
-                          )}
-                        </Button>
+                      <Tip
+                        tip={`Make this simulation ${
+                          formikProps.values.is_public ? "private" : "public"
+                        }.`}
+                      >
+                        <CollaborationSettings
+                          api={api}
+                          user={this.user()}
+                          remoteSim={this.props.remoteSim}
+                        />
                       </Tip>
                     </Col>
                   ) : null}
@@ -448,7 +547,7 @@ export default class DescriptionComponent extends React.Component<
             </Card>
           </Form>
         )}
-      />
+      </Formik>
     );
   }
 }

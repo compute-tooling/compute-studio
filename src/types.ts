@@ -206,6 +206,7 @@ export interface Inputs {
 
 export interface Simulation<T> {
   api_url: string;
+  authors: string[];
   creation_date: Date;
   eta: number;
   exp_comp_datetime: Date;
