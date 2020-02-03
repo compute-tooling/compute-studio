@@ -383,7 +383,6 @@ class SimTabs extends React.Component<
     setTimeout(() => {
       api.getRemoteOutputs().then(initRem => {
         this.setState({ remoteSim: initRem });
-        console.log("status", initRem.status);
         if (initRem.status === "PENDING") {
           return this.pollOutputs(5000);
         } else {
