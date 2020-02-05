@@ -175,6 +175,7 @@ export interface MiniSimulation {
   model_version: string;
   notify_on_completion: boolean;
   owner: string;
+  project: string;
   readme: string;
   status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
   title: string;
