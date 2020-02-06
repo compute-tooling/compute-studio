@@ -95,7 +95,16 @@ const GridRow: React.FC<{ initSim: MiniSimulation }> = ({ initSim }) => {
                 <Modal.Title>Rename Simulation</Modal.Title>
               </Modal.Header>
               <Modal.Body>
-                <Field name="title" className="form-control" />
+                <Field
+                  name="title"
+                  className="form-control"
+                  onKeyPress={e => {
+                    if (e.key === "Enter") {
+                      handleSubmit(e);
+                      setEditTitle(false);
+                    }
+                  }}
+                />
                 <ErrorMessage name="title" render={msg => <Message msg={msg} />} />
               </Modal.Body>
               <Modal.Footer>
