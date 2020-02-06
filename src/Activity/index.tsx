@@ -37,36 +37,74 @@ interface ActivityState {
   ordering?: Array<"project__owner" | "project__title" | "creation_date">;
 }
 
+// Necessary to stop click on dropdown toggle from propagating up to the parent elements.
+const CustomToggle = React.forwardRef<any, any>(({ children, onClick }, ref) => (
+  <Button
+    variant="link"
+    style={{ border: 0, color: "inherit" }}
+    href=""
+    ref={ref}
+    onClick={e => {
+      e.stopPropagation();
+      e.preventDefault();
+      onClick(e);
+    }}
+  >
+    {children}
+  </Button>
+));
+
 const GridRow: React.FC<{ sim: MiniSimulation }> = ({ sim }) => {
+  let [focus, setFocus] = React.useState(false);
+  let simLink;
+  if (sim.status === "STARTED") {
+    simLink = `${sim.gui_url}edit/`;
+  } else {
+    simLink = sim.gui_url;
+  }
+  let rowStyle: { [key: string]: any } = { borderRadius: "20px" };
+  if (focus) {
+    rowStyle = { ...rowStyle, backgroundColor: "rgb(245, 248, 250)", cursor: "pointer" };
+  }
+  console.log(rowStyle);
   return (
-    <Row className="justify-content-center my-4 border p-3" style={{ borderRadius: "20px" }}>
-      <Col className="col-1">
-        <Dropdown>
-          <Dropdown.Toggle
-            variant="link"
-            style={{ border: 0, color: "inherit" }}
-            id="dropdown-basic"
-          >
-            <i className="fas fa-ellipsis-v"></i>
-          </Dropdown.Toggle>
-          <Dropdown.Menu>
-            <Dropdown.Item key={0} href={sim.gui_url}>
-              View Results{" "}
-            </Dropdown.Item>
-            <Dropdown.Item key={1} href={`${sim.gui_url}edit/`}>
-              Edit Results
-            </Dropdown.Item>
-          </Dropdown.Menu>
-        </Dropdown>
-      </Col>
+    <Row
+      className="justify-content-center my-4 border p-3"
+      style={rowStyle}
+      onClick={e => {
+        window.location.href = simLink;
+      }}
+      onMouseEnter={() => {
+        setFocus(true);
+      }}
+      onMouseLeave={() => {
+        setFocus(false);
+      }}
+    >
       <Col className="col-3 text-truncate">{sim.title}</Col>
       <Col className="col-3">{sim.project}</Col>
+      <Col className="col-1">#{sim.model_pk}</Col>
       <Col className="col-1">
         <a href={sim.gui_url}>{status(sim.status)}</a>
       </Col>
       <Col className="col-2 text-truncate">{moment(sim.creation_date).fromNow()}</Col>
       <Col className="col-1">
         {sim.is_public ? <i className="fas fa-lock-open"></i> : <i className="fas fa-lock"></i>}
+      </Col>
+      <Col className="col-1">
+        <Dropdown>
+          <Dropdown.Toggle id="dropdown-basic" as={CustomToggle}>
+            <i className="fas fa-ellipsis-v"></i>
+          </Dropdown.Toggle>
+          <Dropdown.Menu>
+            <Dropdown.Item key={0} href="">
+              Rename
+            </Dropdown.Item>
+            <Dropdown.Item key={1} href="">
+              Make {sim.is_public ? "private" : "public"}
+            </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
       </Col>
     </Row>
   );
