@@ -20,7 +20,7 @@ from rest_framework import filters
 import cs_storage
 
 from webapp.apps.users.models import Project, Profile
-from webapp.apps.users.permissions import StrictRequiresActive
+from webapp.apps.users.permissions import RequiresActive, StrictRequiresActive
 
 from webapp.apps.comp.asyncsubmit import SubmitInputs, SubmitSim
 from webapp.apps.comp.compute import Compute, JobFailError
@@ -436,8 +436,12 @@ class SimsAPIView(generics.ListAPIView):
     queryset = Simulation.objects.all()
     serializer_class = MiniSimulationSerializer
 
+    def get_queryset(self):
+        return self.queryset.filter(owner__user=self.request.user)
+
 
 class ProfileSimsAPIView(SimsAPIView):
+    permission_classes = (RequiresActive,)
     queryset = Simulation.objects.public_sims()
 
     def get_queryset(self):
