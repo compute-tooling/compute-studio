@@ -1,42 +1,5 @@
-{% load strings %}
-
-<div class="card card-body card-outer mb-4" style="overflow-x: auto;">
-  <table id="sim-table" class="container table table-responsive-md">
-    <thead>
-      <tr>
-        <th>Output</th>
-        <th>Title</th>
-        <th>Model</th>
-        <th>Run time (s)</th>
-        <th>Date (EST)</th>
-        <th>Status</th>
-        <th>Access</th>
-      </tr>
-    </thead>
-    {% for run in runs %}
-    <tr>
-      <td>
-        <a href="{{run.get_absolute_url}}">{{run.model_pk}}</a>
-        <a class="color-inherit hover-blue" href="{{run.get_absolute_edit_url}}"><i class="fas fa-edit fa-sm"></i></a>
-      </td>
-      <td style="max-width: 100px;" className="text-truncate">{{run.title}}</td>
-      <td>{{run.project}}</td>
-      <td>{{run.run_time}}</td>
-      <td>{{run.creation_date}}</td>
-      <td class="sim-status">{{run.status}}</td>
-      <td><i class="fas {% if run.is_public %}fa-lock-open{% else %}fa-lock{% endif %}"></i></td>
-    </tr>
-    {% endfor %}
-  </table>
+{% load static %}
+<div class="container-fluid">
+  <div id="activity-container"></div>
+  <script src="{% static 'js/activity.js' %}"></script>
 </div>
-
-<script>
-  $(document).ready(function () {
-    $(" .sim-status").each(function () {
-      node = $(this); if (node.text() == "SUCCESS") { node.addClass("text-success"); }
-      else if (node.text() == "PENDING") { node.addClass("text-warning"); } else if (node.text() == "STARTED") {
-        node.addClass("text-primary");
-      } else { node.addClass("text-danger"); }
-    });
-    $('#sim-table').DataTable();
-  }); </script>
