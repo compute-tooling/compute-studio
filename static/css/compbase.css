@@ -31,7 +31,7 @@ cs-white-color {
 
 div.card.publish.markdown {
   /* background-color: rgba(27, 31, 35, 0.05); */
-  padding: .375rem .75rem;
+  padding: 0.375rem 0.75rem;
 }
 
 code {
@@ -269,11 +269,9 @@ span.default-value {
   color: inherit;
 }
 
-
 /* output modal styling */
 .output-modal.modal.show .modal-content {
   min-width: 100%;
-
 }
 
 .output-modal.modal.show div.modal-dialog.modal-xl {
@@ -288,4 +286,11 @@ blockquote {
   color: #aaa;
   font-style: italic;
   font-size: 17px !important;
+}
+
+.caret-off::before {
+  display: none;
+}
+.caret-off::after {
+  display: none;
 }
