@@ -37,12 +37,25 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
     api_url = serializers.CharField(required=False, source="get_absolute_api_url")
     gui_url = serializers.CharField(required=False, source="get_absolute_url")
 
+    # see to_representation
+    # has_write_access = serializers.BooleanField(source="has_write_access")
+
+    def to_representation(self, obj):
+        rep = super().to_representation(obj)
+        if self.context.get("request"):
+            user = self.context["request"].user
+        else:
+            user = None
+        rep["has_write_access"] = obj.has_write_access(user)
+        return rep
+
     class Meta:
         model = Simulation
         fields = (
             "api_url",
             "creation_date",
             "gui_url",
+            # "has_write_access",
             "is_public",
             "model_pk",
             "model_version",
