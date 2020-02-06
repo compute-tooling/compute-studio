@@ -75,15 +75,6 @@ class Profile(models.Model):
                 agg[month["month"]] += float(month["effective__sum"])
         return {k.strftime("%B %Y"): v for k, v in sorted(agg.items())}
 
-    def sims_breakdown(self, public_only=True):
-        runs = {}
-        kwargs = {}
-        if public_only:
-            kwargs.update({"creation_date__gt": ANON_BEFORE, "is_public": True})
-        queryset = self.sims.filter(**kwargs)
-        runs = queryset.all().order_by("-pk")
-        return runs
-
     def can_run(self, project):
         if not self.is_active:
             return False

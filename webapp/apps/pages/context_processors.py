@@ -1,4 +1,5 @@
 from webapp.apps.users.models import Project
+from webapp.settings import DEBUG
 
 
 def project_list(request):
@@ -10,4 +11,4 @@ def project_list(request):
         project_list.append(
             (project.owner.user.username, project.title, project.app_url)
         )
-    return {"project_list": project_list}
+    return {"project_list": project_list, "debug": DEBUG}

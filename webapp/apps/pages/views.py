@@ -17,7 +17,6 @@ class HomeView(View):
                 self.profile_template,
                 context={
                     "username": request.user.username,
-                    "runs": profile.sims_breakdown(public_only=False),
                     "show_readme": False,
                     "projects": self.projects.filter(owner=profile),
                 },
@@ -37,7 +36,6 @@ class ProfileView(View):
             self.profile_template,
             context={
                 "username": request.user.username,
-                "runs": profile.sims_breakdown(public_only=True),
                 "show_readme": False,
                 "projects": self.projects.filter(owner=profile, listed=True),
             },

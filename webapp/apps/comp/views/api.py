@@ -1,20 +1,26 @@
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
 from rest_framework.authentication import (
     BasicAuthentication,
     SessionAuthentication,
     TokenAuthentication,
 )
+
 from rest_framework.views import APIView
+from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.fields import IntegerField
+from rest_framework import filters
 
 import cs_storage
 
-from webapp.apps.users.models import Project
+from webapp.apps.users.models import Project, Profile
+from webapp.apps.users.permissions import StrictRequiresActive
 
 from webapp.apps.comp.asyncsubmit import SubmitInputs, SubmitSim
 from webapp.apps.comp.compute import Compute, JobFailError
@@ -413,3 +419,28 @@ class MyInputsAPIView(APIView):
                 return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class SimsAPIView(generics.ListAPIView):
+    permission_classes = (StrictRequiresActive,)
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ["creation_date", "project__title", "project__owner"]
+    ordering = ["-creation_date"]
+
+    queryset = Simulation.objects.all()
+    serializer_class = MiniSimulationSerializer
+
+
+class ProfileSimsAPIView(SimsAPIView):
+    queryset = Simulation.objects.public_sims()
+
+    def get_queryset(self):
+        username = self.request.parser_context["kwargs"].get("username", None)
+        user = get_object_or_404(get_user_model(), username=username)
+        return self.queryset.filter(owner__user=user)

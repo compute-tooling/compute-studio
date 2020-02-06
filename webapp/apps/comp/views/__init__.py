@@ -16,4 +16,6 @@ from .api import (
     DetailMyInputsAPIView,
     MyInputsAPIView,
     NewSimulationAPIView,
+    SimsAPIView,
+    ProfileSimsAPIView,
 )

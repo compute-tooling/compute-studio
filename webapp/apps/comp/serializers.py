@@ -31,6 +31,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
     owner = serializers.StringRelatedField(source="get_owner", required=False)
     title = serializers.CharField(required=False)
     model_pk = serializers.IntegerField(required=False)
+    project = serializers.StringRelatedField(required=False)
     readme = serializers.JSONField(required=False)
     status = serializers.CharField(required=False)
     api_url = serializers.CharField(required=False, source="get_absolute_api_url")
@@ -47,6 +48,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
             "model_version",
             "notify_on_completion",
             "owner",
+            "project",
             "readme",
             "status",
             "title",
@@ -58,6 +60,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
             "model_pk",
             "model_version",
             "owner",
+            "project",
             "status",
         )
 
