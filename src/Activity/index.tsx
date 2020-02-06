@@ -3,13 +3,17 @@ import * as React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import ReactLoading from "react-loading";
 import axios from "axios";
+import * as yup from "yup";
 
 import ErrorBoundary from "../ErrorBoundary";
 import API from "./API";
+import { default as SimAPI } from "../Simulation/API";
 import { MiniSimulation } from "../types";
 import moment = require("moment");
-import { Button, Row, Col, Dropdown } from "react-bootstrap";
+import { Button, Row, Col, Dropdown, Modal } from "react-bootstrap";
 import { Tip } from "../components";
+import { Formik, Field, ErrorMessage } from "formik";
+import { Message } from "../fields";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
@@ -37,25 +41,10 @@ interface ActivityState {
   ordering?: Array<"project__owner" | "project__title" | "creation_date">;
 }
 
-// Necessary to stop click on dropdown toggle from propagating up to the parent elements.
-const CustomToggle = React.forwardRef<any, any>(({ children, onClick }, ref) => (
-  <Button
-    variant="link"
-    style={{ border: 0, color: "inherit" }}
-    href=""
-    ref={ref}
-    onClick={e => {
-      e.stopPropagation();
-      e.preventDefault();
-      onClick(e);
-    }}
-  >
-    {children}
-  </Button>
-));
-
-const GridRow: React.FC<{ sim: MiniSimulation }> = ({ sim }) => {
+const GridRow: React.FC<{ initSim: MiniSimulation }> = ({ initSim }) => {
   let [focus, setFocus] = React.useState(false);
+  let [sim, setSim] = React.useState(initSim);
+  let [editTitle, setEditTitle] = React.useState(false);
   let simLink;
   if (sim.status === "STARTED") {
     simLink = `${sim.gui_url}edit/`;
@@ -66,47 +55,115 @@ const GridRow: React.FC<{ sim: MiniSimulation }> = ({ sim }) => {
   if (focus) {
     rowStyle = { ...rowStyle, backgroundColor: "rgb(245, 248, 250)", cursor: "pointer" };
   }
-  console.log(rowStyle);
   return (
-    <Row
-      className="justify-content-center my-4 border p-3"
-      style={rowStyle}
-      onClick={e => {
-        window.location.href = simLink;
-      }}
-      onMouseEnter={() => {
-        setFocus(true);
-      }}
-      onMouseLeave={() => {
-        setFocus(false);
+    <Formik
+      initialValues={{ title: sim.title, is_public: sim.is_public }}
+      validationSchema={yup.object().shape({ title: yup.string(), is_public: yup.boolean() })}
+      onSubmit={values => {
+        let [owner, title] = sim.project.split("/");
+        let simapi = new SimAPI(owner, title, sim.model_pk.toString());
+        let formdata = new FormData();
+        for (const field in values) {
+          if (values[field]) formdata.append(field, values[field]);
+        }
+        simapi.putDescription(formdata).then(data => {
+          setSim(prevSim => ({ ...prevSim, title: values.title, is_public: values.is_public }));
+        });
       }}
     >
-      <Col className="col-3 text-truncate">{sim.title}</Col>
-      <Col className="col-3">{sim.project}</Col>
-      <Col className="col-1">#{sim.model_pk}</Col>
-      <Col className="col-1">
-        <a href={sim.gui_url}>{status(sim.status)}</a>
-      </Col>
-      <Col className="col-2 text-truncate">{moment(sim.creation_date).fromNow()}</Col>
-      <Col className="col-1">
-        {sim.is_public ? <i className="fas fa-lock-open"></i> : <i className="fas fa-lock"></i>}
-      </Col>
-      <Col className="col-1">
-        <Dropdown>
-          <Dropdown.Toggle id="dropdown-basic" as={CustomToggle}>
-            <i className="fas fa-ellipsis-v"></i>
-          </Dropdown.Toggle>
-          <Dropdown.Menu>
-            <Dropdown.Item key={0} href="">
-              Rename
-            </Dropdown.Item>
-            <Dropdown.Item key={1} href="">
-              Make {sim.is_public ? "private" : "public"}
-            </Dropdown.Item>
-          </Dropdown.Menu>
-        </Dropdown>
-      </Col>
-    </Row>
+      {({ values, setFieldValue, handleSubmit }) => (
+        <Row
+          className="justify-content-center my-4 border p-3"
+          style={rowStyle}
+          onClick={e => {
+            window.location.href = simLink;
+          }}
+          onMouseEnter={() => {
+            setFocus(true);
+          }}
+          onMouseLeave={() => {
+            setFocus(false);
+          }}
+        >
+          <Modal
+            show={editTitle}
+            onHide={() => setEditTitle(false)}
+            onClick={e => e.stopPropagation()}
+          >
+            <Modal.Header closeButton>
+              <Modal.Title>Rename Simulation</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <Field name="title" className="form-control" />
+              <ErrorMessage name="title" render={msg => <Message msg={msg} />} />
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                variant="outline-primary"
+                onClick={e => {
+                  setEditTitle(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={e => {
+                  handleSubmit();
+                  setEditTitle(false);
+                }}
+              >
+                Save
+              </Button>
+            </Modal.Footer>
+          </Modal>
+          <Col className="col-3 text-truncate">{sim.title}</Col>
+          <Col className="col-3">{sim.project}</Col>
+          <Col className="col-1">#{sim.model_pk}</Col>
+          <Col className="col-1">
+            <a href={sim.gui_url}>{status(sim.status)}</a>
+          </Col>
+          <Col className="col-2 text-truncate">{moment(sim.creation_date).fromNow()}</Col>
+          <Col className="col-1">
+            {sim.is_public ? <i className="fas fa-lock-open"></i> : <i className="fas fa-lock"></i>}
+          </Col>
+          {sim.has_write_access ? (
+            <Col className="col-1">
+              <Dropdown onClick={e => e.stopPropagation()}>
+                <Dropdown.Toggle
+                  id="dropdown-basic"
+                  variant="link"
+                  style={{ border: 0, color: "inherit" }}
+                >
+                  <i className="fas fa-ellipsis-v"></i>
+                </Dropdown.Toggle>
+                <Dropdown.Menu>
+                  <Dropdown.Item
+                    key={0}
+                    href=""
+                    onClick={() => {
+                      setEditTitle(true);
+                    }}
+                  >
+                    Rename
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    key={1}
+                    href=""
+                    onClick={() => {
+                      setFieldValue("is_public", !values.is_public);
+                      setTimeout(() => handleSubmit(), 0);
+                    }}
+                  >
+                    Make {values.is_public ? "private" : "public"}
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
+            </Col>
+          ) : null}
+        </Row>
+      )}
+    </Formik>
   );
 };
 
@@ -114,7 +171,7 @@ const Grid: React.FC<{ sims: Array<MiniSimulation> }> = ({ sims }) => {
   return (
     <div className="container-fluid">
       {sims.map(sim => (
-        <GridRow sim={sim} />
+        <GridRow initSim={sim} key={`${sim.project}#${sim.model_pk}`} />
       ))}
     </div>
   );
@@ -148,7 +205,6 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
     this.setState({ loading: true });
     this.api.nextSimulations(this.state.feed.next).then(feed => {
       if (!feed.results.length) {
-        console.log("heyoooo");
         this.setState({ loading: false });
       }
       this.setState(prevState => ({

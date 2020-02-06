@@ -170,6 +170,7 @@ export interface MiniSimulation {
   api_url: string;
   creation_date: Date;
   gui_url: string;
+  has_write_access: boolean;
   is_public: boolean;
   model_pk: number;
   model_version: string;
