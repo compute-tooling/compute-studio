@@ -10,7 +10,7 @@ import API from "./API";
 import { default as SimAPI } from "../Simulation/API";
 import { MiniSimulation } from "../types";
 import moment = require("moment");
-import { Button, Row, Col, Dropdown, Modal } from "react-bootstrap";
+import { Button, Row, Col, Dropdown, Modal, Card } from "react-bootstrap";
 import { Tip } from "../components";
 import { Formik, Field, ErrorMessage } from "formik";
 import { Message } from "../fields";
@@ -51,7 +51,7 @@ const GridRow: React.FC<{ initSim: MiniSimulation }> = ({ initSim }) => {
   } else {
     simLink = sim.gui_url;
   }
-  let rowStyle: { [key: string]: any } = { borderRadius: "20px" };
+  let rowStyle: { [key: string]: any } = { borderRadius: "2px" };
   if (focus) {
     rowStyle = { ...rowStyle, backgroundColor: "rgb(245, 248, 250)", cursor: "pointer" };
   }
@@ -72,8 +72,8 @@ const GridRow: React.FC<{ initSim: MiniSimulation }> = ({ initSim }) => {
       }}
     >
       {({ values, setFieldValue, handleSubmit }) => (
-        <Row
-          className="justify-content-center my-4 border p-3"
+        <Card
+          className="my-3 border p-0"
           style={rowStyle}
           onClick={e => {
             window.location.href = simLink;
@@ -85,83 +85,109 @@ const GridRow: React.FC<{ initSim: MiniSimulation }> = ({ initSim }) => {
             setFocus(false);
           }}
         >
-          <Modal
-            show={editTitle}
-            onHide={() => setEditTitle(false)}
-            onClick={e => e.stopPropagation()}
-          >
-            <Modal.Header closeButton>
-              <Modal.Title>Rename Simulation</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <Field name="title" className="form-control" />
-              <ErrorMessage name="title" render={msg => <Message msg={msg} />} />
-            </Modal.Body>
-            <Modal.Footer>
-              <Button
-                variant="outline-primary"
-                onClick={e => {
-                  setEditTitle(false);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={e => {
-                  handleSubmit();
-                  setEditTitle(false);
-                }}
-              >
-                Save
-              </Button>
-            </Modal.Footer>
-          </Modal>
-          <Col className="col-3 text-truncate">{sim.title}</Col>
-          <Col className="col-3">{sim.project}</Col>
-          <Col className="col-1">#{sim.model_pk}</Col>
-          <Col className="col-1">
-            <a href={sim.gui_url}>{status(sim.status)}</a>
-          </Col>
-          <Col className="col-2 text-truncate">{moment(sim.creation_date).fromNow()}</Col>
-          <Col className="col-1">
-            {sim.is_public ? <i className="fas fa-lock-open"></i> : <i className="fas fa-lock"></i>}
-          </Col>
-          {sim.has_write_access ? (
-            <Col className="col-1">
-              <Dropdown onClick={e => e.stopPropagation()}>
-                <Dropdown.Toggle
-                  id="dropdown-basic"
-                  variant="link"
-                  style={{ border: 0, color: "inherit" }}
+          <Card.Body>
+            <Modal
+              show={editTitle}
+              onHide={() => setEditTitle(false)}
+              onClick={e => e.stopPropagation()}
+            >
+              <Modal.Header closeButton>
+                <Modal.Title>Rename Simulation</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                <Field name="title" className="form-control" />
+                <ErrorMessage name="title" render={msg => <Message msg={msg} />} />
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  variant="outline-primary"
+                  onClick={e => {
+                    setEditTitle(false);
+                  }}
                 >
-                  <i className="fas fa-ellipsis-v"></i>
-                </Dropdown.Toggle>
-                <Dropdown.Menu>
-                  <Dropdown.Item
-                    key={0}
-                    href=""
-                    onClick={() => {
-                      setEditTitle(true);
-                    }}
-                  >
-                    Rename
-                  </Dropdown.Item>
-                  <Dropdown.Item
-                    key={1}
-                    href=""
-                    onClick={() => {
-                      setFieldValue("is_public", !values.is_public);
-                      setTimeout(() => handleSubmit(), 0);
-                    }}
-                  >
-                    Make {values.is_public ? "private" : "public"}
-                  </Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
-            </Col>
-          ) : null}
-        </Row>
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={e => {
+                    handleSubmit();
+                    setEditTitle(false);
+                  }}
+                >
+                  Save
+                </Button>
+              </Modal.Footer>
+            </Modal>
+            {/* top level row for card */}
+            <Row className="w-100">
+              {/* left half */}
+              <Col className="col-8">
+                <Card.Title>
+                  <h5>{sim.title}</h5>
+                </Card.Title>
+                <Card.Subtitle className="text-muted" onClick={e => e.stopPropagation()}>
+                  <h6>
+                    <a href={sim.project} className="color-inherit">
+                      {sim.project}
+                    </a>
+                    <span className="ml-1">#{sim.model_pk} </span>
+                  </h6>
+                </Card.Subtitle>
+              </Col>
+              {/* right half */}
+              <Col className="col-4">
+                <Row className="w-100 justify-content-start">
+                  <Col className="col-3 align-self-center">{status(sim.status)}</Col>
+                  <Col className="col-3 align-self-center">
+                    {sim.is_public ? (
+                      <i className="fas fa-lock-open"></i>
+                    ) : (
+                      <i className="fas fa-lock"></i>
+                    )}
+                  </Col>
+                  {sim.has_write_access ? (
+                    <Col className="col-3 align-self-center">
+                      <Dropdown onClick={e => e.stopPropagation()}>
+                        <Dropdown.Toggle
+                          id="dropdown-basic"
+                          variant="link"
+                          className="color-inherit"
+                          style={{ border: 0 }}
+                        >
+                          <i className="fas fa-ellipsis-v"></i>
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                          <Dropdown.Item
+                            key={0}
+                            href=""
+                            onClick={() => {
+                              setEditTitle(true);
+                            }}
+                          >
+                            Rename
+                          </Dropdown.Item>
+                          <Dropdown.Item
+                            key={1}
+                            href=""
+                            onClick={() => {
+                              setFieldValue("is_public", !values.is_public);
+                              setTimeout(() => handleSubmit(), 0);
+                            }}
+                          >
+                            Make {values.is_public ? "private" : "public"}
+                          </Dropdown.Item>
+                        </Dropdown.Menu>
+                      </Dropdown>
+                    </Col>
+                  ) : null}
+                </Row>
+                <Row className="w-100 justify-content-start">
+                  <Col>{moment(sim.creation_date).fromNow()}</Col>
+                </Row>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
       )}
     </Formik>
   );
@@ -248,9 +274,9 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
             <Dropdown>
               <Dropdown.Toggle
                 variant="link"
-                style={{ border: 0, color: "inherit" }}
+                style={{ border: 0 }}
                 id="dropdown-sort"
-                className="caret-off"
+                className="caret-off color-inherit"
               >
                 <i className="fas fa-sort"></i>
               </Dropdown.Toggle>
