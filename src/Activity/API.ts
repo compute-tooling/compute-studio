@@ -1,5 +1,5 @@
 import axios from "axios";
-import { MiniSimulation } from "../types";
+import { MiniSimulation, Project } from "../types";
 
 export default class API {
   username?: string;
@@ -49,5 +49,9 @@ export default class API {
         .get("/api/v1/sims", { params: { ordering: ordering.join(",") } })
         .then(resp => resp.data);
     }
+  }
+
+  getRecentModels(): Promise<Array<Project>> {
+    return axios.get("/api/v1/models/recent/").then(resp => resp.data.results);
   }
 }

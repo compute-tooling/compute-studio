@@ -8,7 +8,7 @@ import * as yup from "yup";
 import ErrorBoundary from "../ErrorBoundary";
 import API from "./API";
 import { default as SimAPI } from "../Simulation/API";
-import { MiniSimulation } from "../types";
+import { MiniSimulation, Project } from "../types";
 import moment = require("moment");
 import { Button, Row, Col, Dropdown, Modal, Card } from "react-bootstrap";
 import { Tip } from "../components";
@@ -39,9 +39,10 @@ interface ActivityState {
   };
   loading: boolean;
   ordering?: Array<"project__owner" | "project__title" | "creation_date">;
+  recentModels?: Array<Project>;
 }
 
-const GridRow: React.FC<{ initSim: MiniSimulation }> = ({ initSim }) => {
+const GridRow: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim, index }) => {
   let [focus, setFocus] = React.useState(false);
   let [sim, setSim] = React.useState(initSim);
   let [editTitle, setEditTitle] = React.useState(false);
@@ -54,6 +55,12 @@ const GridRow: React.FC<{ initSim: MiniSimulation }> = ({ initSim }) => {
   let rowStyle: { [key: string]: any } = { borderRadius: "2px" };
   if (focus) {
     rowStyle = { ...rowStyle, backgroundColor: "rgb(245, 248, 250)", cursor: "pointer" };
+  }
+  let margin;
+  if (index === 0) {
+    margin = "mb-3";
+  } else {
+    margin = "my-3";
   }
   return (
     <Formik
@@ -73,7 +80,7 @@ const GridRow: React.FC<{ initSim: MiniSimulation }> = ({ initSim }) => {
     >
       {({ values, setFieldValue, handleSubmit }) => (
         <Card
-          className="my-3 border p-0"
+          className={`${margin} border p-0`}
           style={rowStyle}
           onClick={e => {
             window.location.href = simLink;
@@ -205,8 +212,8 @@ const GridRow: React.FC<{ initSim: MiniSimulation }> = ({ initSim }) => {
 const Grid: React.FC<{ sims: Array<MiniSimulation> }> = ({ sims }) => {
   return (
     <div className="container-fluid">
-      {sims.map(sim => (
-        <GridRow initSim={sim} key={`${sim.project}#${sim.model_pk}`} />
+      {sims.map((sim, ix) => (
+        <GridRow initSim={sim} key={`${sim.project}#${sim.model_pk}`} index={ix} />
       ))}
     </div>
   );
@@ -232,6 +239,11 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
     this.api.initSimulations().then(feed => {
       this.setState({ feed });
     });
+    if (!this.api.username) {
+      this.api.getRecentModels().then(recentModels => {
+        this.setState({ recentModels });
+      });
+    }
   }
 
   loadNextSimulations() {
@@ -287,7 +299,7 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
                 id="dropdown-sort"
                 className="caret-off color-inherit"
               >
-                <i className="fas fa-sort"></i>
+                <i style={{ fontSize: "1.5rem" }} className="fas fa-sort"></i>
               </Dropdown.Toggle>
               <Dropdown.Menu>
                 <Dropdown.Item
@@ -315,7 +327,42 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
             </Dropdown>
           </Col>
         </Row>
-        <Grid sims={sims} />
+        {!this.api.username ? (
+          <Row>
+            <Col className="col-3">
+              <Card>
+                <Card.Body>
+                  <p className="lead">Create a new simulation</p>
+                  {this.state.recentModels
+                    ? this.state.recentModels.map((model, ix) => (
+                        <Card
+                          className={`p-0 ${ix > 0 ? "border-top-0" : ""}`}
+                          style={{ borderRadius: 0 }}
+                        >
+                          <Card.Body>
+                            <Card.Title>
+                              <h6>
+                                <a
+                                  // className="color-inherit"
+                                  href={`/${model.owner}/${model.title}/new/`}
+                                >{`${model.owner}/${model.title}`}</a>
+                              </h6>
+                            </Card.Title>
+                            <Card.Subtitle className="text-muted">{model.oneliner}</Card.Subtitle>
+                          </Card.Body>
+                        </Card>
+                      ))
+                    : null}
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col className="col-9">
+              <Grid sims={sims} />
+            </Col>
+          </Row>
+        ) : (
+          <Grid sims={sims} />
+        )}
         {this.state.feed?.next ? (
           <Row className="text-center">
             <Col>
