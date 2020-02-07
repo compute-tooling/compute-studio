@@ -330,31 +330,31 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
         {!this.api.username ? (
           <Row>
             <Col className="col-3">
-              <Card>
-                <Card.Body>
-                  <p className="lead">Create a new simulation</p>
-                  {this.state.recentModels
-                    ? this.state.recentModels.map((model, ix) => (
-                        <Card
-                          className={`p-0 ${ix > 0 ? "border-top-0" : ""}`}
-                          style={{ borderRadius: 0 }}
-                        >
-                          <Card.Body>
-                            <Card.Title>
-                              <h6>
-                                <a
-                                  // className="color-inherit"
-                                  href={`/${model.owner}/${model.title}/new/`}
-                                >{`${model.owner}/${model.title}`}</a>
-                              </h6>
-                            </Card.Title>
-                            <Card.Subtitle className="text-muted">{model.oneliner}</Card.Subtitle>
-                          </Card.Body>
-                        </Card>
-                      ))
-                    : null}
-                </Card.Body>
-              </Card>
+              {this.state.recentModels
+                ? this.state.recentModels.map((model, ix) => (
+                    <Card
+                      className={`p-0 ${ix > 0 ? "border-top-0" : ""}`}
+                      style={{ borderRadius: 0 }}
+                    >
+                      <Card.Body>
+                        <Card.Title>
+                          <Tip tip="Create new simulation">
+                            <h6>
+                              <a
+                                // className="color-inherit"
+                                href={`/${model.owner}/${model.title}/new/`}
+                              >
+                                {`${model.owner}/${model.title}`}{" "}
+                                <i className="fas fa-plus-circle text-success"></i>
+                              </a>
+                            </h6>
+                          </Tip>
+                        </Card.Title>
+                        <Card.Subtitle className="text-muted">{model.oneliner}</Card.Subtitle>
+                      </Card.Body>
+                    </Card>
+                  ))
+                : null}
             </Col>
             <Col className="col-9">
               <Grid sims={sims} />
