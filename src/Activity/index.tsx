@@ -221,6 +221,70 @@ const Grid: React.FC<{ sims: Array<MiniSimulation> }> = ({ sims }) => {
   );
 };
 
+const RecentModelsPanel: React.FC<{ recentModels: Array<Project> }> = ({ recentModels }) => (
+  <>
+    {recentModels.map((model, ix) => (
+      <Card className={`p-0 ${ix > 0 ? "border-top-0" : ""}`} style={{ borderRadius: 0 }}>
+        <Card.Body>
+          <Card.Title>
+            <Tip tip="Create new simulation">
+              <h6>
+                <a
+                  // className="color-inherit"
+                  href={`/${model.owner}/${model.title}/new/`}
+                >
+                  {`${model.owner}/${model.title}`}{" "}
+                  <i className="fas fa-plus-circle text-success"></i>
+                </a>
+              </h6>
+            </Tip>
+          </Card.Title>
+          <Card.Subtitle className="text-muted">{model.oneliner}</Card.Subtitle>
+        </Card.Body>
+      </Card>
+    ))}
+  </>
+);
+
+const OrderingDropDown: React.FC<{ ordering: Array<string>; updateOrder: (string) => void }> = ({
+  ordering,
+  updateOrder
+}) => (
+  <Dropdown>
+    <Dropdown.Toggle
+      variant="link"
+      style={{ border: 0 }}
+      id="dropdown-sort"
+      className="caret-off color-inherit"
+    >
+      <i style={{ fontSize: "1.5rem" }} className="fas fa-sort"></i>
+    </Dropdown.Toggle>
+    <Dropdown.Menu>
+      <Dropdown.Item
+        key={0}
+        active={ordering.includes("creation_date")}
+        onClick={() => updateOrder("creation_date")}
+      >
+        Creation Date
+      </Dropdown.Item>
+      <Dropdown.Item
+        key={1}
+        active={ordering.includes("project__owner")}
+        onClick={() => updateOrder("project__owner")}
+      >
+        Model Owner
+      </Dropdown.Item>
+      <Dropdown.Item
+        key={2}
+        active={ordering.includes("project__title")}
+        onClick={() => updateOrder("project__title")}
+      >
+        Model Title
+      </Dropdown.Item>
+    </Dropdown.Menu>
+  </Dropdown>
+);
+
 class Activity extends React.Component<ActivityProps, ActivityState> {
   api: API;
   constructor(props) {
@@ -290,73 +354,18 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
       );
     }
     const sims = feed.results;
+    const recentModels = this.state.recentModels;
     return (
       <div className="container-fluid">
         <Row className="w-100 justify-content-end">
           <Col className="col-1">
-            <Dropdown>
-              <Dropdown.Toggle
-                variant="link"
-                style={{ border: 0 }}
-                id="dropdown-sort"
-                className="caret-off color-inherit"
-              >
-                <i style={{ fontSize: "1.5rem" }} className="fas fa-sort"></i>
-              </Dropdown.Toggle>
-              <Dropdown.Menu>
-                <Dropdown.Item
-                  key={0}
-                  active={this.state.ordering.includes("creation_date")}
-                  onClick={() => this.updateOrder("creation_date")}
-                >
-                  Creation Date
-                </Dropdown.Item>
-                <Dropdown.Item
-                  key={1}
-                  active={this.state.ordering.includes("project__owner")}
-                  onClick={() => this.updateOrder("project__owner")}
-                >
-                  Model Owner
-                </Dropdown.Item>
-                <Dropdown.Item
-                  key={2}
-                  active={this.state.ordering.includes("project__title")}
-                  onClick={() => this.updateOrder("project__title")}
-                >
-                  Model Title
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
+            <OrderingDropDown ordering={this.state.ordering} updateOrder={this.updateOrder} />
           </Col>
         </Row>
         {!this.api.username ? (
           <Row>
             <Col className="col-3">
-              {this.state.recentModels
-                ? this.state.recentModels.map((model, ix) => (
-                    <Card
-                      className={`p-0 ${ix > 0 ? "border-top-0" : ""}`}
-                      style={{ borderRadius: 0 }}
-                    >
-                      <Card.Body>
-                        <Card.Title>
-                          <Tip tip="Create new simulation">
-                            <h6>
-                              <a
-                                // className="color-inherit"
-                                href={`/${model.owner}/${model.title}/new/`}
-                              >
-                                {`${model.owner}/${model.title}`}{" "}
-                                <i className="fas fa-plus-circle text-success"></i>
-                              </a>
-                            </h6>
-                          </Tip>
-                        </Card.Title>
-                        <Card.Subtitle className="text-muted">{model.oneliner}</Card.Subtitle>
-                      </Card.Body>
-                    </Card>
-                  ))
-                : null}
+              {recentModels ? <RecentModelsPanel recentModels={recentModels} /> : null}
             </Col>
             <Col className="col-9">
               <Grid sims={sims} />
