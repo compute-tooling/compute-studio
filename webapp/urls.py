@@ -43,6 +43,11 @@ urlpatterns = [
         name="public_sim_api",
     ),
     path(
+        "api/v1/models/recent/",
+        publishviews.RecentModelsAPIView.as_view(),
+        name="recent_models_api",
+    ),
+    path(
         "<str:username>/<str:title>/detail/",
         publishviews.ProjectDetailView.as_view(),
         name="project_detail",

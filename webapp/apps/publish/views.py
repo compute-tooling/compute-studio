@@ -1,6 +1,7 @@
 import json
 import re
 
+from django.db.models import Max
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.utils.decorators import method_decorator
@@ -9,12 +10,19 @@ from django.urls import reverse
 from django.core.mail import send_mail
 
 from rest_framework.views import APIView
+from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.authentication import (
+    BasicAuthentication,
+    SessionAuthentication,
+    TokenAuthentication,
+)
 
 # from webapp.settings import DEBUG
 
 from webapp.apps.users.models import Project, is_profile_active
+from webapp.apps.users.permissions import StrictRequiresActive
 
 from .serializers import PublishSerializer
 from .utils import title_fixup
@@ -137,3 +145,23 @@ class ProjectAPIView(GetProjectMixin, APIView):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class RecentModelsAPIView(generics.ListAPIView):
+    permission_classes = (StrictRequiresActive,)
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    queryset = None
+    serializer_class = PublishSerializer
+    n_recent = 7
+
+    def get_queryset(self):
+        return [
+            Project.objects.get(pk=project["project"])
+            for project in self.request.user.profile.sims.values("project")
+            .annotate(recent_date=Max("creation_date"))
+            .order_by("-recent_date")[: self.n_recent]
+        ]
