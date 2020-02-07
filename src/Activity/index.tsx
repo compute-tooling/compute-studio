@@ -198,7 +198,9 @@ const GridRow: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim
                   ) : null}
                 </Row>
                 <Row className="w-100 justify-content-start">
-                  <Col>{moment(sim.creation_date).fromNow()}</Col>
+                  <Col>
+                    <span className="text-muted">{moment(sim.creation_date).fromNow()}</span>
+                  </Col>
                 </Row>
               </Col>
             </Row>
