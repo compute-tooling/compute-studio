@@ -58,9 +58,9 @@ const GridRow: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim
   }
   let margin;
   if (index === 0) {
-    margin = "mb-3";
+    margin = "mb-2";
   } else {
-    margin = "my-3";
+    margin = "my-2";
   }
   return (
     <Formik
@@ -167,7 +167,7 @@ const GridRow: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim
                         <Dropdown.Toggle
                           id="dropdown-basic"
                           variant="link"
-                          className="color-inherit"
+                          className="color-inherit caret-off"
                           style={{ border: 0 }}
                         >
                           <i className="fas fa-ellipsis-v"></i>
@@ -244,6 +244,25 @@ const RecentModelsPanel: React.FC<{ recentModels: Array<Project> }> = ({ recentM
       </Card>
     ))}
   </>
+);
+
+const LoadSimulationsButton: React.FC<{ loading: boolean; loadNextSimulations: () => void }> = ({
+  loading,
+  loadNextSimulations
+}) => (
+  <Row className="text-center">
+    <Col>
+      <Button variant="outline-primary" onClick={loadNextSimulations}>
+        <p className="mb-0" style={{ display: "flex", justifyContent: "center" }}>
+          {loading ? (
+            <ReactLoading type="spokes" color="#2b2c2d" height={"20%"} width={"20%"} />
+          ) : (
+            "Load more"
+          )}
+        </p>
+      </Button>
+    </Col>
+  </Row>
 );
 
 const OrderingDropDown: React.FC<{ ordering: Array<string>; updateOrder: (string) => void }> = ({
@@ -368,27 +387,28 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
               {recentModels ? <RecentModelsPanel recentModels={recentModels} /> : null}
             </Col>
             <Col className="col-9">
-              <Grid sims={sims} />
+              <>
+                <Grid sims={sims} />
+                {this.state.feed?.next ? (
+                  <LoadSimulationsButton
+                    loading={this.state.loading}
+                    loadNextSimulations={this.loadNextSimulations}
+                  />
+                ) : null}
+              </>
             </Col>
           </Row>
         ) : (
-          <Grid sims={sims} />
+          <>
+            <Grid sims={sims} />
+            {this.state.feed?.next ? (
+              <LoadSimulationsButton
+                loading={this.state.loading}
+                loadNextSimulations={this.loadNextSimulations}
+              />
+            ) : null}
+          </>
         )}
-        {this.state.feed?.next ? (
-          <Row className="text-center">
-            <Col>
-              <Button variant="outline-primary" onClick={this.loadNextSimulations}>
-                <p className="mb-0" style={{ display: "flex", justifyContent: "center" }}>
-                  {this.state.loading ? (
-                    <ReactLoading type="spokes" color="#2b2c2d" height={"20%"} width={"20%"} />
-                  ) : (
-                    "Load more"
-                  )}
-                </p>
-              </Button>
-            </Col>
-          </Row>
-        ) : null}
       </div>
     );
   }
