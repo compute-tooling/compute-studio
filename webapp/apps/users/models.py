@@ -5,7 +5,7 @@ import markdown
 
 from django.db import models
 from django.db.models.functions import TruncMonth
-from django.db.models import F, Case, When, Sum
+from django.db.models import F, Case, When, Sum, Max
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.core.mail import EmailMessage, send_mail
@@ -55,6 +55,14 @@ class User(AbstractUser):
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=False)
+
+    def recent_models(self, limit):
+        return [
+            Project.objects.get(pk=project["project"])
+            for project in self.sims.values("project")
+            .annotate(recent_date=Max("creation_date"))
+            .order_by("-recent_date")[:limit]
+        ]
 
     def costs_breakdown(self, projects=None):
         if projects is None:

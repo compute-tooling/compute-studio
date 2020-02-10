@@ -154,3 +154,54 @@ class TestPublishViews:
         act = set(proj["title"] for proj in resp.data)
 
         assert exp == act
+
+    def test_models_api(self, api_client, test_models):
+        # test unauth'ed get returns 403
+        resp = api_client.get("/api/v1/models")
+        assert resp.status_code == 403, f"Expected 403, got {resp.status_code}"
+
+        # test unauth'ed get on profile endpoint only returns listed
+        # projects.
+        project = Project.objects.get(title="Used-for-testing")
+        project.listed = False
+        project.save()
+
+        modeler = test_models[0].project.owner
+
+        resp = api_client.get("/api/v1/models/modeler")
+        assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
+        exp = set(
+            proj.title for proj in Project.objects.filter(owner=modeler, listed=True)
+        )
+        act = set(proj["title"] for proj in resp.data["results"])
+        assert exp == act
+
+        project = Project.objects.get(title="Used-for-testing")
+        project.listed = False
+        project.save()
+
+        # test auth'ed get returns all projects.
+        modeler = test_models[0].owner
+        api_client.force_login(modeler.user)
+        resp = api_client.get("/api/v1/models")
+        assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
+
+        exp = set(proj.title for proj in Project.objects.filter(owner=modeler))
+        act = set(proj["title"] for proj in resp.data["results"])
+        assert exp == act
+
+    def test_recent_models_api(self, api_client, test_models):
+        # test unauth'ed get returns 403
+        resp = api_client.get("/api/v1/models/recent/")
+        assert resp.status_code == 403, f"Expected 403, got {resp.status_code}"
+
+        # test auth'ed user gets same result as recent_sims
+        api_client.force_login(test_models[0].owner.user)
+        resp = api_client.get("/api/v1/models/recent/")
+        assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
+
+        exp = [
+            project.title for project in test_models[0].owner.recent_models(limit=10)
+        ]
+        act = [project["title"] for project in resp.data["results"]]
+        assert exp == act

@@ -96,3 +96,19 @@ class TestUserModels:
         assert profile.user.has_perm("write_project", project)
         remove_perm("write_project", profile.user, project)
         assert not profile.user.has_perm("write_project", project)
+
+    def test_recent_models(self, profile, test_models):
+
+        assert profile.recent_models(limit=10) == [
+            test_models[0].project,
+            test_models[1].project,
+        ]
+
+        Simulation.objects.fork(test_models[1], profile.user)
+
+        assert profile.recent_models(limit=10) == [
+            test_models[1].project,
+            test_models[0].project,
+        ]
+
+        assert profile.recent_models(limit=1) == [test_models[1].project]

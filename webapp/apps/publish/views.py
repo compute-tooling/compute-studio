@@ -1,11 +1,11 @@
 import json
 import re
 
-from django.db.models import Max
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.core.mail import send_mail
 
@@ -22,7 +22,7 @@ from rest_framework.authentication import (
 # from webapp.settings import DEBUG
 
 from webapp.apps.users.models import Project, is_profile_active
-from webapp.apps.users.permissions import StrictRequiresActive
+from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 
 from .serializers import PublishSerializer
 from .utils import title_fixup
@@ -159,9 +159,34 @@ class RecentModelsAPIView(generics.ListAPIView):
     n_recent = 7
 
     def get_queryset(self):
-        return [
-            Project.objects.get(pk=project["project"])
-            for project in self.request.user.profile.sims.values("project")
-            .annotate(recent_date=Max("creation_date"))
-            .order_by("-recent_date")[: self.n_recent]
-        ]
+        return self.request.user.profile.recent_models(limit=self.n_recent)
+
+
+class ModelsAPIView(generics.ListAPIView):
+    permission_classes = (StrictRequiresActive,)
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    queryset = Project.objects.all()
+    serializer_class = PublishSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(owner__user=self.request.user)
+
+
+class ProfileModelsAPIView(generics.ListAPIView):
+    permission_classes = (RequiresActive,)
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    queryset = Project.objects.all()
+    serializer_class = PublishSerializer
+
+    def get_queryset(self):
+        username = self.request.parser_context["kwargs"].get("username", None)
+        user = get_object_or_404(get_user_model(), username=username)
+        return self.queryset.filter(owner__user=user, listed=True)

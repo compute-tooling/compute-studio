@@ -42,6 +42,12 @@ urlpatterns = [
         compviews.ProfileSimsAPIView.as_view(),
         name="public_sim_api",
     ),
+    path("api/v1/models", publishviews.ModelsAPIView.as_view(), name="models_api"),
+    path(
+        "api/v1/models/<str:username>",
+        publishviews.ProfileModelsAPIView.as_view(),
+        name="public_sim_api",
+    ),
     path(
         "api/v1/models/recent/",
         publishviews.RecentModelsAPIView.as_view(),
