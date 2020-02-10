@@ -25,7 +25,7 @@ class HomeView(View):
 
 
 class ProfileView(View):
-    profile_template = "profile/profile_base.html"
+    profile_template = "profile/home_base.html"
     projects = Project.objects.all()
 
     def get(self, request, *args, **kwargs):
