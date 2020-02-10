@@ -137,7 +137,7 @@ const GridRow: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim
             {/* top level row for card */}
             <Row className="w-100">
               {/* left half */}
-              <Col className="col-8">
+              <Col className="col-9">
                 <Card.Title>
                   <h5>{sim.title}</h5>
                 </Card.Title>
@@ -151,7 +151,7 @@ const GridRow: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim
                 </Card.Subtitle>
               </Col>
               {/* right half */}
-              <Col className="col-4">
+              <Col className="col-3">
                 <Row className="w-100 justify-content-start">
                   <Col className="col-3 align-self-center">{status(sim.status)}</Col>
                   <Col className="col-3 align-self-center">
@@ -199,7 +199,12 @@ const GridRow: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim
                 </Row>
                 <Row className="w-100 justify-content-start">
                   <Col>
-                    <span className="text-muted">{moment(sim.creation_date).fromNow()}</span>
+                    <Tip
+                      tip={moment(sim.creation_date).format("MMMM Do YYYY, h:mm:ss a")}
+                      placement="bottom"
+                    >
+                      <span className="text-muted">{moment(sim.creation_date).fromNow()}</span>
+                    </Tip>
                   </Col>
                 </Row>
               </Col>
