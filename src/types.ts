@@ -161,6 +161,7 @@ export interface Project {
   description: string;
   repo_url: string;
   server_size: [string, string];
+  sim_count: number;
   exp_task_time: number;
   server_cost: string;
   listed: boolean;

@@ -444,17 +444,17 @@ class SimTabs extends React.Component<
         </ErrorBoundary>
       );
     }
-    const style = { padding: 0 };
-    const buttonGroupStyle = {
-      left: {
-        borderTopRightRadius: 0,
-        borderBottomRightRadius: 0
-      },
-      right: {
-        borderTopLeftRadius: 0,
-        borderBottomLeftRadius: 0
-      }
-    };
+    // const style = { padding: 0 };
+    // const buttonGroupStyle = {
+    //   left: {
+    //     borderTopRightRadius: 0,
+    //     borderBottomRightRadius: 0
+    //   },
+    //   right: {
+    //     borderTopLeftRadius: 0,
+    //     borderBottomLeftRadius: 0
+    //   }
+    // };
     let {
       accessStatus,
       inputs,
@@ -519,18 +519,14 @@ class SimTabs extends React.Component<
                 onSelect={(k: "inputs" | "outputs") => this.handleTabChange(k, formikProps)}
               >
                 <Nav variant="pills" className="mb-4">
-                  <Col style={style}>
-                    <Nav.Item className="sim-nav-item">
-                      <Nav.Link style={buttonGroupStyle.left} eventKey="inputs">
-                        Inputs
-                      </Nav.Link>
+                  <Col className="p-0">
+                    <Nav.Item className="sim-nav-item left-nav-item">
+                      <Nav.Link eventKey="inputs">Inputs</Nav.Link>
                     </Nav.Item>
                   </Col>
-                  <Col style={style}>
-                    <Nav.Item className="sim-nav-item">
-                      <Nav.Link style={buttonGroupStyle.right} eventKey="outputs">
-                        Outputs
-                      </Nav.Link>
+                  <Col className="p-0">
+                    <Nav.Item className="sim-nav-item right-nav-item">
+                      <Nav.Link eventKey="outputs">Outputs</Nav.Link>
                     </Nav.Item>
                   </Col>
                 </Nav>

@@ -51,6 +51,14 @@ export default class API {
     }
   }
 
+  getModels(): Promise<{ count: number; next: string; previous: string; results: Array<Project> }> {
+    if (this.username) {
+      return axios.get(`/api/v1/models/${this.username}`).then(resp => resp.data);
+    } else {
+      return axios.get(`/api/v1/models`).then(resp => resp.data);
+    }
+  }
+
   getRecentModels(): Promise<Array<Project>> {
     return axios.get("/api/v1/models/recent/").then(resp => resp.data.results);
   }

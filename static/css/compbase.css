@@ -92,6 +92,30 @@ code {
   border: 1px solid #2b2c2d;
 }
 
+.sim-nav-item {
+  padding: 0;
+}
+
+.sub-nav-item .nav-link {
+  color: #586069;
+  background-color: white;
+}
+.sub-nav-item .nav-link.active {
+  color: white;
+  background-color: #0068d6;
+  border-color: #0068d6 !important;
+}
+
+.left-nav-item .nav-link {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.right-nav-item .nav-link {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
 /* Large devices (desktops, 992px and up) */
 @media (min-width: 992px) {
   .dropdown-menu.desktop-menu-right.show {
@@ -296,4 +320,11 @@ blockquote {
 }
 .caret-off::after {
   display: none;
+}
+
+/* tooltip */
+
+.fade.show.tooltip > .tooltip-inner {
+  background-color: #2b2c2d;
+  opacity: 0.99 !important;
 }

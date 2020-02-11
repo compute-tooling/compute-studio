@@ -6,6 +6,7 @@ from webapp.apps.users.models import Project
 class PublishSerializer(serializers.ModelSerializer):
     owner = serializers.StringRelatedField(read_only=True)
     cluster_type = serializers.CharField(required=False)
+    sim_count = serializers.IntegerField()
 
     class Meta:
         model = Project
@@ -20,4 +21,7 @@ class PublishSerializer(serializers.ModelSerializer):
             "listed",
             "owner",
             "cluster_type",
+            "sim_count",
+            "status",
         )
+        read_only = ("sim_count", "status")

@@ -243,5 +243,8 @@ class Project(models.Model):
     def safe_description(self):
         return mark_safe(markdown.markdown(self.description, extensions=["tables"]))
 
+    def sim_count(self):
+        return self.sims.count()
+
     class Meta:
         permissions = (("write_project", "Write project"),)
