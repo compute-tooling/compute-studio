@@ -471,20 +471,20 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
           }}
         >
           <Row className="w-100 justify-content-between mb-3">
-            <Col className={`col-3 ${this.api.username ? "" : "offset-md-3"} align-self-center`}>
+            <Col className={`col-4 ${this.api.username ? "" : "offset-md-3"} align-self-center`}>
               <Nav variant="pills">
                 <Row className="w-100">
                   <Col className="p-0 align-self-center">
                     <Nav.Item className="left-nav-item text-center sub-nav-item">
                       <Nav.Link className="border" eventKey="sims">
-                        Simulations
+                        {this.api.username ? `${this.api.username}'s ` : "My"} simulations
                       </Nav.Link>
                     </Nav.Item>
                   </Col>
                   <Col className="p-0 align-self-center">
                     <Nav.Item className="right-nav-item text-center sub-nav-item">
                       <Nav.Link className="border" eventKey="models">
-                        Models
+                        {this.api.username ? `${this.api.username}'s ` : "My"} models
                       </Nav.Link>
                     </Nav.Item>
                   </Col>
