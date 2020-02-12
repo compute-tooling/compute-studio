@@ -9,6 +9,17 @@ class PublishSerializer(serializers.ModelSerializer):
     sim_count = serializers.IntegerField(required=False)
     user_count = serializers.IntegerField(required=False)
 
+    def to_representation(self, obj):
+        rep = super().to_representation(obj)
+        if self.context.get("request"):
+            user = self.context["request"].user
+        else:
+            user = None
+        if not obj.has_write_access(user):
+            rep.pop("sim_count")
+            rep.pop("user_count")
+        return rep
+
     class Meta:
         model = Project
         fields = (
@@ -35,6 +46,17 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
     sim_count = serializers.IntegerField(required=False)
     version = serializers.CharField(required=False)
     user_count = serializers.IntegerField(required=False)
+
+    def to_representation(self, obj):
+        rep = super().to_representation(obj)
+        if self.context.get("request"):
+            user = self.context["request"].user
+        else:
+            user = None
+        if not obj.has_write_access(user):
+            rep.pop("sim_count")
+            rep.pop("user_count")
+        return rep
 
     class Meta:
         model = Project

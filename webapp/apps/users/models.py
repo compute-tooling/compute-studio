@@ -267,5 +267,12 @@ class Project(models.Model):
             print(f"error retrieving version for {self}", e)
             return None
 
+    def has_write_access(self, user):
+        return bool(
+            user
+            and user.is_authenticated
+            and (self.owner.user == user or user.has_perm("write_project", self))
+        )
+
     class Meta:
         permissions = (("write_project", "Write project"),)

@@ -6,6 +6,7 @@ import pytest
 from django.contrib.auth import get_user_model, get_user
 from guardian.shortcuts import assign_perm, remove_perm
 
+from webapp.apps.comp.models import Simulation
 from webapp.apps.users.models import Project, Profile
 
 from webapp.apps.publish.serializers import PublishSerializer
@@ -49,6 +50,7 @@ class TestPublishViews:
             "exp_task_time": 20,
             "server_cost": Decimal("0.1"),
             "listed": True,
+            "status": "live",
         }
         owner = Profile.objects.get(user__username="modeler")
         project = Project.objects.create(**dict(exp, **{"owner": owner}))
@@ -58,7 +60,7 @@ class TestPublishViews:
         data.pop("owner")
         data.pop("cluster_type")
         serializer = PublishSerializer(project, data=data)
-        assert serializer.is_valid()
+        assert serializer.is_valid(), serializer.errors
         assert serializer.validated_data == exp
 
         resp = client.get("/publish/api/moDeler/detail-test/detail/")
@@ -161,7 +163,7 @@ class TestPublishViews:
         assert resp.status_code == 403, f"Expected 403, got {resp.status_code}"
 
         # test unauth'ed get on profile endpoint only returns listed
-        # projects.
+        # projects and sets sim_count and user_count to None.
         project = Project.objects.get(title="Used-for-testing")
         project.listed = False
         project.save()
@@ -175,6 +177,10 @@ class TestPublishViews:
         )
         act = set(proj["title"] for proj in resp.data["results"])
         assert exp == act
+        assert all(
+            "user_count" not in project and "sim_count" not in project
+            for project in resp.data["results"]
+        )
 
         project = Project.objects.get(title="Used-for-testing")
         project.listed = False
@@ -190,13 +196,14 @@ class TestPublishViews:
         act = set(proj["title"] for proj in resp.data["results"])
         assert exp == act
 
-    def test_recent_models_api(self, api_client, test_models):
+    def test_recent_models_api(self, api_client, test_models, profile):
         # test unauth'ed get returns 403
         resp = api_client.get("/api/v1/models/recent/")
         assert resp.status_code == 403, f"Expected 403, got {resp.status_code}"
 
         # test auth'ed user gets same result as recent_sims
-        api_client.force_login(test_models[0].owner.user)
+        user = test_models[0].owner.user
+        api_client.force_login(user)
         resp = api_client.get("/api/v1/models/recent/")
         assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
 
@@ -205,3 +212,18 @@ class TestPublishViews:
         ]
         act = [project["title"] for project in resp.data["results"]]
         assert exp == act
+
+        # test auth'ed user cannot view other project's private data.
+        Simulation.objects.fork(test_models[0], profile.user)
+        api_client.force_login(profile.user)
+        resp = api_client.get("/api/v1/models/recent/")
+        assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
+
+        for project in resp.data["results"]:
+            p = Project.objects.get(
+                title=project["title"], owner__user__username=project["owner"]
+            )
+            if p.has_write_access(profile.user):
+                assert "sim_count" in project and "user_count" in project
+            else:
+                assert "sim_count" not in project and "user_count" not in project
