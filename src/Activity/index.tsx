@@ -57,6 +57,26 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
     margin = "my-2";
   }
 
+  let simCountEl;
+  if (model.sim_count === 0) {
+    if (!["live", "updating"].includes(model.status)) {
+      simCountEl = (
+        <a className="btn btn-outline-success btn-sm" href={`/${model.owner}/${model.title}/new/`}>
+          Create the first simulation
+        </a>
+      );
+    } else {
+      simCountEl = null;
+    }
+  } else {
+    simCountEl = (
+      <p className="text-muted">
+        {model.sim_count} simulations created by {model.user_count}{" "}
+        {model.user_count > 1 ? "users" : "user"}
+      </p>
+    );
+  }
+
   return (
     <FocusableCard
       className={`${margin} border p-0`}
@@ -68,14 +88,31 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
         <Row className="w-100">
           <Col className="col-9">
             <Card.Title>
-              <h5>{`${model.owner}/${model.title}`}</h5>
+              <h5>
+                {`${model.owner}/${model.title}`}
+                {modelStatus(model.status)}
+              </h5>
             </Card.Title>
             <Card.Subtitle className="text-muted" onClick={e => e.stopPropagation()}>
               <h6>{model.oneliner}</h6>
             </Card.Subtitle>
           </Col>
           <Col className="col-3">
-            <p>Count: {model.sim_count}</p>
+            {simCountEl ? (
+              <Row className="justify-content-start">
+                <Col>{simCountEl}</Col>
+              </Row>
+            ) : null}
+            {model.version ? (
+              <Row className="justify-content-start">
+                <Col>
+                  <p>
+                    <span className="text-muted">Version: </span>
+                    {model.version}
+                  </p>
+                </Col>
+              </Row>
+            ) : null}
           </Col>
         </Row>
       </Card.Body>
@@ -91,7 +128,7 @@ const ModelFeed: React.FC<{ models: Array<Project> }> = ({ models }) => {
       ))}
       <div className="container-fluid text-center my-2">
         <a className="btn btn-success" href="/publish/">
-          Publish a new model <i className="fas fa-plus ml-1"></i>
+          Publish a new model
         </a>
       </div>
     </div>
@@ -586,23 +623,22 @@ const simStatus = (status: MiniSimulation["status"]) => {
 const modelStatus = (status: Project["status"]) => {
   switch (status) {
     case "live":
-      // return "primary";
+    case "updating":
       return (
         <Tip tip="Live">
-          <Button className="btn-success-outline btn-sm" />
+          <Button className="btn-sm btn-outline-success ml-2">live</Button>
         </Tip>
       );
-    case "PENDING":
-      // return "warning";
+    case "pending":
       return (
-        <Tip tip="Pending">
-          <i className="fas fa-spinner text-warning"></i>
+        <Tip tip="Staging">
+          <Button className="btn-sm btn-outline-primary ml-2">staging</Button>
         </Tip>
       );
     default:
       return (
-        <Tip tip="Pending">
-          <i className="fas fa-spinner text-warning"></i>
+        <Tip tip="Staging">
+          <Button className="btn-sm btn-outline-primary ml-2">staging</Button>
         </Tip>
       );
   }
