@@ -72,9 +72,11 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
     simCountEl = null;
   } else {
     simCountEl = (
-      <p className="text-muted">
-        {model.sim_count} simulations created by {model.user_count}{" "}
-        {model.user_count > 1 ? "users" : "user"}
+      <p>
+        {model.sim_count}
+        <span className="text-muted"> simulations created by </span>
+        {model.user_count}
+        <span className="text-muted">{model.user_count > 1 ? " users" : " user"}</span>
       </p>
     );
   }
@@ -88,23 +90,13 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
     >
       <Card.Body>
         <Row className="w-100">
-          <Col className="col-9">
+          <Col className="col-8">
             <Card.Title>
-              <h5>
-                {`${model.owner}/${model.title}`}
-                {modelStatus(model.status)}
-              </h5>
+              <h5>{`${model.owner}/${model.title}`}</h5>
             </Card.Title>
             <Card.Subtitle className="text-muted" onClick={e => e.stopPropagation()}>
               <h6>{model.oneliner}</h6>
             </Card.Subtitle>
-          </Col>
-          <Col className="col-3">
-            {simCountEl ? (
-              <Row className="justify-content-start">
-                <Col>{simCountEl}</Col>
-              </Row>
-            ) : null}
             {model.version ? (
               <Row className="justify-content-start">
                 <Col>
@@ -113,6 +105,25 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
                     {model.version}
                   </p>
                 </Col>
+              </Row>
+            ) : null}
+          </Col>
+          <Col className="col-4">
+            <Row className="w-100 justify-content-start">
+              {<Col className="col-3 align-self-center">{modelStatus(model.status)}</Col>}
+              {model.has_write_access ? (
+                <Col className="col-3 align-self-center">
+                  <Tip tip="Click to edit">
+                    <a className="color-inherit" href={`/${model.owner}/${model.title}/detail/`}>
+                      <i className="fas fa-edit ml-2 hover-blue" style={{ fontSize: "1.4rem" }}></i>
+                    </a>
+                  </Tip>
+                </Col>
+              ) : null}
+            </Row>
+            {simCountEl ? (
+              <Row className="w-100 justify-content-start mt-1">
+                <Col>{simCountEl}</Col>
               </Row>
             ) : null}
           </Col>
@@ -627,20 +638,20 @@ const modelStatus = (status: Project["status"]) => {
     case "live":
     case "updating":
       return (
-        <Tip tip="Live">
-          <Button className="btn-sm btn-outline-success ml-2">live</Button>
+        <Tip tip="This model is live.">
+          <Button className="btn-sm btn-outline-success">live</Button>
         </Tip>
       );
     case "pending":
       return (
-        <Tip tip="Staging">
-          <Button className="btn-sm btn-outline-primary ml-2">staging</Button>
+        <Tip tip="This model is not live right now.">
+          <Button className="btn-sm btn-outline-primary">staging</Button>
         </Tip>
       );
     default:
       return (
-        <Tip tip="Staging">
-          <Button className="btn-sm btn-outline-primary ml-2">staging</Button>
+        <Tip tip="This model is not live right now.">
+          <Button className="btn-sm btn-outline-primary">staging</Button>
         </Tip>
       );
   }
