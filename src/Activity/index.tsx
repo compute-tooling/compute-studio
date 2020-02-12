@@ -141,7 +141,7 @@ const ModelFeed: React.FC<{ models: Array<Project> }> = ({ models }) => {
       ))}
       <div className="container-fluid text-center my-2">
         <a className="btn btn-success" href="/publish/">
-          Publish a new model
+          <strong>Publish a new model</strong>
         </a>
       </div>
     </div>
