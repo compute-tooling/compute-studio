@@ -60,7 +60,7 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
   return (
     <FocusableCard
       className={`${margin} border p-0`}
-      onClick={e => {
+      onClick={() => {
         window.location.href = `/${model.owner}/${model.title}/`;
       }}
     >
@@ -89,6 +89,11 @@ const ModelFeed: React.FC<{ models: Array<Project> }> = ({ models }) => {
       {models.map((model, ix) => (
         <Model model={model} key={`${model.owner}/${model.title}`} index={ix} />
       ))}
+      <div className="container-fluid text-center my-2">
+        <a className="btn btn-success" href="/publish/">
+          Publish a new model <i className="fas fa-plus ml-1"></i>
+        </a>
+      </div>
     </div>
   );
 };
@@ -477,14 +482,14 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
                   <Col className="p-0 align-self-center">
                     <Nav.Item className="left-nav-item text-center sub-nav-item">
                       <Nav.Link className="border" eventKey="sims">
-                        {this.api.username ? `${this.api.username}'s ` : "My"} simulations
+                        {this.api.username ? `Simulations` : "My simulations"}
                       </Nav.Link>
                     </Nav.Item>
                   </Col>
                   <Col className="p-0 align-self-center">
                     <Nav.Item className="right-nav-item text-center sub-nav-item">
                       <Nav.Link className="border" eventKey="models">
-                        {this.api.username ? `${this.api.username}'s ` : "My"} models
+                        {this.api.username ? `Models` : "My models"}
                       </Nav.Link>
                     </Nav.Item>
                   </Col>
