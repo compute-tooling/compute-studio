@@ -4,7 +4,7 @@ from django.core.exceptions import PermissionDenied
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from webapp.apps.comp.permissions import RequiresActive, RequiresPayment
+from webapp.apps.users.permissions import RequiresActive, RequiresPayment
 
 from webapp.apps.billing.utils import has_payment_method, ChargeRunMixin, USE_STRIPE
 from webapp.apps.users.models import is_profile_active

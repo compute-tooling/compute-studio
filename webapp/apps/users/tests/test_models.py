@@ -45,67 +45,6 @@ class TestUserModels:
         """See conftest for initial values in test_models"""
         assert profile.costs_breakdown() == {"February 2019": 1.0}
 
-    def test_profile_sims(self, profile, test_models):
-        sims = profile.sims_breakdown(public_only=False)
-
-        # check that sims are ordered descending by number sims.
-        simcount = 9e99
-        for _, qs in sims.items():
-            assert qs.count() <= simcount
-            simcount = qs.count()
-
-        # check that all apps are queried.
-        titles = {
-            f"{project.owner.user.username}/{project.title}"
-            for project in Project.objects.all()
-            if profile.sims.filter(project=project).count()
-        }
-        assert titles == set(sims.keys())
-
-        testapprun = test_models[0]
-        assert sims["modeler/Used-for-testing"].count() == 1
-        for sim in sims["modeler/Used-for-testing"].all():
-            assert sim == testapprun
-
-        sponsoredtestapprun = test_models[1]
-        assert sims["modeler/Used-for-testing-sponsored-apps"].count() == 1
-        for sim in sims["modeler/Used-for-testing-sponsored-apps"].all():
-            assert sim == sponsoredtestapprun
-
-    def test_profile_sims_public_only(self, profile, test_models):
-        public_sim = Simulation.objects.fork(test_models[0], user=profile.user)
-        public_sim.is_public = True
-        public_sim.save()
-
-        unsigned_sim = Simulation.objects.fork(test_models[0], user=profile.user)
-        unsigned_sim.is_public = True
-        unsigned_sim.creation_date = ANON_BEFORE - datetime.timedelta(days=2)
-        unsigned_sim.save()
-
-        sims = profile.sims_breakdown(public_only=True)
-
-        # check that sims are ordered descending by number sims.
-        simcount = 9e99
-        for _, qs in sims.items():
-            assert qs.count() <= simcount
-            simcount = qs.count()
-
-        # check that all apps are queried.
-        titles = {
-            f"{project.owner.user.username}/{project.title}"
-            for project in Project.objects.all()
-            if profile.sims.filter(
-                project=project, is_public=True, creation_date__gt=ANON_BEFORE
-            ).count()
-        }
-        assert titles == set(sims.keys())
-
-        assert sims["modeler/Used-for-testing"].count() == 1
-        for sim in sims["modeler/Used-for-testing"].all():
-            assert sim == public_sim
-
-        assert "modeler/Used-for-testing-sponsored-apps" not in sims
-
     def test_project_show_sponsor(self, test_models):
         """See conftest for initial values in test_models."""
         reg, sponsored = test_models
@@ -157,3 +96,19 @@ class TestUserModels:
         assert profile.user.has_perm("write_project", project)
         remove_perm("write_project", profile.user, project)
         assert not profile.user.has_perm("write_project", project)
+
+    def test_recent_models(self, profile, test_models):
+
+        assert profile.recent_models(limit=10) == [
+            test_models[0].project,
+            test_models[1].project,
+        ]
+
+        Simulation.objects.fork(test_models[1], profile.user)
+
+        assert profile.recent_models(limit=10) == [
+            test_models[1].project,
+            test_models[0].project,
+        ]
+
+        assert profile.recent_models(limit=1) == [test_models[1].project]

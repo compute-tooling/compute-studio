@@ -159,22 +159,29 @@ export interface Project {
   owner: string;
   oneliner: string;
   description: string;
+  has_write_access: boolean;
   repo_url: string;
   server_size: [string, string];
+  sim_count: number;
+  status: "live" | "pending" | "updating";
   exp_task_time: number;
   server_cost: string;
   listed: boolean;
+  user_count?: number;
+  version?: string;
 }
 
 export interface MiniSimulation {
   api_url: string;
   creation_date: Date;
   gui_url: string;
+  has_write_access: boolean;
   is_public: boolean;
   model_pk: number;
   model_version: string;
   notify_on_completion: boolean;
   owner: string;
+  project: string;
   readme: string;
   status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
   title: string;

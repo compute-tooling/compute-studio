@@ -85,7 +85,11 @@ def async_endpoint(compute_task):
 def sync_endpoint(compute_task):
     print(f"io endpoint {compute_task}")
     data = request.get_data()
-    inputs = json.loads(data)
+    print("got data", data)
+    if not data:
+        inputs = {}
+    else:
+        inputs = json.loads(data)
     print("inputs", inputs)
     result = celery_app.signature(compute_task, kwargs=inputs).delay()
     print("getting...")
@@ -134,6 +138,13 @@ def route_to_task(owner, app_name, endpoint, action):
         return endpoint(task_name)
     else:
         return json.dumps({"error": "invalid endpoint"}), 404
+
+
+@bp.route("/<owner>/<app_name>/version", methods=["POST"])
+def endpoint_version(owner, app_name):
+    action = "inputs_version"
+    endpoint = sync_endpoint
+    return route_to_task(owner, app_name, endpoint, action)
 
 
 @bp.route("/<owner>/<app_name>/inputs", methods=["POST"])

@@ -31,7 +31,7 @@ cs-white-color {
 
 div.card.publish.markdown {
   /* background-color: rgba(27, 31, 35, 0.05); */
-  padding: .375rem .75rem;
+  padding: 0.375rem 0.75rem;
 }
 
 code {
@@ -90,6 +90,30 @@ code {
   /*darker ==> background-color: rgba(75, 77, 78, 1); */
   background-color: rgba(87, 90, 91, 1);
   border: 1px solid #2b2c2d;
+}
+
+.sim-nav-item {
+  padding: 0;
+}
+
+.sub-nav-item .nav-link {
+  color: #586069;
+  background-color: white;
+}
+.sub-nav-item .nav-link.active {
+  color: white;
+  background-color: #0068d6;
+  border-color: #0068d6 !important;
+}
+
+.left-nav-item .nav-link {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.right-nav-item .nav-link {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 /* Large devices (desktops, 992px and up) */
@@ -268,12 +292,13 @@ span.default-value {
 .color-inherit {
   color: inherit;
 }
-
+.color-inherit:hover {
+  color: inherit;
+}
 
 /* output modal styling */
 .output-modal.modal.show .modal-content {
   min-width: 100%;
-
 }
 
 .output-modal.modal.show div.modal-dialog.modal-xl {
@@ -288,4 +313,18 @@ blockquote {
   color: #aaa;
   font-style: italic;
   font-size: 17px !important;
+}
+
+.caret-off::before {
+  display: none;
+}
+.caret-off::after {
+  display: none;
+}
+
+/* tooltip */
+
+.fade.show.tooltip > .tooltip-inner {
+  background-color: #2b2c2d;
+  opacity: 0.99 !important;
 }

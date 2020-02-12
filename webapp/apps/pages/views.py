@@ -11,36 +11,25 @@ class HomeView(View):
 
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            profile = request.user.profile
             return render(
                 request,
                 self.profile_template,
-                context={
-                    "username": request.user.username,
-                    "runs": profile.sims_breakdown(self.projects, public_only=False),
-                    "show_readme": False,
-                    "projects": self.projects.filter(owner=profile),
-                },
+                context={"username": request.user.username, "show_readme": False},
             )
         return render(request, self.home_template)
 
 
 class ProfileView(View):
-    profile_template = "profile/profile_base.html"
+    profile_template = "profile/home_base.html"
     projects = Project.objects.all()
 
     def get(self, request, *args, **kwargs):
         username = kwargs["username"]
-        profile = get_object_or_404(Profile, user__username__iexact=username)
+        get_object_or_404(Profile, user__username__iexact=username)
         return render(
             request,
             self.profile_template,
-            context={
-                "username": request.user.username,
-                "runs": profile.sims_breakdown(self.projects, public_only=True),
-                "show_readme": False,
-                "projects": self.projects.filter(owner=profile, listed=True),
-            },
+            context={"username": request.user.username, "show_readme": False},
         )
 
 
