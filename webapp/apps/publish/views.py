@@ -53,7 +53,7 @@ class ProjectDetailView(GetProjectMixin, View):
 class ProjectDetailAPIView(GetProjectMixin, APIView):
     def get(self, request, *args, **kwargs):
         project = self.get_object(**kwargs)
-        serializer = PublishSerializer(project)
+        serializer = PublishSerializer(project, context={"request": request})
         data = serializer.data
         return Response(data)
 
@@ -93,12 +93,16 @@ class ProjectAPIView(GetProjectMixin, APIView):
     queryset = Project.objects.all()
 
     def get(self, request, *args, **kwargs):
-        ser = PublishSerializer(self.queryset.all(), many=True)
+        ser = PublishSerializer(
+            self.queryset.all(), many=True, context={"request": request}
+        )
         return Response(ser.data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            serializer = PublishSerializer(data=request.POST)
+            serializer = PublishSerializer(
+                data=request.POST, context={"request": request}
+            )
             is_valid = serializer.is_valid()
             if is_valid:
                 title = title_fixup(serializer.validated_data["title"])

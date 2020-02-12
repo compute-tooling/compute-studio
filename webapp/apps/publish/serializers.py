@@ -8,6 +8,8 @@ class PublishSerializer(serializers.ModelSerializer):
     cluster_type = serializers.CharField(required=False)
     sim_count = serializers.IntegerField(required=False)
     user_count = serializers.IntegerField(required=False)
+    # see to_representation
+    # has_write_access = serializers.BooleanField(source="has_write_access")
 
     def to_representation(self, obj):
         rep = super().to_representation(obj)
@@ -15,6 +17,7 @@ class PublishSerializer(serializers.ModelSerializer):
             user = self.context["request"].user
         else:
             user = None
+        rep["has_write_access"] = obj.has_write_access(user)
         if not obj.has_write_access(user):
             rep.pop("sim_count")
             rep.pop("user_count")
@@ -46,6 +49,8 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
     sim_count = serializers.IntegerField(required=False)
     version = serializers.CharField(required=False)
     user_count = serializers.IntegerField(required=False)
+    # see to_representation
+    # has_write_access = serializers.BooleanField(source="has_write_access")
 
     def to_representation(self, obj):
         rep = super().to_representation(obj)
@@ -53,6 +58,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
             user = self.context["request"].user
         else:
             user = None
+        rep["has_write_access"] = obj.has_write_access(user)
         if not obj.has_write_access(user):
             rep.pop("sim_count")
             rep.pop("user_count")

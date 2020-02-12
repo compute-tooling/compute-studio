@@ -40,7 +40,7 @@ class TestPublishViews:
         assert project
         assert project.server_cost
 
-    def test_get_detail_api(self, client, test_models):
+    def test_get_detail_api(self, api_client, client, test_models):
         exp = {
             "title": "Detail-Test",
             "oneliner": "oneliner",
@@ -62,9 +62,14 @@ class TestPublishViews:
         serializer = PublishSerializer(project, data=data)
         assert serializer.is_valid(), serializer.errors
         assert serializer.validated_data == exp
+        assert serializer.data["has_write_access"] == False
 
         resp = client.get("/publish/api/moDeler/detail-test/detail/")
         assert resp.status_code == 200
+
+        api_client.force_login(owner.user)
+        resp = api_client.get("/publish/api/moDeler/detail-test/detail/")
+        assert resp.data["has_write_access"] == True
 
     def test_put_detail_api(self, client, test_models, profile, password):
         put_data = {
