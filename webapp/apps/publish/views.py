@@ -24,7 +24,7 @@ from rest_framework.authentication import (
 from webapp.apps.users.models import Project, is_profile_active
 from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 
-from .serializers import PublishSerializer
+from .serializers import PublishSerializer, ProjectWithVersionSerializer
 from .utils import title_fixup
 
 
@@ -169,8 +169,8 @@ class ModelsAPIView(generics.ListAPIView):
         BasicAuthentication,
         TokenAuthentication,
     )
-    queryset = Project.objects.all()
-    serializer_class = PublishSerializer
+    queryset = Project.objects.all().order_by("-pk")
+    serializer_class = ProjectWithVersionSerializer
 
     def get_queryset(self):
         return self.queryset.filter(owner__user=self.request.user)
@@ -183,10 +183,10 @@ class ProfileModelsAPIView(generics.ListAPIView):
         BasicAuthentication,
         TokenAuthentication,
     )
-    queryset = Project.objects.all()
-    serializer_class = PublishSerializer
+    queryset = Project.objects.all().order_by("-pk")
+    serializer_class = ProjectWithVersionSerializer
 
     def get_queryset(self):
         username = self.request.parser_context["kwargs"].get("username", None)
-        user = get_object_or_404(get_user_model(), username=username)
+        user = get_object_or_404(get_user_model(), username__iexact=username)
         return self.queryset.filter(owner__user=user, listed=True)

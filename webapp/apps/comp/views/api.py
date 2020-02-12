@@ -446,5 +446,5 @@ class ProfileSimsAPIView(SimsAPIView):
 
     def get_queryset(self):
         username = self.request.parser_context["kwargs"].get("username", None)
-        user = get_object_or_404(get_user_model(), username=username)
+        user = get_object_or_404(get_user_model(), username__iexact=username)
         return self.queryset.filter(owner__user=user)

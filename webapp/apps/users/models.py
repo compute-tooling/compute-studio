@@ -15,6 +15,8 @@ from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
 from webapp.apps.billing.models import create_billing_objects
+from webapp.apps.comp import actions
+from webapp.apps.comp.compute import SyncCompute
 from webapp.apps.comp.models import Inputs, ANON_BEFORE
 from webapp.settings import DEBUG
 
@@ -245,6 +247,25 @@ class Project(models.Model):
 
     def sim_count(self):
         return self.sims.count()
+
+    def user_count(self):
+        return self.sims.distinct("owner__user").count()
+
+    def version(self):
+        if self.status not in ("updating", "live"):
+            return None
+        try:
+            success, result = SyncCompute().submit_job(
+                {}, self.worker_ext(actions.VERSION)
+            )
+            if success:
+                return result["version"]
+            else:
+                print(f"error retrieving version for {self}", result)
+                return None
+        except Exception as e:
+            print(f"error retrieving version for {self}", e)
+            return None
 
     class Meta:
         permissions = (("write_project", "Write project"),)

@@ -51,6 +51,7 @@ def get_task_routes():
         routes = {
             f"{model}_tasks.inputs_get": {"queue": f"{model}_inputs_queue"},
             f"{model}_tasks.inputs_parse": {"queue": f"{model}_inputs_queue"},
+            f"{model}_tasks.inputs_version": {"queue": f"{model}_inputs_queue"},
         }
 
         # only add sim routes for models that use celery workers.
