@@ -1,12 +1,13 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 
 from webapp.apps.users.models import Project, Profile
 
+ABOUT_URL = "https://about.compute.studio"
+
 
 class HomeView(View):
     profile_template = "profile/home_base.html"
-    home_template = "pages/getting_started.html"
     projects = Project.objects.all()
 
     def get(self, request, *args, **kwargs):
@@ -16,7 +17,7 @@ class HomeView(View):
                 self.profile_template,
                 context={"username": request.user.username, "show_readme": False},
             )
-        return render(request, self.home_template)
+        return redirect(ABOUT_URL)
 
 
 class ProfileView(View):
@@ -34,10 +35,8 @@ class ProfileView(View):
 
 
 class AboutView(View):
-    template = "pages/about.html"
-
     def get(self, request, *args, **kwargs):
-        return render(request, self.template)
+        return redirect(ABOUT_URL)
 
 
 class PrivacyView(View):
