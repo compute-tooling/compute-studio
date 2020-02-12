@@ -68,6 +68,8 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
     } else {
       simCountEl = null;
     }
+  } else if (model.sim_count === undefined) {
+    simCountEl = null;
   } else {
     simCountEl = (
       <p className="text-muted">
