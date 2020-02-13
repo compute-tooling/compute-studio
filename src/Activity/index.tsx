@@ -135,7 +135,7 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
 
 const ModelFeed: React.FC<{ models: Array<Project> }> = ({ models }) => {
   return (
-    <div className="container-fluid" style={{ paddingLeft: 0 }}>
+    <div className="container-fluid px-0">
       {models.map((model, ix) => (
         <Model model={model} key={`${model.owner}/${model.title}`} index={ix} />
       ))}
