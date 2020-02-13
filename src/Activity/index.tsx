@@ -524,6 +524,7 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
         <Tab.Container
           id="home-tabs"
           defaultActiveKey={this.state.homeTab}
+          transition={false}
           activeKey={this.state.homeTab}
           onSelect={(homeTab: "sims" | "models") => {
             if (homeTab) this.setState({ homeTab: homeTab });
