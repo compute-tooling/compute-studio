@@ -520,67 +520,65 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
     );
 
     return (
-      <div className="container-fluid">
-        <Tab.Container
-          id="home-tabs"
-          defaultActiveKey={this.state.homeTab}
-          transition={false}
-          activeKey={this.state.homeTab}
-          onSelect={(homeTab: "sims" | "models") => {
-            if (homeTab) this.setState({ homeTab: homeTab });
-          }}
-        >
-          <Row className="w-100 px-0 justify-content-between mb-3 d-flex flex-md-row">
-            <Col
-              className={`col-md-auto ${this.api.username ? "" : " offset-md-3"} align-self-center`}
-            >
-              <Nav variant="pills" className="d-flex d-sm-block">
-                <Row className="flex-1">
-                  <Col className="p-0 align-self-center">
-                    <Nav.Item className="left-nav-item text-center sub-nav-item flex-2">
-                      <Nav.Link
-                        className="border"
-                        eventKey="sims"
-                        style={{ fontSize: "15px", fontWeight: 600 }}
-                      >
-                        Simulations
-                      </Nav.Link>
-                    </Nav.Item>
-                  </Col>
-                  <Col className="p-0 align-self-center">
-                    <Nav.Item className="right-nav-item text-center sub-nav-item flex-1">
-                      <Nav.Link
-                        className="border"
-                        eventKey="models"
-                        style={{ fontSize: "15px", fontWeight: 600 }}
-                      >
-                        Models
-                      </Nav.Link>
-                    </Nav.Item>
-                  </Col>
-                </Row>
-              </Nav>
+      <Tab.Container
+        id="home-tabs"
+        defaultActiveKey={this.state.homeTab}
+        transition={false}
+        activeKey={this.state.homeTab}
+        onSelect={(homeTab: "sims" | "models") => {
+          if (homeTab) this.setState({ homeTab: homeTab });
+        }}
+      >
+        <Row className="w-100 px-0 m-0 justify-content-between mb-3 d-flex flex-md-row">
+          <Col
+            className={`col-md-auto ${this.api.username ? "" : " offset-md-3"} align-self-center`}
+          >
+            <Nav variant="pills" className="d-flex d-sm-block">
+              <Row className="flex-1">
+                <Col className="p-0 align-self-center">
+                  <Nav.Item className="left-nav-item text-center sub-nav-item flex-2">
+                    <Nav.Link
+                      className="border"
+                      eventKey="sims"
+                      style={{ fontSize: "15px", fontWeight: 600 }}
+                    >
+                      Simulations
+                    </Nav.Link>
+                  </Nav.Item>
+                </Col>
+                <Col className="p-0 align-self-center">
+                  <Nav.Item className="right-nav-item text-center sub-nav-item flex-1">
+                    <Nav.Link
+                      className="border"
+                      eventKey="models"
+                      style={{ fontSize: "15px", fontWeight: 600 }}
+                    >
+                      Models
+                    </Nav.Link>
+                  </Nav.Item>
+                </Col>
+              </Row>
+            </Nav>
+          </Col>
+          {this.state.homeTab === "sims" ? (
+            <Col className="col-1 align-self-center">
+              <OrderingDropDown ordering={this.state.ordering} updateOrder={this.updateOrder} />
             </Col>
-            {this.state.homeTab === "sims" ? (
-              <Col className="col-1 align-self-center">
-                <OrderingDropDown ordering={this.state.ordering} updateOrder={this.updateOrder} />
-              </Col>
-            ) : null}
+          ) : null}
+        </Row>
+        {!this.api.username ? (
+          <Row className="w-100 m-0">
+            <Col className="col-md-3 pl-0 mobile-pr-0 mb-3">
+              {recentModels ? <RecentModelsPanel recentModels={recentModels} /> : null}
+            </Col>
+            <Col className="col-md-9 px-0">{feed}</Col>
           </Row>
-          {!this.api.username ? (
-            <Row className="w-100">
-              <Col className="col-md-3 pl-0 mobile-pr-0 mb-3">
-                {recentModels ? <RecentModelsPanel recentModels={recentModels} /> : null}
-              </Col>
-              <Col className="col-md-9 px-0">{feed}</Col>
-            </Row>
-          ) : (
-            <Row className="w-100">
-              <Col className="p-0">{feed}</Col>
-            </Row>
-          )}
-        </Tab.Container>
-      </div>
+        ) : (
+          <Row className="w-100 m-0">
+            <Col className="p-0">{feed}</Col>
+          </Row>
+        )}
+      </Tab.Container>
     );
   }
 }
