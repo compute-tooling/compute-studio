@@ -1,5 +1,6 @@
 import os
 
+from django.contrib.auth import get_user_model
 from rest_framework.test import APIRequestFactory
 
 from webapp.apps.users.models import Project
@@ -10,6 +11,9 @@ from webapp.apps.comp.models import Simulation
 from webapp.apps.comp.parser import APIParser
 
 from .compute import MockCompute
+
+
+User = get_user_model()
 
 
 def read_outputs(outputs_name):
@@ -61,3 +65,29 @@ def _submit_sim(submit_inputs):
     result = submit_inputs.submit()
     submit_sim = SubmitSim(result.sim, compute)
     return submit_inputs, submit_sim
+
+
+def _shuffled_sims(profile, get_inputs, meta_param_dict):
+    modeler = User.objects.get(username="modeler").profile
+    # inputs = _submit_inputs("Used-for-testing", get_inputs, meta_param_dict, modeler)
+
+    sims = []
+    modeler_sims = []
+    tester_sims = []
+    number_sims = 10
+    for i in range(0, number_sims):
+        inputs = _submit_inputs(
+            "Used-for-testing",
+            get_inputs,
+            meta_param_dict,
+            profile if i % 3 else modeler,  # swap profiles every three sims.
+            parent_model_pk=sims[-1].model_pk if sims else None,
+        )
+        _, submit_sim = _submit_sim(inputs)
+        sim = submit_sim.submit()
+        sims.append(sim)
+        if i != number_sims - 1 and sim.owner == modeler:
+            modeler_sims.append(sim)
+        elif i != number_sims - 1 and sim.owner == profile:
+            tester_sims.append(sim)
+    return sims, modeler_sims, tester_sims

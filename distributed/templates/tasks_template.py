@@ -13,6 +13,14 @@ except ImportError as ie:
 
 
 @celery_app.task(
+    name="{{APP_NAME}}.inputs_version", soft_time_limit=10, bind=True, acks_late=True
+)
+@task_wrapper
+def inputs_version(self):
+    return {"version": functions.get_version()}
+
+
+@celery_app.task(
     name="{{APP_NAME}}.inputs_get", soft_time_limit=10, bind=True, acks_late=True
 )
 @task_wrapper

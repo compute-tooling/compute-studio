@@ -13,9 +13,14 @@ from webapp.apps.users.models import Project, Profile
 from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
 from webapp.apps.comp.exceptions import ForkObjectException, VersionMismatchException
 
-from .utils import _submit_inputs, _submit_sim, read_outputs
+from .utils import _submit_inputs, _submit_sim, read_outputs, _shuffled_sims
 
 User = auth.get_user_model()
+
+
+@pytest.fixture
+def shuffled_sims(profile, get_inputs, meta_param_dict):
+    return _shuffled_sims(profile, get_inputs, meta_param_dict)
 
 
 def test_new_sim(db, profile):
@@ -75,29 +80,9 @@ def test_parent_sims(db, get_inputs, meta_param_dict, profile):
         assert middle_sim.parent_sims() == list(reversed(sims[:ix]))
 
 
-def test_private_parent_sims(db, get_inputs, meta_param_dict, profile):
+def test_private_parent_sims(db, shuffled_sims, profile):
     modeler = User.objects.get(username="modeler").profile
-    inputs = _submit_inputs("Used-for-testing", get_inputs, meta_param_dict, modeler)
-
-    sims = []
-    modeler_sims = []
-    tester_sims = []
-    number_sims = 10
-    for i in range(0, number_sims):
-        submit_inputs, submit_sim = _submit_sim(inputs)
-        sim = submit_sim.submit()
-        sims.append(sim)
-        if i != number_sims - 1 and sim.owner == modeler:
-            modeler_sims.append(sim)
-        elif i != number_sims - 1 and sim.owner == profile:
-            tester_sims.append(sim)
-        inputs = _submit_inputs(
-            "Used-for-testing",
-            get_inputs,
-            meta_param_dict,
-            profile if i % 3 else modeler,  # swap profiles every three sims.
-            parent_model_pk=sims[-1].model_pk,
-        )
+    sims, modeler_sims, tester_sims = shuffled_sims
 
     child_sim = sims[-1]
     assert child_sim.parent_sims(user=None) == []
@@ -255,3 +240,20 @@ def test_add_authors(db, get_inputs, meta_param_dict, profile):
     assert sim.authors.all().count() == 2 and sim.authors.get(pk=profile.pk) == profile
 
     assert PendingPermission.objects.filter(id=pp.id).count() == 0
+
+
+def test_public_sims(db, shuffled_sims, profile):
+    # modeler = User.objects.get(username="modeler").profile
+    _, modeler_sims, _ = shuffled_sims
+
+    for sim in modeler_sims:
+        sim.is_public = True
+        sim.save()
+
+    assert set(Simulation.objects.public_sims()) == set(modeler_sims)
+
+    modeler_sims[1].creation_date = ANON_BEFORE - datetime.timedelta(days=2)
+    modeler_sims[1].save()
+    assert set(Simulation.objects.public_sims()) == set(
+        [modeler_sims[0]] + modeler_sims[2:]
+    )

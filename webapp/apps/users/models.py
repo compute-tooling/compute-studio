@@ -5,7 +5,7 @@ import markdown
 
 from django.db import models
 from django.db.models.functions import TruncMonth
-from django.db.models import F, Case, When, Sum
+from django.db.models import F, Case, When, Sum, Max
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.core.mail import EmailMessage, send_mail
@@ -15,6 +15,8 @@ from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
 from webapp.apps.billing.models import create_billing_objects
+from webapp.apps.comp import actions
+from webapp.apps.comp.compute import SyncCompute
 from webapp.apps.comp.models import Inputs, ANON_BEFORE
 from webapp.settings import DEBUG
 
@@ -56,6 +58,14 @@ class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=False)
 
+    def recent_models(self, limit):
+        return [
+            Project.objects.get(pk=project["project"])
+            for project in self.sims.values("project")
+            .annotate(recent_date=Max("creation_date"))
+            .order_by("-recent_date")[:limit]
+        ]
+
     def costs_breakdown(self, projects=None):
         if projects is None:
             projects = Project.objects.all()
@@ -74,21 +84,6 @@ class Profile(models.Model):
             for month in res:
                 agg[month["month"]] += float(month["effective__sum"])
         return {k.strftime("%B %Y"): v for k, v in sorted(agg.items())}
-
-    def sims_breakdown(self, projects=None, public_only=True):
-        if projects is None:
-            projects = Project.objects.all()
-        runs = {}
-        kwargs = {}
-        if public_only:
-            kwargs.update({"creation_date__gt": ANON_BEFORE, "is_public": True})
-        for project in projects:
-            queryset = self.sims.filter(project=project, **kwargs)
-            if queryset.count() > 0:
-                runs[
-                    f"{project.owner.user.username}/{project.title}"
-                ] = queryset.all().order_by("-pk")
-        return dict(sorted(runs.items(), key=lambda item: -item[1].count()))
 
     def can_run(self, project):
         if not self.is_active:
@@ -249,6 +244,35 @@ class Project(models.Model):
     @property
     def safe_description(self):
         return mark_safe(markdown.markdown(self.description, extensions=["tables"]))
+
+    def sim_count(self):
+        return self.sims.count()
+
+    def user_count(self):
+        return self.sims.distinct("owner__user").count()
+
+    def version(self):
+        if self.status not in ("updating", "live"):
+            return None
+        try:
+            success, result = SyncCompute().submit_job(
+                {}, self.worker_ext(actions.VERSION)
+            )
+            if success:
+                return result["version"]
+            else:
+                print(f"error retrieving version for {self}", result)
+                return None
+        except Exception as e:
+            print(f"error retrieving version for {self}", e)
+            return None
+
+    def has_write_access(self, user):
+        return bool(
+            user
+            and user.is_authenticated
+            and (self.owner.user == user or user.has_perm("write_project", self))
+        )
 
     class Meta:
         permissions = (("write_project", "Write project"),)

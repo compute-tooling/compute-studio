@@ -1,3 +1,4 @@
+import datetime
 import os
 import json
 import uuid
@@ -15,10 +16,10 @@ from rest_framework.response import Response
 from webapp.apps.billing.models import UsageRecord
 from webapp.apps.users.models import Project, Profile
 
-from webapp.apps.comp.models import Inputs, Simulation
+from webapp.apps.comp.models import Inputs, Simulation, ANON_BEFORE
 from webapp.apps.comp.ioutils import get_ioutils
 from .compute import MockCompute, MockComputeWorkerFailure
-from .utils import read_outputs, _submit_inputs, _submit_sim
+from .utils import read_outputs, _submit_inputs, _submit_sim, _shuffled_sims
 
 User = auth.get_user_model()
 
@@ -833,3 +834,52 @@ def test_collaborators(
     assert sim.authors.all().count() == 2
     assert sim.authors.filter(pk__in=[modeler.pk, profile.pk]).count() == 2
     assert sim.pending_permissions.count() == 0
+
+
+def test_list_sim_api(db, api_client, profile, get_inputs, meta_param_dict):
+    modeler = User.objects.get(username="modeler").profile
+    sims, modeler_sims, tester_sims = _shuffled_sims(
+        profile, get_inputs, meta_param_dict
+    )
+    # test can't access api/v1/sims if not authenticated.
+    resp = api_client.get("/api/v1/sims")
+    assert_status(403, resp, "unauthed_list_sims")
+    resp = api_client.get("/api/v1/sims?ordering=project__title")
+    assert_status(403, resp, "unauthed_list_sims")
+
+    # test can't view others private simulations
+    resp = api_client.get("/api/v1/sims/tester")
+    assert_status(200, resp, "unauthed_list_profile_sims")
+    assert len(resp.data["results"]) == 0
+
+    # test only public sims are shown on profile page.
+    tester_sims[1].is_public = True
+    tester_sims[1].save()
+    resp = api_client.get("/api/v1/sims/tester")
+    assert_status(200, resp, "unauthed_list_profile_sims")
+    assert len(resp.data["results"]) == 1
+    assert resp.data["results"][0]["model_pk"] == tester_sims[1].model_pk
+
+    # ensure anon_before is checked.
+    tester_sims[1].creation_date = ANON_BEFORE - datetime.timedelta(days=2)
+    tester_sims[1].is_public = True
+    tester_sims[1].save()
+    resp = api_client.get("/api/v1/sims/tester")
+    assert_status(200, resp, "unauthed_list_profile_sims")
+    assert len(resp.data["results"]) == 0
+
+    # Check auth'ed user can view their own sims.
+    api_client.force_login(profile.user)
+    resp = api_client.get("/api/v1/sims")
+    assert_status(200, resp, "authed_list_sims")
+    print(sims[-1].owner)
+    modelpks = {sim["model_pk"] for sim in resp.data["results"]}
+    assert modelpks == set(sim.model_pk for sim in tester_sims)
+
+    # Check auth'ed user can only view others public sims.
+    modeler_sims[0].is_public = True
+    modeler_sims[0].save()
+    resp = api_client.get("/api/v1/sims/modeler")
+    assert_status(200, resp, "unauthed_list_profile_sims")
+    assert len(resp.data["results"]) == 1
+    assert resp.data["results"][0]["model_pk"] == modeler_sims[0].model_pk

@@ -5,18 +5,26 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.core.mail import send_mail
 
 from rest_framework.views import APIView
+from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.authentication import (
+    BasicAuthentication,
+    SessionAuthentication,
+    TokenAuthentication,
+)
 
 # from webapp.settings import DEBUG
 
 from webapp.apps.users.models import Project, is_profile_active
+from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 
-from .serializers import PublishSerializer
+from .serializers import PublishSerializer, ProjectWithVersionSerializer
 from .utils import title_fixup
 
 
@@ -45,16 +53,14 @@ class ProjectDetailView(GetProjectMixin, View):
 class ProjectDetailAPIView(GetProjectMixin, APIView):
     def get(self, request, *args, **kwargs):
         project = self.get_object(**kwargs)
-        serializer = PublishSerializer(project)
+        serializer = PublishSerializer(project, context={"request": request})
         data = serializer.data
         return Response(data)
 
     def put(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             project = self.get_object(**kwargs)
-            if project.owner.user == request.user or request.user.has_perm(
-                "write_project", project
-            ):
+            if project.has_write_access(request.user):
                 serializer = PublishSerializer(project, data=request.data)
                 if serializer.is_valid():
                     model = serializer.save(status="updating")
@@ -87,12 +93,16 @@ class ProjectAPIView(GetProjectMixin, APIView):
     queryset = Project.objects.all()
 
     def get(self, request, *args, **kwargs):
-        ser = PublishSerializer(self.queryset.all(), many=True)
+        ser = PublishSerializer(
+            self.queryset.all(), many=True, context={"request": request}
+        )
         return Response(ser.data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            serializer = PublishSerializer(data=request.POST)
+            serializer = PublishSerializer(
+                data=request.POST, context={"request": request}
+            )
             is_valid = serializer.is_valid()
             if is_valid:
                 title = title_fixup(serializer.validated_data["title"])
@@ -137,3 +147,48 @@ class ProjectAPIView(GetProjectMixin, APIView):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class RecentModelsAPIView(generics.ListAPIView):
+    permission_classes = (StrictRequiresActive,)
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    queryset = None
+    serializer_class = PublishSerializer
+    n_recent = 7
+
+    def get_queryset(self):
+        return self.request.user.profile.recent_models(limit=self.n_recent)
+
+
+class ModelsAPIView(generics.ListAPIView):
+    permission_classes = (StrictRequiresActive,)
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    queryset = Project.objects.all().order_by("-pk")
+    serializer_class = ProjectWithVersionSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(owner__user=self.request.user)
+
+
+class ProfileModelsAPIView(generics.ListAPIView):
+    permission_classes = (RequiresActive,)
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    queryset = Project.objects.all().order_by("-pk")
+    serializer_class = ProjectWithVersionSerializer
+
+    def get_queryset(self):
+        username = self.request.parser_context["kwargs"].get("username", None)
+        user = get_object_or_404(get_user_model(), username__iexact=username)
+        return self.queryset.filter(owner__user=user, listed=True)

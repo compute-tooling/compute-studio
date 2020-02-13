@@ -34,10 +34,23 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
     )
     title = serializers.CharField(required=False)
     model_pk = serializers.IntegerField(required=False)
+    project = serializers.StringRelatedField(required=False)
     readme = serializers.JSONField(required=False)
     status = serializers.CharField(required=False)
     api_url = serializers.CharField(required=False, source="get_absolute_api_url")
     gui_url = serializers.CharField(required=False, source="get_absolute_url")
+
+    # see to_representation
+    # has_write_access = serializers.BooleanField(source="has_write_access")
+
+    def to_representation(self, obj):
+        rep = super().to_representation(obj)
+        if self.context.get("request"):
+            user = self.context["request"].user
+        else:
+            user = None
+        rep["has_write_access"] = obj.has_write_access(user)
+        return rep
 
     class Meta:
         model = Simulation
@@ -46,11 +59,13 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
             "authors",
             "creation_date",
             "gui_url",
+            # "has_write_access",
             "is_public",
             "model_pk",
             "model_version",
             "notify_on_completion",
             "owner",
+            "project",
             "readme",
             "status",
             "title",
@@ -63,6 +78,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
             "model_pk",
             "model_version",
             "owner",
+            "project",
             "status",
         )
 

@@ -1,129 +1,202 @@
 <!DOCTYPE html>
 <html class="h-100" lang="en">
-{% load static %}
+  {% load static %}
 
-<head>
-  <title>Compute Studio</title>
-  <link rel="icon" href="{% static 'imgs/cslashs.png' %}" type="image/x-icon">
-  <script src="https://code.jquery.com/jquery-3.3.1.min.js"
-    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
-    integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
-    crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
-    integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
-    integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
-    crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
-    integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
-  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/compbase.css' %}">
-  <link rel="stylesheet" href="{% static 'css/stripe.css' %}">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-157625591-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
 
-  <script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-1.3.4.min.js"></script>
-  <script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-1.3.4.min.js"></script>
-  <meta property="og:site_name" content="Compute Studio" />
-  {% if sim %}
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="{{sim.title}} by {{sim.owner}}">
-  <meta property="og:url" content="{{sim.url}}">
-  {% if sim.pic %}
-  <meta property="og:image" content="{{sim.pic}}">
-  {% endif %}
-  {% endif %}
+      gtag("config", "UA-157625591-1");
+    </script>
 
-  {% block style %}
-  {% endblock %}
-  {% block scripts %}
-  {% endblock %}
-</head>
+    <title>Compute Studio</title>
+    <link rel="icon" href="{% static 'imgs/cslashs.png' %}" type="image/x-icon" />
+    <script
+      src="https://code.jquery.com/jquery-3.3.1.min.js"
+      integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+      integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+      crossorigin="anonymous"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+      integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+      integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+      crossorigin="anonymous"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
+      integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU"
+      crossorigin="anonymous"
+    />
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'css/compbase.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/stripe.css' %}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<body class="main-content d-flex flex-column h-100">
-  <main role="main" class="flex-shrink-0">
-    <nav class="main-navbar navbar navbar-dark navbar-custom navbar-expand-lg shadow">
-      <a href="{% url 'home' %}" class="navbar-brand">
-        <img src="{% static 'imgs/cslashs-white.png' %}" width="30" height="30" alt="Compute Studio">
-      </a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo02"
-        aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
-        <ul class="navbar-nav mr-auto mt-2 mt-lg-0 mobile-mb-3">
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
-              aria-haspopup="true" aria-expanded="false">
-              Models
-            </a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <!-- Add new projects to the dropdown menu here! -->
-              {% for owner, project, url in project_list %}
-              <a class="dropdown-item" href="{{url}}">{{owner}}/{{project}}</a>
-              {% endfor %}
-            </div>
-          </li>
-        </ul>
-        {% if not show_readme and owner and project_name %}
-        <ul class="navbar-nav mr-auto mt-2 mt-lg-0 mobile-mb-3">
-          <li class="nav-item dropdown">
-            <h5>
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownModel" role="button" data-toggle="dropdown"
-                aria-haspopup="true" aria-expanded="false">
-                {{owner}}/{{project_name}}
+    <script
+      type="text/javascript"
+      src="https://cdn.pydata.org/bokeh/release/bokeh-1.3.4.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-1.3.4.min.js"
+    ></script>
+    <meta property="og:site_name" content="Compute Studio" />
+    {% if sim %}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="{{sim.title}} by {{sim.owner}}" />
+    <meta property="og:url" content="{{sim.url}}" />
+    {% if sim.pic %}
+    <meta property="og:image" content="{{sim.pic}}" />
+    {% endif %} {% endif %} {% block style %} {% endblock %} {% block scripts %} {% endblock %}
+  </head>
+
+  <body class="main-content d-flex flex-column h-100">
+    <main role="main" class="flex-shrink-0">
+      <nav class="main-navbar navbar navbar-dark navbar-custom navbar-expand-lg shadow">
+        <a href="{% url 'home' %}" class="navbar-brand">
+          <img
+            src="{% static 'imgs/cslashs-white.png' %}"
+            width="30"
+            height="30"
+            alt="Compute Studio"
+          />
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-toggle="collapse"
+          data-target="#navbarTogglerDemo02"
+          aria-controls="navbarTogglerDemo02"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
+          <ul class="navbar-nav mr-auto mt-2 mt-lg-0 mobile-mb-3">
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                id="navbarDropdown"
+                role="button"
+                data-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                Models
               </a>
-              <!-- </h1> -->
-              <div class="dropdown-menu w-100" aria-labelledby="navbarDropdownModel">
-                <a class="dropdown-item" href="/{{owner}}/{{project_name}}/">View README</a>
-                <a class="dropdown-item" href="/{{owner}}/{{project_name}}/new/">Create Simulation</a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <!-- Add new projects to the dropdown menu here! -->
+                {% for owner, project, url in project_list %}
+                <a class="dropdown-item" href="{{url}}">{{owner}}/{{project}}</a>
+                {% endfor %}
               </div>
-            </h5>
-          </li>
-        </ul>
-        {% endif %}
-        <div id="auth-group">
-          <div class="dropdown mobile-mb-1 {% if not user.is_authenticated %}d-none{% endif %}">
-            <a class="nav-link btn btn-outline-match-nav dropdown-toggle mb-1" style="display: inline-block;" href="#"
-              id="navbarDropdown-prof" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              {{user.username}}
-            </a>
-            <div class="dropdown-menu desktop-menu-right" style="width:180px" aria-labelledby="navbarDropdown-prof">
-              <!-- Add new projects to the dropdown menu here! -->
-              <a class="dropdown-item" href="{% url 'home' %}">Dashboard</a>
-              <a class="dropdown-item" href="{% url 'publish' %}">Publish</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="{% url 'user_settings' %}">Settings</a>
-              <a class="dropdown-item" href="{% url 'logout' %}">Sign out</a>
+            </li>
+          </ul>
+          {% if not show_readme and owner and project_name %}
+          <ul class="navbar-nav mr-auto mt-2 mt-lg-0 mobile-mb-3">
+            <li class="nav-item dropdown">
+              <h5>
+                <a
+                  class="nav-link dropdown-toggle"
+                  href="#"
+                  id="navbarDropdownModel"
+                  role="button"
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                >
+                  {{owner}}/{{project_name}}
+                </a>
+                <!-- </h1> -->
+                <div class="dropdown-menu w-100" aria-labelledby="navbarDropdownModel">
+                  <a class="dropdown-item" href="/{{owner}}/{{project_name}}/">View README</a>
+                  <a class="dropdown-item" href="/{{owner}}/{{project_name}}/new/"
+                    >Create Simulation</a
+                  >
+                </div>
+              </h5>
+            </li>
+          </ul>
+          {% endif %}
+          <div id="auth-group">
+            <div class="dropdown mobile-mb-1 {% if not user.is_authenticated %}d-none{% endif %}">
+              <a
+                class="nav-link btn btn-outline-match-nav dropdown-toggle mb-1"
+                style="display: inline-block;"
+                href="#"
+                id="navbarDropdown-prof"
+                role="button"
+                data-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                {{user.username}}
+              </a>
+              <div
+                class="dropdown-menu desktop-menu-right"
+                style="width:180px"
+                aria-labelledby="navbarDropdown-prof"
+              >
+                <!-- Add new projects to the dropdown menu here! -->
+                <a class="dropdown-item" href="{% url 'home' %}">Dashboard</a>
+                <a class="dropdown-item" href="{% url 'publish' %}">Publish</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="{% url 'user_settings' %}">Settings</a>
+                <a class="dropdown-item" href="{% url 'logout' %}">Sign out</a>
+              </div>
             </div>
-          </div>
-          <div class="{% if user.is_authenticated %}d-none{% endif %}">
-            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-              <li class="nav-item mr-2 mobile-mb-3">
-                <a class="nav-link btn btn-match-nav" style="display: inline-block;" href="{% url 'login' %}">
-                  Sign in
-                </a>
-              </li>
-              <li class="nav-item mobile-mb-1">
-                <a class="nav-link btn btn-outline-match-nav mb-1 mobile-p-1" style="display: inline-block;"
-                  href="{% url 'signup' %}">
-                  Sign up
-                </a>
-              </li>
-            </ul>
+            <div class="{% if user.is_authenticated %}d-none{% endif %}">
+              <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                <li class="nav-item mr-2 mobile-mb-3">
+                  <a
+                    class="nav-link btn btn-match-nav"
+                    style="display: inline-block;"
+                    href="{% url 'login' %}"
+                  >
+                    Sign in
+                  </a>
+                </li>
+                <li class="nav-item mobile-mb-1">
+                  <a
+                    class="nav-link btn btn-outline-match-nav mb-1 mobile-p-1"
+                    style="display: inline-block;"
+                    href="{% url 'signup' %}"
+                  >
+                    Sign up
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
 
-    <div class="container-fluid mt-4" style="max-width:1400px;">
-      {% block content %}
-      {% endblock %}
-    </div>
-  </main>
-  <footer class="footer mt-auto py-3">
-    <div class="container-fluid" style="max-width:1400px;">
-      <div class="card card-body card-outer text-center">
+      <div class="container-fluid mt-4" style="max-width:1400px;">
+        {% block content %} {% endblock %}
+      </div>
+    </main>
+    <footer class="footer mt-auto py-3">
+      <hr className="my-4" />
+      <div class="container-fluid text-center" style="max-width:1400px;">
         <div class="row">
           <div class="col">
             <a href="/about/">About</a>
@@ -136,13 +209,9 @@
           </div>
         </div>
       </div>
-    </div>
-  </footer>
+    </footer>
 
-  {% block bottom_scripts %}
-  {% endblock %}
-</body>
-{% block below_body %}
-{% endblock %}
-
+    {% block bottom_scripts %} {% endblock %}
+  </body>
+  {% block below_body %} {% endblock %}
 </html>

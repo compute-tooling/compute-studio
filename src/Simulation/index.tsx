@@ -73,9 +73,6 @@ interface SimAppState {
   remoteSim?: Simulation<RemoteOutputs>;
   sim?: Simulation<Outputs>;
 
-  inputsTimer?: NodeJS.Timer | null;
-  outputsTimer?: NodeJS.Timer | null;
-
   // necessary for form state
   initialValues?: InitialValues;
   schema?: { adjustment: yup.Schema<any>; meta_parameters: yup.Schema<any> };
@@ -328,7 +325,7 @@ class SimTabs extends React.Component<
   }
 
   pollInputs(respData: InputsDetail, actions: FormikHelpers<InitialValues>, values) {
-    let timer = setInterval(() => {
+    setTimeout(() => {
       axios
         .get(respData.api_url)
         .then(response => {
@@ -336,9 +333,9 @@ class SimTabs extends React.Component<
           // sim has not yet been submitted and saved!
           let data: InputsDetail = response.data;
           if (data.status === "SUCCESS" && data.sim !== null) {
-            this.killTimer("inputsTimer");
             this.api.modelpk = data.sim.model_pk.toString();
-            this.setOutputs();
+            // 250ms buffer time for the backend to update the outputs object.
+            this.pollOutputs(250);
             this.api.getAccessStatus().then(accessStatus => {
               this.setState(prevState => ({
                 initialValues: values, // reset form with updated init vals.
@@ -354,7 +351,6 @@ class SimTabs extends React.Component<
 
             history.pushState(null, null, data.sim.gui_url);
           } else if (response.data.status === "INVALID") {
-            this.killTimer("inputsTimer");
             this.api.getAccessStatus().then(accessStatus => {
               this.setState(prevState => ({
                 inputs: { ...prevState.inputs, ...{ detail: data } },
@@ -368,57 +364,49 @@ class SimTabs extends React.Component<
             });
             actions.setSubmitting(false);
             window.scroll(0, 0);
+          } else {
+            this.pollInputs(respData, actions, values);
           }
         })
         .catch(error => {
           console.log("polling error:");
           console.log(error);
-          this.killTimer("inputsTimer");
         });
     }, 1000);
-    // @ts-ignore
-    this.setState({ inputsTimer: timer });
   }
 
-  setOutputs() {
-    let timer;
+  pollOutputs(timeout: number = 5000) {
     let api = this.api;
     if (!api.modelpk) {
       return;
     }
-    api.getRemoteOutputs().then(initRem => {
-      this.setState({ remoteSim: initRem });
-      if (initRem.status !== "PENDING") {
-        api.getOutputs().then(initSim => {
-          this.setState({ sim: initSim });
-        });
-      } else {
-        timer = setInterval(() => {
-          api.getRemoteOutputs().then(detRem => {
-            if (detRem.status !== "PENDING") {
-              // return component state to default once outputs have loaded.
-              this.setState({ remoteSim: detRem, notifyOnCompletion: false });
-              this.killTimer("outputsTimer");
-              api.getOutputs().then(detSim => {
-                this.setState({ sim: detSim });
-              });
-            } else {
-              this.setState({ remoteSim: detRem });
-            }
+    setTimeout(() => {
+      api.getRemoteOutputs().then(initRem => {
+        this.setState({ remoteSim: initRem });
+        if (initRem.status === "PENDING") {
+          return this.pollOutputs(5000);
+        } else {
+          api.getOutputs().then(initSim => {
+            this.setState({ sim: initSim, notifyOnCompletion: false });
           });
-        }, 5000);
-      }
-      this.setState({ outputsTimer: timer });
-    });
+        }
+      });
+    }, timeout);
   }
 
-  killTimer(timerName: "inputsTimer" | "outputsTimer") {
-    console.log("killTimer", timerName, this.state[timerName]);
-    if (this.state[timerName]) {
-      clearInterval(this.state[timerName]);
-      // @ts-ignore
-      this.setState({ [timerName]: null });
+  setOutputs() {
+    let api = this.api;
+    if (!api.modelpk) {
+      return;
     }
+    api.getRemoteOutputs().then(remoteSim => {
+      this.setState({ remoteSim });
+      if (remoteSim.status !== "STARTED" && remoteSim.status !== "PENDING") {
+        api.getOutputs().then(sim => {
+          this.setState({ sim, notifyOnCompletion: false });
+        });
+      }
+    });
   }
 
   handleTabChange(key: "inputs" | "outputs", formikProps: FormikProps<InitialValues>) {
@@ -456,17 +444,6 @@ class SimTabs extends React.Component<
         </ErrorBoundary>
       );
     }
-    const style = { padding: 0 };
-    const buttonGroupStyle = {
-      left: {
-        borderTopRightRadius: 0,
-        borderBottomRightRadius: 0
-      },
-      right: {
-        borderTopLeftRadius: 0,
-        borderBottomLeftRadius: 0
-      }
-    };
     let {
       accessStatus,
       inputs,
@@ -526,23 +503,20 @@ class SimTabs extends React.Component<
               </ErrorBoundary>
               <Tab.Container
                 id="sim-tabs"
+                transition={false}
                 defaultActiveKey={this.state.key}
                 activeKey={this.state.key}
                 onSelect={(k: "inputs" | "outputs") => this.handleTabChange(k, formikProps)}
               >
                 <Nav variant="pills" className="mb-4">
-                  <Col style={style}>
-                    <Nav.Item className="sim-nav-item">
-                      <Nav.Link style={buttonGroupStyle.left} eventKey="inputs">
-                        Inputs
-                      </Nav.Link>
+                  <Col className="p-0">
+                    <Nav.Item className="sim-nav-item left-nav-item">
+                      <Nav.Link eventKey="inputs">Inputs</Nav.Link>
                     </Nav.Item>
                   </Col>
-                  <Col style={style}>
-                    <Nav.Item className="sim-nav-item">
-                      <Nav.Link style={buttonGroupStyle.right} eventKey="outputs">
-                        Outputs
-                      </Nav.Link>
+                  <Col className="p-0">
+                    <Nav.Item className="sim-nav-item right-nav-item">
+                      <Nav.Link eventKey="outputs">Outputs</Nav.Link>
                     </Nav.Item>
                   </Col>
                 </Nav>

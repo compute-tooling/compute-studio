@@ -248,6 +248,9 @@ class SimulationManager(models.Manager):
         sim.authors.set([user.profile])
         return sim
 
+    def public_sims(self):
+        return self.filter(creation_date__gt=ANON_BEFORE, is_public=True)
+
 
 class Simulation(models.Model):
 
@@ -455,6 +458,7 @@ class Simulation(models.Model):
                     {"renderable": {"outputs": output}}
                 )
                 pic = output["renderable"]["outputs"][0]["screenshot"]
+
         return {"owner": self.get_owner(), "title": self.title, "url": url, "pic": pic}
 
 

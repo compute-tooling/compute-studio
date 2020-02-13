@@ -2,6 +2,7 @@ import pytest
 
 from django.contrib import auth
 
+from ..views import ABOUT_URL
 
 User = auth.get_user_model()
 
@@ -9,11 +10,10 @@ User = auth.get_user_model()
 @pytest.mark.django_db
 class TestPageViews:
     def test_home_page_noauth(self, client):
-        # check about page is rendered if not logged in.
+        # check user is redirected if not logged in.
         resp = client.get("/")
-        assert resp.status_code == 200
-        assert "project_list" in resp.context
-        assert "pages/getting_started.html" in [t.name for t in resp.templates]
+        assert resp.status_code == 302, f"Expected 302, got {resp.status_code}"
+        assert resp.url == ABOUT_URL
 
     def test_get_user_profile(
         self, monkeypatch, client, profile, password, test_models
@@ -34,5 +34,8 @@ class TestPageViews:
         assert "profile/home_base.html" in [t.name for t in resp.templates]
 
     def test_get_pages(self, client):
-        for page in ["about", "privacy", "terms"]:
+        for page in ["privacy", "terms"]:
             assert client.get(f"/{page}/").status_code == 200
+        resp = client.get("/about/")
+        assert resp.status_code == 302, f"Expected 302, got {resp.status_code}"
+        assert resp.url == ABOUT_URL

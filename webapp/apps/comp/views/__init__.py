@@ -19,4 +19,6 @@ from .api import (
     MyInputsAPIView,
     NewSimulationAPIView,
     CollabAPIView,
+    SimsAPIView,
+    ProfileSimsAPIView,
 )

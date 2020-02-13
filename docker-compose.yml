@@ -5,12 +5,19 @@ services:
     image: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+    network_mode: "host"
+    ports:
+      - "5432:5432"
   webbase:
+    network_mode: "host"
+
     build:
       context: ./
       dockerfile: Dockerfile.base
     image: webbase
   web:
+    network_mode: "host"
+
     build:
       context: ./
       dockerfile: Dockerfile.dev
@@ -18,12 +25,12 @@ services:
     volumes:
       - .:/code
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db/postgres
+      - DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/postgres
       - USE_STRIPE=False
       - DEBUG=True
       - WORKERS=${WORKERS}:5050
       - LOCAL=True
-      - BUCKET=cs-outputs-dev-1
+      - BUCKET=cs-outputs-dev
       - MAILGUN_API_KEY=${MAILGUN_API_KEY}
       - USE_STRIPE=${USE_STRIPE}
       - STRIPE_SECRET=${STRIPE_SECRET}
