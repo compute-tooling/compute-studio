@@ -124,6 +124,13 @@ code {
   }
 }
 
+/* small devices */
+@media (max-width: 576px) {
+  .mobile-pr-0 {
+    padding-right: 0 !important;
+  }
+}
+
 @media (max-width: 992px) {
   .mobile-mb-1 {
     margin-bottom: 0.25rem !important;

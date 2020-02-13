@@ -90,7 +90,7 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
     >
       <Card.Body>
         <Row className="w-100">
-          <Col className="col-8">
+          <Col className="col-sm-8">
             <Card.Title>
               <h5>{`${model.owner}/${model.title}`}</h5>
             </Card.Title>
@@ -108,7 +108,7 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
               </Row>
             ) : null}
           </Col>
-          <Col className="col-4">
+          <Col className="col-sm-4">
             <Row className="w-100 justify-content-start">
               {<Col className="col-3 align-self-center">{modelStatus(model.status)}</Col>}
               {model.has_write_access ? (
@@ -231,12 +231,12 @@ const Sim: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim, in
             {/* top level row for card */}
             <Row className="w-100">
               {/* left half */}
-              <Col className="col-9">
+              <Col className="col-md-9">
                 <Card.Title>
                   <h5>{sim.title}</h5>
                 </Card.Title>
                 <Card.Subtitle className="text-muted" onClick={e => e.stopPropagation()}>
-                  <h6>
+                  <h6 style={{ whiteSpace: "nowrap" }}>
                     <a href={sim.project} className="color-inherit">
                       {sim.project}
                     </a>
@@ -245,7 +245,7 @@ const Sim: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim, in
                 </Card.Subtitle>
               </Col>
               {/* right half */}
-              <Col className="col-3">
+              <Col className="col-md-3">
                 <Row className="w-100 justify-content-start">
                   <Col className="col-3 align-self-center">{simStatus(sim.status)}</Col>
                   <Col className="col-3 align-self-center">
@@ -297,7 +297,9 @@ const Sim: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim, in
                       tip={moment(sim.creation_date).format("MMMM Do YYYY, h:mm:ss a")}
                       placement="bottom"
                     >
-                      <span className="text-muted">{moment(sim.creation_date).fromNow()}</span>
+                      <span className="text-muted" style={{ whiteSpace: "nowrap" }}>
+                        {moment(sim.creation_date).fromNow()}
+                      </span>
                     </Tip>
                   </Col>
                 </Row>
@@ -313,7 +315,7 @@ const Sim: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim, in
 const SimFeed: React.FC<{ sims: Array<MiniSimulation> }> = ({ sims }) => {
   if (sims.length > 0) {
     return (
-      <div className="container-fluid" style={{ paddingLeft: 0 }}>
+      <div className="container-fluid px-0">
         {sims.map((sim, ix) => (
           <Sim initSim={sim} key={`${sim.project}#${sim.model_pk}`} index={ix} />
         ))}
@@ -321,7 +323,7 @@ const SimFeed: React.FC<{ sims: Array<MiniSimulation> }> = ({ sims }) => {
     );
   } else {
     return (
-      <div className="container-fluid" style={{ paddingLeft: 0 }}>
+      <div className="container-fluid px-0">
         <Card>
           <Card.Body>
             <Card.Title>No simulations available!</Card.Title>
@@ -355,7 +357,9 @@ const RecentModelsPanel: React.FC<{ recentModels: Array<Project> }> = ({ recentM
               </h6>
             </Tip>
           </Card.Title>
-          <Card.Subtitle className="text-muted">{model.oneliner}</Card.Subtitle>
+          <Card.Subtitle className="text-muted d-none d-sm-none d-md-block">
+            {model.oneliner}
+          </Card.Subtitle>
         </Card.Body>
       </FocusableCard>
     ))}
@@ -525,21 +529,31 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
             if (homeTab) this.setState({ homeTab: homeTab });
           }}
         >
-          <Row className="w-100 justify-content-between mb-3">
-            <Col className={`col-4 ${this.api.username ? "" : "offset-md-3"} align-self-center`}>
-              <Nav variant="pills">
-                <Row className="w-100">
+          <Row className="w-100 px-0 justify-content-between mb-3 d-flex flex-md-row">
+            <Col
+              className={`col-md-auto ${this.api.username ? "" : " offset-md-3"} align-self-center`}
+            >
+              <Nav variant="pills" className="d-flex d-sm-block">
+                <Row className="flex-1">
                   <Col className="p-0 align-self-center">
-                    <Nav.Item className="left-nav-item text-center sub-nav-item">
-                      <Nav.Link className="border" eventKey="sims">
-                        {this.api.username ? `Simulations` : "My simulations"}
+                    <Nav.Item className="left-nav-item text-center sub-nav-item flex-2">
+                      <Nav.Link
+                        className="border"
+                        eventKey="sims"
+                        style={{ fontSize: "15px", fontWeight: 600 }}
+                      >
+                        Simulations
                       </Nav.Link>
                     </Nav.Item>
                   </Col>
                   <Col className="p-0 align-self-center">
-                    <Nav.Item className="right-nav-item text-center sub-nav-item">
-                      <Nav.Link className="border" eventKey="models">
-                        {this.api.username ? `Models` : "My models"}
+                    <Nav.Item className="right-nav-item text-center sub-nav-item flex-1">
+                      <Nav.Link
+                        className="border"
+                        eventKey="models"
+                        style={{ fontSize: "15px", fontWeight: 600 }}
+                      >
+                        Models
                       </Nav.Link>
                     </Nav.Item>
                   </Col>
@@ -554,7 +568,7 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
           </Row>
           {!this.api.username ? (
             <Row className="w-100">
-              <Col className="col-md-3 pl-0">
+              <Col className="col-md-3 pl-0 mobile-pr-0 mb-3">
                 {recentModels ? <RecentModelsPanel recentModels={recentModels} /> : null}
               </Col>
               <Col className="col-md-9 px-0">{feed}</Col>
