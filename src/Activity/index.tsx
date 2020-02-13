@@ -342,7 +342,7 @@ const RecentModelsPanel: React.FC<{ recentModels: Array<Project> }> = ({ recentM
     {recentModels.map((model, ix) => (
       <FocusableCard
         key={ix}
-        className={`p-0 ${ix > 0 ? "border-top-0" : ""}`}
+        className={`p-0 ${ix > 0 ? "border-top-0" : ""} ${ix >= 3 ? "d-none d-sm-block" : ""}`}
         style={{ borderRadius: 0 }}
         onClick={() => (window.location.href = `/${model.owner}/${model.title}/`)}
       >
