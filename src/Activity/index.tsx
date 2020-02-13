@@ -90,7 +90,7 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
     >
       <Card.Body>
         <Row className="w-100">
-          <Col className="col-8">
+          <Col className="col-sm-8">
             <Card.Title>
               <h5>{`${model.owner}/${model.title}`}</h5>
             </Card.Title>
@@ -108,7 +108,7 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
               </Row>
             ) : null}
           </Col>
-          <Col className="col-4">
+          <Col className="col-sm-4">
             <Row className="w-100 justify-content-start">
               {<Col className="col-3 align-self-center">{modelStatus(model.status)}</Col>}
               {model.has_write_access ? (
@@ -135,7 +135,7 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
 
 const ModelFeed: React.FC<{ models: Array<Project> }> = ({ models }) => {
   return (
-    <div className="container-fluid" style={{ paddingLeft: 0 }}>
+    <div className="container-fluid px-0">
       {models.map((model, ix) => (
         <Model model={model} key={`${model.owner}/${model.title}`} index={ix} />
       ))}
@@ -231,12 +231,12 @@ const Sim: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim, in
             {/* top level row for card */}
             <Row className="w-100">
               {/* left half */}
-              <Col className="col-9">
+              <Col className="col-md-9">
                 <Card.Title>
                   <h5>{sim.title}</h5>
                 </Card.Title>
                 <Card.Subtitle className="text-muted" onClick={e => e.stopPropagation()}>
-                  <h6>
+                  <h6 style={{ whiteSpace: "nowrap" }}>
                     <a href={sim.project} className="color-inherit">
                       {sim.project}
                     </a>
@@ -245,7 +245,7 @@ const Sim: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim, in
                 </Card.Subtitle>
               </Col>
               {/* right half */}
-              <Col className="col-3">
+              <Col className="col-md-3">
                 <Row className="w-100 justify-content-start">
                   <Col className="col-3 align-self-center">{simStatus(sim.status)}</Col>
                   <Col className="col-3 align-self-center">
@@ -297,7 +297,9 @@ const Sim: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim, in
                       tip={moment(sim.creation_date).format("MMMM Do YYYY, h:mm:ss a")}
                       placement="bottom"
                     >
-                      <span className="text-muted">{moment(sim.creation_date).fromNow()}</span>
+                      <span className="text-muted" style={{ whiteSpace: "nowrap" }}>
+                        {moment(sim.creation_date).fromNow()}
+                      </span>
                     </Tip>
                   </Col>
                 </Row>
@@ -313,7 +315,7 @@ const Sim: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim, in
 const SimFeed: React.FC<{ sims: Array<MiniSimulation> }> = ({ sims }) => {
   if (sims.length > 0) {
     return (
-      <div className="container-fluid" style={{ paddingLeft: 0 }}>
+      <div className="container-fluid px-0">
         {sims.map((sim, ix) => (
           <Sim initSim={sim} key={`${sim.project}#${sim.model_pk}`} index={ix} />
         ))}
@@ -321,7 +323,7 @@ const SimFeed: React.FC<{ sims: Array<MiniSimulation> }> = ({ sims }) => {
     );
   } else {
     return (
-      <div className="container-fluid" style={{ paddingLeft: 0 }}>
+      <div className="container-fluid px-0">
         <Card>
           <Card.Body>
             <Card.Title>No simulations available!</Card.Title>
@@ -340,7 +342,7 @@ const RecentModelsPanel: React.FC<{ recentModels: Array<Project> }> = ({ recentM
     {recentModels.map((model, ix) => (
       <FocusableCard
         key={ix}
-        className={`p-0 ${ix > 0 ? "border-top-0" : ""}`}
+        className={`p-0 ${ix > 0 ? "border-top-0" : ""} ${ix >= 3 ? "d-none d-sm-block" : ""}`}
         style={{ borderRadius: 0 }}
         onClick={() => (window.location.href = `/${model.owner}/${model.title}/`)}
       >
@@ -355,7 +357,9 @@ const RecentModelsPanel: React.FC<{ recentModels: Array<Project> }> = ({ recentM
               </h6>
             </Tip>
           </Card.Title>
-          <Card.Subtitle className="text-muted">{model.oneliner}</Card.Subtitle>
+          <Card.Subtitle className="text-muted d-none d-sm-none d-md-block">
+            {model.oneliner}
+          </Card.Subtitle>
         </Card.Body>
       </FocusableCard>
     ))}
@@ -385,12 +389,12 @@ const OrderingDropDown: React.FC<{ ordering: Array<string>; updateOrder: (string
   ordering,
   updateOrder
 }) => (
-  <Dropdown>
+  <Dropdown drop="left">
     <Dropdown.Toggle
       variant="link"
       style={{ border: 0 }}
       id="dropdown-sort"
-      className="caret-off color-inherit p-0"
+      className="color-inherit p-0"
     >
       <i style={{ fontSize: "1.5rem" }} className="fas fa-sort"></i>
     </Dropdown.Toggle>
@@ -516,56 +520,65 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
     );
 
     return (
-      <div className="container-fluid">
-        <Tab.Container
-          id="home-tabs"
-          defaultActiveKey={this.state.homeTab}
-          activeKey={this.state.homeTab}
-          onSelect={(homeTab: "sims" | "models") => {
-            if (homeTab) this.setState({ homeTab: homeTab });
-          }}
-        >
-          <Row className="w-100 justify-content-between mb-3">
-            <Col className={`col-4 ${this.api.username ? "" : "offset-md-3"} align-self-center`}>
-              <Nav variant="pills">
-                <Row className="w-100">
-                  <Col className="p-0 align-self-center">
-                    <Nav.Item className="left-nav-item text-center sub-nav-item">
-                      <Nav.Link className="border" eventKey="sims">
-                        {this.api.username ? `Simulations` : "My simulations"}
-                      </Nav.Link>
-                    </Nav.Item>
-                  </Col>
-                  <Col className="p-0 align-self-center">
-                    <Nav.Item className="right-nav-item text-center sub-nav-item">
-                      <Nav.Link className="border" eventKey="models">
-                        {this.api.username ? `Models` : "My models"}
-                      </Nav.Link>
-                    </Nav.Item>
-                  </Col>
-                </Row>
-              </Nav>
+      <Tab.Container
+        id="home-tabs"
+        defaultActiveKey={this.state.homeTab}
+        transition={false}
+        activeKey={this.state.homeTab}
+        onSelect={(homeTab: "sims" | "models") => {
+          if (homeTab) this.setState({ homeTab: homeTab });
+        }}
+      >
+        <Row className="w-100 px-0 m-0 justify-content-between mb-3 d-flex flex-md-row">
+          <Col
+            className={`col-md-auto ${this.api.username ? "" : " offset-md-3"} align-self-center`}
+          >
+            <Nav variant="pills" className="d-flex d-sm-block">
+              <Row className="flex-1">
+                <Col className="p-0 align-self-center">
+                  <Nav.Item className="left-nav-item text-center sub-nav-item flex-2">
+                    <Nav.Link
+                      className="border"
+                      eventKey="sims"
+                      style={{ fontSize: "15px", fontWeight: 600 }}
+                    >
+                      Simulations
+                    </Nav.Link>
+                  </Nav.Item>
+                </Col>
+                <Col className="p-0 align-self-center">
+                  <Nav.Item className="right-nav-item text-center sub-nav-item flex-1">
+                    <Nav.Link
+                      className="border"
+                      eventKey="models"
+                      style={{ fontSize: "15px", fontWeight: 600 }}
+                    >
+                      Models
+                    </Nav.Link>
+                  </Nav.Item>
+                </Col>
+              </Row>
+            </Nav>
+          </Col>
+          {this.state.homeTab === "sims" ? (
+            <Col className="col-1 align-self-center">
+              <OrderingDropDown ordering={this.state.ordering} updateOrder={this.updateOrder} />
             </Col>
-            {this.state.homeTab === "sims" ? (
-              <Col className="col-1 align-self-center">
-                <OrderingDropDown ordering={this.state.ordering} updateOrder={this.updateOrder} />
-              </Col>
-            ) : null}
+          ) : null}
+        </Row>
+        {!this.api.username ? (
+          <Row className="w-100 m-0">
+            <Col className="col-md-3 pl-0 mobile-pr-0 mb-3">
+              {recentModels ? <RecentModelsPanel recentModels={recentModels} /> : null}
+            </Col>
+            <Col className="col-md-9 px-0">{feed}</Col>
           </Row>
-          {!this.api.username ? (
-            <Row className="w-100">
-              <Col className="col-md-3 pl-0">
-                {recentModels ? <RecentModelsPanel recentModels={recentModels} /> : null}
-              </Col>
-              <Col className="col-md-9 px-0">{feed}</Col>
-            </Row>
-          ) : (
-            <Row className="w-100">
-              <Col className="p-0">{feed}</Col>
-            </Row>
-          )}
-        </Tab.Container>
-      </div>
+        ) : (
+          <Row className="w-100 m-0">
+            <Col className="p-0">{feed}</Col>
+          </Row>
+        )}
+      </Tab.Container>
     );
   }
 }

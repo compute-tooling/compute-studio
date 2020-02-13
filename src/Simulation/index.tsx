@@ -444,17 +444,6 @@ class SimTabs extends React.Component<
         </ErrorBoundary>
       );
     }
-    // const style = { padding: 0 };
-    // const buttonGroupStyle = {
-    //   left: {
-    //     borderTopRightRadius: 0,
-    //     borderBottomRightRadius: 0
-    //   },
-    //   right: {
-    //     borderTopLeftRadius: 0,
-    //     borderBottomLeftRadius: 0
-    //   }
-    // };
     let {
       accessStatus,
       inputs,
@@ -514,6 +503,7 @@ class SimTabs extends React.Component<
               </ErrorBoundary>
               <Tab.Container
                 id="sim-tabs"
+                transition={false}
                 defaultActiveKey={this.state.key}
                 activeKey={this.state.key}
                 onSelect={(k: "inputs" | "outputs") => this.handleTabChange(k, formikProps)}
