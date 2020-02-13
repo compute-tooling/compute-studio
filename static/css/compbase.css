@@ -329,6 +329,11 @@ blockquote {
   display: none;
 }
 
+/* drops pesky dropdown arrow on  home page dropdown filter */
+.dropleft .dropdown-toggle::before {
+  display: none;
+}
+
 /* tooltip */
 
 .fade.show.tooltip > .tooltip-inner {

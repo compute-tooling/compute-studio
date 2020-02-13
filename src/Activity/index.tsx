@@ -389,12 +389,12 @@ const OrderingDropDown: React.FC<{ ordering: Array<string>; updateOrder: (string
   ordering,
   updateOrder
 }) => (
-  <Dropdown>
+  <Dropdown drop="left">
     <Dropdown.Toggle
       variant="link"
       style={{ border: 0 }}
       id="dropdown-sort"
-      className="caret-off color-inherit p-0"
+      className="color-inherit p-0"
     >
       <i style={{ fontSize: "1.5rem" }} className="fas fa-sort"></i>
     </Dropdown.Toggle>
