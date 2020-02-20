@@ -774,7 +774,7 @@ def test_add_author_flow(
     _, submit_sim = _submit_sim(inputs)
     sim = submit_sim.submit()
     sim.status = "SUCCESS"
-    sim.is_public = True
+    sim.is_public = False
     sim.save()
 
     assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
@@ -822,6 +822,9 @@ def test_add_author_flow(
     resp = client.get(pp.get_absolute_url())
     assert_status(200, resp, "get_permissions_pending")
     assert "comp/permissions/confirm.html" in [t.name for t in resp.templates]
+    # Test user granted access to private simulation
+    resp = client.get(pp.sim.get_absolute_url())
+    assert_status(200, resp, "potential_sim_author_has_read_access")
     # GET link for granting permission.
     resp = client.get(pp.get_absolute_grant_url())
     assert_status(302, resp, "grant_permissions")
@@ -988,6 +991,77 @@ def test_delete_author(
     api_client.force_login(danger.user)
     resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
     assert_status(403, resp, "auth'ed user cannot delete authors")
+
+
+def test_sim_read_access_management(
+    db, sponsored_matchups, client, api_client, get_inputs, meta_param_dict, profile
+):
+    """
+    Test grant/remove read access to private simulation.
+    - Assert user does not have read access
+    - Check user without read access cannot add themselves
+    - Grant read access to user successfully
+    - Make sure user with read access cannot add others to list
+    - Remove read access from user successfully.
+    """
+    modeler = User.objects.get(username="hdoupe").profile
+    inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, modeler)
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.outputs = json.loads(read_outputs("Matchups_v1"))
+    sim.is_public = False
+    sim.save()
+
+    # Check user does not have access to sim
+    api_client.force_login(profile.user)
+    resp = api_client.get(sim.get_absolute_api_url())
+    assert_status(403, resp, "user does not have read access to sim yet")
+
+    # Check user cannot update read access list
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}access/",
+        data=[{"username": str(profile), "has_read_access": True}],
+        format="json",
+    )
+    assert_status(403, resp, "user cannot update read access")
+
+    # Grant read access to user
+    api_client.force_login(sim.owner.user)
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}access/",
+        data=[{"username": str(profile), "has_read_access": True}],
+        format="json",
+    )
+    assert_status(204, resp, "user granted read access")
+
+    api_client.force_login(profile.user)
+    resp = api_client.get(sim.get_absolute_api_url())
+    assert_status(200, resp, "user has read access to sim")
+
+    # Check user with read access cannot grant others read access
+    u = User.objects.create_user("danger", "danger@example.com", "heyhey2222")
+    create_profile_from_user(u)
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}access/",
+        data=[{"username": "danger", "has_read_access": True}],
+        format="json",
+    )
+    assert_status(403, resp, "user granted read access")
+
+    # Remove read access from user
+    api_client.force_login(sim.owner.user)
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}access/",
+        data=[{"username": str(profile), "has_read_access": False}],
+        format="json",
+    )
+    assert_status(204, resp, "user granted read access")
+
+    api_client.force_login(profile.user)
+    resp = api_client.get(sim.get_absolute_api_url())
+    assert_status(403, resp, "user no longer has read access to sim")
 
 
 def test_list_sim_api(db, api_client, profile, get_inputs, meta_param_dict):

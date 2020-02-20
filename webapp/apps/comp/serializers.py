@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from guardian.shortcuts import get_users_with_perms
 
 from webapp.apps.publish.serializers import PublishSerializer
 
@@ -157,6 +158,32 @@ class InputsSerializer(serializers.ModelSerializer):
         )
 
 
+class SimAccessSerializer(serializers.Serializer):
+    """Serialize user's permissions for a given simulation"""
+
+    is_owner = serializers.BooleanField(required=False)
+    has_write_access = serializers.BooleanField(required=False)
+    has_read_access = serializers.BooleanField(required=False)
+    username = serializers.CharField(required=True)
+
+    @staticmethod
+    def ser(sim: Simulation, user=None):
+        """
+        Hacked on method for serializing data that doesn't quite fit the
+        drf ModelSerialization approach.
+        """
+        return {
+            "has_read_access": sim.has_read_access(user),
+            "has_write_access": sim.has_write_access(user),
+            "is_owner": sim.is_owner(user),
+            "username": user.username,
+        }
+
+    class Meta:
+        fields = ("has_read_access", "has_write_access", "is_owner", "username")
+        read_only = ("is_owner", "has_write_access")
+
+
 class SimulationSerializer(serializers.ModelSerializer):
     """
     Serializer for entire Simulation object. This contains meta
@@ -193,7 +220,10 @@ class SimulationSerializer(serializers.ModelSerializer):
             rep["pending_permissions"] = PendingPermissionSerializer(
                 instance=obj.pending_permissions.all(), many=True
             ).data
-
+            permission_objects = get_users_with_perms(obj)
+            rep["permissions"] = []
+            for user in permission_objects:
+                rep["permissions"].append(SimAccessSerializer.ser(obj, user))
         return rep
 
     class Meta:
@@ -244,5 +274,5 @@ class SimulationSerializer(serializers.ModelSerializer):
         )
 
 
-class AccessSerializer(serializers.Serializer):
+class AddAuthorsSerializer(serializers.Serializer):
     authors = serializers.ListField(child=serializers.CharField(), max_length=10)

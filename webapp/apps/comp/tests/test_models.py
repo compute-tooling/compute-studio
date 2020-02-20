@@ -113,6 +113,15 @@ def test_sim_fork(db, get_inputs, meta_param_dict, profile):
     assert float(newsim.run_cost) == 0.0
     assert newsim.parent_sim == newsim.inputs.parent_sim == sim
 
+    # make sure each sim's owner has read access and that the
+    # read access for the new sim only applies to the owner
+    # of the new sim and not the owner of the old sim.
+    assert newsim.has_read_access(newsim.owner.user)
+    assert sim.has_read_access(sim.owner.user)
+    newsim.is_public = False
+    newsim.save()
+    assert not newsim.has_read_access(sim.owner.user)
+
     def objects_eq(obj1, obj2, fields_to_exclude):
         data1 = model_to_dict(obj1)
         data2 = model_to_dict(obj2)
@@ -210,6 +219,20 @@ def test_has_read_write_access(db, get_inputs, meta_param_dict, profile):
     assert not sim.has_read_access(profile.user)
     assert sim.has_read_access(None) is False
 
+    # test grant/removal of read access.
+    sim.grant_read_access(profile.user)
+    assert sim.has_read_access(profile.user)
+    sim.remove_read_access(profile.user)
+    assert not sim.has_read_access(profile.user)
+
+    # test grant/remove are idempotent:
+    for i in range(3):
+        sim.grant_read_access(profile.user)
+        assert sim.has_read_access(profile.user)
+    for i in range(3):
+        sim.remove_read_access(profile.user)
+        assert not sim.has_read_access(profile.user)
+
     sim.is_public = True
     sim.save()
     assert sim.has_read_access(modeler.user)
@@ -226,8 +249,14 @@ def test_add_authors(db, get_inputs, meta_param_dict, profile):
     sim.status = "SUCCESS"
     sim.save()
 
-    pp = PendingPermission.objects.create(profile=profile, sim=sim)
+    assert not sim.has_read_access(profile.user)
+
+    # Create new pending permission object and make sure that read access was
+    # granted appropriately.
+    pp, created = PendingPermission.objects.get_or_create(profile=profile, sim=sim)
+    assert created
     assert not pp.is_expired()
+    assert sim.has_read_access(profile.user)
 
     sim = Simulation.objects.get(pk=sim.pk)
     assert sim.pending_permissions.filter(id=pp.id).count() == 1

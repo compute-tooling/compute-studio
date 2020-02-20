@@ -19,6 +19,7 @@ from webapp.apps.comp.views import (
     AuthorsDeleteAPIView,
     PermissionPendingView,
     PermissionGrantedView,
+    SimulationAccessAPIView,
 )
 
 # API Routes:
@@ -48,6 +49,11 @@ urlpatterns = [
         "api/v1/<int:model_pk>/fork/",
         ForkDetailAPIView.as_view(),
         name="fork_detail_api",
+    ),
+    path(
+        "api/v1/<int:model_pk>/access/",
+        SimulationAccessAPIView.as_view(),
+        name="access_api",
     ),
     path(
         "api/v1/<int:model_pk>/authors/",

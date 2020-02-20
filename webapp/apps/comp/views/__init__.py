@@ -20,6 +20,7 @@ from .api import (
     NewSimulationAPIView,
     AuthorsAPIView,
     AuthorsDeleteAPIView,
+    SimulationAccessAPIView,
     SimsAPIView,
     ProfileSimsAPIView,
 )

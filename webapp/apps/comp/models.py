@@ -18,6 +18,8 @@ from django.contrib.auth.models import Group
 from django.urls import reverse
 from django.utils import timezone
 
+from guardian.shortcuts import assign_perm, remove_perm
+
 import cs_storage
 
 from webapp.apps.comp import utils, exceptions
@@ -191,6 +193,7 @@ class SimulationManager(models.Manager):
                     is_public=False,
                 )
                 sim.authors.set([user.profile])
+                sim.grant_read_access(user)
                 return sim
         except IntegrityError:
             # Case 1:
@@ -246,6 +249,7 @@ class SimulationManager(models.Manager):
             status=sim.status,
         )
         sim.authors.set([user.profile])
+        sim.grant_read_access(user)
         return sim
 
     def public_sims(self):
@@ -313,6 +317,7 @@ class Simulation(models.Model):
                 fields=["project", "model_pk"], name="unique_model_pk"
             )
         ]
+        permissions = (("read_simulation", "Read simulation"),)
 
     def __str__(self):
         return f"{self.project}#{self.model_pk}"
@@ -407,26 +412,29 @@ class Simulation(models.Model):
             sim = sim.parent_sim
         return parent_sims
 
+    def is_owner(self, user):
+        return user == self.owner.user
+
     def has_write_access(self, user):
-        return bool(user and user.is_authenticated and user == self.owner.user)
+        """
+        Currently, this is just an alias for is_owner.
+        """
+        return self.is_owner(user)
 
     def has_read_access(self, user):
         # Everyone has access to this sim.
         if self.is_public:
             return True
         # User is authenticated:
-        if user and user.is_authenticated and hasattr(user, "profile"):
-            # User is owner.
-            if user == self.owner.user:
-                return True
-            # User is an author.
-            if self.authors.filter(pk=user.profile.pk).count() > 0:
-                return True
-            # User has pending permission (TODO replace with read access).
-            if self.pending_permissions.filter(profile=user.profile).count() > 0:
-                return True
-        # User does not have read access if none of these conditions are met.
-        return False
+        return bool(
+            user and user.is_authenticated and user.has_perm("read_simulation", self)
+        )
+
+    def grant_read_access(self, user):
+        assign_perm("read_simulation", user, self)
+
+    def remove_read_access(self, user):
+        remove_perm("read_simulation", user, self)
 
     def outputs_version(self):
         if self.outputs:
@@ -479,6 +487,14 @@ def two_days_from_now():
     return timezone.now() + datetime.timedelta(days=2)
 
 
+class PendingPermissionManger(models.Manager):
+    def get_or_create(self, **kwargs):
+        pp, created = super().get_or_create(**kwargs)
+        if created:
+            pp.sim.grant_read_access(pp.profile.user)
+        return pp, created
+
+
 class PendingPermission(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     sim = models.ForeignKey(
@@ -493,6 +509,8 @@ class PendingPermission(models.Model):
     creation_date = models.DateTimeField(default=timezone.now)
 
     expiration_date = models.DateTimeField(default=two_days_from_now)
+
+    objects = PendingPermissionManger()
 
     def add_author(self):
         if self.is_expired():

@@ -38,7 +38,8 @@ from webapp.apps.comp.serializers import (
     MiniSimulationSerializer,
     InputsSerializer,
     OutputsSerializer,
-    AccessSerializer,
+    AddAuthorsSerializer,
+    SimAccessSerializer,
     PendingPermissionSerializer,
 )
 from webapp.apps.comp.utils import is_valid
@@ -438,7 +439,7 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
         if not self.object.has_write_access(request.user):
             raise PermissionDenied()
 
-        ser = AccessSerializer(data=request.data)
+        ser = AddAuthorsSerializer(data=request.data)
 
         if ser.is_valid():
             data = ser.validated_data
@@ -537,7 +538,6 @@ class AuthorsDeleteAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIV
         pps = PendingPermission.objects.filter(
             sim=self.object, profile=profile, permission_name="add_author"
         )
-        print("got pps?", profile, pps)
         if pps.count() > 0:
             pps.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -545,6 +545,39 @@ class AuthorsDeleteAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIV
         # if profile is not an author or has not been requested to be an
         # author, then return 404.
         return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class SimulationAccessAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
+    permission_classes = (StrictRequiresActive,)
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    model = Simulation
+
+    def put(self, request, *args, **kwargs):
+        self.object = self.get_object(
+            kwargs["model_pk"], kwargs["username"], kwargs["title"]
+        )
+        if not self.object.has_write_access(request.user):
+            raise PermissionDenied()
+
+        ser = SimAccessSerializer(data=request.data, many=True)
+        if ser.is_valid():
+            data = ser.validated_data
+            for access_obj in data:
+                user = get_object_or_404(
+                    get_user_model(), username__iexact=access_obj["username"]
+                )
+                if access_obj.get("has_read_access", None) is not None:
+                    if access_obj["has_read_access"]:
+                        self.object.grant_read_access(user)
+                    else:
+                        self.object.remove_read_access(user)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(ser.data, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SimsAPIView(generics.ListAPIView):

@@ -61,9 +61,11 @@ def test_write_access(db, get_inputs, meta_param_dict):
     data = SimulationSerializer(instance=sim).data
     assert data["has_write_access"] == False
     assert "pending_permissions" not in data
+    assert "permissions" not in data
     data = SimulationSerializer(instance=sim, context={"request": req}).data
     assert data["has_write_access"] == True
     assert "pending_permissions" in data
+    assert "permissions" in data
 
     data = InputsSerializer(instance=sim.inputs).data
     assert data["has_write_access"] == False
@@ -88,9 +90,10 @@ def test_authors_sorted_alphabetically(db, get_inputs, meta_param_dict):
     create_profile_from_user(u)
     profile = Profile.objects.get(user__username="aaaa")
 
-    pp = PendingPermission.objects.create(
+    pp, created = PendingPermission.objects.get_or_create(
         sim=sim, profile=profile, permission_name="add_author"
     )
+    assert created
     pp.add_author()
 
     data = SimulationSerializer(instance=sim, context={"request": req}).data
