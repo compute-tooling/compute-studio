@@ -296,6 +296,10 @@ span.default-value {
   color: #007bff;
 }
 
+.hover-red:hover {
+  color: #dc3545;
+}
+
 .color-inherit {
   color: inherit;
 }
@@ -332,6 +336,17 @@ blockquote {
 /* drops pesky dropdown arrow on  home page dropdown filter */
 .dropleft .dropdown-toggle::before {
   display: none;
+}
+
+/* .dropdown-menu css for use with custom components */
+.custom-dropdown-menu {
+  position: absolute;
+  will-change: transform;
+  top: 0px;
+  /* left: 0px; */
+  transform: translate3d(0px, 38px, 0px);
+  background-color: white;
+  z-index: 1050;
 }
 
 /* tooltip */
