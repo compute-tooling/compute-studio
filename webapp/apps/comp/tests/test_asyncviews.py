@@ -14,9 +14,9 @@ from rest_framework.test import APIClient
 from rest_framework.response import Response
 
 from webapp.apps.billing.models import UsageRecord
-from webapp.apps.users.models import Project, Profile
+from webapp.apps.users.models import Project, Profile, create_profile_from_user
 
-from webapp.apps.comp.models import Inputs, Simulation, ANON_BEFORE
+from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
 from webapp.apps.comp.ioutils import get_ioutils
 from .compute import MockCompute, MockComputeWorkerFailure
 from .utils import read_outputs, _submit_inputs, _submit_sim, _shuffled_sims
@@ -762,14 +762,11 @@ def test_v0_urls(
     assert s.is_public == False
 
 
-def test_collaborators(
+def test_add_author_flow(
     db, sponsored_matchups, client, api_client, get_inputs, meta_param_dict, profile
 ):
     """
-    Test responses on v0 outputs.
-    - public
-    - private
-    - title update
+    Test full add new author flow.
     """
     modeler = User.objects.get(username="hdoupe").profile
     inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, modeler)
@@ -784,29 +781,29 @@ def test_collaborators(
 
     # Permission denied on unauthed user
     resp = api_client.put(
-        f"{sim.get_absolute_api_url()}collaborators/",
+        f"{sim.get_absolute_api_url()}authors/",
         data={"authors": [profile.user.username]},
         format="json",
     )
-    assert_status(403, resp, "denied_collab")
+    assert_status(403, resp, "denied_authors")
 
     # Permission denied if user is not owner of sim.
     api_client.force_login(profile.user)
     resp = api_client.put(
-        f"{sim.get_absolute_api_url()}collaborators/",
+        f"{sim.get_absolute_api_url()}authors/",
         data={"authors": [profile.user.username]},
         format="json",
     )
-    assert_status(403, resp, "denied_collab")
+    assert_status(403, resp, "denied_authors")
 
     # Successful update
     api_client.force_login(modeler.user)
     resp = api_client.put(
-        f"{sim.get_absolute_api_url()}collaborators/",
+        f"{sim.get_absolute_api_url()}authors/",
         data={"authors": [profile.user.username]},
         format="json",
     )
-    assert_status(200, resp, "success_collab")
+    assert_status(200, resp, "success_authors")
 
     sim = Simulation.objects.get(pk=sim.pk)
     assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
@@ -834,6 +831,163 @@ def test_collaborators(
     assert sim.authors.all().count() == 2
     assert sim.authors.filter(pk__in=[modeler.pk, profile.pk]).count() == 2
     assert sim.pending_permissions.count() == 0
+
+
+def test_add_authors_api(
+    db, sponsored_matchups, client, api_client, get_inputs, meta_param_dict, profile
+):
+    """
+    Test add authors api endpoints.
+    """
+    modeler = User.objects.get(username="hdoupe").profile
+    inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, modeler)
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.is_public = True
+    sim.save()
+
+    assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
+
+    # first create a pending permission through the api
+    api_client.force_login(modeler.user)
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}authors/",
+        data={"authors": [profile.user.username]},
+        format="json",
+    )
+    assert_status(200, resp, "success_authors")
+
+    # check that resubmit has no effect on non-expired permissions.
+    init_pp = sim.pending_permissions.get(profile__pk=profile.pk)
+    assert PendingPermission.objects.count() == 1
+
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}authors/",
+        data={"authors": [profile.user.username]},
+        format="json",
+    )
+    assert_status(200, resp, "success_authors")
+
+    # init_pp is still the only permission that we have.
+    assert PendingPermission.objects.count() == 1
+    assert sim.pending_permissions.get(pk=init_pp.pk) == init_pp
+
+    init_pp.expiration_date = init_pp.creation_date - datetime.timedelta(days=3)
+    init_pp.save()
+    assert init_pp.is_expired() == True
+
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}authors/",
+        data={"authors": [profile.user.username]},
+        format="json",
+    )
+    assert_status(200, resp, "success_authors")
+
+    # Check that stale permission is removed and a new one is added.
+    assert PendingPermission.objects.count() == 1
+    assert PendingPermission.objects.filter(pk=init_pp.pk).count() == 0
+    new_pp = sim.pending_permissions.get(profile__pk=profile.pk)
+    assert new_pp.sim == sim
+
+
+def test_delete_author(
+    db, sponsored_matchups, client, api_client, get_inputs, meta_param_dict, profile
+):
+    """
+    Test delete author from simulation.
+    - owner cannot be deleted from author list.
+    - check delete before permission approval.
+    - check delete of existing author.
+    - 404 on dne or unassociated author.
+    - author can remove themselves as author.
+    """
+    modeler = User.objects.get(username="hdoupe").profile
+    inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, modeler)
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.is_public = True
+    sim.save()
+
+    assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
+
+    # test not allowed to delete owner of simulation from authors.
+    api_client.force_login(modeler.user)
+    resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{sim.owner}/")
+    assert_status(400, resp, "cannot_delete_sim_owner")
+    sim = Simulation.objects.get(pk=sim.pk)
+    assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
+
+    # first create a pending permission through the api.
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}authors/",
+        data={"authors": [profile.user.username]},
+        format="json",
+    )
+    assert_status(200, resp, "success_authors")
+
+    init_pp = sim.pending_permissions.get(profile__pk=profile.pk)
+
+    # test delete author before they approve request.
+    resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
+    assert_status(204, resp, "delete_pending_author")
+    assert PendingPermission.objects.filter(id=init_pp.id).count() == 0
+    sim = Simulation.objects.get(pk=sim.pk)
+    assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
+
+    # test delete author.
+    api_client.force_login(modeler.user)
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}authors/",
+        data={"authors": [profile.user.username]},
+        format="json",
+    )
+    assert_status(200, resp, "success_authors")
+
+    new_pp = sim.pending_permissions.get(profile__pk=profile.pk)
+    new_pp.add_author()
+    assert sim.authors.all().count() == 2 and sim.authors.get(pk=profile.pk)
+
+    resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
+    assert_status(204, resp, "delete_pending_author")
+    assert PendingPermission.objects.filter(id=init_pp.id).count() == 0
+    sim = Simulation.objects.get(pk=sim.pk)
+    assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
+
+    # test not found
+    resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
+    assert_status(404, resp, "delete_author_already_deleted")
+    resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/abcd/")
+    assert_status(404, resp, "delete_author_profile_dne")
+
+    # test unauth'ed user does not have access.
+    api_client.logout()
+    resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
+    assert_status(403, resp, "delete_author_must_be_auth'ed")
+
+    # test profile can remove themselves.
+    api_client.force_login(modeler.user)
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}authors/",
+        data={"authors": [profile.user.username]},
+        format="json",
+    )
+    assert_status(200, resp, "success_authors")
+
+    api_client.force_login(profile.user)
+    resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
+    assert_status(204, resp, "author_can_deletle_themselves")
+
+    # test must have write access or be removing oneself
+    u = User.objects.create_user("danger", "danger@example.com", "heyhey2222")
+    create_profile_from_user(u)
+    danger = Profile.objects.get(user__username="danger")
+    api_client.force_login(danger.user)
+    resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
+    assert_status(403, resp, "auth'ed user cannot delete authors")
 
 
 def test_list_sim_api(db, api_client, profile, get_inputs, meta_param_dict):

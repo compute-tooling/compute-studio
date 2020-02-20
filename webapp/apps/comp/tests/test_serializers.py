@@ -1,9 +1,11 @@
+import copy
 import datetime
 
 from rest_framework.test import APIRequestFactory
 
-from webapp.apps.users.models import User
-from webapp.apps.comp.models import ANON_BEFORE
+from webapp.apps.users.models import User, Profile, create_profile_from_user
+
+from webapp.apps.comp.models import ANON_BEFORE, PendingPermission
 from webapp.apps.comp.serializers import (
     InputsSerializer,
     SimulationSerializer,
@@ -58,10 +60,47 @@ def test_write_access(db, get_inputs, meta_param_dict):
 
     data = SimulationSerializer(instance=sim).data
     assert data["has_write_access"] == False
+    assert "pending_permissions" not in data
     data = SimulationSerializer(instance=sim, context={"request": req}).data
     assert data["has_write_access"] == True
+    assert "pending_permissions" in data
 
-    data = InputsSerializer(instance=sim).data
+    data = InputsSerializer(instance=sim.inputs).data
     assert data["has_write_access"] == False
-    data = InputsSerializer(instance=sim, context={"request": req}).data
+    data = InputsSerializer(instance=sim.inputs, context={"request": req}).data
     assert data["has_write_access"] == True
+
+
+def test_authors_sorted_alphabetically(db, get_inputs, meta_param_dict):
+    modeler = User.objects.get(username="modeler").profile
+    inputs = _submit_inputs("Used-for-testing", get_inputs, meta_param_dict, modeler)
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.save()
+
+    factory = APIRequestFactory()
+    req = factory.get("/")
+    req.user = modeler.user
+
+    u = User.objects.create_user("aaaa", "aaaa@example.com", "heyhey2222")
+    create_profile_from_user(u)
+    profile = Profile.objects.get(user__username="aaaa")
+
+    pp = PendingPermission.objects.create(
+        sim=sim, profile=profile, permission_name="add_author"
+    )
+    pp.add_author()
+
+    data = SimulationSerializer(instance=sim, context={"request": req}).data
+    data2 = copy.deepcopy(data)
+    assert sorted(data2["authors"]) == data["authors"]
+
+    data = SimulationSerializer(instance=sim, context={"request": req}).data
+    data2 = copy.deepcopy(data)
+    assert sorted(data2["authors"]) == data["authors"]
+
+    data = InputsSerializer(instance=sim.inputs, context={"request": req}).data
+    data2 = copy.deepcopy(data)
+    assert sorted(data2["sim"]["authors"]) == data["sim"]["authors"]

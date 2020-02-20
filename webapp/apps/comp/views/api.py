@@ -38,7 +38,8 @@ from webapp.apps.comp.serializers import (
     MiniSimulationSerializer,
     InputsSerializer,
     OutputsSerializer,
-    CollabSerializer,
+    AccessSerializer,
+    PendingPermissionSerializer,
 )
 from webapp.apps.comp.utils import is_valid
 
@@ -359,7 +360,6 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
                 sim = get_object_or_404(Simulation, job_id=data["job_id"])
                 if sim.status == "PENDING":
                     self.record_outputs(sim, data)
-                    print("sim", sim.notify_on_completion)
                     if sim.notify_on_completion:
                         try:
                             host = f"https://{request.get_host()}"
@@ -422,7 +422,7 @@ class MyInputsAPIView(APIView):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
-class CollabAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
+class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
     permission_classes = (StrictRequiresActive,)
     authentication_classes = (
         SessionAuthentication,
@@ -438,7 +438,7 @@ class CollabAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
         if not self.object.has_write_access(request.user):
             raise PermissionDenied()
 
-        ser = CollabSerializer(data=request.data)
+        ser = AccessSerializer(data=request.data)
 
         if ser.is_valid():
             data = ser.validated_data
@@ -450,9 +450,22 @@ class CollabAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             for profile in profiles.all():
-                pp = PendingPermission.objects.create(
+                if self.object.authors.filter(pk=profile.pk).count() > 0:
+                    continue
+                pp, created = PendingPermission.objects.get_or_create(
                     sim=self.object, profile=profile, permission_name="add_author"
                 )
+                # PP already exists and is not expired.
+                if not created and not pp.is_expired():
+                    continue
+                # PP exists but is expired, so delete the existing one and create a
+                # new one.
+                if not created and pp.is_expired():
+                    pp.delete()
+                    pp, created = PendingPermission.objects.get_or_create(
+                        sim=self.object, profile=profile, permission_name="add_author"
+                    )
+
                 try:
                     host = f"https://{request.get_host()}"
                     sim_url = f"{host}{self.object.get_absolute_url()}"
@@ -461,11 +474,11 @@ class CollabAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                         f"Permission to add author",
                         (
                             f"{request.user.username} has requested that you be "
-                            f"added as an author on this simulation: {sim_url}.\n"
+                            f"added as an author on this simulation: {sim_url}.\n\n"
                             f"Click the following link to confirm that you would "
                             f"like to be added as an author on this simulation: \n"
                             f"{confirmation_url}"
-                            f"\nPlease reply to this email if you have any questions."
+                            f"\n\nPlease reply to this email if you have any questions."
                         ),
                         "hank@compute.studio",
                         [profile.user.email],
@@ -474,9 +487,64 @@ class CollabAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                 # Http 401 exception if mail credentials are not set up.
                 except Exception:
                     pass
-            return Response(status=status.HTTP_200_OK)
+
+            return Response(
+                PendingPermissionSerializer(
+                    self.object.pending_permissions, many=True
+                ).data,
+                status=status.HTTP_200_OK,
+            )
         else:
             return Response(ser.data, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AuthorsDeleteAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
+    permission_classes = (StrictRequiresActive,)
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    model = Simulation
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object(
+            kwargs["model_pk"], kwargs["username"], kwargs["title"]
+        )
+        profile = get_object_or_404(Profile, user__username__iexact=kwargs["author"])
+        # profile = Profile.objects.get(user__username__iexact=kwargs["author"])
+        if profile == self.object.owner:
+            return Response(
+                {
+                    "error": "The owner of the simulation cannot be deleted from the authors list."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # User without write access can only remove themselves as author.
+        if (
+            not self.object.has_write_access(request.user)
+            and profile.user != request.user
+        ):
+            raise PermissionDenied()
+
+        # if profile is in authors relation.
+        if self.object.authors.filter(pk=profile.pk).count() > 0:
+            self.object.authors.remove(profile)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        # if profile is not added as an author, then delete the permission
+        # request.
+        pps = PendingPermission.objects.filter(
+            sim=self.object, profile=profile, permission_name="add_author"
+        )
+        print("got pps?", profile, pps)
+        if pps.count() > 0:
+            pps.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        # if profile is not an author or has not been requested to be an
+        # author, then return 404.
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 class SimsAPIView(generics.ListAPIView):

@@ -18,7 +18,8 @@ from .api import (
     DetailMyInputsAPIView,
     MyInputsAPIView,
     NewSimulationAPIView,
-    CollabAPIView,
+    AuthorsAPIView,
+    AuthorsDeleteAPIView,
     SimsAPIView,
     ProfileSimsAPIView,
 )

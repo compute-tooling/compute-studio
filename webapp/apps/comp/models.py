@@ -411,9 +411,22 @@ class Simulation(models.Model):
         return bool(user and user.is_authenticated and user == self.owner.user)
 
     def has_read_access(self, user):
-        return self.is_public or bool(
-            user and user.is_authenticated and user == self.owner.user
-        )
+        # Everyone has access to this sim.
+        if self.is_public:
+            return True
+        # User is authenticated:
+        if user and user.is_authenticated and hasattr(user, "profile"):
+            # User is owner.
+            if user == self.owner.user:
+                return True
+            # User is an author.
+            if self.authors.filter(pk=user.profile.pk).count() > 0:
+                return True
+            # User has pending permission (TODO replace with read access).
+            if self.pending_permissions.filter(profile=user.profile).count() > 0:
+                return True
+        # User does not have read access if none of these conditions are met.
+        return False
 
     def outputs_version(self):
         if self.outputs:
@@ -491,11 +504,21 @@ class PendingPermission(models.Model):
         return timezone.now() > self.expiration_date
 
     def get_absolute_url(self):
-        kwargs = {"id": self.id}
+        kwargs = {
+            "id": self.id,
+            "model_pk": self.sim.model_pk,
+            "title": self.sim.project.title,
+            "username": self.sim.project.owner.user.username,
+        }
         return reverse("permissions_pending", kwargs=kwargs)
 
     def get_absolute_grant_url(self):
-        kwargs = {"id": self.id}
+        kwargs = {
+            "id": self.id,
+            "model_pk": self.sim.model_pk,
+            "title": self.sim.project.title,
+            "username": self.sim.project.owner.user.username,
+        }
         return reverse("permissions_grant", kwargs=kwargs)
 
 
