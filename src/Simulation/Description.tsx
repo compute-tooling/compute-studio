@@ -1,27 +1,39 @@
 "use strict";
 
 import * as React from "react";
-import { Card, Row, Col, Dropdown, Button, OverlayTrigger, Tooltip, Modal } from "react-bootstrap";
+import {
+  Card,
+  Row,
+  Col,
+  Dropdown,
+  Button,
+  OverlayTrigger,
+  Tooltip,
+  Modal,
+  Container
+} from "react-bootstrap";
 import * as yup from "yup";
 import { AccessStatus, MiniSimulation, Simulation, RemoteOutputs } from "../types";
-import { Formik, FormikHelpers, ErrorMessage, Field, Form, FormikProps, FieldArray } from "formik";
+import { Formik, FormikHelpers, ErrorMessage, Field, Form, FormikProps, FastField } from "formik";
 import { Message } from "../fields";
 import moment = require("moment");
 import API from "./API";
 import ReadmeEditor from "./editor";
 import { AxiosError } from "axios";
-import { parseToOps } from "../ParamTools/ops";
 
 interface DescriptionProps {
   accessStatus: AccessStatus;
   api: API;
   remoteSim: Simulation<RemoteOutputs>;
+  resetOutputs: () => void;
 }
 
 interface DescriptionValues {
   title: string;
   readme: { [key: string]: any }[] | Node[];
   is_public: boolean;
+  newAuthor: string;
+  removeAuthor: string;
 }
 
 let Schema = yup.object().shape({
@@ -85,7 +97,7 @@ const HistoryDropDownItems = (
   let lockOpen = <i className="fas fa-lock-open mr-2"></i>;
   // Hides behind inputs form w/out z-index set to 10000.
   let dropdownItems = [
-    <Dropdown.Header key={historyType + "-0"}>
+    <Dropdown.Header key={historyType + "-header"}>
       <Row>
         <Col>
           {`${isOwner ? historyType + " History: " : ""}${nsims +
@@ -143,7 +155,7 @@ const HistoryDropDown: React.FC<{ isOwner: boolean; history: Array<MiniSimulatio
   );
 };
 
-const AuthorDropDown: React.FC<{ author: string }> = ({ author }) => {
+const AuthorsDropDown: React.FC<{ authors: string[] }> = ({ authors }) => {
   return (
     <Tip tip="Author(s) of the simulation.">
       <Dropdown>
@@ -154,11 +166,13 @@ const AuthorDropDown: React.FC<{ author: string }> = ({ author }) => {
           style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}
         >
           <>
-            <i className="fas fa-user-friends mr-2"></i> Author
+            <i className="fas fa-user-friends mr-2"></i> {`Author${authors.length > 1 ? "s" : ""}`}
           </>
         </Dropdown.Toggle>
         <Dropdown.Menu>
-          <Dropdown.Item key={0}>{author}</Dropdown.Item>
+          {authors.map((author, ix) => (
+            <Dropdown.Item key={ix}>{author}</Dropdown.Item>
+          ))}
         </Dropdown.Menu>
       </Dropdown>
     </Tip>
@@ -169,15 +183,31 @@ export const CollaborationSettings: React.FC<{
   api: API;
   user: string;
   remoteSim?: Simulation<RemoteOutputs>;
-}> = ({ api, user, remoteSim }) => {
+  formikProps: FormikProps<DescriptionValues>;
+}> = ({ api, user, remoteSim, formikProps }) => {
   const [show, setShow] = React.useState(false);
+  const [viewQuery, setViewQuery] = React.useState(false);
   const [query, setQuery] = React.useState<Array<{ username: string }>>([]);
+
+  let authors: Array<{
+    username: string;
+    pending?: boolean;
+  }> = (remoteSim?.authors || []).map((author, ix) => ({ username: author }));
+  if (remoteSim?.pending_permissions) {
+    for (const pp of remoteSim.pending_permissions) {
+      if (pp.permission_name === "add_author" && !pp.is_expired) {
+        authors.push({ username: pp.profile, pending: true });
+      }
+    }
+  }
+
   const handleQuery = e => {
-    console.log(e.target.value);
     api.queryUsers(e.target.value).then(data => {
       setQuery(data);
     });
   };
+
+  const { values, setFieldValue, handleSubmit } = formikProps;
 
   return (
     <>
@@ -188,7 +218,7 @@ export const CollaborationSettings: React.FC<{
         onClick={() => setShow(true)}
       >
         <>
-          <i className="fas fa-lock mr-2"></i>
+          <i className={`fas fa-${formikProps.values.is_public ? "lock-open" : "lock"} mr-2`}></i>
           Share
         </>
       </Button>
@@ -198,76 +228,128 @@ export const CollaborationSettings: React.FC<{
           <Modal.Title>Collaboration Settings</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Formik
-            initialValues={{ authors: remoteSim.authors || [user] }}
-            validationSchema={yup.object().shape({ authors: yup.array().of(yup.string()) })}
-            onSubmit={values => {
-              alert(JSON.stringify(values, null, 4));
-            }}
-          >
-            {props => (
-              <Form>
-                <FieldArray name="authors">
-                  {arrayHelpers => (
-                    <div>
-                      {props.values.authors.map((author, ix) => (
-                        <Row key={ix}>
-                          <Col>{author}</Col>
-                          <Col>
-                            <button
-                              className="btn btn-outline-danger btn-sm"
-                              type="button"
-                              onClick={() => {
-                                if (ix === 0) {
-                                  // fixes gnarly uncontrolled to defined bug.
-                                  arrayHelpers.form.setFieldValue("authors", "");
-                                  return;
-                                }
-                                arrayHelpers.remove(ix);
-                              }}
-                            >
-                              <i className="fas fa-minus"></i>
-                            </button>
-                          </Col>
-                        </Row>
-                      ))}
-                      <Row key={props.values.authors.length}>
+          <Row className="w-100 my-2 mx-0">
+            <Col>
+              <p className="lead ml-0">Authors</p>
+              {(authors.length > 0 ? authors : [{ username: user }]).map((author, ix) => (
+                <Row
+                  key={ix}
+                  className={`w-100 p-2 justify-content-between border ${
+                    ix === 0 ? " rounded-top " : " "
+                  }
+                    ${ix < authors.length - 1 ? " border-bottom-0" : " rounded-bottom"}`}
+                >
+                  <Col className="col-7">
+                    <span>{author.username}</span>
+                  </Col>
+                  <Col className="col-4">
+                    {author.pending ? (
+                      <Tip tip={`Waiting for ${author.username}'s approval.`}>
+                        <span className="text-muted">pending</span>
+                      </Tip>
+                    ) : null}
+                    {author.username === remoteSim?.owner ? (
+                      <span className="text-success">owner</span>
+                    ) : null}
+                  </Col>
+                  <Col className="col-1">
+                    {/* owner cannt be removed, to remove an author user must have
+                    write access or be removing themselves. */}
+                    {remoteSim &&
+                    author.username !== remoteSim?.owner &&
+                    (remoteSim?.has_write_access || user === author.username) ? (
+                      <a
+                        className="color-inherit"
+                        role="button"
+                        style={{ maxHeight: 0.5, cursor: "pointer" }}
+                        onClick={() => {
+                          // removeAuthor(author.username);
+                          setFieldValue("removeAuthor", author.username);
+                          setTimeout(handleSubmit, 0);
+                          setTimeout(() => setFieldValue("removeAuthor", ""), 0);
+                        }}
+                      >
+                        <i className="far fa-trash-alt hover-red"></i>
+                      </a>
+                    ) : null}
+                  </Col>
+                </Row>
+              ))}
+            </Col>
+          </Row>
+          {remoteSim?.has_write_access ? (
+            <Row className="w-100 justify-content-left my-2">
+              <Col>
+                <FastField
+                  name="newAuthor"
+                  className="form-control"
+                  placeholder="Search by email or username."
+                  onFocus={() => {
+                    setViewQuery(true);
+                  }}
+                  onChange={e => {
+                    setViewQuery(true);
+                    handleQuery(e);
+                    setFieldValue("newAuthor", e.target.value);
+                  }}
+                />
+                {!!query && query.length && viewQuery ? (
+                  <div className="border rounded shadow mt-2 custom-dropdown-menu">
+                    {query.map((user, qix) => (
+                      // TODO: maybe set this as FocusableCard
+                      <Row className="my-2 mx-3 w-auto" key={qix}>
                         <Col>
-                          <Field
-                            name={`authors.${props.values.authors.length}`}
-                            className="form-control"
-                            onChange={e => {
-                              handleQuery(e);
-                              props.setFieldValue(
-                                `authors.${props.values.authors.length}`,
-                                e.target.value
-                              );
-                            }}
-                          />
-                          <Dropdown.Menu show={!!query}>
-                            {query.map((user, ix) => {
-                              <Dropdown.Item key={ix}>user</Dropdown.Item>;
-                            })}
-                          </Dropdown.Menu>{" "}
-                        </Col>
-                        <Col>
-                          <button
-                            className="btn btn-outline-success btn-sm mt-2"
-                            type="button"
-                            onClick={() => {
-                              arrayHelpers.push("");
+                          <a
+                            className="color-inherit"
+                            role="button"
+                            style={{ cursor: "pointer" }}
+                            onClick={e => {
+                              if (authors.find(a => a.username === user.username)) return;
+                              // addPendingAuthor(user.username);
+                              setFieldValue("newAuthor", user.username);
+                              setTimeout(handleSubmit, 0);
+                              setTimeout(() => setFieldValue("newAuthor", ""), 0);
+                              setQuery([]);
                             }}
                           >
-                            <i className="fas fa-plus"></i>
-                          </button>
+                            {user.username}
+                            {authors.find(a => a.username === user.username) ? (
+                              <span className="text-muted"> &#183; Already selected.</span>
+                            ) : null}
+                          </a>
                         </Col>
                       </Row>
-                    </div>
-                  )}
-                </FieldArray>
-              </Form>
-            )}
-          </Formik>
+                    ))}
+                  </div>
+                ) : null}
+              </Col>
+            </Row>
+          ) : null}
+          {(remoteSim && remoteSim.has_write_access) || !remoteSim ? (
+            <Row className="w-100 mt-4 mb-2 mx-0">
+              <Col>
+                <p className="lead">Visibility</p>
+                <Row className="w-100 justify-content-center">
+                  <Col className="col-auto">
+                    <Button
+                      variant="dark"
+                      style={{ backgroundColor: "rgba(60, 62, 62, 1)", fontWeight: 450 }}
+                      className="mb-4 w-100 mt-1"
+                      onClick={() => {
+                        setFieldValue("is_public", !values.is_public);
+                        // put handleSubmit in setTimeout since setFieldValue is async
+                        // but does not return a promise
+                        // https://github.com/jaredpalmer/formik/issues/529
+                        setTimeout(handleSubmit, 0);
+                      }}
+                    >
+                      Make this simulation {values.is_public ? "private" : "public"}
+                    </Button>
+                  </Col>
+                </Row>
+              </Col>
+            </Row>
+          ) : null}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="outline-primary" onClick={() => setShow(false)}>
@@ -290,7 +372,10 @@ export default class DescriptionComponent extends React.Component<
     let initialValues: DescriptionValues = {
       title: this.props.remoteSim?.title || "Untitled Simulation",
       readme: this.props.remoteSim?.readme || defaultReadme,
-      is_public: this.props.remoteSim?.is_public || false
+      is_public: this.props.remoteSim?.is_public || false,
+      // todo: author: {new: "", remove: ""}
+      newAuthor: "",
+      removeAuthor: ""
     };
     this.state = {
       initialValues: initialValues,
@@ -322,9 +407,11 @@ export default class DescriptionComponent extends React.Component<
     // fields than just the username.
     return (
       this.state !== nextState ||
+      this.state.initialValues !== nextState.initialValues ||
       this.props.api.modelpk !== nextProps.api.modelpk ||
       this.props.accessStatus.username !== nextProps.accessStatus.username ||
-      this.props.remoteSim?.model_pk !== nextProps.remoteSim?.model_pk
+      this.props.remoteSim?.model_pk !== nextProps.remoteSim?.model_pk ||
+      this.props.remoteSim?.pending_permissions !== nextProps.remoteSim?.pending_permissions
     );
   }
 
@@ -369,7 +456,7 @@ export default class DescriptionComponent extends React.Component<
 
   save(values: DescriptionValues) {
     let formdata = new FormData();
-    for (const field in values) {
+    for (const field of ["title", "readme", "is_public"]) {
       if (values[field]) formdata.append(field, values[field]);
     }
     formdata.append("model_pk", this.props.api.modelpk.toString());
@@ -377,13 +464,30 @@ export default class DescriptionComponent extends React.Component<
     this.props.api.putDescription(formdata).then(data => {
       this.setState({ isEditMode: false, dirty: false, initialValues: values });
     });
+
+    if (values.newAuthor) {
+      this.props.api.addAuthors({ authors: [values.newAuthor] }).then(data => {
+        this.props.resetOutputs();
+        this.setState(prevState => ({
+          initialValues: { ...prevState.initialValues, newAuthor: "" }
+        }));
+      });
+    }
+    if (values.removeAuthor) {
+      this.props.api.deleteAuthor(values.removeAuthor).then(data => {
+        this.props.resetOutputs();
+        this.setState(prevState => ({
+          initialValues: { ...prevState.initialValues, removeAuthor: "" }
+        }));
+      });
+    }
   }
 
   render() {
     const api = this.props.api;
     const { isEditMode, showTitleBorder } = this.state;
 
-    let owner = this.props.remoteSim?.owner || this.user();
+    let authors = this.props.remoteSim?.authors || [this.user()];
 
     let subtitle: string;
     if (api.modelpk) {
@@ -503,7 +607,7 @@ export default class DescriptionComponent extends React.Component<
                 ) : null}
                 <Row className="justify-content-left">
                   <Col className="col-sm-2 mt-1" style={{ paddingLeft: 0 }}>
-                    <AuthorDropDown author={owner} />
+                    <AuthorsDropDown authors={authors} />
                   </Col>
                   <Col className="col-sm-2 mt-1">
                     <HistoryDropDown
@@ -527,7 +631,7 @@ export default class DescriptionComponent extends React.Component<
                       </Tip>
                     </Col>
                   ) : null}
-                  {this.writable() ? (
+                  {this.writable() || this.props.remoteSim.authors.includes(this.user()) ? (
                     <Col className="col-sm-2 ml-sm-auto mt-1" style={{ paddingRight: 0 }}>
                       <Tip
                         tip={`Make this simulation ${
@@ -538,6 +642,7 @@ export default class DescriptionComponent extends React.Component<
                           api={api}
                           user={this.user()}
                           remoteSim={this.props.remoteSim}
+                          formikProps={formikProps}
                         />
                       </Tip>
                     </Col>

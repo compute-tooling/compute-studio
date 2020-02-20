@@ -3,8 +3,8 @@
 import * as ReactDOM from "react-dom";
 import * as React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { Nav, Tab, Col } from "react-bootstrap";
-import axios from "axios";
+import { Nav, Tab, Col, ThemeProvider } from "react-bootstrap";
+import axios, { AxiosError } from "axios";
 import * as Sentry from "@sentry/browser";
 import * as yup from "yup";
 import ReactLoading from "react-loading";
@@ -399,14 +399,24 @@ class SimTabs extends React.Component<
     if (!api.modelpk) {
       return;
     }
-    api.getRemoteOutputs().then(remoteSim => {
-      this.setState({ remoteSim });
-      if (remoteSim.status !== "STARTED" && remoteSim.status !== "PENDING") {
-        api.getOutputs().then(sim => {
-          this.setState({ sim, notifyOnCompletion: false });
-        });
-      }
-    });
+    api
+      .getRemoteOutputs()
+      .then(remoteSim => {
+        this.setState({ remoteSim });
+        if (remoteSim.status !== "STARTED" && remoteSim.status !== "PENDING") {
+          api.getOutputs().then(sim => {
+            this.setState({ sim, notifyOnCompletion: false });
+          });
+        }
+      })
+      // This may happen when a users access status changes after
+      // removing their read access permission or removing themselves
+      // from the author list. We just do a reload here.
+      .catch((err: AxiosError) => {
+        if (err.response.status == 403) {
+          window.location.reload();
+        }
+      });
   }
 
   handleTabChange(key: "inputs" | "outputs", formikProps: FormikProps<InitialValues>) {
@@ -437,6 +447,7 @@ class SimTabs extends React.Component<
             api={this.api}
             accessStatus={this.state.accessStatus}
             remoteSim={this.state.remoteSim}
+            resetOutputs={this.setOutputs}
           />
           <div className="d-flex justify-content-center">
             <ReactLoading type="spokes" color="#2b2c2d" />
@@ -499,6 +510,7 @@ class SimTabs extends React.Component<
                   api={this.api}
                   accessStatus={accessStatus}
                   remoteSim={remoteSim}
+                  resetOutputs={this.setOutputs}
                 />
               </ErrorBoundary>
               <Tab.Container

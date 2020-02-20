@@ -105,11 +105,13 @@ export default class API {
     return axios.get(`/users/autocomplete?username=${username}`).then(resp => resp.data);
   }
 
-  addAuthor(username: string): Promise<{}> {
+  addAuthors(data: { authors: Array<string> }): Promise<{}> {
     return axios
-      .post(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/collaborators/`, {
-        authors: [username]
-      })
+      .put(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/authors/`, data)
       .then(response => response.data);
+  }
+
+  deleteAuthor(author: string): Promise<{}> {
+    return axios.delete(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/authors/${author}/`);
   }
 }

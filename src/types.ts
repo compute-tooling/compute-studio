@@ -228,6 +228,11 @@ export interface Simulation<T> {
   outputs_version: string;
   owner: string;
   parent_sims: Array<MiniSimulation>;
+  pending_permissions: Array<{
+    profile: string;
+    permission_name: "add_author";
+    is_expired: boolean;
+  }>;
   project: Project;
   readme: Node[];
   run_time: number;
