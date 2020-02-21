@@ -142,6 +142,8 @@ export interface Outputs {
   downloadable: Array<Output | TableOutput | BokehOutput>;
 }
 
+export type Role = null | "read" | "write" | "admin";
+
 export interface AccessStatus {
   user_status: "inactive" | "customer" | "profile" | "anon";
   username: string;
@@ -175,7 +177,7 @@ export interface MiniSimulation {
   api_url: string;
   creation_date: Date;
   gui_url: string;
-  has_write_access: boolean;
+  role?: Role;
   is_public: boolean;
   model_pk: number;
   model_version: string;
@@ -199,7 +201,7 @@ export interface InputsDetail {
   parent_model_pk: number;
   sim: MiniSimulation;
   status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
-  has_write_access: boolean;
+  role?: Role;
   traceback: string;
 }
 
@@ -219,7 +221,7 @@ export interface Simulation<T> {
   exp_comp_datetime: Date;
   gui_url: string;
   is_public: boolean;
-  has_write_access: boolean;
+  role?: boolean;
   model_pk: number;
   model_version: string;
   notify_on_completion: boolean;
@@ -233,6 +235,7 @@ export interface Simulation<T> {
     permission_name: "add_author";
     is_expired: boolean;
   }>;
+  access?: Array<{ username: string; is_owner: boolean; role: Role }>;
   project: Project;
   readme: Node[];
   run_time: number;

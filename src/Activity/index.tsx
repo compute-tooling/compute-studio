@@ -6,6 +6,7 @@ import axios from "axios";
 import * as yup from "yup";
 
 import ErrorBoundary from "../ErrorBoundary";
+import { RolePerms } from "../roles";
 import API from "./API";
 import { default as SimAPI } from "../Simulation/API";
 import { MiniSimulation, Project } from "../types";
@@ -255,7 +256,7 @@ const Sim: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim, in
                       <i className="fas fa-lock"></i>
                     )}
                   </Col>
-                  {sim.has_write_access ? (
+                  {RolePerms.hasAdminAccess(sim) ? (
                     <Col className="col-3 align-self-center">
                       <Dropdown onClick={e => e.stopPropagation()}>
                         <Dropdown.Toggle

@@ -20,6 +20,7 @@ import moment = require("moment");
 import API from "./API";
 import ReadmeEditor from "./editor";
 import { AxiosError } from "axios";
+import { RolePerms } from "../roles";
 
 interface DescriptionProps {
   accessStatus: AccessStatus;
@@ -74,7 +75,6 @@ const Tip: React.FC<{ tip: string; children: JSX.Element }> = ({ tip, children }
 );
 
 const HistoryDropDownItems = (
-  isOwner: boolean,
   historyType: "Public" | "Private",
   history: Array<MiniSimulation>
 ): JSX.Element[] => {
@@ -101,10 +101,7 @@ const HistoryDropDownItems = (
   let dropdownItems = [
     <Dropdown.Header key={historyType + "-header"}>
       <Row>
-        <Col>
-          {`${isOwner ? historyType + " History: " : ""}${nsims +
-            1}${suffix} Simulation in this line`}
-        </Col>
+        <Col>{`${historyType + " History: "}${nsims + 1}${suffix} Simulation in this line`}</Col>
       </Row>
     </Dropdown.Header>
   ];
@@ -128,15 +125,13 @@ const HistoryDropDownItems = (
   return dropdownItems;
 };
 
-const HistoryDropDown: React.FC<{ isOwner: boolean; history: Array<MiniSimulation> }> = ({
-  isOwner,
-  history
-}) => {
+const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history }) => {
   let style = { width: "300%", zIndex: 10000 };
-  let dropdownItems = HistoryDropDownItems(isOwner, "Public", history);
-  if (isOwner) {
+  let dropdownItems = HistoryDropDownItems("Public", history);
+  let privateDropdownItems = HistoryDropDownItems("Private", history);
+  if (privateDropdownItems.length > 0) {
     dropdownItems.push(<Dropdown.Divider key="divider" />);
-    dropdownItems.push(...HistoryDropDownItems(isOwner, "Private", history));
+    dropdownItems.push(...privateDropdownItems);
   }
   return (
     <Tip tip="List of previous simulations.">
@@ -291,13 +286,13 @@ export const CollaborationSettings: React.FC<{
                     write access or be removing themselves. */}
                     {remoteSim &&
                     author.username !== remoteSim?.owner &&
-                    (remoteSim?.has_write_access || user === author.username) ? (
+                    ((remoteSim && RolePerms.hasAdminAccess(remoteSim)) ||
+                      user === author.username) ? (
                       <a
                         className="color-inherit"
                         role="button"
                         style={{ maxHeight: 0.5, cursor: "pointer" }}
                         onClick={() => {
-                          // removeAuthor(author.username);
                           setFieldValue("author.remove", author.username);
                           setTimeout(handleSubmit, 0);
                           setTimeout(() => setFieldValue("author.remove", ""), 0);
@@ -311,7 +306,7 @@ export const CollaborationSettings: React.FC<{
               ))}
             </Col>
           </Row>
-          {remoteSim?.has_write_access ? (
+          {remoteSim && RolePerms.hasAdminAccess(remoteSim) ? (
             <Row className="w-100 justify-content-left my-2">
               <Col>
                 <FastField
@@ -342,7 +337,7 @@ export const CollaborationSettings: React.FC<{
               </Col>
             </Row>
           ) : null}
-          {(remoteSim && remoteSim.has_write_access) || !remoteSim ? (
+          {RolePerms.hasAdminAccess(remoteSim) || !remoteSim ? (
             <Row className="w-100 mt-4 mb-2 mx-0">
               <Col>
                 <p className="lead">Visibility</p>
@@ -402,18 +397,32 @@ export default class DescriptionComponent extends React.Component<
     };
 
     this.toggleEditMode = this.toggleEditMode.bind(this);
-    this.writable = this.writable.bind(this);
+    this.hasWriteAccess = this.hasWriteAccess.bind(this);
+    this.hasAdminAccess = this.hasAdminAccess.bind(this);
+    this.hasAuthorPortalAccess = this.hasAuthorPortalAccess.bind(this);
     this.forkSimulation = this.forkSimulation.bind(this);
     this.titleInput = React.createRef<HTMLInputElement>();
     this.save = this.save.bind(this);
   }
 
-  writable() {
+  hasWriteAccess() {
     if (this.props.remoteSim) {
-      return this.props.remoteSim.has_write_access;
+      return RolePerms.hasWriteAccess(this.props.remoteSim);
     } else {
       return true;
     }
+  }
+
+  hasAdminAccess() {
+    if (this.props.remoteSim) {
+      return RolePerms.hasAdminAccess(this.props.remoteSim);
+    } else {
+      return true;
+    }
+  }
+
+  hasAuthorPortalAccess() {
+    return this.hasAdminAccess() || this.props.remoteSim.authors.includes(this.user());
   }
 
   shouldComponentUpdate(nextProps: DescriptionProps, nextState: DescriptionState) {
@@ -426,7 +435,8 @@ export default class DescriptionComponent extends React.Component<
       this.props.api.modelpk !== nextProps.api.modelpk ||
       this.props.accessStatus.username !== nextProps.accessStatus.username ||
       this.props.remoteSim?.model_pk !== nextProps.remoteSim?.model_pk ||
-      this.props.remoteSim?.pending_permissions !== nextProps.remoteSim?.pending_permissions
+      this.props.remoteSim?.pending_permissions !== nextProps.remoteSim?.pending_permissions ||
+      this.props.remoteSim?.authors !== nextProps.remoteSim?.authors
     );
   }
 
@@ -440,7 +450,7 @@ export default class DescriptionComponent extends React.Component<
   }
 
   toggleEditMode() {
-    if (this.writable()) {
+    if (this.hasWriteAccess()) {
       this.setState({
         isEditMode: !this.state.isEditMode
       });
@@ -470,15 +480,17 @@ export default class DescriptionComponent extends React.Component<
   }
 
   save(values: DescriptionValues) {
-    let formdata = new FormData();
-    for (const field of ["title", "readme", "is_public"]) {
-      if (values[field]) formdata.append(field, values[field]);
+    if (this.hasWriteAccess()) {
+      let formdata = new FormData();
+      for (const field of ["title", "readme", "is_public"]) {
+        if (values[field]) formdata.append(field, values[field]);
+      }
+      formdata.append("model_pk", this.props.api.modelpk.toString());
+      formdata.append("readme", JSON.stringify(values.readme));
+      this.props.api.putDescription(formdata).then(data => {
+        this.setState({ isEditMode: false, dirty: false, initialValues: values });
+      });
     }
-    formdata.append("model_pk", this.props.api.modelpk.toString());
-    formdata.append("readme", JSON.stringify(values.readme));
-    this.props.api.putDescription(formdata).then(data => {
-      this.setState({ isEditMode: false, dirty: false, initialValues: values });
-    });
 
     if (values.author?.add) {
       this.props.api.addAuthors({ authors: [values.author.add] }).then(data => {
@@ -561,15 +573,19 @@ export default class DescriptionComponent extends React.Component<
                               className={isEditMode ? "d-none" : ""}
                               style={showTitleBorder ? {} : { borderColor: "white" }}
                               onMouseEnter={() =>
-                                this.writable() ? this.setState({ showTitleBorder: true }) : null
+                                this.hasWriteAccess()
+                                  ? this.setState({ showTitleBorder: true })
+                                  : null
                               }
                               onMouseLeave={() =>
-                                this.writable() ? this.setState({ showTitleBorder: false }) : null
+                                this.hasWriteAccess()
+                                  ? this.setState({ showTitleBorder: false })
+                                  : null
                               }
                             >
                               <Tip
                                 tip={
-                                  this.writable()
+                                  this.hasWriteAccess()
                                     ? "Rename."
                                     : "You be an owner of this simulation to edit the title."
                                 }
@@ -602,7 +618,7 @@ export default class DescriptionComponent extends React.Component<
                           value={field.value}
                           setFieldValue={formikProps.setFieldValue}
                           handleSubmit={formikProps.handleSubmit}
-                          readOnly={!this.writable()}
+                          readOnly={!this.hasWriteAccess()}
                         />
                       )}
                     </Field>
@@ -625,10 +641,7 @@ export default class DescriptionComponent extends React.Component<
                     <AuthorsDropDown authors={authors} />
                   </Col>
                   <Col className="col-sm-2 mt-1">
-                    <HistoryDropDown
-                      isOwner={this.writable()}
-                      history={this.props.remoteSim?.parent_sims || []}
-                    />
+                    <HistoryDropDown history={this.props.remoteSim?.parent_sims || []} />
                   </Col>
                   {this.user() !== "anon" ? (
                     <Col className="col-sm-2 mt-1">
@@ -646,20 +659,14 @@ export default class DescriptionComponent extends React.Component<
                       </Tip>
                     </Col>
                   ) : null}
-                  {this.writable() || this.props.remoteSim.authors.includes(this.user()) ? (
+                  {this.hasAuthorPortalAccess() ? (
                     <Col className="col-sm-2 ml-sm-auto mt-1" style={{ paddingRight: 0 }}>
-                      <Tip
-                        tip={`Make this simulation ${
-                          formikProps.values.is_public ? "private" : "public"
-                        }.`}
-                      >
-                        <CollaborationSettings
-                          api={api}
-                          user={this.user()}
-                          remoteSim={this.props.remoteSim}
-                          formikProps={formikProps}
-                        />
-                      </Tip>
+                      <CollaborationSettings
+                        api={api}
+                        user={this.user()}
+                        remoteSim={this.props.remoteSim}
+                        formikProps={formikProps}
+                      />
                     </Col>
                   ) : null}
                 </Row>

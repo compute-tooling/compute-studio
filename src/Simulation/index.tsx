@@ -30,6 +30,7 @@ import { Formik, Form, FormikProps, FormikHelpers } from "formik";
 import { hasServerErrors } from "../utils";
 import { UnsavedChangesModal } from "./modal";
 import { AuthButtons } from "../auth";
+import { RolePerms } from "../roles";
 
 Sentry.init({
   dsn: "https://fde6bcb39fda4af38471b16e2c1711af@sentry.io/1530834"
@@ -261,8 +262,8 @@ class SimTabs extends React.Component<
   submitWillCreateNewSim() {
     // returns true if a sim exists, the user has write access,
     // and the sim has not been kicked off yet.
-    let { sim, has_write_access } = this.state.inputs.detail;
-    return !(sim && has_write_access && sim.status === "STARTED");
+    let { sim } = this.state.inputs.detail;
+    return !(sim && RolePerms.hasWriteAccess(sim) && sim.status === "STARTED");
   }
 
   handleSubmit(values, actions) {

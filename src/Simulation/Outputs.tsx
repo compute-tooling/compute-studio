@@ -15,6 +15,7 @@ import { RemoteOutputs, Outputs, Simulation, Output, TableOutput, BokehOutput } 
 import { imgDims } from "../utils";
 import API from "./API";
 import { NotifyOnCompletion } from "./notify";
+import { RolePerms } from "../roles";
 
 interface OutputsProps {
   api: API;
@@ -218,7 +219,7 @@ export default class OutputsComponent extends React.Component<OutputsProps, Outp
         <Pending
           eta={remoteSim.eta}
           originalEta={remoteSim.original_eta}
-          showNotify={remoteSim.has_write_access}
+          showNotify={RolePerms.hasWriteAccess(remoteSim)}
           notify={remoteSim.notify_on_completion}
           setNotify={this.props.setNotifyOnCompletion}
         />
