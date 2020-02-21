@@ -32,8 +32,10 @@ interface DescriptionValues {
   title: string;
   readme: { [key: string]: any }[] | Node[];
   is_public: boolean;
-  newAuthor: string;
-  removeAuthor: string;
+  author: {
+    add: string;
+    remove: string;
+  };
 }
 
 let Schema = yup.object().shape({
@@ -179,6 +181,38 @@ const AuthorsDropDown: React.FC<{ authors: string[] }> = ({ authors }) => {
   );
 };
 
+export const UserQuery: React.FC<{
+  show: boolean;
+  selectedUsers: Array<{ username: string }>;
+  query: Array<{ username: string }>;
+  onSelectUser: (user: { username: string }) => void;
+}> = ({ show, selectedUsers, query, onSelectUser }) => {
+  if (!query || query.length === 0 || !show) return null;
+
+  return (
+    <div className="border rounded shadow mt-2 custom-dropdown-menu">
+      {query.map((user, qix) => (
+        // TODO: maybe set this as FocusableCard
+        <Row className="my-2 mx-3 w-auto" key={qix}>
+          <Col>
+            <a
+              className="color-inherit"
+              role="button"
+              style={{ cursor: "pointer" }}
+              onClick={() => onSelectUser(user)}
+            >
+              {user.username}
+              {selectedUsers.find(sel => sel.username === user.username) ? (
+                <span className="text-muted"> &#183; Already selected.</span>
+              ) : null}
+            </a>
+          </Col>
+        </Row>
+      ))}
+    </div>
+  );
+};
+
 export const CollaborationSettings: React.FC<{
   api: API;
   user: string;
@@ -201,9 +235,9 @@ export const CollaborationSettings: React.FC<{
     }
   }
 
-  const handleQuery = e => {
+  const handleQuery = (e, updateFunc: (users: Array<{ username: string }>) => void) => {
     api.queryUsers(e.target.value).then(data => {
-      setQuery(data);
+      updateFunc(data);
     });
   };
 
@@ -264,9 +298,9 @@ export const CollaborationSettings: React.FC<{
                         style={{ maxHeight: 0.5, cursor: "pointer" }}
                         onClick={() => {
                           // removeAuthor(author.username);
-                          setFieldValue("removeAuthor", author.username);
+                          setFieldValue("author.remove", author.username);
                           setTimeout(handleSubmit, 0);
-                          setTimeout(() => setFieldValue("removeAuthor", ""), 0);
+                          setTimeout(() => setFieldValue("author.remove", ""), 0);
                         }}
                       >
                         <i className="far fa-trash-alt hover-red"></i>
@@ -281,7 +315,7 @@ export const CollaborationSettings: React.FC<{
             <Row className="w-100 justify-content-left my-2">
               <Col>
                 <FastField
-                  name="newAuthor"
+                  name="author.add"
                   className="form-control"
                   placeholder="Search by email or username."
                   onFocus={() => {
@@ -289,39 +323,22 @@ export const CollaborationSettings: React.FC<{
                   }}
                   onChange={e => {
                     setViewQuery(true);
-                    handleQuery(e);
-                    setFieldValue("newAuthor", e.target.value);
+                    handleQuery(e, users => setQuery(users));
+                    setFieldValue("author.add", e.target.value);
                   }}
                 />
-                {!!query && query.length && viewQuery ? (
-                  <div className="border rounded shadow mt-2 custom-dropdown-menu">
-                    {query.map((user, qix) => (
-                      // TODO: maybe set this as FocusableCard
-                      <Row className="my-2 mx-3 w-auto" key={qix}>
-                        <Col>
-                          <a
-                            className="color-inherit"
-                            role="button"
-                            style={{ cursor: "pointer" }}
-                            onClick={e => {
-                              if (authors.find(a => a.username === user.username)) return;
-                              // addPendingAuthor(user.username);
-                              setFieldValue("newAuthor", user.username);
-                              setTimeout(handleSubmit, 0);
-                              setTimeout(() => setFieldValue("newAuthor", ""), 0);
-                              setQuery([]);
-                            }}
-                          >
-                            {user.username}
-                            {authors.find(a => a.username === user.username) ? (
-                              <span className="text-muted"> &#183; Already selected.</span>
-                            ) : null}
-                          </a>
-                        </Col>
-                      </Row>
-                    ))}
-                  </div>
-                ) : null}
+                <UserQuery
+                  query={query}
+                  selectedUsers={authors}
+                  show={viewQuery}
+                  onSelectUser={selected => {
+                    if (authors.find(a => a.username === selected.username)) return;
+                    setFieldValue("author.add", selected.username);
+                    setTimeout(handleSubmit, 0);
+                    setTimeout(() => setFieldValue("author.add", ""), 0);
+                    setQuery([]);
+                  }}
+                />
               </Col>
             </Row>
           ) : null}
@@ -373,9 +390,7 @@ export default class DescriptionComponent extends React.Component<
       title: this.props.remoteSim?.title || "Untitled Simulation",
       readme: this.props.remoteSim?.readme || defaultReadme,
       is_public: this.props.remoteSim?.is_public || false,
-      // todo: author: {new: "", remove: ""}
-      newAuthor: "",
-      removeAuthor: ""
+      author: { add: "", remove: "" }
     };
     this.state = {
       initialValues: initialValues,
@@ -465,19 +480,19 @@ export default class DescriptionComponent extends React.Component<
       this.setState({ isEditMode: false, dirty: false, initialValues: values });
     });
 
-    if (values.newAuthor) {
-      this.props.api.addAuthors({ authors: [values.newAuthor] }).then(data => {
+    if (values.author?.add) {
+      this.props.api.addAuthors({ authors: [values.author.add] }).then(data => {
         this.props.resetOutputs();
         this.setState(prevState => ({
-          initialValues: { ...prevState.initialValues, newAuthor: "" }
+          initialValues: { ...prevState.initialValues, author: { add: "", remove: "" } }
         }));
       });
     }
-    if (values.removeAuthor) {
-      this.props.api.deleteAuthor(values.removeAuthor).then(data => {
+    if (values.author?.remove) {
+      this.props.api.deleteAuthor(values.author.remove).then(data => {
         this.props.resetOutputs();
         this.setState(prevState => ({
-          initialValues: { ...prevState.initialValues, removeAuthor: "" }
+          initialValues: { ...prevState.initialValues, author: { add: "", remove: "" } }
         }));
       });
     }
