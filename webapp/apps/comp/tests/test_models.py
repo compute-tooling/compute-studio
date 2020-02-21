@@ -7,6 +7,7 @@ from hashids import Hashids
 from django.http import Http404
 from django.contrib import auth
 from django.forms.models import model_to_dict
+from guardian.shortcuts import get_perms
 
 from webapp.apps.users.models import Project, Profile
 
@@ -116,8 +117,8 @@ def test_sim_fork(db, get_inputs, meta_param_dict, profile):
     # make sure each sim's owner has read access and that the
     # read access for the new sim only applies to the owner
     # of the new sim and not the owner of the old sim.
-    assert newsim.has_read_access(newsim.owner.user)
-    assert sim.has_read_access(sim.owner.user)
+    assert newsim.has_admin_access(newsim.owner.user)
+    assert sim.has_admin_access(sim.owner.user)
     newsim.is_public = False
     newsim.save()
     assert not newsim.has_read_access(sim.owner.user)
@@ -201,7 +202,7 @@ def test_get_owner(db, get_inputs, meta_param_dict):
     assert sim.get_owner() == "unsigned"
 
 
-def test_has_read_write_access(db, get_inputs, meta_param_dict, profile):
+def test_sim_permissions(db, get_inputs, meta_param_dict, profile):
     modeler = User.objects.get(username="modeler").profile
     inputs = _submit_inputs("Used-for-testing", get_inputs, meta_param_dict, modeler)
 
@@ -210,34 +211,91 @@ def test_has_read_write_access(db, get_inputs, meta_param_dict, profile):
     sim.status = "SUCCESS"
     sim.save()
 
-    assert sim.has_write_access(modeler.user)
-    assert not sim.has_write_access(profile.user)
-    assert sim.has_write_access(None) is False
+    # check permissions for owner and random profile
+    assert get_perms(sim.owner.user, sim) == ["admin_simulation"]
+    assert sim.role(sim.owner.user) == "admin"
+    assert get_perms(profile.user, sim) == []
+    assert sim.role(profile.user) is None
 
-    assert sim.is_public == False
-    assert sim.has_read_access(modeler.user)
-    assert not sim.has_read_access(profile.user)
-    assert sim.has_read_access(None) is False
+    # sim owner has all levels of access
+    assert (
+        sim.is_owner(sim.owner.user)
+        and sim.has_admin_access(sim.owner.user)
+        and sim.has_write_access(sim.owner.user)
+        and sim.has_read_access(sim.owner.user)
+    )
+    # random user has no access
+    assert (
+        not sim.is_owner(profile.user)
+        and not sim.has_admin_access(profile.user)
+        and not sim.has_write_access(profile.user)
+        and not sim.has_read_access(profile.user)
+    )
+    # None has no access and does not cause errors
+    assert (
+        not sim.is_owner(None)
+        and not sim.has_admin_access(None)
+        and not sim.has_write_access(None)
+        and not sim.has_read_access(None)
+    )
 
     # test grant/removal of read access.
-    sim.grant_read_access(profile.user)
-    assert sim.has_read_access(profile.user)
-    sim.remove_read_access(profile.user)
-    assert not sim.has_read_access(profile.user)
+    sim.grant_read_permissions(profile.user)
+    assert (
+        get_perms(profile.user, sim) == ["read_simulation"]
+        and sim.role(profile.user) == "read"
+    )
+    assert (
+        not sim.is_owner(profile.user)
+        and not sim.has_admin_access(profile.user)
+        and not sim.has_write_access(profile.user)
+        and sim.has_read_access(profile.user)
+    )
+    sim.remove_permissions(profile.user)
+    assert get_perms(profile.user, sim) == [] and sim.role(profile.user) is None
+    assert (
+        not sim.is_owner(profile.user)
+        and not sim.has_admin_access(profile.user)
+        and not sim.has_write_access(profile.user)
+        and not sim.has_read_access(profile.user)
+    )
 
     # test grant/remove are idempotent:
-    for i in range(3):
-        sim.grant_read_access(profile.user)
+    for _ in range(3):
+        sim.grant_read_permissions(profile.user)
         assert sim.has_read_access(profile.user)
-    for i in range(3):
-        sim.remove_read_access(profile.user)
+    for _ in range(3):
+        sim.remove_permissions(profile.user)
         assert not sim.has_read_access(profile.user)
+
+    # test that only one permission is applied at a time.
+    sim.grant_read_permissions(profile.user)
+    assert get_perms(profile.user, sim) == ["read_simulation"]
+    sim.grant_write_permissions(profile.user)
+    assert get_perms(profile.user, sim) == ["write_simulation"]
+    sim.grant_admin_permissions(profile.user)
+    assert get_perms(profile.user, sim) == ["admin_simulation"]
 
     sim.is_public = True
     sim.save()
     assert sim.has_read_access(modeler.user)
     assert sim.has_read_access(profile.user)
     assert sim.has_read_access(None) is True
+
+    # test role
+    sim.is_public = False
+    sim.save()
+    sim.assign_role("admin", profile.user)
+    assert sim.has_admin_access(profile.user) and sim.role(profile.user) == "admin"
+    sim.assign_role("write", profile.user)
+    assert sim.has_write_access(profile.user) and sim.role(profile.user) == "write"
+    sim.assign_role("read", profile.user)
+    assert sim.has_read_access(profile.user) and sim.role(profile.user) == "read"
+    sim.assign_role(None, profile.user)
+    assert not sim.has_read_access(profile.user) and sim.role(profile.user) == None
+
+    with pytest.raises(ValueError) as e:
+        sim.assign_role("dne", profile.user)
 
 
 def test_add_authors(db, get_inputs, meta_param_dict, profile):
@@ -257,6 +315,7 @@ def test_add_authors(db, get_inputs, meta_param_dict, profile):
     assert created
     assert not pp.is_expired()
     assert sim.has_read_access(profile.user)
+    assert get_perms(profile.user, sim) == ["read_simulation"]
 
     sim = Simulation.objects.get(pk=sim.pk)
     assert sim.pending_permissions.filter(id=pp.id).count() == 1

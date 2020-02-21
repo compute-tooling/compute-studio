@@ -436,7 +436,7 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
         self.object = self.get_object(
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
-        if not self.object.has_write_access(request.user):
+        if not self.object.has_admin_access(request.user):
             raise PermissionDenied()
 
         ser = AddAuthorsSerializer(data=request.data)
@@ -523,7 +523,7 @@ class AuthorsDeleteAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIV
             )
         # User without write access can only remove themselves as author.
         if (
-            not self.object.has_write_access(request.user)
+            not self.object.has_admin_access(request.user)
             and profile.user != request.user
         ):
             raise PermissionDenied()
@@ -560,7 +560,7 @@ class SimulationAccessAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, A
         self.object = self.get_object(
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
-        if not self.object.has_write_access(request.user):
+        if not self.object.has_admin_access(request.user):
             raise PermissionDenied()
 
         ser = SimAccessSerializer(data=request.data, many=True)
@@ -570,11 +570,7 @@ class SimulationAccessAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, A
                 user = get_object_or_404(
                     get_user_model(), username__iexact=access_obj["username"]
                 )
-                if access_obj.get("has_read_access", None) is not None:
-                    if access_obj["has_read_access"]:
-                        self.object.grant_read_access(user)
-                    else:
-                        self.object.remove_read_access(user)
+                self.object.assign_role(access_obj["role"], user)
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response(ser.data, status=status.HTTP_400_BAD_REQUEST)

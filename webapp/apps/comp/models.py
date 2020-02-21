@@ -18,7 +18,7 @@ from django.contrib.auth.models import Group
 from django.urls import reverse
 from django.utils import timezone
 
-from guardian.shortcuts import assign_perm, remove_perm
+from guardian.shortcuts import assign_perm, remove_perm, get_perms
 
 import cs_storage
 
@@ -132,11 +132,17 @@ class Inputs(models.Model):
         }
         return reverse("edit", kwargs=kwargs)
 
+    def has_admin_access(self, user):
+        return self.sim.has_admin_access(user)
+
     def has_write_access(self, user):
         return self.sim.has_write_access(user)
 
     def has_read_access(self, user):
         return self.sim.has_read_access(user)
+
+    def role(self, user):
+        return self.sim.role(user)
 
 
 class SimulationManager(models.Manager):
@@ -193,7 +199,7 @@ class SimulationManager(models.Manager):
                     is_public=False,
                 )
                 sim.authors.set([user.profile])
-                sim.grant_read_access(user)
+                sim.grant_admin_permissions(user)
                 return sim
         except IntegrityError:
             # Case 1:
@@ -249,14 +255,32 @@ class SimulationManager(models.Manager):
             status=sim.status,
         )
         sim.authors.set([user.profile])
-        sim.grant_read_access(user)
+        sim.grant_admin_permissions(user)
         return sim
 
     def public_sims(self):
         return self.filter(creation_date__gt=ANON_BEFORE, is_public=True)
 
 
+class SimulationPermissions:
+    READ = (
+        "read_simulation",
+        "Users with this permission may view this simulation, even if it's private.",
+    )
+    WRITE = (
+        "write_simulation",
+        "Users with this permission may edit the title, description, and simulation parameters.",
+    )
+    ADMIN = (
+        "admin_simulation",
+        "Users with this permission control the visibility of this simulation and who has read, write, and admin access to it.",
+    )
+
+
 class Simulation(models.Model):
+    READ = SimulationPermissions.READ
+    WRITE = SimulationPermissions.WRITE
+    ADMIN = SimulationPermissions.ADMIN
 
     # TODO: dimension needs to go
     dimension_name = "Dimension--needs to go"
@@ -317,7 +341,11 @@ class Simulation(models.Model):
                 fields=["project", "model_pk"], name="unique_model_pk"
             )
         ]
-        permissions = (("read_simulation", "Read simulation"),)
+        permissions = (
+            SimulationPermissions.READ,
+            SimulationPermissions.WRITE,
+            SimulationPermissions.ADMIN,
+        )
 
     def __str__(self):
         return f"{self.project}#{self.model_pk}"
@@ -415,26 +443,80 @@ class Simulation(models.Model):
     def is_owner(self, user):
         return user == self.owner.user
 
+    """
+    The methods below are used for checking if a user has read, write, or admin
+    access to a specific simulation. Users can only have one of these permissions
+    at a time, but users with a higher level permission inherit the read/write
+    access from the lower level permissions, too.
+    """
+
+    def has_admin_access(self, user):
+        if not user or not user.is_authenticated:
+            return False
+
+        return user.has_perm(Simulation.ADMIN[0], self)
+
     def has_write_access(self, user):
         """
         Currently, this is just an alias for is_owner.
         """
-        return self.is_owner(user)
+        if not user or not user.is_authenticated:
+            return False
+
+        return user.has_perm(Simulation.WRITE[0], self) or self.has_admin_access(user)
 
     def has_read_access(self, user):
         # Everyone has access to this sim.
         if self.is_public:
             return True
-        # User is authenticated:
-        return bool(
-            user and user.is_authenticated and user.has_perm("read_simulation", self)
-        )
 
-    def grant_read_access(self, user):
-        assign_perm("read_simulation", user, self)
+        if not user or not user.is_authenticated:
+            return False
+        return user.has_perm(Simulation.READ[0], self) or self.has_write_access(user)
 
-    def remove_read_access(self, user):
-        remove_perm("read_simulation", user, self)
+    def remove_permissions(self, user):
+        for permission in get_perms(user, self):
+            remove_perm(permission, user, self)
+
+    def grant_admin_permissions(self, user):
+        self.remove_permissions(user)
+        assign_perm(Simulation.ADMIN[0], user, self)
+
+    def grant_write_permissions(self, user):
+        self.remove_permissions(user)
+        assign_perm(Simulation.WRITE[0], user, self)
+
+    def grant_read_permissions(self, user):
+        self.remove_permissions(user)
+        assign_perm(Simulation.READ[0], user, self)
+
+    def assign_role(self, role, user):
+        if role == None:
+            self.remove_permissions(user)
+        elif role == "read":
+            self.grant_read_permissions(user)
+        elif role == "write":
+            self.grant_write_permissions(user)
+        elif role == "admin":
+            self.grant_admin_permissions(user)
+        else:
+            raise ValueError(
+                f"Received invalid role: {role}. Choices are read, write, or admin."
+            )
+
+    def role(self, user):
+        if not user or not user.is_authenticated:
+            return None
+
+        perms = get_perms(user, self)
+        if not perms:
+            return None
+        elif perms == [Simulation.READ[0]]:
+            return "read"
+        elif perms == [Simulation.WRITE[0]]:
+            return "write"
+        elif perms == [Simulation.ADMIN[0]]:
+            return "admin"
 
     def outputs_version(self):
         if self.outputs:
@@ -491,7 +573,7 @@ class PendingPermissionManger(models.Manager):
     def get_or_create(self, **kwargs):
         pp, created = super().get_or_create(**kwargs)
         if created:
-            pp.sim.grant_read_access(pp.profile.user)
+            pp.sim.grant_read_permissions(pp.profile.user)
         return pp, created
 
 

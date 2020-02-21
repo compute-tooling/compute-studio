@@ -61,9 +61,7 @@ class ResponseStatusException(Exception):
         self.act_resp = act_resp
         self.act_status = act_resp.status_code
         self.stage = stage
-        super().__init__(
-            f"{stage}: expected {exp_status}, got {self.act_status}\n\n{getattr(self.act_resp, 'data', None)}"
-        )
+        super().__init__(f"{stage}: expected {exp_status}, got {self.act_status}")
 
 
 def assert_status(exp_status, act_resp, stage):
@@ -1022,7 +1020,7 @@ def test_sim_read_access_management(
     # Check user cannot update read access list
     resp = api_client.put(
         f"{sim.get_absolute_api_url()}access/",
-        data=[{"username": str(profile), "has_read_access": True}],
+        data=[{"username": str(profile), "role": "read"}],
         format="json",
     )
     assert_status(403, resp, "user cannot update read access")
@@ -1031,7 +1029,7 @@ def test_sim_read_access_management(
     api_client.force_login(sim.owner.user)
     resp = api_client.put(
         f"{sim.get_absolute_api_url()}access/",
-        data=[{"username": str(profile), "has_read_access": True}],
+        data=[{"username": str(profile), "role": "read"}],
         format="json",
     )
     assert_status(204, resp, "user granted read access")
@@ -1045,7 +1043,7 @@ def test_sim_read_access_management(
     create_profile_from_user(u)
     resp = api_client.put(
         f"{sim.get_absolute_api_url()}access/",
-        data=[{"username": "danger", "has_read_access": True}],
+        data=[{"username": "danger", "role": "read"}],
         format="json",
     )
     assert_status(403, resp, "user granted read access")
@@ -1054,7 +1052,7 @@ def test_sim_read_access_management(
     api_client.force_login(sim.owner.user)
     resp = api_client.put(
         f"{sim.get_absolute_api_url()}access/",
-        data=[{"username": str(profile), "has_read_access": False}],
+        data=[{"username": str(profile), "role": None}],
         format="json",
     )
     assert_status(204, resp, "user granted read access")

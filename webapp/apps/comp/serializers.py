@@ -51,7 +51,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
     gui_url = serializers.CharField(required=False, source="get_absolute_url")
 
     # see to_representation
-    # has_write_access = serializers.BooleanField(source="has_write_access")
+    # role = serializers.BooleanField(source="role")
 
     def to_representation(self, obj):
         rep = super().to_representation(obj)
@@ -59,7 +59,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
             user = self.context["request"].user
         else:
             user = None
-        rep["has_write_access"] = obj.has_write_access(user)
+        rep["role"] = obj.role(user)
         rep["authors"] = sorted(rep["authors"])
         return rep
 
@@ -70,7 +70,6 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
             "authors",
             "creation_date",
             "gui_url",
-            # "has_write_access",
             "is_public",
             "model_pk",
             "model_version",
@@ -78,6 +77,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
             "owner",
             "project",
             "readme",
+            # "role",
             "status",
             "title",
         )
@@ -90,6 +90,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
             "model_version",
             "owner",
             "project",
+            # "role",
             "status",
         )
 
@@ -126,7 +127,7 @@ class InputsSerializer(serializers.ModelSerializer):
     notify_on_completion = serializers.BooleanField(required=False)
 
     # see to_representation
-    # has_write_access = serializers.BooleanField(source="has_write_access")
+    # role = serializers.BooleanField(source="role")
 
     def to_representation(self, obj):
         rep = super().to_representation(obj)
@@ -134,7 +135,7 @@ class InputsSerializer(serializers.ModelSerializer):
             user = self.context["request"].user
         else:
             user = None
-        rep["has_write_access"] = obj.has_write_access(user)
+        rep["role"] = obj.role(user)
         rep["sim"]["authors"] = sorted(rep["sim"]["authors"])
         return rep
 
@@ -147,11 +148,11 @@ class InputsSerializer(serializers.ModelSerializer):
             "custom_adjustment",
             "errors_warnings",
             "gui_url",
-            # "has_write_access",
             "job_id",
             "meta_parameters",
             "notify_on_completion",
             "parent_model_pk",
+            "role",
             "sim",
             "status",
             "traceback",
@@ -162,8 +163,9 @@ class SimAccessSerializer(serializers.Serializer):
     """Serialize user's permissions for a given simulation"""
 
     is_owner = serializers.BooleanField(required=False)
-    has_write_access = serializers.BooleanField(required=False)
-    has_read_access = serializers.BooleanField(required=False)
+    role = serializers.ChoiceField(
+        required=True, choices=("read", "write", "admin"), allow_null=True
+    )
     username = serializers.CharField(required=True)
 
     @staticmethod
@@ -173,15 +175,14 @@ class SimAccessSerializer(serializers.Serializer):
         drf ModelSerialization approach.
         """
         return {
-            "has_read_access": sim.has_read_access(user),
-            "has_write_access": sim.has_write_access(user),
             "is_owner": sim.is_owner(user),
+            "role": sim.role(user),
             "username": user.username,
         }
 
     class Meta:
-        fields = ("has_read_access", "has_write_access", "is_owner", "username")
-        read_only = ("is_owner", "has_write_access")
+        fields = ("is_owner", "role", "username")
+        read_only = ("is_owner",)
 
 
 class SimulationSerializer(serializers.ModelSerializer):
@@ -203,7 +204,7 @@ class SimulationSerializer(serializers.ModelSerializer):
     outputs_version = serializers.CharField()
     # see to_representation for definition of parent_sims:
     # parent_sims = MiniSimulationSerializer(many=True)
-    # has_write_access = serializers.BooleanField(source="has_write_access")
+    # role = serializers.BooleanField(source="role")
 
     def to_representation(self, obj):
         rep = super().to_representation(obj)
@@ -214,16 +215,16 @@ class SimulationSerializer(serializers.ModelSerializer):
         rep["parent_sims"] = MiniSimulationSerializer(
             obj.parent_sims(user=user), many=True
         ).data
-        rep["has_write_access"] = obj.has_write_access(user)
+        rep["role"] = obj.role(user)
         rep["authors"] = sorted(rep["authors"])
-        if rep["has_write_access"]:
+        if obj.has_admin_access(user):
             rep["pending_permissions"] = PendingPermissionSerializer(
                 instance=obj.pending_permissions.all(), many=True
             ).data
             permission_objects = get_users_with_perms(obj)
-            rep["permissions"] = []
+            rep["access"] = []
             for user in permission_objects:
-                rep["permissions"].append(SimAccessSerializer.ser(obj, user))
+                rep["access"].append(SimAccessSerializer.ser(obj, user))
         return rep
 
     class Meta:
@@ -235,7 +236,6 @@ class SimulationSerializer(serializers.ModelSerializer):
             "eta",
             "exp_comp_datetime",
             "gui_url",
-            # "has_write_access",
             "is_public",
             "model_pk",
             "model_version",
@@ -247,6 +247,7 @@ class SimulationSerializer(serializers.ModelSerializer):
             # "parent_sims",
             "project",
             "readme",
+            # "role",
             "run_time",
             "status",
             "title",
@@ -259,7 +260,6 @@ class SimulationSerializer(serializers.ModelSerializer):
             "eta",
             "exp_comp_datetime",
             "gui_url",
-            # "has_write_access",
             "model_pk",
             "model_version",
             "original_eta",
@@ -268,6 +268,7 @@ class SimulationSerializer(serializers.ModelSerializer):
             "outputs_version",
             # "parent_sims",
             "project",
+            # "role",
             "run_time",
             "status",
             "traceback",

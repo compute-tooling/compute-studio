@@ -59,18 +59,18 @@ def test_write_access(db, get_inputs, meta_param_dict):
     req.user = modeler.user
 
     data = SimulationSerializer(instance=sim).data
-    assert data["has_write_access"] == False
+    assert data["role"] == None
     assert "pending_permissions" not in data
-    assert "permissions" not in data
+    assert "access" not in data
     data = SimulationSerializer(instance=sim, context={"request": req}).data
-    assert data["has_write_access"] == True
+    assert data["role"] == "admin"
     assert "pending_permissions" in data
-    assert "permissions" in data
+    assert "access" in data
 
     data = InputsSerializer(instance=sim.inputs).data
-    assert data["has_write_access"] == False
+    assert data["role"] == None
     data = InputsSerializer(instance=sim.inputs, context={"request": req}).data
-    assert data["has_write_access"] == True
+    assert data["role"] == "admin"
 
 
 def test_authors_sorted_alphabetically(db, get_inputs, meta_param_dict):
