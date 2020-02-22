@@ -7,7 +7,8 @@ import {
   Inputs,
   AccessStatus,
   InputsDetail,
-  MiniSimulation
+  MiniSimulation,
+  Role
 } from "../types";
 
 export default class API {
@@ -113,5 +114,11 @@ export default class API {
 
   deleteAuthor(author: string): Promise<{}> {
     return axios.delete(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/authors/${author}/`);
+  }
+
+  putAccess(data: Array<{ username: string; role: Role }>): Promise<{}> {
+    return axios
+      .put(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/access/`, data)
+      .then(() => ({}));
   }
 }

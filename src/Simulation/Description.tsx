@@ -13,7 +13,7 @@ import {
   Container
 } from "react-bootstrap";
 import * as yup from "yup";
-import { AccessStatus, MiniSimulation, Simulation, RemoteOutputs } from "../types";
+import { AccessStatus, MiniSimulation, Simulation, RemoteOutputs, Role } from "../types";
 import { Formik, FormikHelpers, ErrorMessage, Field, Form, FormikProps, FastField } from "formik";
 import { Message } from "../fields";
 import moment = require("moment");
@@ -36,6 +36,9 @@ interface DescriptionValues {
   author: {
     add: string;
     remove: string;
+  };
+  access: {
+    read: { grant: string; remove: string };
   };
 }
 
@@ -215,8 +218,11 @@ export const CollaborationSettings: React.FC<{
   formikProps: FormikProps<DescriptionValues>;
 }> = ({ api, user, remoteSim, formikProps }) => {
   const [show, setShow] = React.useState(false);
-  const [viewQuery, setViewQuery] = React.useState(false);
-  const [query, setQuery] = React.useState<Array<{ username: string }>>([]);
+  const [viewAuthorQuery, setViewAuthorQuery] = React.useState(false);
+  const [authorQuery, setAuthorQuery] = React.useState<Array<{ username: string }>>([]);
+
+  const [accessQuery, setAccessQuery] = React.useState<Array<{ username: string }>>([]);
+  const [viewAccessQuery, setViewAccessQuery] = React.useState(false);
 
   let authors: Array<{
     username: string;
@@ -252,7 +258,7 @@ export const CollaborationSettings: React.FC<{
         </>
       </Button>
 
-      <Modal show={show} onHide={() => setShow(false)}>
+      <Modal show={show} onHide={() => setShow(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Collaboration Settings</Modal.Title>
         </Modal.Header>
@@ -314,24 +320,24 @@ export const CollaborationSettings: React.FC<{
                   className="form-control"
                   placeholder="Search by email or username."
                   onFocus={() => {
-                    setViewQuery(true);
+                    setViewAuthorQuery(true);
                   }}
                   onChange={e => {
-                    setViewQuery(true);
-                    handleQuery(e, users => setQuery(users));
+                    setViewAuthorQuery(true);
+                    handleQuery(e, users => setAuthorQuery(users));
                     setFieldValue("author.add", e.target.value);
                   }}
                 />
                 <UserQuery
-                  query={query}
+                  query={authorQuery}
                   selectedUsers={authors}
-                  show={viewQuery}
+                  show={viewAuthorQuery}
                   onSelectUser={selected => {
                     if (authors.find(a => a.username === selected.username)) return;
                     setFieldValue("author.add", selected.username);
                     setTimeout(handleSubmit, 0);
                     setTimeout(() => setFieldValue("author.add", ""), 0);
-                    setQuery([]);
+                    setAuthorQuery([]);
                   }}
                 />
               </Col>
@@ -340,7 +346,17 @@ export const CollaborationSettings: React.FC<{
           {RolePerms.hasAdminAccess(remoteSim) || !remoteSim ? (
             <Row className="w-100 mt-4 mb-2 mx-0">
               <Col>
-                <p className="lead">Visibility</p>
+                <p className="lead">Who has access</p>
+                {values.is_public ? (
+                  <p>
+                    This simulation is <strong>public</strong> and can be viewed by anyone.
+                  </p>
+                ) : (
+                  <p>
+                    This simulation is <strong>private</strong> and can only be viewed by users who
+                    have been granted access to it.
+                  </p>
+                )}
                 <Row className="w-100 justify-content-center">
                   <Col className="col-auto">
                     <Button
@@ -361,6 +377,83 @@ export const CollaborationSettings: React.FC<{
                 </Row>
               </Col>
             </Row>
+          ) : null}
+          {RolePerms.hasAdminAccess(remoteSim) ? (
+            <>
+              <Row className="w-100 my-2 mx-0">
+                <Col>
+                  <p className="lead">Manage access</p>
+                  {remoteSim.access.map((accessobj, ix) => (
+                    <Row
+                      key={ix}
+                      className={`w-100 p-2 justify-content-between border ${
+                        ix === 0 ? " rounded-top " : " "
+                      }
+                    ${ix < remoteSim.access.length - 1 ? " border-bottom-0" : " rounded-bottom"}`}
+                    >
+                      <Col className="col-7">
+                        <span>{accessobj.username}</span>
+                      </Col>
+                      <Col className="col-4">
+                        {accessobj.is_owner ? (
+                          <span className="text-success">owner</span>
+                        ) : (
+                          <span className="text-muted">{accessobj.role}</span>
+                        )}
+                      </Col>
+                      <Col className="col-1">
+                        {/* owner cannot lose access, and authors must be removed as authors
+                        before they can lose access to the simulation. */}
+                        {accessobj.username !== remoteSim?.owner &&
+                        !authors.find(author => author.username === accessobj.username) ? (
+                          <a
+                            className="color-inherit"
+                            role="button"
+                            style={{ maxHeight: 0.5, cursor: "pointer" }}
+                            onClick={() => {
+                              setFieldValue("access.read.remove", accessobj.username);
+                              setTimeout(handleSubmit, 0);
+                              setTimeout(() => setFieldValue("access.read.remove", ""), 0);
+                            }}
+                          >
+                            <i className="far fa-trash-alt hover-red"></i>
+                          </a>
+                        ) : null}
+                      </Col>
+                    </Row>
+                  ))}
+                </Col>
+              </Row>
+              <Row className="w-100 justify-content-left my-2">
+                <Col>
+                  <FastField
+                    name="access.read.grant"
+                    className="form-control"
+                    placeholder="Search by email or username."
+                    onFocus={() => {
+                      setViewAccessQuery(true);
+                    }}
+                    onChange={e => {
+                      setViewAccessQuery(true);
+                      handleQuery(e, users => setAccessQuery(users));
+                      setFieldValue("access.read.grant", e.target.value);
+                    }}
+                  />
+                  <UserQuery
+                    query={accessQuery}
+                    selectedUsers={authors}
+                    show={viewAccessQuery}
+                    onSelectUser={selected => {
+                      if (remoteSim.access.find(a => a.username === selected.username)) return;
+                      setFieldValue("access.read.grant", selected.username);
+                      setTimeout(handleSubmit, 0);
+                      setTimeout(() => setFieldValue("access.read.grant", ""), 0);
+                      setAccessQuery([]);
+                    }}
+                  />
+                </Col>
+              </Row>
+            </>
           ) : null}
         </Modal.Body>
         <Modal.Footer>
@@ -385,7 +478,8 @@ export default class DescriptionComponent extends React.Component<
       title: this.props.remoteSim?.title || "Untitled Simulation",
       readme: this.props.remoteSim?.readme || defaultReadme,
       is_public: this.props.remoteSim?.is_public || false,
-      author: { add: "", remove: "" }
+      author: { add: "", remove: "" },
+      access: { read: { grant: "", remove: "" } }
     };
     this.state = {
       initialValues: initialValues,
@@ -507,6 +601,21 @@ export default class DescriptionComponent extends React.Component<
           initialValues: { ...prevState.initialValues, author: { add: "", remove: "" } }
         }));
       });
+    }
+    if (values.access?.read) {
+      if (values.access.read.grant) {
+        this.props.api
+          .putAccess([{ username: values.access.read.grant, role: "read" as Role }])
+          .then(resp => {
+            this.props.resetOutputs();
+          });
+      } else if (values.access.read.remove) {
+        this.props.api
+          .putAccess([{ username: values.access.read.remove, role: null }])
+          .then(resp => {
+            this.props.resetOutputs();
+          });
+      }
     }
   }
 
