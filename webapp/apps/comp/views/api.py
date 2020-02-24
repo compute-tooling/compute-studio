@@ -570,7 +570,27 @@ class SimulationAccessAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, A
                 user = get_object_or_404(
                     get_user_model(), username__iexact=access_obj["username"]
                 )
+                previous_role = self.object.role(user)
                 self.object.assign_role(access_obj["role"], user)
+                updated_role = self.object.role(user)
+                if updated_role is not None and updated_role != previous_role:
+                    try:
+                        host = f"https://{request.get_host()}"
+                        sim_url = f"{host}{self.object.get_absolute_url()}"
+                        send_mail(
+                            f"Updated role for {self.object}",
+                            (
+                                f"You have been assigned the {updated_role} role for this simulation: "
+                                f"{sim_url}."
+                                f"\n\nPlease reply to this email if you have any questions."
+                            ),
+                            "hank@compute.studio",
+                            [user.email],
+                            fail_silently=True,
+                        )
+                    # Http 401 exception if mail credentials are not set up.
+                    except Exception:
+                        pass
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response(ser.data, status=status.HTTP_400_BAD_REQUEST)
