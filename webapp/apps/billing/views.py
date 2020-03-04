@@ -122,10 +122,8 @@ class UpgradePlan(View):
             if upgrade_plan == "pro":
                 if plan_duration == "monthly":
                     new_plan = product.plans.get(nickname="Monthly Pro Plan")
-                elif plan_duration == "yearly":
-                    new_plan = product.plans.get(nickname="Yearly Pro Plan")
                 else:
-                    return HttpResponseServerError("Unknown plan.")
+                    new_plan = product.plans.get(nickname="Yearly Pro Plan")
 
                 customer.update_plan(new_plan)
 
@@ -134,10 +132,6 @@ class UpgradePlan(View):
 
             elif upgrade_plan == "free":
                 customer.update_plan(None)
-
-            else:
-                # upgrade plan is None, nothing to do
-                pass
 
             current_plan = customer.current_plan()
 
