@@ -43,7 +43,7 @@ class SignUp(generic.CreateView):
 
 
 class UserSettings(View):
-    template_name = ("registration/settings_base.html",)
+    template_name = ("registration/settings.html",)
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):

@@ -2,6 +2,7 @@ import pytest
 
 from django.contrib.auth import get_user_model
 
+from webapp.apps.billing.models import Customer
 
 User = get_user_model()
 
@@ -58,3 +59,95 @@ class TestBillingViews:
         # refresh user object!
         user = User.objects.get(username=user.username)
         assert user.customer
+
+    def test_upgrade_page(self, client, customer):
+        """
+        Test:
+        - basic get
+        - get with Monthly and Yearly durations.
+        """
+        client.force_login(customer.user)
+        resp = client.get("/billing/upgrade")
+        assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
+
+        assert resp.context["current_plan"] == customer.current_plan()
+        assert resp.context["plan_duration"] == "monthly"
+        assert resp.context["card_info"] == customer.card_info()
+
+        resp = client.get("/billing/upgrade?plan_duration=monthly")
+        assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
+        assert resp.context["plan_duration"] == "monthly"
+
+        resp = client.get("/billing/upgrade?plan_duration=yearly")
+        assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
+        assert resp.context["plan_duration"] == "yearly"
+
+    @pytest.mark.parametrize("plan_duration", ["Monthly", "Yearly"])
+    def test_user_upgrade(self, client, customer, monkeypatch, plan_duration):
+        """
+        Test:
+        - Upgrade to pro plan.
+        - Selecting team plan sends email.
+        """
+        client.force_login(customer.user)
+        resp = client.get(
+            f"/billing/upgrade?plan_duration={plan_duration.lower()}&upgrade_plan=pro"
+        )
+        assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
+        assert resp.context["plan_duration"] == plan_duration.lower()
+
+        customer = Customer.objects.get(pk=customer.pk)
+        assert (
+            resp.context["current_plan"]
+            == customer.current_plan()
+            == {"plan_duration": plan_duration.lower(), "name": "pro"}
+        )
+
+        # Test get Team sends email and does not change subscription status.
+
+        called = []  # use list so that called keeps this memory ref.
+
+        def mock_email(user, called=called):
+            assert user == customer.user
+            called += [True]
+
+        monkeypatch.setattr(
+            "webapp.apps.billing.views.send_teams_interest_mail", mock_email
+        )
+
+        resp = client.get(
+            f"/billing/upgrade?plan_duration={plan_duration.lower()}&upgrade_plan=team"
+        )
+        assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
+        assert called == [True]
+        customer = Customer.objects.get(pk=customer.pk)
+        assert (
+            resp.context["current_plan"]
+            == customer.current_plan()
+            == {"plan_duration": plan_duration.lower(), "name": "pro"}
+        )
+
+        # Test get Free sends unsubscribe email and does not change subscription status.
+        # (status will be changed manually for now.)
+
+        called = []  # use list so that called keeps this memory ref.
+
+        def mock_email2(user, called=called):
+            assert user == customer.user
+            called += [True]
+
+        monkeypatch.setattr(
+            "webapp.apps.billing.models.send_unsubscribe_email", mock_email2
+        )
+
+        resp = client.get(
+            f"/billing/upgrade?plan_duration={plan_duration.lower()}&upgrade_plan=free"
+        )
+        assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
+        assert called == [True]
+        customer = Customer.objects.get(pk=customer.pk)
+        assert (
+            resp.context["current_plan"]
+            == customer.current_plan()
+            == {"plan_duration": plan_duration.lower(), "name": "pro"}
+        )

@@ -15,6 +15,8 @@ from webapp.apps.billing.models import (
     Subscription,
     SubscriptionItem,
     UsageRecord,
+    create_pro_billing_objects,
+    UpdateStatus,
 )
 
 User = get_user_model()
@@ -169,3 +171,64 @@ class TestStripeModels:
         )
 
         Customer.objects.sync_subscriptions()
+
+    def test_create_pro_billing_objects(self, db):
+        # this function is called in conftest.py
+        # create_pro_billing_objects()
+
+        pro_product = Product.objects.get(name="Compute Studio Subscription")
+
+        monthly_plan = Plan.objects.get(nickname="Monthly Pro Plan")
+        yearly_plan = Plan.objects.get(nickname="Yearly Pro Plan")
+
+        assert set(pro_product.plans.all()) == set([monthly_plan, yearly_plan])
+
+    def test_customer_card_info(self, db, customer):
+        assert customer.card_info() == {"brand": "Visa", "last4": "0077"}
+
+    @pytest.mark.parametrize("plan_duration", ["Monthly", "Yearly"])
+    def test_customer_subscription_upgrades(
+        self, db, customer, monkeypatch, plan_duration
+    ):
+        assert customer.current_plan() == {"plan_duration": None, "name": "free"}
+
+        cs_product = Product.objects.get(name="Compute Studio Subscription")
+
+        # test upgrade from free to pro
+        plan = cs_product.plans.get(nickname=f"{plan_duration} Pro Plan")
+
+        result = customer.update_plan(plan)
+        assert result == UpdateStatus.upgrade
+
+        customer = Customer.objects.get(pk=customer.pk)
+        assert customer.current_plan() == {
+            "plan_duration": plan_duration.lower(),
+            "name": "pro",
+        }
+
+        # test update_plan is idempotent
+        plan = cs_product.plans.get(nickname=f"{plan_duration} Pro Plan")
+
+        result = customer.update_plan(plan)
+        assert result == UpdateStatus.nochange
+
+        assert customer.current_plan() == {
+            "plan_duration": plan_duration.lower(),
+            "name": "pro",
+        }
+
+        # test downgrade sends mail
+        plan = None
+
+        called = []  # use list so that called keeps this memory ref.
+
+        def mock_email(user, called=called):
+            assert user == customer.user
+            called += [True]
+
+        monkeypatch.setattr(
+            "webapp.apps.billing.models.send_unsubscribe_email", mock_email
+        )
+        result = customer.update_plan(plan)
+        assert result == UpdateStatus.downgrade
+        assert called == [True]

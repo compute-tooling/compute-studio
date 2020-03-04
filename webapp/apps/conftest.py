@@ -21,6 +21,7 @@ from webapp.apps.billing.models import (
     Plan,
     Subscription,
     SubscriptionItem,
+    create_pro_billing_objects,
 )
 from webapp.apps.billing.utils import USE_STRIPE
 from webapp.apps.users.models import Profile, Project
@@ -91,6 +92,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
                 )
                 customer, _ = Customer.get_or_construct(stripe_customer.id, u)
             Customer.objects.sync_subscriptions()
+            create_pro_billing_objects()
 
 
 @pytest.fixture

@@ -2,6 +2,8 @@ import os
 from datetime import datetime, timedelta
 from datetime import date
 import math
+from enum import Enum
+from typing import Optional
 
 import stripe
 
@@ -11,6 +13,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.utils.timezone import make_aware
 
+from .email import send_unsubscribe_email
 
 stripe.api_key = os.environ.get("STRIPE_SECRET")
 
@@ -32,6 +35,12 @@ class CustomerManager(models.Manager):
         for customer in self.all():
             print("user", customer.user.username)
             customer.sync_subscriptions()
+
+
+class UpdateStatus(Enum):
+    upgrade = "upgrade"
+    downgrade = "downgrade"
+    nochange = "nochange"
 
 
 # Create your models here.
@@ -105,6 +114,69 @@ class Customer(models.Model):
                 plan = public_plans.get(stripe_id=raw_si["plan"]["id"])
                 si, created = SubscriptionItem.get_or_construct(stripe_si.id, plan, sub)
 
+    def card_info(self):
+        """Returns last 4 digits and brand of default source or None"""
+        stripe_obj = Customer.get_stripe_object(self.stripe_id)
+        default_source = stripe_obj.default_source
+        last4 = None
+        brand = None
+        for source in stripe_obj.sources:
+            if source.id == default_source:
+                last4 = source.last4
+                brand = source.brand
+                break
+        if last4 and brand:
+            return {"last4": last4, "brand": brand}
+        return None
+
+    def current_plan(self):
+        """
+        Returns customer's compute studio plan and billing cycle duration
+        """
+        product = Product.objects.get(name="Compute Studio Subscription")
+        current_plan = {"plan_duration": None, "name": "free"}
+        try:
+            si = SubscriptionItem.objects.get(
+                subscription__customer=self, plan__in=product.plans.all()
+            )
+            if si.plan.nickname == "Monthly Pro Plan":
+                current_plan = {"plan_duration": "monthly", "name": "pro"}
+            elif si.plan.nickname == "Yearly Pro Plan":
+                current_plan = {"plan_duration": "yearly", "name": "pro"}
+
+        except SubscriptionItem.DoesNotExist:
+            pass
+
+        return current_plan
+
+    def update_plan(self, new_plan: Optional["Plan"]):
+        old_plan = self.current_plan()
+        product = Product.objects.get(name="Compute Studio Subscription")
+        # Check downgrade transitions
+        if old_plan["name"] == "pro" and new_plan is None:
+            # downgrade from pro to free
+            # send_mail --> I'll do this manually for now.
+            send_unsubscribe_email(self.user)
+            return UpdateStatus.downgrade
+
+        # Check nochange transitions
+        if old_plan["name"] == "free" and new_plan is None:
+            return UpdateStatus.nochange
+        if old_plan["name"] == "pro" and new_plan.nickname.endswith("Pro Plan"):
+            return UpdateStatus.nochange
+
+        # Now, upgrade plan from old_plan to new_plan.
+        stripe_sub = Subscription.create_stripe_object(self, [new_plan])
+        sub = Subscription.construct(
+            stripe_sub, self, [new_plan], subscription_type="compute-studio"
+        )
+        for si_object in stripe_sub["items"]["data"]:
+            stripe_si = SubscriptionItem.get_stripe_object(si_object["id"])
+            plan = product.plans.get(stripe_id=si_object["plan"]["id"])
+            SubscriptionItem.get_or_construct(stripe_si.id, plan, sub)
+
+        return UpdateStatus.upgrade
+
     @staticmethod
     def get_stripe_object(stripe_id):
         return stripe.Customer.retrieve(stripe_id)
@@ -171,12 +243,8 @@ class Product(models.Model):
     @staticmethod
     def get_or_construct(stripe_id, project=None):
         try:
-            product, created = Product.objects.get(stripe_id), False
+            product, created = Product.objects.get(stripe_id=stripe_id), False
         except Product.DoesNotExist:
-            if product is None:
-                raise RequiredLocalInstances(
-                    "Local instance of Project was not provided."
-                )
             stripe_obj = Product.get_stripe_object(stripe_id)
             product, created = Product.construct(stripe_obj, project), True
         except IntegrityError:
@@ -228,9 +296,9 @@ class Plan(models.Model):
 
     @staticmethod
     def create_stripe_object(
-        amount, product, usage_type, interval="month", currency="usd"
+        amount, product, usage_type, interval="month", currency="usd", nickname=None
     ):
-        nickname = f"{product.name} {usage_type.title()} {currency}"
+        nickname = nickname or f"{product.name} {usage_type.title()} {currency}"
         plan = stripe.Plan.create(
             amount=amount,
             nickname=nickname,
@@ -243,7 +311,7 @@ class Plan(models.Model):
 
     @staticmethod
     def get_stripe_object(stripe_id):
-        return stripe.Plan.get(stripe_id)
+        return stripe.Plan.retrieve(stripe_id)
 
     @staticmethod
     def construct(stripe_plan, product):
@@ -287,7 +355,12 @@ class Plan(models.Model):
 class Subscription(models.Model):
     # raises error on deletion
     subscription_type = models.CharField(
-        default="primary", choices=[("primary", "Primary")], max_length=50
+        default="primary",
+        choices=[
+            ("primary", "Primary"),
+            ("compute-studio", "Compute Studio Subscription"),
+        ],
+        max_length=50,
     )
     stripe_id = models.CharField(max_length=255, unique=True)
     customer = models.ForeignKey(
@@ -532,3 +605,26 @@ def create_billing_objects(project):
             currency="usd",
         )
         Plan.construct(stripe_plan_met, product)
+
+
+def create_pro_billing_objects():
+    stripe_obj = Product.create_stripe_object("Compute Studio Subscription")
+    pro_product, _ = Product.get_or_construct(stripe_obj.id)
+
+    monthly_plan = Plan.create_stripe_object(
+        amount=50 * 100,
+        product=pro_product,
+        usage_type="licensed",
+        interval="month",
+        nickname="Monthly Pro Plan",
+    )
+    Plan.get_or_construct(monthly_plan.id, pro_product)
+
+    yearly_plan = Plan.create_stripe_object(
+        amount=500 * 100,
+        product=pro_product,
+        usage_type="licensed",
+        interval="year",
+        nickname="Yearly Pro Plan",
+    )
+    Plan.get_or_construct(yearly_plan.id, pro_product)
