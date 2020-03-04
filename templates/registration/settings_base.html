@@ -1,32 +1,33 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block content %}
+{% extends 'base.html' %} {% load static %} {% block content %}
 
 <div class="card card-body card-outer">
-    {% csrf_token %}
-    <h4>{{ username }}</h4>
-    <div style="margin:10px;">
-        <form action="{% url 'password_change' %}" method="GET">
-                <input class="btn btn-light" type="submit" value="Change password">
-        </form>
+  {% csrf_token %}
+  <div class="row justify-content-between px-5">
+    <div class="col-md-3 mb-2">
+      <div class="row">
+        <div class="col">
+          <div class="row py-2 border border-bottom-0 rounded-top menu-heading">
+            <h5 class="menu-item">Settings</h5>
+          </div>
+          <div class="row py-2 border border-bottom-0">
+            <a class="menu-item" href="{% url 'password_change' %}">Change password</a>
+          </div>
+          <div class="row py-2 border border-bottom-0">
+            <a class="menu-item" href="{% url 'upgrade_plan' %}">Select plan</a>
+          </div>
+          <div class="row py-2 border border-bottom-0">
+            <a class="menu-item" href="{% url 'update_payment' %}">Update payment information</a>
+          </div>
+          <div class="row py-2 border rounded-bottom">
+            <a class="menu-item" href="{% url 'delete_user' %}">Delete account</a>
+          </div>
+        </div>
+      </div>
     </div>
-    <div style="margin:10px;">
-    <form action="{% url 'update_payment' %}" method="GET">
-            <input class="btn btn-light" type="submit" value="Update payment information">
-    </form>
+    <div class="col-md-9">
+      {% block settings %}{% endblock %}
     </div>
-    <div style="margin:10px;">
-        <form action="{% url 'cancel_subscription' %}" method="GET">
-            <input class="btn btn-danger" type="submit" value="Cancel subscription">
-        </form>
-    </div>
-    <div style="margin:10px;">
-        <form action="{% url 'delete_user' %}" method="GET">
-            <input class="btn btn-danger" type="submit" value="Delete account">
-        </form>
-    </div>
+  </div>
 
+  {% endblock %}
 </div>
-
-{% endblock %}
