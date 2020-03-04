@@ -116,6 +116,17 @@ code {
   border-bottom-left-radius: 0;
 }
 
+/* extend bootstrap border classes */
+.rounded-right-0 {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.rounded-left-0 {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
 /* Large devices (desktops, 992px and up) */
 @media (min-width: 992px) {
   .dropdown-menu.desktop-menu-right.show {
@@ -306,6 +317,9 @@ span.default-value {
 .color-inherit:hover {
   color: inherit;
 }
+.background-color-inherit {
+  background-color: inherit;
+}
 
 /* output modal styling */
 .output-modal.modal.show .modal-content {
@@ -354,4 +368,24 @@ blockquote {
 .fade.show.tooltip > .tooltip-inner {
   background-color: #2b2c2d;
   opacity: 0.99 !important;
+}
+
+.menu-item {
+  position: relative;
+  display: block;
+  padding: 8px 10px;
+  font-weight: 600;
+}
+
+.menu-heading {
+  display: block;
+  padding: 8px 10px;
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  color: #586069;
+  background-color: #f3f5f8;
+  border-bottom: 1px solid #e1e4e8;
 }
