@@ -1,7 +1,7 @@
 {% extends 'registration/settings_base.html' %} {% load static %} {% block settings %}
 <div class="card card-body card-inner">
   <h2 class="card-title">Add payment method</h2>
-  <form method="post" id="payment-form" action="{% url 'update_payment' %}">
+  <form method="post" id="payment-form">
     {% csrf_token %}
     <div class="stripe-input">
       {% include 'billing/base.html' %}

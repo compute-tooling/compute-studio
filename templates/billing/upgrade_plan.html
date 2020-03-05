@@ -1,38 +1,26 @@
 {% extends 'registration/settings_base.html' %} {% load static %} {% block title %}Update payment
 information{% endblock %} {% block settings %}
 <div class="card card-body card-inner pt-0">
-  {% if not user.customer %}
-  <div class="mb-4">
-    <h2 class="card-title">Add payment information</h2>
-    <form method="post" id="payment-form" action="{% url 'upgrade_plan' %}">
-      {% csrf_token %}
-      <div class="stripe-input">
-        {% include 'billing/base.html' %}
-      </div>
-      <button type="submit" class="btn btn-success mt-4">Submit</button>
-    </form>
-  </div>
-  {% endif %}
   <div class="row w-100 justify-content-left mb-4">
     <div class="col col-auto">
       <div class="row">
         {% if plan_duration == "monthly" %}
         <div class="col m-0 pr-0">
           <a class="btn btn-primary border-right-0 rounded-right-0"
-            href="/billing/upgrade?plan_duration=monthly">Monthly</a>
+            href="/billing/upgrade/monthly/">Monthly</a>
         </div>
         <div class="col m-0 pl-0">
           <a class="btn btn-outline-primary border-left-0 rounded-left-0"
-            href="/billing/upgrade?plan_duration=yearly">Yearly</a>
+            href="/billing/upgrade/yearly/">Yearly</a>
         </div>
         {% else %}
         <div class="col m-0 pr-0">
           <a class="btn btn-outline-primary border-right-0 rounded-right-0"
-            href="/billing/upgrade?plan_duration=monthly">Monthly</a>
+            href="/billing/upgrade/monthly/">Monthly</a>
         </div>
         <div class="col m-0 pl-0">
           <a class="btn btn-primary border-left-0 rounded-left-0"
-            href="/billing/upgrade?plan_duration=yearly">Yearly</a>
+            href="/billing/upgrade/yearly/">Yearly</a>
         </div>
         {% endif %}
       </div>
@@ -134,16 +122,23 @@ information{% endblock %} {% block settings %}
           {% else %}
           <p class="lead">You will be charged $500 per year.</p>
           {% endif %}
-
+          {% if not user.customer %}
+          <p><a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=pro">Add payment method</a></p>
+          {% else %}
           <p>Payment method:</p>
           <p><i class="far fa-credit-card mr-1"></i><strong>{{card_info.brand}}</strong> ending **** **** ****
             {{card_info.last4}}</p>
-          <p><a href="{% url 'update_payment' %}?next={% url 'upgrade_plan' %}">Update payment method</a></p>
+          <p><a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=pro">Update payment method</a></p>
+          {% endif %}
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <a href="/billing/upgrade?plan_duration={{plan_duration}}&upgrade_plan=pro" class="btn btn-primary">Buy
+          {% if not user.customer %}
+          <a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=pro" class="btn btn-primary">Add payment method</a>
+          {% else %}
+          <a href="/billing/upgrade/{{plan_duration}}/?upgrade_plan=pro" class="btn btn-primary">Buy
             now</a>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -160,5 +155,12 @@ information{% endblock %} {% block settings %}
     contactButton.innerHTML = "<strong>Thanks! We'll be in touch</strong>";
     fetch("/billing/upgrade?upgrade_plan=team").then(function (resp) { });
   });
+  var searchParams = (new URL(document.location)).searchParams;
+  console.log(window.location.href, searchParams.get('selected_plan'))
+  if (searchParams.get("selected_plan") === "pro") {
+    $(document).ready(function () {
+      $("#proModal").modal("show");
+    });
+  }
 </script>
 {% endblock %}

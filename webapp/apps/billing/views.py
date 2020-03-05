@@ -20,6 +20,12 @@ from .models import Customer, Product, Subscription, SubscriptionItem
 stripe.api_key = os.environ.get("STRIPE_SECRET")
 wh_secret = os.environ.get("WEBHOOK_SECRET")
 
+white_listed_urls = (
+    "/billing/upgrade/?selected_plan=pro",
+    "/billing/upgrade/monthly/?selected_plan=pro",
+    "/billing/upgrade/yearly/?selected_plan=pro",
+)
+
 
 def update_payment(user, stripe_token):
     if hasattr(user, "customer"):
@@ -81,7 +87,8 @@ class UpdatePayment(View):
                 try:
                     next_url = resolve(to).url_name
                 except Resolver404:
-                    pass
+                    if to in white_listed_urls:
+                        next_url = to
             return redirect(next_url)
         except Exception as e:
             import traceback
@@ -102,23 +109,29 @@ class UpdatePaymentDone(generic.TemplateView):
         return super().dispatch(*args, **kwargs)
 
 
+def parse_upgrade_params(request):
+    upgrade_plan = request.GET.get("upgrade_plan", None)
+    if upgrade_plan is not None and upgrade_plan.lower() not in ("free", "pro", "team"):
+        upgrade_plan = None
+
+    selected_plan = request.GET.get("selected_plan", None)
+    if selected_plan is not None and selected_plan.lower() not in (
+        "free",
+        "pro",
+        "team",
+    ):
+        selected_plan = None
+    return upgrade_plan, selected_plan
+
+
 class UpgradePlan(View):
     template_name = "billing/upgrade_plan.html"
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        plan_duration = request.GET.get("plan_duration", "monthly")
-        if plan_duration not in ("monthly", "yearly"):
-            plan_duration = "monthly"
-
-        upgrade_plan = request.GET.get("upgrade_plan", None)
-        if upgrade_plan is not None and upgrade_plan.lower() not in (
-            "free",
-            "pro",
-            "team",
-        ):
-            upgrade_plan = None
-
+        # plan_duration optionally given in url: /billing/upgarde/[plan_duration]/
+        plan_duration = kwargs.get("plan_duration", "monthly")
+        upgrade_plan, selected_plan = parse_upgrade_params(request)
         customer = getattr(request.user, "customer", None)
 
         card_info = {"last4": None, "brand": None}
@@ -151,22 +164,6 @@ class UpgradePlan(View):
                 "plan_duration": plan_duration,
                 "current_plan": current_plan,
                 "card_info": card_info,
+                "selected_plan": selected_plan,
             },
         )
-
-    @method_decorator(login_required)
-    def post(self, request, *args, **kwargs):
-        # get stripe token and update web db and stripe db
-        stripe_token = request.POST["stripeToken"]
-        try:
-            update_payment(request.user, stripe_token)
-            return redirect("upgrade_plan")
-        except Exception:
-            import traceback
-
-            traceback.print_exc()
-            msg = (
-                "Something has gone wrong. Contact us at admin@compute.studio to "
-                "resolve this issue"
-            )
-            return HttpResponseServerError(msg)

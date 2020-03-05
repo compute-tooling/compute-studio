@@ -67,18 +67,18 @@ class TestBillingViews:
         - get with Monthly and Yearly durations.
         """
         client.force_login(customer.user)
-        resp = client.get("/billing/upgrade")
+        resp = client.get("/billing/upgrade/")
         assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
 
         assert resp.context["current_plan"] == customer.current_plan()
         assert resp.context["plan_duration"] == "monthly"
         assert resp.context["card_info"] == customer.card_info()
 
-        resp = client.get("/billing/upgrade?plan_duration=monthly")
+        resp = client.get("/billing/upgrade/monthly/")
         assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
         assert resp.context["plan_duration"] == "monthly"
 
-        resp = client.get("/billing/upgrade?plan_duration=yearly")
+        resp = client.get("/billing/upgrade/yearly/")
         assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
         assert resp.context["plan_duration"] == "yearly"
 
@@ -90,9 +90,7 @@ class TestBillingViews:
         - Selecting team plan sends email.
         """
         client.force_login(customer.user)
-        resp = client.get(
-            f"/billing/upgrade?plan_duration={plan_duration.lower()}&upgrade_plan=pro"
-        )
+        resp = client.get(f"/billing/upgrade/{plan_duration.lower()}/?upgrade_plan=pro")
         assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
         assert resp.context["plan_duration"] == plan_duration.lower()
 
@@ -116,7 +114,7 @@ class TestBillingViews:
         )
 
         resp = client.get(
-            f"/billing/upgrade?plan_duration={plan_duration.lower()}&upgrade_plan=team"
+            f"/billing/upgrade/{plan_duration.lower()}/?upgrade_plan=team"
         )
         assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
         assert called == [True]
@@ -141,7 +139,7 @@ class TestBillingViews:
         )
 
         resp = client.get(
-            f"/billing/upgrade?plan_duration={plan_duration.lower()}&upgrade_plan=free"
+            f"/billing/upgrade/{plan_duration.lower()}/?upgrade_plan=free"
         )
         assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
         assert called == [True]
