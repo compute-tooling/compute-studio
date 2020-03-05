@@ -4,7 +4,7 @@ information{% endblock %} {% block settings %}
   {% if not user.customer %}
   <div class="mb-4">
     <h2 class="card-title">Add payment information</h2>
-    <form method="post" id="payment-form" action="{% url 'update_payment' %}">
+    <form method="post" id="payment-form" action="{% url 'upgrade_plan' %}">
       {% csrf_token %}
       <div class="stripe-input">
         {% include 'billing/base.html' %}
@@ -138,7 +138,7 @@ information{% endblock %} {% block settings %}
           <p>Payment method:</p>
           <p><i class="far fa-credit-card mr-1"></i><strong>{{card_info.brand}}</strong> ending **** **** ****
             {{card_info.last4}}</p>
-          <p><a href="{% url 'update_payment' %}">Update payment method</a></p>
+          <p><a href="{% url 'update_payment' %}?next={% url 'upgrade_plan' %}">Update payment method</a></p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>

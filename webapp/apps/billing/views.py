@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseServerError
+from django.urls import resolve, Resolver404
 
 from webapp.apps.users.models import Project
 
@@ -73,7 +74,15 @@ class UpdatePayment(View):
         stripe_token = request.POST["stripeToken"]
         try:
             update_payment(request.user, stripe_token)
-            return redirect("update_payment_done")
+            next_url = "update_payment_done"
+            to = request.GET.get("next", None)
+            if to is not None:
+                # Try to resolve the url.
+                try:
+                    next_url = resolve(to).url_name
+                except Resolver404:
+                    pass
+            return redirect(next_url)
         except Exception as e:
             import traceback
 
