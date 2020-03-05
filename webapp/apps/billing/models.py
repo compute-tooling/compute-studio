@@ -118,15 +118,18 @@ class Customer(models.Model):
         """Returns last 4 digits and brand of default source or None"""
         stripe_obj = Customer.get_stripe_object(self.stripe_id)
         default_source = stripe_obj.default_source
-        last4 = None
-        brand = None
+        info = (None, None, None, None)
         for source in stripe_obj.sources:
             if source.id == default_source:
-                last4 = source.last4
-                brand = source.brand
+                info = (source.brand, source.last4, source.exp_month, source.exp_year)
                 break
-        if last4 and brand:
-            return {"last4": last4, "brand": brand}
+        if all(info):
+            return {
+                "brand": info[0],
+                "last4": info[1],
+                "exp_month": info[2],
+                "exp_year": info[3],
+            }
         return None
 
     def current_plan(self):

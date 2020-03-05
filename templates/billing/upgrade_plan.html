@@ -128,6 +128,7 @@ information{% endblock %} {% block settings %}
           <p>Payment method:</p>
           <p><i class="far fa-credit-card mr-1"></i><strong>{{card_info.brand}}</strong> ending **** **** ****
             {{card_info.last4}}</p>
+          <p>Expires: {{card_info.exp_month}}/{{card_info.exp_year}}</p>
           <p><a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=pro">Update payment method</a></p>
           {% endif %}
         </div>

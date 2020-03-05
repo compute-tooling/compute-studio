@@ -184,7 +184,16 @@ class TestStripeModels:
         assert set(pro_product.plans.all()) == set([monthly_plan, yearly_plan])
 
     def test_customer_card_info(self, db, customer):
-        assert customer.card_info() == {"brand": "Visa", "last4": "0077"}
+        # As of today, 3/5/2020, stripe gives an expiration date
+        # on the test token of 3/2021. This may need to be updated
+        # in the future.
+        now = datetime.now()
+        assert customer.card_info() == {
+            "brand": "Visa",
+            "last4": "0077",
+            "exp_month": now.month,
+            "exp_year": now.year + 1,
+        }
 
     @pytest.mark.parametrize("plan_duration", ["Monthly", "Yearly"])
     def test_customer_subscription_upgrades(
