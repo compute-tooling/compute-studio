@@ -13,6 +13,8 @@ from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.utils.timezone import make_aware
 
+from webapp.settings import USE_STRIPE, DEBUG
+
 from .email import send_unsubscribe_email
 
 stripe.api_key = os.environ.get("STRIPE_SECRET")
@@ -45,6 +47,7 @@ class UpdateStatus(Enum):
 
 # Create your models here.
 class Customer(models.Model):
+    plan_in_nostripe_mode = "free"
     USD = "usd"
     CURRENCY_CHOICES = ((USD, "usd"),)
 
@@ -136,6 +139,13 @@ class Customer(models.Model):
         """
         Returns customer's compute studio plan and billing cycle duration
         """
+        if not USE_STRIPE:
+            if not DEBUG:
+                import warnings
+
+                warnings.warn("Stripe mode is not on and you are in production!")
+            return {"name": Customer.plan_in_nostripe_mode, "plan_duration": "monthly"}
+
         product = Product.objects.get(name="Compute Studio Subscription")
         current_plan = {"plan_duration": None, "name": "free"}
         try:

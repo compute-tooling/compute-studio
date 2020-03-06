@@ -29,6 +29,7 @@ from webapp.apps.comp.exceptions import (
     ValidationError,
     BadPostException,
     ForkObjectException,
+    ResourceLimitException,
 )
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.models import Inputs, Simulation, PendingPermission
@@ -453,9 +454,16 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
             for profile in profiles.all():
                 if self.object.authors.filter(pk=profile.pk).count() > 0:
                     continue
-                pp, created = PendingPermission.objects.get_or_create(
-                    sim=self.object, profile=profile, permission_name="add_author"
-                )
+                try:
+                    print("trying....", self.object.role(profile.user))
+                    pp, created = PendingPermission.objects.get_or_create(
+                        sim=self.object, profile=profile, permission_name="add_author"
+                    )
+                except ResourceLimitException as rle:
+                    return Response(
+                        data={"collaborator": str(rle)},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
                 # PP already exists and is not expired.
                 if not created and not pp.is_expired():
                     continue
@@ -571,7 +579,13 @@ class SimulationAccessAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, A
                     get_user_model(), username__iexact=access_obj["username"]
                 )
                 previous_role = self.object.role(user)
-                self.object.assign_role(access_obj["role"], user)
+                try:
+                    self.object.assign_role(access_obj["role"], user)
+                except ResourceLimitException as rle:
+                    return Response(
+                        data={"collaborator": str(rle)},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
                 updated_role = self.object.role(user)
                 if updated_role is not None and updated_role != previous_role:
                     try:

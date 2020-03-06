@@ -36,6 +36,13 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 CSRF_COOKIE_NAME = "csrftoken"
 
+USE_STRIPE = os.environ.get("USE_STRIPE", "false").lower() == "true"
+
+# Indicates that this c/s instance uses billing restrictions.
+HAS_USAGE_RESTRICTIONS = (
+    os.environ.get("HAS_USAGE_RESTRICTIONS", "true").lower() == "true"
+)
+
 
 def get_salt(env_var, dev_value):
     salt = os.environ.get(env_var, None)

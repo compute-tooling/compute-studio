@@ -9,12 +9,16 @@ from django.contrib import auth
 from django.forms.models import model_to_dict
 from guardian.shortcuts import get_perms
 
-from webapp.apps.users.models import Project, Profile
+from webapp.apps.users.models import Project, Profile, create_profile_from_user
 
 from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
-from webapp.apps.comp.exceptions import ForkObjectException, VersionMismatchException
+from webapp.apps.comp.exceptions import (
+    ForkObjectException,
+    VersionMismatchException,
+    ResourceLimitException,
+)
 
-from .utils import _submit_inputs, _submit_sim, read_outputs, _shuffled_sims
+from .utils import _submit_inputs, _submit_sim, read_outputs, _shuffled_sims, Customer
 
 User = auth.get_user_model()
 
@@ -311,7 +315,9 @@ def test_add_authors(db, get_inputs, meta_param_dict, profile):
 
     # Create new pending permission object and make sure that read access was
     # granted appropriately.
-    pp, created = PendingPermission.objects.get_or_create(profile=profile, sim=sim)
+    pp, created = PendingPermission.objects.get_or_create(
+        sim=sim, profile=profile, permission_name="add_author"
+    )
     assert created
     assert not pp.is_expired()
     assert sim.has_read_access(profile.user)
@@ -345,3 +351,57 @@ def test_public_sims(db, shuffled_sims, profile):
     assert set(Simulation.objects.public_sims()) == set(
         [modeler_sims[0]] + modeler_sims[2:]
     )
+
+
+def test_collaborator_limit_triggered(
+    db, get_inputs, meta_param_dict, free_profile, profile
+):
+    inputs = _submit_inputs(
+        "Used-for-testing", get_inputs, meta_param_dict, free_profile
+    )
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.save()
+
+    # test grant/removal of read access.
+    sim.assign_role("read", profile.user)
+    assert (
+        get_perms(profile.user, sim) == ["read_simulation"]
+        and sim.role(profile.user) == "read"
+    )
+
+    u = User.objects.create_user("second-collab", "second@example.com", "heyhey2222")
+    create_profile_from_user(u)
+
+    with pytest.raises(ResourceLimitException) as excinfo:
+        sim.assign_role("read", u)
+
+    assert str(excinfo.value) == ResourceLimitException.collaborators_msg
+    assert get_perms(u, sim) == [] and sim.role(u) == None
+
+
+def test_collaborator_limit_passes(
+    db, get_inputs, meta_param_dict, pro_profile, profile
+):
+    inputs = _submit_inputs(
+        "Used-for-testing", get_inputs, meta_param_dict, pro_profile
+    )
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.save()
+
+    # test grant/removal of read access.
+    sim.assign_role("read", profile.user)
+    assert (
+        get_perms(profile.user, sim) == ["read_simulation"]
+        and sim.role(profile.user) == "read"
+    )
+
+    u = User.objects.create_user("second-collab", "second@example.com", "heyhey2222")
+    create_profile_from_user(u)
+
+    sim.assign_role("read", u)

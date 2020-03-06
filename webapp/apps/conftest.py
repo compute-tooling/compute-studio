@@ -15,6 +15,7 @@ from django.utils.timezone import make_aware
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
+from webapp.settings import USE_STRIPE
 from webapp.apps.billing.models import (
     Customer,
     Product,
@@ -23,9 +24,7 @@ from webapp.apps.billing.models import (
     SubscriptionItem,
     create_pro_billing_objects,
 )
-from webapp.apps.billing.utils import USE_STRIPE
 from webapp.apps.users.models import Profile, Project
-
 from webapp.apps.comp.meta_parameters import translate_to_django
 from webapp.apps.comp.models import Inputs, Simulation
 
@@ -185,6 +184,26 @@ def profile_w_mockcustomer(db, password):
         metadata={},
     )
     return Profile.objects.create(user=customer.user, is_active=True)
+
+
+@pytest.fixture
+def free_profile(db, profile, profile_w_mockcustomer):
+    mock_cp = lambda: {"name": "free"}
+    profile_w_mockcustomer.user.customer.current_plan = mock_cp
+    return profile_w_mockcustomer
+
+
+@pytest.fixture
+def pro_profile(db, profile, profile_w_mockcustomer):
+    if getattr(profile.user, "customer", None):
+        product = Product.objects.get(name="Compute Studio Subscription")
+        plan = product.plans.get(nickname="Monthly Pro Plan")
+        profile.user.customer.update_plan(plan)
+        return profile
+    else:
+        mock_cp = lambda: {"name": "pro"}
+        profile_w_mockcustomer.user.customer.current_plan = mock_cp
+        return profile_w_mockcustomer
 
 
 @pytest.fixture

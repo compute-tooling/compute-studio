@@ -18,6 +18,7 @@ from webapp.apps.users.models import Project, Profile, create_profile_from_user
 
 from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
 from webapp.apps.comp.ioutils import get_ioutils
+from webapp.apps.comp.exceptions import ResourceLimitException
 from .compute import MockCompute, MockComputeWorkerFailure
 from .utils import read_outputs, _submit_inputs, _submit_sim, _shuffled_sims
 
@@ -547,23 +548,21 @@ class TestAsyncAPI(CoreTestMixin):
             set_auth_token(api_client, profile_w_mockcustomer.user)
         else:
             set_auth_token(api_client, profile.user)
+
         rmm = RunMockModel(**kwargs)
         rmm.run()
 
-        customer = getattr(profile.user, "customer", None)
-        try:
-            profile.customer = None
+        if hasattr(profile.user, "customer"):
+            profile.user.customer.delete()
             profile.save()
-            set_auth_token(api_client, profile.user)
-            rmm = RunMockModel(**kwargs)
-            with pytest.raises(ResponseStatusException) as excinfo:
-                rmm.run()
-            assert excinfo.value.stage == "post_adjustment"
-            assert excinfo.value.exp_status == 201
-            assert excinfo.value.act_status == 403
-        finally:
-            profile.customer = customer
-            profile.save()
+
+        set_auth_token(api_client, profile.user)
+        rmm = RunMockModel(**kwargs)
+        with pytest.raises(ResponseStatusException) as excinfo:
+            rmm.run()
+        assert excinfo.value.stage == "post_adjustment", excinfo.value.act_status
+        assert excinfo.value.exp_status == 201
+        assert excinfo.value.act_status == 403
 
     @pytest.mark.parametrize("test_lower", [False, True])
     def test_fork(
@@ -1060,6 +1059,159 @@ def test_sim_read_access_management(
     api_client.force_login(profile.user)
     resp = api_client.get(sim.get_absolute_api_url())
     assert_status(403, resp, "user no longer has read access to sim")
+
+
+def test_collaborator_usage_limits_triggered(
+    db,
+    sponsored_matchups,
+    client,
+    api_client,
+    get_inputs,
+    meta_param_dict,
+    free_profile,
+):
+    """
+    Test collaborator resource usage limits.
+    - Able to add first collaborator.
+    - Able to re-assign role of first collaborator.
+    - Adding second collaborator through role or as author triggers
+      error.
+    - Able to make user with read access an author.
+    """
+    inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, free_profile)
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.outputs = json.loads(read_outputs("Matchups_v1"))
+    sim.is_public = False
+    sim.save()
+
+    collabs = []
+    for i in range(2):
+        u = User.objects.create_user(
+            f"collab-{i}", f"collab{i}@example.com", "heyhey2222"
+        )
+        create_profile_from_user(u)
+        collabs.append(Profile.objects.get(user__username=f"collab-{i}"))
+
+    # Grant read access to user
+    api_client.force_login(sim.owner.user)
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}access/",
+        data=[{"username": str(collabs[0]), "role": "read"}],
+        format="json",
+    )
+    assert_status(204, resp, "user granted read access")
+
+    # Check re-assigning role has no affect
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}access/",
+        data=[{"username": str(collabs[0]), "role": None}],
+        format="json",
+    )
+    assert_status(204, resp, "user revoked access")
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}access/",
+        data=[{"username": str(collabs[0]), "role": "write"}],
+        format="json",
+    )
+    assert_status(204, resp, "user granted write access")
+
+    # Grant read access to another user triggers reource error.
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}access/",
+        data=[{"username": str(collabs[1]), "role": "read"}],
+        format="json",
+    )
+    assert_status(400, resp, "resource limit triggered")
+
+    assert resp.data == {"collaborator": ResourceLimitException.collaborators_msg}
+
+    # Grant read access through assigning author triggers resource error.
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}authors/",
+        data={"authors": [str(collabs[1])]},
+        format="json",
+    )
+    assert_status(400, resp, "resource limit triggered on author")
+    assert resp.data == {"collaborator": ResourceLimitException.collaborators_msg}
+
+    # No problem adding user with read access as author
+    resp = api_client.put(
+        f"{sim.get_absolute_api_url()}authors/",
+        data={"authors": [str(collabs[0])]},
+        format="json",
+    )
+    assert_status(200, resp, "no problem when user already has read access")
+
+
+def test_no_limit_collaboration(
+    db,
+    monkeypatch,
+    sponsored_matchups,
+    client,
+    api_client,
+    get_inputs,
+    meta_param_dict,
+    pro_profile,
+):
+    # This test is only valid if the C/S instance is using the Stripe/Customer
+    # framework
+    try:
+        from webapp.apps.billing.models import Customer
+    except ImportError:
+        from webapp.settings import HAS_USAGE_RESTRICTIONS
+
+        assert HAS_USAGE_RESTRICTIONS
+        return
+
+    Customer.plan_in_nostripe_mode = "pro"
+
+    inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, pro_profile)
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.outputs = json.loads(read_outputs("Matchups_v1"))
+    sim.is_public = False
+    sim.save()
+
+    collabs = []
+    for i in range(2):
+        u = User.objects.create_user(
+            f"collab-{i}", f"collab{i}@example.com", "heyhey2222"
+        )
+        create_profile_from_user(u)
+        collabs.append(Profile.objects.get(user__username=f"collab-{i}"))
+
+    # Grant read access to user
+    api_client.force_login(sim.owner.user)
+    for collab in collabs:
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}access/",
+            data=[{"username": str(collab), "role": "read"}],
+            format="json",
+        )
+        assert_status(204, resp, f"{str(collab)} granted read access")
+
+    # remove read acccess from 2 users
+    for collab in collabs[:2]:
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}access/",
+            data=[{"username": str(collab), "role": None}],
+            format="json",
+        )
+        assert_status(204, resp, f"{str(collab)} revoked read access")
+
+    # add as authors
+    for collab in collabs:
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}authors/",
+            data={"authors": [str(collab)]},
+            format="json",
+        )
+        assert_status(200, resp, f"add author {str(collab)}")
 
 
 def test_list_sim_api(db, api_client, profile, get_inputs, meta_param_dict):

@@ -1,7 +1,11 @@
 import json
 
 
-class CSError(Exception):
+class CSException(Exception):
+    pass
+
+
+class CSError(CSException):
     pass
 
 
@@ -32,3 +36,17 @@ class VersionMismatchException(CSError):
 
 class PermissionExpiredException(CSError):
     pass
+
+
+class ResourceLimitException(CSException):
+    collaborators_msg = (
+        "You have reached the limit for the number of collaborators "
+        "that you can add to this simulation. You may make this "
+        "simulation public or upgrade to Compute Studio Pro to "
+        "increase the number of collaborators that are allowed on "
+        "this plan."
+    )
+
+    def __init__(self, resource, *args, **kwargs):
+        self.resource = resource
+        super().__init__(*args, **kwargs)

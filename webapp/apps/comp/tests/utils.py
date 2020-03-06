@@ -91,3 +91,11 @@ def _shuffled_sims(profile, get_inputs, meta_param_dict):
         elif i != number_sims - 1 and sim.owner == profile:
             tester_sims.append(sim)
     return sims, modeler_sims, tester_sims
+
+
+class Customer:
+    def __init__(self, current_plan):
+        self._current_plan = current_plan
+
+    def current_plan(self):
+        return self._current_plan

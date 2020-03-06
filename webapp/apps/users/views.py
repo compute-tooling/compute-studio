@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from webapp.apps.billing.utils import USE_STRIPE
+from webapp.settings import USE_STRIPE
 from webapp.apps.publish.views import GetProjectMixin
 
 from .forms import UserCreationForm, CancelSubscriptionForm, DeleteUserForm

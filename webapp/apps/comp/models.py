@@ -2,6 +2,7 @@ import datetime
 import uuid
 import json
 import pytz
+import os
 
 from dataclasses import dataclass, field
 from typing import List, Union
@@ -18,12 +19,19 @@ from django.contrib.auth.models import Group
 from django.urls import reverse
 from django.utils import timezone
 
-from guardian.shortcuts import assign_perm, remove_perm, get_perms
+from guardian.shortcuts import assign_perm, remove_perm, get_perms, get_users_with_perms
 
 import cs_storage
 
-from webapp.apps.comp import utils, exceptions
-from webapp.settings import INPUTS_SALT
+from webapp.settings import HAS_USAGE_RESTRICTIONS, USE_STRIPE
+
+from webapp.apps.comp import utils
+from webapp.apps.comp.exceptions import (
+    ForkObjectException,
+    PermissionExpiredException,
+    ResourceLimitException,
+    VersionMismatchException,
+)
 
 
 # 11:59 on night of deployment
@@ -212,12 +220,12 @@ class SimulationManager(models.Manager):
 
     def fork(self, sim, user):
         if sim.inputs.status == "PENDING":
-            raise exceptions.ForkObjectException(
+            raise ForkObjectException(
                 "Simulations may not be forked while they are in a pending state. "
                 "Please try again once validation has completed."
             )
         if sim.status == "PENDING":
-            raise exceptions.ForkObjectException(
+            raise ForkObjectException(
                 "Simulations may not be forked while they are in a pending state. "
                 "Please try again once the simulation has completed."
             )
@@ -394,7 +402,7 @@ class Simulation(models.Model):
         if self.outputs_version() == "v0":
             return reverse("v0_outputs", kwargs=kwargs)
 
-        raise exceptions.VersionMismatchException(
+        raise VersionMismatchException(
             f"{self} is version {self.outputs_version()} != v0."
         )
 
@@ -443,6 +451,32 @@ class Simulation(models.Model):
     def is_owner(self, user):
         return user == self.owner.user
 
+    def add_collaborator_test(self):
+        """
+        Test if user's plan allows them to add more collaborators
+        to this simulation.
+        """
+        if self.is_public or not HAS_USAGE_RESTRICTIONS:
+            return
+
+        permission_objects = get_users_with_perms(self)
+        num_collaborators = permission_objects.count()
+
+        user = self.owner.user
+        customer = getattr(user, "customer", None)
+        if customer is None:
+            if num_collaborators + 1 > 2:
+                raise ResourceLimitException(
+                    "collaborators", ResourceLimitException.collaborators_msg
+                )
+
+        if customer is not None:
+            current_plan = customer.current_plan()
+            if num_collaborators + 1 > 2 and current_plan["name"] == "free":
+                raise ResourceLimitException(
+                    "collaborators", ResourceLimitException.collaborators_msg
+                )
+
     """
     The methods below are used for checking if a user has read, write, or admin
     access to a specific simulation. Users can only have one of these permissions
@@ -480,14 +514,17 @@ class Simulation(models.Model):
 
     def grant_admin_permissions(self, user):
         self.remove_permissions(user)
+        self.add_collaborator_test()
         assign_perm(Simulation.ADMIN[0], user, self)
 
     def grant_write_permissions(self, user):
         self.remove_permissions(user)
+        self.add_collaborator_test()
         assign_perm(Simulation.WRITE[0], user, self)
 
     def grant_read_permissions(self, user):
         self.remove_permissions(user)
+        self.add_collaborator_test()
         assign_perm(Simulation.READ[0], user, self)
 
     def assign_role(self, role, user):
@@ -570,10 +607,12 @@ def two_days_from_now():
 
 
 class PendingPermissionManger(models.Manager):
-    def get_or_create(self, **kwargs):
-        pp, created = super().get_or_create(**kwargs)
-        if created:
-            pp.sim.grant_read_permissions(pp.profile.user)
+    def get_or_create(self, sim=None, profile=None, permission_name=None, **kwargs):
+        pp, created = super().get_or_create(
+            sim=sim, profile=profile, permission_name=permission_name, **kwargs
+        )
+        if created and pp.sim.role(pp.profile.user) is None:
+            pp.sim.assign_role("read", pp.profile.user)
         return pp, created
 
 
@@ -596,7 +635,7 @@ class PendingPermission(models.Model):
 
     def add_author(self):
         if self.is_expired():
-            raise exceptions.PermissionExpiredException()
+            raise PermissionExpiredException()
         self.sim.authors.add(self.profile)
         self.delete()
 
