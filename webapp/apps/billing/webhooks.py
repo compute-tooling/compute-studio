@@ -17,7 +17,7 @@ def customer_created(event):
     print("processing customer.created event...")
     customer = Customer.objects.get(stripe_id=event.data["object"]["id"])
     send_mail(
-        "Compute Studio",
+        "Payment method updated",
         "Your payment method was set successfully! Please write back if you have any questions.",
         "Compute Studio <hank@compute.studio>",
         [customer.user.email],
@@ -38,7 +38,7 @@ def customer_subscription_deleted(event):
             "you have cancelled your subscription and what we can do to win you back "
             "in the future.\n\nBest,\nThe C/S Team"
         ),
-        "hank@compute.studio",
+        "matt@compute.studio",
         [customer.user.email],
         fail_silently=False,
     )

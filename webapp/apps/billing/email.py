@@ -13,9 +13,8 @@ def send_teams_interest_mail(user):
             "Best,\n"
             "Matt"
         ),
-        from_email="hank@compute.studio",
+        from_email="matt@compute.studio",
         to=[user.email],
-        # bcc=["matt@compute.studio"],
     )
     try:
         email_msg.send(fail_silently=True)
@@ -35,9 +34,8 @@ def send_unsubscribe_email(user):
             "Best,\n"
             "Matt"
         ),
-        from_email="hank@compute.studio",
+        from_email="matt@compute.studio",
         to=[user.email],
-        # bcc=["matt@compute.studio"],
     )
     try:
         email_msg.send(fail_silently=True)
