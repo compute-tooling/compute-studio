@@ -6,21 +6,17 @@ information{% endblock %} {% block settings %}
       <div class="row">
         {% if plan_duration == "monthly" %}
         <div class="col m-0 pr-0">
-          <a class="btn btn-primary border-right-0 rounded-right-0"
-            href="/billing/upgrade/monthly/">Monthly</a>
+          <a class="btn btn-primary border-right-0 rounded-right-0" href="/billing/upgrade/monthly/">Monthly</a>
         </div>
         <div class="col m-0 pl-0">
-          <a class="btn btn-outline-primary border-left-0 rounded-left-0"
-            href="/billing/upgrade/yearly/">Yearly</a>
+          <a class="btn btn-outline-primary border-left-0 rounded-left-0" href="/billing/upgrade/yearly/">Yearly</a>
         </div>
         {% else %}
         <div class="col m-0 pr-0">
-          <a class="btn btn-outline-primary border-right-0 rounded-right-0"
-            href="/billing/upgrade/monthly/">Monthly</a>
+          <a class="btn btn-outline-primary border-right-0 rounded-right-0" href="/billing/upgrade/monthly/">Monthly</a>
         </div>
         <div class="col m-0 pl-0">
-          <a class="btn btn-primary border-left-0 rounded-left-0"
-            href="/billing/upgrade/yearly/">Yearly</a>
+          <a class="btn btn-primary border-left-0 rounded-left-0" href="/billing/upgrade/yearly/">Yearly</a>
         </div>
         {% endif %}
       </div>
@@ -123,19 +119,22 @@ information{% endblock %} {% block settings %}
           <p class="lead">You will be charged $500 per year.</p>
           {% endif %}
           {% if not user.customer %}
-          <p><a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=pro">Add payment method</a></p>
+          <p><a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=pro">Add payment
+              method</a></p>
           {% else %}
           <p>Payment method:</p>
           <p><i class="far fa-credit-card mr-1"></i><strong>{{card_info.brand}}</strong> ending **** **** ****
             {{card_info.last4}}</p>
           <p>Expires: {{card_info.exp_month}}/{{card_info.exp_year}}</p>
-          <p><a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=pro">Update payment method</a></p>
+          <p><a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=pro">Update
+              payment method</a></p>
           {% endif %}
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
           {% if not user.customer %}
-          <a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=pro" class="btn btn-primary">Add payment method</a>
+          <a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=pro"
+            class="btn btn-primary">Add payment method</a>
           {% else %}
           <a href="/billing/upgrade/{{plan_duration}}/?upgrade_plan=pro" class="btn btn-primary">Buy
             now</a>
@@ -144,13 +143,19 @@ information{% endblock %} {% block settings %}
       </div>
     </div>
   </div>
+  <div class="row justify-content-center mt-5 {% if current_plan.name == 'free' %}d-none{% endif %}">
+    <div class="col col-auto">
+      <a id="contact-unsubscribe" href="#" class="btn btn-outline-primary text-center">
+        Unsubscribe
+      </a>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
 {% block bottom_scripts %}
 <script>
   var contactButton = document.getElementById("contact-sales");
-  console.log("button", contactButton)
   contactButton.addEventListener("click", function (event) {
     event.preventDefault();
     contactButton.innerHTML = "<strong>Thanks! We'll be in touch</strong>";
@@ -163,5 +168,13 @@ information{% endblock %} {% block settings %}
       $("#proModal").modal("show");
     });
   }
+
+  var unsubscribeButton = document.getElementById("contact-unsubscribe");
+  unsubscribeButton.addEventListener("click", function (event) {
+    event.preventDefault();
+    unsubscribeButton.innerHTML = "<strong>Sorry to hear that. You will be unsubscribed within the next business day.</strong>";
+    fetch("/billing/upgrade?upgrade_plan=free").then(function (resp) { });
+  });
+
 </script>
 {% endblock %}
