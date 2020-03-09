@@ -37,9 +37,9 @@ def create_profile_from_user(user):
             f"questions or there is anything else we "
             f"can do to help you get up and running."
         ),
-        from_email="hank@compute.studio",
+        from_email="matt@compute.studio",
         to=[user.email],
-        bcc=["matt.h.jensen@gmail.com"],
+        bcc=["matt.h.jensen@gmail.com", "hank@compute.studio"],
     )
     try:
         email_msg.send(fail_silently=True)

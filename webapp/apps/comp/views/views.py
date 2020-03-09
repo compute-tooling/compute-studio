@@ -168,7 +168,7 @@ class OutputsView(GetOutputsObjectMixin, DetailView):
             send_mail(
                 f"Compute Studio Sim fail",
                 f"An error has occurred at {username}/{title}/{model_pk}",
-                "hank@compute.studio",
+                "notifications@compute.studio",
                 ["hank@compute.studio"],
                 fail_silently=True,
             )

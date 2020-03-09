@@ -19,7 +19,7 @@ def customer_created(event):
     send_mail(
         "Payment method updated",
         "Your payment method was set successfully! Please write back if you have any questions.",
-        "Compute Studio <hank@compute.studio>",
+        "notifications@compute.studio",
         [customer.user.email],
         fail_silently=False,
     )

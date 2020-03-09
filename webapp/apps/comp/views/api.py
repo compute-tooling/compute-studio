@@ -136,7 +136,7 @@ def submit(request, success_status, project, sim):
                     f"{ae.traceback}\n user:{request.user.username}\n "
                     f"project: {project.app_url}."
                 ),
-                "hank@compute.studio",
+                "notifications@compute.studio",
                 ["hank@compute.studio"],
                 fail_silently=True,
             )
@@ -372,7 +372,7 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
                                     f"Here's a link to your simulation:\n\n{sim_url}."
                                     f"\n\nPlease write back if you have any questions or feedback!"
                                 ),
-                                "hank@compute.studio",
+                                "notifications@compute.studio",
                                 [sim.owner.user.email],
                                 fail_silently=True,
                             )
@@ -489,7 +489,7 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                             f"{confirmation_url}"
                             f"\n\nPlease reply to this email if you have any questions."
                         ),
-                        "hank@compute.studio",
+                        "notifications@compute.studio",
                         [profile.user.email],
                         fail_silently=True,
                     )
@@ -598,7 +598,7 @@ class SimulationAccessAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, A
                                 f"{sim_url}."
                                 f"\n\nPlease reply to this email if you have any questions."
                             ),
-                            "hank@compute.studio",
+                            "notifications@compute.studio",
                             [user.email],
                             fail_silently=True,
                         )
