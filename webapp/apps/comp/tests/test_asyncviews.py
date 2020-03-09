@@ -1126,7 +1126,7 @@ def test_collaborator_usage_limits_triggered(
     )
     assert_status(400, resp, "resource limit triggered")
 
-    assert resp.data == {"collaborator": ResourceLimitException.collaborators_msg}
+    assert resp.data == {"collaborator_limit": ResourceLimitException.collaborators_msg}
 
     # Grant read access through assigning author triggers resource error.
     resp = api_client.put(
@@ -1135,7 +1135,7 @@ def test_collaborator_usage_limits_triggered(
         format="json",
     )
     assert_status(400, resp, "resource limit triggered on author")
-    assert resp.data == {"collaborator": ResourceLimitException.collaborators_msg}
+    assert resp.data == {"collaborator_limit": ResourceLimitException.collaborators_msg}
 
     # No problem adding user with read access as author
     resp = api_client.put(

@@ -461,7 +461,7 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                     )
                 except ResourceLimitException as rle:
                     return Response(
-                        data={"collaborator": str(rle)},
+                        data={"collaborator_limit": str(rle)},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 # PP already exists and is not expired.
@@ -583,7 +583,7 @@ class SimulationAccessAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, A
                     self.object.assign_role(access_obj["role"], user)
                 except ResourceLimitException as rle:
                     return Response(
-                        data={"collaborator": str(rle)},
+                        data={"collaborator_limit": str(rle)},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 updated_role = self.object.role(user)

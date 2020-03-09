@@ -263,6 +263,20 @@ export const CollaborationSettings: React.FC<{
           <Modal.Title>Collaboration Settings</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          {formikProps.status?.collaboratorLimit ? (
+            <Row className="w-100">
+              <Col>
+                <div className="alert alert-danger" role="alert">
+                  You have reached the limit for the number of collaborators on private simulations.
+                  You may make this simulation public or upgrade to{" "}
+                  <a href="/billing/upgrade/">
+                    <strong>Compute Studio Pro</strong>
+                  </a>{" "}
+                  to add more collaborators.
+                </div>
+              </Col>
+            </Row>
+          ) : null}
           <Row className="w-100 my-2 mx-0">
             <Col>
               <p className="lead ml-0">Authors</p>
@@ -573,7 +587,7 @@ export default class DescriptionComponent extends React.Component<
     }
   }
 
-  save(values: DescriptionValues) {
+  save(values: DescriptionValues, actions?: FormikHelpers<DescriptionValues>) {
     if (this.hasWriteAccess()) {
       let formdata = new FormData();
       for (const field of ["title", "readme", "is_public"]) {
@@ -587,12 +601,23 @@ export default class DescriptionComponent extends React.Component<
     }
 
     if (values.author?.add) {
-      this.props.api.addAuthors({ authors: [values.author.add] }).then(data => {
-        this.props.resetOutputs();
-        this.setState(prevState => ({
-          initialValues: { ...prevState.initialValues, author: { add: "", remove: "" } }
-        }));
-      });
+      this.props.api
+        .addAuthors({ authors: [values.author.add] })
+        .then(data => {
+          this.props.resetOutputs();
+          this.setState(prevState => ({
+            initialValues: { ...prevState.initialValues, author: { add: "", remove: "" } }
+          }));
+        })
+        .catch(error => {
+          if (!actions) throw error;
+          if (error.response.status == 400 && error.response.data.collaborator_limit) {
+            window.scroll(0, 0);
+            actions.setStatus({
+              collaboratorLimit: error.response.data.collaborator_limit
+            });
+          }
+        });
     }
     if (values.author?.remove) {
       this.props.api.deleteAuthor(values.author.remove).then(data => {
@@ -608,6 +633,15 @@ export default class DescriptionComponent extends React.Component<
           .putAccess([{ username: values.access.read.grant, role: "read" as Role }])
           .then(resp => {
             this.props.resetOutputs();
+          })
+          .catch(error => {
+            if (!actions) throw error;
+            if (error.response.status == 400 && error.response.data.collaborator_limit) {
+              window.scroll(0, 0);
+              actions.setStatus({
+                collaboratorLimit: error.response.data.collaborator_limit
+              });
+            }
           });
       } else if (values.access.read.remove) {
         this.props.api
@@ -648,7 +682,7 @@ export default class DescriptionComponent extends React.Component<
               isEditMode: false
             }));
           } else {
-            this.save(values);
+            this.save(values, actions);
           }
         }}
         validationSchema={Schema}

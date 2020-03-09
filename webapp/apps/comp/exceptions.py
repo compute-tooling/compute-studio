@@ -41,10 +41,8 @@ class PermissionExpiredException(CSError):
 class ResourceLimitException(CSException):
     collaborators_msg = (
         "You have reached the limit for the number of collaborators "
-        "that you can add to this simulation. You may make this "
-        "simulation public or upgrade to Compute Studio Pro to "
-        "increase the number of collaborators that are allowed on "
-        "this plan."
+        "on private simulations. You may make this simulation public "
+        "or upgrade to Compute Studio Pro to add more collaborators."
     )
 
     def __init__(self, resource, *args, **kwargs):
