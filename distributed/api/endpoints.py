@@ -25,7 +25,7 @@ bp = Blueprint("endpoints", __name__)
 
 queue_name = "celery"
 client = redis.Redis.from_url(
-    os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
+    os.environ.get("CELERY_BROKER_URL", "redis://redis-master/0")
 )
 
 
@@ -71,18 +71,18 @@ def dask_scheduler_address(owner, app_name):
     return f"{owner}-{app_name}-dask-scheduler:8786"
 
 
-def async_endpoint(compute_task):
+def async_endpoint(owner, app_name, compute_task):
     print(f"async endpoint {compute_task}")
     data = request.get_data()
     inputs = json.loads(data)
     print("inputs", inputs)
     result = celery_app.signature(compute_task, kwargs=inputs).delay()
-    length = client.llen(queue_name) + 1
+    length = client.llen(f"{owner}_{app_name}_queue") + 1
     data = {"job_id": str(result), "qlength": length}
     return json.dumps(data)
 
 
-def sync_endpoint(compute_task):
+def sync_endpoint(owner, app_name, compute_task):
     print(f"io endpoint {compute_task}")
     data = request.get_data()
     print("got data", data)
@@ -135,7 +135,7 @@ def route_to_task(owner, app_name, endpoint, action):
     print("got task_name", task_name)
     print("map", celery_app.amqp.routes)
     if task_name in celery_app.amqp.routes[0].map:
-        return endpoint(task_name)
+        return endpoint(owner, app_name, task_name)
     else:
         return json.dumps({"error": "invalid endpoint"}), 404
 
