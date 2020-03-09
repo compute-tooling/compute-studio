@@ -1,6 +1,7 @@
 import pytest
 
 from django.contrib.auth import get_user_model
+from django.shortcuts import reverse
 
 from webapp.apps.billing.models import Customer
 
@@ -91,9 +92,14 @@ class TestBillingViews:
         """
         client.force_login(customer.user)
         resp = client.get(f"/billing/upgrade/{plan_duration.lower()}/?upgrade_plan=pro")
+        assert resp.status_code == 302, f"Expected 302: got {resp.status_code}"
+        next_url = resp.url
+        assert next_url == reverse(
+            "upgrade_plan_duration", kwargs=dict(plan_duration=plan_duration.lower())
+        )
+        resp = client.get(next_url)
         assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
         assert resp.context["plan_duration"] == plan_duration.lower()
-
         customer = Customer.objects.get(pk=customer.pk)
         assert (
             resp.context["current_plan"]
@@ -141,6 +147,11 @@ class TestBillingViews:
         resp = client.get(
             f"/billing/upgrade/{plan_duration.lower()}/?upgrade_plan=free"
         )
+        assert resp.status_code == 302, f"Expected 302: got {resp.status_code}"
+        assert resp.url == reverse(
+            "upgrade_plan_duration", kwargs=dict(plan_duration=plan_duration.lower())
+        )
+        resp = client.get(resp.url)
         assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
         assert called == [True]
         customer = Customer.objects.get(pk=customer.pk)

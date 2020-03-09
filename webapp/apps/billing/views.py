@@ -3,7 +3,7 @@ import os
 import stripe
 
 from django.views import View, generic
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
@@ -14,7 +14,7 @@ from webapp.apps.users.models import Project
 
 from . import webhooks
 from .email import send_teams_interest_mail
-from .models import Customer, Product, Subscription, SubscriptionItem
+from .models import Customer, Product, Subscription, SubscriptionItem, UpdateStatus
 
 
 stripe.api_key = os.environ.get("STRIPE_SECRET")
@@ -129,7 +129,7 @@ class UpgradePlan(View):
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        # plan_duration optionally given in url: /billing/upgarde/[plan_duration]/
+        # plan_duration optionally given in url: /billing/upgrade/[plan_duration]/
         plan_duration = kwargs.get("plan_duration", "monthly")
         upgrade_plan, selected_plan = parse_upgrade_params(request)
         customer = getattr(request.user, "customer", None)
@@ -140,22 +140,31 @@ class UpgradePlan(View):
             card_info = customer.card_info()
             product = Product.objects.get(name="Compute Studio Subscription")
             current_plan = customer.current_plan()
-
+            result = UpdateStatus.nochange
             if upgrade_plan == "pro":
                 if plan_duration == "monthly":
                     new_plan = product.plans.get(nickname="Monthly Pro Plan")
                 else:
                     new_plan = product.plans.get(nickname="Yearly Pro Plan")
 
-                customer.update_plan(new_plan)
+                result = customer.update_plan(new_plan)
 
             elif upgrade_plan == "team":
                 send_teams_interest_mail(customer.user)
 
             elif upgrade_plan == "free":
-                customer.update_plan(None)
+                result = customer.update_plan(None)
 
             current_plan = customer.current_plan()
+
+            if result != UpdateStatus.nochange:
+                next_url = reverse(
+                    "upgrade_plan_duration",
+                    kwargs=dict(
+                        plan_duration=current_plan["plan_duration"] or plan_duration
+                    ),
+                )
+                return redirect(next_url)
 
         return render(
             request,

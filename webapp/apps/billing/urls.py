@@ -11,5 +11,4 @@ urlpatterns = [
         views.UpgradePlan.as_view(),
         name="upgrade_plan_duration",
     ),
-    # path("upgrade/done/")
 ]
