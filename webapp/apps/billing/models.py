@@ -425,7 +425,7 @@ class Subscription(models.Model):
             metadata=stripe_subscription.to_dict(),
             current_period_start=current_period_start,
             current_period_end=current_period_end,
-            subscription_type="primary",
+            subscription_type=subscription_type,
         )
         sub.plans.add(*plans)
         sub.save()
