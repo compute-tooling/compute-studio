@@ -18,6 +18,7 @@ from django.contrib.postgres.fields import JSONField
 from django.contrib.auth.models import Group
 from django.urls import reverse
 from django.utils import timezone
+from django.db import transaction
 
 from guardian.shortcuts import assign_perm, remove_perm, get_perms, get_users_with_perms
 
@@ -451,31 +452,44 @@ class Simulation(models.Model):
     def is_owner(self, user):
         return user == self.owner.user
 
-    def add_collaborator_test(self):
-        """
-        Test if user's plan allows them to add more collaborators
-        to this simulation.
-        """
+    def _collaborator_test(self, adding_collaborator=True):
         if self.is_public or not HAS_USAGE_RESTRICTIONS:
             return
 
         permission_objects = get_users_with_perms(self)
         num_collaborators = permission_objects.count()
 
+        if adding_collaborator:
+            num_collaborators += 1
+
         user = self.owner.user
         customer = getattr(user, "customer", None)
         if customer is None:
-            if num_collaborators + 1 > 2:
+            if num_collaborators > 2:
                 raise ResourceLimitException(
                     "collaborators", ResourceLimitException.collaborators_msg
                 )
 
         if customer is not None:
             current_plan = customer.current_plan()
-            if num_collaborators + 1 > 2 and current_plan["name"] == "free":
+            if num_collaborators > 2 and current_plan["name"] == "free":
                 raise ResourceLimitException(
                     "collaborators", ResourceLimitException.collaborators_msg
                 )
+
+    def add_collaborator_test(self):
+        """
+        Test if user's plan allows them to add more collaborators
+        to this simulation.
+        """
+        return self._collaborator_test(adding_collaborator=True)
+
+    def make_private_test(self):
+        """
+        Test if user's plan allows them to make the simulation private with
+        the existing number of collaborators.
+        """
+        return self._collaborator_test(adding_collaborator=False)
 
     """
     The methods below are used for checking if a user has read, write, or admin
@@ -527,7 +541,15 @@ class Simulation(models.Model):
         self.add_collaborator_test()
         assign_perm(Simulation.READ[0], user, self)
 
+    @transaction.atomic
     def assign_role(self, role, user):
+        """
+        Wrapper for granting and revoking permissions for a user.
+        Each of the methods below complete multiple DB transactions
+        which can cause some race condition-related bugs.
+
+        Roles: read, write, admin, None (none removes all perms.)
+        """
         if role == None:
             self.remove_permissions(user)
         elif role == "read":

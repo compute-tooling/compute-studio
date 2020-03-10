@@ -253,7 +253,7 @@ export const CollaborationSettings: React.FC<{
         onClick={() => setShow(true)}
       >
         <>
-          <i className={`fas fa-${formikProps.values.is_public ? "lock-open" : "lock"} mr-2`}></i>
+          <i className={`fas fa-${remoteSim.is_public ? "lock-open" : "lock"} mr-2`}></i>
           Share
         </>
       </Button>
@@ -361,7 +361,7 @@ export const CollaborationSettings: React.FC<{
             <Row className="w-100 mt-4 mb-2 mx-0">
               <Col>
                 <p className="lead">Who has access</p>
-                {values.is_public ? (
+                {remoteSim.is_public ? (
                   <p>
                     This simulation is <strong>public</strong> and can be viewed by anyone.
                   </p>
@@ -378,14 +378,14 @@ export const CollaborationSettings: React.FC<{
                       style={{ backgroundColor: "rgba(60, 62, 62, 1)", fontWeight: 450 }}
                       className="mb-4 w-100 mt-1"
                       onClick={() => {
-                        setFieldValue("is_public", !values.is_public);
+                        setFieldValue("is_public", !remoteSim.is_public);
                         // put handleSubmit in setTimeout since setFieldValue is async
                         // but does not return a promise
                         // https://github.com/jaredpalmer/formik/issues/529
                         setTimeout(handleSubmit, 0);
                       }}
                     >
-                      Make this simulation {values.is_public ? "private" : "public"}
+                      Make this simulation {remoteSim.is_public ? "private" : "public"}
                     </Button>
                   </Col>
                 </Row>
@@ -588,6 +588,13 @@ export default class DescriptionComponent extends React.Component<
   }
 
   save(values: DescriptionValues, actions?: FormikHelpers<DescriptionValues>) {
+    const resetStatus = () => {
+      if (!!actions) {
+        actions.setStatus({ collaboratorLimit: null });
+      }
+    };
+
+    resetStatus();
     if (this.hasWriteAccess()) {
       let formdata = new FormData();
       for (const field of ["title", "readme", "is_public"]) {
@@ -595,9 +602,36 @@ export default class DescriptionComponent extends React.Component<
       }
       formdata.append("model_pk", this.props.api.modelpk.toString());
       formdata.append("readme", JSON.stringify(values.readme));
-      this.props.api.putDescription(formdata).then(data => {
-        this.setState({ isEditMode: false, dirty: false, initialValues: values });
-      });
+      this.props.api
+        .putDescription(formdata)
+        .then(data => {
+          if (!!this.props.remoteSim && data.is_public !== this.props.remoteSim?.is_public) {
+            this.props.resetOutputs();
+          }
+          this.setState({
+            isEditMode: false,
+            dirty: false,
+            initialValues: {
+              ...values,
+              ...{
+                // is public is stored on the server side, except when the
+                // remoteSim has not been defined...i.e. new sim.
+                is_public: !!this.props.remoteSim
+                  ? this.props.remoteSim?.is_public
+                  : values.is_public
+              }
+            }
+          });
+        })
+        .catch(error => {
+          if (!actions) throw error;
+          if (error.response.status == 400 && error.response.data.collaborators) {
+            window.scroll(0, 0);
+            actions.setStatus({
+              collaboratorLimit: error.response.data.collaborators
+            });
+          }
+        });
     }
 
     if (values.author?.add) {
@@ -605,16 +639,17 @@ export default class DescriptionComponent extends React.Component<
         .addAuthors({ authors: [values.author.add] })
         .then(data => {
           this.props.resetOutputs();
+          resetStatus();
           this.setState(prevState => ({
             initialValues: { ...prevState.initialValues, author: { add: "", remove: "" } }
           }));
         })
         .catch(error => {
           if (!actions) throw error;
-          if (error.response.status == 400 && error.response.data.collaborator_limit) {
+          if (error.response.status == 400 && error.response.data.collaborators) {
             window.scroll(0, 0);
             actions.setStatus({
-              collaboratorLimit: error.response.data.collaborator_limit
+              collaboratorLimit: error.response.data.collaborators
             });
           }
         });
@@ -622,6 +657,7 @@ export default class DescriptionComponent extends React.Component<
     if (values.author?.remove) {
       this.props.api.deleteAuthor(values.author.remove).then(data => {
         this.props.resetOutputs();
+        resetStatus();
         this.setState(prevState => ({
           initialValues: { ...prevState.initialValues, author: { add: "", remove: "" } }
         }));
@@ -632,21 +668,25 @@ export default class DescriptionComponent extends React.Component<
         this.props.api
           .putAccess([{ username: values.access.read.grant, role: "read" as Role }])
           .then(resp => {
+            resetStatus();
             this.props.resetOutputs();
           })
           .catch(error => {
+            console.log("whoops");
             if (!actions) throw error;
-            if (error.response.status == 400 && error.response.data.collaborator_limit) {
+            if (error.response.status == 400 && error.response.data.collaborators) {
               window.scroll(0, 0);
               actions.setStatus({
-                collaboratorLimit: error.response.data.collaborator_limit
+                collaboratorLimit: error.response.data.collaborators
               });
             }
           });
-      } else if (values.access.read.remove) {
+      }
+      if (values.access.read.remove) {
         this.props.api
           .putAccess([{ username: values.access.read.remove, role: null }])
           .then(resp => {
+            resetStatus();
             this.props.resetOutputs();
           });
       }

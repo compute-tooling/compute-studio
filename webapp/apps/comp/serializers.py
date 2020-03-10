@@ -3,6 +3,7 @@ from guardian.shortcuts import get_users_with_perms
 
 from webapp.apps.publish.serializers import PublishSerializer
 
+from .exceptions import ResourceLimitException
 from .models import Inputs, Simulation, PendingPermission
 
 
@@ -62,6 +63,12 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
         rep["role"] = obj.role(user)
         rep["authors"] = sorted(rep["authors"])
         return rep
+
+    def validate_is_public(self, value):
+        if getattr(self, "instance", None) is not None:
+            self.instance.is_public = value
+            self.instance.make_private_test()
+        return value
 
     class Meta:
         model = Simulation

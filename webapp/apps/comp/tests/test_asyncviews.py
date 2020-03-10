@@ -1152,9 +1152,7 @@ class TestCollaboration:
         )
         assert_status(400, resp, "resource limit triggered")
 
-        assert resp.data == {
-            "collaborator_limit": ResourceLimitException.collaborators_msg
-        }
+        assert resp.data == {"collaborators": ResourceLimitException.collaborators_msg}
 
         # Grant read access through assigning author triggers resource error.
         resp = api_client.put(
@@ -1163,9 +1161,7 @@ class TestCollaboration:
             format="json",
         )
         assert_status(400, resp, "resource limit triggered on author")
-        assert resp.data == {
-            "collaborator_limit": ResourceLimitException.collaborators_msg
-        }
+        assert resp.data == {"collaborators": ResourceLimitException.collaborators_msg}
 
         # No problem adding user with read access as author
         resp = api_client.put(
@@ -1196,7 +1192,7 @@ class TestCollaboration:
             assert HAS_USAGE_RESTRICTIONS
             return
 
-        Customer.plan_in_nostripe_mode = "pro"
+        monkeypatch.setattr(Customer, "plan_in_nostripe_mode", "pro")
 
         inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, pro_profile)
 
@@ -1242,6 +1238,53 @@ class TestCollaboration:
                 format="json",
             )
             assert_status(200, resp, f"add author {str(collab)}")
+
+    def test_public_to_private_transition(
+        self,
+        db,
+        sponsored_matchups,
+        client,
+        api_client,
+        get_inputs,
+        meta_param_dict,
+        free_profile,
+    ):
+        """
+        Test collaborator resource usage limits.
+        - Test add 3 collaborators to public sim is OK.
+        - Test user can not make sim private afterwards.
+        """
+        inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, free_profile)
+
+        _, submit_sim = _submit_sim(inputs)
+        sim = submit_sim.submit()
+        sim.status = "SUCCESS"
+        sim.outputs = json.loads(read_outputs("Matchups_v1"))
+        sim.is_public = True
+        sim.save()
+
+        collabs = []
+        for i in range(3):
+            u = User.objects.create_user(
+                f"collab-{i}", f"collab{i}@example.com", "heyhey2222"
+            )
+            create_profile_from_user(u)
+            collabs.append(Profile.objects.get(user__username=f"collab-{i}"))
+
+        # Grant read access to users
+        api_client.force_login(sim.owner.user)
+        for collab in collabs:
+            resp = api_client.put(
+                f"{sim.get_absolute_api_url()}access/",
+                data=[{"username": str(collab), "role": "read"}],
+                format="json",
+            )
+            assert_status(204, resp, f"{str(collab)} granted read access")
+
+        resp = api_client.put(sim.get_absolute_api_url(), data={"is_public": False})
+        sim.refresh_from_db()
+        assert_status(400, resp, "can't make private with >2 collabs")
+        assert resp.data["collaborators"] == ResourceLimitException.collaborators_msg
 
 
 def test_list_sim_api(db, api_client, profile, get_inputs, meta_param_dict):
