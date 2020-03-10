@@ -244,6 +244,8 @@ export const CollaborationSettings: React.FC<{
 
   const { values, setFieldValue, handleSubmit } = formikProps;
 
+  const is_public = remoteSim?.is_public !== undefined ? remoteSim.is_public : values.is_public;
+
   return (
     <>
       <Button
@@ -253,7 +255,7 @@ export const CollaborationSettings: React.FC<{
         onClick={() => setShow(true)}
       >
         <>
-          <i className={`fas fa-${remoteSim.is_public ? "lock-open" : "lock"} mr-2`}></i>
+          <i className={`fas fa-${is_public ? "lock-open" : "lock"} mr-2`}></i>
           Share
         </>
       </Button>
@@ -361,7 +363,7 @@ export const CollaborationSettings: React.FC<{
             <Row className="w-100 mt-4 mb-2 mx-0">
               <Col>
                 <p className="lead">Who has access</p>
-                {remoteSim.is_public ? (
+                {is_public ? (
                   <p>
                     This simulation is <strong>public</strong> and can be viewed by anyone.
                   </p>
@@ -378,14 +380,14 @@ export const CollaborationSettings: React.FC<{
                       style={{ backgroundColor: "rgba(60, 62, 62, 1)", fontWeight: 450 }}
                       className="mb-4 w-100 mt-1"
                       onClick={() => {
-                        setFieldValue("is_public", !remoteSim.is_public);
+                        setFieldValue("is_public", !is_public);
                         // put handleSubmit in setTimeout since setFieldValue is async
                         // but does not return a promise
                         // https://github.com/jaredpalmer/formik/issues/529
                         setTimeout(handleSubmit, 0);
                       }}
                     >
-                      Make this simulation {remoteSim.is_public ? "private" : "public"}
+                      Make this simulation {is_public ? "private" : "public"}
                     </Button>
                   </Col>
                 </Row>
