@@ -106,7 +106,7 @@ export default class API {
     return axios.get(`/users/autocomplete?username=${username}`).then(resp => resp.data);
   }
 
-  addAuthors(data: { authors: Array<string> }): Promise<{}> {
+  addAuthors(data: { authors: Array<{ username: string; msg?: string }> }): Promise<{}> {
     return axios
       .put(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/authors/`, data)
       .then(response => response.data);
@@ -116,7 +116,7 @@ export default class API {
     return axios.delete(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/authors/${author}/`);
   }
 
-  putAccess(data: Array<{ username: string; role: Role }>): Promise<{}> {
+  putAccess(data: Array<{ username: string; role: Role; msg?: string }>): Promise<{}> {
     return axios
       .put(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/access/`, data)
       .then(() => ({}));

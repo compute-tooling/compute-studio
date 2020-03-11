@@ -787,7 +787,7 @@ class TestCollaboration:
         # Permission denied on unauthed user
         resp = api_client.put(
             f"{sim.get_absolute_api_url()}authors/",
-            data={"authors": [profile.user.username]},
+            data={"authors": [{"username": profile.user.username}]},
             format="json",
         )
         assert_status(403, resp, "denied_authors")
@@ -796,7 +796,7 @@ class TestCollaboration:
         api_client.force_login(profile.user)
         resp = api_client.put(
             f"{sim.get_absolute_api_url()}authors/",
-            data={"authors": [profile.user.username]},
+            data={"authors": [{"username": profile.user.username}]},
             format="json",
         )
         assert_status(403, resp, "denied_authors")
@@ -805,7 +805,7 @@ class TestCollaboration:
         api_client.force_login(modeler.user)
         resp = api_client.put(
             f"{sim.get_absolute_api_url()}authors/",
-            data={"authors": [profile.user.username]},
+            data={"authors": [{"username": profile.user.username}]},
             format="json",
         )
         assert_status(200, resp, "success_authors")
@@ -868,7 +868,7 @@ class TestCollaboration:
         api_client.force_login(modeler.user)
         resp = api_client.put(
             f"{sim.get_absolute_api_url()}authors/",
-            data={"authors": [profile.user.username]},
+            data={"authors": [{"username": profile.user.username}]},
             format="json",
         )
         assert_status(200, resp, "success_authors")
@@ -879,7 +879,7 @@ class TestCollaboration:
 
         resp = api_client.put(
             f"{sim.get_absolute_api_url()}authors/",
-            data={"authors": [profile.user.username]},
+            data={"authors": [{"username": profile.user.username}]},
             format="json",
         )
         assert_status(200, resp, "success_authors")
@@ -894,7 +894,7 @@ class TestCollaboration:
 
         resp = api_client.put(
             f"{sim.get_absolute_api_url()}authors/",
-            data={"authors": [profile.user.username]},
+            data={"authors": [{"username": profile.user.username}]},
             format="json",
         )
         assert_status(200, resp, "success_authors")
@@ -944,7 +944,7 @@ class TestCollaboration:
         # first create a pending permission through the api.
         resp = api_client.put(
             f"{sim.get_absolute_api_url()}authors/",
-            data={"authors": [profile.user.username]},
+            data={"authors": [{"username": profile.user.username}]},
             format="json",
         )
         assert_status(200, resp, "success_authors")
@@ -962,7 +962,7 @@ class TestCollaboration:
         api_client.force_login(modeler.user)
         resp = api_client.put(
             f"{sim.get_absolute_api_url()}authors/",
-            data={"authors": [profile.user.username]},
+            data={"authors": [{"username": profile.user.username}]},
             format="json",
         )
         assert_status(200, resp, "success_authors")
@@ -992,7 +992,7 @@ class TestCollaboration:
         api_client.force_login(modeler.user)
         resp = api_client.put(
             f"{sim.get_absolute_api_url()}authors/",
-            data={"authors": [profile.user.username]},
+            data={"authors": [{"username": profile.user.username}]},
             format="json",
         )
         assert_status(200, resp, "success_authors")
@@ -1157,7 +1157,7 @@ class TestCollaboration:
         # Grant read access through assigning author triggers resource error.
         resp = api_client.put(
             f"{sim.get_absolute_api_url()}authors/",
-            data={"authors": [str(collabs[1])]},
+            data={"authors": [{"username": str(collabs[1])}]},
             format="json",
         )
         assert_status(400, resp, "resource limit triggered on author")
@@ -1166,7 +1166,7 @@ class TestCollaboration:
         # No problem adding user with read access as author
         resp = api_client.put(
             f"{sim.get_absolute_api_url()}authors/",
-            data={"authors": [str(collabs[0])]},
+            data={"authors": [{"username": str(collabs[0])}]},
             format="json",
         )
         assert_status(200, resp, "no problem when user already has read access")
@@ -1234,7 +1234,7 @@ class TestCollaboration:
         for collab in collabs:
             resp = api_client.put(
                 f"{sim.get_absolute_api_url()}authors/",
-                data={"authors": [str(collab)]},
+                data={"authors": [{"username": str(collab)}]},
                 format="json",
             )
             assert_status(200, resp, f"add author {str(collab)}")

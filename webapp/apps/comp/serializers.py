@@ -174,6 +174,7 @@ class SimAccessSerializer(serializers.Serializer):
         required=True, choices=("read", "write", "admin"), allow_null=True
     )
     username = serializers.CharField(required=True)
+    msg = serializers.CharField(required=False, allow_blank=True)
 
     @staticmethod
     def ser(sim: Simulation, user=None):
@@ -188,8 +189,9 @@ class SimAccessSerializer(serializers.Serializer):
         }
 
     class Meta:
-        fields = ("is_owner", "role", "username")
+        fields = ("is_owner", "role", "username", "msg")
         read_only = ("is_owner",)
+        write_only = ("msg",)
 
 
 class SimulationSerializer(serializers.ModelSerializer):
@@ -282,5 +284,10 @@ class SimulationSerializer(serializers.ModelSerializer):
         )
 
 
+class AuthorSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    msg = serializers.CharField(required=False, allow_blank=True)
+
+
 class AddAuthorsSerializer(serializers.Serializer):
-    authors = serializers.ListField(child=serializers.CharField(), max_length=10)
+    authors = serializers.ListField(child=AuthorSerializer(), max_length=10)

@@ -450,7 +450,7 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
 
         if ser.is_valid():
             data = ser.validated_data
-            new_authors = set(data["authors"])
+            new_authors = set(obj["username"] for obj in data["authors"])
             profiles = Profile.objects.filter(user__username__in=new_authors)
             if profiles.count() < len(new_authors):
                 return Response(
@@ -461,7 +461,6 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                 if self.object.authors.filter(pk=profile.pk).count() > 0:
                     continue
                 try:
-                    print("trying....", self.object.role(profile.user))
                     pp, created = PendingPermission.objects.get_or_create(
                         sim=self.object, profile=profile, permission_name="add_author"
                     )
@@ -482,6 +481,18 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                     )
 
                 try:
+                    msg = next(
+                        (
+                            obj["msg"]
+                            for obj in data["authors"]
+                            if obj["username"] == str(profile)
+                        ),
+                        None,
+                    )
+                    if msg:
+                        msg = f"{msg}\n\n"
+                    else:
+                        msg = None
                     host = f"https://{request.get_host()}"
                     sim_url = f"{host}{self.object.get_absolute_url()}"
                     confirmation_url = f"{host}{pp.get_absolute_url()}"
@@ -490,18 +501,21 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                         (
                             f"{request.user.username} has requested that you be "
                             f"added as an author on this simulation: {sim_url}.\n\n"
+                            f"{msg if msg else ''}"
                             f"Click the following link to confirm that you would "
                             f"like to be added as an author on this simulation: \n"
                             f"{confirmation_url}"
                             f"\n\nPlease reply to this email if you have any questions."
                         ),
-                        "notifications@compute.studio",
+                        f"{str(request.user.username)} <notifications@compute.studio>",
                         [profile.user.email],
                         fail_silently=True,
                     )
                 # Http 401 exception if mail credentials are not set up.
                 except Exception:
-                    pass
+                    import traceback
+
+                    traceback.print_exc()
 
             return Response(
                 PendingPermissionSerializer(
@@ -510,7 +524,7 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                 status=status.HTTP_200_OK,
             )
         else:
-            return Response(ser.data, status=status.HTTP_400_BAD_REQUEST)
+            return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AuthorsDeleteAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
@@ -595,25 +609,34 @@ class SimulationAccessAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, A
                 updated_role = self.object.role(user)
                 if updated_role is not None and updated_role != previous_role:
                     try:
+                        msg = access_obj.get("msg", None)
+                        if msg:
+                            msg = f"{msg}\n\n"
+                        else:
+                            msg = None
+
                         host = f"https://{request.get_host()}"
                         sim_url = f"{host}{self.object.get_absolute_url()}"
                         send_mail(
                             f"Updated role for {self.object}",
                             (
                                 f"You have been assigned the {updated_role} role for this simulation: "
-                                f"{sim_url}."
-                                f"\n\nPlease reply to this email if you have any questions."
+                                f"{sim_url}.\n\n"
+                                f"{msg}"
+                                f"\nPlease reply to this email if you have any questions."
                             ),
-                            "notifications@compute.studio",
+                            f"{request.user.username} <notifications@compute.studio>",
                             [user.email],
                             fail_silently=True,
                         )
                     # Http 401 exception if mail credentials are not set up.
                     except Exception:
-                        pass
+                        import traceback
+
+                        traceback.print_exc()
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
-            return Response(ser.data, status=status.HTTP_400_BAD_REQUEST)
+            return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SimsAPIView(generics.ListAPIView):

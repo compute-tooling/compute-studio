@@ -119,6 +119,19 @@ export interface BokehOutput extends RemoteOutput {
   data: { target_id: string; root_id: string; doc: string };
 }
 
+export interface DescriptionValues {
+  title: string;
+  readme: { [key: string]: any }[] | Node[];
+  is_public: boolean;
+  author: {
+    add: { username: string; msg?: string };
+    remove: { username: string };
+  };
+  access: {
+    read: { grant: { username: string; msg?: string }; remove: { username: string } };
+  };
+}
+
 // Interfaces below correspond to interfaces defined in:
 // webapp/apps/comp/serializers.py
 // cs_storage/validate.py
