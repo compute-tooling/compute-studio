@@ -159,50 +159,46 @@ export const CollaborationSettings: React.FC<{
           <Row className="w-100 my-2 mx-0">
             <Col>
               <p className="lead ml-0">Authors</p>
-              {(authors.length > 0 ? authors : [{ username: user }]).map((author, ix) => (
-                <Row
-                  key={ix}
-                  className={`w-100 p-2 justify-content-between border ${
-                    ix === 0 ? " rounded-top " : " "
-                  }
-                      ${ix < authors.length - 1 ? " border-bottom-0" : " rounded-bottom"}`}
-                >
-                  <Col className="col-7">
-                    <span>{author.username}</span>
-                  </Col>
-                  <Col className="col-4">
-                    {author.pending ? (
-                      <Tip tip={`Waiting for ${author.username}'s approval.`}>
-                        <span className="text-muted">pending</span>
-                      </Tip>
-                    ) : null}
-                    {author.username === remoteSim?.owner ? (
-                      <span className="text-success">owner</span>
-                    ) : null}
-                  </Col>
-                  <Col className="col-1">
-                    {/* owner cannt be removed, to remove an author user must have
+              <div className="row-flush">
+                {(authors.length > 0 ? authors : [{ username: user }]).map((author, ix) => (
+                  <Row key={ix} className="w-100 p-2 justify-content-between row-flush-item">
+                    <Col className="col-7">
+                      <span>{author.username}</span>
+                    </Col>
+                    <Col className="col-4">
+                      {author.pending ? (
+                        <Tip tip={`Waiting for ${author.username}'s approval.`}>
+                          <span className="text-muted">pending</span>
+                        </Tip>
+                      ) : null}
+                      {author.username === remoteSim?.owner ? (
+                        <span className="text-success">owner</span>
+                      ) : null}
+                    </Col>
+                    <Col className="col-1">
+                      {/* owner cannt be removed, to remove an author user must have
                       write access or be removing themselves. */}
-                    {remoteSim &&
-                    author.username !== remoteSim?.owner &&
-                    ((remoteSim && RolePerms.hasAdminAccess(remoteSim)) ||
-                      user === author.username) ? (
-                      <a
-                        className="color-inherit"
-                        role="button"
-                        style={{ maxHeight: 0.5, cursor: "pointer" }}
-                        onClick={() => {
-                          setFieldValue("author.remove.username", author.username);
-                          setTimeout(handleSubmit, 0);
-                          setTimeout(() => setFieldValue("author.remove", ""), 0);
-                        }}
-                      >
-                        <i className="far fa-trash-alt hover-red"></i>
-                      </a>
-                    ) : null}
-                  </Col>
-                </Row>
-              ))}
+                      {remoteSim &&
+                      author.username !== remoteSim?.owner &&
+                      ((remoteSim && RolePerms.hasAdminAccess(remoteSim)) ||
+                        user === author.username) ? (
+                        <a
+                          className="color-inherit"
+                          role="button"
+                          style={{ maxHeight: 0.5, cursor: "pointer" }}
+                          onClick={() => {
+                            setFieldValue("author.remove.username", author.username);
+                            setTimeout(handleSubmit, 0);
+                            setTimeout(() => setFieldValue("author.remove", ""), 0);
+                          }}
+                        >
+                          <i className="far fa-trash-alt hover-red"></i>
+                        </a>
+                      ) : null}
+                    </Col>
+                  </Row>
+                ))}
+              </div>
             </Col>
           </Row>
           {remoteSim && RolePerms.hasAdminAccess(remoteSim) ? (
@@ -289,45 +285,44 @@ export const CollaborationSettings: React.FC<{
               <Row className="w-100 my-2 mx-0">
                 <Col>
                   <p className="lead">Manage access</p>
-                  {remoteSim.access.map((accessobj, ix) => (
-                    <Row
-                      key={ix}
-                      className={`w-100 p-2 justify-content-between border ${
-                        ix === 0 ? " rounded-top " : " "
-                      }
-                      ${ix < remoteSim.access.length - 1 ? " border-bottom-0" : " rounded-bottom"}`}
-                    >
-                      <Col className="col-7">
-                        <span>{accessobj.username}</span>
-                      </Col>
-                      <Col className="col-4">
-                        {accessobj.is_owner ? (
-                          <span className="text-success">owner</span>
-                        ) : (
-                          <span className="text-muted">{accessobj.role}</span>
-                        )}
-                      </Col>
-                      <Col className="col-1">
-                        {/* owner cannot lose access, and authors must be removed as authors
+                  <div className="row-flush">
+                    {remoteSim.access.map((accessobj, ix) => (
+                      <Row key={ix} className="w-100 p-2 justify-content-between row-flush-item">
+                        <Col className="col-7">
+                          <span>{accessobj.username}</span>
+                        </Col>
+                        <Col className="col-4">
+                          {accessobj.is_owner ? (
+                            <span className="text-success">owner</span>
+                          ) : (
+                            <span className="text-muted">{accessobj.role}</span>
+                          )}
+                        </Col>
+                        <Col className="col-1">
+                          {/* owner cannot lose access, and authors must be removed as authors
                           before they can lose access to the simulation. */}
-                        {accessobj.username !== remoteSim?.owner &&
-                        !authors.find(author => author.username === accessobj.username) ? (
-                          <a
-                            className="color-inherit"
-                            role="button"
-                            style={{ maxHeight: 0.5, cursor: "pointer" }}
-                            onClick={() => {
-                              setFieldValue("access.read.remove.username", accessobj.username);
-                              setTimeout(handleSubmit, 0);
-                              setTimeout(() => setFieldValue("access.read.remove.username", ""), 0);
-                            }}
-                          >
-                            <i className="far fa-trash-alt hover-red"></i>
-                          </a>
-                        ) : null}
-                      </Col>
-                    </Row>
-                  ))}
+                          {accessobj.username !== remoteSim?.owner &&
+                          !authors.find(author => author.username === accessobj.username) ? (
+                            <a
+                              className="color-inherit"
+                              role="button"
+                              style={{ maxHeight: 0.5, cursor: "pointer" }}
+                              onClick={() => {
+                                setFieldValue("access.read.remove.username", accessobj.username);
+                                setTimeout(handleSubmit, 0);
+                                setTimeout(
+                                  () => setFieldValue("access.read.remove.username", ""),
+                                  0
+                                );
+                              }}
+                            >
+                              <i className="far fa-trash-alt hover-red"></i>
+                            </a>
+                          ) : null}
+                        </Col>
+                      </Row>
+                    ))}
+                  </div>
                 </Col>
               </Row>
               <Row className="w-100 justify-content-left my-2">

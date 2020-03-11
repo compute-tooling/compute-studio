@@ -389,3 +389,19 @@ blockquote {
   background-color: #f3f5f8;
   border-bottom: 1px solid #e1e4e8;
 }
+
+/* Create flush rows like Boostrap's flush-lists */
+.row-flush .row-flush-item {
+  border: 1px solid #dee2e6;
+  border-bottom: 0 !important;
+}
+.row-flush .row-flush-item:first-child {
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+}
+
+.row-flush .row-flush-item:last-child {
+  border-bottom-left-radius: 0.25rem;
+  border-bottom-right-radius: 0.25rem;
+  border-bottom: 1px solid #dee2e6 !important;
+}
