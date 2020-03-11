@@ -6,7 +6,56 @@ import { FormikProps, Field, FastField } from "formik";
 import { Tip } from "../components";
 import { RolePerms } from "../roles";
 
-export const UserQuery: React.FC<{
+const ConfirmSelected: React.FC<{
+  userFieldName: string;
+  msgFieldName: string;
+  setSelected: (selected: boolean) => void;
+  formikProps: FormikProps<DescriptionValues>;
+}> = ({ userFieldName, msgFieldName, setSelected, formikProps }) => {
+  const { setFieldValue, handleSubmit } = formikProps;
+  return (
+    <>
+      <FastField
+        name={msgFieldName}
+        type="text"
+        className="form-control my-2"
+        component="textarea"
+        placeholder="Add a note"
+      ></FastField>
+      <Row className="w-100 justify-content-left p-0 my-2">
+        <Col className="col-auto">
+          <a
+            className="btn btn-success"
+            style={{ color: "white", cursor: "pointer" }}
+            onClick={() => {
+              setTimeout(handleSubmit, 0);
+              setTimeout(() => setFieldValue(userFieldName, ""), 0);
+              setTimeout(() => setFieldValue(msgFieldName, ""), 0);
+              setSelected(false);
+            }}
+          >
+            Confirm
+          </a>
+        </Col>
+        <Col className="col-auto">
+          <a
+            className="btn btn-light"
+            style={{ color: "black", cursor: "pointer" }}
+            onClick={() => {
+              setFieldValue(userFieldName, "");
+              setFieldValue(msgFieldName, "");
+              setSelected(false);
+            }}
+          >
+            Cancel
+          </a>
+        </Col>
+      </Row>
+    </>
+  );
+};
+
+const UserQuery: React.FC<{
   show: boolean;
   selectedUsers: Array<{ username: string }>;
   query: Array<{ username: string }>;
@@ -17,7 +66,6 @@ export const UserQuery: React.FC<{
   return (
     <div className="border rounded shadow mt-2 custom-dropdown-menu">
       {query.map((user, qix) => (
-        // TODO: maybe set this as FocusableCard
         <Row className="my-2 mx-3 w-auto" key={qix}>
           <Col>
             <a
@@ -191,44 +239,12 @@ export const CollaborationSettings: React.FC<{
                   }}
                 />
                 {authorSelected ? (
-                  <>
-                    <FastField
-                      name="author.add.msg"
-                      type="text"
-                      className="form-control my-2"
-                      component="textarea"
-                      placeholder="Add a note"
-                    ></FastField>
-                    <Row className="w-100 justify-content-left p-0 my-2">
-                      <Col className="col-auto">
-                        <a
-                          className="btn btn-success"
-                          style={{ color: "white", cursor: "pointer" }}
-                          onClick={() => {
-                            setTimeout(handleSubmit, 0);
-                            setTimeout(() => setFieldValue("author.add.username", ""), 0);
-                            setTimeout(() => setFieldValue("author.add.msg", ""), 0);
-                            setAuthorSelected(false);
-                          }}
-                        >
-                          Confirm
-                        </a>
-                      </Col>
-                      <Col className="col-auto">
-                        <a
-                          className="btn btn-light"
-                          style={{ color: "black", cursor: "pointer" }}
-                          onClick={() => {
-                            setFieldValue("author.add.username", "");
-                            setFieldValue("author.add.msg", "");
-                            setAuthorSelected(false);
-                          }}
-                        >
-                          Cancel
-                        </a>
-                      </Col>
-                    </Row>
-                  </>
+                  <ConfirmSelected
+                    userFieldName="author.add.username"
+                    msgFieldName="author.add.msg"
+                    setSelected={setAuthorSelected}
+                    formikProps={formikProps}
+                  />
                 ) : null}
               </Col>
             </Row>
@@ -347,44 +363,12 @@ export const CollaborationSettings: React.FC<{
                     }}
                   />
                   {accessSelected ? (
-                    <>
-                      <FastField
-                        name="access.read.grant.msg"
-                        type="text"
-                        className="form-control my-2"
-                        component="textarea"
-                        placeholder="Add a note"
-                      ></FastField>
-                      <Row className="w-100 justify-content-left p-0 my-2">
-                        <Col className="col-auto">
-                          <a
-                            className="btn btn-success"
-                            style={{ color: "white", cursor: "pointer" }}
-                            onClick={() => {
-                              setTimeout(handleSubmit, 0);
-                              setTimeout(() => setFieldValue("access.read.grant.username", ""), 0);
-                              setTimeout(() => setFieldValue("access.read.grant.msg", ""), 0);
-                              setAccessSelected(false);
-                            }}
-                          >
-                            Confirm
-                          </a>
-                        </Col>
-                        <Col className="col-auto">
-                          <a
-                            className="btn btn-light"
-                            style={{ color: "black", cursor: "pointer" }}
-                            onClick={() => {
-                              setFieldValue("access.read.grant.username", "");
-                              setFieldValue("access.read.grant.msg", "");
-                              setAccessSelected(false);
-                            }}
-                          >
-                            Cancel
-                          </a>
-                        </Col>
-                      </Row>
-                    </>
+                    <ConfirmSelected
+                      userFieldName="access.read.grant.username"
+                      msgFieldName="access.read.grant.msg"
+                      setSelected={setAccessSelected}
+                      formikProps={formikProps}
+                    />
                   ) : null}
                 </Col>
               </Row>
