@@ -101,7 +101,7 @@ const ConfirmSelected: React.FC<{
               setSelected(false);
             }}
           >
-            Confirm
+            <strong>Confirm</strong>
           </a>
         </Col>
         <Col className="col-auto">
@@ -251,7 +251,7 @@ export const CollaborationSettings: React.FC<{
                   <Col className="col-auto">
                     <Button
                       variant="dark"
-                      style={{ backgroundColor: "rgba(60, 62, 62, 1)", fontWeight: 450 }}
+                      style={{ backgroundColor: "rgba(60, 62, 62, 1)", fontWeight: 600 }}
                       className="mb-4 w-100 mt-1"
                       onClick={() => {
                         setFieldValue("is_public", !is_public);
