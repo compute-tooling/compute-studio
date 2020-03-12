@@ -633,7 +633,8 @@ class PendingPermissionManger(models.Manager):
         pp, created = super().get_or_create(
             sim=sim, profile=profile, permission_name=permission_name, **kwargs
         )
-        if created and pp.sim.role(pp.profile.user) is None:
+        # guarantee use at least as the read role.
+        if pp.sim.role(pp.profile.user) is None:
             pp.sim.assign_role("read", pp.profile.user)
         return pp, created
 
