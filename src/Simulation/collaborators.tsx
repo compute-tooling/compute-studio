@@ -278,19 +278,19 @@ export const CollaborationSettings: React.FC<{
                       const author = authors.find(author => author.username === accessobj.username);
                       return (
                         <Row key={ix} className="w-100 p-2 justify-content-between row-flush-item">
-                          <Col className="col-5">
+                          <Col className="col-md-5">
                             <span>
                               <strong>{accessobj.username}</strong>
                             </span>
                           </Col>
-                          <Col className="col-2">
+                          <Col className="col-md-2">
                             {accessobj.is_owner ? (
                               <span>Owner</span>
                             ) : (
                               <span>{prettyRole(accessobj.role)}</span>
                             )}
                           </Col>
-                          <Col className="col-4">
+                          <Col className="col-md-4">
                             {!!author ? (
                               author.pending ? (
                                 <span className="text-muted">
@@ -319,7 +319,7 @@ export const CollaborationSettings: React.FC<{
                               </a>
                             )}
                           </Col>
-                          <Col className="col-1">
+                          <Col className="col-md-1">
                             {/* owner cannot lose access, and authors must be removed as authors
                           before they can lose access to the simulation. */}
                             {accessobj.username !== remoteSim?.owner ? (
