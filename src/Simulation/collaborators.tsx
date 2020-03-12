@@ -1,36 +1,103 @@
 import React = require("react");
-import { Row, Col, Button, Modal } from "react-bootstrap";
+import { Row, Col, Button, Modal, Dropdown } from "react-bootstrap";
 import API from "./API";
-import { Simulation, RemoteOutputs, DescriptionValues } from "../types";
-import { FormikProps, Field, FastField } from "formik";
+import { Simulation, RemoteOutputs, DescriptionValues, Role } from "../types";
+import { FormikProps, Field, FastField, setNestedObjectValues } from "formik";
 import { Tip } from "../components";
 import { RolePerms } from "../roles";
 
+const prettyRole = (role: Role | "owner") => {
+  switch (role) {
+    case "read":
+      return "Reader";
+    case "write":
+      return "Write";
+    case "admin":
+      return "Administrator";
+    case "owner":
+      return "Onwer";
+  }
+};
+
 const ConfirmSelected: React.FC<{
-  userFieldName: string;
-  msgFieldName: string;
+  selectedUser: string;
   setSelected: (selected: boolean) => void;
   formikProps: FormikProps<DescriptionValues>;
-}> = ({ userFieldName, msgFieldName, setSelected, formikProps }) => {
-  const { setFieldValue, handleSubmit } = formikProps;
+  defaultInviteAuthor?: boolean;
+}> = ({ selectedUser, setSelected, formikProps, defaultInviteAuthor }) => {
+  const [inviteAuthor, setInviteAuthor] = React.useState(
+    defaultInviteAuthor !== undefined ? defaultInviteAuthor : false
+  );
+  const [msg, setMsg] = React.useState("");
+  const { handleSubmit, setValues, values } = formikProps;
+
   return (
     <>
-      <FastField
-        name={msgFieldName}
-        type="text"
+      <textarea
+        name="message"
         className="form-control my-2"
-        component="textarea"
+        // component="textarea"
+        value={msg}
         placeholder="Add a note"
-      ></FastField>
+        onChange={e => setMsg(e.target.value)}
+      />
+      <Row className="w-100 justify-content-left p-0 my-2">
+        <Col className="col-auto align-self-center">
+          <input
+            className="form-check mt-1 d-inline-block mr-2"
+            type="checkbox"
+            name="inviteAuthor"
+            id="inviteAuthor"
+            checked={inviteAuthor}
+            onChange={e => {
+              setInviteAuthor(!inviteAuthor);
+            }}
+          />
+          <label className="align-middle" htmlFor="inviteAuthor">
+            <strong>Invite to author ({inviteAuthor.toString()}) </strong>
+          </label>
+        </Col>
+      </Row>
       <Row className="w-100 justify-content-left p-0 my-2">
         <Col className="col-auto">
           <a
             className="btn btn-success"
             style={{ color: "white", cursor: "pointer" }}
             onClick={() => {
+              if (inviteAuthor) {
+                setValues({
+                  ...formikProps.values,
+                  author: {
+                    add: { username: selectedUser, msg: msg },
+                    remove: { username: "" }
+                  },
+                  access: {
+                    read: { grant: { username: "", msg: "" }, remove: { username: "" } }
+                  }
+                });
+              } else {
+                setValues({
+                  ...formikProps.values,
+                  author: { add: { username: "", msg: "" }, remove: { username: "" } },
+                  access: {
+                    read: {
+                      grant: { username: selectedUser, msg: msg },
+                      remove: { username: "" }
+                    }
+                  }
+                });
+              }
+
               setTimeout(handleSubmit, 0);
-              setTimeout(() => setFieldValue(userFieldName, ""), 0);
-              setTimeout(() => setFieldValue(msgFieldName, ""), 0);
+
+              setTimeout(() =>
+                setValues({
+                  ...values,
+                  author: { add: { username: "", msg: "" }, remove: { username: "" } },
+                  access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } }
+                })
+              );
+
               setSelected(false);
             }}
           >
@@ -42,8 +109,12 @@ const ConfirmSelected: React.FC<{
             className="btn btn-light"
             style={{ color: "black", cursor: "pointer" }}
             onClick={() => {
-              setFieldValue(userFieldName, "");
-              setFieldValue(msgFieldName, "");
+              setValues({
+                ...values,
+                author: { add: { username: "", msg: "" }, remove: { username: "" } },
+                access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } }
+              });
+              setMsg("");
               setSelected(false);
             }}
           >
@@ -93,13 +164,12 @@ export const CollaborationSettings: React.FC<{
   formikProps: FormikProps<DescriptionValues>;
 }> = ({ api, user, remoteSim, formikProps }) => {
   const [show, setShow] = React.useState(false);
-  const [viewAuthorQuery, setViewAuthorQuery] = React.useState(false);
-  const [authorQuery, setAuthorQuery] = React.useState<Array<{ username: string }>>([]);
-  const [authorSelected, setAuthorSelected] = React.useState(false);
 
   const [accessQuery, setAccessQuery] = React.useState<Array<{ username: string }>>([]);
   const [viewAccessQuery, setViewAccessQuery] = React.useState(false);
   const [accessSelected, setAccessSelected] = React.useState(false);
+
+  const [authorSelected, setAuthorSelected] = React.useState(false);
 
   let authors: Array<{
     username: string;
@@ -122,6 +192,13 @@ export const CollaborationSettings: React.FC<{
   const { values, setFieldValue, handleSubmit } = formikProps;
 
   const is_public = remoteSim?.is_public !== undefined ? remoteSim.is_public : values.is_public;
+
+  let accessobjs: Simulation<any>["access"];
+  if (RolePerms.hasAdminAccess(remoteSim)) {
+    accessobjs = remoteSim.access;
+  } else {
+    accessobjs = [{ username: user, role: "read", is_owner: false }];
+  }
 
   return (
     <>
@@ -156,97 +233,8 @@ export const CollaborationSettings: React.FC<{
               </Col>
             </Row>
           ) : null}
-          <Row className="w-100 my-2 mx-0">
-            <Col>
-              <p className="lead ml-0">Authors</p>
-              <div className="row-flush">
-                {(authors.length > 0 ? authors : [{ username: user }]).map((author, ix) => (
-                  <Row key={ix} className="w-100 p-2 justify-content-between row-flush-item">
-                    <Col className="col-7">
-                      <span>{author.username}</span>
-                    </Col>
-                    <Col className="col-4">
-                      {author.pending ? (
-                        <Tip tip={`Waiting for ${author.username}'s approval.`}>
-                          <span className="text-muted">pending</span>
-                        </Tip>
-                      ) : null}
-                      {author.username === remoteSim?.owner ? (
-                        <span className="text-success">owner</span>
-                      ) : null}
-                    </Col>
-                    <Col className="col-1">
-                      {/* owner cannt be removed, to remove an author user must have
-                      write access or be removing themselves. */}
-                      {remoteSim &&
-                      author.username !== remoteSim?.owner &&
-                      ((remoteSim && RolePerms.hasAdminAccess(remoteSim)) ||
-                        user === author.username) ? (
-                        <a
-                          className="color-inherit"
-                          role="button"
-                          style={{ maxHeight: 0.5, cursor: "pointer" }}
-                          onClick={() => {
-                            setFieldValue("author.remove.username", author.username);
-                            setTimeout(handleSubmit, 0);
-                            setTimeout(() => setFieldValue("author.remove", ""), 0);
-                          }}
-                        >
-                          <i className="far fa-trash-alt hover-red"></i>
-                        </a>
-                      ) : null}
-                    </Col>
-                  </Row>
-                ))}
-              </div>
-            </Col>
-          </Row>
-          {remoteSim && RolePerms.hasAdminAccess(remoteSim) ? (
-            <Row className="w-100 justify-content-left my-2">
-              <Col>
-                <Field name="author.add.username">
-                  {({ field }) => (
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Search by email or username."
-                      {...field}
-                      onFocus={() => {
-                        setViewAuthorQuery(true);
-                      }}
-                      onChange={e => {
-                        setViewAuthorQuery(true);
-                        handleQuery(e, users => setAuthorQuery(users));
-                        setFieldValue("author.add.username", e.target.value);
-                      }}
-                      readOnly={authorSelected}
-                    ></input>
-                  )}
-                </Field>
-                <UserQuery
-                  query={authorQuery}
-                  selectedUsers={authors}
-                  show={viewAuthorQuery}
-                  onSelectUser={selected => {
-                    if (authors.find(a => a.username === selected.username)) return;
-                    setFieldValue("author.add.username", selected.username);
-                    setAuthorSelected(true);
-                    setAuthorQuery([]);
-                  }}
-                />
-                {authorSelected ? (
-                  <ConfirmSelected
-                    userFieldName="author.add.username"
-                    msgFieldName="author.add.msg"
-                    setSelected={setAuthorSelected}
-                    formikProps={formikProps}
-                  />
-                ) : null}
-              </Col>
-            </Row>
-          ) : null}
           {RolePerms.hasAdminAccess(remoteSim) || !remoteSim ? (
-            <Row className="w-100 mt-4 mb-2 mx-0">
+            <Row className="w-100 mb-2 mx-0">
               <Col>
                 <p className="lead">Who has access</p>
                 {is_public ? (
@@ -280,93 +268,172 @@ export const CollaborationSettings: React.FC<{
               </Col>
             </Row>
           ) : null}
-          {RolePerms.hasAdminAccess(remoteSim) ? (
+          {user !== "anon" ? (
             <>
               <Row className="w-100 my-2 mx-0">
                 <Col>
-                  <p className="lead">Manage access</p>
+                  <p className="lead">People</p>
                   <div className="row-flush">
-                    {remoteSim.access.map((accessobj, ix) => (
-                      <Row key={ix} className="w-100 p-2 justify-content-between row-flush-item">
-                        <Col className="col-7">
-                          <span>{accessobj.username}</span>
-                        </Col>
-                        <Col className="col-4">
-                          {accessobj.is_owner ? (
-                            <span className="text-success">owner</span>
-                          ) : (
-                            <span className="text-muted">{accessobj.role}</span>
-                          )}
-                        </Col>
-                        <Col className="col-1">
-                          {/* owner cannot lose access, and authors must be removed as authors
+                    {accessobjs.map((accessobj, ix) => {
+                      const author = authors.find(author => author.username === accessobj.username);
+                      return (
+                        <Row key={ix} className="w-100 p-2 justify-content-between row-flush-item">
+                          <Col className="col-5">
+                            <span style={{ fontWeight: 600 }}>{accessobj.username}</span>
+                          </Col>
+                          <Col className="col-2">
+                            {accessobj.is_owner ? (
+                              <span>Owner</span>
+                            ) : (
+                              <span>{prettyRole(accessobj.role)}</span>
+                            )}
+                          </Col>
+                          <Col className="col-4">
+                            {!!author ? (
+                              author.pending ? (
+                                <span className="text-muted">
+                                  <i className="fas fa-user-friends mr-1"></i>
+                                  <span className="text-muted">Author &#183; pending</span>
+                                </span>
+                              ) : (
+                                <span className="text-success">
+                                  <i className="fas fa-user-friends mr-1"></i>Author
+                                </span>
+                              )
+                            ) : (
+                              <a
+                                href="#"
+                                className="btn btn-outline-secondary lh-1"
+                                onClick={e => {
+                                  e.preventDefault();
+                                  console.log("setting", accessobj.username);
+                                  setFieldValue("author.add.username", accessobj.username);
+                                  setAuthorSelected(true);
+                                  setAccessSelected(false);
+                                  setAccessQuery([]);
+                                }}
+                              >
+                                Invite to author
+                              </a>
+                            )}
+                          </Col>
+                          <Col className="col-1">
+                            {/* owner cannot lose access, and authors must be removed as authors
                           before they can lose access to the simulation. */}
-                          {accessobj.username !== remoteSim?.owner &&
-                          !authors.find(author => author.username === accessobj.username) ? (
-                            <a
-                              className="color-inherit"
-                              role="button"
-                              style={{ maxHeight: 0.5, cursor: "pointer" }}
-                              onClick={() => {
-                                setFieldValue("access.read.remove.username", accessobj.username);
-                                setTimeout(handleSubmit, 0);
-                                setTimeout(
-                                  () => setFieldValue("access.read.remove.username", ""),
-                                  0
-                                );
-                              }}
-                            >
-                              <i className="far fa-trash-alt hover-red"></i>
-                            </a>
-                          ) : null}
-                        </Col>
-                      </Row>
-                    ))}
+                            {accessobj.username !== remoteSim?.owner ? (
+                              <>
+                                <Dropdown>
+                                  <Dropdown.Toggle
+                                    id="dropdown-basic"
+                                    variant="link"
+                                    className="caret-off"
+                                    style={{ border: 0 }}
+                                  >
+                                    <i className="far fa-trash-alt hover-red"></i>
+                                  </Dropdown.Toggle>
+                                  <Dropdown.Menu>
+                                    {RolePerms.hasAdminAccess(remoteSim) ? (
+                                      <Dropdown.Item
+                                        key={0}
+                                        href=""
+                                        onClick={() => {
+                                          setFieldValue(
+                                            "access.read.remove.username",
+                                            accessobj.username
+                                          );
+                                          setTimeout(handleSubmit, 0);
+                                          setTimeout(() =>
+                                            setFieldValue("access.read.remove.username", "")
+                                          );
+                                        }}
+                                      >
+                                        Remove role: {prettyRole(accessobj.role)}
+                                      </Dropdown.Item>
+                                    ) : null}
+                                    {author ? (
+                                      <Dropdown.Item
+                                        key={1}
+                                        href=""
+                                        onClick={() => {
+                                          setFieldValue("author.remove.username", author.username);
+                                          setTimeout(handleSubmit, 0);
+                                          setTimeout(() => setFieldValue("author.remove", ""));
+                                        }}
+                                      >
+                                        Remove from authors
+                                      </Dropdown.Item>
+                                    ) : null}
+                                  </Dropdown.Menu>
+                                </Dropdown>
+                              </>
+                            ) : null}
+                          </Col>
+                        </Row>
+                      );
+                    })}
                   </div>
                 </Col>
               </Row>
-              <Row className="w-100 justify-content-left my-2">
-                <Col>
-                  <Field name="access.read.grant.username">
-                    {({ field }) => (
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Search by email or username."
-                        {...field}
-                        onFocus={() => {
-                          setViewAccessQuery(true);
+              {authorSelected ? (
+                <ConfirmSelected
+                  selectedUser={values.author.add.username}
+                  setSelected={setAuthorSelected}
+                  formikProps={formikProps}
+                  defaultInviteAuthor={true}
+                />
+              ) : null}
+              {RolePerms.hasAdminAccess(remoteSim) ? (
+                <>
+                  <Row className="w-100 mt-4">
+                    <Col>
+                      <p className="lead" style={{ paddingLeft: "15px" }}>
+                        Invite collaborators
+                      </p>
+                    </Col>
+                  </Row>
+                  <Row className="w-100 justify-content-left">
+                    <Col>
+                      <Field name="access.read.grant.username">
+                        {({ field }) => (
+                          <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Search by email or username."
+                            {...field}
+                            onFocus={() => {
+                              setViewAccessQuery(true);
+                            }}
+                            onChange={e => {
+                              setViewAccessQuery(true);
+                              handleQuery(e, users => setAccessQuery(users));
+                              setFieldValue("access.read.grant.username", e.target.value);
+                            }}
+                            readOnly={accessSelected}
+                          ></input>
+                        )}
+                      </Field>
+                      <UserQuery
+                        query={accessQuery}
+                        selectedUsers={remoteSim.access}
+                        show={viewAccessQuery}
+                        onSelectUser={selected => {
+                          if (remoteSim.access.find(a => a.username === selected.username)) return;
+                          setFieldValue("access.read.grant.username", selected.username);
+                          setAccessSelected(true);
+                          setAccessQuery([]);
                         }}
-                        onChange={e => {
-                          setViewAccessQuery(true);
-                          handleQuery(e, users => setAccessQuery(users));
-                          setFieldValue("access.read.grant.username", e.target.value);
-                        }}
-                        readOnly={accessSelected}
-                      ></input>
-                    )}
-                  </Field>
-                  <UserQuery
-                    query={accessQuery}
-                    selectedUsers={remoteSim.access}
-                    show={viewAccessQuery}
-                    onSelectUser={selected => {
-                      if (remoteSim.access.find(a => a.username === selected.username)) return;
-                      setFieldValue("access.read.grant.username", selected.username);
-                      setAccessSelected(true);
-                      setAccessQuery([]);
-                    }}
-                  />
-                  {accessSelected ? (
-                    <ConfirmSelected
-                      userFieldName="access.read.grant.username"
-                      msgFieldName="access.read.grant.msg"
-                      setSelected={setAccessSelected}
-                      formikProps={formikProps}
-                    />
-                  ) : null}
-                </Col>
-              </Row>
+                      />
+                      {accessSelected ? (
+                        <ConfirmSelected
+                          selectedUser={values.access.read.grant.username}
+                          setSelected={setAccessSelected}
+                          formikProps={formikProps}
+                        />
+                      ) : null}
+                    </Col>
+                  </Row>
+                </>
+              ) : null}
             </>
           ) : null}
         </Modal.Body>

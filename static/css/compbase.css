@@ -307,6 +307,10 @@ span.default-value {
   color: #007bff;
 }
 
+.hover-red {
+  color: black;
+}
+
 .hover-red:hover {
   color: #dc3545;
 }
@@ -404,4 +408,8 @@ blockquote {
   border-bottom-left-radius: 0.25rem;
   border-bottom-right-radius: 0.25rem;
   border-bottom: 1px solid #dee2e6 !important;
+}
+
+.lh-1 {
+  line-height: 1;
 }
