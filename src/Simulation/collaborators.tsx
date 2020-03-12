@@ -54,7 +54,7 @@ const ConfirmSelected: React.FC<{
             }}
           />
           <label className="align-middle" htmlFor="inviteAuthor">
-            <strong>Invite to author ({inviteAuthor.toString()}) </strong>
+            <strong>Invite to author</strong>
           </label>
         </Col>
       </Row>
@@ -279,7 +279,9 @@ export const CollaborationSettings: React.FC<{
                       return (
                         <Row key={ix} className="w-100 p-2 justify-content-between row-flush-item">
                           <Col className="col-5">
-                            <span style={{ fontWeight: 600 }}>{accessobj.username}</span>
+                            <span>
+                              <strong>{accessobj.username}</strong>
+                            </span>
                           </Col>
                           <Col className="col-2">
                             {accessobj.is_owner ? (
