@@ -497,7 +497,7 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                     sim_url = f"{host}{self.object.get_absolute_url()}"
                     confirmation_url = f"{host}{pp.get_absolute_url()}"
                     send_mail(
-                        f"Permission to add author",
+                        f"Author invite for {self.object}",
                         (
                             f"{request.user.username} has requested that you be "
                             f"added as an author on this simulation: {sim_url}.\n\n"
