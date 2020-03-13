@@ -10,6 +10,7 @@ from webapp.apps.comp.serializers import (
     InputsSerializer,
     SimulationSerializer,
     MiniSimulationSerializer,
+    PendingPermissionSerializer,
 )
 
 from .utils import _submit_inputs, _submit_sim
@@ -71,6 +72,38 @@ def test_write_access(db, get_inputs, meta_param_dict):
     assert data["role"] == None
     data = InputsSerializer(instance=sim.inputs, context={"request": req}).data
     assert data["role"] == "admin"
+
+
+def test_pending_permissions(db, get_inputs, meta_param_dict, profile):
+    modeler = User.objects.get(username="modeler").profile
+    inputs = _submit_inputs("Used-for-testing", get_inputs, meta_param_dict, modeler)
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.is_public = False
+    sim.save()
+
+    factory = APIRequestFactory()
+    req = factory.get("/")
+    req.user = profile.user
+
+    data = SimulationSerializer(instance=sim, context={"request": req}).data
+    assert data["role"] == None
+    assert "pending_permissions" not in data
+    assert "access" not in data
+
+    pp, _ = PendingPermission.objects.get_or_create(
+        sim=sim, profile=profile, permission_name="add_author"
+    )
+
+    data = SimulationSerializer(instance=sim, context={"request": req}).data
+    assert data["role"] == "read"
+    assert (
+        data["pending_permissions"]
+        == PendingPermissionSerializer(instance=[pp], many=True).data
+    )
+    assert "access" not in data
 
 
 def test_authors_sorted_alphabetically(db, get_inputs, meta_param_dict):

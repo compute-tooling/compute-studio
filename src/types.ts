@@ -244,6 +244,7 @@ export interface Simulation<T> {
   owner: string;
   parent_sims: Array<MiniSimulation>;
   pending_permissions: Array<{
+    grant_url: string;
     profile: string;
     permission_name: "add_author";
     is_expired: boolean;

@@ -195,6 +195,7 @@ export default class DescriptionComponent extends React.Component<
     this.forkSimulation = this.forkSimulation.bind(this);
     this.titleInput = React.createRef<HTMLInputElement>();
     this.save = this.save.bind(this);
+    this.pendingPermission = this.pendingPermission.bind(this);
   }
 
   hasWriteAccess() {
@@ -229,6 +230,21 @@ export default class DescriptionComponent extends React.Component<
       this.props.remoteSim?.model_pk !== nextProps.remoteSim?.model_pk ||
       this.props.remoteSim?.pending_permissions !== nextProps.remoteSim?.pending_permissions ||
       this.props.remoteSim?.authors !== nextProps.remoteSim?.authors
+    );
+  }
+
+  pendingPermission() {
+    console.log(this.props.remoteSim?.pending_permissions);
+    if (!this.props.remoteSim?.pending_permissions) {
+      return undefined;
+    }
+
+    if (!!this.props.remoteSim.authors.find(author => author === this.user())) {
+      return undefined;
+    }
+
+    return this.props.remoteSim.pending_permissions.find(
+      pp => pp.profile === this.user() && !pp.is_expired
     );
   }
 
@@ -401,7 +417,8 @@ export default class DescriptionComponent extends React.Component<
     }
 
     const titleStyle = { display: "inline-block", padding: "5px", margin: 0 };
-
+    const pendingPermission = this.pendingPermission();
+    console.log("pending", pendingPermission);
     return (
       <Formik
         initialValues={this.state.initialValues}
@@ -464,7 +481,7 @@ export default class DescriptionComponent extends React.Component<
                                 tip={
                                   this.hasWriteAccess()
                                     ? "Rename."
-                                    : "You be an owner of this simulation to edit the title."
+                                    : "You must be an owner of this simulation to edit the title."
                                 }
                               >
                                 <h3 style={titleStyle} onClick={this.toggleEditMode}>
@@ -534,6 +551,13 @@ export default class DescriptionComponent extends React.Component<
                           </>
                         </Button>
                       </Tip>
+                    </Col>
+                  ) : null}
+                  {!!pendingPermission ? (
+                    <Col className="col-sm-2 ml-sm-auto mt-1">
+                      <a className="btn btn-success bold" href={pendingPermission.grant_url}>
+                        <strong>Accept Author Invite</strong>
+                      </a>
                     </Col>
                   ) : null}
                   {this.hasAuthorPortalAccess() ? (

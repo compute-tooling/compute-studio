@@ -25,11 +25,12 @@ class OutputsSerializer(serializers.Serializer):
 
 class PendingPermissionSerializer(serializers.ModelSerializer):
     profile = serializers.StringRelatedField()
+    grant_url = serializers.CharField(required=False, source="get_absolute_grant_url")
 
     class Meta:
         model = PendingPermission
-        fields = ("profile", "permission_name", "is_expired")
-        read_only = ("is_expired",)
+        fields = ("grant_url", "profile", "permission_name", "is_expired")
+        read_only = ("is_expired", "grant_url")
 
 
 class MiniSimulationSerializer(serializers.ModelSerializer):
@@ -234,6 +235,14 @@ class SimulationSerializer(serializers.ModelSerializer):
             rep["access"] = []
             for user in permission_objects:
                 rep["access"].append(SimAccessSerializer.ser(obj, user))
+        elif (
+            user is not None
+            and user.is_authenticated
+            and obj.pending_permissions.filter(profile__user=user).count() > 0
+        ):
+            rep["pending_permissions"] = PendingPermissionSerializer(
+                instance=obj.pending_permissions.filter(profile__user=user), many=True
+            ).data
         return rep
 
     class Meta:
