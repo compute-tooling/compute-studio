@@ -495,17 +495,13 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                         msg = None
                     host = f"https://{request.get_host()}"
                     sim_url = f"{host}{self.object.get_absolute_url()}"
-                    confirmation_url = f"{host}{pp.get_absolute_url()}"
                     send_mail(
                         f"Author invite for {self.object}",
                         (
-                            f"{request.user.username} has requested that you be "
-                            f"added as an author on this simulation: {sim_url}.\n\n"
+                            f"{request.user.username} has invited you to be "
+                            f"an author on this simulation: {sim_url}\n\n"
                             f"{msg if msg else ''}"
-                            f"Click the following link to confirm that you would "
-                            f"like to be added as an author on this simulation: \n"
-                            f"{confirmation_url}"
-                            f"\n\nPlease reply to this email if you have any questions."
+                            f"Please reply to this email if you have any questions."
                         ),
                         f"{str(request.user.username)} <notifications@compute.studio>",
                         [profile.user.email],
