@@ -3,7 +3,7 @@ import os
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIRequestFactory
 
-from webapp.apps.users.models import Project
+from webapp.apps.users.models import Project, Profile, create_profile_from_user
 from webapp.apps.comp.asyncsubmit import SubmitInputs, SubmitSim
 from webapp.apps.comp.displayer import Displayer
 from webapp.apps.comp.ioutils import get_ioutils
@@ -99,3 +99,12 @@ class Customer:
 
     def current_plan(self):
         return self._current_plan
+
+
+def gen_collabs(n):
+    for i in range(n):
+        u = User.objects.create_user(
+            f"collab-{i}", f"collab{i}@example.com", "heyhey2222"
+        )
+        create_profile_from_user(u)
+        yield Profile.objects.get(user__username=f"collab-{i}")

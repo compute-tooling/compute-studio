@@ -178,10 +178,16 @@ class TestStripeModels:
 
         pro_product = Product.objects.get(name="Compute Studio Subscription")
 
-        monthly_plan = Plan.objects.get(nickname="Monthly Pro Plan")
-        yearly_plan = Plan.objects.get(nickname="Yearly Pro Plan")
+        plans = set(
+            [
+                Plan.objects.get(nickname="Monthly Plus Plan"),
+                Plan.objects.get(nickname="Yearly Plus Plan"),
+                Plan.objects.get(nickname="Monthly Pro Plan"),
+                Plan.objects.get(nickname="Yearly Pro Plan"),
+            ]
+        )
 
-        assert set(pro_product.plans.all()) == set([monthly_plan, yearly_plan])
+        assert set(pro_product.plans.all()) == plans
 
     def test_customer_card_info(self, db, customer):
         # As of today, 3/5/2020, stripe gives an expiration date
@@ -226,7 +232,29 @@ class TestStripeModels:
             "name": "pro",
         }
 
-        # test downgrade sends mail
+        # test downgrade from plus to pro
+        plan = cs_product.plans.get(nickname=f"{plan_duration} Plus Plan")
+
+        result = customer.update_plan(plan)
+        assert result == UpdateStatus.downgrade
+
+        assert customer.current_plan() == {
+            "plan_duration": plan_duration.lower(),
+            "name": "plus",
+        }
+
+        # test upgrade back to pro
+        plan = cs_product.plans.get(nickname=f"{plan_duration} Pro Plan")
+
+        result = customer.update_plan(plan)
+        assert result == UpdateStatus.upgrade
+
+        assert customer.current_plan() == {
+            "plan_duration": plan_duration.lower(),
+            "name": "pro",
+        }
+
+        # test downgrade to free sends mail
         plan = None
 
         called = []  # use list so that called keeps this memory ref.

@@ -21,6 +21,11 @@ stripe.api_key = os.environ.get("STRIPE_SECRET")
 wh_secret = os.environ.get("WEBHOOK_SECRET")
 
 white_listed_urls = (
+    # next urls for plus plan
+    "/billing/upgrade/?selected_plan=plus",
+    "/billing/upgrade/monthly/?selected_plan=plus",
+    "/billing/upgrade/yearly/?selected_plan=plus",
+    # next urls for pro plan
     "/billing/upgrade/?selected_plan=pro",
     "/billing/upgrade/monthly/?selected_plan=pro",
     "/billing/upgrade/yearly/?selected_plan=pro",
@@ -111,12 +116,18 @@ class UpdatePaymentDone(generic.TemplateView):
 
 def parse_upgrade_params(request):
     upgrade_plan = request.GET.get("upgrade_plan", None)
-    if upgrade_plan is not None and upgrade_plan.lower() not in ("free", "pro", "team"):
+    if upgrade_plan is not None and upgrade_plan.lower() not in (
+        "free",
+        "plus",
+        "pro",
+        "team",
+    ):
         upgrade_plan = None
 
     selected_plan = request.GET.get("selected_plan", None)
     if selected_plan is not None and selected_plan.lower() not in (
         "free",
+        "plus",
         "pro",
         "team",
     ):
@@ -133,7 +144,6 @@ class UpgradePlan(View):
         plan_duration = kwargs.get("plan_duration", "monthly")
         upgrade_plan, selected_plan = parse_upgrade_params(request)
         customer = getattr(request.user, "customer", None)
-
         card_info = {"last4": None, "brand": None}
         current_plan = {"plan_duration": None, "name": "free"}
         if customer is not None:
@@ -141,7 +151,17 @@ class UpgradePlan(View):
             product = Product.objects.get(name="Compute Studio Subscription")
             current_plan = customer.current_plan()
             result = UpdateStatus.nochange
-            if upgrade_plan == "pro":
+            new_plan = None
+
+            if upgrade_plan == "plus":
+                if plan_duration == "monthly":
+                    new_plan = product.plans.get(nickname="Monthly Plus Plan")
+                else:
+                    new_plan = product.plans.get(nickname="Yearly Plus Plan")
+
+                result = customer.update_plan(new_plan)
+
+            elif upgrade_plan == "pro":
                 if plan_duration == "monthly":
                     new_plan = product.plans.get(nickname="Monthly Pro Plan")
                 else:
@@ -159,7 +179,7 @@ class UpgradePlan(View):
 
             if result != UpdateStatus.nochange:
                 next_url = reverse(
-                    "upgrade_plan_duration",
+                    "upgrade_plan_duration_done",
                     kwargs=dict(
                         plan_duration=current_plan["plan_duration"] or plan_duration
                     ),
@@ -174,5 +194,36 @@ class UpgradePlan(View):
                 "current_plan": current_plan,
                 "card_info": card_info,
                 "selected_plan": selected_plan,
+            },
+        )
+
+
+class UpgradePlanDone(View):
+    template_name = "billing/upgrade_plan.html"
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        # plan_duration optionally given in url: /billing/upgrade/[plan_duration]/
+        plan_duration = kwargs.get("plan_duration", "monthly")
+        customer = getattr(request.user, "customer", None)
+        if customer is not None:
+            card_info = customer.card_info()
+            current_si = customer.current_plan(as_dict=False)
+            current_plan = customer.current_plan(si=current_si, as_dict=True)
+            plan_name = current_si.plan.nickname
+        else:
+            card_info = {"last4": None, "brand": None}
+            current_plan = {"plan_duration": None, "name": "free"}
+            plan_name = "Free Plan"
+
+        return render(
+            request,
+            self.template_name,
+            context={
+                "plan_duration": plan_duration,
+                "current_plan": current_plan,
+                "card_info": card_info,
+                "update_completed": True,
+                "update_completed_msg": f"You are now on the {plan_name}.",
             },
         )

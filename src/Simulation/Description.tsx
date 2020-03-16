@@ -196,6 +196,7 @@ export default class DescriptionComponent extends React.Component<
     this.titleInput = React.createRef<HTMLInputElement>();
     this.save = this.save.bind(this);
     this.pendingPermission = this.pendingPermission.bind(this);
+    this.plan = this.plan.bind(this);
   }
 
   hasWriteAccess() {
@@ -269,6 +270,10 @@ export default class DescriptionComponent extends React.Component<
     return this.props.accessStatus && this.props.accessStatus.username
       ? this.props.accessStatus.username
       : "anon";
+  }
+
+  plan() {
+    return this.props.accessStatus.plan.name;
   }
 
   forkSimulation() {
@@ -567,6 +572,7 @@ export default class DescriptionComponent extends React.Component<
                         user={this.user()}
                         remoteSim={this.props.remoteSim}
                         formikProps={formikProps}
+                        plan={this.plan()}
                       />
                     </Col>
                   ) : null}

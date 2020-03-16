@@ -1,6 +1,16 @@
-{% extends 'registration/settings_base.html' %} {% load static %} {% block title %}Update payment
-information{% endblock %} {% block settings %}
-<div class="card card-body card-inner pt-0">
+{% extends 'base.html' %} {% load static %} {% block title %}Update Plan
+information{% endblock %} {% block content %}
+<div class="card card-body card-inner">
+  {% if update_completed %}
+  <div class="row w-100 justify-content-left mb-4">
+    <div class="col text-center">
+      <div class="alert alert-primary" role="alert">
+        <p class="lead" style="font-weight:600">{{update_completed_msg}}</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="row w-100 justify-content-left mb-4">
     <div class="col col-auto">
       <div class="row">
@@ -41,9 +51,46 @@ information{% endblock %} {% block settings %}
         <small class="text-center text-muted">Additional fees may apply for using paid apps.</small>
       </div>
     </div>
+
     <div class="card card-outer">
       <div class="card-body">
-        <h2 class="card-title" style="font-weight:500">Professional
+        <h2 class="card-title" style="font-weight:500">Plus
+          {% if current_plan.name == 'plus' %}<a href="#" class="btn btn-link float-right my-0">
+            <i class="fas fa-check-circle"></i> </a>{% endif %}</h2>
+        <p class="lead">Share your private work with someone you trust.</p>
+        <ul class="my-4 pl-3">
+          <li>Add a private collaborator to your simulations, models, and data shapshots.</li>
+        </ul>
+        {% if current_plan.name != 'plus' %}
+        <div class="text-center">
+          <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#plusModal">
+            <strong>
+              {% if current_plan.name == "free" %}
+              Upgrade
+              {% else %}
+              Select
+              {% endif %}
+            </strong>
+            </a>
+        </div>
+        {% endif %}
+      </div>
+      <div class="card-footer border-top-0 background-color-inherit">
+        {% if plan_duration == "monthly" %}
+        <h2 class="text-center">$15</h2>
+        <h4 class="text-center">Per month</h4>
+        <small class="text-center text-muted">Save $30 by getting 2 months free with annual pre-pay.</small>
+        {% else %}
+        <h2 class="text-center">$12.50</h2>
+        <h4 class="text-center">Per month</h4>
+        <small class="text-center text-muted"><i>Billed at $150 / year</i></small>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card card-outer">
+      <div class="card-body">
+        <h2 class="card-title" style="font-weight:500">Pro
           {% if current_plan.name == 'pro' %}<a href="#" class="btn btn-link float-right my-0">
             <i class="fas fa-check-circle"></i> </a>{% endif %}</h2>
         <p class="lead">Unlimited private collaboration for pros.</p>
@@ -103,6 +150,14 @@ information{% endblock %} {% block settings %}
       </div>
     </div>
   </div>
+  <div class="row justify-content-center mt-5 {% if current_plan.name == 'free' %}d-none{% endif %}">
+    <div class="col col-auto">
+      <a id="contact-unsubscribe" href="#" class="btn btn-outline-primary text-center">
+        Unsubscribe
+      </a>
+    </div>
+  </div>
+
   <div class="modal fade" id="proModal" tabindex="-1" role="dialog" aria-labelledby="proModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -143,11 +198,46 @@ information{% endblock %} {% block settings %}
       </div>
     </div>
   </div>
-  <div class="row justify-content-center mt-5 {% if current_plan.name == 'free' %}d-none{% endif %}">
-    <div class="col col-auto">
-      <a id="contact-unsubscribe" href="#" class="btn btn-outline-primary text-center">
-        Unsubscribe
-      </a>
+  <div class="modal fade" id="plusModal" tabindex="-1" role="dialog" aria-labelledby="plusModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="plusModalLabel">Upgrade to Plus</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          {% if plan_duration == "monthly" %}
+          <p class="lead">You will be charged $15 per month.</p>
+          {% else %}
+          <p class="lead">You will be charged $150 per year.</p>
+          {% endif %}
+          {% if not user.customer %}
+          <p><a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=plus">Add
+              payment
+              method</a></p>
+          {% else %}
+          <p>Payment method:</p>
+          <p><i class="far fa-credit-card mr-1"></i><strong>{{card_info.brand}}</strong> ending **** **** ****
+            {{card_info.last4}}</p>
+          <p>Expires: {{card_info.exp_month}}/{{card_info.exp_year}}</p>
+          <p><a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=plus">Update
+              payment method</a></p>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          {% if not user.customer %}
+          <a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=plus"
+            class="btn btn-primary">Add payment method</a>
+          {% else %}
+          <a href="/billing/upgrade/{{plan_duration}}/?upgrade_plan=plus" class="btn btn-primary">Buy
+            now</a>
+          {% endif %}
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -161,8 +251,15 @@ information{% endblock %} {% block settings %}
     contactButton.innerHTML = "<strong>Thanks! We'll be in touch</strong>";
     fetch("/billing/upgrade?upgrade_plan=team").then(function (resp) { });
   });
+
   var searchParams = (new URL(document.location)).searchParams;
-  console.log(window.location.href, searchParams.get('selected_plan'))
+
+  if (searchParams.get("selected_plan") === "plus") {
+    $(document).ready(function () {
+      $("#plusModal").modal("show");
+    });
+  }
+
   if (searchParams.get("selected_plan") === "pro") {
     $(document).ready(function () {
       $("#proModal").modal("show");

@@ -91,11 +91,31 @@ class TestBillingViews:
         - Selecting team plan sends email.
         """
         client.force_login(customer.user)
+        resp = client.get(
+            f"/billing/upgrade/{plan_duration.lower()}/?upgrade_plan=plus"
+        )
+        assert resp.status_code == 302, f"Expected 302: got {resp.status_code}"
+        next_url = resp.url
+        assert next_url == reverse(
+            "upgrade_plan_duration_done",
+            kwargs=dict(plan_duration=plan_duration.lower()),
+        )
+        resp = client.get(next_url)
+        assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
+        assert resp.context["plan_duration"] == plan_duration.lower()
+        customer = Customer.objects.get(pk=customer.pk)
+        assert (
+            resp.context["current_plan"]
+            == customer.current_plan()
+            == {"plan_duration": plan_duration.lower(), "name": "plus"}
+        )
+
         resp = client.get(f"/billing/upgrade/{plan_duration.lower()}/?upgrade_plan=pro")
         assert resp.status_code == 302, f"Expected 302: got {resp.status_code}"
         next_url = resp.url
         assert next_url == reverse(
-            "upgrade_plan_duration", kwargs=dict(plan_duration=plan_duration.lower())
+            "upgrade_plan_duration_done",
+            kwargs=dict(plan_duration=plan_duration.lower()),
         )
         resp = client.get(next_url)
         assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
@@ -149,7 +169,8 @@ class TestBillingViews:
         )
         assert resp.status_code == 302, f"Expected 302: got {resp.status_code}"
         assert resp.url == reverse(
-            "upgrade_plan_duration", kwargs=dict(plan_duration=plan_duration.lower())
+            "upgrade_plan_duration_done",
+            kwargs=dict(plan_duration=plan_duration.lower()),
         )
         resp = client.get(resp.url)
         assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"

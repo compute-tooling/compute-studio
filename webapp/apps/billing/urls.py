@@ -11,4 +11,9 @@ urlpatterns = [
         views.UpgradePlan.as_view(),
         name="upgrade_plan_duration",
     ),
+    path(
+        "upgrade/<str:plan_duration>/done/",
+        views.UpgradePlanDone.as_view(),
+        name="upgrade_plan_duration_done",
+    ),
 ]

@@ -115,9 +115,12 @@ class DeleteUserDone(generic.TemplateView):
 class AccessStatusAPI(GetProjectMixin, APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
+        plan = {"name": "free", "plan_duration": None}
         if user.is_authenticated and user.profile:
             user_status = user.profile.status
             username = user.username
+            if getattr(user, "customer", None) is not None:
+                plan = user.customer.current_plan()
         else:
             user_status = "anon"
             username = None
@@ -141,6 +144,7 @@ class AccessStatusAPI(GetProjectMixin, APIView):
                     "exp_time": exp_time,
                     "api_url": reverse("access_project", kwargs=kwargs),
                     "username": username,
+                    "plan": plan,
                 }
             )
         else:
@@ -149,5 +153,6 @@ class AccessStatusAPI(GetProjectMixin, APIView):
                     "user_status": user_status,
                     "api_url": reverse("access_status"),
                     "username": username,
+                    "plan": plan,
                 }
             )

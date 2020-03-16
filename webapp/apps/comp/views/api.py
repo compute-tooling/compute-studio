@@ -211,7 +211,7 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
                     )
                 except ResourceLimitException as rle:
                     return Response(
-                        {rle.resource: str(rle)}, status=status.HTTP_400_BAD_REQUEST
+                        {rle.resource: rle.todict()}, status=status.HTTP_400_BAD_REQUEST
                     )
             else:
                 return Response(status=status.HTTP_403_FORBIDDEN)
@@ -466,7 +466,7 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                     )
                 except ResourceLimitException as rle:
                     return Response(
-                        data={rle.resource: str(rle)},
+                        data={rle.resource: rle.todict()},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 # PP already exists and is not expired.
@@ -599,7 +599,7 @@ class SimulationAccessAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, A
                     self.object.assign_role(access_obj["role"], user)
                 except ResourceLimitException as rle:
                     return Response(
-                        data={rle.resource: str(rle)},
+                        data={rle.resource: rle.todict()},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 updated_role = self.object.role(user)

@@ -167,6 +167,7 @@ export interface AccessStatus {
   server_cost?: number;
   exp_cost?: number;
   exp_time?: number;
+  plan: { name: "free" | "plus" | "pro" | "team" };
 }
 
 export interface Project {

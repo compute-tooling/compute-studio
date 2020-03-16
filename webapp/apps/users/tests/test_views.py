@@ -176,6 +176,7 @@ class TestUsersViews:
             "user_status": "anon",
             "api_url": "/users/status/",
             "username": None,
+            "plan": {"name": "free", "plan_duration": None},
         }
 
         resp = api_client.get(
@@ -191,6 +192,7 @@ class TestUsersViews:
             "server_cost": project.server_cost,
             "api_url": f"/users/status/{project.owner.user.username}/{project.title}/",
             "username": None,
+            "plan": {"name": "free", "plan_duration": None},
         }
 
         resp = api_client.get(
@@ -206,6 +208,7 @@ class TestUsersViews:
             "server_cost": sponsored_project.server_cost,
             "api_url": f"/users/status/{sponsored_project.owner.user.username}/{sponsored_project.title}/",
             "username": None,
+            "plan": {"name": "free", "plan_duration": None},
         }
 
         assert api_client.login(username=profile.user.username, password=password)
@@ -214,4 +217,5 @@ class TestUsersViews:
             "user_status": profile.status,
             "api_url": "/users/status/",
             "username": profile.user.username,
+            "plan": {"name": "free", "plan_duration": None},
         }

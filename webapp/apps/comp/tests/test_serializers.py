@@ -81,7 +81,7 @@ def test_pending_permissions(db, get_inputs, meta_param_dict, profile):
     _, submit_sim = _submit_sim(inputs)
     sim = submit_sim.submit()
     sim.status = "SUCCESS"
-    sim.is_public = False
+    sim.is_public = True
     sim.save()
 
     factory = APIRequestFactory()
@@ -113,6 +113,7 @@ def test_authors_sorted_alphabetically(db, get_inputs, meta_param_dict):
     _, submit_sim = _submit_sim(inputs)
     sim = submit_sim.submit()
     sim.status = "SUCCESS"
+    sim.is_public = True
     sim.save()
 
     factory = APIRequestFactory()

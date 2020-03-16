@@ -452,12 +452,14 @@ class Simulation(models.Model):
     def is_owner(self, user):
         return user == self.owner.user
 
-    def _collaborator_test(self, adding_collaborator=True):
-        if self.is_public or not HAS_USAGE_RESTRICTIONS:
+    def _collaborator_test(self, test_name, adding_collaborator=True):
+        if not HAS_USAGE_RESTRICTIONS:
             return
 
         permission_objects = get_users_with_perms(self)
-        num_collaborators = permission_objects.count()
+
+        # number of additional collaborators besides owner.
+        num_collaborators = permission_objects.count() - 1
 
         if adding_collaborator:
             num_collaborators += 1
@@ -465,16 +467,31 @@ class Simulation(models.Model):
         user = self.owner.user
         customer = getattr(user, "customer", None)
         if customer is None:
-            if num_collaborators > 2:
+            if num_collaborators > 0:
                 raise ResourceLimitException(
-                    "collaborators", ResourceLimitException.collaborators_msg
+                    "collaborators",
+                    test_name,
+                    "plus",
+                    ResourceLimitException.collaborators_msg,
                 )
 
         if customer is not None:
             current_plan = customer.current_plan()
-            if num_collaborators > 2 and current_plan["name"] == "free":
+
+            if num_collaborators > 0 and current_plan["name"] == "free":
                 raise ResourceLimitException(
-                    "collaborators", ResourceLimitException.collaborators_msg
+                    "collaborators",
+                    test_name,
+                    "plus",
+                    ResourceLimitException.collaborators_msg,
+                )
+
+            if num_collaborators > 1 and current_plan["name"] == "plus":
+                raise ResourceLimitException(
+                    "collaborators",
+                    test_name,
+                    "pro",
+                    ResourceLimitException.collaborators_msg,
                 )
 
     def add_collaborator_test(self):
@@ -482,14 +499,16 @@ class Simulation(models.Model):
         Test if user's plan allows them to add more collaborators
         to this simulation.
         """
-        return self._collaborator_test(adding_collaborator=True)
+        if self.is_public:
+            return
+        return self._collaborator_test("add_collaborator", adding_collaborator=True)
 
     def make_private_test(self):
         """
         Test if user's plan allows them to make the simulation private with
         the existing number of collaborators.
         """
-        return self._collaborator_test(adding_collaborator=False)
+        return self._collaborator_test("make_private", adding_collaborator=False)
 
     """
     The methods below are used for checking if a user has read, write, or admin

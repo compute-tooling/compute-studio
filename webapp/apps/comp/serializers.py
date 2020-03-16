@@ -66,8 +66,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
         return rep
 
     def validate_is_public(self, value):
-        if getattr(self, "instance", None) is not None:
-            self.instance.is_public = value
+        if getattr(self, "instance", None) is not None and value is False:
             self.instance.make_private_test()
         return value
 

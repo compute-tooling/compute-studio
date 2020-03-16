@@ -188,9 +188,22 @@ def profile_w_mockcustomer(db, password):
 
 @pytest.fixture
 def free_profile(db, profile, profile_w_mockcustomer):
-    mock_cp = lambda: {"name": "free"}
+    mock_cp = lambda: {"name": "free", "plan_duration": None}
     profile_w_mockcustomer.user.customer.current_plan = mock_cp
     return profile_w_mockcustomer
+
+
+@pytest.fixture
+def plus_profile(db, profile, profile_w_mockcustomer):
+    if getattr(profile.user, "customer", None):
+        product = Product.objects.get(name="Compute Studio Subscription")
+        plan = product.plans.get(nickname="Monthly Plus Plan")
+        profile.user.customer.update_plan(plan)
+        return profile
+    else:
+        mock_cp = lambda: {"name": "plus", "plan_duration": "monthly"}
+        profile_w_mockcustomer.user.customer.current_plan = mock_cp
+        return profile_w_mockcustomer
 
 
 @pytest.fixture
@@ -201,9 +214,39 @@ def pro_profile(db, profile, profile_w_mockcustomer):
         profile.user.customer.update_plan(plan)
         return profile
     else:
-        mock_cp = lambda: {"name": "pro"}
+        mock_cp = lambda: {"name": "pro", "plan_duration": "monthly"}
         profile_w_mockcustomer.user.customer.current_plan = mock_cp
         return profile_w_mockcustomer
+
+
+@pytest.fixture
+def customer_plus_by_default(monkeypatch):
+    # This test is only valid if the C/S instance is using the Stripe/Customer
+    # framework
+    try:
+        from webapp.apps.billing.models import Customer
+    except ImportError:
+        from webapp.settings import HAS_USAGE_RESTRICTIONS
+
+        assert HAS_USAGE_RESTRICTIONS
+        return
+
+    monkeypatch.setattr(Customer, "plan_in_nostripe_mode", "plus")
+
+
+@pytest.fixture
+def customer_pro_by_default(monkeypatch):
+    # This test is only valid if the C/S instance is using the Stripe/Customer
+    # framework
+    try:
+        from webapp.apps.billing.models import Customer
+    except ImportError:
+        from webapp.settings import HAS_USAGE_RESTRICTIONS
+
+        assert HAS_USAGE_RESTRICTIONS
+        return
+
+    monkeypatch.setattr(Customer, "plan_in_nostripe_mode", "pro")
 
 
 @pytest.fixture

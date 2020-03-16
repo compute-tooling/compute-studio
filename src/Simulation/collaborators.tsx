@@ -1,10 +1,54 @@
 import React = require("react");
 import { Row, Col, Button, Modal, Dropdown } from "react-bootstrap";
 import API from "./API";
-import { Simulation, RemoteOutputs, DescriptionValues, Role } from "../types";
+import { Simulation, RemoteOutputs, DescriptionValues, Role, AccessStatus } from "../types";
 import { FormikProps, Field, FastField, setNestedObjectValues } from "formik";
-import { Tip } from "../components";
 import { RolePerms } from "../roles";
+
+interface ResourceLimitException {
+  resource: "collaborators";
+  test_name: "add_collaborator" | "make_private";
+  msg: string;
+  upgrade_to: "plus" | "pro";
+}
+
+const AddCollaboratorException = (upgradeTo: "plus" | "pro") => {
+  let plan;
+  if (upgradeTo === "plus") {
+    plan = "Compute Studio Plus";
+  } else if (upgradeTo === "pro") {
+    plan = "Compute Studio Pro";
+  }
+  return (
+    <div className="alert alert-danger" role="alert">
+      You have reached the limit for the number of collaborators on private simulations. You may
+      make this simulation public or upgrade to{" "}
+      <a href="/billing/upgrade/">
+        <strong>{plan}</strong>
+      </a>{" "}
+      to add more collaborators.
+    </div>
+  );
+};
+
+const MakePrivateException = (upgradeTo: "plus" | "pro") => {
+  let plan;
+  if (upgradeTo === "plus") {
+    plan = "Compute Studio Plus";
+  } else if (upgradeTo === "pro") {
+    plan = "Compute Studio Pro";
+  }
+  return (
+    <div className="alert alert-danger" role="alert">
+      You have exceeded the limit for collaborators on a private simulation. You may keep this
+      simulation public, as is, or upgrade to{" "}
+      <a href="/billing/upgrade/">
+        <strong>{plan}</strong>
+      </a>{" "}
+      to make it private.
+    </div>
+  );
+};
 
 const prettyRole = (role: Role | "owner") => {
   switch (role) {
@@ -162,7 +206,8 @@ export const CollaborationSettings: React.FC<{
   user: string;
   remoteSim?: Simulation<RemoteOutputs>;
   formikProps: FormikProps<DescriptionValues>;
-}> = ({ api, user, remoteSim, formikProps }) => {
+  plan: AccessStatus["plan"]["name"];
+}> = ({ api, user, remoteSim, formikProps, plan }) => {
   const [show, setShow] = React.useState(false);
 
   const [accessQuery, setAccessQuery] = React.useState<Array<{ username: string }>>([]);
@@ -200,6 +245,16 @@ export const CollaborationSettings: React.FC<{
     accessobjs = [{ username: user, role: "read", is_owner: false }];
   }
 
+  let collabExceptionMsg;
+  if (!!formikProps.status?.collaboratorLimit) {
+    let collabMsg: ResourceLimitException = formikProps.status?.collaboratorLimit;
+    if (collabMsg.test_name === "make_private") {
+      collabExceptionMsg = MakePrivateException(collabMsg.upgrade_to);
+    } else if (collabMsg.test_name === "add_collaborator") {
+      collabExceptionMsg = AddCollaboratorException(collabMsg.upgrade_to);
+    }
+  }
+
   return (
     <>
       <Button
@@ -219,18 +274,9 @@ export const CollaborationSettings: React.FC<{
           <Modal.Title>Collaboration Settings</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {formikProps.status?.collaboratorLimit ? (
+          {!!collabExceptionMsg ? (
             <Row className="w-100">
-              <Col>
-                <div className="alert alert-danger" role="alert">
-                  You have reached the limit for the number of collaborators on private simulations.
-                  You may make this simulation public or upgrade to{" "}
-                  <a href="/billing/upgrade/">
-                    <strong>Compute Studio Pro</strong>
-                  </a>{" "}
-                  to add more collaborators.
-                </div>
-              </Col>
+              <Col>{collabExceptionMsg}</Col>
             </Row>
           ) : null}
           {RolePerms.hasAdminAccess(remoteSim) || !remoteSim ? (
