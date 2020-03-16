@@ -430,7 +430,21 @@ export const CollaborationSettings: React.FC<{
                   defaultInviteAuthor={true}
                 />
               ) : null}
-              {RolePerms.hasAdminAccess(remoteSim) ? (
+              {RolePerms.hasAdminAccess(remoteSim) && plan === "free" && !remoteSim.is_public ? (
+                <Row className="w-100 mt-4 justify-content-center">
+                  <Col className="col-auto">
+                    <Button
+                      variant="success"
+                      style={{ fontWeight: 600 }}
+                      className="mb-4 w-100 mt-1"
+                      href="/billing/upgrade/"
+                    >
+                      Upgrade to add private collaborators
+                    </Button>
+                  </Col>
+                </Row>
+              ) : null}
+              {RolePerms.hasAdminAccess(remoteSim) && (plan !== "free" || remoteSim.is_public) ? (
                 <>
                   <Row className="w-100 mt-4">
                     <Col>
