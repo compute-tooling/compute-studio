@@ -20,13 +20,28 @@ const AddCollaboratorException = (upgradeTo: "plus" | "pro") => {
     plan = "Compute Studio Pro";
   }
   return (
-    <div className="alert alert-danger" role="alert">
+    <div className="alert alert-primary alert-dismissible fade show" role="alert">
       You have reached the limit for the number of collaborators on private simulations. You may
       make this simulation public or upgrade to{" "}
       <a href="/billing/upgrade/">
         <strong>{plan}</strong>
       </a>{" "}
       to add more collaborators.
+      <Row className="w-100 justify-content-center">
+        <Col className="col-auto">
+          <Button
+            variant="primary"
+            style={{ fontWeight: 600 }}
+            className="w-100 mt-3"
+            href="/billing/upgrade/"
+          >
+            Upgrade to {plan}
+          </Button>
+        </Col>
+      </Row>
+      <button type="button" className="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
     </div>
   );
 };
@@ -39,13 +54,28 @@ const MakePrivateException = (upgradeTo: "plus" | "pro") => {
     plan = "Compute Studio Pro";
   }
   return (
-    <div className="alert alert-danger" role="alert">
+    <div className="alert alert-primary alert-dismissible fade show" role="alert">
       You have exceeded the limit for collaborators on a private simulation. You may keep this
       simulation public, as is, or upgrade to{" "}
       <a href="/billing/upgrade/">
         <strong>{plan}</strong>
       </a>{" "}
       to make it private.
+      <Row className="w-100 justify-content-center">
+        <Col className="col-auto">
+          <Button
+            variant="primary"
+            style={{ fontWeight: 600 }}
+            className="w-100 mt-3"
+            href="/billing/upgrade/"
+          >
+            Upgrade to {plan}
+          </Button>
+        </Col>
+      </Row>
+      <button type="button" className="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
     </div>
   );
 };
