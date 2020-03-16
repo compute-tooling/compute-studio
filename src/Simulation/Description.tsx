@@ -298,6 +298,74 @@ export default class DescriptionComponent extends React.Component<
         actions.setStatus({ collaboratorLimit: null });
       }
     };
+    const saveCollaborators = () => {
+      if (values.author?.add?.username) {
+        this.props.api
+          .addAuthors({ authors: [values.author.add] })
+          .then(data => {
+            this.props.resetOutputs();
+            resetStatus();
+            this.setState(prevState => ({
+              initialValues: {
+                ...prevState.initialValues,
+                author: { add: { username: "", msg: "" }, remove: { username: "" } }
+              }
+            }));
+          })
+          .catch(error => {
+            if (!actions) throw error;
+            if (error.response.status == 400 && error.response.data.collaborators) {
+              window.scroll(0, 0);
+              actions.setStatus({
+                collaboratorLimit: error.response.data.collaborators
+              });
+            }
+          });
+      }
+      if (values.author?.remove?.username) {
+        this.props.api.deleteAuthor(values.author.remove.username).then(data => {
+          this.props.resetOutputs();
+          resetStatus();
+          this.setState(prevState => ({
+            initialValues: {
+              ...prevState.initialValues,
+              author: { add: { username: "", msg: "" }, remove: { username: "" } }
+            }
+          }));
+        });
+      }
+      if (values.access.read?.grant?.username) {
+        this.props.api
+          .putAccess([
+            {
+              username: values.access.read.grant.username,
+              role: "read" as Role,
+              msg: values.access.read.grant.msg
+            }
+          ])
+          .then(resp => {
+            resetStatus();
+            this.props.resetOutputs();
+          })
+          .catch(error => {
+            if (!actions) throw error;
+            if (error.response.status == 400 && error.response.data.collaborators) {
+              window.scroll(0, 0);
+              actions.setStatus({
+                collaboratorLimit: error.response.data.collaborators
+              });
+            }
+          });
+      }
+      if (values.access.read?.remove?.username) {
+        this.props.api
+          .putAccess([{ username: values.access.read.remove.username, role: null }])
+          .then(resp => {
+            resetStatus();
+            this.props.resetOutputs();
+          });
+      }
+    };
 
     resetStatus();
     if (this.hasWriteAccess()) {
@@ -327,6 +395,9 @@ export default class DescriptionComponent extends React.Component<
               }
             }
           });
+          // Only save collaborators once the description data has been saved to avoid
+          // race conditions.
+          saveCollaborators();
         })
         .catch(error => {
           if (!actions) throw error;
@@ -336,74 +407,6 @@ export default class DescriptionComponent extends React.Component<
               collaboratorLimit: error.response.data.collaborators
             });
           }
-        });
-    }
-
-    if (values.author?.add?.username) {
-      console.log(values.author.add);
-      this.props.api
-        .addAuthors({ authors: [values.author.add] })
-        .then(data => {
-          this.props.resetOutputs();
-          resetStatus();
-          this.setState(prevState => ({
-            initialValues: {
-              ...prevState.initialValues,
-              author: { add: { username: "", msg: "" }, remove: { username: "" } }
-            }
-          }));
-        })
-        .catch(error => {
-          if (!actions) throw error;
-          if (error.response.status == 400 && error.response.data.collaborators) {
-            window.scroll(0, 0);
-            actions.setStatus({
-              collaboratorLimit: error.response.data.collaborators
-            });
-          }
-        });
-    }
-    if (values.author?.remove?.username) {
-      this.props.api.deleteAuthor(values.author.remove.username).then(data => {
-        this.props.resetOutputs();
-        resetStatus();
-        this.setState(prevState => ({
-          initialValues: {
-            ...prevState.initialValues,
-            author: { add: { username: "", msg: "" }, remove: { username: "" } }
-          }
-        }));
-      });
-    }
-    if (values.access.read?.grant?.username) {
-      this.props.api
-        .putAccess([
-          {
-            username: values.access.read.grant.username,
-            role: "read" as Role,
-            msg: values.access.read.grant.msg
-          }
-        ])
-        .then(resp => {
-          resetStatus();
-          this.props.resetOutputs();
-        })
-        .catch(error => {
-          if (!actions) throw error;
-          if (error.response.status == 400 && error.response.data.collaborators) {
-            window.scroll(0, 0);
-            actions.setStatus({
-              collaboratorLimit: error.response.data.collaborators
-            });
-          }
-        });
-    }
-    if (values.access.read?.remove?.username) {
-      this.props.api
-        .putAccess([{ username: values.access.read.remove.username, role: null }])
-        .then(resp => {
-          resetStatus();
-          this.props.resetOutputs();
         });
     }
   }

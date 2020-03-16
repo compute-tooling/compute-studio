@@ -246,6 +246,8 @@ export const CollaborationSettings: React.FC<{
 
   const [authorSelected, setAuthorSelected] = React.useState(false);
 
+  const [selectedUser, setSelectedUser] = React.useState("false");
+
   let authors: Array<{
     username: string;
     pending?: boolean;
@@ -385,7 +387,7 @@ export const CollaborationSettings: React.FC<{
                                 onClick={e => {
                                   e.preventDefault();
                                   console.log("setting", accessobj.username);
-                                  setFieldValue("author.add.username", accessobj.username);
+                                  setSelectedUser(accessobj.username);
                                   setAuthorSelected(true);
                                   setAccessSelected(false);
                                   setAccessQuery([]);
@@ -454,7 +456,7 @@ export const CollaborationSettings: React.FC<{
               </Row>
               {authorSelected ? (
                 <ConfirmSelected
-                  selectedUser={values.author.add.username}
+                  selectedUser={selectedUser}
                   setSelected={setAuthorSelected}
                   formikProps={formikProps}
                   defaultInviteAuthor={true}
@@ -485,39 +487,34 @@ export const CollaborationSettings: React.FC<{
                   </Row>
                   <Row className="w-100 justify-content-left">
                     <Col>
-                      <Field name="access.read.grant.username">
-                        {({ field }) => (
-                          <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Search by email or username."
-                            {...field}
-                            onFocus={() => {
-                              setViewAccessQuery(true);
-                            }}
-                            onChange={e => {
-                              setViewAccessQuery(true);
-                              handleQuery(e, users => setAccessQuery(users));
-                              setFieldValue("access.read.grant.username", e.target.value);
-                            }}
-                            readOnly={accessSelected}
-                          ></input>
-                        )}
-                      </Field>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Search by email or username."
+                        onFocus={() => {
+                          setViewAccessQuery(true);
+                        }}
+                        onChange={e => {
+                          setViewAccessQuery(true);
+                          handleQuery(e, users => setAccessQuery(users));
+                          setSelectedUser(e.target.value);
+                        }}
+                        readOnly={accessSelected}
+                      ></input>
                       <UserQuery
                         query={accessQuery}
                         selectedUsers={remoteSim.access}
                         show={viewAccessQuery}
                         onSelectUser={selected => {
                           if (remoteSim.access.find(a => a.username === selected.username)) return;
-                          setFieldValue("access.read.grant.username", selected.username);
+                          setSelectedUser(selected.username);
                           setAccessSelected(true);
                           setAccessQuery([]);
                         }}
                       />
                       {accessSelected ? (
                         <ConfirmSelected
-                          selectedUser={values.access.read.grant.username}
+                          selectedUser={selectedUser}
                           setSelected={setAccessSelected}
                           formikProps={formikProps}
                         />
