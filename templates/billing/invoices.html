@@ -23,9 +23,9 @@ information{% endblock %} {% block settings %}
         <td><a href="{{invoice.hosted_invoice_url}}">Invoice Link</a></td>
         <td><a href="{{invoice.invoice_pdf}}">PDF</a></td>
         {% if invoice.status == "paid" %}
-        <td class="text-success">{{invoice.status}}</td>
+        <td class="text-success">{{invoice.status|title}}</td>
         {% else %}
-        <td class="text-muted">{{invoice.status}}</td>
+        <td class="text-muted">{{invoice.status|title}}</td>
         {% endif %}
       </tr>
       {% endfor %}
