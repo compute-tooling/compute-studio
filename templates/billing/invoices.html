@@ -12,6 +12,7 @@ information{% endblock %} {% block settings %}
           Invoice
         </th>
         <th>Download</th>
+        <th>Status</th>
       </tr>
     </thead>
     <tbody>
@@ -21,6 +22,11 @@ information{% endblock %} {% block settings %}
         <td>${{invoice.amount}}</td>
         <td><a href="{{invoice.hosted_invoice_url}}">Invoice Link</a></td>
         <td><a href="{{invoice.invoice_pdf}}">PDF</a></td>
+        {% if invoice.status == "paid" %}
+        <td class="text-success">{{invoice.status}}</td>
+        {% else %}
+        <td class="text-muted">{{invoice.status}}</td>
+        {% endif %}
       </tr>
       {% endfor %}
     </tbody>

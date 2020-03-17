@@ -252,6 +252,7 @@ class ListInvoices(View):
                         ),
                         "amount": invoice.total,
                         "invoice_pdf": invoice.invoice_pdf,
+                        "status": invoice.status,
                     }
                 )
         return render(request, self.template_name, context={"invoices": invoices})
