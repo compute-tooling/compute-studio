@@ -618,7 +618,7 @@ class SimulationAccessAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, A
                             (
                                 f"You have been assigned the {updated_role} role for this simulation: "
                                 f"{sim_url}.\n\n"
-                                f"{msg}"
+                                f"{msg if msg else ''}"
                                 f"\nPlease reply to this email if you have any questions."
                             ),
                             f"{request.user.username} <notifications@compute.studio>",
