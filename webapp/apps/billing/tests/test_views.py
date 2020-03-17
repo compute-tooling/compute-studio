@@ -3,6 +3,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.shortcuts import reverse
 
+from webapp.apps.users.models import create_profile_from_user
 from webapp.apps.billing.models import Customer
 
 User = get_user_model()
@@ -181,3 +182,40 @@ class TestBillingViews:
             == customer.current_plan()
             == {"plan_duration": plan_duration.lower(), "name": "pro"}
         )
+
+    def test_list_invoices(self, db, client, customer):
+        """
+        Test list invoice view:
+        - Unauthenticated redirects to login.
+        - List of invoices in context matches list in model.
+        - Still matches after updating subscription.
+        - Test with authenticated user without customer object.
+        """
+        resp = client.get("/billing/invoices/")
+        assert resp.status_code == 302
+
+        client.force_login(customer.user)
+        resp = client.get("/billing/invoices/")
+        assert resp.status_code == 200
+        assert len(resp.context["invoices"]) == len(list(customer.invoices()))
+
+        resp = client.get(f"/billing/upgrade/monthly/?upgrade_plan=pro")
+        assert resp.status_code == 302, f"Expected 302: got {resp.status_code}"
+        next_url = resp.url
+        assert next_url == reverse(
+            "upgrade_plan_duration_done", kwargs=dict(plan_duration="monthly")
+        )
+
+        resp = client.get("/billing/invoices/")
+        assert resp.status_code == 200
+        assert len(resp.context["invoices"]) == len(list(customer.invoices()))
+
+        newuser = User.objects.create_user(
+            "nocust", f"nocust@example.com", "heyhey2222"
+        )
+        create_profile_from_user(newuser)
+        newuser.refresh_from_db()
+        client.force_login(newuser)
+        resp = client.get("/billing/invoices/")
+        assert resp.status_code == 200
+        assert len(resp.context["invoices"]) == 0

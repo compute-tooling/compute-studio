@@ -135,6 +135,11 @@ class Customer(models.Model):
             }
         return None
 
+    def invoices(self):
+        res = stripe.Invoice.list(customer=self.stripe_id)
+        for invoice in res.data:
+            yield invoice
+
     def current_plan(self, si=None, as_dict=True):
         """
         Returns customer's compute studio plan and billing cycle duration

@@ -1,0 +1,38 @@
+{% extends 'registration/settings_base.html' %} {% load static %} {% block title %}Invoices
+information{% endblock %} {% block settings %}
+<div class="card card-body card-inner pt-0">
+  <h1 class="card-title">Invoices</h1>
+  {% if invoices %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Created</th>
+        <th>Amount</th>
+        <th>
+          Invoice
+        </th>
+        <th>Download</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for invoice in invoices %}
+      <tr>
+        <td>{{invoice.created}}</td>
+        <td>${{invoice.amount}}</td>
+        <td><a href="{{invoice.hosted_invoice_url}}">Invoice Link</a></td>
+        <td><a href="{{invoice.invoice_pdf}}">PDF</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="lead text-muted">No invoices available.</p>
+  {% endif %}
+  <div class="row w-100 justify-content-center">
+    <div class="col col-auto">
+      <a href="https://stripe.com"><img src="{% static 'imgs/powered_by_stripe.png' %}" alt="powered-by-stripe" /></a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

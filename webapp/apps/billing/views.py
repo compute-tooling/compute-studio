@@ -14,7 +14,14 @@ from webapp.apps.users.models import Project
 
 from . import webhooks
 from .email import send_teams_interest_mail
-from .models import Customer, Product, Subscription, SubscriptionItem, UpdateStatus
+from .models import (
+    Customer,
+    Product,
+    Subscription,
+    SubscriptionItem,
+    UpdateStatus,
+    timestamp_to_datetime,
+)
 
 
 stripe.api_key = os.environ.get("STRIPE_SECRET")
@@ -227,3 +234,24 @@ class UpgradePlanDone(View):
                 "update_completed_msg": f"You are now on the {plan_name}.",
             },
         )
+
+
+class ListInvoices(View):
+    template_name = "billing/invoices.html"
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        invoices = []
+        if getattr(request.user, "customer", None) is not None:
+            for invoice in request.user.customer.invoices():
+                invoices.append(
+                    {
+                        "hosted_invoice_url": invoice.hosted_invoice_url,
+                        "created": timestamp_to_datetime(invoice.created).strftime(
+                            "%Y-%m-%d"
+                        ),
+                        "amount": invoice.total,
+                        "invoice_pdf": invoice.invoice_pdf,
+                    }
+                )
+        return render(request, self.template_name, context={"invoices": invoices})

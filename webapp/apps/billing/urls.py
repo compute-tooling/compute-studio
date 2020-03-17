@@ -16,4 +16,5 @@ urlpatterns = [
         views.UpgradePlanDone.as_view(),
         name="upgrade_plan_duration_done",
     ),
+    path("invoices/", views.ListInvoices.as_view(), name="list_invoices"),
 ]
