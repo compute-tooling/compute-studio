@@ -298,11 +298,43 @@ export default class DescriptionComponent extends React.Component<
         actions.setStatus({ collaboratorLimit: null });
       }
     };
+
+    const setSubmitting = (submitting: boolean) => {
+      if (!!actions) {
+        actions.setSubmitting(submitting);
+      }
+    };
+
     const saveCollaborators = () => {
+      const promises = [];
       if (values.author?.add?.username) {
-        this.props.api
-          .addAuthors({ authors: [values.author.add] })
-          .then(data => {
+        promises.push(
+          this.props.api
+            .addAuthors({ authors: [values.author.add] })
+            .then(data => {
+              this.props.resetOutputs();
+              resetStatus();
+              this.setState(prevState => ({
+                initialValues: {
+                  ...prevState.initialValues,
+                  author: { add: { username: "", msg: "" }, remove: { username: "" } }
+                }
+              }));
+            })
+            .catch(error => {
+              if (!actions) throw error;
+              if (error.response.status == 400 && error.response.data.collaborators) {
+                window.scroll(0, 0);
+                actions.setStatus({
+                  collaboratorLimit: error.response.data.collaborators
+                });
+              }
+            })
+        );
+      }
+      if (values.author?.remove?.username) {
+        promises.push(
+          this.props.api.deleteAuthor(values.author.remove.username).then(data => {
             this.props.resetOutputs();
             resetStatus();
             this.setState(prevState => ({
@@ -312,59 +344,45 @@ export default class DescriptionComponent extends React.Component<
               }
             }));
           })
-          .catch(error => {
-            if (!actions) throw error;
-            if (error.response.status == 400 && error.response.data.collaborators) {
-              window.scroll(0, 0);
-              actions.setStatus({
-                collaboratorLimit: error.response.data.collaborators
-              });
-            }
-          });
-      }
-      if (values.author?.remove?.username) {
-        this.props.api.deleteAuthor(values.author.remove.username).then(data => {
-          this.props.resetOutputs();
-          resetStatus();
-          this.setState(prevState => ({
-            initialValues: {
-              ...prevState.initialValues,
-              author: { add: { username: "", msg: "" }, remove: { username: "" } }
-            }
-          }));
-        });
+        );
       }
       if (values.access.read?.grant?.username) {
-        this.props.api
-          .putAccess([
-            {
-              username: values.access.read.grant.username,
-              role: "read" as Role,
-              msg: values.access.read.grant.msg
-            }
-          ])
-          .then(resp => {
-            resetStatus();
-            this.props.resetOutputs();
-          })
-          .catch(error => {
-            if (!actions) throw error;
-            if (error.response.status == 400 && error.response.data.collaborators) {
-              window.scroll(0, 0);
-              actions.setStatus({
-                collaboratorLimit: error.response.data.collaborators
-              });
-            }
-          });
+        promises.push(
+          this.props.api
+            .putAccess([
+              {
+                username: values.access.read.grant.username,
+                role: "read" as Role,
+                msg: values.access.read.grant.msg
+              }
+            ])
+            .then(resp => {
+              resetStatus();
+              this.props.resetOutputs();
+            })
+            .catch(error => {
+              if (!actions) throw error;
+              if (error.response.status == 400 && error.response.data.collaborators) {
+                window.scroll(0, 0);
+                actions.setStatus({
+                  collaboratorLimit: error.response.data.collaborators
+                });
+              }
+            })
+        );
       }
       if (values.access.read?.remove?.username) {
-        this.props.api
-          .putAccess([{ username: values.access.read.remove.username, role: null }])
-          .then(resp => {
-            resetStatus();
-            this.props.resetOutputs();
-          });
+        promises.push(
+          this.props.api
+            .putAccess([{ username: values.access.read.remove.username, role: null }])
+            .then(resp => {
+              resetStatus();
+              this.props.resetOutputs();
+            })
+        );
       }
+
+      return Promise.all(promises);
     };
 
     resetStatus();
@@ -375,39 +393,41 @@ export default class DescriptionComponent extends React.Component<
       }
       formdata.append("model_pk", this.props.api.modelpk.toString());
       formdata.append("readme", JSON.stringify(values.readme));
-      this.props.api
-        .putDescription(formdata)
-        .then(data => {
-          if (!!this.props.remoteSim && data.is_public !== this.props.remoteSim?.is_public) {
-            this.props.resetOutputs();
-          }
-          this.setState({
-            isEditMode: false,
-            dirty: false,
-            initialValues: {
-              ...values,
-              ...{
-                // is public is stored on the server side, except when the
-                // remoteSim has not been defined...i.e. new sim.
-                is_public: !!this.props.remoteSim
-                  ? this.props.remoteSim?.is_public
-                  : values.is_public
+      saveCollaborators()
+        .then(() =>
+          this.props.api
+            .putDescription(formdata)
+            .then(data => {
+              if (!!this.props.remoteSim && data.is_public !== this.props.remoteSim?.is_public) {
+                this.props.resetOutputs();
               }
-            }
-          });
-          // Only save collaborators once the description data has been saved to avoid
-          // race conditions.
-          saveCollaborators();
-        })
-        .catch(error => {
-          if (!actions) throw error;
-          if (error.response.status == 400 && error.response.data.collaborators) {
-            window.scroll(0, 0);
-            actions.setStatus({
-              collaboratorLimit: error.response.data.collaborators
-            });
-          }
-        });
+              this.setState({
+                isEditMode: false,
+                dirty: false,
+                initialValues: {
+                  ...values,
+                  ...{
+                    // is public is stored on the server side, except when the
+                    // remoteSim has not been defined...i.e. new sim.
+                    is_public: !!this.props.remoteSim
+                      ? this.props.remoteSim?.is_public
+                      : values.is_public
+                  }
+                }
+              });
+            })
+            .catch(error => {
+              if (!actions) throw error;
+              if (error.response.status == 400 && error.response.data.collaborators) {
+                window.scroll(0, 0);
+                actions.setStatus({
+                  collaboratorLimit: error.response.data.collaborators
+                });
+              }
+              setSubmitting(false);
+            })
+        )
+        .finally(() => setSubmitting(false));
     }
   }
 

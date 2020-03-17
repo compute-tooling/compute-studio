@@ -2,7 +2,8 @@ import React = require("react");
 import { Row, Col, Button, Modal, Dropdown } from "react-bootstrap";
 import API from "./API";
 import { Simulation, RemoteOutputs, DescriptionValues, Role, AccessStatus } from "../types";
-import { FormikProps, Field, FastField, setNestedObjectValues } from "formik";
+import { FormikProps } from "formik";
+import ReactLoading from "react-loading";
 import { RolePerms } from "../roles";
 
 interface ResourceLimitException {
@@ -95,10 +96,10 @@ const prettyRole = (role: Role | "owner") => {
 
 const ConfirmSelected: React.FC<{
   selectedUser: string;
-  setSelected: (selected: boolean) => void;
+  resetState: () => void;
   formikProps: FormikProps<DescriptionValues>;
   defaultInviteAuthor?: boolean;
-}> = ({ selectedUser, setSelected, formikProps, defaultInviteAuthor }) => {
+}> = ({ selectedUser, resetState, formikProps, defaultInviteAuthor }) => {
   const [inviteAuthor, setInviteAuthor] = React.useState(
     defaultInviteAuthor !== undefined ? defaultInviteAuthor : false
   );
@@ -172,7 +173,7 @@ const ConfirmSelected: React.FC<{
                 })
               );
 
-              setSelected(false);
+              resetState();
             }}
           >
             <strong>Confirm</strong>
@@ -189,7 +190,7 @@ const ConfirmSelected: React.FC<{
                 access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } }
               });
               setMsg("");
-              setSelected(false);
+              resetState();
             }}
           >
             Cancel
@@ -246,7 +247,7 @@ export const CollaborationSettings: React.FC<{
 
   const [authorSelected, setAuthorSelected] = React.useState(false);
 
-  const [selectedUser, setSelectedUser] = React.useState("false");
+  const [selectedUser, setSelectedUser] = React.useState("");
 
   let authors: Array<{
     username: string;
@@ -350,7 +351,18 @@ export const CollaborationSettings: React.FC<{
             <>
               <Row className="w-100 my-2 mx-0">
                 <Col>
-                  <p className="lead">People</p>
+                  <div className="lead d-flex">
+                    People{" "}
+                    {formikProps.isSubmitting ? (
+                      <ReactLoading
+                        className="ml-2"
+                        type="spokes"
+                        color="#2b2c2d"
+                        height={"1.5rem"}
+                        width={"1.5rem"}
+                      />
+                    ) : null}
+                  </div>
                   <div className="row-flush">
                     {accessobjs.map((accessobj, ix) => {
                       const author = authors.find(author => author.username === accessobj.username);
@@ -386,11 +398,13 @@ export const CollaborationSettings: React.FC<{
                                 className="btn btn-outline-secondary lh-1"
                                 onClick={e => {
                                   e.preventDefault();
-                                  console.log("setting", accessobj.username);
+                                  console.log("author set", accessobj.username);
                                   setSelectedUser(accessobj.username);
-                                  setAuthorSelected(true);
-                                  setAccessSelected(false);
-                                  setAccessQuery([]);
+                                  setTimeout(() => {
+                                    setAuthorSelected(true);
+                                    setAccessSelected(false);
+                                    setAccessQuery([]);
+                                  });
                                 }}
                               >
                                 Invite to author
@@ -457,7 +471,10 @@ export const CollaborationSettings: React.FC<{
               {authorSelected ? (
                 <ConfirmSelected
                   selectedUser={selectedUser}
-                  setSelected={setAuthorSelected}
+                  resetState={() => {
+                    setAuthorSelected(false);
+                    setSelectedUser("");
+                  }}
                   formikProps={formikProps}
                   defaultInviteAuthor={true}
                 />
@@ -491,6 +508,7 @@ export const CollaborationSettings: React.FC<{
                         type="text"
                         className="form-control"
                         placeholder="Search by email or username."
+                        value={selectedUser}
                         onFocus={() => {
                           setViewAccessQuery(true);
                         }}
@@ -508,14 +526,21 @@ export const CollaborationSettings: React.FC<{
                         onSelectUser={selected => {
                           if (remoteSim.access.find(a => a.username === selected.username)) return;
                           setSelectedUser(selected.username);
-                          setAccessSelected(true);
-                          setAccessQuery([]);
+                          console.log("access set", selected.username);
+                          setTimeout(() => {
+                            setAccessSelected(true);
+                            setAuthorSelected(false);
+                            setAccessQuery([]);
+                          });
                         }}
                       />
                       {accessSelected ? (
                         <ConfirmSelected
                           selectedUser={selectedUser}
-                          setSelected={setAccessSelected}
+                          resetState={() => {
+                            setAccessSelected(false);
+                            setSelectedUser("");
+                          }}
                           formikProps={formikProps}
                         />
                       ) : null}
