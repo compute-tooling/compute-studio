@@ -11,7 +11,11 @@ information{% endblock %} {% block content %}
   </div>
   {% endif %}
 
-  <div class="row w-100 justify-content-left mb-4">
+  <div class="row w-100 justify-content-between mb-4">
+    <div class="col col-auto">
+      <a class="btn btn-link" href="{% url 'user_settings' %}"><i class="fas fa-arrow-left"></i> Settings</a>
+    </div>
+
     <div class="col col-auto">
       <div class="row">
         {% if plan_duration == "monthly" %}
@@ -174,7 +178,8 @@ information{% endblock %} {% block content %}
           <p class="lead">You will be charged $500 per year.</p>
           {% endif %}
           {% if not user.customer %}
-          <p><a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=pro">Add payment
+          <p><a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=pro">Add
+              payment
               method</a></p>
           {% else %}
           <p>Payment method:</p>
