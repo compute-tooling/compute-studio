@@ -42,6 +42,7 @@ class CustomerManager(models.Manager):
 class UpdateStatus(Enum):
     upgrade = "upgrade"
     downgrade = "downgrade"
+    duration_change = "duration_change"
     nochange = "nochange"
 
 
@@ -179,7 +180,7 @@ class Customer(models.Model):
         current_plan = self.current_plan(si=current_si, as_dict=True)
 
         product = Product.objects.get(name="Compute Studio Subscription")
-        print(current_plan, new_plan.nickname if new_plan is not None else None)
+
         # Check downgrade transitions
         if current_plan["name"] in ("plus", "pro") and new_plan is None:
             # downgrade from pro to free
@@ -188,27 +189,42 @@ class Customer(models.Model):
             return UpdateStatus.downgrade
 
         # Check change from one paid plan to another.
-        if current_plan["name"] == "plus" and new_plan.nickname.endswith("Pro Plan"):
+        if (
+            new_plan is not None
+            and current_si is not None
+            and current_si.plan != new_plan
+        ):
+            if current_si.plan.nickname.endswith("Pro Plan"):
+
+                if new_plan.nickname.endswith("Pro Plan"):
+                    status = UpdateStatus.duration_change
+                elif new_plan.nickname.endswith("Plus Plan"):
+                    status = UpdateStatus.downgrade
+
+            elif current_si.plan.nickname.endswith("Plus Plan"):
+
+                if new_plan.nickname.endswith("Plus Plan"):
+                    status = UpdateStatus.duration_change
+                elif new_plan.nickname.endswith("Pro Plan"):
+                    status = UpdateStatus.upgrade
+
+            else:
+                raise ValueError(
+                    "Can only handle plus and pro plans at the moment: {new_plan.nickname}."
+                )
+
             stripe.SubscriptionItem.modify(
                 current_si.stripe_id, plan=new_plan.stripe_id
             )
             current_si.plan = new_plan
             current_si.save()
             send_subscribe_to_plan_email(self.user, new_plan)
-            return UpdateStatus.upgrade
-        if current_plan["name"] == "pro" and new_plan.nickname.endswith("Plus Plan"):
-            stripe.SubscriptionItem.modify(
-                current_si.stripe_id, plan=new_plan.stripe_id
-            )
-            current_si.plan = new_plan
-            current_si.save()
-            send_subscribe_to_plan_email(self.user, new_plan)
-            return UpdateStatus.downgrade
+            return status
 
         # Check nochange transitions
         if current_plan["name"] == "free" and new_plan is None:
             return UpdateStatus.nochange
-        if current_plan["name"] == "pro" and new_plan.nickname.endswith("Pro Plan"):
+        if current_si is not None and current_si.plan == new_plan:
             return UpdateStatus.nochange
 
         # Transition from free to paid plan.

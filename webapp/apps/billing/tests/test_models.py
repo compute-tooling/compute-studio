@@ -201,9 +201,11 @@ class TestStripeModels:
             "exp_year": now.year + 1,
         }
 
-    @pytest.mark.parametrize("plan_duration", ["Monthly", "Yearly"])
+    @pytest.mark.parametrize(
+        "plan_duration,other_duration", [("Monthly", "Yearly"), ("Yearly", "Monthly")]
+    )
     def test_customer_subscription_upgrades(
-        self, db, customer, monkeypatch, plan_duration
+        self, db, customer, monkeypatch, plan_duration, other_duration
     ):
         assert customer.current_plan() == {"plan_duration": None, "name": "free"}
 
@@ -232,7 +234,7 @@ class TestStripeModels:
             "name": "pro",
         }
 
-        # test downgrade from plus to pro
+        # test downgrade from pro to plus
         plan = cs_product.plans.get(nickname=f"{plan_duration} Plus Plan")
 
         result = customer.update_plan(plan)
@@ -240,6 +242,17 @@ class TestStripeModels:
 
         assert customer.current_plan() == {
             "plan_duration": plan_duration.lower(),
+            "name": "plus",
+        }
+
+        # swap to other plus duration
+        plan = cs_product.plans.get(nickname=f"{other_duration} Plus Plan")
+
+        result = customer.update_plan(plan)
+        assert result == UpdateStatus.duration_change
+
+        assert customer.current_plan() == {
+            "plan_duration": other_duration.lower(),
             "name": "plus",
         }
 
@@ -251,6 +264,17 @@ class TestStripeModels:
 
         assert customer.current_plan() == {
             "plan_duration": plan_duration.lower(),
+            "name": "pro",
+        }
+
+        # swap to other pro duration
+        plan = cs_product.plans.get(nickname=f"{other_duration} Pro Plan")
+
+        result = customer.update_plan(plan)
+        assert result == UpdateStatus.duration_change
+
+        assert customer.current_plan() == {
+            "plan_duration": other_duration.lower(),
             "name": "pro",
         }
 

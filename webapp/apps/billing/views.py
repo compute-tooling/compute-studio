@@ -142,13 +142,31 @@ def parse_upgrade_params(request):
     return upgrade_plan, selected_plan
 
 
+class Plans(View):
+    template_name = "billing/upgrade_plan.html"
+    default_duration = "monthly"
+
+    def get(self, request, *args, **kwargs):
+        current_plan = {"plan_duration": None, "name": "free"}
+        if getattr(request.user, "customer", None) is not None:
+            current_plan = request.user.customer.current_plan()
+
+        return redirect(
+            reverse(
+                "upgrade_plan_duration",
+                kwargs=dict(
+                    plan_duration=current_plan["plan_duration"] or self.default_duration
+                ),
+            )
+        )
+
+
 class UpgradePlan(View):
     template_name = "billing/upgrade_plan.html"
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        # plan_duration optionally given in url: /billing/upgrade/[plan_duration]/
-        plan_duration = kwargs.get("plan_duration", "monthly")
+        plan_duration = kwargs.get("plan_duration")
         upgrade_plan, selected_plan = parse_upgrade_params(request)
         customer = getattr(request.user, "customer", None)
         card_info = {"last4": None, "brand": None}

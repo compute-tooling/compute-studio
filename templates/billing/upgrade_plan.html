@@ -59,13 +59,14 @@ information{% endblock %} {% block content %}
     <div class="card card-outer">
       <div class="card-body">
         <h2 class="card-title" style="font-weight:500">Plus
-          {% if current_plan.name == 'plus' %}<a href="#" class="btn btn-link float-right my-0">
+          {% if current_plan.name == 'plus' and current_plan.plan_duration == plan_duration %}<a href="#"
+            class="btn btn-link float-right my-0">
             <i class="fas fa-check-circle"></i> </a>{% endif %}</h2>
         <p class="lead">Share your private work with someone you trust.</p>
         <ul class="my-4 pl-3">
           <li>Add a private collaborator to your simulations, models, and data shapshots.</li>
         </ul>
-        {% if current_plan.name != 'plus' %}
+        {% if current_plan.name != 'plus' or current_plan.plan_duration != plan_duration %}
         <div class="text-center">
           <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#plusModal">
             <strong>
@@ -95,16 +96,23 @@ information{% endblock %} {% block content %}
     <div class="card card-outer">
       <div class="card-body">
         <h2 class="card-title" style="font-weight:500">Pro
-          {% if current_plan.name == 'pro' %}<a href="#" class="btn btn-link float-right my-0">
+          {% if current_plan.name == 'pro' and current_plan.plan_duration == plan_duration %}<a href="#"
+            class="btn btn-link float-right my-0">
             <i class="fas fa-check-circle"></i> </a>{% endif %}</h2>
         <p class="lead">Unlimited private collaboration for pros.</p>
         <ul class="my-4 pl-3">
           <li>Unlimited private collaboration.</li>
         </ul>
-        {% if current_plan.name != 'pro' %}
+        {% if current_plan.name != 'pro' or current_plan.plan_duration != plan_duration%}
         <div class="text-center">
           <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#proModal">
-            <strong>Upgrade</strong>
+            <strong>
+              {% if current_plan.name == "free" or current_plan.name == "plus" %}
+              Upgrade
+              {% else %}
+              Select
+              {% endif %}
+            </strong>
             </a>
         </div>
         {% endif %}
