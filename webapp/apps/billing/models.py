@@ -15,7 +15,7 @@ from django.utils.timezone import make_aware
 
 from webapp.settings import USE_STRIPE, DEBUG
 
-from .email import send_unsubscribe_email, send_subscribe_to_plan_email
+from .email import send_subscribe_to_plan_email
 
 stripe.api_key = os.environ.get("STRIPE_SECRET")
 
@@ -158,7 +158,9 @@ class Customer(models.Model):
             si = si or SubscriptionItem.objects.get(
                 subscription__customer=self, plan__in=product.plans.all()
             )
-            if si.plan.nickname == "Monthly Plus Plan":
+            if si.plan.nickname == "Free Plan":
+                current_plan = {"plan_duration": None, "name": "free"}
+            elif si.plan.nickname == "Monthly Plus Plan":
                 current_plan = {"plan_duration": "monthly", "name": "plus"}
             elif si.plan.nickname == "Yearly Plus Plan":
                 current_plan = {"plan_duration": "yearly", "name": "plus"}
@@ -181,25 +183,14 @@ class Customer(models.Model):
 
         product = Product.objects.get(name="Compute Studio Subscription")
 
-        # Check downgrade transitions
-        if current_plan["name"] in ("plus", "pro") and new_plan is None:
-            # downgrade from pro to free
-            # send_mail --> I'll do this manually for now.
-            send_unsubscribe_email(self.user)
-            return UpdateStatus.downgrade
-
         # Check change from one paid plan to another.
         if (
             new_plan is not None
             and current_si is not None
             and current_si.plan != new_plan
         ):
-            if current_si.plan.nickname.endswith("Pro Plan"):
-
-                if new_plan.nickname.endswith("Pro Plan"):
-                    status = UpdateStatus.duration_change
-                elif new_plan.nickname.endswith("Plus Plan"):
-                    status = UpdateStatus.downgrade
+            if current_si.plan.nickname == "Free Plan":
+                status = UpdateStatus.upgrade
 
             elif current_si.plan.nickname.endswith("Plus Plan"):
 
@@ -207,10 +198,21 @@ class Customer(models.Model):
                     status = UpdateStatus.duration_change
                 elif new_plan.nickname.endswith("Pro Plan"):
                     status = UpdateStatus.upgrade
+                elif new_plan.nickname == "Free Plan":
+                    status = UpdateStatus.downgrade
+
+            elif current_si.plan.nickname.endswith("Pro Plan"):
+
+                if new_plan.nickname.endswith("Pro Plan"):
+                    status = UpdateStatus.duration_change
+                elif new_plan.nickname.endswith("Plus Plan"):
+                    status = UpdateStatus.downgrade
+                elif new_plan.nickname == "Free Plan":
+                    status = UpdateStatus.downgrade
 
             else:
                 raise ValueError(
-                    "Can only handle plus and pro plans at the moment: {new_plan.nickname}."
+                    "Can only handle free, plus, and pro plans at the moment: {new_plan.nickname}."
                 )
 
             stripe.SubscriptionItem.modify(
@@ -272,6 +274,7 @@ class Customer(models.Model):
         except Customer.DoesNotExist as dne:
             stripe_obj = Customer.get_stripe_object(stripe_id)
             customer, created = Customer.construct(stripe_obj, user), True
+            customer.update_plan(new_plan=Plan.objects.get(nickname="Free Plan"))
         except IntegrityError:
             customer, created = Customer.objects.get(stripe_id=stripe_id), False
         return customer, created
@@ -675,6 +678,16 @@ def create_pro_billing_objects():
         product, _ = Product.get_or_construct(stripe_obj.id)
     else:
         product = Product.objects.get(name="Compute Studio Subscription")
+
+    if Plan.objects.filter(nickname="Free Plan").count() == 0:
+        plan = Plan.create_stripe_object(
+            amount=0,
+            product=product,
+            usage_type="licensed",
+            interval="month",
+            nickname="Free Plan",
+        )
+        Plan.get_or_construct(plan.id, product)
 
     if Plan.objects.filter(nickname="Monthly Plus Plan").count() == 0:
         monthly_plan = Plan.create_stripe_object(

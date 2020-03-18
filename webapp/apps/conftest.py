@@ -84,6 +84,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
             project = Project.objects.create(**dict(common, **project_config))
 
         if USE_STRIPE:
+            create_pro_billing_objects()
             Project.objects.sync_products()
             for u in [modeler, sponsor, hdoupe]:
                 stripe_customer = stripe.Customer.create(
@@ -91,7 +92,6 @@ def django_db_setup(django_db_setup, django_db_blocker):
                 )
                 customer, _ = Customer.get_or_construct(stripe_customer.id, u)
             Customer.objects.sync_subscriptions()
-            create_pro_billing_objects()
 
 
 @pytest.fixture

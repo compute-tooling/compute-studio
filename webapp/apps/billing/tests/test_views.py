@@ -190,35 +190,24 @@ class TestBillingViews:
             == {"plan_duration": plan_duration.lower(), "name": "pro"}
         )
 
-        # Test get Free sends unsubscribe email and does not change subscription status.
-        # (status will be changed manually for now.)
-
-        called = []  # use list so that called keeps this memory ref.
-
-        def mock_email2(user, called=called):
-            assert user == customer.user
-            called += [True]
-
-        monkeypatch.setattr(
-            "webapp.apps.billing.models.send_unsubscribe_email", mock_email2
-        )
-
+        # Test downgrade to free plan.
         resp = client.get(
             f"/billing/upgrade/{plan_duration.lower()}/?upgrade_plan=free"
         )
         assert resp.status_code == 302, f"Expected 302: got {resp.status_code}"
-        assert resp.url == reverse(
+        next_url = resp.url
+        assert next_url == reverse(
             "upgrade_plan_duration_done",
             kwargs=dict(plan_duration=plan_duration.lower()),
         )
-        resp = client.get(resp.url)
+        resp = client.get(next_url)
         assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
-        assert called == [True]
+        assert resp.context["plan_duration"] == plan_duration.lower()
         customer = Customer.objects.get(pk=customer.pk)
         assert (
             resp.context["current_plan"]
             == customer.current_plan()
-            == {"plan_duration": plan_duration.lower(), "name": "pro"}
+            == {"plan_duration": None, "name": "free"}
         )
 
     def test_list_invoices(self, db, client, customer):

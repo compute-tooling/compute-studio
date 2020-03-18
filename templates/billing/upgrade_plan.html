@@ -48,6 +48,16 @@ information{% endblock %} {% block content %}
           <li>Unlimited public publishing.</li>
           <li>Unlimited public modeling and data snapshotting.</li>
         </ul>
+        {% if current_plan.name != 'free' %}
+        <div class="text-center">
+          <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#freeModal">
+            <strong>
+              Select
+            </strong>
+            </a>
+        </div>
+        {% endif %}
+
       </div>
       <div class="card-footer border-top-0 background-color-inherit">
         <h2 class="text-center">$0</h2>
@@ -162,11 +172,24 @@ information{% endblock %} {% block content %}
       </div>
     </div>
   </div>
-  <div class="row justify-content-center mt-5 {% if current_plan.name == 'free' %}d-none{% endif %}">
-    <div class="col col-auto">
-      <a id="contact-unsubscribe" href="#" class="btn btn-outline-primary text-center">
-        Unsubscribe
-      </a>
+  <div class="modal fade" id="freeModal" tabindex="-1" role="dialog" aria-labelledby="freeModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="freeModalLabel">Downgrade to Free Plan</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="lead">This plan is free.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <a href="/billing/upgrade/{{plan_duration}}/?upgrade_plan=free" class="btn btn-primary">Select</a>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -278,13 +301,6 @@ information{% endblock %} {% block content %}
       $("#proModal").modal("show");
     });
   }
-
-  var unsubscribeButton = document.getElementById("contact-unsubscribe");
-  unsubscribeButton.addEventListener("click", function (event) {
-    event.preventDefault();
-    unsubscribeButton.innerHTML = "<strong>Sorry to hear that. You will be unsubscribed within the next business day.</strong>";
-    fetch("/billing/upgrade?upgrade_plan=free").then(function (resp) { });
-  });
 
 </script>
 {% endblock %}

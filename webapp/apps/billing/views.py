@@ -178,7 +178,11 @@ class UpgradePlan(View):
             result = UpdateStatus.nochange
             new_plan = None
 
-            if upgrade_plan == "plus":
+            if upgrade_plan == "free":
+                new_plan = product.plans.get(nickname="Free Plan")
+                result = customer.update_plan(new_plan)
+
+            elif upgrade_plan == "plus":
                 if plan_duration == "monthly":
                     new_plan = product.plans.get(nickname="Monthly Plus Plan")
                 else:
@@ -196,9 +200,6 @@ class UpgradePlan(View):
 
             elif upgrade_plan == "team":
                 send_teams_interest_mail(customer.user)
-
-            elif upgrade_plan == "free":
-                result = customer.update_plan(None)
 
             current_plan = customer.current_plan()
 

@@ -36,6 +36,9 @@ class TestStripeModels:
         assert customer.user
         assert created
         assert not customer.livemode
+        assert customer.current_plan(as_dict=False).plan == Plan.objects.get(
+            nickname="Free Plan"
+        )
 
         customer, created = Customer.get_or_construct(stripe_customer.id)
         assert customer
@@ -139,7 +142,10 @@ class TestStripeModels:
             email=u.email, source="tok_bypassPending"
         )
         c, _ = Customer.get_or_construct(stripe_customer.id, u)
-        assert c.subscriptions.count() == 0
+        assert c.subscriptions.count() == 1
+        assert c.current_plan(as_dict=False).plan == Plan.objects.get(
+            nickname="Free Plan"
+        )
 
         # test new customer gets all subscriptions.
         c.sync_subscriptions()
@@ -180,6 +186,7 @@ class TestStripeModels:
 
         plans = set(
             [
+                Plan.objects.get(nickname="Free Plan"),
                 Plan.objects.get(nickname="Monthly Plus Plan"),
                 Plan.objects.get(nickname="Yearly Plus Plan"),
                 Plan.objects.get(nickname="Monthly Pro Plan"),
@@ -208,6 +215,9 @@ class TestStripeModels:
         self, db, customer, monkeypatch, plan_duration, other_duration
     ):
         assert customer.current_plan() == {"plan_duration": None, "name": "free"}
+        assert customer.current_plan(as_dict=False).plan == Plan.objects.get(
+            nickname="Free Plan"
+        )
 
         cs_product = Product.objects.get(name="Compute Studio Subscription")
 
@@ -278,18 +288,11 @@ class TestStripeModels:
             "name": "pro",
         }
 
-        # test downgrade to free sends mail
-        plan = None
-
-        called = []  # use list so that called keeps this memory ref.
-
-        def mock_email(user, called=called):
-            assert user == customer.user
-            called += [True]
-
-        monkeypatch.setattr(
-            "webapp.apps.billing.models.send_unsubscribe_email", mock_email
-        )
+        # test downgrade to free
+        plan = Plan.objects.get(nickname="Free Plan")
         result = customer.update_plan(plan)
         assert result == UpdateStatus.downgrade
-        assert called == [True]
+        assert customer.current_plan() == {"plan_duration": None, "name": "free"}
+        assert customer.current_plan(as_dict=False).plan == Plan.objects.get(
+            nickname="Free Plan"
+        )
