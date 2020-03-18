@@ -2,9 +2,32 @@ import React = require("react");
 import { Row, Col, Button, Modal, Dropdown } from "react-bootstrap";
 import API from "./API";
 import { Simulation, RemoteOutputs, DescriptionValues, Role, AccessStatus } from "../types";
-import { FormikProps } from "formik";
+import { FormikProps, FormikHelpers } from "formik";
 import ReactLoading from "react-loading";
 import { RolePerms } from "../roles";
+
+export interface CollaboratorValues {
+  access: {
+    read: {
+      grant: {
+        username: string;
+        msg?: string;
+      };
+      remove: {
+        username: string;
+      };
+    };
+  };
+  author: {
+    add: {
+      username: string;
+      msg?: string;
+    };
+    remove: {
+      username: string;
+    };
+  };
+}
 
 interface ResourceLimitException {
   resource: "collaborators";
@@ -97,7 +120,7 @@ const prettyRole = (role: Role | "owner") => {
 const ConfirmSelected: React.FC<{
   selectedUser: string;
   resetState: () => void;
-  formikProps: FormikProps<DescriptionValues>;
+  formikProps: FormikProps<{ title: string; is_public: boolean } & CollaboratorValues>;
   defaultInviteAuthor?: boolean;
 }> = ({ selectedUser, resetState, formikProps, defaultInviteAuthor }) => {
   const [inviteAuthor, setInviteAuthor] = React.useState(
@@ -236,11 +259,47 @@ export const CollaborationSettings: React.FC<{
   api: API;
   user: string;
   remoteSim?: Simulation<RemoteOutputs>;
-  formikProps: FormikProps<DescriptionValues>;
+  formikProps: FormikProps<{ title: string; is_public: boolean } & CollaboratorValues>;
   plan: AccessStatus["plan"]["name"];
 }> = ({ api, user, remoteSim, formikProps, plan }) => {
   const [show, setShow] = React.useState(false);
+  const is_public =
+    remoteSim?.is_public !== undefined ? remoteSim.is_public : formikProps.values.is_public;
+  return (
+    <>
+      <Button
+        variant="dark"
+        style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}
+        className="mb-4 w-100 mt-1"
+        onClick={() => setShow(true)}
+      >
+        <>
+          <i className={`fas fa-${is_public ? "lock-open" : "lock"} mr-2`}></i>
+          Share
+        </>
+      </Button>
+      <CollaborationModal
+        api={api}
+        user={user}
+        remoteSim={remoteSim}
+        formikProps={formikProps}
+        plan={plan}
+        show={show}
+        setShow={setShow}
+      />
+    </>
+  );
+};
 
+export const CollaborationModal: React.FC<{
+  api: API;
+  user: string;
+  remoteSim?: Simulation<RemoteOutputs>;
+  formikProps: FormikProps<{ title: string; is_public: boolean } & CollaboratorValues>;
+  plan: AccessStatus["plan"]["name"];
+  show?: boolean;
+  setShow: (show: boolean) => void;
+}> = ({ api, user, remoteSim, formikProps, plan, show, setShow }) => {
   const [accessQuery, setAccessQuery] = React.useState<Array<{ username: string }>>([]);
   const [viewAccessQuery, setViewAccessQuery] = React.useState(false);
   const [accessSelected, setAccessSelected] = React.useState(false);
@@ -289,274 +348,306 @@ export const CollaborationSettings: React.FC<{
   }
 
   return (
-    <>
-      <Button
-        variant="dark"
-        style={{ backgroundColor: "rgba(60, 62, 62, 1)" }}
-        className="mb-4 w-100 mt-1"
-        onClick={() => setShow(true)}
-      >
-        <>
-          <i className={`fas fa-${is_public ? "lock-open" : "lock"} mr-2`}></i>
-          Share
-        </>
-      </Button>
-
-      <Modal show={show} onHide={() => setShow(false)} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>Collaboration Settings</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {!!collabExceptionMsg ? (
-            <Row className="w-100">
-              <Col>{collabExceptionMsg}</Col>
-            </Row>
-          ) : null}
-          {RolePerms.hasAdminAccess(remoteSim) || !remoteSim ? (
-            <Row className="w-100 mb-2 mx-0">
-              <Col>
-                <p className="lead">Who has access</p>
-                {is_public ? (
-                  <p>
-                    This simulation is <strong>public</strong> and can be viewed by anyone.
-                  </p>
-                ) : (
-                  <p>
-                    This simulation is <strong>private</strong> and can only be viewed by users who
-                    have been granted access to it.
-                  </p>
-                )}
-                <Row className="w-100 justify-content-center">
-                  <Col className="col-auto">
-                    <Button
-                      variant="dark"
-                      style={{ backgroundColor: "rgba(60, 62, 62, 1)", fontWeight: 600 }}
-                      className="mb-4 w-100 mt-1"
-                      onClick={() => {
-                        setFieldValue("is_public", !is_public);
-                        // put handleSubmit in setTimeout since setFieldValue is async
-                        // but does not return a promise
-                        // https://github.com/jaredpalmer/formik/issues/529
-                        setTimeout(handleSubmit, 0);
-                      }}
-                    >
-                      Make this simulation {is_public ? "private" : "public"}
-                    </Button>
-                  </Col>
-                </Row>
-              </Col>
-            </Row>
-          ) : null}
-          {user !== "anon" ? (
-            <>
-              <Row className="w-100 my-2 mx-0">
-                <Col>
-                  <div className="lead d-flex">
-                    People{" "}
-                    {formikProps.isSubmitting ? (
-                      <ReactLoading
-                        className="ml-2"
-                        type="spokes"
-                        color="#2b2c2d"
-                        height={"1.5rem"}
-                        width={"1.5rem"}
-                      />
-                    ) : null}
-                  </div>
-                  <div className="row-flush">
-                    {accessobjs.map((accessobj, ix) => {
-                      const author = authors.find(author => author.username === accessobj.username);
-                      return (
-                        <Row key={ix} className="w-100 p-2 justify-content-between row-flush-item">
-                          <Col className="col-md-5 align-self-center">
-                            <span>
-                              <strong>{accessobj.username}</strong>
-                            </span>
-                          </Col>
-                          <Col className="col-md-2 align-self-center">
-                            {accessobj.is_owner ? (
-                              <span>Owner</span>
-                            ) : (
-                              <span>{prettyRole(accessobj.role)}</span>
-                            )}
-                          </Col>
-                          <Col className="col-md-4 align-self-center">
-                            {!!author ? (
-                              author.pending ? (
-                                <span className="text-muted">
-                                  <i className="fas fa-user-friends mr-1"></i>
-                                  <span className="text-muted">Author &#183; pending</span>
-                                </span>
-                              ) : (
-                                <span className="text-success">
-                                  <i className="fas fa-user-friends mr-1"></i>Author
-                                </span>
-                              )
-                            ) : (
-                              <a
-                                href="#"
-                                className="btn btn-outline-secondary lh-1"
-                                onClick={e => {
-                                  e.preventDefault();
-                                  console.log("author set", accessobj.username);
-                                  setSelectedUser(accessobj.username);
-                                  setTimeout(() => {
-                                    setAuthorSelected(true);
-                                    setAccessSelected(false);
-                                    setAccessQuery([]);
-                                  });
-                                }}
-                              >
-                                Invite to author
-                              </a>
-                            )}
-                          </Col>
-                          <Col className="col-md-1 align-self-center">
-                            {/* owner cannot lose access, and authors must be removed as authors
-                          before they can lose access to the simulation. */}
-                            {accessobj.username !== remoteSim?.owner ? (
-                              <>
-                                <Dropdown>
-                                  <Dropdown.Toggle
-                                    id="dropdown-basic"
-                                    variant="link"
-                                    className="caret-off"
-                                    style={{ border: 0 }}
-                                  >
-                                    <i className="far fa-trash-alt hover-red"></i>
-                                  </Dropdown.Toggle>
-                                  <Dropdown.Menu>
-                                    {RolePerms.hasAdminAccess(remoteSim) ? (
-                                      <Dropdown.Item
-                                        key={0}
-                                        href=""
-                                        onClick={() => {
-                                          setFieldValue(
-                                            "access.read.remove.username",
-                                            accessobj.username
-                                          );
-                                          setTimeout(handleSubmit, 0);
-                                          setTimeout(() =>
-                                            setFieldValue("access.read.remove.username", "")
-                                          );
-                                        }}
-                                      >
-                                        Remove role: {prettyRole(accessobj.role)}
-                                      </Dropdown.Item>
-                                    ) : null}
-                                    {author ? (
-                                      <Dropdown.Item
-                                        key={1}
-                                        href=""
-                                        onClick={() => {
-                                          setFieldValue("author.remove.username", author.username);
-                                          setTimeout(handleSubmit, 0);
-                                          setTimeout(() => setFieldValue("author.remove", ""));
-                                        }}
-                                      >
-                                        Remove from authors
-                                      </Dropdown.Item>
-                                    ) : null}
-                                  </Dropdown.Menu>
-                                </Dropdown>
-                              </>
-                            ) : null}
-                          </Col>
-                        </Row>
-                      );
-                    })}
-                  </div>
+    <Modal show={show} onHide={() => setShow(false)} size="lg">
+      <Modal.Header closeButton>
+        <Modal.Title>Collaboration Settings</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {!!collabExceptionMsg ? (
+          <Row className="w-100">
+            <Col>{collabExceptionMsg}</Col>
+          </Row>
+        ) : null}
+        {RolePerms.hasAdminAccess(remoteSim) || !remoteSim ? (
+          <Row className="w-100 mb-2 mx-0">
+            <Col>
+              <p className="lead">Who has access</p>
+              {is_public ? (
+                <p>
+                  This simulation is <strong>public</strong> and can be viewed by anyone.
+                </p>
+              ) : (
+                <p>
+                  This simulation is <strong>private</strong> and can only be viewed by users who
+                  have been granted access to it.
+                </p>
+              )}
+              <Row className="w-100 justify-content-center">
+                <Col className="col-auto">
+                  <Button
+                    variant="dark"
+                    style={{ backgroundColor: "rgba(60, 62, 62, 1)", fontWeight: 600 }}
+                    className="mb-4 w-100 mt-1"
+                    onClick={() => {
+                      setFieldValue("is_public", !is_public);
+                      // put handleSubmit in setTimeout since setFieldValue is async
+                      // but does not return a promise
+                      // https://github.com/jaredpalmer/formik/issues/529
+                      setTimeout(handleSubmit, 0);
+                    }}
+                  >
+                    Make this simulation {is_public ? "private" : "public"}
+                  </Button>
                 </Col>
               </Row>
-              {authorSelected ? (
-                <ConfirmSelected
-                  selectedUser={selectedUser}
-                  resetState={() => {
-                    setAuthorSelected(false);
-                    setSelectedUser("");
-                  }}
-                  formikProps={formikProps}
-                  defaultInviteAuthor={true}
-                />
-              ) : null}
-              {RolePerms.hasAdminAccess(remoteSim) && plan === "free" && !remoteSim.is_public ? (
-                <Row className="w-100 mt-4 justify-content-center">
-                  <Col className="col-auto">
-                    <Button
-                      variant="success"
-                      style={{ fontWeight: 600 }}
-                      className="mb-4 w-100 mt-1"
-                      href="/billing/upgrade/"
-                    >
-                      Upgrade to add private collaborators
-                    </Button>
+            </Col>
+          </Row>
+        ) : null}
+        {user !== "anon" ? (
+          <>
+            <Row className="w-100 my-2 mx-0">
+              <Col>
+                <div className="lead d-flex">
+                  People{" "}
+                  {formikProps.isSubmitting ? (
+                    <ReactLoading
+                      className="ml-2"
+                      type="spokes"
+                      color="#2b2c2d"
+                      height={"1.5rem"}
+                      width={"1.5rem"}
+                    />
+                  ) : null}
+                </div>
+                <div className="row-flush">
+                  {accessobjs.map((accessobj, ix) => {
+                    const author = authors.find(author => author.username === accessobj.username);
+                    return (
+                      <Row key={ix} className="w-100 p-2 justify-content-between row-flush-item">
+                        <Col className="col-md-5 align-self-center">
+                          <span>
+                            <strong>{accessobj.username}</strong>
+                          </span>
+                        </Col>
+                        <Col className="col-md-2 align-self-center">
+                          {accessobj.is_owner ? (
+                            <span>Owner</span>
+                          ) : (
+                            <span>{prettyRole(accessobj.role)}</span>
+                          )}
+                        </Col>
+                        <Col className="col-md-4 align-self-center">
+                          {!!author ? (
+                            author.pending ? (
+                              <span className="text-muted">
+                                <i className="fas fa-user-friends mr-1"></i>
+                                <span className="text-muted">Author &#183; pending</span>
+                              </span>
+                            ) : (
+                              <span className="text-success">
+                                <i className="fas fa-user-friends mr-1"></i>Author
+                              </span>
+                            )
+                          ) : (
+                            <a
+                              href="#"
+                              className="btn btn-outline-secondary lh-1"
+                              onClick={e => {
+                                e.preventDefault();
+                                console.log("author set", accessobj.username);
+                                setSelectedUser(accessobj.username);
+                                setTimeout(() => {
+                                  setAuthorSelected(true);
+                                  setAccessSelected(false);
+                                  setAccessQuery([]);
+                                });
+                              }}
+                            >
+                              Invite to author
+                            </a>
+                          )}
+                        </Col>
+                        <Col className="col-md-1 align-self-center">
+                          {/* owner cannot lose access, and authors must be removed as authors
+                          before they can lose access to the simulation. */}
+                          {accessobj.username !== remoteSim?.owner ? (
+                            <>
+                              <Dropdown>
+                                <Dropdown.Toggle
+                                  id="dropdown-basic"
+                                  variant="link"
+                                  className="caret-off"
+                                  style={{ border: 0 }}
+                                >
+                                  <i className="far fa-trash-alt hover-red"></i>
+                                </Dropdown.Toggle>
+                                <Dropdown.Menu>
+                                  {RolePerms.hasAdminAccess(remoteSim) ? (
+                                    <Dropdown.Item
+                                      key={0}
+                                      href=""
+                                      onClick={() => {
+                                        setFieldValue(
+                                          "access.read.remove.username",
+                                          accessobj.username
+                                        );
+                                        setTimeout(handleSubmit, 0);
+                                        setTimeout(() =>
+                                          setFieldValue("access.read.remove.username", "")
+                                        );
+                                      }}
+                                    >
+                                      Remove role: {prettyRole(accessobj.role)}
+                                    </Dropdown.Item>
+                                  ) : null}
+                                  {author ? (
+                                    <Dropdown.Item
+                                      key={1}
+                                      href=""
+                                      onClick={() => {
+                                        setFieldValue("author.remove.username", author.username);
+                                        setTimeout(handleSubmit, 0);
+                                        setTimeout(() => setFieldValue("author.remove", ""));
+                                      }}
+                                    >
+                                      Remove from authors
+                                    </Dropdown.Item>
+                                  ) : null}
+                                </Dropdown.Menu>
+                              </Dropdown>
+                            </>
+                          ) : null}
+                        </Col>
+                      </Row>
+                    );
+                  })}
+                </div>
+              </Col>
+            </Row>
+            {authorSelected ? (
+              <ConfirmSelected
+                selectedUser={selectedUser}
+                resetState={() => {
+                  setAuthorSelected(false);
+                  setSelectedUser("");
+                }}
+                formikProps={formikProps}
+                defaultInviteAuthor={true}
+              />
+            ) : null}
+            {RolePerms.hasAdminAccess(remoteSim) && plan === "free" && !remoteSim.is_public ? (
+              <Row className="w-100 mt-4 justify-content-center">
+                <Col className="col-auto">
+                  <Button
+                    variant="success"
+                    style={{ fontWeight: 600 }}
+                    className="mb-4 w-100 mt-1"
+                    href="/billing/upgrade/"
+                  >
+                    Upgrade to add private collaborators
+                  </Button>
+                </Col>
+              </Row>
+            ) : null}
+            {RolePerms.hasAdminAccess(remoteSim) && (plan !== "free" || remoteSim.is_public) ? (
+              <>
+                <Row className="w-100 mt-4">
+                  <Col>
+                    <p className="lead" style={{ paddingLeft: "15px" }}>
+                      Invite collaborators
+                    </p>
                   </Col>
                 </Row>
-              ) : null}
-              {RolePerms.hasAdminAccess(remoteSim) && (plan !== "free" || remoteSim.is_public) ? (
-                <>
-                  <Row className="w-100 mt-4">
-                    <Col>
-                      <p className="lead" style={{ paddingLeft: "15px" }}>
-                        Invite collaborators
-                      </p>
-                    </Col>
-                  </Row>
-                  <Row className="w-100 justify-content-left">
-                    <Col>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Search by email or username."
-                        value={selectedUser}
-                        onFocus={() => {
-                          setViewAccessQuery(true);
+                <Row className="w-100 justify-content-left">
+                  <Col>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Search by email or username."
+                      value={selectedUser}
+                      onFocus={() => {
+                        setViewAccessQuery(true);
+                      }}
+                      onChange={e => {
+                        setViewAccessQuery(true);
+                        handleQuery(e, users => setAccessQuery(users));
+                        setSelectedUser(e.target.value);
+                      }}
+                      readOnly={accessSelected}
+                    ></input>
+                    <UserQuery
+                      query={accessQuery}
+                      selectedUsers={remoteSim.access}
+                      show={viewAccessQuery}
+                      onSelectUser={selected => {
+                        if (remoteSim.access.find(a => a.username === selected.username)) return;
+                        setSelectedUser(selected.username);
+                        console.log("access set", selected.username);
+                        setTimeout(() => {
+                          setAccessSelected(true);
+                          setAuthorSelected(false);
+                          setAccessQuery([]);
+                        });
+                      }}
+                    />
+                    {accessSelected ? (
+                      <ConfirmSelected
+                        selectedUser={selectedUser}
+                        resetState={() => {
+                          setAccessSelected(false);
+                          setSelectedUser("");
                         }}
-                        onChange={e => {
-                          setViewAccessQuery(true);
-                          handleQuery(e, users => setAccessQuery(users));
-                          setSelectedUser(e.target.value);
-                        }}
-                        readOnly={accessSelected}
-                      ></input>
-                      <UserQuery
-                        query={accessQuery}
-                        selectedUsers={remoteSim.access}
-                        show={viewAccessQuery}
-                        onSelectUser={selected => {
-                          if (remoteSim.access.find(a => a.username === selected.username)) return;
-                          setSelectedUser(selected.username);
-                          console.log("access set", selected.username);
-                          setTimeout(() => {
-                            setAccessSelected(true);
-                            setAuthorSelected(false);
-                            setAccessQuery([]);
-                          });
-                        }}
+                        formikProps={formikProps}
                       />
-                      {accessSelected ? (
-                        <ConfirmSelected
-                          selectedUser={selectedUser}
-                          resetState={() => {
-                            setAccessSelected(false);
-                            setSelectedUser("");
-                          }}
-                          formikProps={formikProps}
-                        />
-                      ) : null}
-                    </Col>
-                  </Row>
-                </>
-              ) : null}
-            </>
-          ) : null}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="outline-primary" onClick={() => setShow(false)}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </>
+                    ) : null}
+                  </Col>
+                </Row>
+              </>
+            ) : null}
+          </>
+        ) : null}
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="outline-primary" onClick={() => setShow(false)}>
+          Close
+        </Button>
+      </Modal.Footer>
+    </Modal>
   );
+};
+
+export const saveCollaborators = (
+  api: API,
+  values: CollaboratorValues,
+  handleSuccess: () => void
+) => {
+  const promises = [];
+  if (values.author?.add?.username) {
+    promises.push(
+      api.addAuthors({ authors: [values.author.add] }).then(() => {
+        handleSuccess();
+      })
+    );
+  }
+  if (values.author?.remove?.username) {
+    promises.push(
+      api.deleteAuthor(values.author.remove.username).then(() => {
+        handleSuccess();
+      })
+    );
+  }
+  if (values.access.read?.grant?.username) {
+    promises.push(
+      api
+        .putAccess([
+          {
+            username: values.access.read.grant.username,
+            role: "read" as Role,
+            msg: values.access.read.grant.msg
+          }
+        ])
+        .then(() => {
+          handleSuccess();
+        })
+    );
+  }
+  if (values.access.read?.remove?.username) {
+    promises.push(
+      api.putAccess([{ username: values.access.read.remove.username, role: null }]).then(() => {
+        handleSuccess();
+      })
+    );
+  }
+
+  return Promise.all(promises);
 };

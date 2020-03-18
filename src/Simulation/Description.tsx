@@ -18,7 +18,7 @@ import API from "./API";
 import ReadmeEditor from "./editor";
 import { AxiosError } from "axios";
 import { RolePerms } from "../roles";
-import { CollaborationSettings } from "./collaborators";
+import { CollaborationSettings, saveCollaborators } from "./collaborators";
 
 interface DescriptionProps {
   accessStatus: AccessStatus;
@@ -305,86 +305,6 @@ export default class DescriptionComponent extends React.Component<
       }
     };
 
-    const saveCollaborators = () => {
-      const promises = [];
-      if (values.author?.add?.username) {
-        promises.push(
-          this.props.api
-            .addAuthors({ authors: [values.author.add] })
-            .then(data => {
-              this.props.resetOutputs();
-              resetStatus();
-              this.setState(prevState => ({
-                initialValues: {
-                  ...prevState.initialValues,
-                  author: { add: { username: "", msg: "" }, remove: { username: "" } }
-                }
-              }));
-            })
-            .catch(error => {
-              if (!actions) throw error;
-              if (error.response.status == 400 && error.response.data.collaborators) {
-                window.scroll(0, 0);
-                actions.setStatus({
-                  collaboratorLimit: error.response.data.collaborators
-                });
-              }
-            })
-        );
-      }
-      if (values.author?.remove?.username) {
-        promises.push(
-          this.props.api.deleteAuthor(values.author.remove.username).then(data => {
-            this.props.resetOutputs();
-            resetStatus();
-            this.setState(prevState => ({
-              initialValues: {
-                ...prevState.initialValues,
-                author: { add: { username: "", msg: "" }, remove: { username: "" } }
-              }
-            }));
-          })
-        );
-      }
-      if (values.access.read?.grant?.username) {
-        promises.push(
-          this.props.api
-            .putAccess([
-              {
-                username: values.access.read.grant.username,
-                role: "read" as Role,
-                msg: values.access.read.grant.msg
-              }
-            ])
-            .then(resp => {
-              resetStatus();
-              this.props.resetOutputs();
-            })
-            .catch(error => {
-              if (!actions) throw error;
-              if (error.response.status == 400 && error.response.data.collaborators) {
-                window.scroll(0, 0);
-                actions.setStatus({
-                  collaboratorLimit: error.response.data.collaborators
-                });
-              }
-            })
-        );
-      }
-      if (values.access.read?.remove?.username) {
-        promises.push(
-          this.props.api
-            .putAccess([{ username: values.access.read.remove.username, role: null }])
-            .then(resp => {
-              resetStatus();
-              this.props.resetOutputs();
-            })
-        );
-      }
-
-      return Promise.all(promises);
-    };
-
     resetStatus();
     if (this.hasWriteAccess()) {
       let formdata = new FormData();
@@ -393,7 +313,7 @@ export default class DescriptionComponent extends React.Component<
       }
       formdata.append("model_pk", this.props.api.modelpk.toString());
       formdata.append("readme", JSON.stringify(values.readme));
-      saveCollaborators()
+      saveCollaborators(this.props.api, values, this.props.resetOutputs)
         .then(() =>
           this.props.api
             .putDescription(formdata)
@@ -427,6 +347,16 @@ export default class DescriptionComponent extends React.Component<
               setSubmitting(false);
             })
         )
+        .catch(error => {
+          if (!actions) throw error;
+          if (error.response.status == 400 && error.response.data.collaborators) {
+            window.scroll(0, 0);
+            actions.setStatus({
+              collaboratorLimit: error.response.data.collaborators
+            });
+          }
+          setSubmitting(false);
+        })
         .finally(() => setSubmitting(false));
     }
   }

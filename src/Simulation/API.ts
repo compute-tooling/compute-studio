@@ -36,9 +36,9 @@ export default class API {
     });
   }
 
-  putDescription(data: FormData): Promise<Simulation<RemoteOutputs>> {
+  putDescription(data: FormData): Promise<MiniSimulation> {
     return axios.put(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/`, data).then(resp => {
-      let data: Simulation<RemoteOutputs> = resp.data;
+      let data: MiniSimulation = resp.data;
       return data;
     });
   }
