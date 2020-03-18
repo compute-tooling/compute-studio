@@ -9,12 +9,17 @@ import ErrorBoundary from "../ErrorBoundary";
 import { RolePerms } from "../roles";
 import API from "./API";
 import { default as SimAPI } from "../Simulation/API";
-import { MiniSimulation, Project } from "../types";
+import { MiniSimulation, Project, Simulation, RemoteOutputs, AccessStatus } from "../types";
 import moment = require("moment");
 import { Button, Row, Col, Dropdown, Modal, Card, Tab, Nav } from "react-bootstrap";
 import { Tip, FocusableCard } from "../components";
-import { Formik, Field, ErrorMessage } from "formik";
+import { Formik, Field, ErrorMessage, FormikProps } from "formik";
 import { Message } from "../fields";
+import {
+  saveCollaborators,
+  CollaboratorValues,
+  CollaborationModal
+} from "../Simulation/collaborators";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
@@ -48,6 +53,7 @@ interface ActivityState {
   ordering?: Array<"project__owner" | "project__title" | "creation_date">;
   recentModels?: Array<Project>;
   homeTab: "sims" | "models";
+  accessStatus: AccessStatus;
 }
 
 const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) => {
@@ -149,14 +155,38 @@ const ModelFeed: React.FC<{ models: Array<Project> }> = ({ models }) => {
   );
 };
 
-const Sim: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim, index }) => {
-  let [sim, setSim] = React.useState(initSim);
-  let [editTitle, setEditTitle] = React.useState(false);
+const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: AccessStatus }> = ({
+  initMiniSim,
+  index,
+  accessStatus
+}) => {
+  const [miniSim, setMiniSim] = React.useState(initMiniSim);
+  const [remoteSim, setRemoteSim] = React.useState(null as Simulation<RemoteOutputs> | null);
+  const [editTitle, setEditTitle] = React.useState(false);
+  const [showCollabModal, setShowCollabModal] = React.useState(false);
+  const [owner, title] = miniSim.project.split("/");
+  const simapi = new SimAPI(owner, title, miniSim.model_pk.toString());
+  const resetRemoteSim = () => {
+    return simapi.getRemoteOutputs().then(remoteSim => {
+      setRemoteSim(remoteSim);
+    });
+  };
+
+  const handleShowCollabModal = (show: boolean) => {
+    if (show && !!remoteSim) {
+      setShowCollabModal(true);
+    } else if (show && !remoteSim) {
+      resetRemoteSim().then(() => setShowCollabModal(true));
+    } else {
+      setShowCollabModal(false);
+    }
+  };
+
   let simLink;
-  if (sim.status === "STARTED") {
-    simLink = `${sim.gui_url}edit/`;
+  if (miniSim.status === "STARTED") {
+    simLink = `${miniSim.gui_url}edit/`;
   } else {
-    simLink = sim.gui_url;
+    simLink = miniSim.gui_url;
   }
   let margin;
   if (index === 0) {
@@ -166,159 +196,216 @@ const Sim: React.FC<{ initSim: MiniSimulation; index: number }> = ({ initSim, in
   }
   return (
     <Formik
-      initialValues={{ title: sim.title, is_public: sim.is_public }}
+      initialValues={{
+        title: miniSim.title,
+        is_public: miniSim.is_public,
+        author: { add: { username: "", msg: "" }, remove: { username: "" } },
+        access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } }
+      }}
       validationSchema={yup.object().shape({ title: yup.string(), is_public: yup.boolean() })}
-      onSubmit={values => {
-        let [owner, title] = sim.project.split("/");
-        let simapi = new SimAPI(owner, title, sim.model_pk.toString());
+      onSubmit={(values, actions) => {
         let formdata = new FormData();
         for (const field in values) {
           if (values[field]) formdata.append(field, values[field]);
         }
-        simapi.putDescription(formdata).then(() => {
-          setSim(prevSim => ({ ...prevSim, title: values.title, is_public: values.is_public }));
-        });
+        actions.setStatus({ collaboratorLimit: null });
+        saveCollaborators(simapi, values, resetRemoteSim)
+          .then(() =>
+            simapi
+              .putDescription(formdata)
+              .then(newMiniSim => {
+                setMiniSim(prevSim => ({
+                  ...prevSim,
+                  title: newMiniSim.title,
+                  is_public: newMiniSim.is_public
+                }));
+                resetRemoteSim();
+              })
+              .catch(error => {
+                if (error.response.status == 400 && error.response.data.collaborators) {
+                  resetRemoteSim().then(() => {
+                    actions.setStatus({
+                      collaboratorLimit: error.response.data.collaborators
+                    });
+                    setShowCollabModal(true);
+                  });
+                }
+              })
+          )
+          .catch(error => {
+            if (error.response.status == 400 && error.response.data.collaborators) {
+              resetRemoteSim().then(() => {
+                actions.setStatus({
+                  collaboratorLimit: error.response.data.collaborators
+                });
+                setShowCollabModal(true);
+              });
+            }
+          })
+          .finally(() => actions.setSubmitting(false));
       }}
     >
-      {({ values, setFieldValue, handleSubmit }) => (
-        <FocusableCard
-          className={`${margin} border p-0`}
-          onClick={e => {
-            window.location.href = simLink;
-          }}
-        >
-          <Card.Body>
-            <Modal
-              show={editTitle}
-              onHide={() => setEditTitle(false)}
-              onClick={e => e.stopPropagation()}
-            >
-              <Modal.Header closeButton>
-                <Modal.Title>Rename Simulation</Modal.Title>
-              </Modal.Header>
-              <Modal.Body>
-                <Field
-                  name="title"
-                  className="form-control"
-                  onKeyPress={e => {
-                    if (e.key === "Enter") {
-                      handleSubmit(e);
+      {(props: FormikProps<{ title: string; is_public: boolean } & CollaboratorValues>) => (
+        <>
+          <FocusableCard
+            className={`${margin} border p-0`}
+            onClick={e => {
+              window.location.href = simLink;
+            }}
+          >
+            <Card.Body>
+              <Modal
+                show={editTitle}
+                onHide={() => setEditTitle(false)}
+                onClick={e => e.stopPropagation()}
+              >
+                <Modal.Header closeButton>
+                  <Modal.Title>Rename Simulation</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                  <Field
+                    name="title"
+                    className="form-control"
+                    onKeyPress={e => {
+                      if (e.key === "Enter") {
+                        props.handleSubmit(e);
+                        setEditTitle(false);
+                      }
+                    }}
+                  />
+                  <ErrorMessage name="title" render={msg => <Message msg={msg} />} />
+                </Modal.Body>
+                <Modal.Footer>
+                  <Button
+                    variant="outline-primary"
+                    onClick={e => {
                       setEditTitle(false);
-                    }
-                  }}
-                />
-                <ErrorMessage name="title" render={msg => <Message msg={msg} />} />
-              </Modal.Body>
-              <Modal.Footer>
-                <Button
-                  variant="outline-primary"
-                  onClick={e => {
-                    setEditTitle(false);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={e => {
-                    handleSubmit();
-                    setEditTitle(false);
-                  }}
-                >
-                  Save
-                </Button>
-              </Modal.Footer>
-            </Modal>
-            {/* top level row for card */}
-            <Row className="w-100">
-              {/* left half */}
-              <Col className="col-md-9">
-                <Card.Title>
-                  <h5>{sim.title}</h5>
-                </Card.Title>
-                <Card.Subtitle className="text-muted" onClick={e => e.stopPropagation()}>
-                  <h6 style={{ whiteSpace: "nowrap" }}>
-                    <a href={sim.project} className="color-inherit">
-                      {sim.project}
-                    </a>
-                    <span className="ml-1">#{sim.model_pk} </span>
-                  </h6>
-                </Card.Subtitle>
-              </Col>
-              {/* right half */}
-              <Col className="col-md-3">
-                <Row className="w-100 justify-content-start">
-                  <Col className="col-3 align-self-center">{simStatus(sim.status)}</Col>
-                  <Col className="col-3 align-self-center">
-                    {sim.is_public ? (
-                      <i className="fas fa-lock-open"></i>
-                    ) : (
-                      <i className="fas fa-lock"></i>
-                    )}
-                  </Col>
-                  {RolePerms.hasAdminAccess(sim) ? (
-                    <Col className="col-3 align-self-center">
-                      <Dropdown onClick={e => e.stopPropagation()}>
-                        <Dropdown.Toggle
-                          id="dropdown-basic"
-                          variant="link"
-                          className="color-inherit caret-off"
-                          style={{ border: 0 }}
-                        >
-                          <i className="fas fa-ellipsis-v"></i>
-                        </Dropdown.Toggle>
-                        <Dropdown.Menu>
-                          <Dropdown.Item
-                            key={0}
-                            href=""
-                            onClick={() => {
-                              setEditTitle(true);
-                            }}
-                          >
-                            Rename
-                          </Dropdown.Item>
-                          <Dropdown.Item
-                            key={1}
-                            href=""
-                            onClick={() => {
-                              setFieldValue("is_public", !values.is_public);
-                              setTimeout(() => handleSubmit(), 0);
-                            }}
-                          >
-                            Make {values.is_public ? "private" : "public"}
-                          </Dropdown.Item>
-                        </Dropdown.Menu>
-                      </Dropdown>
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={e => {
+                      props.handleSubmit();
+                      setEditTitle(false);
+                    }}
+                  >
+                    Save
+                  </Button>
+                </Modal.Footer>
+              </Modal>
+              {/* top level row for card */}
+              <Row className="w-100">
+                {/* left half */}
+                <Col className="col-md-9">
+                  <Card.Title>
+                    <h5>{miniSim.title}</h5>
+                  </Card.Title>
+                  <Card.Subtitle className="text-muted" onClick={e => e.stopPropagation()}>
+                    <h6 style={{ whiteSpace: "nowrap" }}>
+                      <a href={miniSim.project} className="color-inherit">
+                        {miniSim.project}
+                      </a>
+                      <span className="ml-1">#{miniSim.model_pk} </span>
+                    </h6>
+                  </Card.Subtitle>
+                </Col>
+                {/* right half */}
+                <Col className="col-md-3">
+                  <Row className="w-100 justify-content-start">
+                    <Col className="col-auto align-self-center">{simStatus(miniSim.status)}</Col>
+                    <Col className="col-auto align-self-center">
+                      <Tip tip={miniSim.is_public ? "Public" : "Private"}>
+                        {miniSim.is_public ? (
+                          <i className="fas fa-lock-open"></i>
+                        ) : (
+                          <i className="fas fa-lock"></i>
+                        )}
+                      </Tip>
                     </Col>
-                  ) : null}
-                </Row>
-                <Row className="w-100 justify-content-start">
-                  <Col>
-                    <Tip
-                      tip={moment(sim.creation_date).format("MMMM Do YYYY, h:mm:ss a")}
-                      placement="bottom"
-                    >
-                      <span className="text-muted" style={{ whiteSpace: "nowrap" }}>
-                        {moment(sim.creation_date).fromNow()}
-                      </span>
-                    </Tip>
-                  </Col>
-                </Row>
-              </Col>
-            </Row>
-          </Card.Body>
-        </FocusableCard>
+                    {RolePerms.hasAdminAccess(miniSim) ? (
+                      <Col className="col-auto align-self-center">
+                        <Dropdown onClick={e => e.stopPropagation()}>
+                          <Dropdown.Toggle
+                            id="dropdown-basic"
+                            variant="link"
+                            className="color-inherit caret-off"
+                            style={{ border: 0 }}
+                          >
+                            <i className="fas fa-ellipsis-v"></i>
+                          </Dropdown.Toggle>
+                          <Dropdown.Menu>
+                            <Dropdown.Item
+                              key={0}
+                              href=""
+                              onClick={() => {
+                                setEditTitle(true);
+                              }}
+                            >
+                              Rename
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                              key={1}
+                              href=""
+                              onClick={() => {
+                                handleShowCollabModal(true);
+                              }}
+                            >
+                              Share
+                            </Dropdown.Item>
+                          </Dropdown.Menu>
+                        </Dropdown>
+                      </Col>
+                    ) : null}
+                  </Row>
+                  <Row className="w-100 justify-content-start">
+                    <Col>
+                      <Tip
+                        tip={moment(miniSim.creation_date).format("MMMM Do YYYY, h:mm:ss a")}
+                        placement="bottom"
+                      >
+                        <span className="text-muted" style={{ whiteSpace: "nowrap" }}>
+                          {moment(miniSim.creation_date).fromNow()}
+                        </span>
+                      </Tip>
+                    </Col>
+                  </Row>
+                </Col>
+              </Row>
+            </Card.Body>
+          </FocusableCard>
+          {remoteSim ? (
+            <CollaborationModal
+              api={simapi}
+              user={accessStatus.username}
+              remoteSim={remoteSim}
+              formikProps={props}
+              plan={accessStatus.plan.name}
+              show={showCollabModal}
+              setShow={setShowCollabModal}
+            />
+          ) : null}
+        </>
       )}
     </Formik>
   );
 };
 
-const SimFeed: React.FC<{ sims: Array<MiniSimulation> }> = ({ sims }) => {
+const SimFeed: React.FC<{ sims: Array<MiniSimulation>; accessStatus: AccessStatus }> = ({
+  sims,
+  accessStatus
+}) => {
   if (sims.length > 0) {
     return (
       <div className="container-fluid px-0">
         {sims.map((sim, ix) => (
-          <Sim initSim={sim} key={`${sim.project}#${sim.model_pk}`} index={ix} />
+          <Sim
+            initMiniSim={sim}
+            key={`${sim.project}#${sim.model_pk}`}
+            index={ix}
+            accessStatus={accessStatus}
+          />
         ))}
       </div>
     );
@@ -435,7 +522,8 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
     this.state = {
       loading: false,
       ordering: [],
-      homeTab: "sims"
+      homeTab: "sims",
+      accessStatus: null
     };
 
     this.loadNextSimulations = this.loadNextSimulations.bind(this);
@@ -443,6 +531,9 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
   }
 
   componentDidMount() {
+    this.api.getAccessStatus().then(accessStatus => {
+      this.setState({ accessStatus: accessStatus });
+    });
     this.api.initSimulations().then(simFeed => {
       this.setState({ simFeed: simFeed });
     });
@@ -503,7 +594,7 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
       <>
         <Tab.Content>
           <Tab.Pane eventKey="sims">
-            <SimFeed sims={sims} />
+            <SimFeed sims={sims} accessStatus={this.state.accessStatus} />
             {this.state.simFeed?.next ? (
               <LoadSimulationsButton
                 loading={this.state.loading}
