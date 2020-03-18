@@ -498,10 +498,10 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                     host = f"https://{request.get_host()}"
                     sim_url = f"{host}{self.object.get_absolute_url()}"
                     send_mail(
-                        f"Author invite for {self.object}",
+                        f"Coauthor invite for {self.object}",
                         (
                             f"{request.user.username} has invited you to be "
-                            f"an author on this simulation: {sim_url}\n\n"
+                            f"a coauthor on this simulation: {sim_url}\n\n"
                             f"{msg if msg else ''}"
                             f"Please reply to this email if you have any questions."
                         ),
@@ -618,7 +618,7 @@ class SimulationAccessAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, A
                         send_mail(
                             f"Updated role for {self.object}",
                             (
-                                f"You have been assigned the {updated_role} role for this simulation: "
+                                f"You have been assigned the '{updated_role}' role for this simulation: "
                                 f"{sim_url}.\n\n"
                                 f"{msg if msg else ''}"
                                 f"\nPlease reply to this email if you have any questions."
