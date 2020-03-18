@@ -200,7 +200,9 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
                 kwargs["model_pk"], kwargs["username"], kwargs["title"]
             )
             if self.object.has_write_access(request.user):
-                serializer = MiniSimulationSerializer(self.object, data=request.data)
+                serializer = MiniSimulationSerializer(
+                    self.object, data=request.data, context={"request": request}
+                )
                 try:
                     if serializer.is_valid():
                         serializer.save(last_modified=timezone.now())
