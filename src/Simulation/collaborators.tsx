@@ -152,7 +152,7 @@ const ConfirmSelected: React.FC<{
             }}
           />
           <label className="align-middle" htmlFor="inviteAuthor">
-            <strong>Invite to author</strong>
+            <strong>Invite to coauthor</strong>
           </label>
         </Col>
       </Row>
@@ -199,7 +199,7 @@ const ConfirmSelected: React.FC<{
               resetState();
             }}
           >
-            <strong>Confirm</strong>
+            <strong>Invite</strong>
           </a>
         </Col>
         <Col className="col-auto">
@@ -453,7 +453,7 @@ export const CollaborationModal: React.FC<{
                                 });
                               }}
                             >
-                              Invite to author
+                              Invite to coauthor
                             </a>
                           )}
                         </Col>
@@ -544,7 +544,7 @@ export const CollaborationModal: React.FC<{
                 <Row className="w-100 mt-4">
                   <Col>
                     <p className="lead" style={{ paddingLeft: "15px" }}>
-                      Invite collaborators
+                      Invite readers and coauthors
                     </p>
                   </Col>
                 </Row>
