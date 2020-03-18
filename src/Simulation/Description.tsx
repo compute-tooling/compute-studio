@@ -514,7 +514,7 @@ export default class DescriptionComponent extends React.Component<
                   {!!pendingPermission ? (
                     <Col className="col-sm-2 ml-sm-auto mt-1">
                       <a className="btn btn-success bold" href={pendingPermission.grant_url}>
-                        <strong>Accept Author Invite</strong>
+                        <strong>Accept Coauthor Invite</strong>
                       </a>
                     </Col>
                   ) : null}
