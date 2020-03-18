@@ -358,6 +358,19 @@ export default class DescriptionComponent extends React.Component<
           setSubmitting(false);
         })
         .finally(() => setSubmitting(false));
+    } else {
+      saveCollaborators(this.props.api, values, this.props.resetOutputs)
+        .catch(error => {
+          if (!actions) throw error;
+          if (error.response.status == 400 && error.response.data.collaborators) {
+            window.scroll(0, 0);
+            actions.setStatus({
+              collaboratorLimit: error.response.data.collaborators
+            });
+          }
+          setSubmitting(false);
+        })
+        .finally(() => setSubmitting(false));
     }
   }
 
