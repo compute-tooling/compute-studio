@@ -269,7 +269,7 @@ class ListInvoices(View):
                         "created": timestamp_to_datetime(invoice.created).strftime(
                             "%Y-%m-%d"
                         ),
-                        "amount": invoice.total,
+                        "amount": "{0:.2f}".format(invoice.total / 100),
                         "invoice_pdf": invoice.invoice_pdf,
                         "status": invoice.status,
                     }
