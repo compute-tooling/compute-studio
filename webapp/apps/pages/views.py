@@ -51,3 +51,10 @@ class TermsView(View):
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template)
+
+
+class DMCAView(View):
+    template = "pages/dmca.html"
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template)
