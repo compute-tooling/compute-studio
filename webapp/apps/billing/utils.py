@@ -1,11 +1,7 @@
 import json
-import os
 
 from webapp.apps.users.models import Project
 from .models import SubscriptionItem, UsageRecord
-
-
-USE_STRIPE = os.environ.get("USE_STRIPE", "false").lower() == "true"
 
 
 class ChargeRunMixin:

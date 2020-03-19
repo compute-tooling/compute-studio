@@ -79,7 +79,6 @@ class APIParser(BaseParser):
 
         # kick off async parsing
         job_id, queue_length = self.post(errors_warnings, adjustment)
-
         return {
             "job_id": job_id,
             "queue_length": queue_length,

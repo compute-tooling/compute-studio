@@ -15,16 +15,16 @@ from django.utils.timezone import make_aware
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
+from webapp.settings import USE_STRIPE
 from webapp.apps.billing.models import (
     Customer,
     Product,
     Plan,
     Subscription,
     SubscriptionItem,
+    create_pro_billing_objects,
 )
-from webapp.apps.billing.utils import USE_STRIPE
 from webapp.apps.users.models import Profile, Project
-
 from webapp.apps.comp.meta_parameters import translate_to_django
 from webapp.apps.comp.models import Inputs, Simulation
 
@@ -84,6 +84,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
             project = Project.objects.create(**dict(common, **project_config))
 
         if USE_STRIPE:
+            create_pro_billing_objects()
             Project.objects.sync_products()
             for u in [modeler, sponsor, hdoupe]:
                 stripe_customer = stripe.Customer.create(
@@ -183,6 +184,69 @@ def profile_w_mockcustomer(db, password):
         metadata={},
     )
     return Profile.objects.create(user=customer.user, is_active=True)
+
+
+@pytest.fixture
+def free_profile(db, profile, profile_w_mockcustomer):
+    mock_cp = lambda: {"name": "free", "plan_duration": None}
+    profile_w_mockcustomer.user.customer.current_plan = mock_cp
+    return profile_w_mockcustomer
+
+
+@pytest.fixture
+def plus_profile(db, profile, profile_w_mockcustomer):
+    if getattr(profile.user, "customer", None):
+        product = Product.objects.get(name="Compute Studio Subscription")
+        plan = product.plans.get(nickname="Monthly Plus Plan")
+        profile.user.customer.update_plan(plan)
+        return profile
+    else:
+        mock_cp = lambda: {"name": "plus", "plan_duration": "monthly"}
+        profile_w_mockcustomer.user.customer.current_plan = mock_cp
+        return profile_w_mockcustomer
+
+
+@pytest.fixture
+def pro_profile(db, profile, profile_w_mockcustomer):
+    if getattr(profile.user, "customer", None):
+        product = Product.objects.get(name="Compute Studio Subscription")
+        plan = product.plans.get(nickname="Monthly Pro Plan")
+        profile.user.customer.update_plan(plan)
+        return profile
+    else:
+        mock_cp = lambda: {"name": "pro", "plan_duration": "monthly"}
+        profile_w_mockcustomer.user.customer.current_plan = mock_cp
+        return profile_w_mockcustomer
+
+
+@pytest.fixture
+def customer_plus_by_default(monkeypatch):
+    # This test is only valid if the C/S instance is using the Stripe/Customer
+    # framework
+    try:
+        from webapp.apps.billing.models import Customer
+    except ImportError:
+        from webapp.settings import HAS_USAGE_RESTRICTIONS
+
+        assert HAS_USAGE_RESTRICTIONS
+        return
+
+    monkeypatch.setattr(Customer, "plan_in_nostripe_mode", "plus")
+
+
+@pytest.fixture
+def customer_pro_by_default(monkeypatch):
+    # This test is only valid if the C/S instance is using the Stripe/Customer
+    # framework
+    try:
+        from webapp.apps.billing.models import Customer
+    except ImportError:
+        from webapp.settings import HAS_USAGE_RESTRICTIONS
+
+        assert HAS_USAGE_RESTRICTIONS
+        return
+
+    monkeypatch.setattr(Customer, "plan_in_nostripe_mode", "pro")
 
 
 @pytest.fixture

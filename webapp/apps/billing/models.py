@@ -2,6 +2,8 @@ import os
 from datetime import datetime, timedelta
 from datetime import date
 import math
+from enum import Enum
+from typing import Optional
 
 import stripe
 
@@ -11,6 +13,9 @@ from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.utils.timezone import make_aware
 
+from webapp.settings import USE_STRIPE, DEBUG
+
+from .email import send_subscribe_to_plan_email
 
 stripe.api_key = os.environ.get("STRIPE_SECRET")
 
@@ -34,8 +39,16 @@ class CustomerManager(models.Manager):
             customer.sync_subscriptions()
 
 
+class UpdateStatus(Enum):
+    upgrade = "upgrade"
+    downgrade = "downgrade"
+    duration_change = "duration_change"
+    nochange = "nochange"
+
+
 # Create your models here.
 class Customer(models.Model):
+    plan_in_nostripe_mode = "free"
     USD = "usd"
     CURRENCY_CHOICES = ((USD, "usd"),)
 
@@ -105,6 +118,129 @@ class Customer(models.Model):
                 plan = public_plans.get(stripe_id=raw_si["plan"]["id"])
                 si, created = SubscriptionItem.get_or_construct(stripe_si.id, plan, sub)
 
+    def card_info(self):
+        """Returns last 4 digits and brand of default source or None"""
+        stripe_obj = Customer.get_stripe_object(self.stripe_id)
+        default_source = stripe_obj.default_source
+        info = (None, None, None, None)
+        for source in stripe_obj.sources:
+            if source.id == default_source:
+                info = (source.brand, source.last4, source.exp_month, source.exp_year)
+                break
+        if all(info):
+            return {
+                "brand": info[0],
+                "last4": info[1],
+                "exp_month": info[2],
+                "exp_year": info[3],
+            }
+        return None
+
+    def invoices(self):
+        res = stripe.Invoice.list(customer=self.stripe_id)
+        for invoice in res.data:
+            yield invoice
+
+    def current_plan(self, si=None, as_dict=True):
+        """
+        Returns customer's compute studio plan and billing cycle duration
+        """
+        if not USE_STRIPE:
+            if not DEBUG:
+                import warnings
+
+                warnings.warn("Stripe mode is not on and you are in production!")
+            return {"name": Customer.plan_in_nostripe_mode, "plan_duration": "monthly"}
+
+        product = Product.objects.get(name="Compute Studio Subscription")
+        current_plan = {"plan_duration": None, "name": "free"}
+        try:
+            si = si or SubscriptionItem.objects.get(
+                subscription__customer=self, plan__in=product.plans.all()
+            )
+            if si.plan.nickname == "Free Plan":
+                current_plan = {"plan_duration": None, "name": "free"}
+            elif si.plan.nickname == "Monthly Plus Plan":
+                current_plan = {"plan_duration": "monthly", "name": "plus"}
+            elif si.plan.nickname == "Yearly Plus Plan":
+                current_plan = {"plan_duration": "yearly", "name": "plus"}
+            elif si.plan.nickname == "Monthly Pro Plan":
+                current_plan = {"plan_duration": "monthly", "name": "pro"}
+            elif si.plan.nickname == "Yearly Pro Plan":
+                current_plan = {"plan_duration": "yearly", "name": "pro"}
+
+        except SubscriptionItem.DoesNotExist:
+            pass
+
+        if as_dict:
+            return current_plan
+        else:
+            return si
+
+    def update_plan(self, new_plan: Optional["Plan"]):
+        current_si = self.current_plan(as_dict=False)
+        current_plan = self.current_plan(si=current_si, as_dict=True)
+
+        product = Product.objects.get(name="Compute Studio Subscription")
+
+        # Check change from one paid plan to another.
+        if (
+            new_plan is not None
+            and current_si is not None
+            and current_si.plan != new_plan
+        ):
+            if current_si.plan.nickname == "Free Plan":
+                status = UpdateStatus.upgrade
+
+            elif current_si.plan.nickname.endswith("Plus Plan"):
+
+                if new_plan.nickname.endswith("Plus Plan"):
+                    status = UpdateStatus.duration_change
+                elif new_plan.nickname.endswith("Pro Plan"):
+                    status = UpdateStatus.upgrade
+                elif new_plan.nickname == "Free Plan":
+                    status = UpdateStatus.downgrade
+
+            elif current_si.plan.nickname.endswith("Pro Plan"):
+
+                if new_plan.nickname.endswith("Pro Plan"):
+                    status = UpdateStatus.duration_change
+                elif new_plan.nickname.endswith("Plus Plan"):
+                    status = UpdateStatus.downgrade
+                elif new_plan.nickname == "Free Plan":
+                    status = UpdateStatus.downgrade
+
+            else:
+                raise ValueError(
+                    "Can only handle free, plus, and pro plans at the moment: {new_plan.nickname}."
+                )
+
+            stripe.SubscriptionItem.modify(
+                current_si.stripe_id, plan=new_plan.stripe_id
+            )
+            current_si.plan = new_plan
+            current_si.save()
+            send_subscribe_to_plan_email(self.user, new_plan)
+            return status
+
+        # Check nochange transitions
+        if current_plan["name"] == "free" and new_plan is None:
+            return UpdateStatus.nochange
+        if current_si is not None and current_si.plan == new_plan:
+            return UpdateStatus.nochange
+
+        # Transition from free to paid plan.
+        stripe_sub = Subscription.create_stripe_object(self, [new_plan])
+        sub = Subscription.construct(
+            stripe_sub, self, [new_plan], subscription_type="compute-studio"
+        )
+        for si_object in stripe_sub["items"]["data"]:
+            stripe_si = SubscriptionItem.get_stripe_object(si_object["id"])
+            plan = product.plans.get(stripe_id=si_object["plan"]["id"])
+            SubscriptionItem.get_or_construct(stripe_si.id, plan, sub)
+
+        return UpdateStatus.upgrade
+
     @staticmethod
     def get_stripe_object(stripe_id):
         return stripe.Customer.retrieve(stripe_id)
@@ -138,6 +274,7 @@ class Customer(models.Model):
         except Customer.DoesNotExist as dne:
             stripe_obj = Customer.get_stripe_object(stripe_id)
             customer, created = Customer.construct(stripe_obj, user), True
+            customer.update_plan(new_plan=Plan.objects.get(nickname="Free Plan"))
         except IntegrityError:
             customer, created = Customer.objects.get(stripe_id=stripe_id), False
         return customer, created
@@ -171,12 +308,8 @@ class Product(models.Model):
     @staticmethod
     def get_or_construct(stripe_id, project=None):
         try:
-            product, created = Product.objects.get(stripe_id), False
+            product, created = Product.objects.get(stripe_id=stripe_id), False
         except Product.DoesNotExist:
-            if product is None:
-                raise RequiredLocalInstances(
-                    "Local instance of Project was not provided."
-                )
             stripe_obj = Product.get_stripe_object(stripe_id)
             product, created = Product.construct(stripe_obj, project), True
         except IntegrityError:
@@ -228,9 +361,9 @@ class Plan(models.Model):
 
     @staticmethod
     def create_stripe_object(
-        amount, product, usage_type, interval="month", currency="usd"
+        amount, product, usage_type, interval="month", currency="usd", nickname=None
     ):
-        nickname = f"{product.name} {usage_type.title()} {currency}"
+        nickname = nickname or f"{product.name} {usage_type.title()} {currency}"
         plan = stripe.Plan.create(
             amount=amount,
             nickname=nickname,
@@ -243,7 +376,7 @@ class Plan(models.Model):
 
     @staticmethod
     def get_stripe_object(stripe_id):
-        return stripe.Plan.get(stripe_id)
+        return stripe.Plan.retrieve(stripe_id)
 
     @staticmethod
     def construct(stripe_plan, product):
@@ -287,7 +420,12 @@ class Plan(models.Model):
 class Subscription(models.Model):
     # raises error on deletion
     subscription_type = models.CharField(
-        default="primary", choices=[("primary", "Primary")], max_length=50
+        default="primary",
+        choices=[
+            ("primary", "Primary"),
+            ("compute-studio", "Compute Studio Subscription"),
+        ],
+        max_length=50,
     )
     stripe_id = models.CharField(max_length=255, unique=True)
     customer = models.ForeignKey(
@@ -339,7 +477,7 @@ class Subscription(models.Model):
             metadata=stripe_subscription.to_dict(),
             current_period_start=current_period_start,
             current_period_end=current_period_end,
-            subscription_type="primary",
+            subscription_type=subscription_type,
         )
         sub.plans.add(*plans)
         sub.save()
@@ -532,3 +670,61 @@ def create_billing_objects(project):
             currency="usd",
         )
         Plan.construct(stripe_plan_met, product)
+
+
+def create_pro_billing_objects():
+    if Product.objects.filter(name="Compute Studio Subscription").count() == 0:
+        stripe_obj = Product.create_stripe_object("Compute Studio Subscription")
+        product, _ = Product.get_or_construct(stripe_obj.id)
+    else:
+        product = Product.objects.get(name="Compute Studio Subscription")
+
+    if Plan.objects.filter(nickname="Free Plan").count() == 0:
+        plan = Plan.create_stripe_object(
+            amount=0,
+            product=product,
+            usage_type="licensed",
+            interval="month",
+            nickname="Free Plan",
+        )
+        Plan.get_or_construct(plan.id, product)
+
+    if Plan.objects.filter(nickname="Monthly Plus Plan").count() == 0:
+        monthly_plan = Plan.create_stripe_object(
+            amount=15 * 100,
+            product=product,
+            usage_type="licensed",
+            interval="month",
+            nickname="Monthly Plus Plan",
+        )
+        Plan.get_or_construct(monthly_plan.id, product)
+
+    if Plan.objects.filter(nickname="Yearly Plus Plan").count() == 0:
+        yearly_plan = Plan.create_stripe_object(
+            amount=150 * 100,
+            product=product,
+            usage_type="licensed",
+            interval="year",
+            nickname="Yearly Plus Plan",
+        )
+        Plan.get_or_construct(yearly_plan.id, product)
+
+    if Plan.objects.filter(nickname="Monthly Pro Plan").count() == 0:
+        monthly_plan = Plan.create_stripe_object(
+            amount=50 * 100,
+            product=product,
+            usage_type="licensed",
+            interval="month",
+            nickname="Monthly Pro Plan",
+        )
+        Plan.get_or_construct(monthly_plan.id, product)
+
+    if Plan.objects.filter(nickname="Yearly Pro Plan").count() == 0:
+        yearly_plan = Plan.create_stripe_object(
+            amount=500 * 100,
+            product=product,
+            usage_type="licensed",
+            interval="year",
+            nickname="Yearly Pro Plan",
+        )
+        Plan.get_or_construct(yearly_plan.id, product)

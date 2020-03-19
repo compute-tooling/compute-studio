@@ -78,8 +78,8 @@ class CancelSubscriptionForm(ConfirmUsernameForm):
                 f"from Compute Studio. We value your feedback. Please let us know why "
                 f"you unsubscribed and how we can win you back in the future."
             ),
-            "hank@compute.studio",
-            set([user.email, "hank@compute.studio"]),
+            "matt@compute.studio",
+            set([user.email, "matt@compute.studio"]),
             fail_silently=True,
         )
         return user
@@ -101,7 +101,7 @@ class DeleteUserForm(CancelSubscriptionForm):
                 f"mistake, please let us know why you deleted your account "
                 f"and how we can win you back in the future."
             ),
-            "hank@compute.studio",
+            "admin@compute.studio",
             set([user.email, "hank@compute.studio"]),
             fail_silently=True,
         )

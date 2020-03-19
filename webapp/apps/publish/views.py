@@ -63,12 +63,8 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
             if project.has_write_access(request.user):
                 serializer = PublishSerializer(project, data=request.data)
                 if serializer.is_valid():
-                    model = serializer.save(status="updating")
-                    status_url = request.build_absolute_uri(
-                        reverse(
-                            "userprofile", kwargs={"username": request.user.username}
-                        )
-                    )
+                    model = serializer.save(status="live")
+                    status_url = request.build_absolute_uri(model.app_url)
                     try:
                         send_mail(
                             f"{request.user.username} is updating a model on Compute Studio!",
@@ -77,7 +73,7 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
                                 f"the next 24 hours. Check the status of the update at "
                                 f"{status_url}."
                             ),
-                            "hank@compute.studio",
+                            "notifications@compute.studio",
                             list({request.user.email, "hank@compute.studio"}),
                             fail_silently=False,
                         )
@@ -123,9 +119,7 @@ class ProjectAPIView(GetProjectMixin, APIView):
                     title=title,
                     server_cost=0.1,
                 )
-                status_url = request.build_absolute_uri(
-                    reverse("userprofile", kwargs={"username": request.user.username})
-                )
+                status_url = request.build_absolute_uri(model.app_url)
                 try:
                     send_mail(
                         f"{request.user.username} is publishing a model on Compute Studio!",
@@ -134,7 +128,7 @@ class ProjectAPIView(GetProjectMixin, APIView):
                             f"the next 24 hours. Check the status of the submission at "
                             f"{status_url}."
                         ),
-                        "hank@compute.studio",
+                        "notifications@compute.studio",
                         list({request.user.email, "hank@compute.studio"}),
                         fail_silently=False,
                     )

@@ -29,15 +29,19 @@ from webapp.apps.comp.exceptions import (
     ValidationError,
     BadPostException,
     ForkObjectException,
+    ResourceLimitException,
 )
 from webapp.apps.comp.ioutils import get_ioutils
-from webapp.apps.comp.models import Inputs, Simulation
+from webapp.apps.comp.models import Inputs, Simulation, PendingPermission
 from webapp.apps.comp.parser import APIParser
 from webapp.apps.comp.serializers import (
     SimulationSerializer,
     MiniSimulationSerializer,
     InputsSerializer,
     OutputsSerializer,
+    AddAuthorsSerializer,
+    SimAccessSerializer,
+    PendingPermissionSerializer,
 )
 from webapp.apps.comp.utils import is_valid
 
@@ -132,7 +136,7 @@ def submit(request, success_status, project, sim):
                     f"{ae.traceback}\n user:{request.user.username}\n "
                     f"project: {project.app_url}."
                 ),
-                "hank@compute.studio",
+                "notifications@compute.studio",
                 ["hank@compute.studio"],
                 fail_silently=True,
             )
@@ -196,13 +200,21 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
                 kwargs["model_pk"], kwargs["username"], kwargs["title"]
             )
             if self.object.has_write_access(request.user):
-                serializer = MiniSimulationSerializer(self.object, data=request.data)
-                if serializer.is_valid():
-                    serializer.save(last_modified=timezone.now())
-                    print(serializer.data)
+                serializer = MiniSimulationSerializer(
+                    self.object, data=request.data, context={"request": request}
+                )
+                try:
+                    if serializer.is_valid():
+                        serializer.save(last_modified=timezone.now())
 
-                    return Response(serializer.data)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        return Response(serializer.data)
+                    return Response(
+                        serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                    )
+                except ResourceLimitException as rle:
+                    return Response(
+                        {rle.resource: rle.todict()}, status=status.HTTP_400_BAD_REQUEST
+                    )
             else:
                 return Response(status=status.HTTP_403_FORBIDDEN)
         return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -358,7 +370,6 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
                 sim = get_object_or_404(Simulation, job_id=data["job_id"])
                 if sim.status == "PENDING":
                     self.record_outputs(sim, data)
-                    print("sim", sim.notify_on_completion)
                     if sim.notify_on_completion:
                         try:
                             host = f"https://{request.get_host()}"
@@ -369,7 +380,7 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
                                     f"Here's a link to your simulation:\n\n{sim_url}."
                                     f"\n\nPlease write back if you have any questions or feedback!"
                                 ),
-                                "hank@compute.studio",
+                                "notifications@compute.studio",
                                 [sim.owner.user.email],
                                 fail_silently=True,
                             )
@@ -419,6 +430,211 @@ class MyInputsAPIView(APIView):
                 return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
+    permission_classes = (StrictRequiresActive,)
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    model = Simulation
+
+    def put(self, request, *args, **kwargs):
+        self.object = self.get_object(
+            kwargs["model_pk"], kwargs["username"], kwargs["title"]
+        )
+        if not self.object.has_admin_access(request.user):
+            raise PermissionDenied()
+
+        ser = AddAuthorsSerializer(data=request.data)
+
+        if ser.is_valid():
+            data = ser.validated_data
+            new_authors = set(obj["username"] for obj in data["authors"])
+            profiles = Profile.objects.filter(user__username__in=new_authors)
+            if profiles.count() < len(new_authors):
+                return Response(
+                    {"authors": "All authors must have an account on Compute Studio."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            for profile in profiles.all():
+                if self.object.authors.filter(pk=profile.pk).count() > 0:
+                    continue
+                try:
+                    pp, created = PendingPermission.objects.get_or_create(
+                        sim=self.object, profile=profile, permission_name="add_author"
+                    )
+                except ResourceLimitException as rle:
+                    return Response(
+                        data={rle.resource: rle.todict()},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                # PP already exists and is not expired.
+                if not created and not pp.is_expired():
+                    continue
+                # PP exists but is expired, so delete the existing one and create a
+                # new one.
+                if not created and pp.is_expired():
+                    pp.delete()
+                    pp, created = PendingPermission.objects.get_or_create(
+                        sim=self.object, profile=profile, permission_name="add_author"
+                    )
+
+                try:
+                    msg = next(
+                        (
+                            obj["msg"]
+                            for obj in data["authors"]
+                            if obj["username"] == str(profile)
+                        ),
+                        None,
+                    )
+                    if msg:
+                        msg = f"{msg}\n\n"
+                    else:
+                        msg = None
+                    host = f"https://{request.get_host()}"
+                    sim_url = f"{host}{self.object.get_absolute_url()}"
+                    send_mail(
+                        f"Coauthor invite for {self.object}",
+                        (
+                            f"{request.user.username} has invited you to be "
+                            f"a coauthor on this simulation: {sim_url}\n\n"
+                            f"{msg if msg else ''}"
+                            f"Please reply to this email if you have any questions."
+                        ),
+                        f"{str(request.user.username)} <notifications@compute.studio>",
+                        [profile.user.email],
+                        fail_silently=True,
+                    )
+                # Http 401 exception if mail credentials are not set up.
+                except Exception:
+                    import traceback
+
+                    traceback.print_exc()
+
+            return Response(
+                PendingPermissionSerializer(
+                    self.object.pending_permissions, many=True
+                ).data,
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AuthorsDeleteAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
+    permission_classes = (StrictRequiresActive,)
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    model = Simulation
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object(
+            kwargs["model_pk"], kwargs["username"], kwargs["title"]
+        )
+        profile = get_object_or_404(Profile, user__username__iexact=kwargs["author"])
+        # profile = Profile.objects.get(user__username__iexact=kwargs["author"])
+        if profile == self.object.owner:
+            return Response(
+                {
+                    "error": "The owner of the simulation cannot be deleted from the authors list."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # User without write access can only remove themselves as author.
+        if (
+            not self.object.has_admin_access(request.user)
+            and profile.user != request.user
+        ):
+            raise PermissionDenied()
+
+        # if profile is in authors relation.
+        if self.object.authors.filter(pk=profile.pk).count() > 0:
+            self.object.authors.remove(profile)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        # if profile is not added as an author, then delete the permission
+        # request.
+        pps = PendingPermission.objects.filter(
+            sim=self.object, profile=profile, permission_name="add_author"
+        )
+        if pps.count() > 0:
+            pps.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        # if profile is not an author or has not been requested to be an
+        # author, then return 404.
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class SimulationAccessAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
+    permission_classes = (StrictRequiresActive,)
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    model = Simulation
+
+    def put(self, request, *args, **kwargs):
+        self.object = self.get_object(
+            kwargs["model_pk"], kwargs["username"], kwargs["title"]
+        )
+        if not self.object.has_admin_access(request.user):
+            raise PermissionDenied()
+
+        ser = SimAccessSerializer(data=request.data, many=True)
+        if ser.is_valid():
+            data = ser.validated_data
+            for access_obj in data:
+                user = get_object_or_404(
+                    get_user_model(), username__iexact=access_obj["username"]
+                )
+                previous_role = self.object.role(user)
+                try:
+                    self.object.assign_role(access_obj["role"], user)
+                except ResourceLimitException as rle:
+                    return Response(
+                        data={rle.resource: rle.todict()},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                updated_role = self.object.role(user)
+                if updated_role is not None and updated_role != previous_role:
+                    try:
+                        msg = access_obj.get("msg", None)
+                        if msg:
+                            msg = f"{msg}\n\n"
+                        else:
+                            msg = None
+
+                        host = f"https://{request.get_host()}"
+                        sim_url = f"{host}{self.object.get_absolute_url()}"
+                        send_mail(
+                            f"Updated role for {self.object}",
+                            (
+                                f"You have been assigned the '{updated_role}' role for this simulation: "
+                                f"{sim_url}.\n\n"
+                                f"{msg if msg else ''}"
+                                f"\nPlease reply to this email if you have any questions."
+                            ),
+                            f"{request.user.username} <notifications@compute.studio>",
+                            [user.email],
+                            fail_silently=True,
+                        )
+                    # Http 401 exception if mail credentials are not set up.
+                    except Exception:
+                        import traceback
+
+                        traceback.print_exc()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SimsAPIView(generics.ListAPIView):

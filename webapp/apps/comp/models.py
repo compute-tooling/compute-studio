@@ -2,6 +2,7 @@ import datetime
 import uuid
 import json
 import pytz
+import os
 
 from dataclasses import dataclass, field
 from typing import List, Union
@@ -17,11 +18,21 @@ from django.contrib.postgres.fields import JSONField
 from django.contrib.auth.models import Group
 from django.urls import reverse
 from django.utils import timezone
+from django.db import transaction
+
+from guardian.shortcuts import assign_perm, remove_perm, get_perms, get_users_with_perms
 
 import cs_storage
 
-from webapp.apps.comp import utils, exceptions
-from webapp.settings import INPUTS_SALT
+from webapp.settings import HAS_USAGE_RESTRICTIONS, USE_STRIPE
+
+from webapp.apps.comp import utils
+from webapp.apps.comp.exceptions import (
+    ForkObjectException,
+    PermissionExpiredException,
+    ResourceLimitException,
+    VersionMismatchException,
+)
 
 
 # 11:59 on night of deployment
@@ -130,11 +141,17 @@ class Inputs(models.Model):
         }
         return reverse("edit", kwargs=kwargs)
 
+    def has_admin_access(self, user):
+        return self.sim.has_admin_access(user)
+
     def has_write_access(self, user):
         return self.sim.has_write_access(user)
 
     def has_read_access(self, user):
         return self.sim.has_read_access(user)
+
+    def role(self, user):
+        return self.sim.role(user)
 
 
 class SimulationManager(models.Manager):
@@ -182,7 +199,7 @@ class SimulationManager(models.Manager):
                     errors_warnings={},
                 )
                 model_pk = self.next_model_pk(project)
-                return self.create(
+                sim = self.create(
                     owner=user.profile,
                     project=project,
                     model_pk=model_pk,
@@ -190,6 +207,9 @@ class SimulationManager(models.Manager):
                     status="STARTED",
                     is_public=False,
                 )
+                sim.authors.set([user.profile])
+                sim.grant_admin_permissions(user)
+                return sim
         except IntegrityError:
             # Case 1:
             if model_pk is not None:
@@ -201,12 +221,12 @@ class SimulationManager(models.Manager):
 
     def fork(self, sim, user):
         if sim.inputs.status == "PENDING":
-            raise exceptions.ForkObjectException(
+            raise ForkObjectException(
                 "Simulations may not be forked while they are in a pending state. "
                 "Please try again once validation has completed."
             )
         if sim.status == "PENDING":
-            raise exceptions.ForkObjectException(
+            raise ForkObjectException(
                 "Simulations may not be forked while they are in a pending state. "
                 "Please try again once the simulation has completed."
             )
@@ -223,7 +243,7 @@ class SimulationManager(models.Manager):
             traceback=sim.inputs.traceback,
             client=sim.inputs.client,
         )
-        return self.create(
+        sim = self.create(
             owner=user.profile,
             title=sim.title,
             readme=sim.readme,
@@ -243,12 +263,33 @@ class SimulationManager(models.Manager):
             is_public=False,
             status=sim.status,
         )
+        sim.authors.set([user.profile])
+        sim.grant_admin_permissions(user)
+        return sim
 
     def public_sims(self):
         return self.filter(creation_date__gt=ANON_BEFORE, is_public=True)
 
 
+class SimulationPermissions:
+    READ = (
+        "read_simulation",
+        "Users with this permission may view this simulation, even if it's private.",
+    )
+    WRITE = (
+        "write_simulation",
+        "Users with this permission may edit the title, description, and simulation parameters.",
+    )
+    ADMIN = (
+        "admin_simulation",
+        "Users with this permission control the visibility of this simulation and who has read, write, and admin access to it.",
+    )
+
+
 class Simulation(models.Model):
+    READ = SimulationPermissions.READ
+    WRITE = SimulationPermissions.WRITE
+    ADMIN = SimulationPermissions.ADMIN
 
     # TODO: dimension needs to go
     dimension_name = "Dimension--needs to go"
@@ -266,6 +307,7 @@ class Simulation(models.Model):
     owner = models.ForeignKey(
         "users.Profile", on_delete=models.CASCADE, null=True, related_name="sims"
     )
+    authors = models.ManyToManyField("users.Profile", related_name="authored_sims")
     sponsor = models.ForeignKey(
         "users.Profile",
         on_delete=models.SET_NULL,
@@ -308,6 +350,11 @@ class Simulation(models.Model):
                 fields=["project", "model_pk"], name="unique_model_pk"
             )
         ]
+        permissions = (
+            SimulationPermissions.READ,
+            SimulationPermissions.WRITE,
+            SimulationPermissions.ADMIN,
+        )
 
     def __str__(self):
         return f"{self.project}#{self.model_pk}"
@@ -356,7 +403,7 @@ class Simulation(models.Model):
         if self.outputs_version() == "v0":
             return reverse("v0_outputs", kwargs=kwargs)
 
-        raise exceptions.VersionMismatchException(
+        raise VersionMismatchException(
             f"{self} is version {self.outputs_version()} != v0."
         )
 
@@ -402,13 +449,152 @@ class Simulation(models.Model):
             sim = sim.parent_sim
         return parent_sims
 
+    def is_owner(self, user):
+        return user == self.owner.user
+
+    def _collaborator_test(self, test_name, adding_collaborator=True):
+        if not HAS_USAGE_RESTRICTIONS:
+            return
+
+        permission_objects = get_users_with_perms(self)
+
+        # number of additional collaborators besides owner.
+        num_collaborators = permission_objects.count() - 1
+
+        if adding_collaborator:
+            num_collaborators += 1
+
+        user = self.owner.user
+        customer = getattr(user, "customer", None)
+        if customer is None:
+            if num_collaborators > 0:
+                raise ResourceLimitException(
+                    "collaborators",
+                    test_name,
+                    "plus",
+                    ResourceLimitException.collaborators_msg,
+                )
+
+        if customer is not None:
+            current_plan = customer.current_plan()
+
+            if num_collaborators > 0 and current_plan["name"] == "free":
+                raise ResourceLimitException(
+                    "collaborators",
+                    test_name,
+                    "plus",
+                    ResourceLimitException.collaborators_msg,
+                )
+
+            if num_collaborators > 1 and current_plan["name"] == "plus":
+                raise ResourceLimitException(
+                    "collaborators",
+                    test_name,
+                    "pro",
+                    ResourceLimitException.collaborators_msg,
+                )
+
+    def add_collaborator_test(self):
+        """
+        Test if user's plan allows them to add more collaborators
+        to this simulation.
+        """
+        if self.is_public:
+            return
+        return self._collaborator_test("add_collaborator", adding_collaborator=True)
+
+    def make_private_test(self):
+        """
+        Test if user's plan allows them to make the simulation private with
+        the existing number of collaborators.
+        """
+        return self._collaborator_test("make_private", adding_collaborator=False)
+
+    """
+    The methods below are used for checking if a user has read, write, or admin
+    access to a specific simulation. Users can only have one of these permissions
+    at a time, but users with a higher level permission inherit the read/write
+    access from the lower level permissions, too.
+    """
+
+    def has_admin_access(self, user):
+        if not user or not user.is_authenticated:
+            return False
+
+        return user.has_perm(Simulation.ADMIN[0], self)
+
     def has_write_access(self, user):
-        return bool(user and user.is_authenticated and user == self.owner.user)
+        """
+        Currently, this is just an alias for is_owner.
+        """
+        if not user or not user.is_authenticated:
+            return False
+
+        return user.has_perm(Simulation.WRITE[0], self) or self.has_admin_access(user)
 
     def has_read_access(self, user):
-        return self.is_public or bool(
-            user and user.is_authenticated and user == self.owner.user
-        )
+        # Everyone has access to this sim.
+        if self.is_public:
+            return True
+
+        if not user or not user.is_authenticated:
+            return False
+        return user.has_perm(Simulation.READ[0], self) or self.has_write_access(user)
+
+    def remove_permissions(self, user):
+        for permission in get_perms(user, self):
+            remove_perm(permission, user, self)
+
+    def grant_admin_permissions(self, user):
+        self.remove_permissions(user)
+        self.add_collaborator_test()
+        assign_perm(Simulation.ADMIN[0], user, self)
+
+    def grant_write_permissions(self, user):
+        self.remove_permissions(user)
+        self.add_collaborator_test()
+        assign_perm(Simulation.WRITE[0], user, self)
+
+    def grant_read_permissions(self, user):
+        self.remove_permissions(user)
+        self.add_collaborator_test()
+        assign_perm(Simulation.READ[0], user, self)
+
+    @transaction.atomic
+    def assign_role(self, role, user):
+        """
+        Wrapper for granting and revoking permissions for a user.
+        Each of the methods below complete multiple DB transactions
+        which can cause some race condition-related bugs.
+
+        Roles: read, write, admin, None (none removes all perms.)
+        """
+        if role == None:
+            self.remove_permissions(user)
+        elif role == "read":
+            self.grant_read_permissions(user)
+        elif role == "write":
+            self.grant_write_permissions(user)
+        elif role == "admin":
+            self.grant_admin_permissions(user)
+        else:
+            raise ValueError(
+                f"Received invalid role: {role}. Choices are read, write, or admin."
+            )
+
+    def role(self, user):
+        if not user or not user.is_authenticated:
+            return None
+
+        perms = get_perms(user, self)
+        if not perms:
+            return None
+        elif perms == [Simulation.READ[0]]:
+            return "read"
+        elif perms == [Simulation.WRITE[0]]:
+            return "write"
+        elif perms == [Simulation.ADMIN[0]]:
+            return "admin"
 
     def outputs_version(self):
         if self.outputs:
@@ -431,6 +617,16 @@ class Simulation(models.Model):
         else:
             return self.owner
 
+    def get_authors(self):
+        """
+        This protects the identity of users who created simulations
+        before ANON_BEFORE. See get_owner for more information.
+        """
+        if self.creation_date < ANON_BEFORE:
+            return ["unsigned"]
+        else:
+            return self.authors
+
     def context(self, request=None):
         url = self.get_absolute_url()
         if request is not None:
@@ -445,6 +641,66 @@ class Simulation(models.Model):
                 pic = output["renderable"]["outputs"][0]["screenshot"]
 
         return {"owner": self.get_owner(), "title": self.title, "url": url, "pic": pic}
+
+
+def two_days_from_now():
+    return timezone.now() + datetime.timedelta(days=2)
+
+
+class PendingPermissionManger(models.Manager):
+    def get_or_create(self, sim=None, profile=None, permission_name=None, **kwargs):
+        pp, created = super().get_or_create(
+            sim=sim, profile=profile, permission_name=permission_name, **kwargs
+        )
+        # guarantee use at least as the read role.
+        if pp.sim.role(pp.profile.user) is None:
+            pp.sim.assign_role("read", pp.profile.user)
+        return pp, created
+
+
+class PendingPermission(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sim = models.ForeignKey(
+        Simulation, on_delete=models.CASCADE, related_name="pending_permissions"
+    )
+    profile = models.ForeignKey(
+        "users.Profile", on_delete=models.CASCADE, related_name="pending_permissions"
+    )
+    permission_name = models.CharField(
+        choices=(("add_author", "Permission to add author."),), max_length=32
+    )
+    creation_date = models.DateTimeField(default=timezone.now)
+
+    expiration_date = models.DateTimeField(default=two_days_from_now)
+
+    objects = PendingPermissionManger()
+
+    def add_author(self):
+        if self.is_expired():
+            raise PermissionExpiredException()
+        self.sim.authors.add(self.profile)
+        self.delete()
+
+    def is_expired(self):
+        return timezone.now() > self.expiration_date
+
+    def get_absolute_url(self):
+        kwargs = {
+            "id": self.id,
+            "model_pk": self.sim.model_pk,
+            "title": self.sim.project.title,
+            "username": self.sim.project.owner.user.username,
+        }
+        return reverse("permissions_pending", kwargs=kwargs)
+
+    def get_absolute_grant_url(self):
+        kwargs = {
+            "id": self.id,
+            "model_pk": self.sim.model_pk,
+            "title": self.sim.project.title,
+            "username": self.sim.project.owner.user.username,
+        }
+        return reverse("permissions_grant", kwargs=kwargs)
 
 
 @dataclass

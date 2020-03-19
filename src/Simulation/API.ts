@@ -7,7 +7,8 @@ import {
   Inputs,
   AccessStatus,
   InputsDetail,
-  MiniSimulation
+  MiniSimulation,
+  Role
 } from "../types";
 
 export default class API {
@@ -35,9 +36,9 @@ export default class API {
     });
   }
 
-  putDescription(data: FormData): Promise<Simulation<RemoteOutputs>> {
+  putDescription(data: FormData): Promise<MiniSimulation> {
     return axios.put(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/`, data).then(resp => {
-      let data: Simulation<RemoteOutputs> = resp.data;
+      let data: MiniSimulation = resp.data;
       return data;
     });
   }
@@ -99,5 +100,25 @@ export default class API {
 
   createNewSimulation(): Promise<{ inputs: InputsDetail; sim: Simulation<RemoteOutputs> }> {
     return axios.post(`/${this.owner}/${this.title}/api/v1/new/`).then(response => response.data);
+  }
+
+  queryUsers(username: string): Promise<Array<{ username: string }>> {
+    return axios.get(`/users/autocomplete?username=${username}`).then(resp => resp.data);
+  }
+
+  addAuthors(data: { authors: Array<{ username: string; msg?: string }> }): Promise<{}> {
+    return axios
+      .put(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/authors/`, data)
+      .then(response => response.data);
+  }
+
+  deleteAuthor(author: string): Promise<{}> {
+    return axios.delete(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/authors/${author}/`);
+  }
+
+  putAccess(data: Array<{ username: string; role: Role; msg?: string }>): Promise<{}> {
+    return axios
+      .put(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/access/`, data)
+      .then(() => ({}));
   }
 }

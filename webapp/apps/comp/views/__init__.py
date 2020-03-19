@@ -4,6 +4,8 @@ from .views import (
     EditSimView,
     OutputsDownloadView,
     OutputsView,
+    PermissionPendingView,
+    PermissionGrantedView,
 )
 
 from .api import (
@@ -16,6 +18,9 @@ from .api import (
     DetailMyInputsAPIView,
     MyInputsAPIView,
     NewSimulationAPIView,
+    AuthorsAPIView,
+    AuthorsDeleteAPIView,
+    SimulationAccessAPIView,
     SimsAPIView,
     ProfileSimsAPIView,
 )

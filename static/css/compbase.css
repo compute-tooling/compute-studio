@@ -116,6 +116,17 @@ code {
   border-bottom-left-radius: 0;
 }
 
+/* extend bootstrap border classes */
+.rounded-right-0 {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.rounded-left-0 {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
 /* Large devices (desktops, 992px and up) */
 @media (min-width: 992px) {
   .dropdown-menu.desktop-menu-right.show {
@@ -296,11 +307,22 @@ span.default-value {
   color: #007bff;
 }
 
+.hover-red {
+  color: black;
+}
+
+.hover-red:hover {
+  color: #dc3545;
+}
+
 .color-inherit {
   color: inherit;
 }
 .color-inherit:hover {
   color: inherit;
+}
+.background-color-inherit {
+  background-color: inherit;
 }
 
 /* output modal styling */
@@ -334,9 +356,60 @@ blockquote {
   display: none;
 }
 
+/* .dropdown-menu css for use with custom components */
+.custom-dropdown-menu {
+  position: absolute;
+  will-change: transform;
+  top: 0px;
+  /* left: 0px; */
+  transform: translate3d(0px, 38px, 0px);
+  background-color: white;
+  z-index: 1050;
+}
+
 /* tooltip */
 
 .fade.show.tooltip > .tooltip-inner {
   background-color: #2b2c2d;
   opacity: 0.99 !important;
+}
+
+.menu-item {
+  position: relative;
+  display: block;
+  padding: 8px 10px;
+  font-weight: 600;
+}
+
+.menu-heading {
+  display: block;
+  padding: 8px 10px;
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  color: #586069;
+  background-color: #f3f5f8;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+/* Create flush rows like Boostrap's flush-lists */
+.row-flush .row-flush-item {
+  border: 1px solid #dee2e6;
+  border-bottom: 0 !important;
+}
+.row-flush .row-flush-item:first-child {
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+}
+
+.row-flush .row-flush-item:last-child {
+  border-bottom-left-radius: 0.25rem;
+  border-bottom-right-radius: 0.25rem;
+  border-bottom: 1px solid #dee2e6 !important;
+}
+
+.lh-1 {
+  line-height: 1;
 }

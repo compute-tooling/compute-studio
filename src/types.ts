@@ -119,6 +119,19 @@ export interface BokehOutput extends RemoteOutput {
   data: { target_id: string; root_id: string; doc: string };
 }
 
+export interface DescriptionValues {
+  title: string;
+  readme: { [key: string]: any }[] | Node[];
+  is_public: boolean;
+  author: {
+    add: { username: string; msg?: string };
+    remove: { username: string };
+  };
+  access: {
+    read: { grant: { username: string; msg?: string }; remove: { username: string } };
+  };
+}
+
 // Interfaces below correspond to interfaces defined in:
 // webapp/apps/comp/serializers.py
 // cs_storage/validate.py
@@ -142,6 +155,8 @@ export interface Outputs {
   downloadable: Array<Output | TableOutput | BokehOutput>;
 }
 
+export type Role = null | "read" | "write" | "admin";
+
 export interface AccessStatus {
   user_status: "inactive" | "customer" | "profile" | "anon";
   username: string;
@@ -152,6 +167,7 @@ export interface AccessStatus {
   server_cost?: number;
   exp_cost?: number;
   exp_time?: number;
+  plan: { name: "free" | "plus" | "pro" | "team" };
 }
 
 export interface Project {
@@ -175,7 +191,7 @@ export interface MiniSimulation {
   api_url: string;
   creation_date: Date;
   gui_url: string;
-  has_write_access: boolean;
+  role?: Role;
   is_public: boolean;
   model_pk: number;
   model_version: string;
@@ -199,7 +215,7 @@ export interface InputsDetail {
   parent_model_pk: number;
   sim: MiniSimulation;
   status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
-  has_write_access: boolean;
+  role?: Role;
   traceback: string;
 }
 
@@ -213,12 +229,13 @@ export interface Inputs {
 
 export interface Simulation<T> {
   api_url: string;
+  authors: string[];
   creation_date: Date;
   eta: number;
   exp_comp_datetime: Date;
   gui_url: string;
   is_public: boolean;
-  has_write_access: boolean;
+  role?: boolean;
   model_pk: number;
   model_version: string;
   notify_on_completion: boolean;
@@ -227,6 +244,13 @@ export interface Simulation<T> {
   outputs_version: string;
   owner: string;
   parent_sims: Array<MiniSimulation>;
+  pending_permissions: Array<{
+    grant_url: string;
+    profile: string;
+    permission_name: "add_author";
+    is_expired: boolean;
+  }>;
+  access?: Array<{ username: string; is_owner: boolean; role: Role }>;
   project: Project;
   readme: Node[];
   run_time: number;

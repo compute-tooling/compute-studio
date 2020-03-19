@@ -4,40 +4,49 @@ import time
 import stripe
 
 from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404
 
-from .models import Event, Customer
+from .models import Event, Customer, Subscription
 from .events import get_customer_from_event
 
 
 stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 
-def invoice_payment_failed(event, link="test"):
-    print("processing invoice.payment_failed event...")
-    send_mail(
-        "Compute Studio",
-        "Payment failed",
-        "Compute Studio <hank@compute.studio>",
-        ["hank@compute.studio"],
-        fail_silently=False,
-    )
-
-
 def customer_created(event):
     print("processing customer.created event...")
     customer = Customer.objects.get(stripe_id=event.data["object"]["id"])
     send_mail(
-        "Compute Studio",
+        "Payment method updated",
         "Your payment method was set successfully! Please write back if you have any questions.",
-        "Compute Studio <hank@compute.studio>",
+        "notifications@compute.studio",
+        [customer.user.email],
+        fail_silently=False,
+    )
+
+
+def customer_subscription_deleted(event):
+    print("processing customer.subscription.deleted event...")
+    sub = get_object_or_404(Subscription, stripe_id=event.data.object.id)
+    customer = sub.customer
+    sub.delete()
+    print("successfully deleted subscription")
+    send_mail(
+        "Your C/S subscription has been cancelled",
+        (
+            "We are sorry to see you go. If you have a moment, please let us know why "
+            "you have cancelled your subscription and what we can do to win you back "
+            "in the future.\n\nBest,\nThe C/S Team"
+        ),
+        "matt@compute.studio",
         [customer.user.email],
         fail_silently=False,
     )
 
 
 webhook_map = {
-    "invoice.payment_failed": invoice_payment_failed,
     "customer.created": customer_created,
+    "customer.subscription.deleted": customer_subscription_deleted,
 }
 
 

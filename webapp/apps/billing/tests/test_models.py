@@ -15,6 +15,8 @@ from webapp.apps.billing.models import (
     Subscription,
     SubscriptionItem,
     UsageRecord,
+    create_pro_billing_objects,
+    UpdateStatus,
 )
 
 User = get_user_model()
@@ -34,6 +36,9 @@ class TestStripeModels:
         assert customer.user
         assert created
         assert not customer.livemode
+        assert customer.current_plan(as_dict=False).plan == Plan.objects.get(
+            nickname="Free Plan"
+        )
 
         customer, created = Customer.get_or_construct(stripe_customer.id)
         assert customer
@@ -137,7 +142,10 @@ class TestStripeModels:
             email=u.email, source="tok_bypassPending"
         )
         c, _ = Customer.get_or_construct(stripe_customer.id, u)
-        assert c.subscriptions.count() == 0
+        assert c.subscriptions.count() == 1
+        assert c.current_plan(as_dict=False).plan == Plan.objects.get(
+            nickname="Free Plan"
+        )
 
         # test new customer gets all subscriptions.
         c.sync_subscriptions()
@@ -169,3 +177,122 @@ class TestStripeModels:
         )
 
         Customer.objects.sync_subscriptions()
+
+    def test_create_pro_billing_objects(self, db):
+        # this function is called in conftest.py
+        # create_pro_billing_objects()
+
+        pro_product = Product.objects.get(name="Compute Studio Subscription")
+
+        plans = set(
+            [
+                Plan.objects.get(nickname="Free Plan"),
+                Plan.objects.get(nickname="Monthly Plus Plan"),
+                Plan.objects.get(nickname="Yearly Plus Plan"),
+                Plan.objects.get(nickname="Monthly Pro Plan"),
+                Plan.objects.get(nickname="Yearly Pro Plan"),
+            ]
+        )
+
+        assert set(pro_product.plans.all()) == plans
+
+    def test_customer_card_info(self, db, customer):
+        # As of today, 3/5/2020, stripe gives an expiration date
+        # on the test token of 3/2021. This may need to be updated
+        # in the future.
+        now = datetime.now()
+        assert customer.card_info() == {
+            "brand": "Visa",
+            "last4": "0077",
+            "exp_month": now.month,
+            "exp_year": now.year + 1,
+        }
+
+    @pytest.mark.parametrize(
+        "plan_duration,other_duration", [("Monthly", "Yearly"), ("Yearly", "Monthly")]
+    )
+    def test_customer_subscription_upgrades(
+        self, db, customer, monkeypatch, plan_duration, other_duration
+    ):
+        assert customer.current_plan() == {"plan_duration": None, "name": "free"}
+        assert customer.current_plan(as_dict=False).plan == Plan.objects.get(
+            nickname="Free Plan"
+        )
+
+        cs_product = Product.objects.get(name="Compute Studio Subscription")
+
+        # test upgrade from free to pro
+        plan = cs_product.plans.get(nickname=f"{plan_duration} Pro Plan")
+
+        result = customer.update_plan(plan)
+        assert result == UpdateStatus.upgrade
+
+        customer = Customer.objects.get(pk=customer.pk)
+        assert customer.current_plan() == {
+            "plan_duration": plan_duration.lower(),
+            "name": "pro",
+        }
+
+        # test update_plan is idempotent
+        plan = cs_product.plans.get(nickname=f"{plan_duration} Pro Plan")
+
+        result = customer.update_plan(plan)
+        assert result == UpdateStatus.nochange
+
+        assert customer.current_plan() == {
+            "plan_duration": plan_duration.lower(),
+            "name": "pro",
+        }
+
+        # test downgrade from pro to plus
+        plan = cs_product.plans.get(nickname=f"{plan_duration} Plus Plan")
+
+        result = customer.update_plan(plan)
+        assert result == UpdateStatus.downgrade
+
+        assert customer.current_plan() == {
+            "plan_duration": plan_duration.lower(),
+            "name": "plus",
+        }
+
+        # swap to other plus duration
+        plan = cs_product.plans.get(nickname=f"{other_duration} Plus Plan")
+
+        result = customer.update_plan(plan)
+        assert result == UpdateStatus.duration_change
+
+        assert customer.current_plan() == {
+            "plan_duration": other_duration.lower(),
+            "name": "plus",
+        }
+
+        # test upgrade back to pro
+        plan = cs_product.plans.get(nickname=f"{plan_duration} Pro Plan")
+
+        result = customer.update_plan(plan)
+        assert result == UpdateStatus.upgrade
+
+        assert customer.current_plan() == {
+            "plan_duration": plan_duration.lower(),
+            "name": "pro",
+        }
+
+        # swap to other pro duration
+        plan = cs_product.plans.get(nickname=f"{other_duration} Pro Plan")
+
+        result = customer.update_plan(plan)
+        assert result == UpdateStatus.duration_change
+
+        assert customer.current_plan() == {
+            "plan_duration": other_duration.lower(),
+            "name": "pro",
+        }
+
+        # test downgrade to free
+        plan = Plan.objects.get(nickname="Free Plan")
+        result = customer.update_plan(plan)
+        assert result == UpdateStatus.downgrade
+        assert customer.current_plan() == {"plan_duration": None, "name": "free"}
+        assert customer.current_plan(as_dict=False).plan == Plan.objects.get(
+            nickname="Free Plan"
+        )

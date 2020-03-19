@@ -1,14 +1,24 @@
-{% extends 'base.html' %}
-
-{% load static %}
-{% block title %}Update payment information{% endblock %}
-
-{% block content %}
-<div class="card card-body card-outer">
+{% extends 'registration/settings_base.html' %} {% load static %} {% block title %}Update payment
+information{% endblock %} {% block settings %}
+<div class="card card-body card-inner">
   <h2 class="card-title">Update payment information</h2>
-  <form method="post" id="payment-form" action="{% url 'update_payment' %}">
-    {% csrf_token %}
-    <div class='stripe-input'>
+  <form method="post" id="payment-form">
+    {% csrf_token %} {% with card_info=request.user.customer.card_info %}
+    <div class="row justify-content-between w-100 mt-3 mb-4">
+      <div class="col col-auto">
+        <p>Current payment method</p>
+        <p>
+          <i class="far fa-credit-card mr-1"></i><strong>{{card_info.brand}}</strong> ending ****
+          **** **** {{card_info.last4}}
+        </p>
+      </div>
+      <div class="col col-auto">
+        <p>Expires</p>
+        <p>{{card_info.exp_month}}/{{card_info.exp_year}}</p>
+      </div>
+    </div>
+    {% endwith %}
+    <div class="stripe-input">
       {% include 'billing/base.html' %}
     </div>
     <button type="submit" class="btn btn-success mt-4">Update</button>

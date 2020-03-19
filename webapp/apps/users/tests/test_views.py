@@ -130,6 +130,23 @@ class TestUsersViews:
         user = auth.get_user(client)
         assert not user.is_authenticated
 
+    def test_user_lookup(self, api_client, profile):
+        resp = api_client.get("/users/autocomplete?username=hd")
+        assert resp.status_code == 403
+
+        api_client.force_login(profile.user)
+        resp = api_client.get("/users/autocomplete?username=hd")
+        assert resp.status_code == 200
+        assert {"username": "hdoupe"} in resp.data
+
+        resp = api_client.get("/users/autocomplete?username=''")
+        assert resp.status_code == 200
+        assert resp.data == []
+
+        resp = api_client.get("/users/autocomplete?username=")
+        assert resp.status_code == 200
+        assert resp.data == []
+
     def test_access_to_profile_pages(self, client):
         user = auth.get_user(client)
         assert not user.is_authenticated
@@ -159,6 +176,7 @@ class TestUsersViews:
             "user_status": "anon",
             "api_url": "/users/status/",
             "username": None,
+            "plan": {"name": "free", "plan_duration": None},
         }
 
         resp = api_client.get(
@@ -174,6 +192,7 @@ class TestUsersViews:
             "server_cost": project.server_cost,
             "api_url": f"/users/status/{project.owner.user.username}/{project.title}/",
             "username": None,
+            "plan": {"name": "free", "plan_duration": None},
         }
 
         resp = api_client.get(
@@ -189,6 +208,7 @@ class TestUsersViews:
             "server_cost": sponsored_project.server_cost,
             "api_url": f"/users/status/{sponsored_project.owner.user.username}/{sponsored_project.title}/",
             "username": None,
+            "plan": {"name": "free", "plan_duration": None},
         }
 
         assert api_client.login(username=profile.user.username, password=password)
@@ -197,4 +217,5 @@ class TestUsersViews:
             "user_status": profile.status,
             "api_url": "/users/status/",
             "username": profile.user.username,
+            "plan": {"name": "free", "plan_duration": None},
         }

@@ -14,12 +14,19 @@ from rest_framework.test import APIClient
 from rest_framework.response import Response
 
 from webapp.apps.billing.models import UsageRecord
-from webapp.apps.users.models import Project, Profile
+from webapp.apps.users.models import Project, Profile, create_profile_from_user
 
-from webapp.apps.comp.models import Inputs, Simulation, ANON_BEFORE
+from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
 from webapp.apps.comp.ioutils import get_ioutils
+from webapp.apps.comp.exceptions import ResourceLimitException
 from .compute import MockCompute, MockComputeWorkerFailure
-from .utils import read_outputs, _submit_inputs, _submit_sim, _shuffled_sims
+from .utils import (
+    read_outputs,
+    _submit_inputs,
+    _submit_sim,
+    _shuffled_sims,
+    gen_collabs,
+)
 
 User = auth.get_user_model()
 
@@ -61,9 +68,7 @@ class ResponseStatusException(Exception):
         self.act_resp = act_resp
         self.act_status = act_resp.status_code
         self.stage = stage
-        super().__init__(
-            f"{stage}: expected {exp_status}, got {self.act_status}\n\n{getattr(self.act_resp, 'data', None)}"
-        )
+        super().__init__(f"{stage}: expected {exp_status}, got {self.act_status}")
 
 
 def assert_status(exp_status, act_resp, stage):
@@ -549,23 +554,21 @@ class TestAsyncAPI(CoreTestMixin):
             set_auth_token(api_client, profile_w_mockcustomer.user)
         else:
             set_auth_token(api_client, profile.user)
+
         rmm = RunMockModel(**kwargs)
         rmm.run()
 
-        customer = getattr(profile.user, "customer", None)
-        try:
-            profile.customer = None
+        if hasattr(profile.user, "customer"):
+            profile.user.customer.delete()
             profile.save()
-            set_auth_token(api_client, profile.user)
-            rmm = RunMockModel(**kwargs)
-            with pytest.raises(ResponseStatusException) as excinfo:
-                rmm.run()
-            assert excinfo.value.stage == "post_adjustment"
-            assert excinfo.value.exp_status == 201
-            assert excinfo.value.act_status == 403
-        finally:
-            profile.customer = customer
-            profile.save()
+
+        set_auth_token(api_client, profile.user)
+        rmm = RunMockModel(**kwargs)
+        with pytest.raises(ResponseStatusException) as excinfo:
+            rmm.run()
+        assert excinfo.value.stage == "post_adjustment", excinfo.value.act_status
+        assert excinfo.value.exp_status == 201
+        assert excinfo.value.act_status == 403
 
     @pytest.mark.parametrize("test_lower", [False, True])
     def test_fork(
@@ -762,8 +765,543 @@ def test_v0_urls(
     assert s.is_public == False
 
 
+class TestCollaboration:
+    def test_add_author_flow(
+        self,
+        db,
+        sponsored_matchups,
+        client,
+        api_client,
+        get_inputs,
+        meta_param_dict,
+        pro_profile,
+        customer_pro_by_default,
+    ):
+        """
+        Test full add new author flow.
+        """
+        inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, pro_profile)
+
+        _, submit_sim = _submit_sim(inputs)
+        sim = submit_sim.submit()
+        sim.status = "SUCCESS"
+        sim.is_public = False
+        sim.save()
+
+        assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
+
+        collab = next(gen_collabs(1))
+
+        # Permission denied on unauthed user
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}authors/",
+            data={"authors": [{"username": collab.user.username}]},
+            format="json",
+        )
+        assert_status(403, resp, "denied_authors")
+
+        # Permission denied if user is not owner of sim.
+        api_client.force_login(collab.user)
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}authors/",
+            data={"authors": [{"username": collab.user.username}]},
+            format="json",
+        )
+        assert_status(403, resp, "denied_authors")
+
+        # Successful update
+        api_client.force_login(pro_profile.user)
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}authors/",
+            data={"authors": [{"username": collab.user.username}]},
+            format="json",
+        )
+        assert_status(200, resp, "success_authors")
+
+        sim = Simulation.objects.get(pk=sim.pk)
+        assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
+        assert sim.pending_permissions.all().count() == 1 and sim.pending_permissions.all().get(
+            profile=collab
+        )
+        pp = sim.pending_permissions.first()
+
+        # Test user redirected to login if not authed.
+        resp = client.get(pp.get_absolute_url())
+        assert_status(302, resp, "pending_redirect_to_login")
+        assert resp.url == f"/users/login/?next={pp.get_absolute_url()}"
+
+        # Login profile, go to permission confirmation page.
+        client.force_login(user=collab.user)
+        resp = client.get(pp.get_absolute_url())
+        assert_status(200, resp, "get_permissions_pending")
+        assert "comp/permissions/confirm.html" in [t.name for t in resp.templates]
+        # Test user granted access to private simulation
+        resp = client.get(pp.sim.get_absolute_url())
+        assert_status(200, resp, "potential_sim_author_has_read_access")
+        # GET link for granting permission.
+        resp = client.get(pp.get_absolute_grant_url())
+        assert_status(302, resp, "grant_permissions")
+        assert resp.url == sim.get_absolute_url()
+
+        sim = Simulation.objects.get(pk=sim.pk)
+        assert sim.authors.all().count() == 2
+        assert sim.authors.filter(pk__in=[pro_profile.pk, collab.pk]).count() == 2
+        assert sim.pending_permissions.count() == 0
+
+    def test_add_authors_api(
+        self,
+        db,
+        sponsored_matchups,
+        client,
+        api_client,
+        get_inputs,
+        meta_param_dict,
+        profile,
+    ):
+        """
+        Test add authors api endpoints.
+        """
+        modeler = User.objects.get(username="hdoupe").profile
+        inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, modeler)
+
+        _, submit_sim = _submit_sim(inputs)
+        sim = submit_sim.submit()
+        sim.status = "SUCCESS"
+        sim.is_public = True
+        sim.save()
+
+        assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
+
+        # first create a pending permission through the api
+        api_client.force_login(modeler.user)
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}authors/",
+            data={"authors": [{"username": profile.user.username}]},
+            format="json",
+        )
+        assert_status(200, resp, "success_authors")
+
+        # check that resubmit has no effect on non-expired permissions.
+        init_pp = sim.pending_permissions.get(profile__pk=profile.pk)
+        assert PendingPermission.objects.count() == 1
+
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}authors/",
+            data={"authors": [{"username": profile.user.username}]},
+            format="json",
+        )
+        assert_status(200, resp, "success_authors")
+
+        # init_pp is still the only permission that we have.
+        assert PendingPermission.objects.count() == 1
+        assert sim.pending_permissions.get(pk=init_pp.pk) == init_pp
+
+        init_pp.expiration_date = init_pp.creation_date - datetime.timedelta(days=3)
+        init_pp.save()
+        assert init_pp.is_expired() == True
+
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}authors/",
+            data={"authors": [{"username": profile.user.username}]},
+            format="json",
+        )
+        assert_status(200, resp, "success_authors")
+
+        # Check that stale permission is removed and a new one is added.
+        assert PendingPermission.objects.count() == 1
+        assert PendingPermission.objects.filter(pk=init_pp.pk).count() == 0
+        new_pp = sim.pending_permissions.get(profile__pk=profile.pk)
+        assert new_pp.sim == sim
+
+    def test_delete_author(
+        self,
+        db,
+        sponsored_matchups,
+        client,
+        api_client,
+        get_inputs,
+        meta_param_dict,
+        profile,
+    ):
+        """
+        Test delete author from simulation.
+        - owner cannot be deleted from author list.
+        - check delete before permission approval.
+        - check delete of existing author.
+        - 404 on dne or unassociated author.
+        - author can remove themselves as author.
+        """
+        modeler = User.objects.get(username="hdoupe").profile
+        inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, modeler)
+
+        _, submit_sim = _submit_sim(inputs)
+        sim = submit_sim.submit()
+        sim.status = "SUCCESS"
+        sim.is_public = True
+        sim.save()
+
+        assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
+
+        # test not allowed to delete owner of simulation from authors.
+        api_client.force_login(modeler.user)
+        resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{sim.owner}/")
+        assert_status(400, resp, "cannot_delete_sim_owner")
+        sim = Simulation.objects.get(pk=sim.pk)
+        assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
+
+        # first create a pending permission through the api.
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}authors/",
+            data={"authors": [{"username": profile.user.username}]},
+            format="json",
+        )
+        assert_status(200, resp, "success_authors")
+
+        init_pp = sim.pending_permissions.get(profile__pk=profile.pk)
+
+        # test delete author before they approve request.
+        resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
+        assert_status(204, resp, "delete_pending_author")
+        assert PendingPermission.objects.filter(id=init_pp.id).count() == 0
+        sim = Simulation.objects.get(pk=sim.pk)
+        assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
+
+        # test delete author.
+        api_client.force_login(modeler.user)
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}authors/",
+            data={"authors": [{"username": profile.user.username}]},
+            format="json",
+        )
+        assert_status(200, resp, "success_authors")
+
+        new_pp = sim.pending_permissions.get(profile__pk=profile.pk)
+        new_pp.add_author()
+        assert sim.authors.all().count() == 2 and sim.authors.get(pk=profile.pk)
+
+        resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
+        assert_status(204, resp, "delete_pending_author")
+        assert PendingPermission.objects.filter(id=init_pp.id).count() == 0
+        sim = Simulation.objects.get(pk=sim.pk)
+        assert sim.authors.all().count() == 1 and sim.authors.get(pk=sim.owner.pk)
+
+        # test not found
+        resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
+        assert_status(404, resp, "delete_author_already_deleted")
+        resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/abcd/")
+        assert_status(404, resp, "delete_author_profile_dne")
+
+        # test unauth'ed user does not have access.
+        api_client.logout()
+        resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
+        assert_status(403, resp, "delete_author_must_be_auth'ed")
+
+        # test profile can remove themselves.
+        api_client.force_login(modeler.user)
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}authors/",
+            data={"authors": [{"username": profile.user.username}]},
+            format="json",
+        )
+        assert_status(200, resp, "success_authors")
+
+        api_client.force_login(profile.user)
+        resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
+        assert_status(204, resp, "author_can_deletle_themselves")
+
+        # test must have write access or be removing oneself
+        u = User.objects.create_user("danger", "danger@example.com", "heyhey2222")
+        create_profile_from_user(u)
+        danger = Profile.objects.get(user__username="danger")
+        api_client.force_login(danger.user)
+        resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
+        assert_status(403, resp, "auth'ed user cannot delete authors")
+
+    def test_sim_read_access_management(
+        self,
+        db,
+        sponsored_matchups,
+        client,
+        api_client,
+        get_inputs,
+        meta_param_dict,
+        pro_profile,
+        customer_pro_by_default,
+    ):
+        """
+        Test grant/remove read access to private simulation.
+        - Assert user does not have read access
+        - Check user without read access cannot add themselves
+        - Grant read access to user successfully
+        - Make sure user with read access cannot add others to list
+        - Remove read access from user successfully.
+        """
+        inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, pro_profile)
+
+        _, submit_sim = _submit_sim(inputs)
+        sim = submit_sim.submit()
+        sim.status = "SUCCESS"
+        sim.outputs = json.loads(read_outputs("Matchups_v1"))
+        sim.is_public = False
+        sim.save()
+
+        collabs = list(gen_collabs(2))
+
+        # Check user does not have access to sim
+        api_client.force_login(collabs[0].user)
+        resp = api_client.get(sim.get_absolute_api_url())
+        assert_status(403, resp, "user does not have read access to sim yet")
+
+        # Check user cannot update read access list
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}access/",
+            data=[{"username": str(collabs[0]), "role": "read"}],
+            format="json",
+        )
+        assert_status(403, resp, "user cannot update read access")
+
+        # Grant read access to user
+        api_client.force_login(sim.owner.user)
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}access/",
+            data=[{"username": str(collabs[0]), "role": "read"}],
+            format="json",
+        )
+        assert_status(204, resp, "user granted read access")
+
+        api_client.force_login(collabs[0].user)
+        resp = api_client.get(sim.get_absolute_api_url())
+        assert_status(200, resp, "user has read access to sim")
+
+        # Check user with read access cannot grant others read access
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}access/",
+            data=[{"username": str(collabs[1]), "role": "read"}],
+            format="json",
+        )
+        assert_status(403, resp, "user granted read access")
+
+        # Remove read access from user
+        api_client.force_login(sim.owner.user)
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}access/",
+            data=[{"username": str(collabs[0]), "role": None}],
+            format="json",
+        )
+        assert_status(204, resp, "user granted read access")
+
+        api_client.force_login(collabs[0].user)
+        resp = api_client.get(sim.get_absolute_api_url())
+        assert_status(403, resp, "user no longer has read access to sim")
+
+    def test_collaborator_usage_limits_triggered(
+        self,
+        db,
+        sponsored_matchups,
+        client,
+        api_client,
+        get_inputs,
+        meta_param_dict,
+        plus_profile,
+        customer_plus_by_default,
+    ):
+        """
+        Test collaborator resource usage limits.
+        - Able to add first collaborator.
+        - Able to re-assign role of first collaborator.
+        - Adding second collaborator through role or as author triggers
+        error.
+        - Able to make user with read access an author.
+        """
+        inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, plus_profile)
+
+        _, submit_sim = _submit_sim(inputs)
+        sim = submit_sim.submit()
+        sim.status = "SUCCESS"
+        sim.outputs = json.loads(read_outputs("Matchups_v1"))
+        sim.is_public = False
+        sim.save()
+
+        collabs = list(gen_collabs(2))
+
+        # Grant read access to user
+        api_client.force_login(plus_profile.user)
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}access/",
+            data=[{"username": str(collabs[0]), "role": "read"}],
+            format="json",
+        )
+        assert_status(204, resp, "user granted read access")
+
+        # Check re-assigning role has no affect
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}access/",
+            data=[{"username": str(collabs[0]), "role": None}],
+            format="json",
+        )
+        assert_status(204, resp, "user revoked access")
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}access/",
+            data=[{"username": str(collabs[0]), "role": "write"}],
+            format="json",
+        )
+        assert_status(204, resp, "user granted write access")
+
+        # Grant read access to another user triggers reource error.
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}access/",
+            data=[{"username": str(collabs[1]), "role": "read"}],
+            format="json",
+        )
+        assert_status(400, resp, "resource limit triggered")
+
+        assert resp.data == {
+            "collaborators": {
+                "msg": ResourceLimitException.collaborators_msg,
+                "upgrade_to": "pro",
+                "resource": "collaborators",
+                "test_name": "add_collaborator",
+            }
+        }
+
+        # Grant read access through assigning author triggers resource error.
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}authors/",
+            data={"authors": [{"username": str(collabs[1])}]},
+            format="json",
+        )
+        assert_status(400, resp, "resource limit triggered on author")
+        assert resp.data == {
+            "collaborators": {
+                "msg": ResourceLimitException.collaborators_msg,
+                "upgrade_to": "pro",
+                "resource": "collaborators",
+                "test_name": "add_collaborator",
+            }
+        }
+
+        # No problem adding user with read access as author
+        resp = api_client.put(
+            f"{sim.get_absolute_api_url()}authors/",
+            data={"authors": [{"username": str(collabs[0])}]},
+            format="json",
+        )
+        assert_status(200, resp, "no problem when user already has read access")
+
+    def test_no_limit_collaboration(
+        self,
+        db,
+        monkeypatch,
+        sponsored_matchups,
+        client,
+        api_client,
+        get_inputs,
+        meta_param_dict,
+        pro_profile,
+        customer_pro_by_default,
+    ):
+
+        inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, pro_profile)
+
+        _, submit_sim = _submit_sim(inputs)
+        sim = submit_sim.submit()
+        sim.status = "SUCCESS"
+        sim.outputs = json.loads(read_outputs("Matchups_v1"))
+        sim.is_public = False
+        sim.save()
+
+        collabs = []
+        for i in range(2):
+            u = User.objects.create_user(
+                f"collab-{i}", f"collab{i}@example.com", "heyhey2222"
+            )
+            create_profile_from_user(u)
+            collabs.append(Profile.objects.get(user__username=f"collab-{i}"))
+
+        # Grant read access to user
+        api_client.force_login(sim.owner.user)
+        for collab in collabs:
+            resp = api_client.put(
+                f"{sim.get_absolute_api_url()}access/",
+                data=[{"username": str(collab), "role": "read"}],
+                format="json",
+            )
+            assert_status(204, resp, f"{str(collab)} granted read access")
+
+        # remove read acccess from 2 users
+        for collab in collabs[:2]:
+            resp = api_client.put(
+                f"{sim.get_absolute_api_url()}access/",
+                data=[{"username": str(collab), "role": None}],
+                format="json",
+            )
+            assert_status(204, resp, f"{str(collab)} revoked read access")
+
+        # add as authors
+        for collab in collabs:
+            resp = api_client.put(
+                f"{sim.get_absolute_api_url()}authors/",
+                data={"authors": [{"username": str(collab)}]},
+                format="json",
+            )
+            assert_status(200, resp, f"add author {str(collab)}")
+
+    def test_public_to_private_transition(
+        self,
+        db,
+        sponsored_matchups,
+        client,
+        api_client,
+        get_inputs,
+        meta_param_dict,
+        free_profile,
+    ):
+        """
+        Test collaborator resource usage limits.
+        - Test add 3 collaborators to public sim is OK.
+        - Test user can not make sim private afterwards.
+        """
+        inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, free_profile)
+
+        _, submit_sim = _submit_sim(inputs)
+        sim = submit_sim.submit()
+        sim.status = "SUCCESS"
+        sim.outputs = json.loads(read_outputs("Matchups_v1"))
+        sim.is_public = True
+        sim.save()
+
+        collabs = []
+        for i in range(3):
+            u = User.objects.create_user(
+                f"collab-{i}", f"collab{i}@example.com", "heyhey2222"
+            )
+            create_profile_from_user(u)
+            collabs.append(Profile.objects.get(user__username=f"collab-{i}"))
+
+        # Grant read access to users
+        api_client.force_login(sim.owner.user)
+        for collab in collabs:
+            resp = api_client.put(
+                f"{sim.get_absolute_api_url()}access/",
+                data=[{"username": str(collab), "role": "read"}],
+                format="json",
+            )
+            assert_status(204, resp, f"{str(collab)} granted read access")
+
+        resp = api_client.put(sim.get_absolute_api_url(), data={"is_public": False})
+        sim.refresh_from_db()
+        assert_status(400, resp, "can't make private with >2 collabs")
+        assert resp.data == {
+            "collaborators": {
+                "msg": ResourceLimitException.collaborators_msg,
+                "upgrade_to": "plus",
+                "resource": "collaborators",
+                "test_name": "make_private",
+            }
+        }
+
+
 def test_list_sim_api(db, api_client, profile, get_inputs, meta_param_dict):
-    modeler = User.objects.get(username="modeler").profile
     sims, modeler_sims, tester_sims = _shuffled_sims(
         profile, get_inputs, meta_param_dict
     )

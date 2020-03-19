@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from webapp.apps.billing.utils import USE_STRIPE
+from webapp.settings import USE_STRIPE
 from webapp.apps.publish.views import GetProjectMixin
 
 from .forms import UserCreationForm, CancelSubscriptionForm, DeleteUserForm
@@ -43,7 +43,7 @@ class SignUp(generic.CreateView):
 
 
 class UserSettings(View):
-    template_name = ("registration/settings_base.html",)
+    template_name = ("registration/settings.html",)
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
@@ -115,9 +115,12 @@ class DeleteUserDone(generic.TemplateView):
 class AccessStatusAPI(GetProjectMixin, APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
+        plan = {"name": "free", "plan_duration": None}
         if user.is_authenticated and user.profile:
             user_status = user.profile.status
             username = user.username
+            if getattr(user, "customer", None) is not None:
+                plan = user.customer.current_plan()
         else:
             user_status = "anon"
             username = None
@@ -141,6 +144,7 @@ class AccessStatusAPI(GetProjectMixin, APIView):
                     "exp_time": exp_time,
                     "api_url": reverse("access_project", kwargs=kwargs),
                     "username": username,
+                    "plan": plan,
                 }
             )
         else:
@@ -149,5 +153,6 @@ class AccessStatusAPI(GetProjectMixin, APIView):
                     "user_status": user_status,
                     "api_url": reverse("access_status"),
                     "username": username,
+                    "plan": plan,
                 }
             )

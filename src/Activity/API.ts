@@ -1,11 +1,15 @@
 import axios from "axios";
-import { MiniSimulation, Project } from "../types";
+import { MiniSimulation, Project, AccessStatus } from "../types";
 
 export default class API {
   username?: string;
 
   constructor(username?: string) {
     this.username = username;
+  }
+
+  getAccessStatus(): Promise<AccessStatus> {
+    return axios.get(`/users/status/`).then(resp => resp.data);
   }
 
   initSimulations(): Promise<{

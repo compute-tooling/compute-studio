@@ -15,6 +15,11 @@ from webapp.apps.comp.views import (
     MyInputsAPIView,
     DetailMyInputsAPIView,
     NewSimulationAPIView,
+    AuthorsAPIView,
+    AuthorsDeleteAPIView,
+    PermissionPendingView,
+    PermissionGrantedView,
+    SimulationAccessAPIView,
 )
 
 # API Routes:
@@ -44,6 +49,31 @@ urlpatterns = [
         "api/v1/<int:model_pk>/fork/",
         ForkDetailAPIView.as_view(),
         name="fork_detail_api",
+    ),
+    path(
+        "api/v1/<int:model_pk>/access/",
+        SimulationAccessAPIView.as_view(),
+        name="access_api",
+    ),
+    path(
+        "api/v1/<int:model_pk>/authors/",
+        AuthorsAPIView.as_view(),
+        name="authors_add_api",
+    ),
+    path(
+        "api/v1/<int:model_pk>/authors/<str:author>/",
+        AuthorsDeleteAPIView.as_view(),
+        name="authors_delete_api",
+    ),
+    path(
+        "<int:model_pk>/access/<uuid:id>/grant/",
+        PermissionGrantedView.as_view(),
+        name="permissions_grant",
+    ),
+    path(
+        "<int:model_pk>/access/<uuid:id>/",
+        PermissionPendingView.as_view(),
+        name="permissions_pending",
     ),
     path("<int:model_pk>/edit/", EditSimView.as_view(), name="edit"),
     path("<int:model_pk>/download/", OutputsDownloadView.as_view(), name="download"),
