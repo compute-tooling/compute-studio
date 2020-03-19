@@ -101,8 +101,8 @@ class DeleteUserForm(CancelSubscriptionForm):
                 f"mistake, please let us know why you deleted your account "
                 f"and how we can win you back in the future."
             ),
-            "matt@compute.studio",
-            set([user.email, "matt@compute.studio"]),
+            "admin@compute.studio",
+            set([user.email, "hank@compute.studio"]),
             fail_silently=True,
         )
         return user

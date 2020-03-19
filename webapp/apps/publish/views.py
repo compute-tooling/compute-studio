@@ -63,12 +63,8 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
             if project.has_write_access(request.user):
                 serializer = PublishSerializer(project, data=request.data)
                 if serializer.is_valid():
-                    model = serializer.save(status="updating")
-                    status_url = request.build_absolute_uri(
-                        reverse(
-                            "userprofile", kwargs={"username": request.user.username}
-                        )
-                    )
+                    model = serializer.save(status="live")
+                    status_url = request.build_absolute_uri(model.app_url)
                     try:
                         send_mail(
                             f"{request.user.username} is updating a model on Compute Studio!",
@@ -78,13 +74,7 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
                                 f"{status_url}."
                             ),
                             "notifications@compute.studio",
-                            list(
-                                {
-                                    request.user.email,
-                                    "matt@compute.studio",
-                                    "hank@compute.studio",
-                                }
-                            ),
+                            list({request.user.email, "hank@compute.studio"}),
                             fail_silently=False,
                         )
                     # Http 401 exception if mail credentials are not set up.
@@ -129,9 +119,7 @@ class ProjectAPIView(GetProjectMixin, APIView):
                     title=title,
                     server_cost=0.1,
                 )
-                status_url = request.build_absolute_uri(
-                    reverse("userprofile", kwargs={"username": request.user.username})
-                )
+                status_url = request.build_absolute_uri(model.app_url)
                 try:
                     send_mail(
                         f"{request.user.username} is publishing a model on Compute Studio!",
@@ -141,13 +129,7 @@ class ProjectAPIView(GetProjectMixin, APIView):
                             f"{status_url}."
                         ),
                         "notifications@compute.studio",
-                        list(
-                            {
-                                request.user.email,
-                                "matt@compute.studio",
-                                "hank@compute.studio",
-                            }
-                        ),
+                        list({request.user.email, "hank@compute.studio"}),
                         fail_silently=False,
                     )
                 # Http 401 exception if mail credentials are not set up.

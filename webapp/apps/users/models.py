@@ -37,7 +37,7 @@ def create_profile_from_user(user):
             f"questions or there is anything else we "
             f"can do to help you get up and running."
         ),
-        from_email="matt@compute.studio",
+        from_email="Hank Doupe <hank@compute.studio>",
         to=[user.email],
         bcc=["matt.h.jensen@gmail.com", "hank@compute.studio"],
     )
@@ -134,6 +134,7 @@ class Project(models.Model):
     status = models.CharField(
         choices=(
             ("live", "live"),
+            ("updating", "updating"),
             ("pending", "pending"),
             ("requires fixes", "requires fixes"),
         ),
