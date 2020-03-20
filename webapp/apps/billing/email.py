@@ -13,7 +13,7 @@ def send_teams_interest_mail(user):
             "Best,\n"
             "Matt"
         ),
-        from_email="matt@compute.studio",
+        from_email="Matt Jensen <matt@compute.studio>",
         to=[user.email],
     )
     try:
@@ -31,9 +31,9 @@ def send_subscribe_to_plan_email(user, new_plan):
             f"Thanks for subscribing to {new_plan.nickname}! "
             "Please write back to this email if you have any questions or feedback.\n\n"
             "Best,\n"
-            "Matt"
+            "The Compute Studio Team"
         ),
-        from_email="Matt Jensen <matt@compute.studio>",
+        from_email="notifications@compute.studio",
         to=[user.email],
     )
     try:

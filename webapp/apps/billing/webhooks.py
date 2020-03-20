@@ -38,7 +38,7 @@ def customer_subscription_deleted(event):
             "you have cancelled your subscription and what we can do to win you back "
             "in the future.\n\nBest,\nThe C/S Team"
         ),
-        "matt@compute.studio",
+        "admin@compute.studio",
         [customer.user.email],
         fail_silently=False,
     )

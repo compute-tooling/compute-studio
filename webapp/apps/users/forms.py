@@ -78,7 +78,7 @@ class CancelSubscriptionForm(ConfirmUsernameForm):
                 f"from Compute Studio. We value your feedback. Please let us know why "
                 f"you unsubscribed and how we can win you back in the future."
             ),
-            "matt@compute.studio",
+            "admin@compute.studio",
             set([user.email, "matt@compute.studio"]),
             fail_silently=True,
         )
