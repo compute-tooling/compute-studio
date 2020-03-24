@@ -17,6 +17,8 @@ import API from "./API";
 import { NotifyOnCompletion } from "./notify";
 import { RolePerms } from "../roles";
 
+import { lt as semverlt } from "semver";
+
 interface OutputsProps {
   api: API;
   remoteSim?: Simulation<RemoteOutputs>;
@@ -35,7 +37,15 @@ const TableComponent: React.FC<{ output: TableOutput }> = ({ output }) => (
 
 const BokehComponent: React.FC<{ output: BokehOutput }> = ({ output }) => {
   // @ts-ignore
-  window.Bokeh.embed.embed_item(output.data, output.id);
+  let bokeh = window.Bokeh200;
+  // @ts-ignore
+  if (semverlt(output.data.doc.version, "2.0.0")) {
+    // @ts-ignore
+    bokeh = window.Bokeh140;
+  }
+  console.log("bokeh", bokeh);
+  // @ts-ignore
+  bokeh.embed.embed_item(output.data, output.id);
   return <div id={output.id} data-root-id={output.id} className="bk-root"></div>;
 };
 
