@@ -4,5 +4,19 @@
   <div id="inputs-container"></div>
   <script src="{% static 'js/core.js' %}"></script>
   <script src="{% static 'js/sim.js' %}"></script>
-  {% endblock %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-1.4.0.min.js"></script>
+<script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-1.4.0.min.js"></script>
+<script type="text/javascript">
+  var Bokeh140 = window.Bokeh;
+</script>
+
+<script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-2.0.0.min.js"></script>
+<script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-2.0.0.min.js"></script>
+<script type="text/javascript">
+  var Bokeh200 = window.Bokeh;
+</script>
+{% endblock %}
