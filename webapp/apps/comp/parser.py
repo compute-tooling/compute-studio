@@ -3,7 +3,6 @@ import time
 
 from webapp.apps.comp import actions
 from webapp.apps.comp.compute import Compute
-from webapp.apps.comp.displayer import Displayer
 from webapp.apps.comp.exceptions import AppError
 from webapp.apps.comp.models import Inputs
 
@@ -16,7 +15,7 @@ class ParameterLookUpException(Exception):
 
 class BaseParser:
     def __init__(
-        self, project, displayer, clean_inputs, compute=None, **valid_meta_params
+        self, project, model_parameters, clean_inputs, compute=None, **valid_meta_params
     ):
         self.project = project
         self.clean_inputs = clean_inputs
@@ -24,7 +23,7 @@ class BaseParser:
         self.valid_meta_params = valid_meta_params
         for param, value in valid_meta_params.items():
             setattr(self, param, value)
-        defaults = displayer.package_defaults()
+        defaults = model_parameters.defaults(self.valid_meta_params)
         self.grouped_defaults = defaults["model_parameters"]
         self.flat_defaults = {
             k: v for _, sect in self.grouped_defaults.items() for k, v in sect.items()

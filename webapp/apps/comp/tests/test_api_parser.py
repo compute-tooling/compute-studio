@@ -1,25 +1,25 @@
 from webapp.apps.users.models import Project
-from webapp.apps.comp.displayer import Displayer
+from webapp.apps.comp.model_parameters import ModelParameters
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.models import Inputs
 from webapp.apps.comp.tests.parser import LocalAPIParser
 
 
 def test_api_parser(db, get_inputs, valid_meta_params):
-    class MockDisplayer(Displayer):
-        def package_defaults(self):
+    class MockMp(ModelParameters):
+        def get_inputs(self, meta_parameters=None):
             return get_inputs
 
     project = Project.objects.get(title="Used-for-testing")
-    ioutils = get_ioutils(project, Displayer=MockDisplayer, Parser=LocalAPIParser)
-    ioutils.displayer.meta_parameters = valid_meta_params
+    ioutils = get_ioutils(project, ModelParameters=MockMp, Parser=LocalAPIParser)
+    ioutils.model_parameters.init_meta_parameters = valid_meta_params
 
     clean_inputs = {
         "majorsection1": {"intparam": 3, "boolparam": True},
         "majorsection2": {"mj2param": 4},
     }
     parser = LocalAPIParser(
-        project, ioutils.displayer, clean_inputs, **valid_meta_params
+        project, ioutils.model_parameters, clean_inputs, **valid_meta_params
     )
     res = parser.parse_parameters()
     adjustment = res["adjustment"]
@@ -36,20 +36,20 @@ def test_api_parser(db, get_inputs, valid_meta_params):
 
 
 def test_api_parser_extra_section(db, get_inputs, valid_meta_params):
-    class MockDisplayer(Displayer):
-        def package_defaults(self):
+    class MockMp(ModelParameters):
+        def get_inputs(self, meta_parameters=None):
             return get_inputs
 
     project = Project.objects.get(title="Used-for-testing")
-    ioutils = get_ioutils(project, Displayer=MockDisplayer, Parser=LocalAPIParser)
-    ioutils.displayer.meta_parameters = valid_meta_params
+    ioutils = get_ioutils(project, ModelParameters=MockMp, Parser=LocalAPIParser)
+    ioutils.model_parameters.init_meta_parameters = valid_meta_params
 
     clean_inputs = {
         "majorsection1-mispelled": {"intparam": 3, "boolparam": True},
         "majorsection2": {"mj2param": 4},
     }
     parser = LocalAPIParser(
-        project, ioutils.displayer, clean_inputs, **valid_meta_params
+        project, ioutils.model_parameters, clean_inputs, **valid_meta_params
     )
     res = parser.parse_parameters()
     adjustment = res["adjustment"]

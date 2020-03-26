@@ -5,7 +5,7 @@ from rest_framework.test import APIRequestFactory
 
 from webapp.apps.users.models import Project, Profile, create_profile_from_user
 from webapp.apps.comp.asyncsubmit import SubmitInputs, SubmitSim
-from webapp.apps.comp.displayer import Displayer
+from webapp.apps.comp.model_parameters import ModelParameters
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.models import Simulation
 from webapp.apps.comp.parser import APIParser
@@ -31,12 +31,12 @@ def _submit_inputs(
     parent_model_pk=None,
     notify_on_completion=None,
 ):
-    class MockDisplayer(Displayer):
-        def package_defaults(self):
+    class MockMP(ModelParameters):
+        def get_inputs(self, meta_parameters=None):
             return get_inputs
 
     project = Project.objects.get(title=title)
-    ioutils = get_ioutils(project, Displayer=MockDisplayer, Parser=APIParser)
+    ioutils = get_ioutils(project, ModelParameters=MockMP, Parser=APIParser)
 
     factory = APIRequestFactory()
     data = {

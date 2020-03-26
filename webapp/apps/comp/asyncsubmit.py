@@ -8,6 +8,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 
+import paramtools as pt
+
 from webapp.apps.users.models import Project
 
 from webapp.apps.comp import actions
@@ -40,7 +42,7 @@ class SubmitInputs:
         self.ioutils = ioutils
         self.compute = compute
         self.badpost = None
-        self.meta_parameters = ioutils.displayer.parsed_meta_parameters()
+        self.meta_parameters = ioutils.model_parameters.meta_parameters_parser()
         self.sim = sim
 
     def submit(self):
@@ -63,9 +65,12 @@ class SubmitInputs:
             parent_sim = None
 
         try:
-            self.valid_meta_params = self.meta_parameters.validate(meta_parameters)
+            self.meta_parameters.adjust(meta_parameters)
+            self.valid_meta_params = self.meta_parameters.specification(
+                meta_data=False, serializable=True
+            )
             errors = None
-        except ValidationError as ve:
+        except pt.ValidationError as ve:
             errors = str(ve)
 
         if errors:
@@ -73,7 +78,7 @@ class SubmitInputs:
 
         parser = self.ioutils.Parser(
             self.project,
-            self.ioutils.displayer,
+            self.ioutils.model_parameters,
             adjustment,
             compute=self.compute,
             **self.valid_meta_params,

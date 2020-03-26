@@ -6,7 +6,7 @@ import functools
 import requests
 import pytest
 import stripe
-import paramtools
+import paramtools as pt
 
 from django import forms
 from django.core.management import call_command
@@ -25,7 +25,7 @@ from webapp.apps.billing.models import (
     create_pro_billing_objects,
 )
 from webapp.apps.users.models import Profile, Project
-from webapp.apps.comp.meta_parameters import translate_to_django
+from webapp.apps.comp.model_parameters import ModelParameters
 from webapp.apps.comp.models import Inputs, Simulation
 
 
@@ -340,12 +340,15 @@ def meta_param_dict(comp_inputs_json):
 
 @pytest.fixture
 def meta_param(meta_param_dict):
-    return translate_to_django(meta_param_dict)
+    class metaparams(pt.Parameters):
+        defaults = meta_param_dict
+
+    return metaparams()
 
 
 @pytest.fixture
-def valid_meta_params(meta_param):
-    return meta_param.validate({})
+def valid_meta_params(meta_param, meta_param_dict):
+    return meta_param.specification(meta_data=False, serializable=True)
 
 
 @pytest.fixture
@@ -359,13 +362,13 @@ def get_inputs(comp_inputs_json):
         }
     }
 
-    class Params1(paramtools.Parameters):
+    class Params1(pt.Parameters):
         defaults = dict(comp_inputs_json["model_params"]["majorsection1"], **schema)
 
-    class Params2(paramtools.Parameters):
+    class Params2(pt.Parameters):
         defaults = dict(comp_inputs_json["model_params"]["majorsection2"], **schema)
 
-    class MetaParams(paramtools.Parameters):
+    class MetaParams(pt.Parameters):
         array_first = True
         defaults = comp_inputs_json["meta_param_dict"]
 

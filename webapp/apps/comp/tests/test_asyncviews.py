@@ -374,7 +374,7 @@ class TestAsyncAPI(CoreTestMixin):
             assert resp.status_code == 200
 
             ioutils = get_ioutils(self.project)
-            exp = ioutils.displayer.package_defaults()
+            exp = ioutils.model_parameters.defaults()
             assert exp == resp.data
 
     @pytest.mark.parametrize("use_api", [True, False])
@@ -474,8 +474,7 @@ class TestAsyncAPI(CoreTestMixin):
             assert resp.status_code == 200
 
             ioutils = get_ioutils(self.project)
-            ioutils.displayer.meta_parameters.update(meta_params["meta_parameters"])
-            exp = ioutils.displayer.package_defaults()
+            exp = ioutils.model_parameters.defaults(meta_params["meta_parameters"])
             assert exp == resp.data
 
     @pytest.mark.parametrize("test_lower", [False, True])
