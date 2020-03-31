@@ -7,7 +7,6 @@ import os
 from dataclasses import dataclass, field
 from typing import List, Union
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db import IntegrityError, transaction
 from django.http import Http404
@@ -41,9 +40,56 @@ ANON_BEFORE = datetime.datetime(
 )
 
 
+class ModelConfigManager(models.Manager):
+    def get(self, project, model_version, meta_parameters_values, **kwargs):
+        if meta_parameters_values:
+            mp_search_kwargs = {
+                f"meta_parameters_values__{name}": val
+                for name, val in meta_parameters_values.items()
+            }
+        else:
+            mp_search_kwargs = {"meta_parameters_values": {}}
+        kwargs.update(mp_search_kwargs)
+        return super().get(model_version=model_version, project=project, **kwargs)
+
+
+class ModelConfig(models.Model):
+    project = models.ForeignKey(
+        "users.Project",
+        on_delete=models.SET_NULL,
+        related_name="model_configs",
+        null=True,
+    )
+    inputs_version = models.CharField(choices=(("v1", "Version 1"),), max_length=10)
+    model_version = models.CharField(
+        blank=True, default=None, null=True, max_length=100
+    )
+    creation_date = models.DateTimeField(default=timezone.now)
+
+    meta_parameters_values = JSONField(null=True)
+    meta_parameters = JSONField(default=dict)
+    model_parameters = JSONField(default=dict)
+
+    objects = ModelConfigManager()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "model_version", "meta_parameters_values"],
+                name="unique_model_config",
+            )
+        ]
+
+
 class Inputs(models.Model):
     parent_sim = models.ForeignKey(
         "Simulation", null=True, related_name="child_inputs", on_delete=models.SET_NULL
+    )
+    model_config = models.ForeignKey(
+        ModelConfig,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="inputs_instances",
     )
     meta_parameters = JSONField(default=None, blank=True, null=True)
     raw_gui_inputs = JSONField(default=None, blank=True, null=True)
@@ -230,7 +276,6 @@ class SimulationManager(models.Manager):
                 "Simulations may not be forked while they are in a pending state. "
                 "Please try again once the simulation has completed."
             )
-
         inputs = Inputs.objects.create(
             owner=user.profile,
             project=sim.project,

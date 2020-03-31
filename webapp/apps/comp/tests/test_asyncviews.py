@@ -463,6 +463,12 @@ class TestAsyncAPI(CoreTestMixin):
             print("mocking", f"{worker_url}{self.owner}/{self.title}/inputs")
             mock.register_uri(
                 "POST",
+                f"{worker_url}{self.owner}/{self.title}/version",
+                text=json.dumps({"status": "SUCCESS", "version": "1.0.0"}),
+            )
+
+            mock.register_uri(
+                "POST",
                 f"{worker_url}{self.owner}/{self.title}/inputs",
                 text=json.dumps(resp_data),
             )

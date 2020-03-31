@@ -93,6 +93,7 @@ class SubmitInputs:
             job_id=result["job_id"],
             status="PENDING",
             parent_sim=self.sim.parent_sim or parent_sim,
+            model_config=self.ioutils.model_parameters.config,
         )
         # case where parent sim exists and has not yet been assigned
         if not self.sim.parent_sim and parent_sim:
