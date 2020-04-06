@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 import requests_mock
 import paramtools as pt
@@ -133,3 +135,23 @@ def test_model_parameters(mock_project):
     # test going back to init doesn't break cache
     defaults = mp.defaults()
     assert ModelConfig.objects.filter(project=project).count() == 2
+
+
+def test_parameter_order(monkeypatch, mock_project):
+    project = mock_project
+    new_defaults = copy.deepcopy(Params.defaults)
+    for i in range(50):
+        new_defaults[f"param-{i}"] = copy.deepcopy(new_defaults["param"])
+
+    monkeypatch.setattr(Params, "defaults", new_defaults)
+
+    mp = ModelParameters(project=mock_project)
+    mp.get_inputs()
+
+    mc = ModelConfig.objects.get(
+        project=project, model_version="v1", meta_parameters_values={}
+    )
+
+    params = Params()
+    for act, exp in zip(mc.model_parameters["section"], params.dump()):
+        assert act == exp, f"Expected {act} === {exp}"

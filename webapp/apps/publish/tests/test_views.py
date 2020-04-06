@@ -108,7 +108,7 @@ class TestPublishViews:
             title="Used-for-testing", owner__user__username="modeler"
         )
         assert project.description == put_data["description"]
-        assert project.status == "updating"
+        assert project.status == "live"
 
         # Description can't be empty.
         resp = client.put(
