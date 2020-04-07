@@ -1,15 +1,15 @@
 from typing import NamedTuple, Type
-from webapp.apps.comp.displayer import Displayer
+from webapp.apps.comp.model_parameters import ModelParameters
 from webapp.apps.comp.parser import Parser
 
 
 class IOClasses(NamedTuple):
-    displayer: Displayer
+    model_parameters: ModelParameters
     Parser: Type[Parser]
 
 
 def get_ioutils(project, **kwargs):
     return IOClasses(
-        displayer=kwargs.get("Displayer", Displayer)(project),
+        model_parameters=kwargs.get("ModelParameters", ModelParameters)(project),
         Parser=kwargs.get("Parser", Parser),
     )

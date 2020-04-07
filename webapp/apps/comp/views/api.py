@@ -17,6 +17,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import IntegerField
 from rest_framework import filters
 
+import paramtools as pt
 import cs_storage
 
 from webapp.apps.users.models import Project, Profile
@@ -64,15 +65,10 @@ class InputsAPIView(APIView):
             title__iexact=kwargs["title"],
         )
         ioutils = get_ioutils(project)
-        if meta_parameters is not None:
-            try:
-                parsed_mp = ioutils.displayer.parsed_meta_parameters()
-                ioutils.displayer.meta_parameters = parsed_mp.validate(
-                    meta_parameters, throw_errors=True
-                )
-            except ValidationError as e:
-                return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
-        defaults = ioutils.displayer.package_defaults()
+        try:
+            defaults = ioutils.model_parameters.defaults(meta_parameters)
+        except pt.ValidationError as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
         if "year" in defaults["meta_parameters"]:
             defaults.update({"extend": True})
         return Response(defaults)

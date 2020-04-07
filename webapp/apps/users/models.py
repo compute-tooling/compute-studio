@@ -252,6 +252,7 @@ class Project(models.Model):
     def user_count(self):
         return self.sims.distinct("owner__user").count()
 
+    @cached_property
     def version(self):
         if self.status not in ("updating", "live"):
             return None

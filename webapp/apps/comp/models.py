@@ -7,14 +7,13 @@ import os
 from dataclasses import dataclass, field
 from typing import List, Union
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db import IntegrityError, transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils import timezone
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import JSONField as JSONBField
 from django.contrib.auth.models import Group
 from django.urls import reverse
 from django.utils import timezone
@@ -41,22 +40,74 @@ ANON_BEFORE = datetime.datetime(
 )
 
 
+class JSONField(JSONBField):
+    def db_type(self, connection):
+        return "json"
+
+
+class ModelConfigManager(models.Manager):
+    def get(self, project, model_version, meta_parameters_values, **kwargs):
+        if meta_parameters_values:
+            mp_search_kwargs = {
+                f"meta_parameters_values__{name}": val
+                for name, val in meta_parameters_values.items()
+            }
+        else:
+            mp_search_kwargs = {"meta_parameters_values": {}}
+        kwargs.update(mp_search_kwargs)
+        return super().get(model_version=model_version, project=project, **kwargs)
+
+
+class ModelConfig(models.Model):
+    project = models.ForeignKey(
+        "users.Project",
+        on_delete=models.SET_NULL,
+        related_name="model_configs",
+        null=True,
+    )
+    inputs_version = models.CharField(choices=(("v1", "Version 1"),), max_length=10)
+    model_version = models.CharField(
+        blank=True, default=None, null=True, max_length=100
+    )
+    creation_date = models.DateTimeField(default=timezone.now)
+
+    meta_parameters_values = JSONBField(null=True)
+    meta_parameters = JSONField(default=dict)
+    model_parameters = JSONField(default=dict)
+
+    objects = ModelConfigManager()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "model_version", "meta_parameters_values"],
+                name="unique_model_config",
+            )
+        ]
+
+
 class Inputs(models.Model):
     parent_sim = models.ForeignKey(
         "Simulation", null=True, related_name="child_inputs", on_delete=models.SET_NULL
     )
-    meta_parameters = JSONField(default=None, blank=True, null=True)
-    raw_gui_inputs = JSONField(default=None, blank=True, null=True)
-    gui_inputs = JSONField(default=None, blank=True, null=True)
+    model_config = models.ForeignKey(
+        ModelConfig,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="inputs_instances",
+    )
+    meta_parameters = JSONBField(default=None, blank=True, null=True)
+    raw_gui_inputs = JSONBField(default=None, blank=True, null=True)
+    gui_inputs = JSONBField(default=None, blank=True, null=True)
 
     # Validated GUI input that has been parsed to have the correct data types,
     # or JSON reform uploaded as file
-    custom_adjustment = JSONField(default=dict, blank=True, null=True)
+    custom_adjustment = JSONBField(default=dict, blank=True, null=True)
 
-    errors_warnings = JSONField(default=None, blank=True, null=True)
+    errors_warnings = JSONBField(default=None, blank=True, null=True)
 
     # The parameters that will be used to run the model
-    adjustment = JSONField(default=dict, blank=True, null=True)
+    adjustment = JSONBField(default=dict, blank=True, null=True)
 
     # If project changes input type, we still want to know the type of the
     # previous model runs' inputs.
@@ -230,7 +281,6 @@ class SimulationManager(models.Manager):
                 "Simulations may not be forked while they are in a pending state. "
                 "Please try again once the simulation has completed."
             )
-
         inputs = Inputs.objects.create(
             owner=user.profile,
             project=sim.project,
@@ -294,15 +344,15 @@ class Simulation(models.Model):
     # TODO: dimension needs to go
     dimension_name = "Dimension--needs to go"
     title = models.CharField(default="Untitled Simulation", max_length=500)
-    readme = JSONField(null=True, default=None, blank=True)
+    readme = JSONBField(null=True, default=None, blank=True)
     last_modified = models.DateTimeField(default=timezone.now)
     parent_sim = models.ForeignKey(
         "self", null=True, related_name="child_sims", on_delete=models.SET_NULL
     )
     inputs = models.OneToOneField(Inputs, on_delete=models.CASCADE, related_name="sim")
-    meta_data = JSONField(default=None, blank=True, null=True)
-    outputs = JSONField(default=None, blank=True, null=True)
-    aggr_outputs = JSONField(default=None, blank=True, null=True)
+    meta_data = JSONBField(default=None, blank=True, null=True)
+    outputs = JSONBField(default=None, blank=True, null=True)
+    aggr_outputs = JSONBField(default=None, blank=True, null=True)
     traceback = models.CharField(null=True, blank=True, default=None, max_length=8000)
     owner = models.ForeignKey(
         "users.Profile", on_delete=models.CASCADE, null=True, related_name="sims"

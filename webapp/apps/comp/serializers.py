@@ -4,7 +4,7 @@ from guardian.shortcuts import get_users_with_perms
 from webapp.apps.publish.serializers import PublishSerializer
 
 from .exceptions import ResourceLimitException
-from .models import Inputs, Simulation, PendingPermission
+from .models import Inputs, Simulation, PendingPermission, ModelConfig
 
 
 class OutputsSerializer(serializers.Serializer):
@@ -102,6 +102,30 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
         )
 
 
+class ModelConfigSerializer(serializers.ModelSerializer):
+    project = serializers.StringRelatedField()
+
+    class Meta:
+        model = ModelConfig
+        fields = (
+            "project",
+            "model_version",
+            "meta_parameters_values",
+            "meta_parameters",
+            "model_parameters",
+            "creation_date",
+        )
+
+        read_only = (
+            "project",
+            "model_version",
+            "meta_parameters_values",
+            "meta_parameters",
+            "model_parameters",
+            "creation_date",
+        )
+
+
 class InputsSerializer(serializers.ModelSerializer):
     """
     Serializer for the Inputs object.
@@ -133,6 +157,8 @@ class InputsSerializer(serializers.ModelSerializer):
     # notification status on sims created from /[owner]/[title]/api/v1/
     notify_on_completion = serializers.BooleanField(required=False)
 
+    model_config = ModelConfigSerializer(allow_null=True, required=False)
+
     # see to_representation
     # role = serializers.BooleanField(source="role")
 
@@ -157,6 +183,7 @@ class InputsSerializer(serializers.ModelSerializer):
             "gui_url",
             "job_id",
             "meta_parameters",
+            "model_config",
             "notify_on_completion",
             "parent_model_pk",
             "role",
