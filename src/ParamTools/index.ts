@@ -370,7 +370,7 @@ export function convertToFormik(
       if (
         Array.isArray(meta_parameters[mp_name]) &&
         (meta_parameters[mp_name] as Array<ValueObject>).length >= 1 &&
-        !!meta_parameters[mp_name][0].value
+        "value" in meta_parameters[mp_name][0]
       ) {
         mpVal = meta_parameters[mp_name][0].value;
       } else {
