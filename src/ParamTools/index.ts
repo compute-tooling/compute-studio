@@ -366,9 +366,18 @@ export function convertToFormik(
     let yupObj = yupValidator(data.meta_parameters, mp_data);
     let mpVal = mp_data.value[0].value;
     mpShape[mp_name] = yupObj;
-    initialValues["meta_parameters"][mp_name] = yupObj.cast(
-      meta_parameters && mp_name in meta_parameters ? meta_parameters[mp_name] : mpVal
-    );
+    if (meta_parameters && mp_name in meta_parameters) {
+      if (
+        Array.isArray(meta_parameters[mp_name]) &&
+        (meta_parameters[mp_name] as Array<ValueObject>).length >= 1 &&
+        !!meta_parameters[mp_name][0].value
+      ) {
+        mpVal = meta_parameters[mp_name][0].value;
+      } else {
+        mpVal = meta_parameters[mp_name] as ValueObject["value"];
+      }
+    }
+    initialValues["meta_parameters"][mp_name] = yupObj.cast(mpVal);
   }
   let schema = {
     adjustment: yup.object().shape(adjShape),

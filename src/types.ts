@@ -211,7 +211,7 @@ export interface InputsDetail {
   errors_warnings: { [msect: string]: { errors: { [paramName: string]: Array<string> } } };
   gui_url: string;
   job_id: string;
-  meta_parameters: { [paramName: string]: Array<ValueObject> };
+  meta_parameters: { [paramName: string]: Array<ValueObject> | ValueObject["value"] };
   parent_model_pk: number;
   sim: MiniSimulation;
   status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
