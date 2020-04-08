@@ -55,6 +55,11 @@ const OutputModal: React.FC<{
 }> = ({ output, children }) => {
   const [show, setShow] = React.useState(false);
 
+  React.useEffect(() => {
+    // @ts-ignore
+    if (show) const res = window.MathJax.typeset();
+  }, [show]);
+
   let el;
   switch (output.media_type) {
     case "table":
