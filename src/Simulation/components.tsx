@@ -199,7 +199,7 @@ const ParamComponent: React.FC<{
   } else if (data.type === "bool" || (!!data.validators && data.validators.choice)) {
     colClass = "col-md-auto";
   } else {
-    colClass = "col";
+    colClass = "col-md";
   }
   if ("checkbox" in data || "indexed" in data) {
     checkbox = (
