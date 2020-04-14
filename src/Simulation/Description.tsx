@@ -156,7 +156,9 @@ const AuthorsDropDown: React.FC<{ authors: string[] }> = ({ authors }) => {
         </Dropdown.Toggle>
         <Dropdown.Menu>
           {authors.map((author, ix) => (
-            <Dropdown.Item key={ix}>{author}</Dropdown.Item>
+            <Dropdown.Item href={author !== "unsigned" ? `/${author}/` : "#"} key={ix}>
+              {author}
+            </Dropdown.Item>
           ))}
         </Dropdown.Menu>
       </Dropdown>
