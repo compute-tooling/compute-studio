@@ -503,8 +503,8 @@ export default class DescriptionComponent extends React.Component<
                     {this.state.forkError}
                   </div>
                 ) : null}
-                <Row className="justify-content-left">
-                  <Col className="col-sm-2 mt-1" style={{ paddingLeft: 0 }}>
+                <Row className="justify-content-left" style={{ paddingLeft: 0, paddingRight: 0 }}>
+                  <Col className="col-sm-2 mt-1">
                     <AuthorsDropDown authors={authors} />
                   </Col>
                   <Col className="col-sm-2 mt-1">
@@ -534,7 +534,7 @@ export default class DescriptionComponent extends React.Component<
                     </Col>
                   ) : null}
                   {this.hasAuthorPortalAccess() ? (
-                    <Col className="col-sm-2 ml-sm-auto mt-1" style={{ paddingRight: 0 }}>
+                    <Col className="col-sm-2 ml-sm-auto mt-1">
                       <CollaborationSettings
                         api={api}
                         user={this.user()}
