@@ -268,7 +268,7 @@ export const getField = (
           style={style}
           disabled={readOnly}
         >
-          {makeOptions(data.validators.choice.choices)}
+          {makeOptions(choices)}
         </FastField>
       );
     }
