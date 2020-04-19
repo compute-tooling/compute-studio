@@ -13,15 +13,15 @@ except ImportError:
     functions = None
 
 
-def done_callback(future, job_id, comp_url, comp_api_token, start_time):
+def done_callback(future, job_id, cs_url, cs_api_token, start_time):
     """
     This should be called like:
 
     callback = functools.partial(
         done_callback,
         job_id=job_id,
-        comp_url=os.environ.get("COMP_URL"),
-        comp_api_token=os.environ.get("comp_api_token"),
+        cs_url=os.environ.get("CS_URL"),
+        cs_api_token=os.environ.get("CS_API_TOKEN"),
         start_time=time.time()
     )
 
@@ -61,18 +61,18 @@ def done_callback(future, job_id, comp_url, comp_api_token, start_time):
 
     res["job_id"] = job_id
     print("got result", res)
-    print(f"posting data to {comp_url}/outputs/api/")
+    print(f"posting data to {cs_url}/outputs/api/")
     resp = requests.put(
-        f"{comp_url}/outputs/api/",
+        f"{cs_url}/outputs/api/",
         json=res,
-        headers={"Authorization": f"Token {comp_api_token}"},
+        headers={"Authorization": f"Token {cs_api_token}"},
     )
     print("resp", resp.status_code)
     if resp.status_code == 400:
         print("errors", resp.json())
 
 
-def dask_sim(meta_param_dict, adjustment, job_id, comp_url, comp_api_token, timeout):
+def dask_sim(meta_param_dict, adjustment, job_id, cs_url, cs_api_token, timeout):
     """
     Wraps the functions.run_model function with a dask future and adds a
     callback for pushing the results back to the webapp. The callback is
@@ -88,8 +88,8 @@ def dask_sim(meta_param_dict, adjustment, job_id, comp_url, comp_api_token, time
     partialled_cb = partial(
         done_callback,
         job_id=job_id,
-        comp_url=comp_url,
-        comp_api_token=comp_api_token,
+        cs_url=cs_url,
+        cs_api_token=cs_api_token,
         start_time=start_time,
     )
     with worker_client() as c:

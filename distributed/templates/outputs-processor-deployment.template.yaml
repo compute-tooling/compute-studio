@@ -1,27 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flask
+  name: outputs-processor
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: flask
+      app: outputs-processor
   template:
     metadata:
       labels:
-        app: flask
+        app: outputs-processor
     spec:
       containers:
-        - name: flask
+        - name: outputs-processor
           image:
           imagePullPolicy: Always
           env:
             - name: GET_HOSTS_FROM
               value: dns
-          ports:
-            - containerPort: 5050
           env:
+            - name: BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: BUCKET
             - name: CS_URL
               valueFrom:
                 secretKeyRef:

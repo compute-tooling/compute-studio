@@ -1,10 +1,6 @@
 ARG TAG
 FROM distributed
 
-LABEL build="flask" date="2018-06-13"
-
-USER root
-
 ENV CELERY_BROKER_URL redis://redis-master/0
 ENV CELERY_RESULT_BACKEND redis://redis-master/0
 
@@ -18,19 +14,14 @@ ENV IS_FLASK True
 EXPOSE 80
 EXPOSE 5050
 
-RUN conda install -c conda-forge dask distributed
 RUN pip install -r requirements.txt
 
-COPY ./cs-dask-sim /home/distributed/cs-dask-sim
-RUN cd /home/distributed/cs-dask-sim && pip install -e .
+COPY ./api /home/api
+COPY ./api/endpoints.py /home/api
+COPY ./setup.py /home
+RUN cd /home && pip install -e .
 
-COPY ./api /home/distributed/api
-COPY ./api/endpoints.py /home/distributed/api
-COPY ./api/celery_app/__init__.py /home/distributed/api/celery_app/__init__.py
-COPY ./setup.py /home/distributed
-RUN cd /home/distributed && pip install -e .
-
-WORKDIR /home/distributed/api
+WORKDIR /home/api
 
 # run the app server
 CMD ["gunicorn", "--bind", "0.0.0.0:5050", "api:app", "--access-logfile", "-"]

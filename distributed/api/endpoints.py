@@ -10,16 +10,14 @@ from collections import defaultdict
 from flask import Blueprint, request, make_response
 from celery.result import AsyncResult
 from celery import chord
-from distributed import Client, Future, fire_and_forget
 import redis
 import requests
 
-from api.celery_app import celery_app
-from cs_dask_sim import dask_sim, done_callback
+from cs_publish.app import app as celery_app
 
 
-COMP_URL = os.environ.get("COMP_URL")
-COMP_API_TOKEN = os.environ.get("COMP_API_TOKEN")
+CS_URL = os.environ.get("CS_URL")
+CS_API_TOKEN = os.environ.get("CS_API_TOKEN")
 
 bp = Blueprint("endpoints", __name__)
 
@@ -34,8 +32,8 @@ def clean(word):
 
 
 def get_cs_config():
-    print(f"getting config from: {COMP_URL}/publish/api/")
-    resp = requests.get(f"{COMP_URL}/publish/api/")
+    print(f"getting config from: {CS_URL}/publish/api/")
+    resp = requests.get(f"{CS_URL}/publish/api/")
     if resp.status_code != 200:
         raise Exception(f"Response status code: {resp.status_code}")
     data = resp.json()
@@ -66,11 +64,6 @@ def get_time_out(owner, app_name):
     return CONFIG[model_id]["time_out"]
 
 
-def dask_scheduler_address(owner, app_name):
-    owner, app_name = clean(owner), clean(app_name)
-    return f"{owner}-{app_name}-dask-scheduler:8786"
-
-
 def async_endpoint(owner, app_name, compute_task):
     print(f"async endpoint {compute_task}")
     data = request.get_data()
@@ -95,37 +88,6 @@ def sync_endpoint(owner, app_name, compute_task):
     print("getting...")
     result = result.get()
     return json.dumps(result)
-
-
-def dask_endpoint(owner, app_name, action):
-    """
-    Route dask simulation to appropriate dask scheduluer.
-    """
-    print(f"dask endpoint: {owner}/{app_name}/{action}")
-    data = request.get_data()
-    inputs = json.loads(data)
-    print("inputs", inputs)
-    addr = dask_scheduler_address(owner, app_name)
-    job_id = str(uuid.uuid4())
-
-    # Worker needs the job_id to push the results back to the
-    # webapp.
-    # The url and api token are passed as args insted of env
-    # variables so that the wrapper has access to them
-    # but the model does not.
-    inputs.update(
-        {
-            "job_id": job_id,
-            "comp_url": os.environ.get("COMP_URL"),
-            "comp_api_token": os.environ.get("COMP_API_TOKEN"),
-            "timeout": get_time_out(owner, app_name),
-        }
-    )
-
-    with Client(addr) as c:
-        fut = c.submit(dask_sim, **inputs)
-        fire_and_forget(fut)
-        return {"job_id": job_id, "qlength": 1}
 
 
 def route_to_task(owner, app_name, endpoint, action):
@@ -169,8 +131,6 @@ def endpoint_sim(owner, app_name):
     print(f"cluster type is {cluster_type}")
     if cluster_type == "single-core":
         return route_to_task(owner, app_name, async_endpoint, action)
-    elif cluster_type == "dask":
-        return dask_endpoint(owner, app_name, action)
     else:
         return json.dumps({"error": "model does not exist."}), 404
 
@@ -189,18 +149,6 @@ def results(owner, app_name, job_id):
             )
         else:
             return make_response("not ready", 202)
-    elif cluster_type == "dask":
-        addr = dask_scheduler_address(owner, app_name)
-        with Client(addr) as client:
-            fut = Future(job_id, client=client)
-            if fut.done() and fut.status != "error":
-                return fut.result()
-            elif fut.done() and fut.status in ("error", "cancelled"):
-                return json.dumps(
-                    {"status": "WORKER_FAILURE", "traceback": fut.traceback()}
-                )
-            else:
-                return make_response("not ready", 202)
     else:
         return json.dumps({"error": "model does not exist."}), 404
 
@@ -218,17 +166,6 @@ def query_results(owner, app_name, job_id):
             return "FAIL"
         else:
             return "NO"
-    elif cluster_type == "dask":
-        addr = dask_scheduler_address(owner, app_name)
-        with Client(addr) as client:
-            fut = Future(job_id, client=client)
-            print("dask result", fut.status)
-            if fut.done() and fut.status != "error":
-                return "YES"
-            elif fut.done() and fut.status in ("error", "cancelled"):
-                return "FAIL"
-            else:
-                return "NO"
     else:
         return json.dumps({"error": "model does not exist."}), 404
 
