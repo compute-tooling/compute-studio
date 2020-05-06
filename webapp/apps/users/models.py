@@ -122,6 +122,7 @@ class Project(models.Model):
     oneliner = models.CharField(max_length=10000)
     description = models.CharField(max_length=10000)
     repo_url = models.URLField()
+    repo_tag = models.CharField(default="master", max_length=32)
     owner = models.ForeignKey(
         Profile, null=True, related_name="projects", on_delete=models.CASCADE
     )
@@ -148,9 +149,9 @@ class Project(models.Model):
     def callabledefault():
         return [4, 2]
 
-    server_size = ArrayField(
-        models.CharField(max_length=5), default=callabledefault, size=2
-    )
+    cpu = models.DecimalField(max_digits=5, decimal_places=1, null=True, default=2)
+    memory = models.DecimalField(max_digits=5, decimal_places=1, null=True, default=6)
+
     exp_task_time = models.IntegerField(null=True)
     exp_num_tasks = models.IntegerField(null=True)
 

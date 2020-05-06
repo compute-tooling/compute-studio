@@ -24,7 +24,9 @@ class TestPublishViews:
             "oneliner": "oneliner",
             "description": "**Super** new!",
             "repo_url": "https://github.com/compute-tooling/compute-studio",
-            "server_size": [4, 8],
+            "repo_tag": "dev",
+            "cpu": 3,
+            "memory": 9,
             "listed": True,
         }
         resp = client.post("/publish/api/", post_data)
@@ -46,7 +48,9 @@ class TestPublishViews:
             "oneliner": "oneliner",
             "description": "desc",
             "repo_url": "https://github.com/compute-tooling/compute-studio",
-            "server_size": ["4", "2"],
+            "repo_tag": "master",
+            "cpu": 2,
+            "memory": 6,
             "exp_task_time": 20,
             "server_cost": Decimal("0.1"),
             "listed": True,
@@ -77,7 +81,9 @@ class TestPublishViews:
             "oneliner": "oneliner",
             "description": "hello world!",
             "repo_url": "https://github.com/compute-tooling/compute-studio",
-            "server_size": [2, 4],
+            "repo_tag": "dev",
+            "cpu": 2,
+            "memory": 6,
         }
         # not logged in --> not authorized
         resp = client.put(

@@ -66,7 +66,6 @@ def mock_project(db, worker_url):
         description="",
         oneliner="oneliner",
         repo_url="https://repo.com/test",
-        server_size=["8,2"],
         exp_task_time=10,
         server_cost=0.1,
         listed=True,
