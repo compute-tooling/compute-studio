@@ -32,5 +32,11 @@ spec:
                 secretKeyRef:
                   name: worker-secret
                   key: CS_API_TOKEN
+            - name: REDIS
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: REDIS
+
       nodeSelector:
         component: api

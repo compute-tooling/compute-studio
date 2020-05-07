@@ -13,7 +13,10 @@ from celery import chord
 import redis
 import requests
 
-from cs_publish.app import app as celery_app
+from cs_publish.executors.celery import get_app
+
+
+celery_app = get_app()
 
 
 CS_URL = os.environ.get("CS_URL")
@@ -21,10 +24,7 @@ CS_API_TOKEN = os.environ.get("CS_API_TOKEN")
 
 bp = Blueprint("endpoints", __name__)
 
-queue_name = "celery"
-client = redis.Redis.from_url(
-    os.environ.get("CELERY_BROKER_URL", "redis://redis-master/0")
-)
+client = redis.Redis.from_url(os.environ.get("REDIS", "redis://redis-master/0"))
 
 
 def clean(word):
