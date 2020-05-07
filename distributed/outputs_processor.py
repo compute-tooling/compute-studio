@@ -1,7 +1,10 @@
+import json
 import os
 
-import requests
-from celery import Celery
+import httpx
+import tornado.ioloop
+import tornado.web
+from dask.distributed import Client
 
 import cs_storage
 
@@ -9,49 +12,51 @@ import cs_storage
 CS_URL = os.environ.get("CS_URL")
 CS_API_TOKEN = os.environ.get("CS_API_TOKEN")
 
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
-CELERY_RESULT_BACKEND = os.environ.get(
-    "CELERY_RESULT_BACKEND", "redis://localhost:6379"
-)
 
-app = Celery(
-    "outputs_processor", broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND
-)
-app.conf.update(
-    task_serializer="json",
-    accept_content=["json"],
-    worker_prefetch_multiplier=1,
-    task_acks_late=True,
-)
-
-
-@app.task(name="outputs_processor.write_to_storage")
-def write(task_id, outputs):
+async def write(task_id, outputs):
+    client = await Client(asynchronous=True, processes=False)
     outputs = cs_storage.deserialize_from_json(outputs)
-    res = cs_storage.write(task_id, outputs)
-    print(res)
+    res = await client.submit(cs_storage.write, task_id, outputs)
     return res
 
 
-@app.task(name="outputs_processor.push_to_cs")
-def push(task_type, payload):
-    if task_type == "sim":
-        print(f"posting data to {CS_URL}/outputs/api/")
-        resp = requests.put(
-            f"{CS_URL}/outputs/api/",
-            json=payload,
-            headers={"Authorization": f"Token {CS_API_TOKEN}"},
-        )
-        print("resp", resp.status_code)
-        if resp.status_code == 400:
-            print("errors", resp.json())
-    if task_type == "parse":
-        print(f"posting data to {CS_URL}/inputs/api/")
-        resp = requests.put(
-            f"{CS_URL}/inputs/api/",
-            json=payload,
-            headers={"Authorization": f"Token {CS_API_TOKEN}"},
-        )
-        print("resp", resp.status_code)
-        if resp.status_code == 400:
-            print("errors", resp.json())
+async def push(task_type, result):
+    async with httpx.AsyncClient(
+        headers={"Authorization": f"Token {CS_API_TOKEN}"}
+    ) as client:
+        if task_type == "sim":
+            print(f"posting data to {CS_URL}/outputs/api/")
+            return client.put(f"{CS_URL}/outputs/api/", json=result)
+        if task_type == "parse":
+            print(f"posting data to {CS_URL}/inputs/api/")
+            return client.put(f"{CS_URL}/inputs/api/", json=result)
+        else:
+            raise ValueError(f"Unknown task type: {task_type}.")
+
+
+class Write(tornado.web.RequestHandler):
+    async def post(self):
+        print("POST -- /write/")
+        payload = json.loads(self.request.body.decode("utf-8"))
+        result = await write(**payload)
+        self.write(result)
+
+
+class Push(tornado.web.RequestHandler):
+    async def post(self):
+        print("POST -- /push/")
+        payload = json.loads(self.request.body.decode("utf-8"))
+        await push(**payload)
+        self.set_status(200)
+
+
+def make_app():
+    return tornado.web.Application(
+        [(r"/write/", Write), (r"/push/", Push)], debug=True, autoreload=True
+    )
+
+
+if __name__ == "__main__":
+    app = make_app()
+    app.listen(8888)
+    tornado.ioloop.IOLoop.current().start()

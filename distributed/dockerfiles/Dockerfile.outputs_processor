@@ -12,13 +12,11 @@ RUN apt-get update && \
 
 
 RUN pip install -r requirements.txt
-RUN conda install -c conda-forge jinja2 bokeh pyppeteer "pyee<6" && pyppeteer-install
-
-ENV CELERY_BROKER_URL redis://redis-master/0
-ENV CELERY_RESULT_BACKEND redis://redis-master/0
+RUN pip install httpx pyppeteer2
+RUN conda install -c conda-forge jinja2 bokeh tornado dask && pyppeteer-install
 
 COPY outputs_processor.py /home
 
 WORKDIR /home
 
-CMD ["celery", "-A", "outputs_processor", "worker", "--loglevel=info", "--concurrency=1", "-n", "outputs_processor@%h"]
+CMD ["python", "outputs_processor.py"]

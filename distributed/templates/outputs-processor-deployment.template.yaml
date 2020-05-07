@@ -16,9 +16,8 @@ spec:
         - name: outputs-processor
           image:
           imagePullPolicy: Always
-          env:
-            - name: GET_HOSTS_FROM
-              value: dns
+          ports:
+            - containerPort: 6379
           env:
             - name: BUCKET
               valueFrom:
