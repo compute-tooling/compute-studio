@@ -3,9 +3,9 @@ kind: Service
 metadata:
   name: flask
 spec:
-  type: LoadBalancer
   ports:
-    - port: 5050
-      targetPort: 5050
+  - port: 5050
+    targetPort: 5050
   selector:
     app: flask
+  type: LoadBalancer

@@ -19,23 +19,8 @@ spec:
         tier: backend
     spec:
       containers:
-        - env:
-            - name: REDIS_ADMIN_PW
-              valueFrom:
-                secretKeyRef:
-                  key: REDIS_ADMIN_PW
-                  name: worker-secret
-            - name: REDIS_EXECUTOR_PW
-              valueFrom:
-                secretKeyRef:
-                  key: REDIS_EXECUTOR_PW
-                  name: worker-secret
-            - name: REDIS_SCHEDULER_PW
-              valueFrom:
-                secretKeyRef:
-                  key: REDIS_SCHEDULER_PW
-                  name: worker-secret
-          image: gcr.io/cs-workers-dev/redis-python:latest
+        - env: []
+          image: # redis-python
           lifecycle:
             postStart:
               exec:
@@ -43,7 +28,6 @@ spec:
                   - python3
                   - /home/redis_init.py
           name: master
-          imagePullPolicy: Always
           ports:
             - containerPort: 6379
           resources:
