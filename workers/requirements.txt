@@ -1,0 +1,8 @@
+httpx
+redis
+pytest
+toolz
+boto3
+kubernetes
+cs-storage>=1.10.1
+pyyaml

@@ -144,4 +144,4 @@ RUN set -ex; \
 # End Python install commands
 
 RUN python3 -m pip install redis
-COPY redis_init.py /home/
+COPY ./scripts/redis_init.py /home/

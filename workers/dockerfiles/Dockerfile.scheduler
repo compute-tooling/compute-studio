@@ -2,14 +2,14 @@ ARG TAG
 FROM distributed
 
 ENV HOST 0.0.0.0
-ENV PORT 5050
+ENV PORT 8888
 ENV DEBUG true
 
-ENV IS_FLASK True
+ENV IS_SCHEDULER True
 
 # expose the app port
 EXPOSE 80
-EXPOSE 5050
+EXPOSE 8888
 
 RUN pip install -r requirements.txt
 
