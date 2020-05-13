@@ -33,10 +33,9 @@ def read_github_file(org, repo, branch, filename):
     """
     url = f"https://api.github.com/repos/{org}/{repo}/contents/{filename}?ref={branch}"
     response = requests.get(url)
-    print(f"GET: {url} {response.status_code}")
     if response.status_code == 403:
         assert "hit rate limit" == 403
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Got code: {response.status_code}"
     sanatized_content = response.json()["content"].replace("\n", "")
     encoded_content = sanatized_content.encode()
     decoded_bytes = base64.decodebytes(encoded_content)

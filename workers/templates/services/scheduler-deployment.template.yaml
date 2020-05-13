@@ -1,42 +1,52 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flask
+  name: scheduler
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: flask
+      app: scheduler
   template:
     metadata:
       labels:
-        app: flask
+        app: scheduler
     spec:
       containers:
-        - name: flask
+        - name: scheduler
           image:
           imagePullPolicy: Always
           env:
             - name: GET_HOSTS_FROM
               value: dns
           ports:
-            - containerPort: 5050
+            - containerPort: 8888
           env:
             - name: CS_URL
               valueFrom:
                 secretKeyRef:
                   name: worker-secret
                   key: CS_URL
-            - name: CS_API_TOKEN
+            - name: REDIS_HOST
               valueFrom:
                 secretKeyRef:
                   name: worker-secret
-                  key: CS_API_TOKEN
-            - name: REDIS
+                  key: REDIS_HOST
+            - name: REDIS_PORT
               valueFrom:
                 secretKeyRef:
                   name: worker-secret
-                  key: REDIS
+                  key: REDIS_HOST
+            - name: REDIS_DB
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: REDIS_DB
+            - name: REDIS_SCHEDULER_PW
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: REDIS_SCHEDULER_PW
 
       nodeSelector:
         component: api

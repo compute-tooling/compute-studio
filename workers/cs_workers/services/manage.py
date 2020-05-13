@@ -46,7 +46,7 @@ class Cluster:
     Deploy and manage Compute Studio compute cluster:
         - build, tag, and push the docker images for the flask app and
         compute.studio modeling apps.
-        - write k8s config files for the flask deployment and the
+        - write k8s config files for the scheduler deployment and the
         compute.studio modeling app deployments.
         - apply k8s config files to an existing compute cluster.
 
@@ -74,13 +74,15 @@ class Cluster:
         else:
             self.kubernetes_target = kubernetes_target
 
-        with open("templates/flask-deployment.template.yaml", "r") as f:
-            self.flask_template = yaml.safe_load(f.read())
+        with open("templates/services/scheduler-deployment.template.yaml", "r") as f:
+            self.scheduler_template = yaml.safe_load(f.read())
 
-        with open("templates/outputs-processor-deployment.template.yaml", "r") as f:
+        with open(
+            "templates/services/outputs-processor-deployment.template.yaml", "r"
+        ) as f:
             self.outputs_processor_template = yaml.safe_load(f.read())
 
-        with open("templates/redis-master-deployment.template.yaml", "r") as f:
+        with open("templates/services/redis-master-deployment.template.yaml", "r") as f:
             self.redis_master_template = yaml.safe_load(f.read())
 
         with open("templates/secret.template.yaml", "r") as f:
@@ -90,7 +92,7 @@ class Cluster:
 
     def build(self):
         """
-        Build, tag, and push base images for the flask app and modeling apps.
+        Build, tag, and push base images for the scheduler app.
 
         Note: distributed and celerybase are tagged as "latest." All other apps
         pull from either distributed:latest or celerybase:latest.
@@ -100,7 +102,9 @@ class Cluster:
         run(
             f"docker build -t outputs_processor:{self.tag} -f dockerfiles/Dockerfile.outputs_processor ./"
         )
-        run(f"docker build -t flask:{self.tag} -f dockerfiles/Dockerfile.flask ./")
+        run(
+            f"docker build -t scheduler:{self.tag} -f dockerfiles/Dockerfile.scheduler ./"
+        )
 
         run(f"docker tag distributed {self.cr}/{self.project}/distributed:latest")
 
@@ -108,7 +112,9 @@ class Cluster:
             f"docker tag outputs_processor:{self.tag} {self.cr}/{self.project}/outputs_processor:{self.tag}"
         )
 
-        run(f"docker tag flask:{self.tag} {self.cr}/{self.project}/flask:{self.tag}")
+        run(
+            f"docker tag scheduler:{self.tag} {self.cr}/{self.project}/scheduler:{self.tag}"
+        )
 
     def push(self):
         run(f"docker tag distributed {self.cr}/{self.project}/distributed:latest")
@@ -118,20 +124,22 @@ class Cluster:
             f"docker tag outputs_processor:{self.tag} {self.cr}/{self.project}/outputs_processor:{self.tag}"
         )
 
-        run(f"docker tag flask:{self.tag} {self.cr}/{self.project}/flask:{self.tag}")
+        run(
+            f"docker tag scheduler:{self.tag} {self.cr}/{self.project}/scheduler:{self.tag}"
+        )
 
         run(f"docker push {self.cr}/{self.project}/distributed:latest")
         run(f"docker push {self.cr}/{self.project}/redis-python:latest")
         run(f"docker push {self.cr}/{self.project}/outputs_processor:{self.tag}")
-        run(f"docker push {self.cr}/{self.project}/flask:{self.tag}")
+        run(f"docker push {self.cr}/{self.project}/scheduler:{self.tag}")
 
     def make_config(self):
-        self.write_flask_deployment()
+        self.write_scheduler_deployment()
         self.write_outputs_processor_deployment()
         self.write_secret()
         self.write_redis_deployment()
         configs = [
-            "flask-service.yaml",
+            "scheduler-service.yaml",
             "outputs-processor-deployment.yaml",
             "outputs-processor-service.yaml",
             "redis-master-service.yaml",
@@ -141,16 +149,15 @@ class Cluster:
                 config = yaml.safe_load(f.read())
             self.write_config(filename, config)
 
-    def write_flask_deployment(self):
+    def write_scheduler_deployment(self):
         """
-        Write flask deployment file. Only step is filling in the image uri.
+        Write scheduler deployment file. Only step is filling in the image uri.
         """
-        deployment = copy.deepcopy(self.flask_template)
+        deployment = copy.deepcopy(self.scheduler_template)
         deployment["spec"]["template"]["spec"]["containers"][0][
             "image"
-        ] = f"gcr.io/{self.project}/flask:{self.tag}"
-
-        self.write_config("flask-deployment.yaml", deployment)
+        ] = f"gcr.io/{self.project}/scheduler:{self.tag}"
+        self.write_config("scheduler-deployment.yaml", deployment)
 
         return deployment
 
@@ -256,16 +263,7 @@ class Cluster:
         return client.add_secret_version(secret_parent, {"data": value})
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Deploy C/S compute cluster.")
-    parser.add_argument("--tag", required=False, default=TAG)
-    parser.add_argument("--project", required=False, default=PROJECT)
-    parser.add_argument("--build", action="store_true")
-    parser.add_argument("--push", action="store_true")
-    parser.add_argument("--make-config", action="store_true")
-    parser.add_argument("--config-out", "-o")
-    args = parser.parse_args()
-
+def handle(args: argparse.Namespace):
     cluster = Cluster(
         tag=args.tag, project=args.project, kubernetes_target=args.config_out
     )
@@ -276,3 +274,14 @@ if __name__ == "__main__":
         cluster.push()
     if args.make_config:
         cluster.make_config()
+
+
+def cli(subparsers: argparse._SubParsersAction):
+    parser = subparsers.add_parser("svc")
+    parser.add_argument("--tag", required=False, default=TAG)
+    parser.add_argument("--project", required=False, default=PROJECT)
+    parser.add_argument("--build", action="store_true")
+    parser.add_argument("--push", action="store_true")
+    parser.add_argument("--make-config", action="store_true")
+    parser.add_argument("--config-out", "-o")
+    parser.set_defaults(func=handle)

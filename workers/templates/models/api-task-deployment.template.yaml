@@ -16,15 +16,15 @@ spec:
         - name: # [owner]-[title]-[action]
           image: # gcr.io/[project]/[owner]_[title]_tasks:[tag]
           imagePullPolicy: Always
-          command: [] # ["./celery_[action].sh"]
+          command: ["csw", "api_task", "--start"]
           args: [] # ["[owner]", "[title"]
           resources:
             requests:
-              memory:
-              cpu:
+              memory: 0.25G
+              cpu: 0.7
             limits:
-              memory:
-              cpu:
+              memory: 0.7G
+              cpu: 1
           env:
             - name: OUTPUTS_VERSION
               value: v1

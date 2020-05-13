@@ -1,8 +1,9 @@
+import argparse
 import json
 import os
 import uuid
 
-from cs_publish.executors.task_wrapper import async_task_wrapper, sync_task_wrapper
+from cs_workers.executors.task_wrapper import async_task_wrapper, sync_task_wrapper
 
 import tornado.ioloop
 import tornado.web
@@ -11,10 +12,7 @@ from dask.distributed import Client, fire_and_forget
 try:
     from cs_config import functions
 except ImportError as ie:
-    if os.environ.get("IS_FLASK", "False") == "True":
-        functions = None
-    else:
-        raise ie
+    None
 
 
 def version(task_id, **task_kwargs):
@@ -83,7 +81,18 @@ def executor(routes):
     )
 
 
-if __name__ == "__main__":
-    app = executor(routes={"version": version, "defaults": defaults, "parse": parse})
-    app.listen(8888)
-    tornado.ioloop.IOLoop.current().start()
+def start(args: argparse.Namespace):
+    if args.start:
+        app = executor(
+            routes={"version": version, "defaults": defaults, "parse": parse}
+        )
+        app.listen(8888)
+        tornado.ioloop.IOLoop.current().start()
+
+
+def cli(subparsers: argparse._SubParsersAction):
+    parser = subparsers.add_parser(
+        "api-task", description="REST API for running light-weight tasks."
+    )
+    parser.add_argument("--start", required=False, action="store_true")
+    parser.set_defaults(func=start)

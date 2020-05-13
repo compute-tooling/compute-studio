@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 
-from cs_publish.utils import clean
+from cs_workers.utils import clean
 
 PROJECT = os.environ.get("PROJECT", "cs-workers-dev")
 
@@ -91,18 +91,7 @@ class Secrets:
         return self.client
 
 
-def main():
-    parser = argparse.ArgumentParser(description="CLI for model secrets.")
-    parser.add_argument("--project", required=False, default=PROJECT)
-    parser.add_argument("--owner", required=True)
-    parser.add_argument("--title", required=True)
-    parser.add_argument("--secret-name", "-s")
-    parser.add_argument("--secret-value", "-v")
-    parser.add_argument("--list", "-l", action="store_true")
-    parser.add_argument("--delete", "-d")
-
-    args = parser.parse_args()
-
+def handle(args: argparse.Namespace):
     secrets = Secrets(args.owner, args.title, args.project)
     if args.secret_name and args.secret_value:
         secrets.set_secret(args.secret_name, args.secret_value)
@@ -113,3 +102,15 @@ def main():
 
     if args.list:
         print(json.dumps(secrets.list_secrets(), indent=2))
+
+
+def cli(subparsers: argparse._SubParsersAction):
+    parser = subparsers.add_parser("secrets", description="CLI for model secrets.")
+    parser.add_argument("--project", required=False, default=PROJECT)
+    parser.add_argument("--owner", required=True)
+    parser.add_argument("--title", required=True)
+    parser.add_argument("--secret-name", "-s")
+    parser.add_argument("--secret-value", "-v")
+    parser.add_argument("--list", "-l", action="store_true")
+    parser.add_argument("--delete", "-d")
+    parser.set_defaults(func=handle)

@@ -10,8 +10,8 @@ import requests
 from git import Repo, InvalidGitRepositoryError
 
 
-from cs_publish.utils import clean, run, parse_owner_title, read_github_file
-from cs_publish.client.secrets import Secrets
+from cs_workers.utils import clean, run, parse_owner_title, read_github_file
+from cs_workers.clients.secrets import Secrets
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
 BASE_PATH = CURR_PATH / ".." / ".."
@@ -38,10 +38,10 @@ class Core:
                 )
                 if config_file.exists():
                     with open(config_file, "r") as f:
-                        c = yaml.safe_load(f.read())
+                        contents = yaml.safe_load(f.read())
+                        config[(contents["owner"], contents["title"])] = contents
                 else:
-                    config_file = self.get_config_from_remote([(owner, title)])
-                config[(c["owner"], c["title"])] = c
+                    config.update(self.get_config_from_remote([(owner, title)]))
         if not self.quiet and config:
             print("# Updating:")
             print("\n#".join(f"  {o}/{t}" for o, t in config.keys()))
@@ -70,7 +70,7 @@ class Core:
                 "compute-tooling",
                 "compute-studio-publish",
                 "master",
-                f"{owner}/{title}.yaml",
+                f"config/{owner}/{title}.yaml",
             )
             config[(owner, title)] = yaml.safe_load(content)
         return config

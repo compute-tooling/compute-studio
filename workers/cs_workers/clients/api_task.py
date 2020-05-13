@@ -11,11 +11,10 @@ class APITask:
 
     async def create(self, asynchronous=False):
         method = "async" if asynchronous else "sync"
-        print(f"http://localhost:8888/{method}/{self.task_name}/")
         async with httpx.AsyncClient() as client:
             resp = await client.post(
-                # f"http://{self.owner}-{self.title}/{method}/{self.task_name}/",
-                f"http://localhost:8888/{method}/{self.task_name}/",
+                f"http://{self.owner}-{self.title}/{method}/{self.task_name}/",
+                # f"http://localhost:8888/{method}/{self.task_name}/",
                 json={"task_id": self.task_id, "task_kwargs": self.task_kwargs},
             )
         return resp

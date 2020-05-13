@@ -9,6 +9,7 @@ RUN conda config --append channels conda-forge
 RUN conda install "python>=3.7" pip tornado dask lz4
 
 ADD requirements.txt /home
+RUN pip install -r /home/requirements.txt
 
 WORKDIR /home
 
@@ -34,8 +35,8 @@ ADD ${RAW_REPO_URL}/${BRANCH}/cs-config/cs_config/tests/test_functions.py /home
 RUN pip install cs-kit
 ######################
 
-RUN mkdir /home/cs_publish
-COPY cs_publish /home/cs_publish
+RUN mkdir /home/cs_workers
+COPY cs_workers /home/cs_workers
 COPY setup.py /home
 RUN cd /home/ && pip install -e .
 

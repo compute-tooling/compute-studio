@@ -9,7 +9,7 @@ else:
 
 
 setuptools.setup(
-    name="cs-publish",
+    name="cs-workers",
     version=os.environ.get("TAG", "0.0.0"),
     author="Hank Doupe",
     author_email="hank@compute.studio",
@@ -18,14 +18,10 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/compute-tooling/compute-studio-workers",
     packages=setuptools.find_packages(),
-    install_requires=["celery", "redis", "gitpython", "pyyaml"],
+    install_requires=["redis", "kubernetes", "gitpython", "pyyaml"],
     include_package_data=True,
     entry_points={
-        "console_scripts": [
-            "cs-publish=cs_publish.client.publish:main",
-            "cs-secrets=cs_publish.client.secrets:main",
-            "cs-job=cs_publish.executors.kubernetes:main",
-        ]
+        "console_scripts": ["cs-workers=cs_workers.cli:cli", "csw=cs_workers.cli:cli"]
     },
     classifiers=[
         "Programming Language :: Python :: 3",

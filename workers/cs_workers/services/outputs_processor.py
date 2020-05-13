@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 
@@ -50,13 +51,24 @@ class Push(tornado.web.RequestHandler):
         self.set_status(200)
 
 
-def make_app():
+def get_app():
     return tornado.web.Application(
         [(r"/write/", Write), (r"/push/", Push)], debug=True, autoreload=True
     )
 
 
-if __name__ == "__main__":
-    app = make_app()
-    app.listen(8888)
-    tornado.ioloop.IOLoop.current().start()
+def start(args: argparse.Namespace):
+    if args.start:
+        app = get_app()
+        app.listen(8889)
+        tornado.ioloop.IOLoop.current().start()
+
+
+def cli(subparsers: argparse._SubParsersAction):
+    parser = subparsers.add_parser(
+        "outputs-processor",
+        aliases=["outputs"],
+        description="REST API for processing and storing outputs.",
+    )
+    parser.add_argument("--start", required=False, action="store_true")
+    parser.set_defaults(func=start)

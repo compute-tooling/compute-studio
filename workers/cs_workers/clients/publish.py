@@ -7,7 +7,7 @@ from pathlib import Path
 
 from ..utils import run, clean
 
-from .core import Core
+from cs_workers.clients.core import Core
 
 TAG = os.environ.get("TAG", "")
 PROJECT = os.environ.get("PROJECT", "cs-workers-dev")
@@ -28,7 +28,7 @@ class Publisher(Core):
 
     """
 
-    kubernetes_target = BASE_PATH / Path("kubernetes")
+    kubernetes_target = BASE_PATH / Path("kubernetes") / Path("models")
 
     def __init__(
         self,
@@ -54,12 +54,25 @@ class Publisher(Core):
             self.config.update(self.get_config(self.models))
 
         with open(
-            BASE_PATH / Path("templates") / Path("sc-deployment.template.yaml"), "r"
+            BASE_PATH
+            / Path("templates")
+            / "models"
+            / Path("api-task-deployment.template.yaml"),
+            "r",
         ) as f:
-            self.app_template = yaml.safe_load(f.read())
+            self.api_task_template = yaml.safe_load(f.read())
 
         with open(
-            BASE_PATH / Path("templates") / Path("secret.template.yaml"), "r"
+            BASE_PATH
+            / Path("templates")
+            / "models"
+            / Path("api-task-service.template.yaml"),
+            "r",
+        ) as f:
+            self.api_task_service_template = yaml.safe_load(f.read())
+
+        with open(
+            BASE_PATH / Path("templates") / "models" / Path("secret.template.yaml"), "r"
         ) as f:
             self.secret_template = yaml.safe_load(f.read())
 
@@ -76,7 +89,7 @@ class Publisher(Core):
 
     def write_app_config(self):
         self.apply_method_to_apps(method=self.write_secrets)
-        self.apply_method_to_apps(method=self._write_app_inputs_procesess)
+        self.apply_method_to_apps(method=self._write_api_task)
 
     def apply_method_to_apps(self, method):
         """
@@ -127,7 +140,7 @@ class Publisher(Core):
         buildargs_str = " ".join(
             [f"--build-arg {arg}={value}" for arg, value in buildargs.items()]
         )
-        cmd = f"docker build {buildargs_str} -t {img_name}:{self.tag} ./"
+        cmd = f"docker build {buildargs_str} -t {img_name}:{self.tag} -f dockerfiles/Dockerfile.model ./"
         run(cmd)
 
         run(
@@ -159,6 +172,9 @@ class Publisher(Core):
         for name, value in self._list_secrets(app).items():
             secret_config["stringData"][name] = value
 
+        if not secret_config["stringData"]:
+            return
+
         if self.kubernetes_target == "-":
             sys.stdout.write(yaml.dump(secret_config))
             sys.stdout.write("---")
@@ -169,74 +185,63 @@ class Publisher(Core):
 
         return secret_config
 
-    def _write_app_inputs_procesess(self, app):
-        app_deployment = copy.deepcopy(self.app_template)
+    def _write_api_task(self, app):
+        deployment = copy.deepcopy(self.api_task_template)
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])
-        action = "io"
-        name = f"{safeowner}-{safetitle}-{action}"
+        name = f"{safeowner}-{safetitle}-api-task"
 
-        resources = self._resources(app, action)
+        deployment["metadata"]["name"] = name
+        deployment["spec"]["selector"]["matchLabels"]["app"] = name
+        deployment["spec"]["template"]["metadata"]["labels"]["app"] = name
 
-        app_deployment["metadata"]["name"] = name
-        app_deployment["spec"]["selector"]["matchLabels"]["app"] = name
-        app_deployment["spec"]["template"]["metadata"]["labels"]["app"] = name
-
-        container_config = app_deployment["spec"]["template"]["spec"]["containers"][0]
+        container_config = deployment["spec"]["template"]["spec"]["containers"][0]
 
         container_config.update(
             {
                 "name": name,
                 "image": f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{self.tag}",
-                "command": [f"./celery_{action}.sh"],
-                "args": [
-                    app["owner"],
-                    app["title"],
-                ],  # TODO: pass safe names to docker file at build and run time
-                "resources": resources,
+                "command": ["csw", "api-task", "--start"],
             }
         )
 
-        container_config["env"].append({"name": "TITLE", "value": app["title"]})
-        container_config["env"].append({"name": "OWNER", "value": app["owner"]})
         container_config["env"].append(
             {"name": "SIM_TIME_LIMIT", "value": str(app["sim_time_limit"])}
         )
         container_config["env"].append(
-            {"name": "APP_NAME", "value": f"{safeowner}_{safetitle}_tasks"}
-        )
-        container_config["env"].append(
             {
-                "name": "REDIS",
+                "name": "REDIS_HOST",
                 "valueFrom": {
-                    "secretKeyRef": {"name": "worker-secret", "key": "REDIS"}
+                    "secretKeyRef": {"name": "worker-secret", "key": "REDIS_HOST"}
                 },
             }
         )
 
         self._set_secrets(app, container_config)
 
+        service = copy.deepcopy(self.api_task_service_template)
+        service["metadata"]["name"] = name
+        service["spec"]["selector"]["app"] = name
+
         if self.kubernetes_target == "-":
-            sys.stdout.write(yaml.dump(app_deployment))
+            sys.stdout.write(yaml.dump(deployment))
             sys.stdout.write("---")
             sys.stdout.write("\n")
+            sys.stdout.write(yaml.dump(service))
+            sys.stdout.write("---")
+            sys.stdout.write("\n")
+
         else:
             with open(
-                self.kubernetes_target / Path(f"{name}-deployment.yaml"), "w"
+                self.kubernetes_target / Path(f"{name}-api-tasks-deployment.yaml"), "w"
             ) as f:
-                f.write(yaml.dump(app_deployment))
+                f.write(yaml.dump(deployment))
+            with open(
+                self.kubernetes_target / Path(f"{name}-api-tasks-service.yaml"), "w"
+            ) as f:
+                f.write(yaml.dump(service))
 
-        return app_deployment
-
-    def _resources(self, app, action=None):
-        if action == "io":
-            resources = {
-                "requests": {"cpu": 0.7, "memory": "0.25G"},
-                "limits": {"cpu": 1, "memory": "0.7G"},
-            }
-        else:
-            resources = super()._resources(app)
-        return resources
+        return deployment, service
 
     def _set_secrets(self, app, config):
         safeowner = clean(app["owner"])
@@ -248,21 +253,7 @@ class Publisher(Core):
             )
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Deploy C/S compute cluster.")
-    parser.add_argument("--tag", required=False, default=TAG)
-    parser.add_argument("--project", required=False, default=PROJECT)
-    parser.add_argument("--models", nargs="+", type=str, required=False, default=None)
-    parser.add_argument("--build", action="store_true")
-    parser.add_argument("--test", action="store_true")
-    parser.add_argument("--push", action="store_true")
-    parser.add_argument("--app-config", action="store_true")
-    parser.add_argument("--base-branch", default="origin/master")
-    parser.add_argument("--quiet", "-q", default=False)
-    parser.add_argument("--config-out", "-o", default=None)
-
-    args = parser.parse_args()
-
+def handle(args: argparse.Namespace):
     publisher = Publisher(
         project=args.project,
         tag=args.tag,
@@ -279,3 +270,20 @@ def main():
         publisher.push()
     if args.app_config:
         publisher.write_app_config()
+
+
+def cli(subparsers: argparse._SubParsersAction):
+    parser = subparsers.add_parser(
+        "publish", description="Deploy models on C/S compute cluster."
+    )
+    parser.add_argument("--tag", required=False, default=TAG)
+    parser.add_argument("--project", required=False, default=PROJECT)
+    parser.add_argument("--models", nargs="+", type=str, required=False, default=None)
+    parser.add_argument("--build", action="store_true")
+    parser.add_argument("--test", action="store_true")
+    parser.add_argument("--push", action="store_true")
+    parser.add_argument("--app-config", action="store_true")
+    parser.add_argument("--base-branch", default="origin/master")
+    parser.add_argument("--quiet", "-q", default=False)
+    parser.add_argument("--config-out", "-o", default=None)
+    parser.set_defaults(func=handle)

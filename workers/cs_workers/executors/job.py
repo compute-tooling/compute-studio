@@ -7,8 +7,7 @@ import redis
 import requests
 
 import cs_storage
-from cs_publish.executors.task_wrapper import async_task_wrapper
-from cs_publish.executors.celery import get_app
+from cs_workers.executors.task_wrapper import async_task_wrapper
 
 
 def sim_handler(task_id, meta_param_dict, adjustment):
@@ -27,14 +26,12 @@ def sim_handler(task_id, meta_param_dict, adjustment):
 routes = {"sim": sim_handler}
 
 
-def executor(routes):
-    parser = argparse.ArgumentParser(description="CLI for C/S jobs.")
-    parser.add_argument("--job-id", "-t", required=True)
-    parser.add_argument("--route-name", "-r", required=True)
-    args = parser.parse_args()
-
+def main(args: argparse.Namespace):
     async_task_wrapper(args.job_id, routes[args.route_name])
 
 
-def main():
-    executor({"sim": sim_handler})
+def cli(subparsers: argparse._SubParsersAction):
+    parser = subparsers.add_parser("job", description="CLI for C/S jobs.")
+    parser.add_argument("--job-id", "-t", required=True)
+    parser.add_argument("--route-name", "-r", required=True)
+    parser.set_defaults(func=main)

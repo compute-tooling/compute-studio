@@ -6,8 +6,8 @@ import yaml
 
 from kubernetes import client as kclient, config as kconfig
 
-from cs_publish.utils import clean
-from cs_publish.client.core import Core
+from cs_workers.utils import clean
+from cs_workers.clients.core import Core
 
 
 redis_conn = dict(
@@ -85,7 +85,7 @@ class Job(Core):
         container = kclient.V1Container(
             name=job_name,
             image=f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{tag}",
-            command=["cs-job", "--job-id", job_id],
+            command=["csw", "job", "--job-id", job_id, "--route-name", "sim"],
             env=self.env(owner, title, config),
         )
         # Create and configurate a spec section

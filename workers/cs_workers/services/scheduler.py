@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import uuid
@@ -7,8 +8,8 @@ import marshmallow as ma
 import tornado.ioloop
 import tornado.web
 
-from cs_publish.utils import clean
-from cs_publish.client import job, api_task
+from cs_workers.utils import clean
+from cs_workers.clients import job, api_task
 
 
 CS_URL = os.environ.get("CS_URL")
@@ -99,7 +100,16 @@ def get_app():
     )
 
 
-if __name__ == "__main__":
-    app = get_app()
-    app.listen(8889)
-    tornado.ioloop.IOLoop.current().start()
+def start(args: argparse.Namespace):
+    if args.start:
+        app = get_app()
+        app.listen(8889)
+        tornado.ioloop.IOLoop.current().start()
+
+
+def cli(subparsers: argparse._SubParsersAction):
+    parser = subparsers.add_parser(
+        "scheduler", description="REST API for running jobs on C/S workers."
+    )
+    parser.add_argument("--start", required=False, action="store_true")
+    parser.set_defaults(func=start)

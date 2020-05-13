@@ -13,12 +13,11 @@ EXPOSE 8888
 
 RUN pip install -r requirements.txt
 
-COPY ./api /home/api
-COPY ./api/endpoints.py /home/api
-COPY ./setup.py /home
-RUN cd /home && pip install -e .
+RUN mkdir /home/cs_workers
+COPY cs_workers /home/cs_workers
+COPY setup.py /home
+RUN cd /home/ && pip install -e .
 
-WORKDIR /home/api
+WORKDIR /home
 
-# run the app server
-CMD ["gunicorn", "--bind", "0.0.0.0:5050", "api:app", "--access-logfile", "-"]
+CMD ["csw", "outputs-processor", "--start"]
