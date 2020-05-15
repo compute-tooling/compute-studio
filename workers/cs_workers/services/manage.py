@@ -65,24 +65,25 @@ class Cluster:
     kubernetes_target = "kubernetes/"
     cr = "gcr.io"
 
-    def __init__(self, tag, project, kubernetes_target="kubernetes/"):
+    def __init__(self, tag, project, kubernetes_target="kubernetes/", use_kind=False):
         self.tag = tag
         self.project = project
+        self.use_kind = use_kind
 
         if kubernetes_target is None:
             self.kubernetes_target = Cluster.kubernetes_target
         else:
             self.kubernetes_target = kubernetes_target
 
-        with open("templates/services/scheduler-deployment.template.yaml", "r") as f:
+        with open("templates/services/scheduler-Deployment.template.yaml", "r") as f:
             self.scheduler_template = yaml.safe_load(f.read())
 
         with open(
-            "templates/services/outputs-processor-deployment.template.yaml", "r"
+            "templates/services/outputs-processor-Deployment.template.yaml", "r"
         ) as f:
             self.outputs_processor_template = yaml.safe_load(f.read())
 
-        with open("templates/services/redis-master-deployment.template.yaml", "r") as f:
+        with open("templates/services/redis-master-Deployment.template.yaml", "r") as f:
             self.redis_master_template = yaml.safe_load(f.read())
 
         with open("templates/secret.template.yaml", "r") as f:
@@ -106,16 +107,6 @@ class Cluster:
             f"docker build -t scheduler:{self.tag} -f dockerfiles/Dockerfile.scheduler ./"
         )
 
-        run(f"docker tag distributed {self.cr}/{self.project}/distributed:latest")
-
-        run(
-            f"docker tag outputs_processor:{self.tag} {self.cr}/{self.project}/outputs_processor:{self.tag}"
-        )
-
-        run(
-            f"docker tag scheduler:{self.tag} {self.cr}/{self.project}/scheduler:{self.tag}"
-        )
-
     def push(self):
         run(f"docker tag distributed {self.cr}/{self.project}/distributed:latest")
         run(f"docker tag redis-python {self.cr}/{self.project}/redis-python:latest")
@@ -128,26 +119,33 @@ class Cluster:
             f"docker tag scheduler:{self.tag} {self.cr}/{self.project}/scheduler:{self.tag}"
         )
 
-        run(f"docker push {self.cr}/{self.project}/distributed:latest")
-        run(f"docker push {self.cr}/{self.project}/redis-python:latest")
-        run(f"docker push {self.cr}/{self.project}/outputs_processor:{self.tag}")
-        run(f"docker push {self.cr}/{self.project}/scheduler:{self.tag}")
+        if self.use_kind:
+            cmd_prefix = "kind load docker-image"
+        else:
+            cmd_prefix = "docker push"
+
+        run(f"{cmd_prefix} {self.cr}/{self.project}/distributed:latest")
+        run(f"{cmd_prefix} {self.cr}/{self.project}/redis-python:latest")
+        run(f"{cmd_prefix} {self.cr}/{self.project}/outputs_processor:{self.tag}")
+        run(f"{cmd_prefix} {self.cr}/{self.project}/scheduler:{self.tag}")
 
     def make_config(self):
+        config_filenames = [
+            "scheduler-Service.yaml",
+            "outputs-processor-Service.yaml",
+            "redis-master-Service.yaml",
+        ]
+        for filename in config_filenames:
+            with open(f"templates/services/{filename}", "r") as f:
+                configs = yaml.safe_load_all(f.read())
+            for config in configs:
+                name = config["metadata"]["name"]
+                kind = config["kind"]
+                self.write_config(f"{name}-{kind}.yaml", config)
         self.write_scheduler_deployment()
         self.write_outputs_processor_deployment()
         self.write_secret()
         self.write_redis_deployment()
-        configs = [
-            "scheduler-service.yaml",
-            "outputs-processor-deployment.yaml",
-            "outputs-processor-service.yaml",
-            "redis-master-service.yaml",
-        ]
-        for filename in configs:
-            with open(f"kubernetes/{filename}", "r") as f:
-                config = yaml.safe_load(f.read())
-            self.write_config(filename, config)
 
     def write_scheduler_deployment(self):
         """
@@ -157,7 +155,7 @@ class Cluster:
         deployment["spec"]["template"]["spec"]["containers"][0][
             "image"
         ] = f"gcr.io/{self.project}/scheduler:{self.tag}"
-        self.write_config("scheduler-deployment.yaml", deployment)
+        self.write_config("scheduler-Deployment.yaml", deployment)
 
         return deployment
 
@@ -171,7 +169,7 @@ class Cluster:
             "image"
         ] = f"gcr.io/{self.project}/outputs_processor:{self.tag}"
 
-        self.write_config("outputs-processor-deployment.yaml", deployment)
+        self.write_config("outputs-processor-Deployment.yaml", deployment)
 
         return deployment
 
@@ -190,7 +188,7 @@ class Cluster:
                         },
                     }
                 )
-        self.write_config("redis-master-deployment.yaml", deployment)
+        self.write_config("redis-master-Deployment.yaml", deployment)
 
     def write_secret(self):
 
@@ -265,7 +263,10 @@ class Cluster:
 
 def handle(args: argparse.Namespace):
     cluster = Cluster(
-        tag=args.tag, project=args.project, kubernetes_target=args.config_out
+        tag=args.tag,
+        project=args.project,
+        kubernetes_target=args.config_out,
+        use_kind=args.use_kind,
     )
 
     if args.build:
@@ -284,4 +285,5 @@ def cli(subparsers: argparse._SubParsersAction):
     parser.add_argument("--push", action="store_true")
     parser.add_argument("--make-config", action="store_true")
     parser.add_argument("--config-out", "-o")
+    parser.add_argument("--use-kind", action="store_true")
     parser.set_defaults(func=handle)

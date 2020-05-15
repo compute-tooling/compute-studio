@@ -38,11 +38,13 @@ class Publisher(Core):
         base_branch="origin/master",
         quiet=False,
         kubernetes_target=None,
+        use_kind=False,
     ):
         super().__init__(project, tag, base_branch, quiet)
 
         self.models = models if models and models[0] else None
         self.kubernetes_target = kubernetes_target or self.kubernetes_target
+        self.use_kind = use_kind
 
         if self.kubernetes_target == "-":
             self.quiet = True
@@ -159,7 +161,11 @@ class Publisher(Core):
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])
         img_name = f"{safeowner}_{safetitle}_tasks"
-        run(f"docker push {self.cr}/{self.project}/{img_name}:{self.tag}")
+        if self.use_kind:
+            cmd_prefix = "kind load docker-image"
+        else:
+            cmd_prefix = "docker push"
+        run(f"{cmd_prefix} {self.cr}/{self.project}/{img_name}:{self.tag}")
 
     def write_secrets(self, app):
         secret_config = copy.deepcopy(self.secret_template)
@@ -261,6 +267,7 @@ def handle(args: argparse.Namespace):
         base_branch=args.base_branch,
         quiet=args.quiet,
         kubernetes_target=args.config_out,
+        use_kind=args.use_kind,
     )
     if args.build:
         publisher.build()
@@ -286,4 +293,5 @@ def cli(subparsers: argparse._SubParsersAction):
     parser.add_argument("--base-branch", default="origin/master")
     parser.add_argument("--quiet", "-q", default=False)
     parser.add_argument("--config-out", "-o", default=None)
+    parser.add_argument("--use-kind", action="store_true")
     parser.set_defaults(func=handle)

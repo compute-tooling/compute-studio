@@ -36,7 +36,7 @@ secret-docker-compose.yml
 *worker_config.prod.yaml
 *docker-compose-apps*
 
-kubernetes/models/*
+kubernetes/*
 secret.yaml
 
 *scheduler-deployment.yaml
