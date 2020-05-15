@@ -132,6 +132,7 @@ class Cluster:
     def make_config(self):
         config_filenames = [
             "scheduler-Service.yaml",
+            "scheduler-RBAC.yaml",
             "outputs-processor-Service.yaml",
             "redis-master-Service.yaml",
         ]

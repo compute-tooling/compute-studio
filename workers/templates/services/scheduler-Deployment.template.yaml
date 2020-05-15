@@ -12,6 +12,7 @@ spec:
       labels:
         app: scheduler
     spec:
+      serviceAccountName: scheduler
       containers:
         - name: scheduler
           image:
