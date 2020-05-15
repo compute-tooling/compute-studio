@@ -15,7 +15,6 @@ spec:
       containers:
         - name: outputs-processor
           image:
-          imagePullPolicy: Always
           ports:
             - containerPort: 6379
           env:

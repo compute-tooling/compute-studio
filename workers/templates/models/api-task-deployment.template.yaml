@@ -15,7 +15,6 @@ spec:
       containers:
         - name: # [owner]-[title]-[action]
           image: # gcr.io/[project]/[owner]_[title]_tasks:[tag]
-          imagePullPolicy: Always
           command: ["csw", "api_task", "--start"]
           args: [] # ["[owner]", "[title"]
           resources:

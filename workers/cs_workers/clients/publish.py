@@ -162,7 +162,7 @@ class Publisher(Core):
         safetitle = clean(app["title"])
         img_name = f"{safeowner}_{safetitle}_tasks"
         if self.use_kind:
-            cmd_prefix = "kind load docker-image"
+            cmd_prefix = "kind load docker-image --name cs --nodes cs-worker2"
         else:
             cmd_prefix = "docker push"
         run(f"{cmd_prefix} {self.cr}/{self.project}/{img_name}:{self.tag}")

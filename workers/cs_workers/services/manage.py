@@ -99,7 +99,9 @@ class Cluster:
         pull from either distributed:latest or celerybase:latest.
         """
         run("docker build -t distributed:latest -f dockerfiles/Dockerfile ./")
-        run("docker build -t redis-python:latest -f dockerfiles/Dockerfile.redis ./")
+        run(
+            f"docker build -t redis-python:{self.tag} -f dockerfiles/Dockerfile.redis ./"
+        )
         run(
             f"docker build -t outputs_processor:{self.tag} -f dockerfiles/Dockerfile.outputs_processor ./"
         )
@@ -109,7 +111,9 @@ class Cluster:
 
     def push(self):
         run(f"docker tag distributed {self.cr}/{self.project}/distributed:latest")
-        run(f"docker tag redis-python {self.cr}/{self.project}/redis-python:latest")
+        run(
+            f"docker tag redis-python:{self.tag} {self.cr}/{self.project}/redis-python:{self.tag}"
+        )
 
         run(
             f"docker tag outputs_processor:{self.tag} {self.cr}/{self.project}/outputs_processor:{self.tag}"
@@ -120,16 +124,16 @@ class Cluster:
         )
 
         if self.use_kind:
-            cmd_prefix = "kind load docker-image"
+            cmd_prefix = "kind load docker-image --name cs --nodes cs-worker,cs-worker2"
         else:
             cmd_prefix = "docker push"
 
         run(f"{cmd_prefix} {self.cr}/{self.project}/distributed:latest")
-        run(f"{cmd_prefix} {self.cr}/{self.project}/redis-python:latest")
+        run(f"{cmd_prefix} {self.cr}/{self.project}/redis-python:{self.tag}")
         run(f"{cmd_prefix} {self.cr}/{self.project}/outputs_processor:{self.tag}")
         run(f"{cmd_prefix} {self.cr}/{self.project}/scheduler:{self.tag}")
 
-    def make_config(self):
+    def config(self):
         config_filenames = [
             "scheduler-Service.yaml",
             "scheduler-RBAC.yaml",
@@ -177,7 +181,7 @@ class Cluster:
     def write_redis_deployment(self):
         deployment = copy.deepcopy(self.redis_master_template)
         container = deployment["spec"]["template"]["spec"]["containers"][0]
-        container["image"] = f"gcr.io/{self.project}/redis-python:latest"
+        container["image"] = f"gcr.io/{self.project}/redis-python:{self.tag}"
         redis_secrets = self.redis_secrets()
         for name, sec in redis_secrets.items():
             if sec is not None:
@@ -262,29 +266,44 @@ class Cluster:
         return client.add_secret_version(secret_parent, {"data": value})
 
 
-def handle(args: argparse.Namespace):
-    cluster = Cluster(
+def cluster_from_args(args: argparse.Namespace):
+    return Cluster(
         tag=args.tag,
         project=args.project,
-        kubernetes_target=args.config_out,
-        use_kind=args.use_kind,
+        kubernetes_target=getattr(args, "out", None),
+        use_kind=getattr(args, "use_kind", None),
     )
 
-    if args.build:
-        cluster.build()
-    if args.push:
-        cluster.push()
-    if args.make_config:
-        cluster.make_config()
+
+def build(args: argparse.Namespace):
+    cluster = cluster_from_args(args)
+    cluster.build()
+
+
+def push(args: argparse.Namespace):
+    cluster = cluster_from_args(args)
+    cluster.push()
+
+
+def config(args: argparse.Namespace):
+    cluster = cluster_from_args(args)
+    cluster.config()
 
 
 def cli(subparsers: argparse._SubParsersAction):
-    parser = subparsers.add_parser("svc")
+    parser = subparsers.add_parser("services", aliases=["svc"])
     parser.add_argument("--tag", required=False, default=TAG)
     parser.add_argument("--project", required=False, default=PROJECT)
-    parser.add_argument("--build", action="store_true")
-    parser.add_argument("--push", action="store_true")
-    parser.add_argument("--make-config", action="store_true")
-    parser.add_argument("--config-out", "-o")
-    parser.add_argument("--use-kind", action="store_true")
-    parser.set_defaults(func=handle)
+
+    svc_subparsers = parser.add_subparsers()
+
+    build_parser = svc_subparsers.add_parser("build")
+    build_parser.set_defaults(func=build)
+
+    push_parser = svc_subparsers.add_parser("push")
+    push_parser.add_argument("--use-kind", action="store_true")
+    push_parser.set_defaults(func=push)
+
+    config_parser = svc_subparsers.add_parser("config")
+    config_parser.add_argument("--out", "-o")
+    config_parser.set_defaults(func=config)

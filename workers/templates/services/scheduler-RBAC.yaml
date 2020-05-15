@@ -21,7 +21,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: scheduler
-    apiGroup: rbac.authorization.k8s.io
+    namespace: default
 roleRef:
   kind: Role
   name: job-admin

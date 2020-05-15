@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: scheduler
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: scheduler
@@ -16,7 +16,6 @@ spec:
       containers:
         - name: scheduler
           image:
-          imagePullPolicy: Always
           env:
             - name: GET_HOSTS_FROM
               value: dns
@@ -48,6 +47,5 @@ spec:
                 secretKeyRef:
                   name: worker-secret
                   key: REDIS_SCHEDULER_PW
-
       nodeSelector:
         component: api
