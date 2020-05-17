@@ -21,4 +21,4 @@ RUN cd /home/ && pip install -e .
 
 WORKDIR /home
 
-CMD ["csw", "outputs-processor", "--start"]
+CMD ["csw", "scheduler", "--start"]

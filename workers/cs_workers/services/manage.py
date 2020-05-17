@@ -10,10 +10,6 @@ import time
 from pathlib import Path
 
 
-TAG = os.environ.get("TAG", "")
-PROJECT = os.environ.get("PROJECT", "cs-workers-dev")
-
-
 def clean(word):
     return re.sub("[^0-9a-zA-Z]+", "", word).lower()
 
@@ -124,7 +120,7 @@ class Cluster:
         )
 
         if self.use_kind:
-            cmd_prefix = "kind load docker-image --name cs --nodes cs-worker,cs-worker2"
+            cmd_prefix = "kind load docker-image --name cs --nodes cs-worker"
         else:
             cmd_prefix = "docker push"
 
@@ -292,9 +288,6 @@ def config(args: argparse.Namespace):
 
 def cli(subparsers: argparse._SubParsersAction):
     parser = subparsers.add_parser("services", aliases=["svc"])
-    parser.add_argument("--tag", required=False, default=TAG)
-    parser.add_argument("--project", required=False, default=PROJECT)
-
     svc_subparsers = parser.add_subparsers()
 
     build_parser = svc_subparsers.add_parser("build")

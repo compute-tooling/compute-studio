@@ -31,41 +31,40 @@ class Async(tornado.web.RequestHandler):
     def initialize(self, routes):
         self.routes = routes
 
-    async def post(self, task_name):
-        print("POST -- /async/", task_name)
-        if task_name not in self.routes:
+    async def post(self):
+        print("POST -- /async/", self.request.body)
+        payload = json.loads(self.request.body.decode("utf-8"))
+        handler = self.routes.get(payload.get("task_name"))
+        if handler is None:
             self.set_status(404)
             return
-
-        handler = self.routes[task_name]
-        payload = json.loads(self.request.body.decode("utf-8"))
         task_id = payload.pop("task_id", None)
-        if task_name is None:
+        if task_id is None:
             task_id = str(uuid.uuid4())
+        task_kwargs = payload.get("task_kwargs") or {}
         async with Client(asynchronous=True, processes=True) as client:
-            fut = client.submit(async_task_wrapper, task_id, handler, **payload)
+            fut = client.submit(async_task_wrapper, task_id, handler, **task_kwargs)
             fire_and_forget(fut)
         self.set_status(200)
-        self.write({"status": "PENDING", "task_id": task_name})
+        self.write({"status": "PENDING", "task_id": task_id})
 
 
 class Sync(tornado.web.RequestHandler):
     def initialize(self, routes):
         self.routes = routes
 
-    async def post(self, task_name):
-        print("POST -- /sync/", task_name)
-        if task_name not in self.routes:
+    async def post(self):
+        print("POST -- /sync/", self.request.body)
+        payload = json.loads(self.request.body.decode("utf-8"))
+        handler = self.routes.get(payload.get("task_name"))
+        if handler is None:
             self.set_status(404)
             return
-
-        handler = self.routes[task_name]
-        payload = json.loads(self.request.body.decode("utf-8"))
         task_id = payload.pop("task_id", None)
-        if task_name is None:
+        if task_id is None:
             task_id = str(uuid.uuid4())
-        print("payload", payload)
-        result = sync_task_wrapper(task_id, handler, **payload)
+        task_kwargs = payload.get("task_kwargs") or {}
+        result = sync_task_wrapper(task_id, handler, **task_kwargs)
         self.write(result)
 
 
@@ -73,8 +72,8 @@ def executor(routes):
     print("routes", routes)
     return tornado.web.Application(
         [
-            (r"/async/([A-Za-z0-9-]+)/", Async, dict(routes=routes)),
-            (r"/sync/([A-Za-z0-9-]+)/", Sync, dict(routes=routes)),
+            (r"/async/", Async, dict(routes=routes)),
+            (r"/sync/", Sync, dict(routes=routes)),
         ],
         debug=True,
         autoreload=True,

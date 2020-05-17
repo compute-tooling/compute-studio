@@ -29,6 +29,7 @@ def get_projects():
     projects = {}
     for project in resp.json():
         projects[(project["owner"], project["title"])] = project
+    print("projects", projects)
     return projects
 
 
@@ -101,6 +102,7 @@ def get_app():
 
 
 def start(args: argparse.Namespace):
+    print("starting, now")
     if args.start:
         app = get_app()
         app.listen(8888)

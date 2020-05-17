@@ -9,8 +9,6 @@ from ..utils import run, clean
 
 from cs_workers.clients.core import Core
 
-TAG = os.environ.get("TAG", "")
-PROJECT = os.environ.get("PROJECT", "cs-workers-dev")
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
 BASE_PATH = CURR_PATH / ".." / ".."
 
@@ -42,7 +40,7 @@ class Publisher(Core):
     ):
         super().__init__(project, tag, base_branch, quiet)
 
-        self.models = models if models and models[0] else None
+        self.models = models.split(",") if models else None
         self.kubernetes_target = kubernetes_target or self.kubernetes_target
         self.use_kind = use_kind
 
@@ -259,39 +257,67 @@ class Publisher(Core):
             )
 
 
-def handle(args: argparse.Namespace):
+def build(args: argparse.Namespace):
     publisher = Publisher(
         project=args.project,
         tag=args.tag,
-        models=args.models,
+        models=args.names,
         base_branch=args.base_branch,
-        quiet=args.quiet,
-        kubernetes_target=args.config_out,
+    )
+    publisher.build()
+
+
+def test(args: argparse.Namespace):
+    publisher = Publisher(
+        project=args.project,
+        tag=args.tag,
+        models=args.names,
+        base_branch=args.base_branch,
+    )
+    publisher.test()
+
+
+def push(args: argparse.Namespace):
+    publisher = Publisher(
+        project=args.project,
+        tag=args.tag,
+        models=args.names,
+        base_branch=args.base_branch,
         use_kind=args.use_kind,
     )
-    if args.build:
-        publisher.build()
-    if args.test:
-        publisher.test()
-    if args.push:
-        publisher.push()
-    if args.app_config:
-        publisher.write_app_config()
+    publisher.push()
+
+
+def config(args: argparse.Namespace):
+    publisher = Publisher(
+        project=args.project,
+        tag=args.tag,
+        models=args.names,
+        base_branch=args.base_branch,
+        kubernetes_target=args.out,
+    )
+    publisher.write_app_config()
 
 
 def cli(subparsers: argparse._SubParsersAction):
     parser = subparsers.add_parser(
-        "publish", description="Deploy models on C/S compute cluster."
+        "models", description="Deploy models on C/S compute cluster."
     )
-    parser.add_argument("--tag", required=False, default=TAG)
-    parser.add_argument("--project", required=False, default=PROJECT)
-    parser.add_argument("--models", nargs="+", type=str, required=False, default=None)
-    parser.add_argument("--build", action="store_true")
-    parser.add_argument("--test", action="store_true")
-    parser.add_argument("--push", action="store_true")
-    parser.add_argument("--app-config", action="store_true")
-    parser.add_argument("--base-branch", default="origin/master")
-    parser.add_argument("--quiet", "-q", default=False)
-    parser.add_argument("--config-out", "-o", default=None)
-    parser.add_argument("--use-kind", action="store_true")
-    parser.set_defaults(func=handle)
+    parser.add_argument("--names", "-n", type=str, required=False, default=None)
+    parser.add_argument("--base-branch", default="origin/master", required=False)
+    model_subparsers = parser.add_subparsers()
+
+    build_parser = model_subparsers.add_parser("build")
+    build_parser.set_defaults(func=build)
+    test_parser = model_subparsers.add_parser("test")
+    test_parser.set_defaults(func=test)
+
+    push_parser = model_subparsers.add_parser("push")
+    push_parser.add_argument("--use-kind", action="store_true")
+    push_parser.set_defaults(func=push)
+
+    config_parser = model_subparsers.add_parser("config")
+    config_parser.add_argument("--out", "-o", default=None)
+    config_parser.set_defaults(func=config)
+
+    parser.set_defaults(func=lambda args: print(args))

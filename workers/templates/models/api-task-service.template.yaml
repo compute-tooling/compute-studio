@@ -8,4 +8,3 @@ spec:
     targetPort: 8888
   selector:
     app: # [owner]-[title]-api-task
-  type: LoadBalancer
