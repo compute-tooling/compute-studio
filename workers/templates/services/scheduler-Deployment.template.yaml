@@ -16,9 +16,6 @@ spec:
       containers:
         - name: scheduler
           image:
-          env:
-            - name: GET_HOSTS_FROM
-              value: dns
           ports:
             - containerPort: 8888
           env:

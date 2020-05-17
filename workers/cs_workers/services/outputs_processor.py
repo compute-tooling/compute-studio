@@ -60,7 +60,7 @@ def get_app():
 def start(args: argparse.Namespace):
     if args.start:
         app = get_app()
-        app.listen(8889)
+        app.listen(8888)
         tornado.ioloop.IOLoop.current().start()
 
 

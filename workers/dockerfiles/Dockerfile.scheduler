@@ -12,6 +12,7 @@ EXPOSE 80
 EXPOSE 8888
 
 RUN pip install -r requirements.txt
+RUN conda install dask distributed tornado
 
 RUN mkdir /home/cs_workers
 COPY cs_workers /home/cs_workers
