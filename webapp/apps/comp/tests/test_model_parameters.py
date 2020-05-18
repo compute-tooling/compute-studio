@@ -46,7 +46,7 @@ class Params(pt.Parameters):
 
 def get_inputs_callback(request, context):
     metaparams = MetaParams(array_first=True)
-    metaparams.adjust(request.json()["meta_param_dict"])
+    metaparams.adjust(request.json()["task_kwargs"]["meta_param_dict"])
     params = Params()
     params.set_state(d0=metaparams.d0.tolist(), d1=metaparams.d1)
     return {
@@ -54,6 +54,16 @@ def get_inputs_callback(request, context):
         "meta_parameters": metaparams.dump(),
         "model_parameters": {"section": params.dump()},
     }
+
+
+def mock_callback(request, context):
+    data = request.json()
+    if data["task_name"] == "version":
+        return {"status": "SUCCESS", "version": "v1"}
+    elif data["task_name"] == "defaults":
+        return get_inputs_callback(request, context)
+    else:
+        raise KeyError(f"Unknown task_name: {task_name}")
 
 
 @pytest.fixture
@@ -74,14 +84,8 @@ def mock_project(db, worker_url):
     with requests_mock.Mocker() as mock:
         mock.register_uri(
             "POST",
-            f"{worker_url}{project.owner}/{project.title}/inputs",
-            json=get_inputs_callback,
-            status_code=200,
-        )
-        mock.register_uri(
-            "POST",
-            f"{worker_url}{project.owner}/{project.title}/version",
-            json={"status": "SUCCESS", "version": "v1"},
+            f"{worker_url}{project.owner}/{project.title}/",
+            json=mock_callback,
             status_code=200,
         )
 

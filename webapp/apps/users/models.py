@@ -259,7 +259,7 @@ class Project(models.Model):
             return None
         try:
             success, result = SyncCompute().submit_job(
-                {}, self.worker_ext(actions.VERSION)
+                project=self, task_name=actions.VERSION, task_kwargs=dict()
             )
             if success:
                 return result["version"]
@@ -268,6 +268,9 @@ class Project(models.Model):
                 return None
         except Exception as e:
             print(f"error retrieving version for {self}", e)
+            import traceback
+
+            traceback.print_exc()
             return None
 
     def has_write_access(self, user):

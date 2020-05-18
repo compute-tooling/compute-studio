@@ -28,6 +28,7 @@ class MockCompute(Compute):
         with requests_mock.Mocker() as mock:
             resp = {"job_id": str(uuid.uuid4()), "qlength": 2}
             resp = json.dumps(resp)
+            print("mocking", url)
             mock.register_uri("POST", url, text=resp)
             self.last_posted = data
             return Compute.remote_submit_job(self, url, data, timeout)

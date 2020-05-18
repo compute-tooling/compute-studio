@@ -153,13 +153,11 @@ class RunMockModel(CoreTestMixin):
     ) -> Response:
         mock.register_uri(
             "POST",
-            f"{self.worker_url}{self.owner}/{self.title}/inputs",
-            text=json.dumps(defaults_resp_data),
-        )
-        mock.register_uri(
-            "POST",
-            f"{self.worker_url}{self.owner}/{self.title}/parse",
-            text=json.dumps(adj_resp_data),
+            f"{self.worker_url}{self.owner}/{self.title}/",
+            json=lambda request, context: {
+                "defaults": defaults_resp_data,
+                "parse": adj_resp_data,
+            }[request.json()["task_name"]],
         )
 
         init_resp = self.api_client.post(
@@ -367,7 +365,7 @@ class TestAsyncAPI(CoreTestMixin):
         with requests_mock.Mocker() as mock:
             mock.register_uri(
                 "POST",
-                f"{worker_url}{self.owner}/{self.title}/inputs",
+                f"{worker_url}{self.owner}/{self.title}/",
                 text=json.dumps(resp_data),
             )
             resp = api_client.get(f"/{self.owner}/{self.title}/api/v1/inputs/")
@@ -433,13 +431,11 @@ class TestAsyncAPI(CoreTestMixin):
         with requests_mock.Mocker() as mock:
             mock.register_uri(
                 "POST",
-                f"{worker_url}{self.owner}/{self.title}/inputs",
-                text=json.dumps(inputs_resp_data),
-            )
-            mock.register_uri(
-                "POST",
-                f"{worker_url}{self.owner}/{self.title}/parse",
-                text=json.dumps(adj_resp_data),
+                f"{worker_url}{self.owner}/{self.title}/",
+                json=lambda request, context: {
+                    "defaults": inputs_resp_data,
+                    "parse": adj_resp_data,
+                }[request.json()["task_name"]],
             )
             api_client.force_login(sim.owner.user)
             resp = api_client.get(sim.inputs.get_absolute_api_url())
@@ -463,15 +459,13 @@ class TestAsyncAPI(CoreTestMixin):
             print("mocking", f"{worker_url}{self.owner}/{self.title}/inputs")
             mock.register_uri(
                 "POST",
-                f"{worker_url}{self.owner}/{self.title}/version",
-                text=json.dumps({"status": "SUCCESS", "version": "1.0.0"}),
+                f"{worker_url}{self.owner}/{self.title}/",
+                json=lambda request, context: {
+                    "defaults": resp_data,
+                    "version": {"status": "SUCCESS", "version": "1.0.0"},
+                }[request.json()["task_name"]],
             )
 
-            mock.register_uri(
-                "POST",
-                f"{worker_url}{self.owner}/{self.title}/inputs",
-                text=json.dumps(resp_data),
-            )
             resp = api_client.post(
                 f"/{self.owner}/{self.title}/api/v1/inputs/",
                 data=meta_params,

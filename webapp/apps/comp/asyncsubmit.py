@@ -123,7 +123,7 @@ class SubmitSim:
         }
         print("submit", data)
         self.submitted_id, self.max_q_length = self.compute.submit_job(
-            data, inputs.project.worker_ext(action=actions.SIM)
+            project=inputs.project, task_name=actions.SIM, task_kwargs=data
         )
         print(f"job id: {self.submitted_id}")
         print(f"q lenghth: {self.max_q_length}")

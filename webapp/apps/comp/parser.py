@@ -55,7 +55,7 @@ class BaseParser:
             "errors_warnings": errors_warnings,
         }
         job_id, queue_length = self.compute.submit_job(
-            data, self.project.worker_ext(action=actions.PARSE)
+            project=self.project, task_name=actions.PARSE, task_kwargs=data
         )
         return job_id, queue_length
 

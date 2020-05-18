@@ -23,8 +23,10 @@ class WorkersUnreachableError(Exception):
 
 
 class Compute(object):
-    def remote_submit_job(self, url, data, timeout=TIMEOUT_IN_SECONDS, headers=None):
-        response = requests.post(url, data=data, timeout=timeout)
+    def remote_submit_job(
+        self, url: str, data: dict, timeout: int = TIMEOUT_IN_SECONDS, headers=None
+    ):
+        response = requests.post(url, json=data, timeout=timeout)
         return response
 
     def remote_query_job(self, theurl):
@@ -35,20 +37,21 @@ class Compute(object):
         job_response = requests.get(theurl)
         return job_response
 
-    def submit_job(self, tasks, endpoint):
-        print("submitting", tasks, endpoint)
-        url = f"http://{WORKER_HN}/{endpoint}"
-        return self.submit(tasks, url)
+    def submit_job(self, project, task_name, task_kwargs):
+        print("submitting", task_name)
+        url = f"http://{WORKER_HN}/{project.owner}/{project.title}/"
+        return self.submit(
+            tasks=dict(task_name=task_name, task_kwargs=task_kwargs), url=url
+        )
 
     def submit(self, tasks, url, increment_counter=True, use_wnc_offset=True):
         queue_length = 0
         submitted = False
         attempts = 0
         while not submitted:
-            packed = json.dumps(tasks)
             try:
                 response = self.remote_submit_job(
-                    url, data=packed, timeout=TIMEOUT_IN_SECONDS
+                    url, data=tasks, timeout=TIMEOUT_IN_SECONDS
                 )
                 if response.status_code == 200:
                     print("submitted: ", url)
@@ -106,10 +109,9 @@ class SyncCompute(Compute):
         submitted = False
         attempts = 0
         while not submitted:
-            packed = json.dumps(tasks)
             try:
                 response = self.remote_submit_job(
-                    url, data=packed, timeout=TIMEOUT_IN_SECONDS
+                    url, data=tasks, timeout=TIMEOUT_IN_SECONDS
                 )
                 if response.status_code == 200:
                     print("submitted: ", url)
