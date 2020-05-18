@@ -56,7 +56,7 @@ def main():
         nopass=nopass,
         passwords=f"+{sched_pw}" if not nopass else None,
         commands=["-@all", "+set", "+get", "+acl|whoami"],
-        keys=["job:"],
+        keys=["job-*"],
     )
 
     exec_pw = os.environ.get("REDIS_EXECUTOR_PW")
@@ -67,7 +67,7 @@ def main():
         nopass=nopass,
         passwords=f"+{exec_pw}" if not nopass else None,
         commands=["-@all", "+get", "+acl|whoami"],
-        keys=["job:"],
+        keys=["job-*"],
     )
     admin_client.close()
 

@@ -41,3 +41,5 @@ secret.yaml
 
 *scheduler-deployment.yaml
 *outputs-processor-deployment.yaml
+
+*google-creds.json

@@ -9,13 +9,13 @@ import redis
 import requests
 import cs_storage
 
+from cs_workers.utils import redis_conn_from_env
+
 
 redis_conn = dict(
-    host=os.environ.get("REDIS_HOST"),
-    port=os.environ.get("REDIS_PORT"),
-    db=os.environ.get("REDIS_DB"),
     username="executor",
     password=os.environ.get("REDIS_EXECUTOR_PW"),
+    **redis_conn_from_env(),
 )
 
 
@@ -82,10 +82,11 @@ def async_task_wrapper(task_id, func, **task_kwargs):
     else:
         res["status"] = "FAIL"
         res["traceback"] = traceback_str
-
+    print("saving results...")
     resp = requests.post(
         "http://outputs-processor/push/", json={"task_type": "sim", "result": res}
     )
+    print("resp", resp.status_code, resp.url)
     assert resp.status_code == 200, f"Got code: {resp.status_code}"
 
     return res

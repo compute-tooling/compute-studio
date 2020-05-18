@@ -16,9 +16,11 @@ def sim_handler(task_id, meta_param_dict, adjustment):
     outputs = functions.run_model(meta_param_dict, adjustment)
     print("got result")
     outputs = cs_storage.serialize_to_json(outputs)
+    print("storing results")
     resp = requests.post(
         "http://outputs-processor/write/", json={"task_id": task_id, "outputs": outputs}
     )
+    print("got resp", resp.status_code, resp.url)
     assert resp.status_code == 200, f"Got code: {resp.status_code}"
     return resp.json()
 

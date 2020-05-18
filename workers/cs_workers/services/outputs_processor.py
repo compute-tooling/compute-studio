@@ -27,10 +27,10 @@ async def push(task_type, result):
     ) as client:
         if task_type == "sim":
             print(f"posting data to {CS_URL}/outputs/api/")
-            return client.put(f"{CS_URL}/outputs/api/", json=result)
+            return await client.put(f"{CS_URL}/outputs/api/", json=result)
         if task_type == "parse":
             print(f"posting data to {CS_URL}/inputs/api/")
-            return client.put(f"{CS_URL}/inputs/api/", json=result)
+            return await client.put(f"{CS_URL}/inputs/api/", json=result)
         else:
             raise ValueError(f"Unknown task type: {task_type}.")
 
@@ -40,6 +40,7 @@ class Write(tornado.web.RequestHandler):
         print("POST -- /write/")
         payload = json.loads(self.request.body.decode("utf-8"))
         result = await write(**payload)
+        print("success-write")
         self.write(result)
 
 
@@ -47,7 +48,8 @@ class Push(tornado.web.RequestHandler):
     async def post(self):
         print("POST -- /push/")
         payload = json.loads(self.request.body.decode("utf-8"))
-        await push(**payload)
+        resp = await push(**payload)
+        print("got resp-push", resp.status_code, resp.url)
         self.set_status(200)
 
 

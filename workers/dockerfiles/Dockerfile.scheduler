@@ -12,12 +12,16 @@ EXPOSE 80
 EXPOSE 8888
 
 RUN pip install -r requirements.txt
+RUN pip install google-cloud-secret-manager
 RUN conda install dask distributed tornado
 
 RUN mkdir /home/cs_workers
 COPY cs_workers /home/cs_workers
 COPY setup.py /home
 RUN cd /home/ && pip install -e .
+
+COPY ./google-creds.json /google-creds.json
+ENV GOOGLE_APPLICATION_CREDENTIALS=/google-creds.json
 
 WORKDIR /home
 

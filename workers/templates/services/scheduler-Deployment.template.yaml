@@ -33,7 +33,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: worker-secret
-                  key: REDIS_HOST
+                  key: REDIS_PORT
             - name: REDIS_DB
               valueFrom:
                 secretKeyRef:

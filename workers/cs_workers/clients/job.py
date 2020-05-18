@@ -6,26 +6,36 @@ import yaml
 
 from kubernetes import client as kclient, config as kconfig
 
-from cs_workers.utils import clean
+from cs_workers.utils import clean, redis_conn_from_env
 from cs_workers.clients.core import Core
 
 
 redis_conn = dict(
-    host=os.environ.get("REDIS_HOST"),
-    port=os.environ.get("REDIS_PORT"),
-    db=os.environ.get("REDIS_DB"),
     username="scheduler",
     password=os.environ.get("REDIS_SCHEDULER_PW"),
+    **redis_conn_from_env(),
 )
 
 
 class Job(Core):
     def __init__(
-        self, project, owner, title, tag, job_id=None, job_kwargs=None, quiet=True
+        self,
+        project,
+        owner,
+        title,
+        tag,
+        job_id=None,
+        job_kwargs=None,
+        quiet=True,
+        incluster=True,
     ):
         super().__init__(project, quiet=quiet)
         self.config = {}
-        kconfig.load_kube_config()
+        self.incluster = incluster
+        if self.incluster:
+            kconfig.load_incluster_config()
+        else:
+            kconfig.load_kube_config()
         self.api_client = kclient.BatchV1Api()
         self.job = self.configure(owner, title, tag, job_id)
         self.save_job_kwargs(self.job_id, job_kwargs)
@@ -67,11 +77,11 @@ class Job(Core):
 
     def configure(self, owner, title, tag, job_id=None):
         if job_id is None:
-            job_id = "job:" + str(uuid.uuid4())
+            job_id = "job-" + str(uuid.uuid4())
         else:
             job_id = str(job_id)
-            if not str(job_id).startswith("job:"):
-                job_id += "job:"
+            if not str(job_id).startswith("job-"):
+                job_id = f"job-{job_id}"
 
         if (owner, title) not in self.config:
             self.config.update(self.get_config([(owner, title)]))

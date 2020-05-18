@@ -21,6 +21,7 @@ class Payload(ma.Schema):
     task_kwargs = ma.fields.Dict(
         keys=ma.fields.Str(), values=ma.fields.Field(), missing=dict
     )
+    tag = ma.fields.Str(required=False)
 
 
 def get_projects():
@@ -42,7 +43,7 @@ class Scheduler(tornado.web.RequestHandler):
         if not self.request.body:
             return
         payload = Payload().loads(self.request.body.decode("utf-8"))
-
+        print("payload", payload)
         if (owner, title) not in self.projects:
             self.set_status(404)
 
@@ -70,11 +71,12 @@ class Scheduler(tornado.web.RequestHandler):
 
             data = resp.json()
         elif task_name == "sim":
+            tag = payload["tag"]
             client = job.Job(
                 "cs-workers-dev",
                 owner,
                 title,
-                tag="latest",
+                tag=tag,
                 job_id=task_id,
                 job_kwargs=payload["task_kwargs"],
             )

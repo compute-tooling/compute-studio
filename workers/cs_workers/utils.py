@@ -1,4 +1,5 @@
 import base64
+import os
 import re
 import subprocess
 import time
@@ -41,3 +42,17 @@ def read_github_file(org, repo, branch, filename):
     decoded_bytes = base64.decodebytes(encoded_content)
     text = decoded_bytes.decode()
     return text
+
+
+def redis_conn_from_env():
+    kwargs = {}
+    for kwarg, env in [
+        ("host", "REDIS_HOST"),
+        ("port", "REDIS_PORT"),
+        ("db", "REDIS_DB"),
+    ]:
+        val = os.environ.get(env)
+        if val:
+            kwargs[kwarg] = val
+
+    return kwargs
