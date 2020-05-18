@@ -84,7 +84,7 @@ def async_task_wrapper(task_id, func, **task_kwargs):
         res["traceback"] = traceback_str
     print("saving results...")
     resp = requests.post(
-        "http://outputs-processor/push/", json={"task_type": "sim", "result": res}
+        "http://outputs-processor/push/", json={"task_name": "sim", "result": res}
     )
     print("resp", resp.status_code, resp.url)
     assert resp.status_code == 200, f"Got code: {resp.status_code}"

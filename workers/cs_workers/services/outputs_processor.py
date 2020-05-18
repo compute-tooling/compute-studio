@@ -21,18 +21,18 @@ async def write(task_id, outputs):
     return res
 
 
-async def push(task_type, result):
+async def push(task_name, result):
     async with httpx.AsyncClient(
         headers={"Authorization": f"Token {CS_API_TOKEN}"}
     ) as client:
-        if task_type == "sim":
+        if task_name == "sim":
             print(f"posting data to {CS_URL}/outputs/api/")
             return await client.put(f"{CS_URL}/outputs/api/", json=result)
-        if task_type == "parse":
+        if task_name == "parse":
             print(f"posting data to {CS_URL}/inputs/api/")
             return await client.put(f"{CS_URL}/inputs/api/", json=result)
         else:
-            raise ValueError(f"Unknown task type: {task_type}.")
+            raise ValueError(f"Unknown task type: {task_name}.")
 
 
 class Write(tornado.web.RequestHandler):
