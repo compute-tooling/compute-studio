@@ -28,7 +28,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/postgres
       - USE_STRIPE=False
       - DEBUG=True
-      - WORKERS=${WORKERS}:5050
+      - WORKERS=${WORKERS}
       - LOCAL=True
       - BUCKET=cs-outputs-dev
       - MAILGUN_API_KEY=${MAILGUN_API_KEY}
