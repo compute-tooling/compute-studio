@@ -250,31 +250,8 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
             return Response(data, status=status.HTTP_200_OK)
         elif self.object.status == "STARTED":
             return Response(data, status=status.HTTP_200_OK)
-
-        compute = Compute()
-        try:
-            job_ready = compute.results_ready(self.object)
-        except JobFailError:
-            self.object.traceback = ""
-            self.object.save()
-            return Response(
-                {"error": "model error"}, status=status.HTTP_400_BAD_REQUEST
-            )
-        # something happened and the exception was not caught
-        if job_ready == "FAIL":
-            result = compute.get_results(self.object)
-            if result["traceback"]:
-                traceback_ = result["traceback"]
-            else:
-                traceback_ = "Error: The traceback for this error is unavailable."
-            self.object.traceback = traceback_
-            self.object.status = "WORKER_FAILURE"
-            self.object.save()
-            return Response(
-                {"error": "model error"}, status=status.HTTP_400_BAD_REQUEST
-            )
-        data.update(sim.data)
-        return Response(data, status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(data, status=status.HTTP_202_ACCEPTED)
 
     def get(self, request, *args, **kwargs):
         return self.get_sim_data(request.user, as_remote=False, **kwargs)
@@ -401,6 +378,7 @@ class MyInputsAPIView(APIView):
 
         if request.user.username == "comp-api-user":
             data = request.data
+            print("got data", data)
             ser = InputsSerializer(data=request.data)
             if ser.is_valid():
                 data = ser.validated_data

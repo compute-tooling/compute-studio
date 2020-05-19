@@ -172,6 +172,12 @@ class InputsSerializer(serializers.ModelSerializer):
         rep["sim"]["authors"] = sorted(rep["sim"]["authors"])
         return rep
 
+    def to_internal_value(self, data):
+        print("to_internal_value", data)
+        if "outputs" in data:
+            data.update(**data.pop("outputs"))
+        return super().to_internal_value(data)
+
     class Meta:
         model = Inputs
         fields = (

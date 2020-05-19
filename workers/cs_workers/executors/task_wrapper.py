@@ -29,12 +29,13 @@ except ImportError as ie:
     pass
 
 
-async def sync_task_wrapper(task_id, task_name, func, **task_kwargs):
+async def sync_task_wrapper(task_id, task_name, func, task_kwargs=None):
+    print("sync task", task_id, func, task_kwargs)
     start = time.time()
     traceback_str = None
     res = {}
     try:
-        outputs = func(task_id, **task_kwargs)
+        outputs = func(task_id, **(task_kwargs or {}))
         res.update(outputs)
     except Exception:
         traceback_str = traceback.format_exc()
@@ -50,20 +51,22 @@ async def sync_task_wrapper(task_id, task_name, func, **task_kwargs):
     return res
 
 
-async def async_task_wrapper(task_id, task_name, func, **task_kwargs):
-    print("sim task", task_id, func)
+async def async_task_wrapper(task_id, task_name, func, task_kwargs=None):
+    print("async task", task_id, func, task_kwargs)
     start = time.time()
     traceback_str = None
     res = {"job_id": task_id}
     try:
-        print("calling func", func)
-        if not task_kwargs:
+        if task_kwargs is None:
+            if not task_id.startswith("job-"):
+                _task_id = f"job-{task_id}"
+            else:
+                _task_id = task_id
             with redis.Redis(**redis_conn) as rclient:
-                task_kwargs = rclient.get(task_id)
-            if task_kwargs is None:
-                raise KeyError(f"No value found for job id: {task_id}")
-        task_kwargs = json.loads(task_kwargs.decode())
-        outputs = func(task_id, **task_kwargs)
+                task_kwargs = rclient.get(_task_id)
+            if task_kwargs is not None:
+                task_kwargs = json.loads(task_kwargs.decode())
+        outputs = func(task_id, **(task_kwargs or {}))
         res.update(
             {
                 "model_version": functions.get_version(),

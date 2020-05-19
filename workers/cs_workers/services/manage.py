@@ -97,6 +97,7 @@ class Cluster:
             self.secret_template = yaml.safe_load(f.read())
 
         self._redis_secrets = None
+        self._secrets = None
 
     def build(self):
         """
@@ -255,7 +256,7 @@ class Cluster:
     @property
     def secrets(self):
         if self._secrets is None:
-            self._secrets = Secrets()
+            self._secrets = Secrets(self.project)
         return self._secrets
 
 
@@ -284,6 +285,10 @@ def config(args: argparse.Namespace):
     cluster.config()
 
 
+def serve(args: argparse.Namespace):
+    run("kubectl port-forward svc/scheduler 8888:80")
+
+
 def cli(subparsers: argparse._SubParsersAction):
     parser = subparsers.add_parser("services", aliases=["svc"])
     svc_subparsers = parser.add_subparsers()
@@ -298,3 +303,6 @@ def cli(subparsers: argparse._SubParsersAction):
     config_parser = svc_subparsers.add_parser("config")
     config_parser.add_argument("--out", "-o")
     config_parser.set_defaults(func=config)
+
+    serve_parser = svc_subparsers.add_parser("serve")
+    serve_parser.set_defaults(func=serve)

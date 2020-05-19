@@ -24,7 +24,11 @@ from rest_framework.authentication import (
 from webapp.apps.users.models import Project, is_profile_active
 from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 
-from .serializers import PublishSerializer, ProjectWithVersionSerializer
+from .serializers import (
+    PublishSerializer,
+    ProjectWithVersionSerializer,
+    DeploymentSerializer,
+)
 from .utils import title_fixup
 
 
@@ -51,6 +55,12 @@ class ProjectDetailView(GetProjectMixin, View):
 
 
 class ProjectDetailAPIView(GetProjectMixin, APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
     def get(self, request, *args, **kwargs):
         project = self.get_object(**kwargs)
         serializer = PublishSerializer(project, context={"request": request})
@@ -141,6 +151,31 @@ class ProjectAPIView(GetProjectMixin, APIView):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class DeploymentAPIView(GetProjectMixin, APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    def get(self, request, *args, **kwargs):
+        ser = DeploymentSerializer(
+            self.get_object(**kwargs), context={"request": request}
+        )
+        return Response(ser.data, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        project = self.get_object(**kwargs)
+        if request.user.is_authenticated and project.has_write_access(request.user):
+            serializer = DeploymentSerializer(project, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
 class RecentModelsAPIView(generics.ListAPIView):

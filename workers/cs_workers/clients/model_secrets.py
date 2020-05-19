@@ -15,26 +15,12 @@ class ModelSecrets(Secrets):
         self.project = project
         self.safe_owner = clean(owner)
         self.safe_title = clean(title)
-        self.client = None
+        super().__init__(project)
 
     def set_secret(self, name, value):
-        return self._set_secret(name, value)
-
-    def get_secret(self, name):
-        return self._get_secret(name)
-
-    def list_secrets(self):
-        return self._get_secret()
-
-    def delete_secret(self, name):
-        return self._set_secret(name, None)
-
-    def _set_secret(self, name, value):
         secret_name = f"{self.safe_owner}_{self.safe_title}"
-
-        client = self._client()
         try:
-            secret_val = self._get_secret()
+            secret_val = self.get_secret()
         except SecretNotFound:
             secret_val = {name: value}
             return super().set_secret(secret_name, secret_val)
@@ -48,17 +34,9 @@ class ModelSecrets(Secrets):
 
         return super().set_secret(secret_name, secret_val)
 
-    def _get_secret(self, name=None):
-        from google.api_core import exceptions
-
+    def get_secret(self, name=None):
         secret_name = f"{self.safe_owner}_{self.safe_title}"
-
-        client = self._client()
-
-        try:
-            secret = json.loads(super().get_secret(secret_name))
-        except exceptions.NotFound:
-            raise SecretNotFound()
+        secret = json.loads(super().get_secret(secret_name))
 
         if name and name in secret:
             return secret[name]
@@ -66,6 +44,12 @@ class ModelSecrets(Secrets):
             return None
         else:
             return secret
+
+    def list_secrets(self):
+        return self.get_secret()
+
+    def delete_secret(self, name):
+        return self.set_secret(name, None)
 
 
 def handle(args: argparse.Namespace):

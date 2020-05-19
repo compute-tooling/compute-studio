@@ -91,3 +91,9 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
             "version",
         )
         read_only = ("sim_count", "status", "user_count", "version")
+
+
+class DeploymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = ("latest_tag",)

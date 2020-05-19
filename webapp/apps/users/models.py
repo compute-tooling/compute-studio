@@ -276,6 +276,7 @@ class Project(models.Model):
             return None
 
     def has_write_access(self, user):
+        print("Got user", user)
         return bool(
             user
             and user.is_authenticated

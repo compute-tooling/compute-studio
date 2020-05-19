@@ -21,7 +21,7 @@ class Payload(ma.Schema):
     task_kwargs = ma.fields.Dict(
         keys=ma.fields.Str(), values=ma.fields.Field(), missing=dict
     )
-    tag = ma.fields.Str(required=False)
+    tag = ma.fields.Str(required=False, allow_none=True)
 
 
 def get_projects():

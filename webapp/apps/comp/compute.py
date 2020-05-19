@@ -37,11 +37,11 @@ class Compute(object):
         job_response = requests.get(theurl)
         return job_response
 
-    def submit_job(self, project, task_name, task_kwargs):
+    def submit_job(self, project, task_name, task_kwargs, tag=None):
         print("submitting", task_name)
         url = f"http://{WORKER_HN}/{project.owner}/{project.title}/"
         return self.submit(
-            tasks=dict(task_name=task_name, task_kwargs=task_kwargs), url=url
+            tasks=dict(task_name=task_name, tag=tag, task_kwargs=task_kwargs), url=url
         )
 
     def submit(self, tasks, url, increment_counter=True, use_wnc_offset=True):
@@ -74,34 +74,34 @@ class Compute(object):
 
         return job_id, queue_length
 
-    def results_ready(self, sim):
-        result_url = (
-            f"http://{WORKER_HN}/{sim.project.owner.user.username}/{sim.project.title}"
-            f"/query/{sim.job_id}/"
-        )
-        job_response = self.remote_query_job(result_url)
-        msg = "{0} failed on host: {1}".format(sim.job_id, WORKER_HN)
-        if job_response.status_code == 200:  # Valid response
-            return job_response.text
-        else:
-            print("did not expect response with status_code", job_response.status_code)
-            raise JobFailError(msg)
+    # def results_ready(self, sim):
+    #     result_url = (
+    #         f"http://{WORKER_HN}/{sim.project.owner.user.username}/{sim.project.title}"
+    #         f"/query/{sim.job_id}/"
+    #     )
+    #     job_response = self.remote_query_job(result_url)
+    #     msg = "{0} failed on host: {1}".format(sim.job_id, WORKER_HN)
+    #     if job_response.status_code == 200:  # Valid response
+    #         return job_response.text
+    #     else:
+    #         print("did not expect response with status_code", job_response.status_code)
+    #         raise JobFailError(msg)
 
-    def get_results(self, sim):
-        result_url = (
-            f"http://{WORKER_HN}/{sim.project.owner.user.username}/{sim.project.title}"
-            f"/get_job/{sim.job_id}/"
-        )
-        job_response = self.remote_get_job(result_url)
-        if job_response.status_code == 200:  # Valid response
-            try:
-                return job_response.json()
-            except ValueError:
-                # Got back a bad response. Get the text and re-raise
-                msg = "PROBLEM WITH RESPONSE. TEXT RECEIVED: {}"
-                raise ValueError(msg)
-        else:
-            raise WorkersUnreachableError()
+    # def get_results(self, sim):
+    #     result_url = (
+    #         f"http://{WORKER_HN}/{sim.project.owner.user.username}/{sim.project.title}"
+    #         f"/get_job/{sim.job_id}/"
+    #     )
+    #     job_response = self.remote_get_job(result_url)
+    #     if job_response.status_code == 200:  # Valid response
+    #         try:
+    #             return job_response.json()
+    #         except ValueError:
+    #             # Got back a bad response. Get the text and re-raise
+    #             msg = "PROBLEM WITH RESPONSE. TEXT RECEIVED: {}"
+    #             raise ValueError(msg)
+    #     else:
+    #         raise WorkersUnreachableError()
 
 
 class SyncCompute(Compute):

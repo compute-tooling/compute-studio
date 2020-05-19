@@ -42,8 +42,8 @@ class Async(tornado.web.RequestHandler):
         task_id = payload.pop("task_id", None)
         if task_id is None:
             task_id = str(uuid.uuid4())
-        task_kwargs = payload.get("task_kwargs") or {}
-        async_task = async_task_wrapper(task_id, task_name, handler, **task_kwargs)
+        task_kwargs = payload.get("task_kwargs")
+        async_task = async_task_wrapper(task_id, task_name, handler, task_kwargs)
         asyncio.create_task(async_task)
         self.set_status(200)
         self.write({"status": "PENDING", "task_id": task_id})
@@ -64,8 +64,8 @@ class Sync(tornado.web.RequestHandler):
         task_id = payload.pop("task_id", None)
         if task_id is None:
             task_id = str(uuid.uuid4())
-        task_kwargs = payload.get("task_kwargs") or {}
-        result = await sync_task_wrapper(task_id, task_name, handler, **task_kwargs)
+        task_kwargs = payload.get("task_kwargs")
+        result = await sync_task_wrapper(task_id, task_name, handler, task_kwargs)
         self.write(result)
 
 

@@ -77,11 +77,9 @@ class Job(Core):
 
     def configure(self, owner, title, tag, job_id=None):
         if job_id is None:
-            job_id = "job-" + str(uuid.uuid4())
+            job_id = str(uuid.uuid4())
         else:
             job_id = str(job_id)
-            if not str(job_id).startswith("job-"):
-                job_id = f"job-{job_id}"
 
         if (owner, title) not in self.config:
             self.config.update(self.get_config([(owner, title)]))
@@ -110,7 +108,9 @@ class Job(Core):
             ),
         )
         # Create the specification of deployment
-        spec = kclient.V1JobSpec(template=template, backoff_limit=1)
+        spec = kclient.V1JobSpec(
+            template=template, backoff_limit=1, ttl_seconds_after_finished=7200
+        )
         # Instantiate the job object
         job = kclient.V1Job(
             api_version="batch/v1",
@@ -125,6 +125,8 @@ class Job(Core):
         return job
 
     def save_job_kwargs(self, job_id, job_kwargs):
+        if not job_id.startswith("job-"):
+            job_id = f"job-{job_id}"
         with redis.Redis(**redis_conn) as rclient:
             rclient.set(job_id, json.dumps(job_kwargs))
 

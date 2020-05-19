@@ -87,5 +87,5 @@ class Core:
         return resources
 
     def _list_secrets(self, app):
-        secret = Secrets(app["owner"], app["title"], self.project)
+        secret = ModelSecrets(app["owner"], app["title"], self.project)
         return secret.list_secrets()
