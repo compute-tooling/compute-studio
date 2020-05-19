@@ -11,7 +11,7 @@ from git import Repo, InvalidGitRepositoryError
 
 
 from cs_workers.utils import clean, run, parse_owner_title, read_github_file
-from cs_workers.clients.secrets import Secrets
+from cs_workers.clients.model_secrets import ModelSecrets
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
 BASE_PATH = CURR_PATH / ".." / ".."

@@ -120,6 +120,7 @@ class SubmitSim:
         data = {
             "meta_param_dict": inputs.meta_parameters,
             "adjustment": inputs.deserialized_inputs,
+            "tag": self.sim.project.latest_tag,
         }
         print("submit", data)
         self.submitted_id, self.max_q_length = self.compute.submit_job(

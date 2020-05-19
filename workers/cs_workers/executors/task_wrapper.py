@@ -29,7 +29,7 @@ except ImportError as ie:
     pass
 
 
-def sync_task_wrapper(task_id, func, **task_kwargs):
+async def sync_task_wrapper(task_id, task_name, func, **task_kwargs):
     start = time.time()
     traceback_str = None
     res = {}
@@ -50,7 +50,7 @@ def sync_task_wrapper(task_id, func, **task_kwargs):
     return res
 
 
-def async_task_wrapper(task_id, func, **task_kwargs):
+async def async_task_wrapper(task_id, task_name, func, **task_kwargs):
     print("sim task", task_id, func)
     start = time.time()
     traceback_str = None
@@ -84,7 +84,7 @@ def async_task_wrapper(task_id, func, **task_kwargs):
         res["traceback"] = traceback_str
     print("saving results...")
     resp = requests.post(
-        "http://outputs-processor/push/", json={"task_name": "sim", "result": res}
+        "http://outputs-processor/push/", json={"task_name": task_name, "result": res}
     )
     print("resp", resp.status_code, resp.url)
     assert resp.status_code == 200, f"Got code: {resp.status_code}"

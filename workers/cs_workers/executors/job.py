@@ -29,7 +29,7 @@ routes = {"sim": sim_handler}
 
 
 def main(args: argparse.Namespace):
-    async_task_wrapper(args.job_id, routes[args.route_name])
+    async_task_wrapper(args.job_id, args.route_name, routes[args.route_name])
 
 
 def cli(subparsers: argparse._SubParsersAction):

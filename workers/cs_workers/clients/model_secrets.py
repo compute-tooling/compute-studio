@@ -3,15 +3,12 @@ import json
 import os
 
 from cs_workers.utils import clean
+from cs_workers.secrets import Secrets, SecretNotFound
 
 PROJECT = os.environ.get("PROJECT", "cs-workers-dev")
 
 
-class SecretNotFound(Exception):
-    pass
-
-
-class Secrets:
+class ModelSecrets(Secrets):
     def __init__(self, owner, title, project):
         self.owner = owner
         self.title = title
@@ -40,10 +37,7 @@ class Secrets:
             secret_val = self._get_secret()
         except SecretNotFound:
             secret_val = {name: value}
-            proj_parent = client.project_path(self.project)
-            client.create_secret(
-                proj_parent, secret_name, {"replication": {"automatic": {}}}
-            )
+            return super().set_secret(secret_name, secret_val)
         else:
             if secret_val is not None:
                 secret_val[name] = value
@@ -52,11 +46,7 @@ class Secrets:
             if value is None:
                 secret_val.pop(name)
 
-        secret_bytes = json.dumps(secret_val).encode("utf-8")
-
-        secret_parent = client.secret_path(self.project, secret_name)
-
-        return client.add_secret_version(secret_parent, {"data": secret_bytes})
+        return super().set_secret(secret_name, secret_val)
 
     def _get_secret(self, name=None):
         from google.api_core import exceptions
@@ -66,11 +56,7 @@ class Secrets:
         client = self._client()
 
         try:
-            response = client.access_secret_version(
-                f"projects/{self.project}/secrets/{secret_name}/versions/latest"
-            )
-
-            secret = json.loads(response.payload.data.decode("utf-8"))
+            secret = json.loads(super().get_secret(secret_name))
         except exceptions.NotFound:
             raise SecretNotFound()
 
@@ -80,15 +66,6 @@ class Secrets:
             return None
         else:
             return secret
-
-    def _client(self):
-        if self.client:
-            return self.client
-
-        from google.cloud import secretmanager
-
-        self.client = secretmanager.SecretManagerServiceClient()
-        return self.client
 
 
 def handle(args: argparse.Namespace):

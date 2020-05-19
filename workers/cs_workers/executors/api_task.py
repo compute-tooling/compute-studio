@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import json
 import os
 import uuid
@@ -7,7 +8,6 @@ from cs_workers.executors.task_wrapper import async_task_wrapper, sync_task_wrap
 
 import tornado.ioloop
 import tornado.web
-from dask.distributed import Client, fire_and_forget
 
 try:
     from cs_config import functions
@@ -34,7 +34,8 @@ class Async(tornado.web.RequestHandler):
     async def post(self):
         print("POST -- /async/", self.request.body)
         payload = json.loads(self.request.body.decode("utf-8"))
-        handler = self.routes.get(payload.get("task_name"))
+        task_name = payload.get("task_name")
+        handler = self.routes.get(task_name)
         if handler is None:
             self.set_status(404)
             return
@@ -42,9 +43,8 @@ class Async(tornado.web.RequestHandler):
         if task_id is None:
             task_id = str(uuid.uuid4())
         task_kwargs = payload.get("task_kwargs") or {}
-        async with Client(asynchronous=True, processes=True) as client:
-            fut = client.submit(async_task_wrapper, task_id, handler, **task_kwargs)
-            fire_and_forget(fut)
+        async_task = async_task_wrapper(task_id, task_name, handler, **task_kwargs)
+        asyncio.create_task(async_task)
         self.set_status(200)
         self.write({"status": "PENDING", "task_id": task_id})
 
@@ -56,7 +56,8 @@ class Sync(tornado.web.RequestHandler):
     async def post(self):
         print("POST -- /sync/", self.request.body)
         payload = json.loads(self.request.body.decode("utf-8"))
-        handler = self.routes.get(payload.get("task_name"))
+        task_name = payload.get("task_name")
+        handler = self.routes.get(task_name)
         if handler is None:
             self.set_status(404)
             return
@@ -64,7 +65,7 @@ class Sync(tornado.web.RequestHandler):
         if task_id is None:
             task_id = str(uuid.uuid4())
         task_kwargs = payload.get("task_kwargs") or {}
-        result = sync_task_wrapper(task_id, handler, **task_kwargs)
+        result = await sync_task_wrapper(task_id, task_name, handler, **task_kwargs)
         self.write(result)
 
 

@@ -10,6 +10,9 @@ import time
 from pathlib import Path
 
 
+from ..secrets import Secrets
+
+
 def clean(word):
     return re.sub("[^0-9a-zA-Z]+", "", word).lower()
 
@@ -61,10 +64,18 @@ class Cluster:
     kubernetes_target = "kubernetes/"
     cr = "gcr.io"
 
-    def __init__(self, tag, project, kubernetes_target="kubernetes/", use_kind=False):
+    def __init__(
+        self,
+        tag,
+        project,
+        kubernetes_target="kubernetes/",
+        use_kind=False,
+        cs_api_token=None,
+    ):
         self.tag = tag
         self.project = project
         self.use_kind = use_kind
+        self._cs_api_token = cs_api_token
 
         if kubernetes_target is None:
             self.kubernetes_target = Cluster.kubernetes_target
@@ -192,10 +203,8 @@ class Cluster:
         self.write_config("redis-master-Deployment.yaml", deployment)
 
     def write_secret(self):
-
         secrets = copy.deepcopy(self.secret_template)
-        secrets["stringData"]["CS_API_TOKEN"] = self._get_secret("CS_API_TOKEN")
-
+        secrets["stringData"]["CS_API_TOKEN"] = self.cs_api_token
         redis_secrets = self.redis_secrets()
         for name, sec in redis_secrets.items():
             if sec is not None:
@@ -227,39 +236,27 @@ class Cluster:
         )
         for sec in redis_secrets:
             try:
-                value = self._get_secret(sec)
+                value = self.secrets.get_secret(sec)
             except exceptions.NotFound:
                 try:
                     value = redis_acl_genpass()
-                    self._set_secret(sec, value)
+                    self.secrets.set_secret(sec, value)
                 except Exception:
                     value = ""
             redis_secrets[sec] = value
         return redis_secrets
 
-    def _get_secret(self, secret_name):
-        from google.cloud import secretmanager
+    @property
+    def cs_api_token(self):
+        if self._cs_api_token is None:
+            self._cs_api_token = self.secrets._get_secret("CS_API_TOKEN")
+        return self._cs_api_token
 
-        client = secretmanager.SecretManagerServiceClient()
-        response = client.access_secret_version(
-            f"projects/{self.project}/secrets/{secret_name}/versions/latest"
-        )
-
-        return response.payload.data.decode("utf-8")
-
-    def _set_secret(self, name, value):
-        from google.cloud import secretmanager
-
-        client = secretmanager.SecretManagerServiceClient()
-        proj_parent = client.project_path(self.project)
-        client.create_secret(proj_parent, name, {"replication": {"automatic": {}}})
-
-        if not isinstance(value, bytes):
-            value = value.encode("utf-8")
-
-        secret_parent = client.secret_path(self.project, name)
-
-        return client.add_secret_version(secret_parent, {"data": value})
+    @property
+    def secrets(self):
+        if self._secrets is None:
+            self._secrets = Secrets()
+        return self._secrets
 
 
 def cluster_from_args(args: argparse.Namespace):
@@ -268,6 +265,7 @@ def cluster_from_args(args: argparse.Namespace):
         project=args.project,
         kubernetes_target=getattr(args, "out", None),
         use_kind=getattr(args, "use_kind", None),
+        cs_api_token=getattr(args, "cs_api_token", None),
     )
 
 

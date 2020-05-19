@@ -8,6 +8,7 @@ class PublishSerializer(serializers.ModelSerializer):
     cluster_type = serializers.CharField(required=False)
     sim_count = serializers.IntegerField(required=False)
     user_count = serializers.IntegerField(required=False)
+    latest_tag = serializers.CharField(required=False)
     # see to_representation
     # has_write_access = serializers.BooleanField(source="has_write_access")
 
@@ -31,6 +32,7 @@ class PublishSerializer(serializers.ModelSerializer):
             "description",
             "repo_url",
             "repo_tag",
+            "latest_tag",
             "exp_task_time",
             "server_cost",
             "cpu",
@@ -51,6 +53,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
     sim_count = serializers.IntegerField(required=False)
     version = serializers.CharField(required=False)
     user_count = serializers.IntegerField(required=False)
+    latest_tag = serializers.CharField(required=False)
     # see to_representation
     # has_write_access = serializers.BooleanField(source="has_write_access")
 
@@ -74,6 +77,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
             "description",
             "repo_url",
             "repo_tag",
+            "latest_tag",
             "exp_task_time",
             "server_cost",
             "cpu",

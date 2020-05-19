@@ -5,8 +5,10 @@ import sys
 import yaml
 from pathlib import Path
 
-from ..utils import run, clean
+import requests
 
+from cs_workers.utils import run, clean
+from cs_workers.secrets import Secrets
 from cs_workers.clients.core import Core
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
@@ -37,12 +39,16 @@ class Publisher(Core):
         quiet=False,
         kubernetes_target=None,
         use_kind=False,
+        cs_url=None,
+        cs_api_token=None,
     ):
         super().__init__(project, tag, base_branch, quiet)
 
         self.models = models.split(",") if models else None
         self.kubernetes_target = kubernetes_target or self.kubernetes_target
         self.use_kind = use_kind
+        self.cs_url = cs_url
+        self._cs_api_token = cs_api_token
 
         if self.kubernetes_target == "-":
             self.quiet = True
@@ -165,6 +171,15 @@ class Publisher(Core):
             cmd_prefix = "docker push"
         run(f"{cmd_prefix} {self.cr}/{self.project}/{img_name}:{self.tag}")
 
+        if self.cs_url is not None:
+            resp = requests.put(
+                f"{self.cs_url}/publish/api/{app['owner']}/{app['title']}/detail/",
+                json={"latest_tag": self.tag},
+            )
+            assert (
+                resp.status_code == 200
+            ), f"Got: {resp.url} {resp.status_code} {resp.text}"
+
     def write_secrets(self, app):
         secret_config = copy.deepcopy(self.secret_template)
         safeowner = clean(app["owner"])
@@ -256,6 +271,13 @@ class Publisher(Core):
                 {"name": key, "valueFrom": {"secretKeyRef": {"name": name, "key": key}}}
             )
 
+    @property
+    def cs_api_token(self):
+        if self._cs_api_token is None:
+            secrets = Secrets(self.project)
+            self._cs_api_token = secrets.get_secret("CS_API_TOKEN")
+        return self._cs_api_token
+
 
 def build(args: argparse.Namespace):
     publisher = Publisher(
@@ -284,6 +306,8 @@ def push(args: argparse.Namespace):
         models=args.names,
         base_branch=args.base_branch,
         use_kind=args.use_kind,
+        cs_url=getattr(args, "cs_url", None),
+        cs_api_token=getattr(args, "cs_api_token", None),
     )
     publisher.push()
 
@@ -295,6 +319,8 @@ def config(args: argparse.Namespace):
         models=args.names,
         base_branch=args.base_branch,
         kubernetes_target=args.out,
+        cs_url=getattr(args, "cs_url", None),
+        cs_api_token=getattr(args, "cs_api_token", None),
     )
     publisher.write_app_config()
 

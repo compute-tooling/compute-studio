@@ -57,8 +57,8 @@ class Compute(object):
                     print("submitted: ", url)
                     submitted = True
                     data = response.json()
-                    job_id = data["job_id"]
-                    queue_length = data["qlength"]
+                    job_id = data["task_id"]
+                    queue_length = 0  # data["qlength"]
                 else:
                     print("FAILED: ", WORKER_HN)
                     attempts += 1
