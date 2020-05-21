@@ -23,7 +23,7 @@ setuptools.setup(
         "kubernetes",
         "gitpython",
         "pyyaml",
-        "googe-cloud-secret-manager",
+        "google-cloud-secret-manager",
         "httpx",
         "dask",
         "distributed",
