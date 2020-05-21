@@ -42,6 +42,7 @@ class Publisher(Core):
         cs_url=None,
         cs_api_token=None,
         latest_tag=False,
+        cr=None,
     ):
         super().__init__(project, tag, base_branch, quiet)
 
@@ -51,6 +52,7 @@ class Publisher(Core):
         self.cs_url = cs_url
         self._cs_api_token = cs_api_token
         self.latest_tag = latest_tag
+        self.cr = cr
 
         if self.kubernetes_target == "-":
             self.quiet = True
@@ -156,6 +158,8 @@ class Publisher(Core):
         )
         run(cmd)
 
+        assert self.cr is not None
+
         run(
             f"docker tag {img_name}:{self.tag} {self.cr}/{self.project}/{img_name}:{self.tag}"
         )
@@ -165,10 +169,11 @@ class Publisher(Core):
         safetitle = clean(app["title"])
         img_name = f"{safeowner}_{safetitle}_tasks"
         run(
-            f"docker run {self.cr}/{self.project}/{img_name}:{self.tag} py.test /home/test_functions.py -v -s"
+            f"docker run {self.project}/{img_name}:{self.tag} py.test /home/test_functions.py -v -s"
         )
 
     def push_app_image(self, app):
+        assert self.cr is not None
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])
         img_name = f"{safeowner}_{safetitle}_tasks"
@@ -293,6 +298,7 @@ def build(args: argparse.Namespace):
         tag=args.tag,
         models=args.names,
         base_branch=args.base_branch,
+        cr=args.cr,
     )
     publisher.build()
 
@@ -303,6 +309,7 @@ def test(args: argparse.Namespace):
         tag=args.tag,
         models=args.names,
         base_branch=args.base_branch,
+        cr=args.cr,
     )
     publisher.test()
 
@@ -314,6 +321,7 @@ def push(args: argparse.Namespace):
         models=args.names,
         base_branch=args.base_branch,
         use_kind=args.use_kind,
+        cr=args.cr,
         cs_url=getattr(args, "cs_url", None),
         cs_api_token=getattr(args, "cs_api_token", None),
         latest_tag=getattr(args, "latest_tag", None),
@@ -328,6 +336,7 @@ def config(args: argparse.Namespace):
         models=args.names,
         base_branch=args.base_branch,
         kubernetes_target=args.out,
+        cr=args.cr,
         cs_url=getattr(args, "cs_url", None),
         cs_api_token=getattr(args, "cs_api_token", None),
     )
@@ -340,6 +349,7 @@ def cli(subparsers: argparse._SubParsersAction):
     )
     parser.add_argument("--names", "-n", type=str, required=False, default=None)
     parser.add_argument("--base-branch", default="origin/master", required=False)
+    parser.add_argument("--cr", default="gcr.io", required=False)
     model_subparsers = parser.add_subparsers()
 
     build_parser = model_subparsers.add_parser("build")

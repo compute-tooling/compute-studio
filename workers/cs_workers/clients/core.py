@@ -17,8 +17,6 @@ BASE_PATH = CURR_PATH / ".." / ".."
 
 
 class Core:
-    cr = "gcr.io"
-
     def __init__(self, project, tag=None, base_branch="origin/master", quiet=False):
         self.tag = tag
         self.project = project
