@@ -172,7 +172,7 @@ class Publisher(Core):
         safetitle = clean(app["title"])
         img_name = f"{safeowner}_{safetitle}_tasks"
         run(
-            f"docker run {self.project}/{img_name}:{self.tag} py.test /home/test_functions.py -v -s"
+            f"docker run {self.cr}/{self.project}/{img_name}:{self.tag} py.test /home/test_functions.py -v -s"
         )
 
     def push_app_image(self, app):
