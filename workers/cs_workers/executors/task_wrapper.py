@@ -6,7 +6,7 @@ import time
 import traceback
 
 import redis
-import requests
+import httpx
 import cs_storage
 
 from cs_workers.utils import redis_conn_from_env
@@ -86,9 +86,11 @@ async def async_task_wrapper(task_id, task_name, func, task_kwargs=None):
         res["status"] = "FAIL"
         res["traceback"] = traceback_str
     print("saving results...")
-    resp = requests.post(
-        "http://outputs-processor/push/", json={"task_name": task_name, "result": res}
-    )
+    async with httpx.AsyncClient() as client:
+        resp = client.post(
+            "http://outputs-processor/push/",
+            json={"task_name": task_name, "result": res},
+        )
     print("resp", resp.status_code, resp.url)
     assert resp.status_code == 200, f"Got code: {resp.status_code}"
 

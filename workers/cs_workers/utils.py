@@ -4,7 +4,7 @@ import re
 import subprocess
 import time
 
-import requests
+import httpx
 
 
 def clean(word):
@@ -33,7 +33,7 @@ def read_github_file(org, repo, branch, filename):
     Read data from github api. Ht to @andersonfrailey for decoding the response
     """
     url = f"https://api.github.com/repos/{org}/{repo}/contents/{filename}?ref={branch}"
-    response = requests.get(url)
+    response = httpx.get(url)
     if response.status_code == 403:
         assert "hit rate limit" == 403
     assert response.status_code == 200, f"Got code: {response.status_code}"

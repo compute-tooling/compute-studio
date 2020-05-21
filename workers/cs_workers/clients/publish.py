@@ -5,7 +5,7 @@ import sys
 import yaml
 from pathlib import Path
 
-import requests
+import httpx
 
 from cs_workers.utils import run, clean
 from cs_workers.secrets import Secrets
@@ -172,7 +172,7 @@ class Publisher(Core):
         run(f"{cmd_prefix} {self.cr}/{self.project}/{img_name}:{self.tag}")
 
         if self.cs_url is not None:
-            resp = requests.post(
+            resp = httpx.post(
                 f"{self.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
                 json={"latest_tag": self.tag},
                 headers={"Authorization": f"Token {self.cs_api_token}"},

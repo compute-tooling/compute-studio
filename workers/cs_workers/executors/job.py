@@ -5,7 +5,7 @@ import json
 import os
 
 import redis
-import requests
+import httpx
 
 import cs_storage
 from cs_workers.executors.task_wrapper import async_task_wrapper
@@ -18,7 +18,7 @@ def sim_handler(task_id, meta_param_dict, adjustment):
     print("got result")
     outputs = cs_storage.serialize_to_json(outputs)
     print("storing results")
-    resp = requests.post(
+    resp = httpx.post(
         "http://outputs-processor/write/", json={"task_id": task_id, "outputs": outputs}
     )
     print("got resp", resp.status_code, resp.url)

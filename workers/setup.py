@@ -16,9 +16,20 @@ setuptools.setup(
     description=("Build, publish, and run Compute Studio workers."),
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/compute-tooling/compute-studio-workers",
+    url="https://github.com/compute-tooling/compute-studio",
     packages=setuptools.find_packages(),
-    install_requires=["redis", "kubernetes", "gitpython", "pyyaml"],
+    install_requires=[
+        "redis",
+        "kubernetes",
+        "gitpython",
+        "pyyaml",
+        "googe-cloud-secret-manager",
+        "httpx",
+        "dask",
+        "distributed",
+        "tornado",
+        "cs-storage",
+    ],
     include_package_data=True,
     entry_points={
         "console_scripts": ["cs-workers=cs_workers.cli:cli", "csw=cs_workers.cli:cli"]

@@ -20,8 +20,8 @@ COPY cs_workers /home/cs_workers
 COPY setup.py /home
 RUN cd /home/ && pip install -e .
 
-COPY ./google-creds.json /google-creds.json
-ENV GOOGLE_APPLICATION_CREDENTIALS=/google-creds.json
+# COPY ./google-creds.json /google-creds.json
+# ENV GOOGLE_APPLICATION_CREDENTIALS=/google-creds.json
 
 WORKDIR /home
 
