@@ -1,3 +1,4 @@
 include cs_workers/templates/*
 include cs_workers/templates/services/*
 include cs_workers/templates/models/*
+include cs_workers/dockerfiles/*

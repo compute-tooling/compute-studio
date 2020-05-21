@@ -89,6 +89,7 @@ class Cluster:
             self.kubernetes_target = kubernetes_target
 
         self.templates_dir = BASE_PATH / Path("templates")
+        self.dockerfiles_dir = BASE_PATH / Path("dockerfiles")
 
         with open(
             self.templates_dir / "services" / "scheduler-Deployment.template.yaml", "r"
@@ -122,7 +123,12 @@ class Cluster:
         Note: distributed and celerybase are tagged as "latest." All other apps
         pull from either distributed:latest or celerybase:latest.
         """
-        run("docker build -t distributed:latest -f dockerfiles/Dockerfile ./")
+        distributed = self.dockerfiles_dir / "Dockerfile"
+        distributed = self.dockerfiles_dir / "Dockerfile.redis"
+        distributed = self.dockerfiles_dir / "Dockerfile.outputs_processor"
+        distributed = self.dockerfiles_dir / "Dockerfile.scheduler"
+
+        run(f"docker build -t distributed:latest -f {distributed} ./")
         run(
             f"docker build -t redis-python:{self.tag} -f dockerfiles/Dockerfile.redis ./"
         )

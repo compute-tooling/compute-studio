@@ -59,6 +59,8 @@ class Publisher(Core):
         if self.models:
             self.config.update(self.get_config(self.models))
 
+        self.dockerfiles_dir = BASE_PATH / "dockerfiles"
+
         with open(
             BASE_PATH
             / Path("templates")
@@ -146,7 +148,10 @@ class Publisher(Core):
         buildargs_str = " ".join(
             [f"--build-arg {arg}={value}" for arg, value in buildargs.items()]
         )
-        cmd = f"docker build {buildargs_str} -t {img_name}:{self.tag} -f dockerfiles/Dockerfile.model ./"
+        dockerfile = self.dockerfiles_dir / "Dockerfile.model"
+        cmd = (
+            f"docker build {buildargs_str} -t {img_name}:{self.tag} -f {dockerfile} ./"
+        )
         run(cmd)
 
         run(
