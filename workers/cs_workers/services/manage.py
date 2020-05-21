@@ -13,6 +13,10 @@ from pathlib import Path
 from ..secrets import Secrets
 
 
+CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
+BASE_PATH = CURR_PATH / ".."
+
+
 def clean(word):
     return re.sub("[^0-9a-zA-Z]+", "", word).lower()
 
@@ -61,7 +65,7 @@ class Cluster:
 
     """
 
-    kubernetes_target = "kubernetes/"
+    kubernetes_target = "-"
     cr = "gcr.io"
 
     def __init__(
@@ -84,18 +88,28 @@ class Cluster:
         else:
             self.kubernetes_target = kubernetes_target
 
-        with open("templates/services/scheduler-Deployment.template.yaml", "r") as f:
+        self.templates_dir = BASE_PATH / Path("templates")
+
+        with open(
+            self.templates_dir / "services" / "scheduler-Deployment.template.yaml", "r"
+        ) as f:
             self.scheduler_template = yaml.safe_load(f.read())
 
         with open(
-            "templates/services/outputs-processor-Deployment.template.yaml", "r"
+            self.templates_dir
+            / "services"
+            / "outputs-processor-Deployment.template.yaml",
+            "r",
         ) as f:
             self.outputs_processor_template = yaml.safe_load(f.read())
 
-        with open("templates/services/redis-master-Deployment.template.yaml", "r") as f:
+        with open(
+            self.templates_dir / "services" / "redis-master-Deployment.template.yaml",
+            "r",
+        ) as f:
             self.redis_master_template = yaml.safe_load(f.read())
 
-        with open("templates/secret.template.yaml", "r") as f:
+        with open(self.templates_dir / "secret.template.yaml", "r") as f:
             self.secret_template = yaml.safe_load(f.read())
 
         self._redis_secrets = None
@@ -151,7 +165,7 @@ class Cluster:
             "redis-master-Service.yaml",
         ]
         for filename in config_filenames:
-            with open(f"templates/services/{filename}", "r") as f:
+            with open(self.templates_dir / "services" / f"{filename}", "r") as f:
                 configs = yaml.safe_load_all(f.read())
             for config in configs:
                 name = config["metadata"]["name"]

@@ -12,7 +12,7 @@ from cs_workers.secrets import Secrets
 from cs_workers.clients.core import Core
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
-BASE_PATH = CURR_PATH / ".." / ".."
+BASE_PATH = CURR_PATH / ".."
 
 
 class Publisher(Core):
@@ -28,7 +28,7 @@ class Publisher(Core):
 
     """
 
-    kubernetes_target = BASE_PATH / Path("kubernetes") / Path("models")
+    kubernetes_target = "-"
 
     def __init__(
         self,
