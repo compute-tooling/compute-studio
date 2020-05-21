@@ -42,7 +42,7 @@ class Publisher(Core):
         cs_url=None,
         cs_api_token=None,
         latest_tag=False,
-        cr=None,
+        cr="gcr.io",
     ):
         super().__init__(project, tag, base_branch, quiet)
 
@@ -98,6 +98,9 @@ class Publisher(Core):
 
     def push(self):
         self.apply_method_to_apps(method=self.push_app_image)
+
+    def retag_gh_images(self):
+        self.apply_method_to_apps(method=self.retag_app_image)
 
     def write_app_config(self):
         self.apply_method_to_apps(method=self.write_secrets)
@@ -192,6 +195,17 @@ class Publisher(Core):
             assert (
                 resp.status_code == 200
             ), f"Got: {resp.url} {resp.status_code} {resp.text}"
+
+    def retag_app_image(self, app):
+        assert self.cr is not None
+        safeowner = clean(app["owner"])
+        safetitle = clean(app["title"])
+        img_name = f"{safeowner}_{safetitle}_tasks"
+
+        gh_cr = "docker.pkg.github.com/compute-tooling/compute-studio-publish"
+        run(
+            f"docker tag {gh_cr}/{img_name}:{self.tag} {self.cr}/{self.project}/{img_name}:{self.tag}"
+        )
 
     def write_secrets(self, app):
         secret_config = copy.deepcopy(self.secret_template)
@@ -343,6 +357,17 @@ def config(args: argparse.Namespace):
     publisher.write_app_config()
 
 
+def ghretag(args: argparse.Namespace):
+    publisher = Publisher(
+        project=args.project,
+        tag=args.tag,
+        models=args.names,
+        base_branch=args.base_branch,
+        cr=args.cr,
+    )
+    publisher.retag_gh_images()
+
+
 def cli(subparsers: argparse._SubParsersAction):
     parser = subparsers.add_parser(
         "models", description="Deploy models on C/S compute cluster."
@@ -365,5 +390,8 @@ def cli(subparsers: argparse._SubParsersAction):
     config_parser = model_subparsers.add_parser("config")
     config_parser.add_argument("--out", "-o", default=None)
     config_parser.set_defaults(func=config)
+
+    build_parser = model_subparsers.add_parser("ghretag")
+    build_parser.set_defaults(func=ghretag)
 
     parser.set_defaults(func=lambda args: print(args))
