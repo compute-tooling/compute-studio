@@ -19,7 +19,7 @@ from webapp.apps.users.models import Project, Profile, create_profile_from_user
 from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.exceptions import ResourceLimitException
-from .compute import MockCompute, MockComputeWorkerFailure
+from .compute import MockCompute
 from .utils import (
     read_outputs,
     _submit_inputs,
@@ -112,10 +112,10 @@ class RunMockModel(CoreTestMixin):
         defaults_resp_data = {"status": "SUCCESS", **self.defaults}
         adj = self.inputs
         adj_job_id = str(uuid.uuid4())
-        adj_resp_data = {"job_id": adj_job_id, "qlength": 1}
+        adj_resp_data = {"task_id": adj_job_id}
         adj_callback_data = {
             "status": "SUCCESS",
-            "job_id": adj_job_id,
+            "task_id": adj_job_id,
             **{"errors_warnings": self.errors_warnings},
         }
         with requests_mock.Mocker(real_http=True) as mock:
@@ -157,6 +157,7 @@ class RunMockModel(CoreTestMixin):
             json=lambda request, context: {
                 "defaults": defaults_resp_data,
                 "parse": adj_resp_data,
+                "version": {"status": "success", "version": "v1"},
             }[request.json()["task_name"]],
         )
 
@@ -215,6 +216,19 @@ class RunMockModel(CoreTestMixin):
         assert_status(202, get_resp_pend, "poll_simulation")
 
     def check_simulation_finished(self, model_pk: int):
+        self.sim = Simulation.objects.get(project=self.project, model_pk=model_pk)
+        set_auth_token(self.api_client, self.comp_api_user.user)
+        resp = self.api_client.put(
+            "/outputs/api/",
+            data=dict(
+                json.loads(self.mockcompute.outputs), **{"task_id": self.sim.job_id}
+            ),
+            format="json",
+        )
+        if resp.status_code != 200:
+            raise Exception(
+                f"Status code: {resp.status_code}\n {json.dumps(resp.data, indent=4)}"
+            )
         self.client.force_login(self.sim_owner.user)
         self.api_client.force_login(self.sim_owner.user)
 
@@ -223,7 +237,7 @@ class RunMockModel(CoreTestMixin):
         )
         assert_status(200, get_resp_succ, "check_simulation_finished")
         model_pk = get_resp_succ.data["model_pk"]
-        self.sim = Simulation.objects.get(project=self.project, model_pk=model_pk)
+        self.sim.refresh_from_db()
         assert self.sim.status == "SUCCESS"
         assert self.sim.outputs
         assert self.sim.traceback is None
@@ -427,7 +441,7 @@ class TestAsyncAPI(CoreTestMixin):
 
         defaults = self.defaults()
         inputs_resp_data = {"status": "SUCCESS", **defaults}
-        adj_resp_data = {"job_id": str(uuid.uuid4()), "qlength": 1}
+        adj_resp_data = {"task_id": str(uuid.uuid4())}
         with requests_mock.Mocker() as mock:
             mock.register_uri(
                 "POST",

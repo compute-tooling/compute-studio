@@ -28,6 +28,7 @@ class TestPublishViews:
             "cpu": 3,
             "memory": 9,
             "listed": True,
+            "latest_tag": "v1",
         }
         resp = client.post("/publish/api/", post_data)
         assert resp.status_code == 401
@@ -42,6 +43,9 @@ class TestPublishViews:
         assert project
         assert project.server_cost
 
+        api_user = Profile.objects.get(user__username="comp-api-user")
+        assert project.has_write_access(api_user.user)
+
     def test_get_detail_api(self, api_client, client, test_models):
         exp = {
             "title": "Detail-Test",
@@ -55,6 +59,7 @@ class TestPublishViews:
             "server_cost": Decimal("0.1"),
             "listed": True,
             "status": "live",
+            "latest_tag": "v1",
         }
         owner = Profile.objects.get(user__username="modeler")
         project = Project.objects.create(**dict(exp, **{"owner": owner}))
@@ -84,6 +89,7 @@ class TestPublishViews:
             "repo_tag": "dev",
             "cpu": 2,
             "memory": 6,
+            "lastet_tag": "v2",
         }
         # not logged in --> not authorized
         resp = client.put(
@@ -238,3 +244,20 @@ class TestPublishViews:
                 assert "sim_count" in project and "user_count" in project
             else:
                 assert "sim_count" not in project and "user_count" not in project
+
+    def test_deployments_api(self, api_client, test_models):
+        prof = Profile.objects.get(user__username="comp-api-user")
+        api_client.force_login(prof.user)
+
+        project = test_models[0].project
+        assert project.has_write_access(prof.user)
+
+        resp = api_client.post(
+            f"/publish/api/{project.owner}/{project.title}/deployments/",
+            data={"latest_tag": "v5"},
+            format="json",
+        )
+
+        assert resp.status_code == 200
+        project.refresh_from_db()
+        assert project.latest_tag == "v5"

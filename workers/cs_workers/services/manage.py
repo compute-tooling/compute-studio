@@ -70,11 +70,13 @@ class Cluster:
         project,
         kubernetes_target="kubernetes/",
         use_kind=False,
+        cs_url=None,
         cs_api_token=None,
     ):
         self.tag = tag
         self.project = project
         self.use_kind = use_kind
+        self.cs_url = cs_url
         self._cs_api_token = cs_api_token
 
         if kubernetes_target is None:
@@ -205,6 +207,7 @@ class Cluster:
 
     def write_secret(self):
         secrets = copy.deepcopy(self.secret_template)
+        secrets["stringData"]["CS_URL"] = self.cs_url
         secrets["stringData"]["CS_API_TOKEN"] = self.cs_api_token
         redis_secrets = self.redis_secrets()
         for name, sec in redis_secrets.items():
@@ -266,6 +269,7 @@ def cluster_from_args(args: argparse.Namespace):
         project=args.project,
         kubernetes_target=getattr(args, "out", None),
         use_kind=getattr(args, "use_kind", None),
+        cs_url=getattr(args, "cs_url", None),
         cs_api_token=getattr(args, "cs_api_token", None),
     )
 

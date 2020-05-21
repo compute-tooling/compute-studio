@@ -8,7 +8,7 @@ class PublishSerializer(serializers.ModelSerializer):
     cluster_type = serializers.CharField(required=False)
     sim_count = serializers.IntegerField(required=False)
     user_count = serializers.IntegerField(required=False)
-    latest_tag = serializers.CharField(required=False)
+    latest_tag = serializers.CharField(allow_null=True, required=False)
     # see to_representation
     # has_write_access = serializers.BooleanField(source="has_write_access")
 
@@ -53,7 +53,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
     sim_count = serializers.IntegerField(required=False)
     version = serializers.CharField(required=False)
     user_count = serializers.IntegerField(required=False)
-    latest_tag = serializers.CharField(required=False)
+    latest_tag = serializers.CharField(allow_null=True, required=False)
     # see to_representation
     # has_write_access = serializers.BooleanField(source="has_write_access")
 

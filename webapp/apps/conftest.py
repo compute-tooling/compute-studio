@@ -14,6 +14,7 @@ from django.contrib.auth import get_user_model
 from django.utils.timezone import make_aware
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
+from guardian.shortcuts import assign_perm
 
 from webapp.settings import USE_STRIPE
 from webapp.apps.billing.models import (
@@ -81,6 +82,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
         for project_config in projects:
             project = Project.objects.create(**dict(common, **project_config))
+            assign_perm("write_project", comp_api_user, project)
 
         if USE_STRIPE:
             create_pro_billing_objects()

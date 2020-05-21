@@ -378,7 +378,6 @@ class MyInputsAPIView(APIView):
 
         if request.user.username == "comp-api-user":
             data = request.data
-            print("got data", data)
             ser = InputsSerializer(data=request.data)
             if ser.is_valid():
                 data = ser.validated_data

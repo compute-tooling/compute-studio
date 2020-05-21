@@ -55,7 +55,7 @@ async def async_task_wrapper(task_id, task_name, func, task_kwargs=None):
     print("async task", task_id, func, task_kwargs)
     start = time.time()
     traceback_str = None
-    res = {"job_id": task_id}
+    res = {"task_id": task_id}
     try:
         if task_kwargs is None:
             if not task_id.startswith("job-"):

@@ -19,6 +19,8 @@ from rest_framework.authentication import (
     TokenAuthentication,
 )
 
+from guardian.shortcuts import assign_perm
+
 # from webapp.settings import DEBUG
 
 from webapp.apps.users.models import Project, is_profile_active
@@ -30,6 +32,8 @@ from .serializers import (
     DeploymentSerializer,
 )
 from .utils import title_fixup
+
+User = get_user_model()
 
 
 class GetProjectMixin:
@@ -130,6 +134,8 @@ class ProjectAPIView(GetProjectMixin, APIView):
                     server_cost=0.1,
                 )
                 status_url = request.build_absolute_uri(model.app_url)
+                api_user = User.objects.get(username="comp-api-user")
+                assign_perm("write_project", api_user, model)
                 try:
                     send_mail(
                         f"{request.user.username} is publishing a model on Compute Studio!",

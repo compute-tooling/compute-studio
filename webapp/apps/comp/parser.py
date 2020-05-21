@@ -54,10 +54,10 @@ class BaseParser:
             "adjustment": params,
             "errors_warnings": errors_warnings,
         }
-        job_id, queue_length = self.compute.submit_job(
+        job_id = self.compute.submit_job(
             project=self.project, task_name=actions.PARSE, task_kwargs=data
         )
-        return job_id, queue_length
+        return job_id
 
 
 class Parser:
@@ -77,10 +77,9 @@ class APIParser(BaseParser):
             adjustment[sect].update(self.clean_inputs.get(sect, {}))
 
         # kick off async parsing
-        job_id, queue_length = self.post(errors_warnings, adjustment)
+        job_id = self.post(errors_warnings, adjustment)
         return {
             "job_id": job_id,
-            "queue_length": queue_length,
             "adjustment": adjustment,
             "errors_warnings": errors_warnings,
             "custom_adjustment": None,

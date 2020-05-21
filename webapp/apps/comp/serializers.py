@@ -22,6 +22,11 @@ class OutputsSerializer(serializers.Serializer):
     aggr_outputs = serializers.JSONField(required=False)
     version = serializers.CharField(required=False)
 
+    def to_internal_value(self, data):
+        if "task_id" in data:
+            data["job_id"] = data.pop("task_id")
+        return super().to_internal_value(data)
+
 
 class PendingPermissionSerializer(serializers.ModelSerializer):
     profile = serializers.StringRelatedField()
@@ -173,9 +178,10 @@ class InputsSerializer(serializers.ModelSerializer):
         return rep
 
     def to_internal_value(self, data):
-        print("to_internal_value", data)
         if "outputs" in data:
             data.update(**data.pop("outputs"))
+        if "task_id" in data:
+            data["job_id"] = data.pop("task_id")
         return super().to_internal_value(data)
 
     class Meta:

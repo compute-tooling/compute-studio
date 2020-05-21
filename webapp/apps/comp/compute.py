@@ -45,7 +45,6 @@ class Compute(object):
         )
 
     def submit(self, tasks, url, increment_counter=True, use_wnc_offset=True):
-        queue_length = 0
         submitted = False
         attempts = 0
         while not submitted:
@@ -58,7 +57,6 @@ class Compute(object):
                     submitted = True
                     data = response.json()
                     job_id = data["task_id"]
-                    queue_length = 0  # data["qlength"]
                 else:
                     print("FAILED: ", WORKER_HN)
                     attempts += 1
@@ -72,36 +70,7 @@ class Compute(object):
                 print("Exceeded max attempts. Bailing out.")
                 raise WorkersUnreachableError()
 
-        return job_id, queue_length
-
-    # def results_ready(self, sim):
-    #     result_url = (
-    #         f"http://{WORKER_HN}/{sim.project.owner.user.username}/{sim.project.title}"
-    #         f"/query/{sim.job_id}/"
-    #     )
-    #     job_response = self.remote_query_job(result_url)
-    #     msg = "{0} failed on host: {1}".format(sim.job_id, WORKER_HN)
-    #     if job_response.status_code == 200:  # Valid response
-    #         return job_response.text
-    #     else:
-    #         print("did not expect response with status_code", job_response.status_code)
-    #         raise JobFailError(msg)
-
-    # def get_results(self, sim):
-    #     result_url = (
-    #         f"http://{WORKER_HN}/{sim.project.owner.user.username}/{sim.project.title}"
-    #         f"/get_job/{sim.job_id}/"
-    #     )
-    #     job_response = self.remote_get_job(result_url)
-    #     if job_response.status_code == 200:  # Valid response
-    #         try:
-    #             return job_response.json()
-    #         except ValueError:
-    #             # Got back a bad response. Get the text and re-raise
-    #             msg = "PROBLEM WITH RESPONSE. TEXT RECEIVED: {}"
-    #             raise ValueError(msg)
-    #     else:
-    #         raise WorkersUnreachableError()
+        return job_id
 
 
 class SyncCompute(Compute):
