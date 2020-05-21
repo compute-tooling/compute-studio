@@ -41,6 +41,7 @@ class Publisher(Core):
         use_kind=False,
         cs_url=None,
         cs_api_token=None,
+        latest_tag=False,
     ):
         super().__init__(project, tag, base_branch, quiet)
 
@@ -49,6 +50,7 @@ class Publisher(Core):
         self.use_kind = use_kind
         self.cs_url = cs_url
         self._cs_api_token = cs_api_token
+        self.latest_tag = latest_tag
 
         if self.kubernetes_target == "-":
             self.quiet = True
@@ -176,7 +178,7 @@ class Publisher(Core):
             cmd_prefix = "docker push"
         run(f"{cmd_prefix} {self.cr}/{self.project}/{img_name}:{self.tag}")
 
-        if self.cs_url is not None:
+        if self.cs_url is not None and self.latest_tag:
             resp = httpx.post(
                 f"{self.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
                 json={"latest_tag": self.tag},
@@ -314,6 +316,7 @@ def push(args: argparse.Namespace):
         use_kind=args.use_kind,
         cs_url=getattr(args, "cs_url", None),
         cs_api_token=getattr(args, "cs_api_token", None),
+        latest_tag=getattr(args, "latest_tag", None),
     )
     publisher.push()
 
@@ -346,6 +349,7 @@ def cli(subparsers: argparse._SubParsersAction):
 
     push_parser = model_subparsers.add_parser("push")
     push_parser.add_argument("--use-kind", action="store_true")
+    push_parser.add_argument("--latest-tag", action="store_true")
     push_parser.set_defaults(func=push)
 
     config_parser = model_subparsers.add_parser("config")
