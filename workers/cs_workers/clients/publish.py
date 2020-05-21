@@ -99,8 +99,8 @@ class Publisher(Core):
     def push(self):
         self.apply_method_to_apps(method=self.push_app_image)
 
-    def retag_gh_images(self):
-        self.apply_method_to_apps(method=self.retag_app_image)
+    def promote(self):
+        self.apply_method_to_apps(method=self.promote_app)
 
     def write_app_config(self):
         self.apply_method_to_apps(method=self.write_secrets)
@@ -187,25 +187,17 @@ class Publisher(Core):
         run(f"{cmd_prefix} {self.cr}/{self.project}/{img_name}:{self.tag}")
 
         if self.cs_url is not None and self.latest_tag:
-            resp = httpx.post(
-                f"{self.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
-                json={"latest_tag": self.tag},
-                headers={"Authorization": f"Token {self.cs_api_token}"},
-            )
-            assert (
-                resp.status_code == 200
-            ), f"Got: {resp.url} {resp.status_code} {resp.text}"
+            self.promote(app)
 
-    def retag_app_image(self, app):
-        assert self.cr is not None
-        safeowner = clean(app["owner"])
-        safetitle = clean(app["title"])
-        img_name = f"{safeowner}_{safetitle}_tasks"
-
-        gh_cr = "docker.pkg.github.com/compute-tooling/compute-studio-publish"
-        run(
-            f"docker tag {gh_cr}/{img_name}:{self.tag} {self.cr}/{self.project}/{img_name}:{self.tag}"
+    def promote_app(self, app):
+        resp = httpx.post(
+            f"{self.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
+            json={"latest_tag": self.tag},
+            headers={"Authorization": f"Token {self.cs_api_token}"},
         )
+        assert (
+            resp.status_code == 200
+        ), f"Got: {resp.url} {resp.status_code} {resp.text}"
 
     def write_secrets(self, app):
         secret_config = copy.deepcopy(self.secret_template)
@@ -357,15 +349,17 @@ def config(args: argparse.Namespace):
     publisher.write_app_config()
 
 
-def ghretag(args: argparse.Namespace):
+def promote(args: argparse.Namespace):
     publisher = Publisher(
         project=args.project,
         tag=args.tag,
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
+        cs_url=getattr(args, "cs_url", None),
+        cs_api_token=getattr(args, "cs_api_token", None),
     )
-    publisher.retag_gh_images()
+    publisher.promote()
 
 
 def cli(subparsers: argparse._SubParsersAction):
@@ -391,7 +385,7 @@ def cli(subparsers: argparse._SubParsersAction):
     config_parser.add_argument("--out", "-o", default=None)
     config_parser.set_defaults(func=config)
 
-    build_parser = model_subparsers.add_parser("ghretag")
-    build_parser.set_defaults(func=ghretag)
+    promote_parser = model_subparsers.add_parser("promote")
+    promote_parser.set_defaults(func=promote)
 
     parser.set_defaults(func=lambda args: print(args))
