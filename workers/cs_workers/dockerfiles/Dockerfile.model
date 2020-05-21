@@ -9,8 +9,6 @@ RUN conda config --append channels conda-forge
 RUN conda install "python>=3.7" pip tornado dask lz4
 
 
-RUN pip install "git+https://github.com/compute-tooling/compute-studio.git@cluster-refactor#egg=cs-workers&subdirectory=workers"
-
 WORKDIR /home
 
 ARG TITLE
@@ -32,7 +30,8 @@ RUN bash /home/install.sh
 ARG INSTALL_NUM=0
 RUN pip install "git+${REPO_URL}.git@${BRANCH}#egg=cs-config&subdirectory=cs-config"
 ADD ${RAW_REPO_URL}/${BRANCH}/cs-config/cs_config/tests/test_functions.py /home
-RUN pip install cs-kit
+
+RUN pip install "git+https://github.com/compute-tooling/compute-studio.git@cluster-refactor#egg=cs-workers&subdirectory=workers" cs-kit pytest
 ######################
 
 WORKDIR /home
