@@ -42,6 +42,7 @@ class Publisher(Core):
         cs_url=None,
         cs_api_token=None,
         latest_tag=False,
+        staging_tag=None,
         cr="gcr.io",
     ):
         super().__init__(project, tag, base_branch, quiet)
@@ -52,6 +53,7 @@ class Publisher(Core):
         self.cs_url = cs_url
         self._cs_api_token = cs_api_token
         self.latest_tag = latest_tag
+        self.staging_tag = staging_tag
         self.cr = cr
 
         if self.kubernetes_target == "-":
@@ -98,6 +100,9 @@ class Publisher(Core):
 
     def push(self):
         self.apply_method_to_apps(method=self.push_app_image)
+
+    def stage(self):
+        self.apply_method_to_apps(method=self.stage_app)
 
     def promote(self):
         self.apply_method_to_apps(method=self.promote_app)
@@ -189,10 +194,28 @@ class Publisher(Core):
         if self.cs_url is not None and self.latest_tag:
             self.promote(app)
 
-    def promote_app(self, app):
+    def stage_app(self, app):
         resp = httpx.post(
             f"{self.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
-            json={"latest_tag": self.tag},
+            json={"staging_tag": self.staging_tag},
+            headers={"Authorization": f"Token {self.cs_api_token}"},
+        )
+        assert (
+            resp.status_code == 200
+        ), f"Got: {resp.url} {resp.status_code} {resp.text}"
+
+    def promote_app(self, app):
+        resp = httpx.get(
+            f"{self.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
+            headers={"Authorization": f"Token {self.cs_api_token}"},
+        )
+        assert (
+            resp.status_code == 200
+        ), f"Got: {resp.url} {resp.status_code} {resp.text}"
+        staging_tag = resp.json()["staging_tag"]
+        resp = httpx.post(
+            f"{self.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
+            json={"latest_tag": staging_tag or self.tag, "staging_tag": None},
             headers={"Authorization": f"Token {self.cs_api_token}"},
         )
         assert (
@@ -362,6 +385,20 @@ def promote(args: argparse.Namespace):
     publisher.promote()
 
 
+def stage(args: argparse.Namespace):
+    publisher = Publisher(
+        project=args.project,
+        tag=args.tag,
+        models=args.names,
+        base_branch=args.base_branch,
+        cr=args.cr,
+        cs_url=getattr(args, "cs_url", None),
+        cs_api_token=getattr(args, "cs_api_token", None),
+        staging_tag=getattr(args, "staging_tag", None),
+    )
+    publisher.stage()
+
+
 def cli(subparsers: argparse._SubParsersAction):
     parser = subparsers.add_parser(
         "models", description="Deploy models on C/S compute cluster."
@@ -384,6 +421,10 @@ def cli(subparsers: argparse._SubParsersAction):
     config_parser = model_subparsers.add_parser("config")
     config_parser.add_argument("--out", "-o", default=None)
     config_parser.set_defaults(func=config)
+
+    stage_parser = model_subparsers.add_parser("stage")
+    stage_parser.add_argument("staging_tag", type=str)
+    stage_parser.set_defaults(func=stage)
 
     promote_parser = model_subparsers.add_parser("promote")
     promote_parser.set_defaults(func=promote)

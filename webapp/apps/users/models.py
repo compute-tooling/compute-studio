@@ -167,6 +167,7 @@ class Project(models.Model):
     cluster_type = models.CharField(default="single-core", max_length=32)
 
     latest_tag = models.CharField(null=True, max_length=64)
+    staging_tag = models.CharField(null=True, max_length=64)
 
     objects = ProjectManager()
 

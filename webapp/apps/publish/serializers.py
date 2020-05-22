@@ -96,4 +96,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
 class DeploymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ("latest_tag",)
+        fields = (
+            "latest_tag",
+            "staging_tag",
+        )
