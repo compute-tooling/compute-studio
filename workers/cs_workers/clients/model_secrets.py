@@ -23,7 +23,7 @@ class ModelSecrets(Secrets):
             secret_val = self.get_secret()
         except SecretNotFound:
             secret_val = {name: value}
-            return super().set_secret(secret_name, secret_val)
+            return super().set_secret(secret_name, json.dumps(secret_val))
         else:
             if secret_val is not None:
                 secret_val[name] = value
@@ -32,11 +32,14 @@ class ModelSecrets(Secrets):
             if value is None:
                 secret_val.pop(name)
 
-        return super().set_secret(secret_name, secret_val)
+        return super().set_secret(secret_name, json.dumps(secret_val))
 
     def get_secret(self, name=None):
         secret_name = f"{self.safe_owner}_{self.safe_title}"
-        secret = json.loads(super().get_secret(secret_name))
+        try:
+            secret = json.loads(super().get_secret(secret_name))
+        except SecretNotFound:
+            return {}
 
         if name and name in secret:
             return secret[name]

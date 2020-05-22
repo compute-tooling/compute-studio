@@ -7,7 +7,7 @@ import random
 import yaml
 
 from cs_workers.services import manage, scheduler, outputs_processor
-from cs_workers.clients import publish
+from cs_workers.clients import publish, model_secrets
 from cs_workers.executors import job, api_task
 
 TAG = os.environ.get("TAG", "")
@@ -57,6 +57,7 @@ def cli():
     publish.cli(sub_parsers)
     job.cli(sub_parsers)
     api_task.cli(sub_parsers)
+    model_secrets.cli(sub_parsers)
 
     args = parser.parse_args()
     args.func(args)
