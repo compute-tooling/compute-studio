@@ -87,7 +87,7 @@ async def async_task_wrapper(task_id, task_name, func, task_kwargs=None):
         res["traceback"] = traceback_str
     print("saving results...")
     async with httpx.AsyncClient() as client:
-        resp = client.post(
+        resp = await client.post(
             "http://outputs-processor/push/",
             json={"task_name": task_name, "result": res},
         )
