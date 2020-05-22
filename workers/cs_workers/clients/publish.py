@@ -204,6 +204,8 @@ class Publisher(Core):
             resp.status_code == 200
         ), f"Got: {resp.url} {resp.status_code} {resp.text}"
 
+        sys.stdout.write(resp.json()["staging_tag"])
+
     def promote_app(self, app):
         resp = httpx.get(
             f"{self.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
@@ -221,6 +223,8 @@ class Publisher(Core):
         assert (
             resp.status_code == 200
         ), f"Got: {resp.url} {resp.status_code} {resp.text}"
+
+        sys.stdout.write(resp.json()["latest_tag"])
 
     def write_secrets(self, app):
         secret_config = copy.deepcopy(self.secret_template)
