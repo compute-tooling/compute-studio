@@ -53,7 +53,7 @@ class ModelSecrets(Secrets):
 
 
 def handle(args: argparse.Namespace):
-    secrets = Secrets(args.owner, args.title, args.project)
+    secrets = ModelSecrets(args.owner, args.title, args.project)
     if args.secret_name and args.secret_value:
         secrets.set_secret(args.secret_name, args.secret_value)
     elif args.secret_name:
@@ -67,7 +67,6 @@ def handle(args: argparse.Namespace):
 
 def cli(subparsers: argparse._SubParsersAction):
     parser = subparsers.add_parser("secrets", description="CLI for model secrets.")
-    parser.add_argument("--project", required=False, default=PROJECT)
     parser.add_argument("--owner", required=True)
     parser.add_argument("--title", required=True)
     parser.add_argument("--secret-name", "-s")

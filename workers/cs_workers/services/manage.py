@@ -124,20 +124,14 @@ class Cluster:
         pull from either distributed:latest or celerybase:latest.
         """
         distributed = self.dockerfiles_dir / "Dockerfile"
-        distributed = self.dockerfiles_dir / "Dockerfile.redis"
-        distributed = self.dockerfiles_dir / "Dockerfile.outputs_processor"
-        distributed = self.dockerfiles_dir / "Dockerfile.scheduler"
+        redis = self.dockerfiles_dir / "Dockerfile.redis"
+        outputs_processor = self.dockerfiles_dir / "Dockerfile.outputs_processor"
+        scheduler = self.dockerfiles_dir / "Dockerfile.scheduler"
 
         run(f"docker build -t distributed:latest -f {distributed} ./")
-        run(
-            f"docker build -t redis-python:{self.tag} -f dockerfiles/Dockerfile.redis ./"
-        )
-        run(
-            f"docker build -t outputs_processor:{self.tag} -f dockerfiles/Dockerfile.outputs_processor ./"
-        )
-        run(
-            f"docker build -t scheduler:{self.tag} -f dockerfiles/Dockerfile.scheduler ./"
-        )
+        run(f"docker build -t redis-python:{self.tag} -f {redis} ./")
+        run(f"docker build -t outputs_processor:{self.tag} -f {outputs_processor} ./")
+        run(f"docker build -t scheduler:{self.tag} -f {scheduler} ./")
 
     def push(self):
         run(f"docker tag distributed {self.cr}/{self.project}/distributed:latest")

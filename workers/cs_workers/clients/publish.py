@@ -192,7 +192,7 @@ class Publisher(Core):
         run(f"{cmd_prefix} {self.cr}/{self.project}/{img_name}:{self.tag}")
 
         if self.cs_url is not None and self.latest_tag:
-            self.promote(app)
+            self.promote_app(app)
 
     def stage_app(self, app):
         resp = httpx.post(

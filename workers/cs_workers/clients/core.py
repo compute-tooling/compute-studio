@@ -17,11 +17,14 @@ BASE_PATH = CURR_PATH / ".." / ".."
 
 
 class Core:
-    def __init__(self, project, tag=None, base_branch="origin/master", quiet=False):
+    def __init__(
+        self, project, tag=None, base_branch="origin/master", quiet=False, cr="gcr.io"
+    ):
         self.tag = tag
         self.project = project
         self.base_branch = base_branch
         self.quiet = quiet
+        self.cr = cr
 
     def get_config(self, models):
         config = {}
