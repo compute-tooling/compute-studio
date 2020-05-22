@@ -18,9 +18,17 @@ def sim_handler(task_id, meta_param_dict, adjustment):
     print("got result")
     outputs = cs_storage.serialize_to_json(outputs)
     print("storing results")
-    resp = httpx.post(
-        "http://outputs-processor/write/", json={"task_id": task_id, "outputs": outputs}
-    )
+    for i in range(3):
+        try:
+            resp = httpx.post(
+                "http://outputs-processor/write/",
+                json={"task_id": task_id, "outputs": outputs},
+                timeout=120.0,
+            )
+            break
+        except Exception as e:
+            print(i, e)
+
     print("got resp", resp.status_code, resp.url)
     assert resp.status_code == 200, f"Got code: {resp.status_code}"
     return resp.json()
