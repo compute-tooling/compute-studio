@@ -40,20 +40,18 @@ class Publisher(Core):
         quiet=False,
         kubernetes_target=None,
         use_kind=False,
-        cs_url=None,
+        cs_url=os.environ.get("CS_URL"),
         cs_api_token=None,
-        latest_tag=False,
         staging_tag=None,
         cr="gcr.io",
     ):
-        super().__init__(project, tag, base_branch, quiet)
+        super().__init__(
+            project, cs_url, tag, base_branch, quiet, cs_api_token=cs_api_token
+        )
 
         self.models = models.split(",") if models else None
         self.kubernetes_target = kubernetes_target or self.kubernetes_target
         self.use_kind = use_kind
-        self.cs_url = cs_url
-        self._cs_api_token = cs_api_token
-        self.latest_tag = latest_tag
         self.staging_tag = staging_tag
         self.cr = cr
 
@@ -149,10 +147,7 @@ class Publisher(Core):
         buildargs = dict(
             OWNER=app["owner"],
             TITLE=app["title"],
-            BRANCH=app["branch"],
-            SAFEOWNER=safeowner,
-            SAFETITLE=safetitle,
-            SIM_TIME_LIMIT=app["sim_time_limit"],
+            REPO_TAG=app["repo_tag"],
             REPO_URL=app["repo_url"],
             RAW_REPO_URL=app["repo_url"].replace(reg_url, raw_url),
             **app["env"],
@@ -191,9 +186,6 @@ class Publisher(Core):
         else:
             cmd_prefix = "docker push"
         run(f"{cmd_prefix} {self.cr}/{self.project}/{img_name}:{self.tag}")
-
-        if self.cs_url is not None and self.latest_tag:
-            self.promote_app(app)
 
     def stage_app(self, app):
         resp = httpx.post(
@@ -272,7 +264,7 @@ class Publisher(Core):
         )
 
         container_config["env"].append(
-            {"name": "SIM_TIME_LIMIT", "value": str(app["sim_time_limit"])}
+            {"name": "exp_task_time", "value": str(app["exp_task_time"])}
         )
         container_config["env"].append(
             {
@@ -318,17 +310,11 @@ class Publisher(Core):
                 {"name": key, "valueFrom": {"secretKeyRef": {"name": name, "key": key}}}
             )
 
-    @property
-    def cs_api_token(self):
-        if self._cs_api_token is None:
-            secrets = Secrets(self.project)
-            self._cs_api_token = secrets.get_secret("CS_API_TOKEN")
-        return self._cs_api_token
-
 
 def build(args: argparse.Namespace):
     publisher = Publisher(
         project=args.project,
+        cs_url=args.cs_url,
         tag=args.tag,
         models=args.names,
         base_branch=args.base_branch,
@@ -340,6 +326,7 @@ def build(args: argparse.Namespace):
 def test(args: argparse.Namespace):
     publisher = Publisher(
         project=args.project,
+        cs_url=args.cs_url,
         tag=args.tag,
         models=args.names,
         base_branch=args.base_branch,
@@ -351,14 +338,13 @@ def test(args: argparse.Namespace):
 def push(args: argparse.Namespace):
     publisher = Publisher(
         project=args.project,
+        cs_url=args.cs_url,
         tag=args.tag,
         models=args.names,
         base_branch=args.base_branch,
         use_kind=args.use_kind,
         cr=args.cr,
-        cs_url=getattr(args, "cs_url", None),
         cs_api_token=getattr(args, "cs_api_token", None),
-        latest_tag=getattr(args, "latest_tag", None),
     )
     publisher.push()
 
@@ -366,12 +352,12 @@ def push(args: argparse.Namespace):
 def config(args: argparse.Namespace):
     publisher = Publisher(
         project=args.project,
+        cs_url=args.cs_url,
         tag=args.tag,
         models=args.names,
         base_branch=args.base_branch,
         kubernetes_target=args.out,
         cr=args.cr,
-        cs_url=getattr(args, "cs_url", None),
         cs_api_token=getattr(args, "cs_api_token", None),
     )
     publisher.write_app_config()
@@ -380,11 +366,11 @@ def config(args: argparse.Namespace):
 def promote(args: argparse.Namespace):
     publisher = Publisher(
         project=args.project,
+        cs_url=args.cs_url,
         tag=args.tag,
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
-        cs_url=getattr(args, "cs_url", None),
         cs_api_token=getattr(args, "cs_api_token", None),
     )
     publisher.promote()
@@ -393,11 +379,11 @@ def promote(args: argparse.Namespace):
 def stage(args: argparse.Namespace):
     publisher = Publisher(
         project=args.project,
+        cs_url=args.cs_url,
         tag=args.tag,
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
-        cs_url=getattr(args, "cs_url", None),
         cs_api_token=getattr(args, "cs_api_token", None),
         staging_tag=getattr(args, "staging_tag", None),
     )

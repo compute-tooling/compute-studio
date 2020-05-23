@@ -9,10 +9,13 @@ import tornado.ioloop
 import tornado.web
 
 from cs_workers.utils import clean
-from cs_workers.clients import job, api_task
+from cs_workers.clients import core, job, api_task
 
 
 CS_URL = os.environ.get("CS_URL")
+
+
+config = core.Core("cs-workers-dev", cs_url=CS_URL)
 
 
 class Payload(ma.Schema):
@@ -22,16 +25,6 @@ class Payload(ma.Schema):
         keys=ma.fields.Str(), values=ma.fields.Field(), missing=dict
     )
     tag = ma.fields.Str(required=False, allow_none=True)
-
-
-def get_projects():
-    resp = httpx.get(f"{CS_URL}/publish/api/")
-    assert resp.status_code == 200, f"Got code: {resp.status_code}"
-    projects = {}
-    for project in resp.json():
-        projects[(project["owner"], project["title"])] = project
-    print("projects", projects)
-    return projects
 
 
 class Scheduler(tornado.web.RequestHandler):
@@ -95,7 +88,7 @@ def get_app():
             (
                 r"/([A-Za-z0-9-]+)/([A-Za-z0-9-]+)/",
                 Scheduler,
-                dict(projects=get_projects()),
+                dict(projects=config.get_config()),
             )
         ],
         debug=True,

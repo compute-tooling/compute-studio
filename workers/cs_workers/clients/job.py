@@ -26,10 +26,12 @@ class Job(Core):
         tag,
         job_id=None,
         job_kwargs=None,
+        cs_url=os.environ.get("CS_URL"),
+        cs_api_token=os.environ.get("CS_API_TOKEN"),
         quiet=True,
         incluster=True,
     ):
-        super().__init__(project, quiet=quiet)
+        super().__init__(project, cs_url=cs_url, cs_api_token=cs_api_token, quiet=quiet)
         self.config = {}
         self.incluster = incluster
         if self.incluster:
@@ -46,7 +48,7 @@ class Job(Core):
         envs = [
             kclient.V1EnvVar("OWNER", config["owner"]),
             kclient.V1EnvVar("TITLE", config["title"]),
-            kclient.V1EnvVar("SIM_TIME_LIMIT", str(config["sim_time_limit"])),
+            kclient.V1EnvVar("EXP_TASK_TIME", str(config["exp_task_time"])),
         ]
         for sec in ["CS_URL", "REDIS_HOST", "REDIS_PORT", "REDIS_EXECUTOR_PW"]:
             envs.append(
@@ -95,6 +97,7 @@ class Job(Core):
             image=f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{tag}",
             command=["csw", "job", "--job-id", job_id, "--route-name", "sim"],
             env=self.env(owner, title, config),
+            resources=kclient.V1ResourceRequirements(**config["resources"]),
         )
         # Create and configurate a spec section
         template = kclient.V1PodTemplateSpec(

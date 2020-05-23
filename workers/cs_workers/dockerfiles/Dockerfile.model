@@ -15,21 +15,20 @@ ARG TITLE
 ARG OWNER
 ARG REPO_URL
 ARG RAW_REPO_URL
-ARG BRANCH=master
+ARG REPO_TAG=master
 
 # Install necessary packages, copying files, etc.
 ######################
 # Bump to trigger build
-ARG BUILD_NUM=0
+ARG TIME_STAMP=0
 
-ADD ${RAW_REPO_URL}/${BRANCH}/cs-config/install.sh /home
+ADD ${RAW_REPO_URL}/${REPO_TAG}/cs-config/install.sh /home
 RUN cat /home/install.sh
 RUN bash /home/install.sh
 
 # Bump to trigger re-install of source, without re-installing dependencies.
-ARG INSTALL_NUM=0
-RUN pip install "git+${REPO_URL}.git@${BRANCH}#egg=cs-config&subdirectory=cs-config"
-ADD ${RAW_REPO_URL}/${BRANCH}/cs-config/cs_config/tests/test_functions.py /home
+RUN pip install "git+${REPO_URL}.git@${REPO_TAG}#egg=cs-config&subdirectory=cs-config"
+ADD ${RAW_REPO_URL}/${REPO_TAG}/cs-config/cs_config/tests/test_functions.py /home
 
 RUN pip install "git+https://github.com/compute-tooling/compute-studio.git@cluster-refactor#egg=cs-workers&subdirectory=workers" cs-kit pytest
 ######################

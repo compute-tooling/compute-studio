@@ -56,3 +56,12 @@ def redis_conn_from_env():
             kwargs[kwarg] = val
 
     return kwargs
+
+
+def get_projects(cs_url):
+    resp = httpx.get(f"{cs_url}/publish/api/")
+    assert resp.status_code == 200, f"Got code: {resp.status_code}"
+    projects = {}
+    for project in resp.json():
+        projects[(project["owner"], project["title"])] = project
+    return projects
