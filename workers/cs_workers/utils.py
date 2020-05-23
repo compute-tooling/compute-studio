@@ -36,6 +36,8 @@ def read_github_file(org, repo, branch, filename):
     response = httpx.get(url)
     if response.status_code == 403:
         assert "hit rate limit" == 403
+    if response.status_code == 404:
+        raise FileNotFoundError()
     assert response.status_code == 200, f"Got code: {response.status_code}"
     sanatized_content = response.json()["content"].replace("\n", "")
     encoded_content = sanatized_content.encode()

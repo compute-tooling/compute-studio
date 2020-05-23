@@ -8,7 +8,7 @@ import marshmallow as ma
 import tornado.ioloop
 import tornado.web
 
-from cs_workers.utils import clean
+from cs_workers.utils import clean, get_projects
 from cs_workers.clients import core, job, api_task
 
 
@@ -83,12 +83,13 @@ class Scheduler(tornado.web.RequestHandler):
 
 
 def get_app():
+    projects = get_projects(CS_URL)
     return tornado.web.Application(
         [
             (
                 r"/([A-Za-z0-9-]+)/([A-Za-z0-9-]+)/",
                 Scheduler,
-                dict(projects=config.get_config()),
+                dict(projects=config.get_config_from_remote(models=projects.keys())),
             )
         ],
         debug=True,

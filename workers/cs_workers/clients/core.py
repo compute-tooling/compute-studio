@@ -42,12 +42,13 @@ class Core:
         self.quiet = quiet
         self.cr = cr
         self._cs_api_token = cs_api_token
-        self.projects = None
+        self.set_projects()
+
+    def set_projects(self):
+        self.projects = get_projects(self.cs_url)
+        return self.projects
 
     def merge_configs(self, config):
-        if self.projects is None:
-            self.projects = get_projects(self.cs_url)
-
         for ot in config:
             project = self.projects.get(ot)
             if project:
@@ -64,7 +65,7 @@ class Core:
                         config[ot][attr] = project[attr]
         return config
 
-    def get_config(self, models, merge=True):
+    def get_config(self, models=None, merge=True):
         config = {}
         for owner_title in models:
             owner, title = parse_owner_title(owner_title)
@@ -110,12 +111,15 @@ class Core:
         config = {}
         for owner_title in models:
             owner, title = parse_owner_title(owner_title)
-            content = read_github_file(
-                "compute-tooling",
-                "compute-studio-publish",
-                "master",
-                f"config/{owner}/{title}.yaml",
-            )
+            try:
+                content = read_github_file(
+                    "compute-tooling",
+                    "compute-studio-publish",
+                    "master",
+                    f"config/{owner}/{title}.yaml",
+                )
+            except FileNotFoundError:
+                continue
             config[(owner, title)] = yaml.safe_load(content)
         if merge:
             return self.merge_configs(config)
