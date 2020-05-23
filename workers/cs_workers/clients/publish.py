@@ -44,6 +44,7 @@ class Publisher(Core):
         cs_api_token=None,
         staging_tag=None,
         cr="gcr.io",
+        ignore_ci_errors=False,
     ):
         super().__init__(
             project, cs_url, tag, base_branch, quiet, cs_api_token=cs_api_token
@@ -54,6 +55,7 @@ class Publisher(Core):
         self.use_kind = use_kind
         self.staging_tag = staging_tag
         self.cr = cr
+        self.ignore_ci_errors = ignore_ci_errors
 
         if self.kubernetes_target == "-":
             self.quiet = True
@@ -121,7 +123,9 @@ class Publisher(Core):
                 continue
             try:
                 method(app)
-            except Exception:
+            except Exception as e:
+                if not self.ignore_ci_errors:
+                    raise e
                 print(
                     f"There was an error building: "
                     f"{app['owner']}/{app['title']}:{self.tag}"
@@ -319,6 +323,7 @@ def build(args: argparse.Namespace):
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
+        ignore_ci_errors=args.ignore_ci_errors,
     )
     publisher.build()
 
@@ -331,6 +336,7 @@ def test(args: argparse.Namespace):
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
+        ignore_ci_errors=args.ignore_ci_errors,
     )
     publisher.test()
 
@@ -345,6 +351,7 @@ def push(args: argparse.Namespace):
         use_kind=args.use_kind,
         cr=args.cr,
         cs_api_token=getattr(args, "cs_api_token", None),
+        ignore_ci_errors=args.ignore_ci_errors,
     )
     publisher.push()
 
@@ -359,6 +366,7 @@ def config(args: argparse.Namespace):
         kubernetes_target=args.out,
         cr=args.cr,
         cs_api_token=getattr(args, "cs_api_token", None),
+        ignore_ci_errors=args.ignore_ci_errors,
     )
     publisher.write_app_config()
 
@@ -397,6 +405,7 @@ def cli(subparsers: argparse._SubParsersAction):
     parser.add_argument("--names", "-n", type=str, required=False, default=None)
     parser.add_argument("--base-branch", default="origin/master", required=False)
     parser.add_argument("--cr", default="gcr.io", required=False)
+    parser.add_argument("--ignore-ci-errors", action="store_true")
     model_subparsers = parser.add_subparsers()
 
     build_parser = model_subparsers.add_parser("build")
