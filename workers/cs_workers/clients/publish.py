@@ -60,9 +60,9 @@ class Publisher(Core):
         elif not self.kubernetes_target.exists():
             os.mkdir(self.kubernetes_target)
 
-        self.config = self.get_config_from_diff()
+        self.config = self.get_config_from_diff(merge=True)
         if self.models:
-            self.config.update(self.get_config(self.models))
+            self.config.update(self.get_config(self.models, merge=True))
 
         self.dockerfiles_dir = BASE_PATH / "dockerfiles"
 

@@ -63,7 +63,7 @@ class Core:
                         config[ot][attr] = project[attr]
         return config
 
-    def get_config(self, models):
+    def get_config(self, models, merge=True):
         config = {}
         for owner_title in models:
             owner, title = parse_owner_title(owner_title)
@@ -76,15 +76,20 @@ class Core:
                         contents = yaml.safe_load(f.read())
                         config[(contents["owner"], contents["title"])] = contents
                 else:
-                    config.update(self.get_config_from_remote([(owner, title)]))
+                    config.update(
+                        self.get_config_from_remote([(owner, title)], merge=False)
+                    )
         if not self.quiet and config:
             print("# Updating:")
             print("\n#".join(f"#  {o}/{t}" for o, t in config.keys()))
         elif not self.quiet:
             print("# No changes detected.")
-        return self.merge_configs(config)
+        if merge:
+            return self.merge_configs(config)
+        else:
+            return config
 
-    def get_config_from_diff(self):
+    def get_config_from_diff(self, merge=True):
         try:
             r = Repo()
             files_with_diff = r.index.diff(r.commit(self.base_branch), paths="config")
@@ -95,9 +100,12 @@ class Core:
             with open(config_file.a_path, "r") as f:
                 c = yaml.safe_load(f.read())
             config[(c["owner"], c["title"])] = c
-        return config
+        if merge:
+            return self.merge_configs(config)
+        else:
+            return config
 
-    def get_config_from_remote(self, models):
+    def get_config_from_remote(self, models, merge=True):
         config = {}
         for owner_title in models:
             owner, title = parse_owner_title(owner_title)
@@ -108,7 +116,10 @@ class Core:
                 f"config/{owner}/{title}.yaml",
             )
             config[(owner, title)] = yaml.safe_load(content)
-        return config
+        if merge:
+            return self.merge_configs(config)
+        else:
+            return config
 
     def _resources(self, app, action=None):
         if action == "io":
