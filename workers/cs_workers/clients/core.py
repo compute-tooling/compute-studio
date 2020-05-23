@@ -49,7 +49,8 @@ class Core:
             self.projects = get_projects(self.cs_url)
 
         for ot in config:
-            if (project := self.projects.get(ot)) :
+            project = self.projects.get(ot)
+            if project:
                 if not config[ot].get("resources"):
                     mem = float(project["memory"])
                     cpu = float(project["cpu"])
