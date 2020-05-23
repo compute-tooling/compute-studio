@@ -10,6 +10,7 @@ import httpx
 from cs_workers.utils import run, clean
 from cs_workers.secrets import Secrets
 from cs_workers.clients.core import Core
+from cs_workers.clients import model_secrets
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
 BASE_PATH = CURR_PATH / ".."
@@ -432,5 +433,7 @@ def cli(subparsers: argparse._SubParsersAction):
 
     promote_parser = model_subparsers.add_parser("promote")
     promote_parser.set_defaults(func=promote)
+
+    model_secrets.cli(model_subparsers)
 
     parser.set_defaults(func=lambda args: print(args))

@@ -9,12 +9,15 @@ PROJECT = os.environ.get("PROJECT", "cs-workers-dev")
 
 
 class ModelSecrets(Secrets):
-    def __init__(self, owner, title, project):
-        self.owner = owner
-        self.title = title
+    def __init__(self, owner=None, title=None, name=None, project=None):
+        if owner and title:
+            self.owner = owner
+            self.title = title
+        else:
+            self.owner, self.title = name.split("/")
         self.project = project
-        self.safe_owner = clean(owner)
-        self.safe_title = clean(title)
+        self.safe_owner = clean(self.owner)
+        self.safe_title = clean(self.title)
         super().__init__(project)
 
     def set_secret(self, name, value):
@@ -55,25 +58,46 @@ class ModelSecrets(Secrets):
         return self.set_secret(name, None)
 
 
-def handle(args: argparse.Namespace):
-    secrets = ModelSecrets(args.owner, args.title, args.project)
-    if args.secret_name and args.secret_value:
-        secrets.set_secret(args.secret_name, args.secret_value)
-    elif args.secret_name:
-        print(secrets.get_secret(args.secret_name))
-    elif args.delete:
-        secrets.delete_secret(args.delete)
+def get_secret(args: argparse.Namespace):
+    secrets = ModelSecrets(args.owner, args.title, args.names, args.project)
+    print(secrets.get_secret(args.secret_name))
 
-    if args.list:
-        print(json.dumps(secrets.list_secrets(), indent=2))
+
+def set_secret(args: argparse.Namespace):
+    secrets = ModelSecrets(args.owner, args.title, args.names, args.project)
+    secrets.set_secret(args.secret_name, args.secret_value)
+
+
+def list_secrets(args: argparse.Namespace):
+    secrets = ModelSecrets(args.owner, args.title, args.names, args.project)
+    print(json.dumps(secrets.list_secrets(), indent=2))
+
+
+def delete_secret(args: argparse.Namespace):
+    secrets = ModelSecrets(args.owner, args.title, args.names, args.project)
+    secrets.delete_secret(args.delete)
 
 
 def cli(subparsers: argparse._SubParsersAction):
     parser = subparsers.add_parser("secrets", description="CLI for model secrets.")
-    parser.add_argument("--owner", required=True)
-    parser.add_argument("--title", required=True)
-    parser.add_argument("--secret-name", "-s")
-    parser.add_argument("--secret-value", "-v")
-    parser.add_argument("--list", "-l", action="store_true")
-    parser.add_argument("--delete", "-d")
-    parser.set_defaults(func=handle)
+    parser.add_argument("--owner", required=False)
+    parser.add_argument("--title", required=False)
+
+    secrets_subparsers = parser.add_subparsers()
+
+    get_parser = secrets_subparsers.add_parser("get")
+    get_parser.add_argument("secret_name")
+    get_parser.set_defaults(func=get_secret)
+
+    set_parser = secrets_subparsers.add_parser("set")
+    set_parser.add_argument("--secret-name", "-s", required=False)
+    set_parser.add_argument("--secret-value", "-v", required=False)
+    set_parser.set_defaults(func=set_secret)
+
+    list_parser = secrets_subparsers.add_parser("list")
+    list_parser.add_argument("--secret-name", "-s", required=False)
+    list_parser.set_defaults(func=list_secrets)
+
+    delete_parser = secrets_subparsers.add_parser("delete")
+    delete_parser.add_argument("delete")
+    delete_parser.set_defaults(func=delete_secret)

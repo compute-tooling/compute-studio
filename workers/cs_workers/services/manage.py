@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 
 
-from ..secrets import Secrets
+from ..secrets import Secrets, cli as secrets_cli
 
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
@@ -310,6 +310,8 @@ def serve(args: argparse.Namespace):
 def cli(subparsers: argparse._SubParsersAction):
     parser = subparsers.add_parser("services", aliases=["svc"])
     svc_subparsers = parser.add_subparsers()
+
+    secrets_cli(svc_subparsers)
 
     build_parser = svc_subparsers.add_parser("build")
     build_parser.set_defaults(func=build)
