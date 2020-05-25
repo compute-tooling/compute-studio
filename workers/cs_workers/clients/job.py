@@ -7,8 +7,6 @@ import yaml
 from kubernetes import client as kclient, config as kconfig
 
 from cs_workers.utils import clean, redis_conn_from_env
-from cs_workers.clients.core import Core
-
 
 redis_conn = dict(
     username="scheduler",
@@ -17,23 +15,32 @@ redis_conn = dict(
 )
 
 
-class Job(Core):
+class Job:
     def __init__(
         self,
         project,
         owner,
         title,
         tag,
+        model_config,
         job_id=None,
         job_kwargs=None,
-        cs_url=os.environ.get("CS_URL"),
-        cs_api_token=os.environ.get("CS_API_TOKEN"),
-        quiet=True,
+        cr="gcr.io",
         incluster=True,
+        rclient=None,
+        quiet=True,
     ):
-        super().__init__(project, cs_url=cs_url, cs_api_token=cs_api_token, quiet=quiet)
-        self.config = {}
+        self.project = project
+        self.owner = owner
+        self.title = title
+        self.tag = tag
+        self.model_config = model_config
+        self.cr = cr
+        self.quiet = quiet
+
         self.incluster = incluster
+        if rclient is None:
+            self.rclient = redis.Redis(**redis_conn)
         if self.incluster:
             kconfig.load_incluster_config()
         else:
@@ -50,7 +57,12 @@ class Job(Core):
             kclient.V1EnvVar("TITLE", config["title"]),
             kclient.V1EnvVar("EXP_TASK_TIME", str(config["exp_task_time"])),
         ]
-        for sec in ["CS_URL", "REDIS_HOST", "REDIS_PORT", "REDIS_EXECUTOR_PW"]:
+        for sec in [
+            "CS_URL",
+            "REDIS_HOST",
+            "REDIS_PORT",
+            "REDIS_EXECUTOR_PW",
+        ]:
             envs.append(
                 kclient.V1EnvVar(
                     sec,
@@ -62,7 +74,7 @@ class Job(Core):
                 )
             )
 
-        for secret in self._list_secrets(config):
+        for secret in self.model_config._list_secrets(config):
             envs.append(
                 kclient.V1EnvVar(
                     name=secret,
@@ -83,10 +95,7 @@ class Job(Core):
         else:
             job_id = str(job_id)
 
-        if (owner, title) not in self.config:
-            self.config.update(self.get_config([(owner, title)]))
-
-        config = self.config[(owner, title)]
+        config = self.model_config.projects[(owner, title)]
 
         safeowner = clean(owner)
         safetitle = clean(title)
@@ -130,8 +139,7 @@ class Job(Core):
     def save_job_kwargs(self, job_id, job_kwargs):
         if not job_id.startswith("job-"):
             job_id = f"job-{job_id}"
-        with redis.Redis(**redis_conn) as rclient:
-            rclient.set(job_id, json.dumps(job_kwargs))
+        self.rclient.set(job_id, json.dumps(job_kwargs))
 
     def create(self):
         return self.api_client.create_namespaced_job(body=self.job, namespace="default")

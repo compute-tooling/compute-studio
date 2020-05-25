@@ -9,14 +9,14 @@ import httpx
 
 from cs_workers.utils import run, clean
 from cs_workers.secrets import Secrets
-from cs_workers.clients.core import Core
+from cs_workers.config import ModelConfig
 from cs_workers.clients import model_secrets
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
 BASE_PATH = CURR_PATH / ".."
 
 
-class Publisher(Core):
+class Publisher:
     """
     Build, test, and publish docker images for Compute Studio:
 
@@ -37,24 +37,30 @@ class Publisher(Core):
         tag,
         models=None,
         base_branch="origin/master",
-        quiet=False,
-        kubernetes_target=None,
-        use_kind=False,
         cs_url=os.environ.get("CS_URL"),
         cs_api_token=None,
+        kubernetes_target=None,
+        use_kind=False,
         staging_tag=None,
         cr="gcr.io",
         ignore_ci_errors=False,
+        quiet=False,
     ):
-        super().__init__(
-            project, cs_url, tag, base_branch, quiet, cs_api_token=cs_api_token
-        )
+        self.config = ModelConfig(project, cs_url, base_branch, quiet)
 
+        self.project = project
+        self.tag = tag
         self.models = models.split(",") if models else None
+        self.base_branch = base_branch
+        self.cs_url = cs_url
+        self._cs_api_token = cs_api_token
+        self.cr = cr
+
         self.kubernetes_target = kubernetes_target or self.kubernetes_target
         self.use_kind = use_kind
+
         self.staging_tag = staging_tag
-        self.cr = cr
+
         self.ignore_ci_errors = ignore_ci_errors
 
         if self.kubernetes_target == "-":
@@ -62,12 +68,19 @@ class Publisher(Core):
         elif not self.kubernetes_target.exists():
             os.mkdir(self.kubernetes_target)
 
-        self.config = self.get_config_from_diff(merge=True)
+        models = self.config.get_diffed_projects()
         if self.models:
-            self.config.update(self.get_config(self.models, merge=True))
+            models += self.models
+
+        self.projects = self.config.get_projects(models=models)
 
         self.dockerfiles_dir = BASE_PATH / "dockerfiles"
 
+        self.errored = set()
+
+        self.load_templates()
+
+    def load_templates(self):
         with open(
             BASE_PATH
             / Path("templates")
@@ -90,8 +103,6 @@ class Publisher(Core):
             BASE_PATH / Path("templates") / "models" / Path("secret.template.yaml"), "r"
         ) as f:
             self.secret_template = yaml.safe_load(f.read())
-
-        self.errored = set()
 
     def build(self):
         self.apply_method_to_apps(method=self.build_app_image)
@@ -118,7 +129,7 @@ class Publisher(Core):
         for all apps in config. Filters out those not in models
         list, if applicable.
         """
-        for name, app in self.config.items():
+        for name, app in self.projects.items():
             if self.models and f"{name[0]}/{name[1]}" not in self.models:
                 continue
             try:
@@ -140,7 +151,6 @@ class Publisher(Core):
         """
         Build, tag, and pus the image for a single app.
         """
-        print(app)
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])
         img_name = f"{safeowner}_{safetitle}_tasks"
@@ -154,7 +164,6 @@ class Publisher(Core):
             REPO_TAG=app["repo_tag"],
             REPO_URL=app["repo_url"],
             RAW_REPO_URL=app["repo_url"].replace(reg_url, raw_url),
-            **app["env"],
         )
 
         buildargs_str = " ".join(
@@ -193,7 +202,7 @@ class Publisher(Core):
 
     def stage_app(self, app):
         resp = httpx.post(
-            f"{self.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
+            f"{self.config.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
             json={"staging_tag": self.staging_tag},
             headers={"Authorization": f"Token {self.cs_api_token}"},
         )
@@ -205,7 +214,7 @@ class Publisher(Core):
 
     def promote_app(self, app):
         resp = httpx.get(
-            f"{self.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
+            f"{self.config.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
             headers={"Authorization": f"Token {self.cs_api_token}"},
         )
         assert (
@@ -213,7 +222,7 @@ class Publisher(Core):
         ), f"Got: {resp.url} {resp.status_code} {resp.text}"
         staging_tag = resp.json()["staging_tag"]
         resp = httpx.post(
-            f"{self.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
+            f"{self.config.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
             json={"latest_tag": staging_tag or self.tag, "staging_tag": None},
             headers={"Authorization": f"Token {self.cs_api_token}"},
         )
@@ -231,7 +240,7 @@ class Publisher(Core):
 
         secret_config["metadata"]["name"] = name
 
-        for name, value in self._list_secrets(app).items():
+        for name, value in self.config._list_secrets(app).items():
             secret_config["stringData"][name] = value
 
         if not secret_config["stringData"]:
@@ -267,17 +276,15 @@ class Publisher(Core):
             }
         )
 
-        container_config["env"].append(
-            {"name": "exp_task_time", "value": str(app["exp_task_time"])}
-        )
-        container_config["env"].append(
+        container_config["env"] += [
+            {"name": "exp_task_time", "value": str(app["exp_task_time"])},
             {
                 "name": "REDIS_HOST",
                 "valueFrom": {
                     "secretKeyRef": {"name": "worker-secret", "key": "REDIS_HOST"}
                 },
-            }
-        )
+            },
+        ]
 
         self._set_secrets(app, container_config)
 
@@ -309,17 +316,24 @@ class Publisher(Core):
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])
         name = f"{safeowner}-{safetitle}-secret"
-        for key in self._list_secrets(app):
+        for key in self.config._list_secrets(app):
             config["env"].append(
                 {"name": key, "valueFrom": {"secretKeyRef": {"name": name, "key": key}}}
             )
+
+    @property
+    def cs_api_token(self):
+        if self._cs_api_token is None:
+            secrets = Secrets(self.project)
+            self._cs_api_token = secrets.get_secret("CS_API_TOKEN")
+        return self._cs_api_token
 
 
 def build(args: argparse.Namespace):
     publisher = Publisher(
         project=args.project,
-        cs_url=args.cs_url,
         tag=args.tag,
+        cs_url=args.cs_url,
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
@@ -331,8 +345,8 @@ def build(args: argparse.Namespace):
 def test(args: argparse.Namespace):
     publisher = Publisher(
         project=args.project,
-        cs_url=args.cs_url,
         tag=args.tag,
+        cs_url=args.cs_url,
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
@@ -344,8 +358,8 @@ def test(args: argparse.Namespace):
 def push(args: argparse.Namespace):
     publisher = Publisher(
         project=args.project,
-        cs_url=args.cs_url,
         tag=args.tag,
+        cs_url=args.cs_url,
         models=args.names,
         base_branch=args.base_branch,
         use_kind=args.use_kind,
@@ -359,8 +373,8 @@ def push(args: argparse.Namespace):
 def config(args: argparse.Namespace):
     publisher = Publisher(
         project=args.project,
-        cs_url=args.cs_url,
         tag=args.tag,
+        cs_url=args.cs_url,
         models=args.names,
         base_branch=args.base_branch,
         kubernetes_target=args.out,
@@ -374,8 +388,8 @@ def config(args: argparse.Namespace):
 def promote(args: argparse.Namespace):
     publisher = Publisher(
         project=args.project,
-        cs_url=args.cs_url,
         tag=args.tag,
+        cs_url=args.cs_url,
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
@@ -387,8 +401,8 @@ def promote(args: argparse.Namespace):
 def stage(args: argparse.Namespace):
     publisher = Publisher(
         project=args.project,
-        cs_url=args.cs_url,
         tag=args.tag,
+        cs_url=args.cs_url,
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,

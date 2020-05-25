@@ -5,17 +5,23 @@ import uuid
 
 import httpx
 import marshmallow as ma
+import redis
 import tornado.ioloop
 import tornado.web
 
-from cs_workers.utils import clean, get_projects
-from cs_workers.clients import core, job, api_task
+from cs_workers.utils import clean, get_projects, redis_conn_from_env
+from cs_workers.clients import job, api_task
+from cs_workers.config import ModelConfig
 
 
 CS_URL = os.environ.get("CS_URL")
 
 
-config = core.Core("cs-workers-dev", cs_url=CS_URL)
+redis_conn = dict(
+    username="scheduler",
+    password=os.environ.get("REDIS_SCHEDULER_PW"),
+    **redis_conn_from_env(),
+)
 
 
 class Payload(ma.Schema):
@@ -28,8 +34,10 @@ class Payload(ma.Schema):
 
 
 class Scheduler(tornado.web.RequestHandler):
-    def initialize(self, projects=None):
-        self.projects = projects
+    def initialize(self, config=None, rclient=None):
+        self.config = config
+        self.rclient = rclient
+        self.projects = self.config.projects
 
     async def post(self, owner, title):
         print("POST -- /", owner, title)
@@ -70,8 +78,10 @@ class Scheduler(tornado.web.RequestHandler):
                 owner,
                 title,
                 tag=tag,
+                model_config=self.config,
                 job_id=task_id,
                 job_kwargs=payload["task_kwargs"],
+                rclient=self.rclient,
             )
             client.create()
             data = {"task_id": client.job_id}
@@ -83,13 +93,15 @@ class Scheduler(tornado.web.RequestHandler):
 
 
 def get_app():
-    projects = get_projects(CS_URL)
+    config = ModelConfig("cs-workers-dev", cs_url=CS_URL)
+    config.get_projects()
+    rclient = redis.Redis(**redis_conn)
     return tornado.web.Application(
         [
             (
                 r"/([A-Za-z0-9-]+)/([A-Za-z0-9-]+)/",
                 Scheduler,
-                dict(projects=config.get_config_from_remote(models=projects.keys())),
+                dict(config=config, rclient=rclient),
             )
         ],
         debug=True,
