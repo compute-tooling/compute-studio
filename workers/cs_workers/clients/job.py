@@ -41,6 +41,8 @@ class Job:
         self.incluster = incluster
         if rclient is None:
             self.rclient = redis.Redis(**redis_conn)
+        else:
+            self.rclient = rclient
         if self.incluster:
             kconfig.load_incluster_config()
         else:
