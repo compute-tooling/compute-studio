@@ -4,9 +4,9 @@ FROM continuumio/miniconda3
 USER root
 RUN  apt-get update && apt install libgl1-mesa-glx --yes
 
-RUN conda update conda
 RUN conda config --append channels conda-forge
-RUN conda install "python>=3.7" pip tornado dask lz4 boto3
+RUN conda update conda
+RUN conda install "python>=3.7" pip tornado dask lz4 && pip install boto3
 
 
 WORKDIR /home
