@@ -102,9 +102,8 @@ class Job:
         safeowner = clean(owner)
         safetitle = clean(title)
         name = f"{safeowner}-{safetitle}"
-        job_name = f"{name}-{job_id}"
         container = kclient.V1Container(
-            name=job_name,
+            name=job_id,
             image=f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{tag}",
             command=["csw", "job", "--job-id", job_id, "--route-name", "sim"],
             env=self.env(owner, title, config),
@@ -129,7 +128,7 @@ class Job:
         job = kclient.V1Job(
             api_version="batch/v1",
             kind="Job",
-            metadata=kclient.V1ObjectMeta(name=job_name),
+            metadata=kclient.V1ObjectMeta(name=job_id),
             spec=spec,
         )
 
