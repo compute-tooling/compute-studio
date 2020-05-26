@@ -53,8 +53,8 @@ class ModelConfig:
                 cpu = float(project.pop("cpu"))
                 if cpu and mem:
                     project["resources"] = {
-                        "requests": {"memory": f"{mem} GB", "cpu": cpu},
-                        "limits": {"memory": f"{math.ceil(mem * 1.2)} GB", "cpu": cpu,},
+                        "requests": {"memory": f"{mem}G", "cpu": cpu},
+                        "limits": {"memory": f"{math.ceil(mem * 1.2)}G", "cpu": cpu,},
                     }
         return projects
 

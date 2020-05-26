@@ -123,7 +123,7 @@ class Job:
         )
         # Create the specification of deployment
         spec = kclient.V1JobSpec(
-            template=template, backoff_limit=1, ttl_seconds_after_finished=7200
+            template=template, backoff_limit=1, ttl_seconds_after_finished=0
         )
         # Instantiate the job object
         job = kclient.V1Job(
