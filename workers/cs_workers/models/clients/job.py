@@ -143,7 +143,7 @@ class Job:
         self.rclient.set(job_id, json.dumps(job_kwargs))
 
     def create(self):
-        return self.api_client.create_namespaced_job(body=self.job, namespace="default")
+        return self.api_client.create_namespaced_job(body=self.job, namespace="prod")
 
     def delete(self):
         return self.api_client.delete_namespaced_job(

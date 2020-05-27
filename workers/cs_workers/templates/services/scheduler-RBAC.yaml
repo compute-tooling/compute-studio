@@ -7,7 +7,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: job-admin
-  namespace: default
+  namespace: prod
 rules:
   - apiGroups: ["batch", "extensions"]
     resources: ["jobs"]
@@ -17,11 +17,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: job-admin
-  namespace: default
+  namespace: prod
 subjects:
   - kind: ServiceAccount
     name: scheduler
-    namespace: default
+    namespace: prod
 roleRef:
   kind: Role
   name: job-admin
