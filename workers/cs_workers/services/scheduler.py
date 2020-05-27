@@ -10,7 +10,7 @@ import tornado.ioloop
 import tornado.web
 
 from cs_workers.utils import clean, get_projects, redis_conn_from_env
-from cs_workers.clients import job, api_task
+from cs_workers.models.clients import job, api_task
 from cs_workers.config import ModelConfig
 
 

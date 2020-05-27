@@ -6,9 +6,13 @@ from pathlib import Path
 import random
 import yaml
 
-from cs_workers.services import manage, scheduler, outputs_processor
-from cs_workers.clients import publish, model_secrets
-from cs_workers.executors import job, api_task
+import cs_workers.services.manage
+import cs_workers.services.scheduler
+import cs_workers.services.outputs_processor
+import cs_workers.models.manage
+import cs_workers.models.executors.job
+import cs_workers.models.executors.api_task
+
 
 TAG = os.environ.get("TAG", "")
 PROJECT = os.environ.get("PROJECT", "cs-workers-dev")
@@ -51,13 +55,12 @@ def cli():
     )
     sub_parsers = parser.add_subparsers()
 
-    manage.cli(sub_parsers)
-    scheduler.cli(sub_parsers)
-    outputs_processor.cli(sub_parsers)
-    publish.cli(sub_parsers)
-    job.cli(sub_parsers)
-    api_task.cli(sub_parsers)
-    model_secrets.cli(sub_parsers)
+    cs_workers.services.manage.cli(sub_parsers)
+    cs_workers.services.scheduler.cli(sub_parsers)
+    cs_workers.services.outputs_processor.cli(sub_parsers)
+    cs_workers.models.manage.cli(sub_parsers)
+    cs_workers.models.executors.job.cli(sub_parsers)
+    cs_workers.models.executors.api_task.cli(sub_parsers)
 
     args = parser.parse_args()
     args.func(args)

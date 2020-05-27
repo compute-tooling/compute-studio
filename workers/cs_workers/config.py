@@ -17,8 +17,7 @@ from cs_workers.utils import (
     read_github_file,
     get_projects,
 )
-from cs_workers.clients.model_secrets import ModelSecrets
-from cs_workers.secrets import Secrets
+from cs_workers.models.secrets import ModelSecrets
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
 BASE_PATH = CURR_PATH / ".." / ".."

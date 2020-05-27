@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 
 
-from ..secrets import Secrets, cli as secrets_cli
+from cs_workers.services.secrets import ServicesSecrets, cli as secrets_cli
 
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
@@ -44,7 +44,7 @@ def redis_acl_genpass():
     return value
 
 
-class Cluster:
+class Manager:
     """
     Deploy and manage Compute Studio compute cluster:
         - build, tag, and push the docker images for the flask app and
@@ -84,7 +84,7 @@ class Cluster:
         self._cs_api_token = cs_api_token
 
         if kubernetes_target is None:
-            self.kubernetes_target = Cluster.kubernetes_target
+            self.kubernetes_target = Manager.kubernetes_target
         else:
             self.kubernetes_target = kubernetes_target
 
@@ -273,12 +273,12 @@ class Cluster:
     @property
     def secrets(self):
         if self._secrets is None:
-            self._secrets = Secrets(self.project)
+            self._secrets = ServicesSecrets(self.project)
         return self._secrets
 
 
-def cluster_from_args(args: argparse.Namespace):
-    return Cluster(
+def manager_from_args(args: argparse.Namespace):
+    return Manager(
         tag=args.tag,
         project=args.project,
         kubernetes_target=getattr(args, "out", None),
@@ -289,17 +289,17 @@ def cluster_from_args(args: argparse.Namespace):
 
 
 def build(args: argparse.Namespace):
-    cluster = cluster_from_args(args)
+    cluster = manager_from_args(args)
     cluster.build()
 
 
 def push(args: argparse.Namespace):
-    cluster = cluster_from_args(args)
+    cluster = manager_from_args(args)
     cluster.push()
 
 
 def config(args: argparse.Namespace):
-    cluster = cluster_from_args(args)
+    cluster = manager_from_args(args)
     cluster.config()
 
 

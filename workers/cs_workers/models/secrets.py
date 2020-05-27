@@ -3,12 +3,12 @@ import json
 import os
 
 from cs_workers.utils import clean
-from cs_workers.secrets import Secrets, SecretNotFound
+from cs_workers import secrets
 
 PROJECT = os.environ.get("PROJECT", "cs-workers-dev")
 
 
-class ModelSecrets(Secrets):
+class ModelSecrets(secrets.Secrets):
     def __init__(self, owner=None, title=None, name=None, project=None):
         if owner and title:
             self.owner = owner
@@ -24,7 +24,7 @@ class ModelSecrets(Secrets):
         secret_name = f"{self.safe_owner}_{self.safe_title}"
         try:
             secret_val = self.get_secret()
-        except SecretNotFound:
+        except secrets.SecretNotFound:
             secret_val = {name: value}
             return super().set_secret(secret_name, json.dumps(secret_val))
         else:
@@ -41,7 +41,7 @@ class ModelSecrets(Secrets):
         secret_name = f"{self.safe_owner}_{self.safe_title}"
         try:
             secret = json.loads(super().get_secret(secret_name))
-        except SecretNotFound:
+        except secrets.SecretNotFound:
             return {}
 
         if name and name in secret:

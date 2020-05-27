@@ -8,15 +8,16 @@ from pathlib import Path
 import httpx
 
 from cs_workers.utils import run, clean
-from cs_workers.secrets import Secrets
+
+from cs_workers.services.secrets import ServicesSecrets  # TODO
 from cs_workers.config import ModelConfig
-from cs_workers.clients import model_secrets
+from cs_workers.models import secrets
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
 BASE_PATH = CURR_PATH / ".."
 
 
-class Publisher:
+class Manager:
     """
     Build, test, and publish docker images for Compute Studio:
 
@@ -324,13 +325,13 @@ class Publisher:
     @property
     def cs_api_token(self):
         if self._cs_api_token is None:
-            secrets = Secrets(self.project)
-            self._cs_api_token = secrets.get_secret("CS_API_TOKEN")
+            svc_secrets = ServicesSecrets(self.project)
+            self._cs_api_token = svc_secrets.get_secret("CS_API_TOKEN")
         return self._cs_api_token
 
 
 def build(args: argparse.Namespace):
-    publisher = Publisher(
+    manager = Manager(
         project=args.project,
         tag=args.tag,
         cs_url=args.cs_url,
@@ -339,11 +340,11 @@ def build(args: argparse.Namespace):
         cr=args.cr,
         ignore_ci_errors=args.ignore_ci_errors,
     )
-    publisher.build()
+    manager.build()
 
 
 def test(args: argparse.Namespace):
-    publisher = Publisher(
+    manager = Manager(
         project=args.project,
         tag=args.tag,
         cs_url=args.cs_url,
@@ -352,11 +353,11 @@ def test(args: argparse.Namespace):
         cr=args.cr,
         ignore_ci_errors=args.ignore_ci_errors,
     )
-    publisher.test()
+    manager.test()
 
 
 def push(args: argparse.Namespace):
-    publisher = Publisher(
+    manager = Manager(
         project=args.project,
         tag=args.tag,
         cs_url=args.cs_url,
@@ -367,11 +368,11 @@ def push(args: argparse.Namespace):
         cs_api_token=getattr(args, "cs_api_token", None),
         ignore_ci_errors=args.ignore_ci_errors,
     )
-    publisher.push()
+    manager.push()
 
 
 def config(args: argparse.Namespace):
-    publisher = Publisher(
+    manager = Manager(
         project=args.project,
         tag=args.tag,
         cs_url=args.cs_url,
@@ -382,11 +383,11 @@ def config(args: argparse.Namespace):
         cs_api_token=getattr(args, "cs_api_token", None),
         ignore_ci_errors=args.ignore_ci_errors,
     )
-    publisher.write_app_config()
+    manager.write_app_config()
 
 
 def promote(args: argparse.Namespace):
-    publisher = Publisher(
+    manager = Manager(
         project=args.project,
         tag=args.tag,
         cs_url=args.cs_url,
@@ -395,11 +396,11 @@ def promote(args: argparse.Namespace):
         cr=args.cr,
         cs_api_token=getattr(args, "cs_api_token", None),
     )
-    publisher.promote()
+    manager.promote()
 
 
 def stage(args: argparse.Namespace):
-    publisher = Publisher(
+    manager = Manager(
         project=args.project,
         tag=args.tag,
         cs_url=args.cs_url,
@@ -409,7 +410,7 @@ def stage(args: argparse.Namespace):
         cs_api_token=getattr(args, "cs_api_token", None),
         staging_tag=getattr(args, "staging_tag", None),
     )
-    publisher.stage()
+    manager.stage()
 
 
 def cli(subparsers: argparse._SubParsersAction):
@@ -443,6 +444,6 @@ def cli(subparsers: argparse._SubParsersAction):
     promote_parser = model_subparsers.add_parser("promote")
     promote_parser.set_defaults(func=promote)
 
-    model_secrets.cli(model_subparsers)
+    secrets.cli(model_subparsers)
 
     parser.set_defaults(func=lambda args: print(args))

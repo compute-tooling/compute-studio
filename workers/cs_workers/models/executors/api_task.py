@@ -4,7 +4,10 @@ import json
 import os
 import uuid
 
-from cs_workers.executors.task_wrapper import async_task_wrapper, sync_task_wrapper
+from cs_workers.models.executors.task_wrapper import (
+    async_task_wrapper,
+    sync_task_wrapper,
+)
 
 import tornado.ioloop
 import tornado.web

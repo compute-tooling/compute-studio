@@ -8,7 +8,7 @@ import redis
 import httpx
 
 import cs_storage
-from cs_workers.executors.task_wrapper import async_task_wrapper
+from cs_workers.models.executors.task_wrapper import async_task_wrapper
 
 
 def sim_handler(task_id, meta_param_dict, adjustment):
