@@ -37,7 +37,6 @@ class Scheduler(tornado.web.RequestHandler):
     def initialize(self, config=None, rclient=None):
         self.config = config
         self.rclient = rclient
-        self.projects = self.config.projects
 
     async def post(self, owner, title):
         print("POST -- /", owner, title)
@@ -45,7 +44,7 @@ class Scheduler(tornado.web.RequestHandler):
             return
         payload = Payload().loads(self.request.body.decode("utf-8"))
         print("payload", payload)
-        if (owner, title) not in self.projects:
+        if f"{owner}/{title}" not in self.config.projects():
             self.set_status(404)
 
         task_id = payload.get("task_id")
@@ -93,9 +92,9 @@ class Scheduler(tornado.web.RequestHandler):
 
 
 def get_app():
-    config = ModelConfig("cs-workers-dev", cs_url=CS_URL)
-    config.get_projects()
     rclient = redis.Redis(**redis_conn)
+    config = ModelConfig("cs-workers-dev", cs_url=CS_URL, rclient=rclient)
+    config.set_projects()
     return tornado.web.Application(
         [
             (

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import httpx
 
-from cs_workers.utils import run, clean
+from cs_workers.utils import run, clean, parse_owner_title
 
 from cs_workers.services.secrets import ServicesSecrets  # TODO
 from cs_workers.config import ModelConfig
@@ -73,7 +73,10 @@ class Manager:
         if self.models:
             models += self.models
 
-        self.projects = self.config.get_projects(models=models)
+        self.projects = {}
+        for ot, data in self.config.projects(models=models).items():
+            o, t = parse_owner_title(ot)
+            self.projects[(o, t)] = data
 
         self.dockerfiles_dir = BASE_PATH / "dockerfiles"
 

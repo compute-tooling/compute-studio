@@ -25,25 +25,41 @@ BASE_PATH = CURR_PATH / ".." / ".."
 
 class ModelConfig:
     def __init__(
-        self, project, cs_url, base_branch="origin/master", quiet=False,
+        self, project, cs_url, base_branch="origin/master", quiet=False, rclient=None,
     ):
         self.cs_url = cs_url
         self.project = project
         self.base_branch = base_branch
         self.quiet = quiet
-        self.projects = None
+        self.rclient = rclient
+        self._projects = None
 
-    def get_projects(self, models=None):
+    def projects(self, models=None):
+        if self.rclient is not None:
+            projects = self.rclient.get("projects")
+            if projects is None:
+                self.set_projects(models=models)
+                return self._projects
+            else:
+                self._projects = json.loads(projects.decode())
+        else:
+            self.set_projects(models=models)
+        return self._projects
+
+    def set_projects(self, models=None):
         projects = get_projects(self.cs_url)
         if models is not None:
             selected = {}
             for model in models:
                 o, t = parse_owner_title(model)
-                selected[(o, t)] = projects[(o, t)]
+                selected[f"{o}/{t}"] = projects[f"{o}/{t}"]
             projects = selected
         self.format_resources(projects)
-        self.projects = projects
-        return self.projects
+        if self.rclient is not None:
+            self.rclient.set(
+                "projects", json.dumps(projects),
+            )
+        self._projects = projects
 
     def format_resources(self, projects):
         for ot, project in projects.items():

@@ -97,7 +97,7 @@ class Job:
         else:
             job_id = str(job_id)
 
-        config = self.model_config.projects[(owner, title)]
+        config = self.model_config.projects()[f"{owner}/{title}"]
 
         safeowner = clean(owner)
         safetitle = clean(title)

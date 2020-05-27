@@ -63,7 +63,11 @@ def redis_conn_from_env():
 def get_projects(cs_url):
     resp = httpx.get(f"{cs_url}/publish/api/")
     assert resp.status_code == 200, f"Got code: {resp.status_code}"
+    return hash_projects(resp.json())
+
+
+def hash_projects(payload):
     projects = {}
-    for project in resp.json():
-        projects[(project["owner"], project["title"])] = project
+    for project in payload:
+        projects[f"{project['owner']}/{project['title']}"] = project
     return projects
