@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from guardian.shortcuts import get_users_with_perms
 
-from webapp.apps.publish.serializers import PublishSerializer
+from webapp.apps.users.serializers import ProjectSerializer
 
 from .exceptions import ResourceLimitException
 from .models import Inputs, Simulation, PendingPermission, ModelConfig
@@ -248,7 +248,7 @@ class SimulationSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=False)
     owner = serializers.StringRelatedField(source="get_owner", required=False)
     authors = serializers.StringRelatedField(source="get_authors", many=True)
-    project = PublishSerializer()
+    project = ProjectSerializer()
     outputs_version = serializers.CharField()
     # see to_representation for definition of parent_sims:
     # parent_sims = MiniSimulationSerializer(many=True)

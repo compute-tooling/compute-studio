@@ -2,6 +2,7 @@ from collections import defaultdict
 import json
 
 import markdown
+import requests
 
 from django.db import models
 from django.db.models.functions import TruncMonth
@@ -16,7 +17,7 @@ from django.utils.safestring import mark_safe
 
 from webapp.apps.billing.models import create_billing_objects
 from webapp.apps.comp import actions
-from webapp.apps.comp.compute import SyncCompute
+from webapp.apps.comp.compute import SyncCompute, SyncProjects
 from webapp.apps.comp.models import Inputs, ANON_BEFORE
 from webapp.settings import DEBUG
 
@@ -114,6 +115,9 @@ class ProjectManager(models.Manager):
     def sync_products(self):
         for project in self.all():
             create_billing_objects(project)
+
+    def sync_projects_with_workers(self, data):
+        SyncProjects().submit_job(data)
 
 
 class Project(models.Model):
@@ -277,7 +281,6 @@ class Project(models.Model):
             return None
 
     def has_write_access(self, user):
-        print("Got user", user)
         return bool(
             user
             and user.is_authenticated

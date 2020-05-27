@@ -44,7 +44,7 @@ class Compute(object):
             tasks=dict(task_name=task_name, tag=tag, task_kwargs=task_kwargs), url=url
         )
 
-    def submit(self, tasks, url, increment_counter=True, use_wnc_offset=True):
+    def submit(self, tasks, url):
         submitted = False
         attempts = 0
         while not submitted:
@@ -74,7 +74,7 @@ class Compute(object):
 
 
 class SyncCompute(Compute):
-    def submit(self, tasks, url, increment_counter=True, use_wnc_offset=True):
+    def submit(self, tasks, url):
         submitted = False
         attempts = 0
         while not submitted:
@@ -85,6 +85,8 @@ class SyncCompute(Compute):
                 if response.status_code == 200:
                     print("submitted: ", url)
                     submitted = True
+                    if not response.text:
+                        return
                     data = response.json()
                 else:
                     print("FAILED: ", WORKER_HN)
@@ -104,3 +106,9 @@ class SyncCompute(Compute):
             return success, data
         else:
             return success, data
+
+
+class SyncProjects(SyncCompute):
+    def submit_job(self, projects):
+        url = f"http://{WORKER_HN}/sync/"
+        return self.submit(tasks=projects, url=url)

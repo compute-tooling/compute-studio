@@ -3,7 +3,7 @@ from rest_framework import serializers
 from webapp.apps.users.models import Project
 
 
-class PublishSerializer(serializers.ModelSerializer):
+class ProjectSerializer(serializers.ModelSerializer):
     owner = serializers.StringRelatedField(read_only=True)
     cluster_type = serializers.CharField(required=False)
     sim_count = serializers.IntegerField(required=False)

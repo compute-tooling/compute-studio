@@ -2,6 +2,7 @@ import json
 from decimal import Decimal
 
 import pytest
+import requests_mock
 
 from django.contrib.auth import get_user_model, get_user
 from guardian.shortcuts import assign_perm, remove_perm
@@ -9,10 +10,20 @@ from guardian.shortcuts import assign_perm, remove_perm
 from webapp.apps.comp.models import Simulation
 from webapp.apps.users.models import Project, Profile
 
-from webapp.apps.publish.serializers import PublishSerializer
+from webapp.apps.users.serializers import ProjectSerializer
+
+
+@pytest.fixture
+def mock_sync_projects(db, worker_url):
+    with requests_mock.Mocker(real_http=True) as mock:
+        mock.register_uri(
+            "POST", f"{worker_url}sync/",
+        )
+        yield
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures("mock_sync_projects")
 class TestPublishViews:
     def test_get(self, client):
         resp = client.get("/publish/")
@@ -68,7 +79,7 @@ class TestPublishViews:
         data = resp.json()
         data.pop("owner")
         data.pop("cluster_type")
-        serializer = PublishSerializer(project, data=data)
+        serializer = ProjectSerializer(project, data=data)
         assert serializer.is_valid(), serializer.errors
         assert serializer.validated_data == exp
         assert serializer.data["has_write_access"] == False

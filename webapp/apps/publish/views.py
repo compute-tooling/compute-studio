@@ -26,8 +26,8 @@ from guardian.shortcuts import assign_perm
 from webapp.apps.users.models import Project, is_profile_active
 from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 
-from .serializers import (
-    PublishSerializer,
+from webapp.apps.users.serializers import (
+    ProjectSerializer,
     ProjectWithVersionSerializer,
     DeploymentSerializer,
 )
@@ -67,7 +67,7 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
 
     def get(self, request, *args, **kwargs):
         project = self.get_object(**kwargs)
-        serializer = PublishSerializer(project, context={"request": request})
+        serializer = ProjectSerializer(project, context={"request": request})
         data = serializer.data
         return Response(data)
 
@@ -75,9 +75,12 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
         if request.user.is_authenticated:
             project = self.get_object(**kwargs)
             if project.has_write_access(request.user):
-                serializer = PublishSerializer(project, data=request.data)
+                serializer = ProjectSerializer(project, data=request.data)
                 if serializer.is_valid():
                     model = serializer.save(status="live")
+                    Project.objects.sync_projects_with_workers(
+                        ProjectSerializer(Project.objects.all(), many=True).data
+                    )
                     status_url = request.build_absolute_uri(model.app_url)
                     try:
                         send_mail(
@@ -103,14 +106,14 @@ class ProjectAPIView(GetProjectMixin, APIView):
     queryset = Project.objects.all()
 
     def get(self, request, *args, **kwargs):
-        ser = PublishSerializer(
+        ser = ProjectSerializer(
             self.queryset.all(), many=True, context={"request": request}
         )
         return Response(ser.data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            serializer = PublishSerializer(
+            serializer = ProjectSerializer(
                 data=request.POST, context={"request": request}
             )
             is_valid = serializer.is_valid()
@@ -136,6 +139,9 @@ class ProjectAPIView(GetProjectMixin, APIView):
                 status_url = request.build_absolute_uri(model.app_url)
                 api_user = User.objects.get(username="comp-api-user")
                 assign_perm("write_project", api_user, model)
+                Project.objects.sync_projects_with_workers(
+                    ProjectSerializer(Project.objects.all(), many=True).data
+                )
                 try:
                     send_mail(
                         f"{request.user.username} is publishing a model on Compute Studio!",
@@ -192,7 +198,7 @@ class RecentModelsAPIView(generics.ListAPIView):
         TokenAuthentication,
     )
     queryset = None
-    serializer_class = PublishSerializer
+    serializer_class = ProjectSerializer
     n_recent = 7
 
     def get_queryset(self):

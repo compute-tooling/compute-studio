@@ -46,8 +46,9 @@ class ModelConfig:
             self.set_projects(models=models)
         return self._projects
 
-    def set_projects(self, models=None):
-        projects = get_projects(self.cs_url)
+    def set_projects(self, models=None, projects=None):
+        if projects is None:
+            projects = get_projects(self.cs_url)
         if models is not None:
             selected = {}
             for model in models:

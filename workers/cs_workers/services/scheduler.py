@@ -9,7 +9,7 @@ import redis
 import tornado.ioloop
 import tornado.web
 
-from cs_workers.utils import clean, get_projects, redis_conn_from_env
+from cs_workers.utils import clean, hash_projects, redis_conn_from_env
 from cs_workers.models.clients import job, api_task
 from cs_workers.config import ModelConfig
 
@@ -91,17 +91,30 @@ class Scheduler(tornado.web.RequestHandler):
         self.write(data)
 
 
+class SyncProjects(tornado.web.RequestHandler):
+    def initialize(self, config=None, rclient=None):
+        self.config = config
+        self.rclient = rclient
+
+    def post(self):
+        data = json.loads(self.request.body.decode("utf-8"))
+        projects = hash_projects(data)
+        self.config.set_projects(projects=projects)
+        self.set_status(200)
+
+
 def get_app():
     rclient = redis.Redis(**redis_conn)
     config = ModelConfig("cs-workers-dev", cs_url=CS_URL, rclient=rclient)
     config.set_projects()
     return tornado.web.Application(
         [
+            (r"/sync/", SyncProjects, dict(config=config, rclient=rclient),),
             (
                 r"/([A-Za-z0-9-]+)/([A-Za-z0-9-]+)/",
                 Scheduler,
                 dict(config=config, rclient=rclient),
-            )
+            ),
         ],
         debug=True,
         autoreload=True,
