@@ -18,6 +18,11 @@ spec:
           ports:
             - containerPort: 8888
           env:
+            - name: PROJECT
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: PROJECT
             - name: BUCKET
               valueFrom:
                 secretKeyRef:
