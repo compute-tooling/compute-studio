@@ -61,6 +61,7 @@ class Job:
         ]
         for sec in [
             "CS_URL",
+            "BUCKET",
             "REDIS_HOST",
             "REDIS_PORT",
             "REDIS_EXECUTOR_PW",

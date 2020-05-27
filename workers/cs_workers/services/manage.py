@@ -72,6 +72,7 @@ class Manager:
         self,
         tag,
         project,
+        bucket=None,
         kubernetes_target="kubernetes/",
         use_kind=False,
         cs_url=None,
@@ -79,6 +80,7 @@ class Manager:
     ):
         self.tag = tag
         self.project = project
+        self.bucket = bucket
         self.use_kind = use_kind
         self.cs_url = cs_url
         self._cs_api_token = cs_api_token
@@ -220,9 +222,15 @@ class Manager:
         self.write_config("redis-master-Deployment.yaml", deployment)
 
     def write_secret(self):
+        assert self.bucket
+        assert self.cs_url
+        assert self.cs_api_token
+        assert self.project
         secrets = copy.deepcopy(self.secret_template)
         secrets["stringData"]["CS_URL"] = self.cs_url
         secrets["stringData"]["CS_API_TOKEN"] = self.cs_api_token
+        secrets["stringData"]["BUCKET"] = self.bucket
+        secrets["stringData"]["PROJECT"] = self.project
         redis_secrets = self.redis_secrets()
         for name, sec in redis_secrets.items():
             if sec is not None:
@@ -281,6 +289,7 @@ def manager_from_args(args: argparse.Namespace):
     return Manager(
         tag=args.tag,
         project=args.project,
+        bucket=args.bucket,
         kubernetes_target=getattr(args, "out", None),
         use_kind=getattr(args, "use_kind", None),
         cs_url=getattr(args, "cs_url", None),

@@ -38,7 +38,7 @@ class Manager:
         tag,
         models=None,
         base_branch="origin/master",
-        cs_url=os.environ.get("CS_URL"),
+        cs_url=None,
         cs_api_token=None,
         kubernetes_target=None,
         use_kind=False,
@@ -248,7 +248,7 @@ class Manager:
             secret_config["stringData"][name] = value
 
         if not secret_config["stringData"]:
-            return
+            secret_config["stringData"] = dict()
 
         if self.kubernetes_target == "-":
             sys.stdout.write(yaml.dump(secret_config))

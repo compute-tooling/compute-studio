@@ -15,14 +15,16 @@ import cs_workers.models.executors.api_task
 
 
 TAG = os.environ.get("TAG", "")
-PROJECT = os.environ.get("PROJECT", "cs-workers-dev")
+PROJECT = os.environ.get("PROJECT")
 CS_URL = os.environ.get("CS_URL", None)
+BUCKET = os.environ.get("BUCKET")
 
 defaults = dict(
     TAG=datetime.datetime.now().strftime("%Y-%m-%d"),
-    PROJECT="cs-workers-dev",
+    PROJECT=None,
     CS_URL=None,
     CS_API_TOKEN=None,
+    BUCKET=None,
 )
 
 
@@ -36,7 +38,7 @@ def load_env():
     else:
         user_config = {}
 
-    for var in ["TAG", "PROJECT", "CS_URL", "CS_API_TOKEN"]:
+    for var in ["TAG", "PROJECT", "CS_URL", "CS_API_TOKEN", "BUCKET"]:
         if os.environ.get(var):
             config[var] = os.environ.get(var)
         elif user_config.get(var):
@@ -49,6 +51,7 @@ def cli():
     parser = argparse.ArgumentParser(description="C/S Workers CLI")
     parser.add_argument("--tag", required=False, default=config["TAG"])
     parser.add_argument("--project", required=False, default=config["PROJECT"])
+    parser.add_argument("--bucket", required=False, default=config["BUCKET"])
     parser.add_argument("--cs-url", required=False, default=config["CS_URL"])
     parser.add_argument(
         "--cs-api-token", required=False, default=config["CS_API_TOKEN"]
