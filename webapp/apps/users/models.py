@@ -2,6 +2,7 @@ from collections import defaultdict
 import json
 
 import markdown
+import requests
 
 from django.db import models
 from django.db.models.functions import TruncMonth
@@ -16,7 +17,7 @@ from django.utils.safestring import mark_safe
 
 from webapp.apps.billing.models import create_billing_objects
 from webapp.apps.comp import actions
-from webapp.apps.comp.compute import SyncCompute
+from webapp.apps.comp.compute import SyncCompute, SyncProjects
 from webapp.apps.comp.models import Inputs, ANON_BEFORE
 from webapp.settings import DEBUG
 
@@ -115,6 +116,9 @@ class ProjectManager(models.Manager):
         for project in self.all():
             create_billing_objects(project)
 
+    def sync_projects_with_workers(self, data):
+        SyncProjects().submit_job(data)
+
 
 class Project(models.Model):
     SECS_IN_HOUR = 3600.0
@@ -122,6 +126,7 @@ class Project(models.Model):
     oneliner = models.CharField(max_length=10000)
     description = models.CharField(max_length=10000)
     repo_url = models.URLField()
+    repo_tag = models.CharField(default="master", max_length=32)
     owner = models.ForeignKey(
         Profile, null=True, related_name="projects", on_delete=models.CASCADE
     )
@@ -148,9 +153,9 @@ class Project(models.Model):
     def callabledefault():
         return [4, 2]
 
-    server_size = ArrayField(
-        models.CharField(max_length=5), default=callabledefault, size=2
-    )
+    cpu = models.DecimalField(max_digits=5, decimal_places=1, null=True, default=2)
+    memory = models.DecimalField(max_digits=5, decimal_places=1, null=True, default=6)
+
     exp_task_time = models.IntegerField(null=True)
     exp_num_tasks = models.IntegerField(null=True)
 
@@ -164,6 +169,9 @@ class Project(models.Model):
     listed = models.BooleanField(default=True)
 
     cluster_type = models.CharField(default="single-core", max_length=32)
+
+    latest_tag = models.CharField(null=True, max_length=64)
+    staging_tag = models.CharField(null=True, max_length=64)
 
     objects = ProjectManager()
 
@@ -258,7 +266,7 @@ class Project(models.Model):
             return None
         try:
             success, result = SyncCompute().submit_job(
-                {}, self.worker_ext(actions.VERSION)
+                project=self, task_name=actions.VERSION, task_kwargs=dict()
             )
             if success:
                 return result["version"]
@@ -267,6 +275,9 @@ class Project(models.Model):
                 return None
         except Exception as e:
             print(f"error retrieving version for {self}", e)
+            import traceback
+
+            traceback.print_exc()
             return None
 
     def has_write_access(self, user):

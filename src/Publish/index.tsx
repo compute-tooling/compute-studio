@@ -24,7 +24,14 @@ var Schema = yup.object().shape({
   oneliner: yup.string().required(requiredMessage),
   description: yup.string().required(requiredMessage),
   repo_url: yup.string().url(),
-  // server_size: yup.mixed().oneOf([[4, 2], [8, 4], [16, 8], [32, 16], [64, 32]]),
+  cpu: yup
+    .number()
+    .min(1, "CPU must be greater than ${min}.")
+    .max(7, "CPU must be less than ${max}."),
+  memory: yup
+    .number()
+    .min(2, "Memory must be greater than ${min}.")
+    .max(24, "Memory must be less than ${max}."),
   exp_task_time: yup.number().min(0, "Expected task time must be greater than ${min}."),
   listed: yup.boolean().required(requiredMessage)
 });
@@ -48,7 +55,9 @@ interface PublishValues {
   description: string;
   oneliner: string;
   repo_url: string;
-  server_size: [number, number];
+  repo_tag: string;
+  cpu: number;
+  memory: number;
   exp_task_time: number;
   listed: boolean;
 }
@@ -58,7 +67,9 @@ const initialValues: PublishValues = {
   description: "",
   oneliner: "",
   repo_url: "",
-  server_size: [4, 2],
+  repo_tag: "master",
+  cpu: 2,
+  memory: 6,
   exp_task_time: 0,
   listed: true
 };
@@ -131,6 +142,7 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                 window.scroll(0, 0);
               });
           }}
+          validateOnChange={true}
           validationSchema={Schema}
           render={({ status }) => (
             <Form>
@@ -214,6 +226,21 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                     />
                     <ErrorMessage name="repo_url" render={msg => <Message msg={msg} />} />
                   </p>
+                  <div className="mt-1 mb-1">
+                    <label>
+                      <b>Repo Tag:</b> Your project will be deployed from here
+                    </label>
+                    <p className="mt-1 mb-1">
+                      <Field
+                        className="form-control w-50rem"
+                        type="text"
+                        name="repo_tag"
+                        placeholder="Link to the model's code repository"
+                        style={inputStyle}
+                      />
+                      <ErrorMessage name="repo_tag" render={msg => <Message msg={msg} />} />
+                    </p>
+                  </div>
                 </div>
                 <div className="mt-3 mb-1">
                   <label>
@@ -246,9 +273,35 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                     <ErrorMessage name="exp_task_time" render={msg => <Message msg={msg} />} />
                   </p>
                 </div>
+              </div>
+              <div className="mt-5">
+                <h4>Resource Requirements</h4>
+                <div className="my-3" />
                 <div className="mt-1 mb-1">
-                  <Field name="server_size" component={ServerSizeField} />
-                  <ErrorMessage name="server_size" render={msg => <Message msg={msg} />} />
+                  <label>CPUs required:</label>
+                  <p className="mt-1 mb-1">
+                    <Field
+                      className="form-control w-50rem"
+                      type="number"
+                      step="0.1"
+                      name="cpu"
+                      style={inputStyle}
+                    />
+                    <ErrorMessage name="cpu" render={msg => <Message msg={msg} />} />
+                  </p>
+                </div>
+                <div className="mt-1 mb-1">
+                  <label>Memory (GB) required:</label>
+                  <p className="mt-1 mb-1">
+                    <Field
+                      className="form-control w-50rem"
+                      type="number"
+                      step="0.1"
+                      name="memory"
+                      style={inputStyle}
+                    />
+                    <ErrorMessage name="memory" render={msg => <Message msg={msg} />} />
+                  </p>
                 </div>
               </div>
               {specialRequests}

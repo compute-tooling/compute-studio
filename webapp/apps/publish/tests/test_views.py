@@ -2,6 +2,7 @@ import json
 from decimal import Decimal
 
 import pytest
+import requests_mock
 
 from django.contrib.auth import get_user_model, get_user
 from guardian.shortcuts import assign_perm, remove_perm
@@ -9,10 +10,20 @@ from guardian.shortcuts import assign_perm, remove_perm
 from webapp.apps.comp.models import Simulation
 from webapp.apps.users.models import Project, Profile
 
-from webapp.apps.publish.serializers import PublishSerializer
+from webapp.apps.users.serializers import ProjectSerializer
+
+
+@pytest.fixture
+def mock_sync_projects(db, worker_url):
+    with requests_mock.Mocker(real_http=True) as mock:
+        mock.register_uri(
+            "POST", f"{worker_url}sync/",
+        )
+        yield
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures("mock_sync_projects")
 class TestPublishViews:
     def test_get(self, client):
         resp = client.get("/publish/")
@@ -24,8 +35,11 @@ class TestPublishViews:
             "oneliner": "oneliner",
             "description": "**Super** new!",
             "repo_url": "https://github.com/compute-tooling/compute-studio",
-            "server_size": [4, 8],
+            "repo_tag": "dev",
+            "cpu": 3,
+            "memory": 9,
             "listed": True,
+            "latest_tag": "v1",
         }
         resp = client.post("/publish/api/", post_data)
         assert resp.status_code == 401
@@ -40,17 +54,23 @@ class TestPublishViews:
         assert project
         assert project.server_cost
 
+        api_user = Profile.objects.get(user__username="comp-api-user")
+        assert project.has_write_access(api_user.user)
+
     def test_get_detail_api(self, api_client, client, test_models):
         exp = {
             "title": "Detail-Test",
             "oneliner": "oneliner",
             "description": "desc",
             "repo_url": "https://github.com/compute-tooling/compute-studio",
-            "server_size": ["4", "2"],
+            "repo_tag": "master",
+            "cpu": 2,
+            "memory": 6,
             "exp_task_time": 20,
             "server_cost": Decimal("0.1"),
             "listed": True,
             "status": "live",
+            "latest_tag": "v1",
         }
         owner = Profile.objects.get(user__username="modeler")
         project = Project.objects.create(**dict(exp, **{"owner": owner}))
@@ -59,7 +79,7 @@ class TestPublishViews:
         data = resp.json()
         data.pop("owner")
         data.pop("cluster_type")
-        serializer = PublishSerializer(project, data=data)
+        serializer = ProjectSerializer(project, data=data)
         assert serializer.is_valid(), serializer.errors
         assert serializer.validated_data == exp
         assert serializer.data["has_write_access"] == False
@@ -77,7 +97,10 @@ class TestPublishViews:
             "oneliner": "oneliner",
             "description": "hello world!",
             "repo_url": "https://github.com/compute-tooling/compute-studio",
-            "server_size": [2, 4],
+            "repo_tag": "dev",
+            "cpu": 2,
+            "memory": 6,
+            "lastet_tag": "v2",
         }
         # not logged in --> not authorized
         resp = client.put(
@@ -232,3 +255,20 @@ class TestPublishViews:
                 assert "sim_count" in project and "user_count" in project
             else:
                 assert "sim_count" not in project and "user_count" not in project
+
+    def test_deployments_api(self, api_client, test_models):
+        prof = Profile.objects.get(user__username="comp-api-user")
+        api_client.force_login(prof.user)
+
+        project = test_models[0].project
+        assert project.has_write_access(prof.user)
+
+        resp = api_client.post(
+            f"/publish/api/{project.owner}/{project.title}/deployments/",
+            data={"latest_tag": "v5"},
+            format="json",
+        )
+
+        assert resp.status_code == 200
+        project.refresh_from_db()
+        assert project.latest_tag == "v5"

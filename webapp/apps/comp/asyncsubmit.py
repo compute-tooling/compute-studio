@@ -122,11 +122,13 @@ class SubmitSim:
             "adjustment": inputs.deserialized_inputs,
         }
         print("submit", data)
-        self.submitted_id, self.max_q_length = self.compute.submit_job(
-            data, inputs.project.worker_ext(action=actions.SIM)
+        self.submitted_id = self.compute.submit_job(
+            project=inputs.project,
+            task_name=actions.SIM,
+            task_kwargs=data,
+            tag=self.sim.project.latest_tag,
         )
         print(f"job id: {self.submitted_id}")
-        print(f"q lenghth: {self.max_q_length}")
 
         self.sim = self.save()
         return self.sim
@@ -139,8 +141,7 @@ class SubmitSim:
 
         cur_dt = timezone.now()
 
-        future_offset_seconds = (self.max_q_length) * sim.project.exp_task_time
-        future_offset = datetime.timedelta(seconds=future_offset_seconds)
+        future_offset = datetime.timedelta(seconds=sim.project.exp_task_time)
         expected_completion = cur_dt + future_offset
         sim.exp_comp_datetime = expected_completion
 

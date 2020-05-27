@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scheduler
+  template:
+    metadata:
+      labels:
+        app: scheduler
+    spec:
+      serviceAccountName: scheduler
+      containers:
+        - name: scheduler
+          image:
+          ports:
+            - containerPort: 8888
+          env:
+            - name: CS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: CS_URL
+            - name: REDIS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: REDIS_PORT
+            - name: REDIS_DB
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: REDIS_DB
+            - name: REDIS_SCHEDULER_PW
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: REDIS_SCHEDULER_PW
+      nodeSelector:
+        component: api

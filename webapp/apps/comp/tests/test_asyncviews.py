@@ -19,7 +19,7 @@ from webapp.apps.users.models import Project, Profile, create_profile_from_user
 from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.exceptions import ResourceLimitException
-from .compute import MockCompute, MockComputeWorkerFailure
+from .compute import MockCompute
 from .utils import (
     read_outputs,
     _submit_inputs,
@@ -112,10 +112,10 @@ class RunMockModel(CoreTestMixin):
         defaults_resp_data = {"status": "SUCCESS", **self.defaults}
         adj = self.inputs
         adj_job_id = str(uuid.uuid4())
-        adj_resp_data = {"job_id": adj_job_id, "qlength": 1}
+        adj_resp_data = {"task_id": adj_job_id}
         adj_callback_data = {
             "status": "SUCCESS",
-            "job_id": adj_job_id,
+            "task_id": adj_job_id,
             **{"errors_warnings": self.errors_warnings},
         }
         with requests_mock.Mocker(real_http=True) as mock:
@@ -153,13 +153,12 @@ class RunMockModel(CoreTestMixin):
     ) -> Response:
         mock.register_uri(
             "POST",
-            f"{self.worker_url}{self.owner}/{self.title}/inputs",
-            text=json.dumps(defaults_resp_data),
-        )
-        mock.register_uri(
-            "POST",
-            f"{self.worker_url}{self.owner}/{self.title}/parse",
-            text=json.dumps(adj_resp_data),
+            f"{self.worker_url}{self.owner}/{self.title}/",
+            json=lambda request, context: {
+                "defaults": defaults_resp_data,
+                "parse": adj_resp_data,
+                "version": {"status": "success", "version": "v1"},
+            }[request.json()["task_name"]],
         )
 
         init_resp = self.api_client.post(
@@ -217,6 +216,19 @@ class RunMockModel(CoreTestMixin):
         assert_status(202, get_resp_pend, "poll_simulation")
 
     def check_simulation_finished(self, model_pk: int):
+        self.sim = Simulation.objects.get(project=self.project, model_pk=model_pk)
+        set_auth_token(self.api_client, self.comp_api_user.user)
+        resp = self.api_client.put(
+            "/outputs/api/",
+            data=dict(
+                json.loads(self.mockcompute.outputs), **{"task_id": self.sim.job_id}
+            ),
+            format="json",
+        )
+        if resp.status_code != 200:
+            raise Exception(
+                f"Status code: {resp.status_code}\n {json.dumps(resp.data, indent=4)}"
+            )
         self.client.force_login(self.sim_owner.user)
         self.api_client.force_login(self.sim_owner.user)
 
@@ -225,7 +237,7 @@ class RunMockModel(CoreTestMixin):
         )
         assert_status(200, get_resp_succ, "check_simulation_finished")
         model_pk = get_resp_succ.data["model_pk"]
-        self.sim = Simulation.objects.get(project=self.project, model_pk=model_pk)
+        self.sim.refresh_from_db()
         assert self.sim.status == "SUCCESS"
         assert self.sim.outputs
         assert self.sim.traceback is None
@@ -367,7 +379,7 @@ class TestAsyncAPI(CoreTestMixin):
         with requests_mock.Mocker() as mock:
             mock.register_uri(
                 "POST",
-                f"{worker_url}{self.owner}/{self.title}/inputs",
+                f"{worker_url}{self.owner}/{self.title}/",
                 text=json.dumps(resp_data),
             )
             resp = api_client.get(f"/{self.owner}/{self.title}/api/v1/inputs/")
@@ -429,17 +441,15 @@ class TestAsyncAPI(CoreTestMixin):
 
         defaults = self.defaults()
         inputs_resp_data = {"status": "SUCCESS", **defaults}
-        adj_resp_data = {"job_id": str(uuid.uuid4()), "qlength": 1}
+        adj_resp_data = {"task_id": str(uuid.uuid4())}
         with requests_mock.Mocker() as mock:
             mock.register_uri(
                 "POST",
-                f"{worker_url}{self.owner}/{self.title}/inputs",
-                text=json.dumps(inputs_resp_data),
-            )
-            mock.register_uri(
-                "POST",
-                f"{worker_url}{self.owner}/{self.title}/parse",
-                text=json.dumps(adj_resp_data),
+                f"{worker_url}{self.owner}/{self.title}/",
+                json=lambda request, context: {
+                    "defaults": inputs_resp_data,
+                    "parse": adj_resp_data,
+                }[request.json()["task_name"]],
             )
             api_client.force_login(sim.owner.user)
             resp = api_client.get(sim.inputs.get_absolute_api_url())
@@ -463,15 +473,13 @@ class TestAsyncAPI(CoreTestMixin):
             print("mocking", f"{worker_url}{self.owner}/{self.title}/inputs")
             mock.register_uri(
                 "POST",
-                f"{worker_url}{self.owner}/{self.title}/version",
-                text=json.dumps({"status": "SUCCESS", "version": "1.0.0"}),
+                f"{worker_url}{self.owner}/{self.title}/",
+                json=lambda request, context: {
+                    "defaults": resp_data,
+                    "version": {"status": "SUCCESS", "version": "1.0.0"},
+                }[request.json()["task_name"]],
             )
 
-            mock.register_uri(
-                "POST",
-                f"{worker_url}{self.owner}/{self.title}/inputs",
-                text=json.dumps(resp_data),
-            )
             resp = api_client.post(
                 f"/{self.owner}/{self.title}/api/v1/inputs/",
                 data=meta_params,

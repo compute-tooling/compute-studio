@@ -14,6 +14,7 @@ from django.contrib.auth import get_user_model
 from django.utils.timezone import make_aware
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
+from guardian.shortcuts import assign_perm
 
 from webapp.settings import USE_STRIPE
 from webapp.apps.billing.models import (
@@ -66,7 +67,6 @@ def django_db_setup(django_db_setup, django_db_blocker):
             "description": "[Matchups](https://github.com/hdoupe/Matchups) provides pitch data on pitcher and batter matchups.. Select a date range using the format YYYY-MM-DD. Keep in mind that Matchups only provides data on matchups going back to 2008. Two datasets are offered to run this model: one that only has the most recent season, 2018, and one that contains data on every single pitch going back to 2008. Next, select your favorite pitcher and some batters who he's faced in the past. Click submit to start analyzing the selected matchups!",
             "oneliner": "oneliner",
             "repo_url": "https://github.com/hdoupe/Matchups",
-            "server_size": ["8,2"],
             "exp_task_time": 10,
             "owner": modeler.profile,
             "server_cost": 0.1,
@@ -82,6 +82,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
         for project_config in projects:
             project = Project.objects.create(**dict(common, **project_config))
+            assign_perm("write_project", comp_api_user, project)
 
         if USE_STRIPE:
             create_pro_billing_objects()

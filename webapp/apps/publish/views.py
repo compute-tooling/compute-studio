@@ -19,13 +19,21 @@ from rest_framework.authentication import (
     TokenAuthentication,
 )
 
+from guardian.shortcuts import assign_perm
+
 # from webapp.settings import DEBUG
 
 from webapp.apps.users.models import Project, is_profile_active
 from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 
-from .serializers import PublishSerializer, ProjectWithVersionSerializer
+from webapp.apps.users.serializers import (
+    ProjectSerializer,
+    ProjectWithVersionSerializer,
+    DeploymentSerializer,
+)
 from .utils import title_fixup
+
+User = get_user_model()
 
 
 class GetProjectMixin:
@@ -51,9 +59,15 @@ class ProjectDetailView(GetProjectMixin, View):
 
 
 class ProjectDetailAPIView(GetProjectMixin, APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
     def get(self, request, *args, **kwargs):
         project = self.get_object(**kwargs)
-        serializer = PublishSerializer(project, context={"request": request})
+        serializer = ProjectSerializer(project, context={"request": request})
         data = serializer.data
         return Response(data)
 
@@ -61,9 +75,12 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
         if request.user.is_authenticated:
             project = self.get_object(**kwargs)
             if project.has_write_access(request.user):
-                serializer = PublishSerializer(project, data=request.data)
+                serializer = ProjectSerializer(project, data=request.data)
                 if serializer.is_valid():
                     model = serializer.save(status="live")
+                    Project.objects.sync_projects_with_workers(
+                        ProjectSerializer(Project.objects.all(), many=True).data
+                    )
                     status_url = request.build_absolute_uri(model.app_url)
                     try:
                         send_mail(
@@ -89,14 +106,14 @@ class ProjectAPIView(GetProjectMixin, APIView):
     queryset = Project.objects.all()
 
     def get(self, request, *args, **kwargs):
-        ser = PublishSerializer(
+        ser = ProjectSerializer(
             self.queryset.all(), many=True, context={"request": request}
         )
         return Response(ser.data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            serializer = PublishSerializer(
+            serializer = ProjectSerializer(
                 data=request.POST, context={"request": request}
             )
             is_valid = serializer.is_valid()
@@ -120,6 +137,11 @@ class ProjectAPIView(GetProjectMixin, APIView):
                     server_cost=0.1,
                 )
                 status_url = request.build_absolute_uri(model.app_url)
+                api_user = User.objects.get(username="comp-api-user")
+                assign_perm("write_project", api_user, model)
+                Project.objects.sync_projects_with_workers(
+                    ProjectSerializer(Project.objects.all(), many=True).data
+                )
                 try:
                     send_mail(
                         f"{request.user.username} is publishing a model on Compute Studio!",
@@ -143,6 +165,31 @@ class ProjectAPIView(GetProjectMixin, APIView):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
+class DeploymentAPIView(GetProjectMixin, APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    def get(self, request, *args, **kwargs):
+        ser = DeploymentSerializer(
+            self.get_object(**kwargs), context={"request": request}
+        )
+        return Response(ser.data, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        project = self.get_object(**kwargs)
+        if request.user.is_authenticated and project.has_write_access(request.user):
+            serializer = DeploymentSerializer(project, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
 class RecentModelsAPIView(generics.ListAPIView):
     permission_classes = (StrictRequiresActive,)
     authentication_classes = (
@@ -151,7 +198,7 @@ class RecentModelsAPIView(generics.ListAPIView):
         TokenAuthentication,
     )
     queryset = None
-    serializer_class = PublishSerializer
+    serializer_class = ProjectSerializer
     n_recent = 7
 
     def get_queryset(self):

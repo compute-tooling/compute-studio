@@ -23,8 +23,10 @@ class WorkersUnreachableError(Exception):
 
 
 class Compute(object):
-    def remote_submit_job(self, url, data, timeout=TIMEOUT_IN_SECONDS, headers=None):
-        response = requests.post(url, data=data, timeout=timeout)
+    def remote_submit_job(
+        self, url: str, data: dict, timeout: int = TIMEOUT_IN_SECONDS, headers=None
+    ):
+        response = requests.post(url, json=data, timeout=timeout)
         return response
 
     def remote_query_job(self, theurl):
@@ -35,27 +37,26 @@ class Compute(object):
         job_response = requests.get(theurl)
         return job_response
 
-    def submit_job(self, tasks, endpoint):
-        print("submitting", tasks, endpoint)
-        url = f"http://{WORKER_HN}/{endpoint}"
-        return self.submit(tasks, url)
+    def submit_job(self, project, task_name, task_kwargs, tag=None):
+        print("submitting", task_name)
+        url = f"http://{WORKER_HN}/{project.owner}/{project.title}/"
+        return self.submit(
+            tasks=dict(task_name=task_name, tag=tag, task_kwargs=task_kwargs), url=url
+        )
 
-    def submit(self, tasks, url, increment_counter=True, use_wnc_offset=True):
-        queue_length = 0
+    def submit(self, tasks, url):
         submitted = False
         attempts = 0
         while not submitted:
-            packed = json.dumps(tasks)
             try:
                 response = self.remote_submit_job(
-                    url, data=packed, timeout=TIMEOUT_IN_SECONDS
+                    url, data=tasks, timeout=TIMEOUT_IN_SECONDS
                 )
                 if response.status_code == 200:
                     print("submitted: ", url)
                     submitted = True
                     data = response.json()
-                    job_id = data["job_id"]
-                    queue_length = data["qlength"]
+                    job_id = data["task_id"]
                 else:
                     print("FAILED: ", WORKER_HN)
                     attempts += 1
@@ -69,51 +70,23 @@ class Compute(object):
                 print("Exceeded max attempts. Bailing out.")
                 raise WorkersUnreachableError()
 
-        return job_id, queue_length
-
-    def results_ready(self, sim):
-        result_url = (
-            f"http://{WORKER_HN}/{sim.project.owner.user.username}/{sim.project.title}"
-            f"/query/{sim.job_id}/"
-        )
-        job_response = self.remote_query_job(result_url)
-        msg = "{0} failed on host: {1}".format(sim.job_id, WORKER_HN)
-        if job_response.status_code == 200:  # Valid response
-            return job_response.text
-        else:
-            print("did not expect response with status_code", job_response.status_code)
-            raise JobFailError(msg)
-
-    def get_results(self, sim):
-        result_url = (
-            f"http://{WORKER_HN}/{sim.project.owner.user.username}/{sim.project.title}"
-            f"/get_job/{sim.job_id}/"
-        )
-        job_response = self.remote_get_job(result_url)
-        if job_response.status_code == 200:  # Valid response
-            try:
-                return job_response.json()
-            except ValueError:
-                # Got back a bad response. Get the text and re-raise
-                msg = "PROBLEM WITH RESPONSE. TEXT RECEIVED: {}"
-                raise ValueError(msg)
-        else:
-            raise WorkersUnreachableError()
+        return job_id
 
 
 class SyncCompute(Compute):
-    def submit(self, tasks, url, increment_counter=True, use_wnc_offset=True):
+    def submit(self, tasks, url):
         submitted = False
         attempts = 0
         while not submitted:
-            packed = json.dumps(tasks)
             try:
                 response = self.remote_submit_job(
-                    url, data=packed, timeout=TIMEOUT_IN_SECONDS
+                    url, data=tasks, timeout=TIMEOUT_IN_SECONDS
                 )
                 if response.status_code == 200:
                     print("submitted: ", url)
                     submitted = True
+                    if not response.text:
+                        return
                     data = response.json()
                 else:
                     print("FAILED: ", WORKER_HN)
@@ -133,3 +106,9 @@ class SyncCompute(Compute):
             return success, data
         else:
             return success, data
+
+
+class SyncProjects(SyncCompute):
+    def submit_job(self, projects):
+        url = f"http://{WORKER_HN}/sync/"
+        return self.submit(tasks=projects, url=url)

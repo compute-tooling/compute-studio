@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from guardian.shortcuts import get_users_with_perms
 
-from webapp.apps.publish.serializers import PublishSerializer
+from webapp.apps.users.serializers import ProjectSerializer
 
 from .exceptions import ResourceLimitException
 from .models import Inputs, Simulation, PendingPermission, ModelConfig
@@ -21,6 +21,11 @@ class OutputsSerializer(serializers.Serializer):
     # only used with v0!
     aggr_outputs = serializers.JSONField(required=False)
     version = serializers.CharField(required=False)
+
+    def to_internal_value(self, data):
+        if "task_id" in data:
+            data["job_id"] = data.pop("task_id")
+        return super().to_internal_value(data)
 
 
 class PendingPermissionSerializer(serializers.ModelSerializer):
@@ -172,6 +177,13 @@ class InputsSerializer(serializers.ModelSerializer):
         rep["sim"]["authors"] = sorted(rep["sim"]["authors"])
         return rep
 
+    def to_internal_value(self, data):
+        if "outputs" in data:
+            data.update(**data.pop("outputs"))
+        if "task_id" in data:
+            data["job_id"] = data.pop("task_id")
+        return super().to_internal_value(data)
+
     class Meta:
         model = Inputs
         fields = (
@@ -236,7 +248,7 @@ class SimulationSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=False)
     owner = serializers.StringRelatedField(source="get_owner", required=False)
     authors = serializers.StringRelatedField(source="get_authors", many=True)
-    project = PublishSerializer()
+    project = ProjectSerializer()
     outputs_version = serializers.CharField()
     # see to_representation for definition of parent_sims:
     # parent_sims = MiniSimulationSerializer(many=True)

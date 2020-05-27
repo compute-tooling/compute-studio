@@ -36,7 +36,10 @@ secret-docker-compose.yml
 *worker_config.prod.yaml
 *docker-compose-apps*
 
-distributed/kubernetes/apps/*
-dev-secret.yaml
+kubernetes/*
+secret.yaml
 
-*flask-deployment.yaml
+*scheduler-deployment.yaml
+*outputs-processor-deployment.yaml
+
+*google-creds.json

@@ -67,8 +67,9 @@ class ModelParameters:
             )
         except ModelConfig.DoesNotExist:
             success, result = self.compute.submit_job(
-                {"meta_param_dict": meta_parameters_values or {}},
-                self.project.worker_ext(action=actions.INPUTS),
+                project=self.project,
+                task_name=actions.INPUTS,
+                task_kwargs={"meta_param_dict": meta_parameters_values or {}},
             )
             if not success:
                 raise AppError(meta_parameters_values, result["traceback"])
