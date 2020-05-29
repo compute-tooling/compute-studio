@@ -15,7 +15,7 @@ from cs_workers.config import ModelConfig
 
 
 CS_URL = os.environ.get("CS_URL")
-
+PROJECT = os.environ.get("PROJECT")
 
 redis_conn = dict(
     username="scheduler",
@@ -73,7 +73,7 @@ class Scheduler(tornado.web.RequestHandler):
         elif task_name == "sim":
             tag = payload["tag"]
             client = job.Job(
-                "cs-workers-dev",
+                PROJECT,
                 owner,
                 title,
                 tag=tag,
@@ -104,8 +104,9 @@ class SyncProjects(tornado.web.RequestHandler):
 
 
 def get_app():
+    assert PROJECT and CS_URL
     rclient = redis.Redis(**redis_conn)
-    config = ModelConfig("cs-workers-dev", cs_url=CS_URL, rclient=rclient)
+    config = ModelConfig(PROJECT, cs_url=CS_URL, rclient=rclient)
     config.set_projects()
     return tornado.web.Application(
         [

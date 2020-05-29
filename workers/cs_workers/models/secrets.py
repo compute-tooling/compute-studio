@@ -5,8 +5,6 @@ import os
 from cs_workers.utils import clean
 from cs_workers import secrets
 
-PROJECT = os.environ.get("PROJECT", "cs-workers-dev")
-
 
 class ModelSecrets(secrets.Secrets):
     def __init__(self, owner=None, title=None, name=None, project=None):

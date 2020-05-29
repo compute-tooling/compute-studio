@@ -12,6 +12,7 @@ import cs_storage
 
 CS_URL = os.environ.get("CS_URL")
 CS_API_TOKEN = os.environ.get("CS_API_TOKEN")
+BUCKET = os.environ.get("BUCKET")
 
 
 async def write(task_id, outputs):
@@ -54,6 +55,7 @@ class Push(tornado.web.RequestHandler):
 
 
 def get_app():
+    assert CS_URL and CS_API_TOKEN and BUCKET
     return tornado.web.Application(
         [(r"/write/", Write), (r"/push/", Push)], debug=True, autoreload=True
     )
