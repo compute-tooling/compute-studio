@@ -165,6 +165,8 @@ class Manager:
             "scheduler-RBAC.yaml",
             "outputs-processor-Service.yaml",
             "redis-master-Service.yaml",
+            "job-cleanup-Deployment.yaml",
+            "job-cleanup-RBAC.yaml",
         ]
         for filename in config_filenames:
             with open(self.templates_dir / "services" / f"{filename}", "r") as f:

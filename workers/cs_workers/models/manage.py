@@ -43,6 +43,7 @@ class Manager:
         kubernetes_target=None,
         use_kind=False,
         staging_tag=None,
+        use_latest_tag=False,
         cr="gcr.io",
         ignore_ci_errors=False,
         quiet=False,
@@ -61,6 +62,7 @@ class Manager:
         self.use_kind = use_kind
 
         self.staging_tag = staging_tag
+        self.use_latest_tag = use_latest_tag
 
         self.ignore_ci_errors = ignore_ci_errors
 
@@ -200,9 +202,17 @@ class Manager:
         img_name = f"{safeowner}_{safetitle}_tasks"
         if self.use_kind:
             cmd_prefix = "kind load docker-image --name cs --nodes cs-worker2"
+        elif self.use_latest_tag:
+            raise Exception("Unable to push latest tag for use outside of kind.")
         else:
             cmd_prefix = "docker push"
-        run(f"{cmd_prefix} {self.cr}/{self.project}/{img_name}:{self.tag}")
+
+        if self.use_latest_tag:
+            tag = self.get_latest_tag(app)
+        else:
+            tag = self.tag
+
+        run(f"{cmd_prefix} {self.cr}/{self.project}/{img_name}:{tag}")
 
     def stage_app(self, app):
         resp = httpx.post(
@@ -272,10 +282,15 @@ class Manager:
 
         container_config = deployment["spec"]["template"]["spec"]["containers"][0]
 
+        if self.use_latest_tag:
+            tag = self.get_latest_tag(app)
+        else:
+            tag = self.tag
+
         container_config.update(
             {
                 "name": name,
-                "image": f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{self.tag}",
+                "image": f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{tag}",
                 "command": ["csw", "api-task", "--start"],
             }
         )
@@ -332,6 +347,16 @@ class Manager:
             self._cs_api_token = svc_secrets.get_secret("CS_API_TOKEN")
         return self._cs_api_token
 
+    def get_latest_tag(self, app):
+        resp = httpx.get(
+            f"{self.config.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
+            headers={"Authorization": f"Token {self.cs_api_token}"},
+        )
+        assert (
+            resp.status_code == 200
+        ), f"Got: {resp.url} {resp.status_code} {resp.text}"
+        return resp.json()["latest_tag"]
+
 
 def build(args: argparse.Namespace):
     manager = Manager(
@@ -370,6 +395,7 @@ def push(args: argparse.Namespace):
         cr=args.cr,
         cs_api_token=getattr(args, "cs_api_token", None),
         ignore_ci_errors=args.ignore_ci_errors,
+        use_latest_tag=args.use_latest_tag,
     )
     manager.push()
 
@@ -385,6 +411,7 @@ def config(args: argparse.Namespace):
         cr=args.cr,
         cs_api_token=getattr(args, "cs_api_token", None),
         ignore_ci_errors=args.ignore_ci_errors,
+        use_latest_tag=args.use_latest_tag,
     )
     manager.write_app_config()
 
@@ -433,10 +460,11 @@ def cli(subparsers: argparse._SubParsersAction):
 
     push_parser = model_subparsers.add_parser("push")
     push_parser.add_argument("--use-kind", action="store_true")
-    push_parser.add_argument("--latest-tag", action="store_true")
+    push_parser.add_argument("--use-latest-tag", action="store_true")
     push_parser.set_defaults(func=push)
 
     config_parser = model_subparsers.add_parser("config")
+    config_parser.add_argument("--use-latest-tag", action="store_true")
     config_parser.add_argument("--out", "-o", default=None)
     config_parser.set_defaults(func=config)
 
