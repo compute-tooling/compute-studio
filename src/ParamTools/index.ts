@@ -156,7 +156,8 @@ export function yupValidator(
   extend: boolean = false
 ):
   | yup.Schema<number | boolean | Date | string>
-  | yup.ArraySchema<number | boolean | Date | string> {
+  | yup.ArraySchema<number | boolean | Date | string>
+  | yup.ArraySchema<(number | boolean | Date | string)[]> {
   const ensureExtend = obj => {
     if (extend) {
       return yup
@@ -203,6 +204,29 @@ export function yupValidator(
       .of<number | boolean | Date | string>(yupObj)
       .nullable()
       .compact(v => v == null || v === "");
+  } else if (param_data.number_dims === 2) {
+    let subArray = yup
+      .array()
+      .of<number | boolean | Date | string>(yupObj)
+      .transform((val, oval) => {
+        console.log(
+          val,
+          oval,
+          Object.keys(oval).map(key => oval[key])
+        );
+        if (typeof oval === "object") {
+          return Object.keys(oval).map(key => oval[key]);
+        } else {
+          return oval;
+        }
+      })
+      .min(param_data.value[0].value[0].length)
+      .max(param_data.value[0].value[0].length);
+    return yup
+      .array()
+      .of(subArray)
+      .nullable()
+      .compact(v => v == null || v === [""]);
   } else {
     return ensureExtend(yupObj);
   }
