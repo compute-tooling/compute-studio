@@ -339,7 +339,7 @@ const twoDimArray = (
                             className="form-control"
                             onChange={e => {
                               let newValue;
-                              if (!dlv(arrayHelpers.form.touched, fieldName)) {
+                              if (!values && !dlv(arrayHelpers.form.touched, fieldName)) {
                                 newValue = cloneDeep(placeholder);
                               } else {
                                 newValue = cloneDeep(values);
@@ -381,7 +381,7 @@ const twoDimArray = (
             className="btn btn-outline-success btn-sm mt-2"
             type="button"
             onClick={() => {
-              if (!dlv(arrayHelpers.form.touched, fieldName)) {
+              if (!values && !dlv(arrayHelpers.form.touched, fieldName)) {
                 let newValue = cloneDeep(placeholder);
                 newValue.push(cloneDeep(last));
                 arrayHelpers.form.setFieldValue(fieldName, newValue, true);
