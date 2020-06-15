@@ -209,11 +209,6 @@ export function yupValidator(
       .array()
       .of<number | boolean | Date | string>(yupObj)
       .transform((val, oval) => {
-        console.log(
-          val,
-          oval,
-          Object.keys(oval).map(key => oval[key])
-        );
         if (typeof oval === "object") {
           return Object.keys(oval).map(key => oval[key]);
         } else {
