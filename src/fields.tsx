@@ -7,8 +7,10 @@ hljs.registerLanguage("json", json);
 import "highlight.js/styles/default.css";
 import * as React from "react";
 import { Button, Row, Col } from "react-bootstrap";
-import { FastField, FieldProps, FieldArray } from "formik";
+import { FastField, FieldProps, FieldArray, Field } from "formik";
 import { ParamToolsParam } from "./types";
+import { dlv } from "./utils";
+import { cloneDeep } from "lodash";
 
 interface CustomFieldProps {
   label: string;
@@ -220,6 +222,207 @@ export const SelectField = ({ field, form, ...props }) => {
   );
 };
 
+const oneDimArray = (fieldName, values, data, labelString, placeholder, style, readOnly) => {
+  let last;
+  let mapAcross;
+  if (values.length > 0 && !(values.length === 1 && values[0] === "")) {
+    mapAcross = values;
+  } else {
+    mapAcross = data.form_fields[labelString];
+  }
+  return (
+    <FieldArray
+      name={fieldName}
+      render={arrayHelpers => (
+        <div>
+          {mapAcross.map((value, ix) => {
+            last = value;
+            return (
+              <Row key={ix} className="justify-content-start mt-1">
+                <Col>
+                  <FastField
+                    className="form-control"
+                    name={`${fieldName}.${ix}`}
+                    placeholder={
+                      ix <= placeholder.length - 1
+                        ? placeholder[ix].toString()
+                        : placeholder[placeholder.length - 1].toString()
+                    }
+                    style={style}
+                    disabled={readOnly}
+                  />
+                </Col>
+                <Col>
+                  <button
+                    className="btn btn-outline-danger btn-sm"
+                    type="button"
+                    onClick={() => {
+                      if (ix === 0) {
+                        // fixes gnarly uncontrolled to defined bug.
+                        arrayHelpers.form.setFieldValue(fieldName, "");
+                        return;
+                      }
+                      arrayHelpers.remove(ix);
+                    }}
+                  >
+                    <i className="fas fa-minus"></i>
+                  </button>
+                </Col>
+              </Row>
+            );
+          })}
+          <button
+            className="btn btn-outline-success btn-sm mt-2"
+            type="button"
+            onClick={() => {
+              arrayHelpers.push(last);
+            }}
+          >
+            <i className="fas fa-plus"></i>
+          </button>
+        </div>
+      )}
+    />
+  );
+};
+
+const twoDimArray = (
+  fieldName: string,
+  values: any[][],
+  data: ParamToolsParam,
+  labelString: string | null,
+  placeholder: string[][],
+  style,
+  readOnly: boolean
+) => {
+  let last;
+  let mapAcross;
+  if (!values) {
+    mapAcross = placeholder;
+  } else {
+    mapAcross = values;
+  }
+  return (
+    <FieldArray
+      name={fieldName}
+      render={arrayHelpers => (
+        <div>
+          {mapAcross.map((value, ix) => {
+            last = value;
+            return (
+              <Row key={ix} className="justify-content-start mt-1">
+                <Col className="col-auto">
+                  <span className="align-middle">{`${ix + 1}.`}</span>
+                </Col>
+                {placeholder[0].map((_, xix) => (
+                  <Col key={`${fieldName}.${ix}.${xix}`}>
+                    <Field
+                      // className="form-control"
+                      name={`${fieldName}.${ix}.${xix}`}
+                      style={style}
+                      disabled={readOnly}
+                    >
+                      {({
+                        field, // { name, value, onChange, onBlur }
+                        form: { touched }, // also values, setXXXX, handleXXXX, dirty, isValid, status, etc.
+                        meta
+                      }) => (
+                        <div>
+                          <input
+                            type="text"
+                            placeholder={
+                              ix <= placeholder.length - 1
+                                ? placeholder[ix][xix].toString()
+                                : placeholder[placeholder.length - 1][xix].toString()
+                            }
+                            {...field}
+                            className="form-control"
+                            onChange={e => {
+                              let newValue;
+                              if (!values && !dlv(arrayHelpers.form.touched, fieldName)) {
+                                newValue = cloneDeep(placeholder);
+                              } else {
+                                newValue = cloneDeep(values);
+                              }
+                              newValue[ix][xix] = e.target.value;
+                              return arrayHelpers.form.setFieldValue(fieldName, newValue);
+                            }}
+                          />
+                          {/* {meta.touched && meta.error && <div className="error">{meta.error}</div>} */}
+                        </div>
+                      )}
+                    </Field>
+                  </Col>
+                ))}
+                <Col>
+                  <button
+                    className="btn btn-outline-danger btn-sm"
+                    type="button"
+                    onClick={() => {
+                      if (ix === 0 && !values) {
+                        // fixes gnarly uncontrolled to defined bug.
+                        let emptyVal = [];
+                        for (const ix of placeholder[0]) {
+                          emptyVal.push("");
+                        }
+                        arrayHelpers.form.setFieldValue(fieldName, [emptyVal]);
+                        return;
+                      }
+                      arrayHelpers.remove(ix);
+                    }}
+                  >
+                    <i className="fas fa-minus"></i>
+                  </button>
+                </Col>
+              </Row>
+            );
+          })}
+          <button
+            className="btn btn-outline-success btn-sm mt-2"
+            type="button"
+            onClick={() => {
+              if (!values && !dlv(arrayHelpers.form.touched, fieldName)) {
+                let newValue = cloneDeep(placeholder);
+                newValue.push(cloneDeep(last));
+                arrayHelpers.form.setFieldValue(fieldName, newValue, true);
+                arrayHelpers.form.setFieldTouched(fieldName, true);
+              } else {
+                arrayHelpers.push(cloneDeep(last));
+              }
+            }}
+          >
+            <i className="fas fa-plus"></i>
+          </button>
+        </div>
+      )}
+    />
+  );
+};
+
+const arrayField = (
+  fieldName: string,
+  values: any[],
+  data: ParamToolsParam,
+  labelString: string | null,
+  placeholder: string,
+  style,
+  readOnly: boolean
+) => {
+  if (data.number_dims === 1) {
+    return oneDimArray(fieldName, values, data, labelString, placeholder, style, readOnly);
+  } else if (data.number_dims === 2) {
+    return twoDimArray(
+      fieldName,
+      values,
+      data,
+      labelString,
+      (placeholder as unknown) as string[][],
+      style,
+      readOnly
+    );
+  }
+};
+
 export const getField = (
   fieldName,
   data: ParamToolsParam,
@@ -272,68 +475,8 @@ export const getField = (
         </FastField>
       );
     }
-  } else if (data.number_dims === 1) {
-    let last;
-    let mapAcross;
-    if (values.length > 0 && !(values.length === 1 && values[0] === "")) {
-      mapAcross = values;
-    } else {
-      mapAcross = data.form_fields[labelString];
-    }
-    return (
-      <FieldArray
-        name={fieldName}
-        render={arrayHelpers => (
-          <div>
-            {mapAcross.map((value, ix) => {
-              last = value;
-              return (
-                <Row key={ix} className="justify-content-start mt-1">
-                  <Col>
-                    <FastField
-                      className="form-control"
-                      name={`${fieldName}.${ix}`}
-                      placeholder={
-                        ix <= placeholder.length - 1
-                          ? placeholder[ix].toString()
-                          : placeholder[placeholder.length - 1].toString()
-                      }
-                      style={style}
-                      disabled={readOnly}
-                    />
-                  </Col>
-                  <Col>
-                    <button
-                      className="btn btn-outline-danger btn-sm"
-                      type="button"
-                      onClick={() => {
-                        if (ix === 0) {
-                          // fixes gnarly uncontrolled to defined bug.
-                          arrayHelpers.form.setFieldValue(fieldName, "");
-                          return;
-                        }
-                        arrayHelpers.remove(ix);
-                      }}
-                    >
-                      <i className="fas fa-minus"></i>
-                    </button>
-                  </Col>
-                </Row>
-              );
-            })}
-            <button
-              className="btn btn-outline-success btn-sm mt-2"
-              type="button"
-              onClick={() => {
-                arrayHelpers.push(last);
-              }}
-            >
-              <i className="fas fa-plus"></i>
-            </button>
-          </div>
-        )}
-      />
-    );
+  } else if (data.number_dims > 0) {
+    return arrayField(fieldName, values, data, labelString, placeholder, style, readOnly);
   } else {
     return (
       <FastField

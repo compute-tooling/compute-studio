@@ -72,3 +72,12 @@ export function isUrl(string: string): boolean {
 
   return false;
 }
+
+//github.com/developit/dlv/blob/master/index.js
+export function dlv(obj: any, key: string, def?: any, p?: any, undef?: any) {
+  const splitKey = key.split ? key.split(".") : key;
+  for (p = 0; p < splitKey.length; p++) {
+    obj = obj ? obj[splitKey[p]] : undef;
+  }
+  return obj === undef ? def : obj;
+}

@@ -173,7 +173,7 @@ const ValueComponent: React.FC<{
       {getField(fieldName, data, placeholder, readOnly, style, extend, values, labelString)}
       {isTouched ? (
         <small className="ml-2" style={{ color: "#869191" }}>
-          Default: {placeholder}
+          Default: {placeholder.toString()}
         </small>
       ) : null}
       <ErrorMessage name={fieldName} render={msg => <RedMessage msg={msg} />} />
