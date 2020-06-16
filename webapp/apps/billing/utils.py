@@ -1,7 +1,7 @@
 import json
 
 from webapp.apps.users.models import Project
-from .models import SubscriptionItem, UsageRecord
+from .models import SubscriptionItem, UsageRecord, Plan
 
 
 class ChargeRunMixin:
@@ -24,9 +24,15 @@ class ChargeRunMixin:
                 customer = sponsor.user.customer
             else:
                 customer = sim.owner.user.customer
-            si = SubscriptionItem.objects.get(
-                subscription__customer=customer, plan=plan
-            )
+            try:
+                si = SubscriptionItem.objects.get(
+                    subscription__customer=customer, plan=plan
+                )
+            except SubscriptionItem.DoesNotExist:
+                customer.sync_subscriptions(plans=Plan.objects.filter(pk=plan.pk))
+                si = SubscriptionItem.objects.get(
+                    subscription__customer=customer, plan=plan
+                )
             stripe_ur = UsageRecord.create_stripe_object(
                 quantity=Project.dollar_to_penny(quantity),
                 timestamp=None,

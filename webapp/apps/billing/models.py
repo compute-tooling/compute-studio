@@ -82,8 +82,10 @@ class Customer(models.Model):
         self.default_source = stripe_token
         self.save()
 
-    def sync_subscriptions(self):
+    def sync_subscriptions(self, plans=None):
         public_plans = Plan.get_public_plans(usage_type="metered")
+        if plans is None:
+            plans = public_plans
         do_update = True
         try:
             sub = self.subscriptions.get(subscription_type="primary")
@@ -108,9 +110,9 @@ class Customer(models.Model):
                 # no need to update.
                 do_update = False
         except Subscription.DoesNotExist:
-            stripe_sub = Subscription.create_stripe_object(self, public_plans)
+            stripe_sub = Subscription.create_stripe_object(self, plans)
             sub = Subscription.construct(
-                stripe_sub, self, public_plans, subscription_type="primary"
+                stripe_sub, self, plans, subscription_type="primary"
             )
         if do_update:
             for raw_si in stripe_sub["items"]["data"]:

@@ -89,7 +89,7 @@ class SyncCompute(Compute):
                         return
                     data = response.json()
                 else:
-                    print("FAILED: ", WORKER_HN)
+                    print("FAILED: ", WORKER_HN, response.status_code)
                     attempts += 1
             except Timeout:
                 print("Couldn't submit to: ", WORKER_HN)
