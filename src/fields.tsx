@@ -444,7 +444,12 @@ export const getField = (
 
   let choices;
   if (data.type == "bool") {
-    choices = ["true", "false"];
+    if (placeholder.toString() === "true") {
+      choices = ["true", "false"];
+    } else {
+      choices = ["false", "true"];
+    }
+
   } else if (data.validators && data.validators.choice && data.validators.choice.choices) {
     choices = data.validators.choice.choices;
   }
