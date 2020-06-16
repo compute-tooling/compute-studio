@@ -297,7 +297,7 @@ const twoDimArray = (
 ) => {
   let last;
   let mapAcross;
-  if (!values) {
+  if (!values || (Array.isArray(values) && values.length === 0)) {
     mapAcross = placeholder;
   } else {
     mapAcross = values;
@@ -306,9 +306,9 @@ const twoDimArray = (
     <FieldArray
       name={fieldName}
       render={arrayHelpers => {
-        let fieldIsTouched = false;
+        let isFieldTouched = false;
         if (dlv(arrayHelpers.form.touched, fieldName)) {
-          fieldIsTouched = true;
+          isFieldTouched = true;
         }
         return (
           <div>
@@ -343,13 +343,13 @@ const twoDimArray = (
                               {...field}
                               className="form-control"
                               style={
-                                fieldIsTouched
+                                isFieldTouched
                                   ? { backgroundColor: "rgba(102, 175, 233, 0.2)" }
                                   : null
                               }
                               onChange={e => {
                                 let newValue;
-                                if (!values && !fieldIsTouched) {
+                                if (!values && !isFieldTouched) {
                                   newValue = cloneDeep(placeholder);
                                 } else {
                                   newValue = cloneDeep(values);
@@ -376,9 +376,9 @@ const twoDimArray = (
                             emptyVal.push("");
                           }
                           arrayHelpers.form.setFieldValue(fieldName, [emptyVal]);
-                          return;
+                        } else {
+                          arrayHelpers.remove(ix);
                         }
-                        arrayHelpers.remove(ix);
                       }}
                     >
                       <i className="fas fa-minus"></i>
@@ -391,14 +391,14 @@ const twoDimArray = (
               className="btn btn-outline-success btn-sm mt-2"
               type="button"
               onClick={() => {
-                if (!values && !dlv(arrayHelpers.form.touched, fieldName)) {
+                if (!values && !isFieldTouched) {
                   let newValue = cloneDeep(placeholder);
                   newValue.push(cloneDeep(last));
                   arrayHelpers.form.setFieldValue(fieldName, newValue, true);
-                  arrayHelpers.form.setFieldTouched(fieldName, true);
                 } else {
                   arrayHelpers.push(cloneDeep(last));
                 }
+                arrayHelpers.form.setFieldTouched(fieldName, true);
               }}
             >
               <i className="fas fa-plus"></i>
