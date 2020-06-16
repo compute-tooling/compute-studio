@@ -92,8 +92,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
                 stripe_customer = stripe.Customer.create(
                     email=u.email, source="tok_bypassPending"
                 )
-                customer, _ = Customer.get_or_construct(stripe_customer.id, u)
-            Customer.objects.sync_subscriptions()
+                Customer.get_or_construct(stripe_customer.id, u)
 
 
 @pytest.fixture

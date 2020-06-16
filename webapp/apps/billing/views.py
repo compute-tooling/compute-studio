@@ -44,11 +44,7 @@ def update_payment(user, stripe_token):
         user.customer.update_source(stripe_token)
     else:  # create customer.
         stripe_customer = stripe.Customer.create(email=user.email, source=stripe_token)
-        customer = Customer.construct(stripe_customer, user=user)
-        if Project.objects.count() > 0:
-            customer.sync_subscriptions()
-        else:
-            print("No projects yet.")
+        Customer.construct(stripe_customer, user=user)
 
 
 class Webhook(View):

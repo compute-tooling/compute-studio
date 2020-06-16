@@ -13,7 +13,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 from rest_framework.response import Response
 
-from webapp.apps.billing.models import UsageRecord
+from webapp.apps.billing.tests.utils import gen_blank_customer
 from webapp.apps.users.models import Project, Profile, create_profile_from_user
 
 from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
@@ -60,6 +60,35 @@ class CoreTestMixin:
                 owner__user__username__iexact=self.owner, title__iexact=self.title
             )
         return self._project
+
+    def inputs_ok(self):
+        return {
+            "meta_parameters": {"use_full_data": False},
+            "adjustment": {"matchup": {"pitcher": "Max Scherzer"}},
+        }
+
+    def inputs_bad(self):
+        return {
+            "meta_parameters": {"use_full_data": True},
+            "adjustment": {"matchup": {"pitcher": "not a pitcher"}},
+        }
+
+    def defaults(self):
+        return {
+            "meta_parameters": {
+                "use_full_data": {
+                    "title": "Use Full Data",
+                    "description": "Flag that determines whether Matchups uses the 10 year data set or the 2018 data set.",
+                    "type": "bool",
+                    "value": True,
+                    "validators": {"choice": {"choices": [True, False]}},
+                }
+            },
+            "model_parameters": {"matchup": {"pitcher": {"title": "Pitcher"}}},
+        }
+
+    def errors_warnings(self):
+        return {"matchup": {"errors": {}, "warnings": {}}}
 
 
 class ResponseStatusException(Exception):
@@ -334,6 +363,77 @@ def sponsored_matchups(db):
     matchups.save()
 
 
+@pytest.fixture
+def paid_matchups(db):
+    matchups = Project.objects.get(title="Matchups", owner__user__username="hdoupe")
+    matchups.sponsor = None
+    matchups.save()
+
+
+@pytest.mark.requires_stripe
+@pytest.mark.usefixtures("paid_matchups")
+@pytest.mark.django_db
+class TestPaidModel(CoreTestMixin):
+    class MatchupsMockCompute(MockCompute):
+        outputs = read_outputs("Matchups_v1")
+
+    owner = "hdoupe"
+    title = "Matchups"
+    mockcompute = MatchupsMockCompute
+
+    def test_runmodel_no_existing_subs(
+        self, monkeypatch, client, api_client, worker_url, comp_api_user,
+    ):
+        """
+        Test lifetime of submitting a model.
+        """
+        profile = gen_blank_customer(
+            username="new-cust", email="tester@email.com", password="heyhey2222"
+        )
+
+        set_auth_token(api_client, profile.user)
+
+        rmm = RunMockModel(
+            owner=self.owner,
+            title=self.title,
+            defaults=self.defaults(),
+            inputs=self.inputs_ok(),
+            errors_warnings=self.errors_warnings(),
+            client=client,
+            api_client=api_client,
+            worker_url=worker_url,
+            comp_api_user=comp_api_user,
+            monkeypatch=monkeypatch,
+            mockcompute=self.mockcompute,
+            test_lower=False,
+        )
+        rmm.run()
+
+    def test_runmodel_existing_subs(
+        self, monkeypatch, client, api_client, profile, worker_url, comp_api_user,
+    ):
+        """
+        Test lifetime of submitting a model.
+        """
+        set_auth_token(api_client, profile.user)
+
+        rmm = RunMockModel(
+            owner=self.owner,
+            title=self.title,
+            defaults=self.defaults(),
+            inputs=self.inputs_ok(),
+            errors_warnings=self.errors_warnings(),
+            client=client,
+            api_client=api_client,
+            worker_url=worker_url,
+            comp_api_user=comp_api_user,
+            monkeypatch=monkeypatch,
+            mockcompute=self.mockcompute,
+            test_lower=False,
+        )
+        rmm.run()
+
+
 @pytest.mark.usefixtures("sponsored_matchups")
 @pytest.mark.django_db
 class TestAsyncAPI(CoreTestMixin):
@@ -343,32 +443,6 @@ class TestAsyncAPI(CoreTestMixin):
     owner = "hdoupe"
     title = "Matchups"
     mockcompute = MatchupsMockCompute
-
-    def inputs_ok(self):
-        return {
-            "meta_parameters": {"use_full_data": False},
-            "adjustment": {"matchup": {"pitcher": "Max Scherzer"}},
-        }
-
-    def inputs_bad(self):
-        return {
-            "meta_parameters": {"use_full_data": True},
-            "adjustment": {"matchup": {"pitcher": "not a pitcher"}},
-        }
-
-    def defaults(self):
-        return {
-            "meta_parameters": {
-                "use_full_data": {
-                    "title": "Use Full Data",
-                    "description": "Flag that determines whether Matchups uses the 10 year data set or the 2018 data set.",
-                    "type": "bool",
-                    "value": True,
-                    "validators": {"choice": {"choices": [True, False]}},
-                }
-            },
-            "model_parameters": {"matchup": {"pitcher": {"title": "Pitcher"}}},
-        }
 
     def errors_warnings(self):
         return {"matchup": {"errors": {}, "warnings": {}}}
