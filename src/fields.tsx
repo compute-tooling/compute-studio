@@ -449,7 +449,6 @@ export const getField = (
     } else {
       choices = ["false", "true"];
     }
-
   } else if (data.validators && data.validators.choice && data.validators.choice.choices) {
     choices = data.validators.choice.choices;
   }
