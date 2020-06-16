@@ -2,7 +2,6 @@ import json
 from decimal import Decimal
 
 import pytest
-import requests_mock
 
 from django.contrib.auth import get_user_model, get_user
 from guardian.shortcuts import assign_perm, remove_perm
@@ -11,15 +10,6 @@ from webapp.apps.comp.models import Simulation
 from webapp.apps.users.models import Project, Profile
 
 from webapp.apps.users.serializers import ProjectSerializer
-
-
-@pytest.fixture
-def mock_sync_projects(db, worker_url):
-    with requests_mock.Mocker(real_http=True) as mock:
-        mock.register_uri(
-            "POST", f"{worker_url}sync/",
-        )
-        yield
 
 
 @pytest.mark.django_db

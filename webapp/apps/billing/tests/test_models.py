@@ -133,7 +133,7 @@ class TestStripeModels:
         for sub in customer.subscriptions.all():
             assert sub.cancel_at_period_end
 
-    def test_customer_sync_subscriptions(self, db, client):
+    def test_customer_sync_subscriptions(self, db, client, mock_sync_projects):
         u = User.objects.create_user(
             username="synctest", email="synctest@email.com", password="syncer2222"
         )

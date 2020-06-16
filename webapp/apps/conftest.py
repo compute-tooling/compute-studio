@@ -4,6 +4,7 @@ import datetime
 import functools
 
 import requests
+import requests_mock
 import pytest
 import stripe
 import paramtools as pt
@@ -390,3 +391,12 @@ def worker_url():
 @pytest.fixture
 def comp_api_user(db):
     return Profile.objects.get(user__username="comp-api-user")
+
+
+@pytest.fixture
+def mock_sync_projects(db, worker_url):
+    with requests_mock.Mocker(real_http=True) as mock:
+        mock.register_uri(
+            "POST", f"{worker_url}sync/",
+        )
+        yield
