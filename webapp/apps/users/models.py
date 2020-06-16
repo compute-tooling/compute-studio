@@ -115,7 +115,7 @@ class ProjectManager(models.Manager):
     def sync_products(self, projects=None):
         if projects is None:
             projects = self.all()
-        for project in self.all():
+        for project in projects:
             create_billing_objects(project)
 
     def sync_projects_with_workers(self, data):
