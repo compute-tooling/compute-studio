@@ -297,7 +297,7 @@ const twoDimArray = (
 ) => {
   let last;
   let mapAcross;
-  if (!values) {
+  if (!values || (Array.isArray(values) && values.length === 0)) {
     mapAcross = placeholder;
   } else {
     mapAcross = values;
@@ -305,96 +305,107 @@ const twoDimArray = (
   return (
     <FieldArray
       name={fieldName}
-      render={arrayHelpers => (
-        <div>
-          {mapAcross.map((value, ix) => {
-            last = value;
-            return (
-              <Row key={ix} className="justify-content-start mt-1">
-                <Col className="col-auto">
-                  <span className="align-middle">{`${ix + 1}.`}</span>
-                </Col>
-                {placeholder[0].map((_, xix) => (
-                  <Col key={`${fieldName}.${ix}.${xix}`}>
-                    <Field
-                      // className="form-control"
-                      name={`${fieldName}.${ix}.${xix}`}
-                      style={style}
-                      disabled={readOnly}
-                    >
-                      {({
-                        field, // { name, value, onChange, onBlur }
-                        form: { touched }, // also values, setXXXX, handleXXXX, dirty, isValid, status, etc.
-                        meta
-                      }) => (
-                        <div>
-                          <input
-                            type="text"
-                            placeholder={
-                              ix <= placeholder.length - 1
-                                ? placeholder[ix][xix].toString()
-                                : placeholder[placeholder.length - 1][xix].toString()
-                            }
-                            {...field}
-                            className="form-control"
-                            onChange={e => {
-                              let newValue;
-                              if (!values && !dlv(arrayHelpers.form.touched, fieldName)) {
-                                newValue = cloneDeep(placeholder);
-                              } else {
-                                newValue = cloneDeep(values);
-                              }
-                              newValue[ix][xix] = e.target.value;
-                              return arrayHelpers.form.setFieldValue(fieldName, newValue);
-                            }}
-                          />
-                          {/* {meta.touched && meta.error && <div className="error">{meta.error}</div>} */}
-                        </div>
-                      )}
-                    </Field>
+      render={arrayHelpers => {
+        let isFieldTouched = false;
+        if (dlv(arrayHelpers.form.touched, fieldName)) {
+          isFieldTouched = true;
+        }
+        return (
+          <div>
+            {mapAcross.map((value, ix) => {
+              last = value;
+              return (
+                <Row key={ix} className="justify-content-start mt-1">
+                  <Col className="col-auto">
+                    <span className="align-middle">{`${ix + 1}.`}</span>
                   </Col>
-                ))}
-                <Col>
-                  <button
-                    className="btn btn-outline-danger btn-sm"
-                    type="button"
-                    onClick={() => {
-                      if (ix === 0 && !values) {
-                        // fixes gnarly uncontrolled to defined bug.
-                        let emptyVal = [];
-                        for (const ix of placeholder[0]) {
-                          emptyVal.push("");
+                  {placeholder[0].map((_, xix) => (
+                    <Col key={`${fieldName}.${ix}.${xix}`}>
+                      <Field
+                        // className="form-control"
+                        name={`${fieldName}.${ix}.${xix}`}
+                        style={style}
+                        disabled={readOnly}
+                      >
+                        {({
+                          field, // { name, value, onChange, onBlur }
+                          form: { touched }, // also values, setXXXX, handleXXXX, dirty, isValid, status, etc.
+                          meta
+                        }) => (
+                          <div>
+                            <input
+                              type="text"
+                              placeholder={
+                                ix <= placeholder.length - 1
+                                  ? placeholder[ix][xix].toString()
+                                  : placeholder[placeholder.length - 1][xix].toString()
+                              }
+                              {...field}
+                              className="form-control"
+                              style={
+                                isFieldTouched
+                                  ? { backgroundColor: "rgba(102, 175, 233, 0.2)" }
+                                  : null
+                              }
+                              onChange={e => {
+                                let newValue;
+                                if (!values && !isFieldTouched) {
+                                  newValue = cloneDeep(placeholder);
+                                } else {
+                                  newValue = cloneDeep(values);
+                                }
+                                newValue[ix][xix] = e.target.value;
+                                return arrayHelpers.form.setFieldValue(fieldName, newValue);
+                              }}
+                            />
+                            {/* {meta.touched && meta.error && <div className="error">{meta.error}</div>} */}
+                          </div>
+                        )}
+                      </Field>
+                    </Col>
+                  ))}
+                  <Col>
+                    <button
+                      className="btn btn-outline-danger btn-sm"
+                      type="button"
+                      onClick={() => {
+                        if (ix === 0 && !values) {
+                          // fixes gnarly uncontrolled to defined bug.
+                          let emptyVal = [];
+                          for (const ix of placeholder[0]) {
+                            emptyVal.push("");
+                          }
+                          arrayHelpers.form.setFieldValue(fieldName, [emptyVal]);
+                        } else {
+                          arrayHelpers.remove(ix);
                         }
-                        arrayHelpers.form.setFieldValue(fieldName, [emptyVal]);
-                        return;
-                      }
-                      arrayHelpers.remove(ix);
-                    }}
-                  >
-                    <i className="fas fa-minus"></i>
-                  </button>
-                </Col>
-              </Row>
-            );
-          })}
-          <button
-            className="btn btn-outline-success btn-sm mt-2"
-            type="button"
-            onClick={() => {
-              if (!values && !dlv(arrayHelpers.form.touched, fieldName)) {
-                let newValue = cloneDeep(placeholder);
-                newValue.push(cloneDeep(last));
-                arrayHelpers.form.setFieldValue(fieldName, newValue, true);
+                      }}
+                    >
+                      <i className="fas fa-minus"></i>
+                    </button>
+                  </Col>
+                </Row>
+              );
+            })}
+            <button
+              className="btn btn-outline-success btn-sm mt-2"
+              type="button"
+              onClick={() => {
+                if (!values && !isFieldTouched) {
+                  let newValue = cloneDeep(placeholder);
+                  newValue.push(cloneDeep(last));
+                  arrayHelpers.form.setFieldValue(fieldName, newValue, true);
+                } else {
+                  arrayHelpers.push(cloneDeep(last));
+                }
                 arrayHelpers.form.setFieldTouched(fieldName, true);
-              } else {
-                arrayHelpers.push(cloneDeep(last));
-              }
-            }}
-          >
-            <i className="fas fa-plus"></i>
-          </button>
-        </div>
-      )}
+              }}
+            >
+              <i className="fas fa-plus"></i>
+            </button>
+          </div>
+        );
+      }}
     />
   );
 };
