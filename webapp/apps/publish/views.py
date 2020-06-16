@@ -139,6 +139,7 @@ class ProjectAPIView(GetProjectMixin, APIView):
                 status_url = request.build_absolute_uri(model.app_url)
                 api_user = User.objects.get(username="comp-api-user")
                 assign_perm("write_project", api_user, model)
+                Project.objects.sync_products(projects=[model])
                 Project.objects.sync_projects_with_workers(
                     ProjectSerializer(Project.objects.all(), many=True).data
                 )
