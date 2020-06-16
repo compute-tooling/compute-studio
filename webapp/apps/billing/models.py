@@ -649,7 +649,7 @@ class Event(models.Model):
 
 
 def create_billing_objects(project):
-    if not hasattr(project, "product") or project.product is None:
+    if USE_STRIPE and (not hasattr(project, "product") or project.product is None):
         owner = project.owner.user.username
         title = project.title
         name = f"{owner}/{title}"

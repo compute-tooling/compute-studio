@@ -112,7 +112,9 @@ class Profile(models.Model):
 
 
 class ProjectManager(models.Manager):
-    def sync_products(self):
+    def sync_products(self, projects=None):
+        if projects is None:
+            projects = self.all()
         for project in self.all():
             create_billing_objects(project)
 
