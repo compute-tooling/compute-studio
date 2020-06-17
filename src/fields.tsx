@@ -297,16 +297,17 @@ const twoDimArray = (
 ) => {
   let last;
   let mapAcross;
+  let isFieldTouched = false;
   if (!values || (Array.isArray(values) && values.length === 0)) {
     mapAcross = placeholder;
   } else {
     mapAcross = values;
+    isFieldTouched = true;
   }
   return (
     <FieldArray
       name={fieldName}
       render={arrayHelpers => {
-        let isFieldTouched = false;
         if (dlv(arrayHelpers.form.touched, fieldName)) {
           isFieldTouched = true;
         }

@@ -171,7 +171,7 @@ const ValueComponent: React.FC<{
     <div className={colClass} key={makeID(fieldName)}>
       {label ? <small style={{ padding: 0 }}>{label}</small> : null}
       {getField(fieldName, data, placeholder, readOnly, style, extend, values, labelString)}
-      {isTouched ? (
+      {isTouched && (data?.number_dims < 2 || !data?.number_dims) ? (
         <small className="ml-2" style={{ color: "#869191" }}>
           Default: {placeholder.toString()}
         </small>
