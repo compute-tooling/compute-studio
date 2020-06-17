@@ -120,7 +120,7 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
               {<Col className="col-3 align-self-center">{modelStatus(model.status)}</Col>}
               {model.has_write_access ? (
                 <Col className="col-3 align-self-center">
-                  <Tip tip="Click to edit">
+                  <Tip id="edit-widget" tip="Click to edit">
                     <a className="color-inherit" href={`/${model.owner}/${model.title}/detail/`}>
                       <i className="fas fa-edit ml-2 hover-blue" style={{ fontSize: "1.4rem" }}></i>
                     </a>
@@ -316,7 +316,7 @@ const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: 
                   <Row className="w-100 justify-content-start">
                     <Col className="col-auto align-self-center">{simStatus(miniSim.status)}</Col>
                     <Col className="col-auto align-self-center">
-                      <Tip tip={miniSim.is_public ? "Public" : "Private"}>
+                      <Tip id="public_or_private" tip={miniSim.is_public ? "Public" : "Private"}>
                         {miniSim.is_public ? (
                           <i className="fas fa-lock-open"></i>
                         ) : (
@@ -362,6 +362,7 @@ const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: 
                   <Row className="w-100 justify-content-start">
                     <Col>
                       <Tip
+                        id="sim-creation-date"
                         tip={moment(miniSim.creation_date).format("MMMM Do YYYY, h:mm:ss a")}
                         placement="bottom"
                       >
@@ -436,7 +437,7 @@ const RecentModelsPanel: React.FC<{ recentModels: Array<Project> }> = ({ recentM
       >
         <Card.Body>
           <Card.Title>
-            <Tip tip="Create new simulation">
+            <Tip id="new_simulation" tip="Create new simulation">
               <h6 onClick={e => e.stopPropagation()}>
                 <a href={`/${model.owner}/${model.title}/new/`}>
                   {`${model.owner}/${model.title}`}{" "}
@@ -705,31 +706,31 @@ const simStatus = (status: MiniSimulation["status"]) => {
   switch (status) {
     case "STARTED":
       return (
-        <Tip tip="Staging">
+        <Tip id="sim-status" tip="Staging">
           <i className="fas fa-rocket text-primary"></i>
         </Tip>
       );
     case "PENDING":
       return (
-        <Tip tip="Running">
+        <Tip id="sim-status" tip="Running">
           <i className="fas fa-clock text-warning"></i>
         </Tip>
       );
     case "SUCCESS":
       return (
-        <Tip tip="Success">
+        <Tip id="sim-status" tip="Success">
           <i className="fas fa-check-circle text-success"></i>
         </Tip>
       );
     case "FAIL":
       return (
-        <Tip tip="Fail">
+        <Tip id="sim-status" tip="Fail">
           <i className="fas fa-exclamation-circle text-danger"></i>
         </Tip>
       );
     case "WORKER_FAILURE":
       return (
-        <Tip tip="Worker failure">
+        <Tip id="sim-status" tip="Worker failure">
           <i className="fas fa-exclamation-circle text-danger"></i>
         </Tip>
       );
@@ -743,19 +744,19 @@ const modelStatus = (status: Project["status"]) => {
     case "live":
     case "updating":
       return (
-        <Tip tip="This model is live.">
+        <Tip id="live" tip="This model is live.">
           <Button className="btn-sm btn-outline-success">live</Button>
         </Tip>
       );
     case "pending":
       return (
-        <Tip tip="This model is not live right now.">
+        <Tip id="staging" tip="This model is not live right now.">
           <Button className="btn-sm btn-outline-primary">staging</Button>
         </Tip>
       );
     default:
       return (
-        <Tip tip="This model is not live right now.">
+        <Tip id="staging" tip="This model is not live right now.">
           <Button className="btn-sm btn-outline-primary">staging</Button>
         </Tip>
       );

@@ -3,15 +3,16 @@ import * as React from "react";
 import { OverlayTrigger, Tooltip, Card } from "react-bootstrap";
 
 export const Tip: React.FC<{
+  id: string;
   tip: string;
   children: JSX.Element;
   placement?: "top" | "bottom";
-}> = ({ tip, children, placement = "top" }) => (
+}> = ({ id, tip, children, placement = "top" }) => (
   <OverlayTrigger
     placement={placement}
     delay={{ show: 400, hide: 400 }}
     overlay={props => (
-      <Tooltip {...props} show={props.show.toString()}>
+      <Tooltip id={id} {...props}>
         {tip}
       </Tooltip>
     )}
