@@ -18,6 +18,7 @@ import API from "./API";
 import ReadmeEditor from "./editor";
 import { AxiosError } from "axios";
 import { RolePerms } from "../roles";
+import { Tip } from "../components";
 import { CollaborationSettings, saveCollaborators } from "./collaborators";
 
 interface DescriptionProps {
@@ -47,20 +48,6 @@ const defaultReadme: { [key: string]: any }[] = [
     children: [{ text: "" }]
   }
 ];
-
-const Tip: React.FC<{ tip: string; children: JSX.Element }> = ({ tip, children }) => (
-  <OverlayTrigger
-    placement="top"
-    delay={{ show: 400, hide: 400 }}
-    overlay={props => (
-      <Tooltip {...props} show={props.show.toString()}>
-        {tip}
-      </Tooltip>
-    )}
-  >
-    {children}
-  </OverlayTrigger>
-);
 
 const HistoryDropDownItems = (
   historyType: "Public" | "Private",
@@ -122,7 +109,7 @@ const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history
     dropdownItems.push(...privateDropdownItems);
   }
   return (
-    <Tip tip="List of previous simulations.">
+    <Tip id="history-dropdown" tip="List of previous simulations.">
       <Dropdown>
         <Dropdown.Toggle
           variant="dark"
@@ -142,7 +129,7 @@ const HistoryDropDown: React.FC<{ history: Array<MiniSimulation> }> = ({ history
 
 const AuthorsDropDown: React.FC<{ authors: string[] }> = ({ authors }) => {
   return (
-    <Tip tip="Author(s) of the simulation.">
+    <Tip id="authors-dropdown" tip="Author(s) of the simulation.">
       <Dropdown>
         <Dropdown.Toggle
           variant="dark"
@@ -451,6 +438,7 @@ export default class DescriptionComponent extends React.Component<
                               }
                             >
                               <Tip
+                                id="rename-dropdown"
                                 tip={
                                   this.hasWriteAccess()
                                     ? "Rename."
@@ -512,7 +500,7 @@ export default class DescriptionComponent extends React.Component<
                   </Col>
                   {this.user() !== "anon" ? (
                     <Col className="col-sm-2 mt-1">
-                      <Tip tip="Create a copy of this simulation.">
+                      <Tip id="fork-simulation" tip="Create a copy of this simulation.">
                         <Button
                           className="w-100"
                           onClick={this.forkSimulation}
