@@ -19,9 +19,12 @@ class TestUserModels:
         assert user.username
         assert user.email
 
-    def test_project(self):
+    def test_project(self, monkeypatch):
+        monkeypatch.setattr(
+            "webapp.apps.users.models.COMPUTE_PRICING", {"cpu": 12, "memory": 2}
+        )
         markdown = "[hello](www.world.com)"
-        p = Project(title="test project", server_cost=36, description=markdown)
+        p = Project(title="test project", description=markdown)
         assert p.server_cost_in_secs == 0.01
         assert p.n_secs_per_penny == 1.0
         assert p.run_cost(1) == 0.01

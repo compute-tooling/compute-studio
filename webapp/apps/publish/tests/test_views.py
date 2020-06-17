@@ -57,7 +57,6 @@ class TestPublishViews:
             "cpu": 2,
             "memory": 6,
             "exp_task_time": 20,
-            "server_cost": Decimal("0.1"),
             "listed": True,
             "status": "live",
             "latest_tag": "v1",
