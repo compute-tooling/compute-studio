@@ -16,9 +16,9 @@ BUCKET = os.environ.get("BUCKET")
 
 
 async def write(task_id, outputs):
-    client = await Client(asynchronous=True, processes=False)
-    outputs = cs_storage.deserialize_from_json(outputs)
-    res = await client.submit(cs_storage.write, task_id, outputs)
+    async with await Client(asynchronous=True, processes=False) as client:
+        outputs = cs_storage.deserialize_from_json(outputs)
+        res = await client.submit(cs_storage.write, task_id, outputs)
     return res
 
 
