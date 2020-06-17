@@ -25,7 +25,16 @@ export default class API {
     }
   }
 
-  nextSimulations(
+  initFeed(): Promise<{
+    count: number;
+    next: string;
+    previous: string;
+    results: Array<MiniSimulation>;
+  }> {
+    return axios.get("/api/v1/feed").then(resp => resp.data);
+  }
+
+  next(
     nextUrl
   ): Promise<{
     count: number;
@@ -36,7 +45,7 @@ export default class API {
     return axios.get(nextUrl).then(resp => resp.data);
   }
 
-  updateOrder(
+  updateSimsOrder(
     ordering: ("project__owner" | "project__title" | "creation_date")[]
   ): Promise<{
     count: number;
@@ -53,6 +62,19 @@ export default class API {
         .get("/api/v1/sims", { params: { ordering: ordering.join(",") } })
         .then(resp => resp.data);
     }
+  }
+
+  updateFeedOrder(
+    ordering: ("project__owner" | "project__title" | "creation_date")[]
+  ): Promise<{
+    count: number;
+    next: string;
+    previous: string;
+    results: Array<MiniSimulation>;
+  }> {
+    return axios
+      .get(`/api/v1/feed`, { params: { ordering: ordering.join(",") } })
+      .then(resp => resp.data);
   }
 
   getModels(): Promise<{ count: number; next: string; previous: string; results: Array<Project> }> {

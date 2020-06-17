@@ -1434,3 +1434,15 @@ def test_list_sim_api(db, api_client, profile, get_inputs, meta_param_dict):
     assert_status(200, resp, "unauthed_list_profile_sims")
     assert len(resp.data["results"]) == 1
     assert resp.data["results"][0]["model_pk"] == modeler_sims[0].model_pk
+
+    # test only public sims are shown on feed page.
+    api_client.logout()
+    modeler_sims[0].is_public = False
+    modeler_sims[0].save()
+    tester_sims[1].is_public = True
+    tester_sims[1].creation_date = ANON_BEFORE + datetime.timedelta(days=2)
+    tester_sims[1].save()
+    resp = api_client.get("/api/v1/feed")
+    assert_status(200, resp, "unauthed list sims")
+    assert len(resp.data["results"]) == 1
+    assert resp.data["results"][0]["model_pk"] == tester_sims[1].model_pk

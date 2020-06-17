@@ -36,7 +36,9 @@ urlpatterns = [
     path("inputs/api/", compviews.MyInputsAPIView.as_view(), name="myinputs_api"),
     url(r"^rest-auth/", include("rest_auth.urls")),
     url(r"^rest-auth/registration/", include("rest_auth.registration.urls")),
-    path("api/v1/sims", compviews.SimsAPIView.as_view(), name="sim_api"),
+    path("api/v1/sims", compviews.UserSimsAPIView.as_view(), name="sim_api"),
+    path("feed/", pageviews.FeedView.as_view(), name="feed"),
+    path("api/v1/feed", compviews.PublicSimsAPIView.as_view(), name="feed_api"),
     path(
         "api/v1/sims/<str:username>",
         compviews.ProfileSimsAPIView.as_view(),

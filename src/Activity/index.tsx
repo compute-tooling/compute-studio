@@ -34,7 +34,9 @@ interface URLProps {
   };
 }
 
-interface ActivityProps extends URLProps {}
+interface ActivityProps extends URLProps {
+  pageName: "home" | "feed" | "profile";
+}
 
 interface ActivityState {
   simFeed?: {
@@ -300,9 +302,17 @@ const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: 
                 {/* left half */}
                 <Col className="col-md-9">
                   <Card.Title>
-                    <h5>{miniSim.title}</h5>
+                    <h5>
+                      <strong>{miniSim.title}</strong>
+                    </h5>
                   </Card.Title>
                   <Card.Subtitle className="text-muted" onClick={e => e.stopPropagation()}>
+                    <h6 style={{ whiteSpace: "nowrap" }}>
+                      Created by:{" "}
+                      <a href={`/${miniSim.owner}/`}>
+                        <strong>{miniSim.owner}</strong>
+                      </a>
+                    </h6>
                     <h6 style={{ whiteSpace: "nowrap" }}>
                       <a href={miniSim.project} className="color-inherit">
                         {miniSim.project}
@@ -517,7 +527,6 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
   api: API;
   constructor(props) {
     super(props);
-    super(props);
     const { username } = this.props.match.params;
     this.api = new API(username);
     this.state = {
@@ -527,7 +536,7 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
       accessStatus: null
     };
 
-    this.loadNextSimulations = this.loadNextSimulations.bind(this);
+    this.loadNext = this.loadNext.bind(this);
     this.updateOrder = this.updateOrder.bind(this);
   }
 
@@ -535,24 +544,41 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
     this.api.getAccessStatus().then(accessStatus => {
       this.setState({ accessStatus: accessStatus });
     });
-    this.api.initSimulations().then(simFeed => {
-      this.setState({ simFeed: simFeed });
-    });
-    this.api.getModels().then(modelFeed => {
-      this.setState({ modelFeed: modelFeed });
-    });
-    if (!this.api.username) {
+    if (this.props.pageName === "home" || this.props.pageName === "profile") {
+      this.api.initSimulations().then(simFeed => {
+        this.setState({ simFeed: simFeed });
+      });
+    } else if (this.props.pageName === "feed") {
+      this.api.initFeed().then(simFeed => {
+        this.setState({ simFeed: simFeed });
+      });
+    }
+    if (this.props.pageName === "feed") {
+      this.setState({
+        modelFeed: {
+          count: 0,
+          next: null,
+          previous: null,
+          results: []
+        }
+      });
+    } else {
+      this.api.getModels().then(modelFeed => {
+        this.setState({ modelFeed: modelFeed });
+      });
+    }
+    if (this.props.pageName === "home") {
       this.api.getRecentModels().then(recentModels => {
         this.setState({ recentModels: recentModels });
       });
     }
   }
 
-  loadNextSimulations() {
+  loadNext() {
     // check if we are at the end of the results.
     if (!this.state.simFeed?.next) return;
     this.setState({ loading: true });
-    this.api.nextSimulations(this.state.simFeed.next).then(simFeed => {
+    this.api.next(this.state.simFeed.next).then(simFeed => {
       if (!simFeed.results.length) {
         this.setState({ loading: false });
       }
@@ -575,9 +601,15 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
       ordering: toggleOrder(prevState.ordering),
       loading: true
     }));
-    this.api.updateOrder(toggleOrder(this.state.ordering)).then(simFeed => {
-      this.setState({ simFeed: simFeed, loading: false });
-    });
+    if (this.props.pageName === "home" || this.props.pageName === "profile") {
+      this.api.updateSimsOrder(toggleOrder(this.state.ordering)).then(simFeed => {
+        this.setState({ simFeed: simFeed, loading: false });
+      });
+    } else if (this.props.pageName === "feed") {
+      this.api.updateFeedOrder(toggleOrder(this.state.ordering)).then(simFeed => {
+        this.setState({ simFeed: simFeed, loading: false });
+      });
+    }
   }
 
   render() {
@@ -599,7 +631,7 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
             {this.state.simFeed?.next ? (
               <LoadSimulationsButton
                 loading={this.state.loading}
-                loadNextSimulations={this.loadNextSimulations}
+                loadNextSimulations={this.loadNext}
               />
             ) : null}
           </Tab.Pane>
@@ -624,7 +656,9 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
       >
         <Row className="w-100 px-0 m-0 justify-content-between mb-3 d-flex flex-md-row">
           <Col
-            className={`col-md-auto ${this.api.username ? "" : " offset-md-3"} align-self-center`}
+            className={`col-md-auto ${
+              this.props.pageName !== "home" ? "" : " offset-md-3"
+            } align-self-center`}
           >
             <Nav variant="pills" className="d-flex d-sm-block">
               <Row className="flex-1">
@@ -659,7 +693,7 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
             </Col>
           ) : null}
         </Row>
-        {!this.api.username ? (
+        {this.props.pageName === "home" ? (
           <Row className="w-100 m-0">
             <Col className="col-md-3 pl-0 mobile-pr-0 mb-3">
               {recentModels ? <RecentModelsPanel recentModels={recentModels} /> : null}
@@ -684,7 +718,16 @@ ReactDOM.render(
         path="/"
         render={routeProps => (
           <ErrorBoundary>
-            <Activity {...routeProps} />
+            <Activity pageName="home" {...routeProps} />
+          </ErrorBoundary>
+        )}
+      />
+      <Route
+        exact
+        path="/feed/"
+        render={routeProps => (
+          <ErrorBoundary>
+            <Activity pageName="feed" {...routeProps} />
           </ErrorBoundary>
         )}
       />
@@ -693,7 +736,7 @@ ReactDOM.render(
         path="/:username/"
         render={routeProps => (
           <ErrorBoundary>
-            <Activity {...routeProps} />
+            <Activity pageName="profile" {...routeProps} />
           </ErrorBoundary>
         )}
       />
