@@ -70,7 +70,6 @@ def django_db_setup(django_db_setup, django_db_blocker):
             "repo_url": "https://github.com/hdoupe/Matchups",
             "exp_task_time": 10,
             "owner": modeler.profile,
-            "server_cost": 0.1,
             "listed": True,
         }
 

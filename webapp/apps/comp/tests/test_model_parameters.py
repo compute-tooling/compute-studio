@@ -77,7 +77,6 @@ def mock_project(db, worker_url):
         oneliner="oneliner",
         repo_url="https://repo.com/test",
         exp_task_time=10,
-        server_cost=0.1,
         listed=True,
         sponsor=profile,
     )

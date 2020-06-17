@@ -19,7 +19,7 @@ from webapp.apps.billing.models import create_billing_objects
 from webapp.apps.comp import actions
 from webapp.apps.comp.compute import SyncCompute, SyncProjects
 from webapp.apps.comp.models import Inputs, ANON_BEFORE
-from webapp.settings import DEBUG
+from webapp.settings import DEBUG, COMPUTE_PRICING
 
 
 def is_profile_active(user):
@@ -149,8 +149,6 @@ class Project(models.Model):
         max_length=32,
     )
 
-    # server resources
-    server_cost = models.DecimalField(max_digits=6, decimal_places=3, null=True)
     # ram, vcpus
     def callabledefault():
         return [4, 2]
@@ -216,6 +214,13 @@ class Project(models.Model):
         the cost of that run is one penny.
         """
         return 0.01 / self.server_cost_in_secs
+
+    @property
+    def server_cost(self):
+        """Hourly compute costs"""
+        cpu_price = COMPUTE_PRICING["cpu"]
+        memory_price = COMPUTE_PRICING["memory"]
+        return float(self.cpu) * cpu_price + float(self.memory) * memory_price
 
     @property
     def server_cost_in_secs(self):

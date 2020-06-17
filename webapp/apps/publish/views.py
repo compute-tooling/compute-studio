@@ -131,10 +131,7 @@ class ProjectAPIView(GetProjectMixin, APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 model = serializer.save(
-                    owner=request.user.profile,
-                    status="pending",
-                    title=title,
-                    server_cost=0.1,
+                    owner=request.user.profile, status="pending", title=title,
                 )
                 status_url = request.build_absolute_uri(model.app_url)
                 api_user = User.objects.get(username="comp-api-user")
