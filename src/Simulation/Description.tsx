@@ -299,7 +299,7 @@ export default class DescriptionComponent extends React.Component<
     if (this.hasWriteAccess()) {
       let formdata = new FormData();
       for (const field of ["title", "readme", "is_public"]) {
-        if (values[field]) formdata.append(field, values[field]);
+        if (field in values) formdata.append(field, values[field]);
       }
       formdata.append("model_pk", this.props.api.modelpk.toString());
       formdata.append("readme", JSON.stringify(values.readme));
