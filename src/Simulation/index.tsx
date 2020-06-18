@@ -70,6 +70,10 @@ interface SimAppState {
   // notification on sim completion.
   notifyOnCompletion: boolean;
 
+  // Keep track of whether the sim is public.
+  // This is only used for the run modal.
+  isPublic: boolean;
+
   // all meta data for the outputs of a sim.
   remoteSim?: Simulation<RemoteOutputs>;
   sim?: Simulation<Outputs>;
@@ -123,7 +127,8 @@ class SimTabs extends React.Component<
       key: props.tabName,
       hasShownDirtyWarning: false,
       showDirtyWarning: false,
-      notifyOnCompletion: false
+      notifyOnCompletion: false,
+      isPublic: false
     };
 
     this.handleTabChange = this.handleTabChange.bind(this);
@@ -131,6 +136,7 @@ class SimTabs extends React.Component<
     this.resetAccessStatus = this.resetAccessStatus.bind(this);
     this.authenticateAndCreateSimulation = this.authenticateAndCreateSimulation.bind(this);
     this.setNotifyOnCompletion = this.setNotifyOnCompletion.bind(this);
+    this.setIsPublic = this.setIsPublic.bind(this);
     this.submitWillCreateNewSim = this.submitWillCreateNewSim.bind(this);
     this.pollInputs = this.pollInputs.bind(this);
     this.setOutputs = this.setOutputs.bind(this);
@@ -259,6 +265,25 @@ class SimTabs extends React.Component<
     }
   }
 
+  setIsPublic(is_public: boolean) {
+    const { remoteSim } = this.state;
+    if (remoteSim && !this.submitWillCreateNewSim()) {
+      let data = new FormData();
+      data.append("is_public", is_public.toString());
+      this.api.putDescription(data).then(() => {
+        this.setState(prevState => ({
+          isPublic: is_public,
+          remoteSim: {
+            ...prevState.remoteSim,
+            ...{ is_public: is_public }
+          }
+        }));
+      });
+    } else {
+      this.setState({ isPublic: is_public });
+    }
+  }
+
   submitWillCreateNewSim() {
     // returns true if a sim exists, the user has write access,
     // and the sim has not been kicked off yet.
@@ -281,7 +306,8 @@ class SimTabs extends React.Component<
     formdata.append("meta_parameters", JSON.stringify(meta_parameters));
     formdata.append("client", "web-beta");
     formdata.append("notify_on_completion", this.state.notifyOnCompletion.toString());
-
+    formdata.append("is_public", this.state.isPublic.toString());
+    console.log("isPublic", this.state.isPublic);
     let url = `/${this.api.owner}/${this.api.title}/api/v1/`;
     let sim = this.state.inputs.detail?.sim;
 
@@ -403,7 +429,10 @@ class SimTabs extends React.Component<
     api
       .getRemoteOutputs()
       .then(remoteSim => {
-        this.setState({ remoteSim });
+        this.setState(prevState => ({
+          remoteSim,
+          isPublic: remoteSim.status === "SUCCESS" ? false : prevState.isPublic
+        }));
         if (remoteSim.status !== "STARTED" && remoteSim.status !== "PENDING") {
           api.getOutputs().then(sim => {
             this.setState({ sim, notifyOnCompletion: false });
@@ -550,6 +579,8 @@ class SimTabs extends React.Component<
                             this.setNotifyOnCompletion(notify, "inputs")
                           }
                           notifyOnCompletion={this.state.notifyOnCompletion}
+                          setIsPublic={this.setIsPublic}
+                          isPublic={this.state.isPublic}
                           inputs={inputs}
                           defaultURL={`/${this.api.owner}/${this.api.title}/api/v1/`}
                           simStatus={remoteSim?.status || "STARTED"}

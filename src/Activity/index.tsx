@@ -314,7 +314,7 @@ const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: 
                       </a>
                     </h6>
                     <h6 style={{ whiteSpace: "nowrap" }}>
-                      <a href={miniSim.project} className="color-inherit">
+                      <a href={`/${miniSim.project}`} className="color-inherit">
                         {miniSim.project}
                       </a>
                       <span className="ml-1">#{miniSim.model_pk} </span>

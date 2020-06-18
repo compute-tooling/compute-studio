@@ -14,7 +14,7 @@ import * as moment from "moment";
 import { RemoteOutputs, Outputs, Simulation, Output, TableOutput, BokehOutput } from "../types";
 import { imgDims } from "../utils";
 import API from "./API";
-import { NotifyOnCompletion } from "./notify";
+import { CheckboxWidget } from "./notify";
 import { RolePerms } from "../roles";
 
 import { lt as semverlt } from "semver";
@@ -128,7 +128,7 @@ const Pending: React.FC<{
           </h3>
           {showNotify ? (
             <div className="text-center">
-              <NotifyOnCompletion notify={notify} setNotify={setNotify} />
+              <CheckboxWidget value={notify} setValue={setNotify} message="Email me when ready." />
             </div>
           ) : null}
         </Card.Title>

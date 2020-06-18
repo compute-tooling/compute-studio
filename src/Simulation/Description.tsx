@@ -219,7 +219,8 @@ export default class DescriptionComponent extends React.Component<
       this.props.accessStatus.username !== nextProps.accessStatus.username ||
       this.props.remoteSim?.model_pk !== nextProps.remoteSim?.model_pk ||
       this.props.remoteSim?.pending_permissions !== nextProps.remoteSim?.pending_permissions ||
-      this.props.remoteSim?.authors !== nextProps.remoteSim?.authors
+      this.props.remoteSim?.authors !== nextProps.remoteSim?.authors ||
+      this.props.remoteSim?.is_public !== nextProps.remoteSim?.is_public
     );
   }
 

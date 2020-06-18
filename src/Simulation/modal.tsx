@@ -5,9 +5,10 @@ import * as yup from "yup";
 
 import { AuthDialog } from "../auth";
 import { AccessStatus, InitialValues, Inputs } from "../types";
-import { NotifyOnCompletion } from "./notify";
+import { CheckboxWidget } from "./notify";
 import { isEqual } from "lodash";
 import { formikToJSON } from "../ParamTools";
+import { Tip } from "../components";
 
 export const ValidatingModal: React.FC<{ defaultShow?: boolean }> = ({ defaultShow = true }) => {
   const [show, setShow] = React.useState(defaultShow);
@@ -102,7 +103,9 @@ const RunDialog: React.FC<{
   handleSubmit: () => void;
   setNotify: (notify: boolean) => void;
   notify: boolean;
-}> = ({ accessStatus, show, setShow, handleSubmit, setNotify, notify }) => {
+  setIsPublic: (isPublic: boolean) => void;
+  isPublic: boolean;
+}> = ({ accessStatus, show, setShow, handleSubmit, setNotify, notify, setIsPublic, isPublic }) => {
   const handleCloseWithSubmit = () => {
     setShow(false);
     handleSubmit();
@@ -139,19 +142,44 @@ const RunDialog: React.FC<{
       </Modal.Header>
       {body}
       <Modal.Footer style={{ justifyContent: "none" }}>
-        <Row className="align-items-center w-100">
-          <Col className="align-self-start col-7">
-            <NotifyOnCompletion setNotify={setNotify} notify={notify} />
+        <Row className="align-items-center w-100 justify-content-between">
+          <Col className=" col-auto">
+            <Row>
+              <Col>
+                <CheckboxWidget
+                  setValue={setNotify}
+                  value={notify}
+                  message="Email me when ready."
+                />
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <CheckboxWidget setValue={setIsPublic} value={isPublic} message="Make public." />
+              </Col>
+            </Row>
           </Col>
-          <Col className="align-self-end">
-            <Button className="mr-2" variant="secondary" onClick={() => setShow(false)}>
-              Close
+          <Col className="col-auto">
+            <Button
+              className="mr-3"
+              variant="success"
+              onClick={handleCloseWithSubmit}
+              type="submit"
+            >
+              <strong>Run</strong>
             </Button>
-            {/* </Col>
-          <Col className="align-self-end"> */}
-            <Button variant="success" onClick={handleCloseWithSubmit} type="submit">
-              Run
-            </Button>
+            <Tip id="run-visibility" tip={`Make ${isPublic ? "private" : "public"}.`}>
+              <Button
+                className="ml-3"
+                variant="dark"
+                style={{ backgroundColor: "rgba(60, 62, 62, 1)", fontWeight: 600 }}
+                onClick={() => {
+                  setIsPublic(!isPublic);
+                }}
+              >
+                {isPublic ? <i className="fas fa-lock-open"></i> : <i className="fas fa-lock"></i>}
+              </Button>
+            </Tip>
           </Col>
         </Row>
       </Modal.Footer>
@@ -167,7 +195,19 @@ const Dialog: React.FC<{
   handleSubmit: () => void;
   setNotify: (notify: boolean) => void;
   notify: boolean;
-}> = ({ accessStatus, resetAccessStatus, show, setShow, handleSubmit, setNotify, notify }) => {
+  setIsPublic: (isPublic: boolean) => void;
+  isPublic: boolean;
+}> = ({
+  accessStatus,
+  resetAccessStatus,
+  show,
+  setShow,
+  handleSubmit,
+  setNotify,
+  notify,
+  setIsPublic,
+  isPublic
+}) => {
   // pass new show and setShow so main run dialog is not closed.
   const [authShow, setAuthShow] = React.useState(true);
   if (accessStatus.can_run) {
@@ -179,6 +219,8 @@ const Dialog: React.FC<{
         handleSubmit={handleSubmit}
         setNotify={setNotify}
         notify={notify}
+        setIsPublic={setIsPublic}
+        isPublic={isPublic}
       />
     );
   } else if (accessStatus.user_status === "anon") {
@@ -212,6 +254,8 @@ export const RunModal: React.FC<{
   resetAccessStatus: () => void;
   setNotify: (notify: boolean) => void;
   notify: boolean;
+  setIsPublic: (isPublic: boolean) => void;
+  isPublic: boolean;
 }> = ({
   showModal,
   setShowModal,
@@ -220,7 +264,9 @@ export const RunModal: React.FC<{
   accessStatus,
   resetAccessStatus,
   setNotify,
-  notify
+  notify,
+  setIsPublic,
+  isPublic
 }) => {
   let runbuttontext: string;
   if (!accessStatus.is_sponsored) {
@@ -248,6 +294,8 @@ export const RunModal: React.FC<{
         handleSubmit={handleSubmit}
         setNotify={setNotify}
         notify={notify}
+        setIsPublic={setIsPublic}
+        isPublic={isPublic}
       />
     </>
   );
