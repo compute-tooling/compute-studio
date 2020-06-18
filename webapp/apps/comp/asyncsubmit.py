@@ -56,6 +56,7 @@ class SubmitInputs:
         adjustment = validated_data.get("adjustment", {})
         parent_model_pk = validated_data.pop("parent_model_pk", None)
         notify_on_completion = validated_data.pop("notify_on_completion", None)
+        is_public = validated_data.pop("is_public", None)
 
         if parent_model_pk is not None and self.sim.parent_sim is None:
             parent_sim = get_object_or_404(
@@ -102,6 +103,8 @@ class SubmitInputs:
             self.sim.readme = parent_sim.readme
             if notify_on_completion is not None:
                 self.sim.notify_on_completion = notify_on_completion
+            if is_public is not None:
+                self.sim.is_public = is_public
             self.sim.save()
         elif notify_on_completion is not None:
             self.sim.notify_on_completion = notify_on_completion
