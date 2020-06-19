@@ -219,7 +219,8 @@ export default class DescriptionComponent extends React.Component<
       this.props.accessStatus.username !== nextProps.accessStatus.username ||
       this.props.remoteSim?.model_pk !== nextProps.remoteSim?.model_pk ||
       this.props.remoteSim?.pending_permissions !== nextProps.remoteSim?.pending_permissions ||
-      this.props.remoteSim?.authors !== nextProps.remoteSim?.authors
+      this.props.remoteSim?.authors !== nextProps.remoteSim?.authors ||
+      this.props.remoteSim?.is_public !== nextProps.remoteSim?.is_public
     );
   }
 
@@ -298,7 +299,7 @@ export default class DescriptionComponent extends React.Component<
     if (this.hasWriteAccess()) {
       let formdata = new FormData();
       for (const field of ["title", "readme", "is_public"]) {
-        if (values[field]) formdata.append(field, values[field]);
+        if (field in values) formdata.append(field, values[field]);
       }
       formdata.append("model_pk", this.props.api.modelpk.toString());
       formdata.append("readme", JSON.stringify(values.readme));

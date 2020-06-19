@@ -34,7 +34,7 @@ class TestPageViews:
         assert "profile/home_base.html" in [t.name for t in resp.templates]
 
     def test_get_pages(self, client):
-        for page in ["privacy", "terms", "dmca"]:
+        for page in ["privacy", "terms", "dmca", "feed"]:
             assert client.get(f"/{page}/").status_code == 200
         resp = client.get("/about/")
         assert resp.status_code == 302, f"Expected 302, got {resp.status_code}"

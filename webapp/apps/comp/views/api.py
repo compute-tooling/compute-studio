@@ -33,7 +33,7 @@ from webapp.apps.comp.exceptions import (
     ResourceLimitException,
 )
 from webapp.apps.comp.ioutils import get_ioutils
-from webapp.apps.comp.models import Inputs, Simulation, PendingPermission
+from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
 from webapp.apps.comp.parser import APIParser
 from webapp.apps.comp.serializers import (
     SimulationSerializer,
@@ -625,8 +625,17 @@ class SimsAPIView(generics.ListAPIView):
     queryset = Simulation.objects.all()
     serializer_class = MiniSimulationSerializer
 
+
+class UserSimsAPIView(SimsAPIView):
     def get_queryset(self):
         return self.queryset.filter(owner__user=self.request.user)
+
+
+class PublicSimsAPIView(SimsAPIView):
+    permission_classes = (RequiresActive,)
+
+    def get_queryset(self):
+        return self.queryset.filter(is_public=True, creation_date__gte=ANON_BEFORE)
 
 
 class ProfileSimsAPIView(SimsAPIView):

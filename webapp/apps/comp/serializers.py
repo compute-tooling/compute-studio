@@ -56,6 +56,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
     status = serializers.CharField(required=False)
     api_url = serializers.CharField(required=False, source="get_absolute_api_url")
     gui_url = serializers.CharField(required=False, source="get_absolute_url")
+    is_public = serializers.NullBooleanField(required=False)
 
     # see to_representation
     # role = serializers.BooleanField(source="role")
@@ -159,8 +160,10 @@ class InputsSerializer(serializers.ModelSerializer):
     sim = MiniSimulationSerializer(required=False)
 
     # Not part of Inputs model but is needed for setting sim completion
-    # notification status on sims created from /[owner]/[title]/api/v1/
+    # notification status and visibility on sims created from
+    # /[owner]/[title]/api/v1/
     notify_on_completion = serializers.BooleanField(required=False)
+    is_public = serializers.BooleanField(required=False)
 
     model_config = ModelConfigSerializer(allow_null=True, required=False)
 
@@ -193,6 +196,7 @@ class InputsSerializer(serializers.ModelSerializer):
             "custom_adjustment",
             "errors_warnings",
             "gui_url",
+            "is_public",
             "job_id",
             "meta_parameters",
             "model_config",

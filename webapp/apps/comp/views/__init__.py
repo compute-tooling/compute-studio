@@ -21,6 +21,7 @@ from .api import (
     AuthorsAPIView,
     AuthorsDeleteAPIView,
     SimulationAccessAPIView,
-    SimsAPIView,
+    UserSimsAPIView,
+    PublicSimsAPIView,
     ProfileSimsAPIView,
 )

@@ -32,6 +32,8 @@ interface InputsFormProps {
   resetAccessStatus: () => void;
   setNotifyOnCompletion: (notify: boolean) => void;
   notifyOnCompletion: boolean;
+  setIsPublic: (is_public: boolean) => void;
+  isPublic: boolean;
   inputs: Inputs;
   defaultURL: string;
   simStatus: Simulation<any>["status"];
@@ -63,6 +65,8 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
   let {
     accessStatus,
     setNotifyOnCompletion,
+    setIsPublic,
+    isPublic,
     notifyOnCompletion,
     inputs,
     resetInitialValues,
@@ -128,6 +132,8 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
                 resetAccessStatus={props.resetAccessStatus}
                 notify={notifyOnCompletion}
                 setNotify={setNotifyOnCompletion}
+                setIsPublic={setIsPublic}
+                isPublic={isPublic}
               />
             </li>
           </ul>
@@ -191,6 +197,7 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
 
 const InputsMemoed = React.memo(InputsForm, (prevProps, nextProps) => {
   return (
+    prevProps.isPublic === nextProps.isPublic &&
     prevProps.simStatus === nextProps.simStatus &&
     prevProps.accessStatus === nextProps.accessStatus &&
     prevProps.formikProps === nextProps.formikProps

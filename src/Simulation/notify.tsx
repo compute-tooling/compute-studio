@@ -1,13 +1,10 @@
 import * as React from "react";
 
-export const NotifyOnCompletion: React.FC<{
-  notify: boolean;
-  setNotify: (notify: boolean) => void;
-}> = ({ notify, setNotify }) => {
-  console.log(notify);
-  const toggleNotify = () => {
-    setNotify(!notify);
-  };
+export const CheckboxWidget: React.FC<{
+  message: string;
+  value: boolean;
+  setValue: (value: boolean) => void;
+}> = ({ message, value, setValue }) => {
   return (
     // alignment on run model dialog window.
     <p className="mt-2 mb-1">
@@ -15,11 +12,11 @@ export const NotifyOnCompletion: React.FC<{
         name="notify"
         className="form-check mr-2"
         type="checkbox"
-        checked={notify}
-        onChange={toggleNotify}
+        checked={value}
+        onChange={() => setValue(!value)}
         style={{ display: "inline" }}
       />
-      Email me when ready
+      {message}
     </p>
   );
 };

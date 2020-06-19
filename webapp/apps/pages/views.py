@@ -34,6 +34,18 @@ class ProfileView(View):
         )
 
 
+class FeedView(View):
+    profile_template = "profile/home_base.html"
+    projects = Project.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        return render(
+            request,
+            self.profile_template,
+            context={"username": request.user.username, "show_readme": False},
+        )
+
+
 class AboutView(View):
     def get(self, request, *args, **kwargs):
         return redirect(ABOUT_URL)
