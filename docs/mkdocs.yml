@@ -1,17 +1,30 @@
 site_name: Compute Studio
 
-pages:
-  - Home: 'index.md'
+nav:
+  - Home: "index.md"
   - Publish:
-    - Guide: 'publish/guide.md'
-    - Inputs: 'publish/inputs.md'
-    - Outputs: 'publish/outputs.md'
-    - Functions: 'publish/functions.md'
-    - Environment: 'publish/environment.md'
+      - Guide: "publish/guide.md"
+      - Inputs: "publish/inputs.md"
+      - Outputs: "publish/outputs.md"
+      - Functions: "publish/functions.md"
+      - Environment: "publish/environment.md"
   - API:
-    - Guide: 'api/guide.md'
-    - Authentication: 'api/auth.md'
-    - Python: 'api/python.md'
+      - Guide: "api/guide.md"
+      - Authentication: "api/auth.md"
+      - Python: "api/python.md"
 
-highlightjs: true
-hljs_style: github
+markdown_extensions:
+  - admonition
+  - codehilite
+  # - mkautodoc
+extra_css:
+  - css/custom.css
+theme:
+  name: "material"
+  highlightjs: true
+  hljs_languages:
+    - python
+    - json
+    - bash
+  logo: "cslashs-white.png"
+  favicon: "cslashs.png"
