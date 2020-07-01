@@ -11,9 +11,11 @@ Once you've skimmed the criteria below, you can develop your functions against t
 
 ## Get Version
 
-Returns the version of the model as a string.
+Returns the version of the model as a string. This **should be updated each time the model is updated**. C/S saves the model's inputs and only gets the new outputs when the version is updated.
+
 
 - **Python Example:**
+
 
 ```python
 

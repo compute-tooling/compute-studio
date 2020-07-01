@@ -10,7 +10,12 @@ Compute Studio relies on two data formats, one for the [inputs](/publish/inputs)
 
 ## Functions
 
-Compute Studio interacts with your model using [4 Python functions](/publish/functions/): one for getting the model's version, one for getting the default inputs, one for validating user inputs, and one for running the model.
+Compute Studio interacts with your model using [4 Python functions](/publish/functions/):
+
+1. `get_version`: Returns the model's version.
+2. `get_inputs`: Returns the default inputs.
+3. `validate_inputs`: Validate user inputs.
+4. `run_model`: Run the model and return the results.
 
 ## Publish
 
