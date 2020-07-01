@@ -1,132 +1,452 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        
-        
-        
-        <link rel="shortcut icon" href="../../img/favicon.ico">
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="shortcut icon" href="../../cslashs.png">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-5.1.1">
+    
+    
+      
         <title>Functions - Compute Studio</title>
-        <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
-        <link href="../../css/font-awesome.min.css" rel="stylesheet">
-        <link href="../../css/base.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
-        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
-        <!--[if lt IE 9]>
-            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-        <![endif]-->
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a676eddb.min.css">
+      
+      
+    
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="../../css/custom.css">
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#python-functions" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href="../.." title="Compute Studio" class="md-header-nav__button md-logo" aria-label="Compute Studio">
+      
+  <img src="../../cslashs-white.png" alt="logo">
 
-        <script src="../../js/jquery-1.10.2.min.js" defer></script>
-        <script src="../../js/bootstrap-3.0.3.min.js" defer></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-        <script>hljs.initHighlightingOnLoad();</script> 
-    </head>
-
-    <body>
-
-        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
-            <div class="container">
-
-                <!-- Collapsed navigation -->
-                <div class="navbar-header">
-                    <!-- Expander button -->
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a class="navbar-brand" href="../..">Compute Studio</a>
-                </div>
-
-                <!-- Expanded navigation -->
-                <div class="navbar-collapse collapse">
-                        <!-- Main navigation -->
-                        <ul class="nav navbar-nav">
-                            <li >
-                                <a href="../..">Home</a>
-                            </li>
-                            <li class="dropdown active">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Publish <b class="caret"></b></a>
-                                <ul class="dropdown-menu">
-                                    
-<li >
-    <a href="../guide/">Guide</a>
-</li>
-                                    
-<li >
-    <a href="../inputs/">Inputs</a>
-</li>
-                                    
-<li >
-    <a href="../outputs/">Outputs</a>
-</li>
-                                    
-<li class="active">
-    <a href="./">Functions</a>
-</li>
-                                    
-<li >
-    <a href="../environment/">Environment</a>
-</li>
-                                </ul>
-                            </li>
-                            <li class="dropdown">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">API <b class="caret"></b></a>
-                                <ul class="dropdown-menu">
-                                    
-<li >
-    <a href="../../api/guide/">Guide</a>
-</li>
-                                    
-<li >
-    <a href="../../api/auth/">Authentication</a>
-</li>
-                                    
-<li >
-    <a href="../../api/python/">Python</a>
-</li>
-                                </ul>
-                            </li>
-                        </ul>
-
-                    <ul class="nav navbar-nav navbar-right">
-                        <li>
-                            <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
-                                <i class="fa fa-search"></i> Search
-                            </a>
-                        </li>
-                            <li >
-                                <a rel="next" href="../outputs/">
-                                    <i class="fa fa-arrow-left"></i> Previous
-                                </a>
-                            </li>
-                            <li >
-                                <a rel="prev" href="../environment/">
-                                    Next <i class="fa fa-arrow-right"></i>
-                                </a>
-                            </li>
-                    </ul>
-                </div>
-            </div>
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      
+        <div class="md-header-nav__ellipsis">
+          <span class="md-header-nav__topic md-ellipsis">
+            Compute Studio
+          </span>
+          <span class="md-header-nav__topic md-ellipsis">
+            
+              Functions
+            
+          </span>
         </div>
+      
+    </div>
+    
+      <label class="md-header-nav__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" /></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active">
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" /></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" /></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" /></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+        
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Compute Studio" class="md-nav__button md-logo" aria-label="Compute Studio">
+      
+  <img src="../../cslashs-white.png" alt="logo">
 
-        <div class="container">
-                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
-    <ul class="nav bs-sidenav">
-        <li class="main active"><a href="#python-functions">Python functions</a></li>
-            <li><a href="#get-version">Get Version</a></li>
-            <li><a href="#model-parameters">Model Parameters</a></li>
-            <li><a href="#validate-user-adjustments">Validate user adjustments</a></li>
-            <li><a href="#run-simulation">Run simulation</a></li>
+    </a>
+    Compute Studio
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../.." title="Home" class="md-nav__link">
+      Home
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
+    
+    <label class="md-nav__link" for="nav-2">
+      Publish
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" /></svg>
+      </span>
+    </label>
+    <nav class="md-nav" aria-label="Publish" data-md-level="1">
+      <label class="md-nav__title" for="nav-2">
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" /></svg>
+        </span>
+        Publish
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../guide/" title="Guide" class="md-nav__link">
+      Guide
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../inputs/" title="Inputs" class="md-nav__link">
+      Inputs
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../outputs/" title="Outputs" class="md-nav__link">
+      Outputs
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Functions
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3,9H17V7H3V9M3,13H17V11H3V13M3,17H17V15H3V17M19,17H21V15H19V17M19,7V9H21V7H19M19,13H21V11H19V13Z" /></svg>
+        </span>
+      </label>
+    
+    <a href="./" title="Functions" class="md-nav__link md-nav__link--active">
+      Functions
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" /></svg>
+      </span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#get-version" class="md-nav__link">
+    Get Version
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-parameters" class="md-nav__link">
+    Model Parameters
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validate-user-adjustments" class="md-nav__link">
+    Validate user adjustments
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-simulation" class="md-nav__link">
+    Run simulation
+  </a>
+  
+</li>
+      
     </ul>
-</div></div>
-                <div class="col-md-9" role="main">
+  
+</nav>
+    
+  </li>
 
-<h1 id="python-functions">Python functions</h1>
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../environment/" title="Environment" class="md-nav__link">
+      Environment
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      API
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" /></svg>
+      </span>
+    </label>
+    <nav class="md-nav" aria-label="API" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" /></svg>
+        </span>
+        API
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../api/guide/" title="Guide" class="md-nav__link">
+      Guide
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../api/auth/" title="Authentication" class="md-nav__link">
+      Authentication
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../api/python/" title="Python" class="md-nav__link">
+      Python
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" /></svg>
+      </span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#get-version" class="md-nav__link">
+    Get Version
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-parameters" class="md-nav__link">
+    Model Parameters
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validate-user-adjustments" class="md-nav__link">
+    Validate user adjustments
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-simulation" class="md-nav__link">
+    Run simulation
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                  
+                
+                
+                <h1 id="python-functions">Python functions</h1>
 <p>The modeling project must provide a Python function for each of the following tasks:</p>
 <ul>
 <li><strong>Get Version</strong>: Get the model's version.</li>
@@ -140,187 +460,194 @@
 <ul>
 <li><strong>Python Example:</strong></li>
 </ul>
-<pre><code class="python">
-def get_version():
-    return &quot;1.0.0&quot;
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">get_version</span><span class="p">():</span>
+    <span class="k">return</span> <span class="s2">&quot;1.0.0&quot;</span>
+</code></pre></div>
 
-</code></pre>
 
 <h2 id="model-parameters">Model Parameters</h2>
 <p>Accepts Meta Parameters, if they are being utilized. Returns data in the form specified in the <a href="/publish/inputs/">inputs page</a>.</p>
 <ul>
 <li><strong>Python Example</strong>:</li>
 </ul>
-<pre><code class="python">import matchups
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">matchups</span>
 
 
-def get_inputs(meta_params_dict):
-    meta_params = matchups.MetaParams()
-    meta_params.adjust(meta_params_dict)
-    params = matchups.MatchupsParams()
-    params.set_state(use_full_data=True)
-    return {
-        &quot;meta_parameters&quot;: meta_params.dump(),
-        &quot;model_parameters&quot;: params.dump()
-    }
+<span class="k">def</span> <span class="nf">get_inputs</span><span class="p">(</span><span class="n">meta_params_dict</span><span class="p">):</span>
+    <span class="n">meta_params</span> <span class="o">=</span> <span class="n">matchups</span><span class="o">.</span><span class="n">MetaParams</span><span class="p">()</span>
+    <span class="n">meta_params</span><span class="o">.</span><span class="n">adjust</span><span class="p">(</span><span class="n">meta_params_dict</span><span class="p">)</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">matchups</span><span class="o">.</span><span class="n">MatchupsParams</span><span class="p">()</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">set_state</span><span class="p">(</span><span class="n">use_full_data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;meta_parameters&quot;</span><span class="p">:</span> <span class="n">meta_params</span><span class="o">.</span><span class="n">dump</span><span class="p">(),</span>
+        <span class="s2">&quot;model_parameters&quot;</span><span class="p">:</span> <span class="n">params</span><span class="o">.</span><span class="n">dump</span><span class="p">()</span>
+    <span class="p">}</span>
+</code></pre></div>
 
-</code></pre>
 
 <p>Here's what you get after filling in this function:
 <a href="https://compute.studio/hdoupe/Matchups/"><img alt="alt text" src="https://user-images.githubusercontent.com/9206065/56739963-eee28780-673d-11e9-8692-59f58af2b5ff.png" /></a></p>
 <h2 id="validate-user-adjustments">Validate user adjustments</h2>
 <p>Accepts parsed user adjustments, separated by each major section. Returns warnings/errors (if any).</p>
 <p>Compute Studio will provide parsed user adjustments of the form:</p>
-<pre><code>meta_param_dict = {
-    &quot;use_full_data&quot;: True
-}
+<div class="codehilite"><pre><span></span><code><span class="n">meta_param_dict</span> <span class="o">=</span> <span class="err">{</span>
+    <span class="ss">&quot;use_full_data&quot;</span><span class="p">:</span> <span class="k">True</span>
+<span class="err">}</span>
 
-adjustment = {
-  &quot;matchup&quot;: {
-    &quot;start_date&quot;: [{ &quot;value&quot;: &quot;2012-08-01&quot; }],
-    &quot;end_date&quot;: [{ &quot;value&quot;: &quot;2012-09-01&quot; }],
-    &quot;pitcher&quot;: [{ &quot;value&quot;: &quot;Not a Real Pitcher&quot; }]
-  }
-}
+<span class="n">adjustment</span> <span class="o">=</span> <span class="err">{</span>
+  <span class="ss">&quot;matchup&quot;</span><span class="p">:</span> <span class="err">{</span>
+    <span class="ss">&quot;start_date&quot;</span><span class="p">:</span> <span class="p">[</span><span class="err">{</span> <span class="ss">&quot;value&quot;</span><span class="p">:</span> <span class="ss">&quot;2012-08-01&quot;</span> <span class="err">}</span><span class="p">],</span>
+    <span class="ss">&quot;end_date&quot;</span><span class="p">:</span> <span class="p">[</span><span class="err">{</span> <span class="ss">&quot;value&quot;</span><span class="p">:</span> <span class="ss">&quot;2012-09-01&quot;</span> <span class="err">}</span><span class="p">],</span>
+    <span class="ss">&quot;pitcher&quot;</span><span class="p">:</span> <span class="p">[</span><span class="err">{</span> <span class="ss">&quot;value&quot;</span><span class="p">:</span> <span class="ss">&quot;Not a Real Pitcher&quot;</span> <span class="err">}</span><span class="p">]</span>
+  <span class="err">}</span>
+<span class="err">}</span>
 
-errors_warnings = {
-    &quot;matchup&quot;: {
-        &quot;errors&quot;: {},
-        &quot;warnings&quot;: {}
-    }
-}
-</code></pre>
+<span class="n">errors_warnings</span> <span class="o">=</span> <span class="err">{</span>
+    <span class="ss">&quot;matchup&quot;</span><span class="p">:</span> <span class="err">{</span>
+        <span class="ss">&quot;errors&quot;</span><span class="p">:</span> <span class="err">{}</span><span class="p">,</span>
+        <span class="ss">&quot;warnings&quot;</span><span class="p">:</span> <span class="err">{}</span>
+    <span class="err">}</span>
+<span class="err">}</span>
+</code></pre></div>
+
 
 <p>The function should return:</p>
 <p>Warnings/Errors:</p>
-<pre><code class="python">{
-    &quot;errors_warnings&quot;: {
-        &quot;matchup&quot;: {
-            &quot;errors&quot;: {
-                &quot;pitcher&quot;: ['Pitcher &quot;Not a Real Pitcher&quot; not allowed']
-            },
-            &quot;warnings&quot;: {}
-        }
-    }
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+    <span class="s2">&quot;errors_warnings&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;matchup&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;errors&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;pitcher&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Pitcher &quot;Not a Real Pitcher&quot; not allowed&#39;</span><span class="p">]</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;warnings&quot;</span><span class="p">:</span> <span class="p">{}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
 
 <ul>
 <li><strong>Python</strong>:</li>
 </ul>
-<pre><code class="python">import matchups
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">matchups</span>
 
-def validate_inputs(meta_param_dict, adjustment, errors_warnings):
-    # matchups doesn't look at meta_param_dict for validating inputs.
-    params = matchups.MatchupsParams()
-    params.adjust(adjustment[&quot;matchup&quot;], raise_errors=False)
-    errors_warnings[&quot;matchup&quot;][&quot;errors&quot;].update(params.errors)
-    return {&quot;errors_warnings&quot;: errors_warnings}
-</code></pre>
+<span class="k">def</span> <span class="nf">validate_inputs</span><span class="p">(</span><span class="n">meta_param_dict</span><span class="p">,</span> <span class="n">adjustment</span><span class="p">,</span> <span class="n">errors_warnings</span><span class="p">):</span>
+    <span class="c1"># matchups doesn&#39;t look at meta_param_dict for validating inputs.</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">matchups</span><span class="o">.</span><span class="n">MatchupsParams</span><span class="p">()</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">adjust</span><span class="p">(</span><span class="n">adjustment</span><span class="p">[</span><span class="s2">&quot;matchup&quot;</span><span class="p">],</span> <span class="n">raise_errors</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">errors_warnings</span><span class="p">[</span><span class="s2">&quot;matchup&quot;</span><span class="p">][</span><span class="s2">&quot;errors&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;errors_warnings&quot;</span><span class="p">:</span> <span class="n">errors_warnings</span><span class="p">}</span>
+</code></pre></div>
+
 
 <p>Here's what you get after filling in this function:
 <img alt="alt text" src="https://user-images.githubusercontent.com/9206065/56741151-48e44c80-6740-11e9-88a8-dcc5887a3187.png" /></p>
 <h2 id="run-simulation">Run simulation</h2>
 <p>Accepts Meta Parameters values and model parameters. Returns outputs as specified in the <a href="/publish/outputs/">outputs page</a></p>
 <p>Compute Studio submits the model's meta parameters and the parsed and formatted user adjustments:</p>
-<pre><code>meta_param_dict = {
-    &quot;use_full_data&quot;: True
-}
-adjustment = {
-    &quot;matchup&quot;: {
-        &quot;pitcher&quot;: &quot;Max Scherzer&quot;
-    },
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="err">meta_param_dict = {</span>
+<span class="err">    &quot;use_full_data&quot;: True</span>
+<span class="err">}</span>
+<span class="err">adjustment = {</span>
+<span class="err">    &quot;matchup&quot;: {</span>
+<span class="err">        &quot;pitcher&quot;: &quot;Max Scherzer&quot;</span>
+<span class="err">    },</span>
+<span class="err">}</span>
+</code></pre></div>
+
 
 <ul>
 <li><strong>Python Example</strong>:</li>
 </ul>
-<pre><code class="python">import matchups
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">matchups</span>
 
-def get_matchup(meta_param_dict, adjustment):
-    result = matchups.get_matchup(meta_param_dict, adjustment)
-    return result
-</code></pre>
+<span class="k">def</span> <span class="nf">get_matchup</span><span class="p">(</span><span class="n">meta_param_dict</span><span class="p">,</span> <span class="n">adjustment</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">matchups</span><span class="o">.</span><span class="n">get_matchup</span><span class="p">(</span><span class="n">meta_param_dict</span><span class="p">,</span> <span class="n">adjustment</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+</code></pre></div>
+
 
 <p>Here's what you get after filling in this function:</p>
-<p><a href="https://compute.studio/hdoupe/Matchups/16/"><img alt="alt text" src="https://user-images.githubusercontent.com/9206065/56739964-ef7b1e00-673d-11e9-9d91-2f7227d09897.png" /></a></p></div>
-        </div>
+<p><a href="https://compute.studio/hdoupe/Matchups/16/"><img alt="alt text" src="https://user-images.githubusercontent.com/9206065/56739964-ef7b1e00-673d-11e9-9d91-2f7227d09897.png" /></a></p>
+                
+              
+              
+                
 
-        <footer class="col-md-12">
-            <hr>
-            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
-        </footer>
-        <script>
-            var base_url = "../..",
-                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
-        </script>
-        <script src="../../js/base.js" defer></script>
-        <script src="../../search/main.js" defer></script>
 
-        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                <h4 class="modal-title" id="exampleModalLabel">Search</h4>
-            </div>
-            <div class="modal-body">
-                <p>
-                    From here you can search these documents. Enter
-                    your search terms below.
-                </p>
-                <form role="form">
-                    <div class="form-group">
-                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
-                    </div>
-                </form>
-                <div id="mkdocs-search-results"></div>
-            </div>
-            <div class="modal-footer">
-            </div>
+              
+            </article>
+          </div>
         </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../outputs/" title="Outputs" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" /></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Outputs
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../environment/" title="Environment" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Environment
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" /></svg>
+            </div>
+          </a>
+        
+      </nav>
     </div>
-</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="Keyboard Shortcuts Modal" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                <h4 class="modal-title" id="exampleModalLabel">Keyboard Shortcuts</h4>
-            </div>
-            <div class="modal-body">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th style="width: 20%;">Keys</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td class="help shortcut"><kbd>?</kbd></td>
-                    <td>Open this help</td>
-                  </tr>
-                  <tr>
-                    <td class="next shortcut"><kbd>n</kbd></td>
-                    <td>Next page</td>
-                  </tr>
-                  <tr>
-                    <td class="prev shortcut"><kbd>p</kbd></td>
-                    <td>Previous page</td>
-                  </tr>
-                  <tr>
-                    <td class="search shortcut"><kbd>s</kbd></td>
-                    <td>Search</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="modal-footer">
-            </div>
-        </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
     </div>
-</div>
-
-    </body>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/vendor.c51dfa35.min.js"></script>
+      <script src="../../assets/javascripts/bundle.eaaa3931.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      
+      <script>
+        app = initialize({
+          base: "../..",
+          features: [],
+          search: Object.assign({
+            worker: "../../assets/javascripts/worker/search.58d22e8e.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+      
+    
+  </body>
 </html>

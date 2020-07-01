@@ -1,0 +1,39 @@
+div.autodoc-docstring {
+  padding-left: 20px;
+  margin-bottom: 30px;
+  border-left: 5px solid rgba(230, 230, 230);
+}
+
+div.autodoc-members {
+  padding-left: 20px;
+  margin-bottom: 15px;
+}
+
+header.md-header,
+div.md-footer-nav,
+div.md-footer-meta.md-typeset {
+  background-color: #2b2c2d;
+}
+
+a,
+a:hover {
+  color: #0366d6 !important;
+  text-decoration-line: underline;
+}
+
+.md-nav__link,
+.md-nav__link:hover,
+.md-nav__link--active,
+.md-nav__link:active,
+.md-nav__item--nested > .md-nav__link,
+.md-nav__link .md-nav__link--active {
+  color: #2b2c2d !important;
+}
+
+.md-footer-meta.md-typeset a,
+.md-flex__ellipsis,
+i.md-icon,
+.md-footer-nav__link md-footer-nav__link--next,
+.md-footer-nav__link md-footer-nav__link--previous {
+  color: hsla(0, 0%, 100%, 0.7) !important;
+}
