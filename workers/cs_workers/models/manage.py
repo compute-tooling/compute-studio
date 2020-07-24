@@ -5,6 +5,7 @@ import sys
 import yaml
 from pathlib import Path
 
+import docker
 import httpx
 
 from cs_workers.utils import run, clean, parse_owner_title
@@ -191,9 +192,23 @@ class Manager:
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])
         img_name = f"{safeowner}_{safetitle}_tasks"
-        run(
-            f"docker run {self.cr}/{self.project}/{img_name}:{self.tag} py.test /home/test_functions.py -v -s"
+        cmd = ["py.test", "/home/test_functions.py", "-v", "-s"]
+        secrets = self.config._list_secrets(app)
+        client = docker.from_env()
+        container = client.containers.run(
+            f"{img_name}:{self.tag}", cmd, environment=secrets, detach=True
         )
+
+        for line in container.logs(stream=True):
+            line = line.decode()
+            for name, value in secrets.items():
+                line = line.replace(name, "******").replace(value, "******")
+            print(line.strip("\n"))
+
+        container.reload()
+        exit_status = container.wait()
+        if exit_status["StatusCode"] == 1:
+            raise RuntimeError("Tests failed with exit status 1.")
 
     def push_app_image(self, app):
         assert self.cr is not None
