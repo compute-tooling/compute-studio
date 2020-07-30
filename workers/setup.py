@@ -28,7 +28,7 @@ setuptools.setup(
         "dask",
         "distributed",
         "tornado",
-        "cs-storage",
+        "cs-storage>=1.11.0",
     ],
     include_package_data=True,
     entry_points={
