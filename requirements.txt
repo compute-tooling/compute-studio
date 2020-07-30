@@ -21,4 +21,4 @@ newrelic
 hashids
 django-rest-auth
 django-allauth
-cs-storage>=1.8.1
+cs-storage>=1.11.0

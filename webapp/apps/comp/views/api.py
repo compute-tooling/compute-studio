@@ -242,9 +242,15 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
             if not as_remote:
                 data["outputs"] = cs_storage.read(outputs)
             else:
-                data["outputs"]["outputs"] = cs_storage.add_screenshot_links(
-                    data["outputs"]["outputs"]
-                )
+                if self.request.is_secure():
+                    protocol = "https"
+                else:
+                    protocol = "http"  # local dev.
+                base_url = f"{protocol}://{self.request.get_host()}"
+                for rem_output in data["outputs"]["outputs"]["renderable"]["outputs"]:
+                    rem_output[
+                        "screenshot"
+                    ] = f"{base_url}/storage/screenshots/{rem_output['id']}.png"
             return Response(data, status=status.HTTP_200_OK)
         elif self.object.traceback is not None:
             return Response(data, status=status.HTTP_200_OK)

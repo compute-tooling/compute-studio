@@ -30,7 +30,7 @@ services:
       - DEBUG=True
       - WORKERS=${WORKERS}
       - LOCAL=True
-      - BUCKET=cs-outputs-dev
+      - BUCKET=cs-outputs-dev-private
       - MAILGUN_API_KEY=${MAILGUN_API_KEY}
       - USE_STRIPE=${USE_STRIPE}
       - STRIPE_SECRET=${STRIPE_SECRET}

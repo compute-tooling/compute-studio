@@ -206,6 +206,15 @@ class Inputs(models.Model):
 
 
 class SimulationManager(models.Manager):
+    def get_object_from_screenshot(self, output_id, http_404_on_fail=False):
+        query = dict(
+            outputs__outputs__renderable__outputs__contains=[{"id": output_id}],
+        )
+        if http_404_on_fail:
+            return get_object_or_404(Simulation, **query)
+        else:
+            return self.get(**query)
+
     def next_model_pk(self, project):
         curr_max = Simulation.objects.filter(project=project).aggregate(
             models.Max("model_pk")
@@ -685,10 +694,7 @@ class Simulation(models.Model):
         if self.outputs and self.outputs_version() != "v0":
             output = self.outputs["outputs"]["renderable"]["outputs"][:1]
             if output:
-                output = cs_storage.add_screenshot_links(
-                    {"renderable": {"outputs": output}}
-                )
-                pic = output["renderable"]["outputs"][0]["screenshot"]
+                pic = f"https://{request.get_host()}/data/{output[0]['id']}.png"
 
         return {"owner": self.get_owner(), "title": self.title, "url": url, "pic": pic}
 
