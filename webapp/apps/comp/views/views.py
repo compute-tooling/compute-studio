@@ -25,7 +25,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-import gcsfs
+import fsspec as fs
 import cs_storage
 
 from webapp.settings import DEBUG
@@ -267,8 +267,7 @@ class OutputsDownloadView(GetOutputsObjectMixin, View):
         if request.GET.get("raw_json", False):
             return self.render_json()
         zip_loc = self.object.outputs["outputs"]["downloadable"]["ziplocation"]
-        fs = gcsfs.GCSFileSystem(BUCKET)
-        with fs.open(f"{BUCKET}/{zip_loc}", "rb") as f:
+        with fs.open(f"gcs://{BUCKET}/{zip_loc}", "rb",) as f:
             resp = HttpResponse(f, content_type="application/zip")
             resp[
                 "Content-Disposition"
