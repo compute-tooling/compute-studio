@@ -32,6 +32,11 @@ urlpatterns = [
     path("users/", include("webapp.apps.users.urls")),
     path("users/", include("django.contrib.auth.urls")),
     path("billing/", include("webapp.apps.billing.urls")),
+    path(
+        "storage/screenshots/<str:data_id>",
+        compviews.DataView.as_view(),
+        name="data__view",
+    ),
     path("outputs/api/", compviews.OutputsAPIView.as_view(), name="outputs_api"),
     path("inputs/api/", compviews.MyInputsAPIView.as_view(), name="myinputs_api"),
     url(r"^rest-auth/", include("rest_auth.urls")),

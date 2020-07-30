@@ -6,6 +6,7 @@ from .views import (
     OutputsView,
     PermissionPendingView,
     PermissionGrantedView,
+    DataView,
 )
 
 from .api import (

@@ -315,6 +315,7 @@ class RunMockModel(CoreTestMixin):
 
     def get_paths(self, model_pk: int):
         def fetch_sims(exp_resp: int):
+            output_id = self.sim.outputs["outputs"]["renderable"]["outputs"][0]["id"]
             api_paths = [
                 f"/{self.owner}/{self.title}/api/v1/{model_pk}/remote/",
                 f"/{self.owner}/{self.title}/api/v1/{model_pk}/",
@@ -323,6 +324,7 @@ class RunMockModel(CoreTestMixin):
             paths = [
                 f"/{self.owner}/{self.title}/{model_pk}/",
                 f"/{self.owner}/{self.title}/{model_pk}/edit/",
+                f"/storage/screenshots/{output_id}.png",
             ]
             for path in api_paths:
                 resp = self.api_client.get(path)

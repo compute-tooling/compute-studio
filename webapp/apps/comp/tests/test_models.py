@@ -7,6 +7,7 @@ from hashids import Hashids
 from django.http import Http404
 from django.contrib import auth
 from django.forms.models import model_to_dict
+from django.http.response import Http404
 from guardian.shortcuts import get_perms
 
 from webapp.apps.users.models import Project, Profile, create_profile_from_user
@@ -211,6 +212,26 @@ def test_get_owner(db, get_inputs, meta_param_dict):
     sim.creation_date = ANON_BEFORE - datetime.timedelta(days=2)
     sim.save()
     assert sim.get_owner() == "unsigned"
+
+
+def test_sim_screenshot_query(db, get_inputs, meta_param_dict):
+    modeler = User.objects.get(username="modeler").profile
+    inputs = _submit_inputs("Used-for-testing", get_inputs, meta_param_dict, modeler)
+
+    _, submit_sim = _submit_sim(inputs)
+    sim = submit_sim.submit()
+    sim.status = "SUCCESS"
+    sim.outputs = json.loads(read_outputs("Matchups_v1"))
+    sim.save()
+
+    for output in sim.outputs["outputs"]["renderable"]["outputs"]:
+        assert sim == Simulation.objects.get_object_from_screenshot(output["id"])
+
+    with pytest.raises(Simulation.DoesNotExist):
+        Simulation.objects.get_object_from_screenshot("abc123")
+
+    with pytest.raises(Http404):
+        Simulation.objects.get_object_from_screenshot("abc123", http_404_on_fail=True)
 
 
 def test_sim_permissions(db, get_inputs, meta_param_dict, plus_profile):

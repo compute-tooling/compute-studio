@@ -289,3 +289,22 @@ class OutputsDownloadView(GetOutputsObjectMixin, View):
             "Content-Disposition"
         ] = f"attachment; filename={self.object.json_filename()}"
         return resp
+
+
+class DataView(View):
+    def get(self, request, *args, **kwargs):
+        data_id = kwargs["data_id"]
+
+        if data_id.endswith(".png"):
+            data_id = data_id[:-4]
+
+        self.object = Simulation.objects.get_object_from_screenshot(
+            data_id, http_404_on_fail=True
+        )
+
+        if not self.object.has_read_access(request.user):
+            raise PermissionDenied()
+
+        pic = cs_storage.read_screenshot(kwargs["data_id"])
+
+        return HttpResponse(pic, content_type="image/png")
