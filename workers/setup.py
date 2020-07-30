@@ -29,6 +29,7 @@ setuptools.setup(
         "distributed",
         "tornado",
         "cs-storage>=1.11.0",
+        "docker",
     ],
     include_package_data=True,
     entry_points={
