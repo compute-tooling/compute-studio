@@ -207,13 +207,18 @@ class Inputs(models.Model):
 
 class SimulationManager(models.Manager):
     def get_object_from_screenshot(self, output_id, http_404_on_fail=False):
-        query = dict(
+        res = self.filter(
             outputs__outputs__renderable__outputs__contains=[{"id": output_id}],
-        )
-        if http_404_on_fail:
-            return get_object_or_404(Simulation, **query)
+        ).first()
+
+        if res is None and http_404_on_fail:
+            raise Http404(f"Unable to find Simulation with id {output_id}.")
+        elif res is None:
+            raise Simulation.DoesNotExist(
+                "Unable to find Simulation with id {output_id}."
+            )
         else:
-            return self.get(**query)
+            return res
 
     def next_model_pk(self, project):
         curr_max = Simulation.objects.filter(project=project).aggregate(
