@@ -298,7 +298,7 @@ class DataView(View):
             data_id = data_id[:-4]
 
         self.object = Simulation.objects.get_object_from_screenshot(
-            data_id, http_404_on_fail=True
+            data_id, request.user, http_404_on_fail=True
         )
 
         if not self.object.has_read_access(request.user):

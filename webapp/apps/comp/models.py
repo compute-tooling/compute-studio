@@ -18,6 +18,7 @@ from django.contrib.auth.models import Group
 from django.urls import reverse
 from django.utils import timezone
 from django.db import transaction
+from django.core.exceptions import PermissionDenied
 
 from guardian.shortcuts import assign_perm, remove_perm, get_perms, get_users_with_perms
 
@@ -206,19 +207,26 @@ class Inputs(models.Model):
 
 
 class SimulationManager(models.Manager):
-    def get_object_from_screenshot(self, output_id, http_404_on_fail=False):
-        res = self.filter(
+    def get_object_from_screenshot(self, output_id, user, http_404_on_fail=False):
+        queryset = self.filter(
             outputs__outputs__renderable__outputs__contains=[{"id": output_id}],
-        ).first()
+        )
+        result = None
+        for sim in queryset:
+            if sim.has_read_access(user):
+                result = sim
+                break
 
-        if res is None and http_404_on_fail:
+        if result is None and len(queryset) == 0 and http_404_on_fail:
             raise Http404(f"Unable to find Simulation with id {output_id}.")
-        elif res is None:
+        elif result is None and len(queryset) == 0:
             raise Simulation.DoesNotExist(
                 "Unable to find Simulation with id {output_id}."
             )
+        elif result is None and len(queryset) > 0:
+            raise PermissionDenied()
         else:
-            return res
+            return result
 
     def next_model_pk(self, project):
         curr_max = Simulation.objects.filter(project=project).aggregate(

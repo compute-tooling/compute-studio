@@ -225,13 +225,39 @@ def test_sim_screenshot_query(db, get_inputs, meta_param_dict):
     sim.save()
 
     for output in sim.outputs["outputs"]["renderable"]["outputs"]:
-        assert sim == Simulation.objects.get_object_from_screenshot(output["id"])
+        assert sim == Simulation.objects.get_object_from_screenshot(
+            output["id"], sim.owner.user
+        )
 
     with pytest.raises(Simulation.DoesNotExist):
-        Simulation.objects.get_object_from_screenshot("abc123")
+        Simulation.objects.get_object_from_screenshot("abc123", sim.owner.user)
 
     with pytest.raises(Http404):
-        Simulation.objects.get_object_from_screenshot("abc123", http_404_on_fail=True)
+        Simulation.objects.get_object_from_screenshot(
+            "abc123", sim.owner.user, http_404_on_fail=True
+        )
+
+    collab = next(gen_collabs(1))
+    sim.is_public = True
+    sim.status = "SUCCESS"
+    sim.inputs.status = "SUCCESS"
+    sim.save()
+    newsim = Simulation.objects.fork(sim, collab.user)
+    for output in sim.outputs["outputs"]["renderable"]["outputs"]:
+        assert Simulation.objects.get_object_from_screenshot(
+            output["id"], sim.owner.user
+        ) in (sim, newsim)
+
+    sim.is_public = False
+    sim.save()
+
+    for output in sim.outputs["outputs"]["renderable"]["outputs"]:
+        assert (
+            Simulation.objects.get_object_from_screenshot(
+                output["id"], newsim.owner.user
+            )
+            == newsim
+        )
 
 
 def test_sim_permissions(db, get_inputs, meta_param_dict, plus_profile):
