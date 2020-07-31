@@ -12,7 +12,7 @@ import cs_workers.services.outputs_processor
 import cs_workers.models.manage
 import cs_workers.models.executors.job
 import cs_workers.models.executors.api_task
-
+import cs_workers.models.executors.server
 
 TAG = os.environ.get("TAG", "")
 PROJECT = os.environ.get("PROJECT")
@@ -64,6 +64,7 @@ def cli():
     cs_workers.models.manage.cli(sub_parsers)
     cs_workers.models.executors.job.cli(sub_parsers)
     cs_workers.models.executors.api_task.cli(sub_parsers)
+    cs_workers.models.executors.server.cli(sub_parsers)
 
     args = parser.parse_args()
     args.func(args)

@@ -30,7 +30,14 @@ RUN bash /home/install.sh
 RUN pip install "git+${REPO_URL}.git@${REPO_TAG}#egg=cs-config&subdirectory=cs-config"
 ADD ${RAW_REPO_URL}/${REPO_TAG}/cs-config/cs_config/tests/test_functions.py /home
 
-RUN pip install "git+https://github.com/compute-tooling/compute-studio.git@master#egg=cs-workers&subdirectory=workers" cs-kit pytest
+ADD ./setup.py .
+COPY ./cs_workers ./cs_workers
+RUN pip install -e . && pip install cs-kit pytest
+# RUN pip install "git+https://github.com/compute-tooling/compute-studio.git@master#egg=cs-workers&subdirectory=workers" cs-kit pytest
 ######################
 
 WORKDIR /home
+
+EXPOSE 8010
+ENV PORT=8010
+ENV HOST=0.0.0.0
