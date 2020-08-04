@@ -26,7 +26,7 @@ from webapp.apps.billing.models import (
     SubscriptionItem,
     create_pro_billing_objects,
 )
-from webapp.apps.users.models import Profile, Project
+from webapp.apps.users.models import Profile, Project, Visualization
 from webapp.apps.comp.model_parameters import ModelParameters
 from webapp.apps.comp.models import Inputs, Simulation
 
@@ -75,14 +75,28 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
         projects = [
             {"title": "Matchups", "owner": hdoupe.profile},
-            {"title": "Used-for-testing", "listed": False},
+            {
+                "title": "Used-for-testing",
+                "listed": False,
+                "viz": {
+                    "title": "Test-Viz",
+                    "description": "description here",
+                    "oneliner": "oneliner here",
+                    "software": "Bokeh",
+                    "function_name": "hello_func",
+                    "requires_server": True,
+                },
+            },
             {"title": "Tax-Brain"},
             {"title": "Used-for-testing-sponsored-apps", "sponsor": sponsor.profile},
         ]
 
         for project_config in projects:
+            viz = project_config.pop("viz", None)
             project = Project.objects.create(**dict(common, **project_config))
             assign_perm("write_project", comp_api_user, project)
+            if viz is not None:
+                Visualization.objects.create(**dict(project=project, **viz))
 
         if USE_STRIPE:
             create_pro_billing_objects()

@@ -1,6 +1,30 @@
 from rest_framework import serializers
 
-from webapp.apps.users.models import Project
+from webapp.apps.users.models import Project, Visualization
+
+
+class VisualizationSerializer(serializers.ModelSerializer):
+    project = serializers.StringRelatedField(required=False)
+    is_live = serializers.BooleanField(required=False)
+    status = serializers.CharField(required=False)
+
+    class Meta:
+        model = Visualization
+        fields = (
+            "title",
+            "oneliner",
+            "description",
+            "function_name",
+            "project",
+            "software",
+            "requires_server",
+            "is_live",
+            "status",
+        )
+        read_only = (
+            "project",
+            "status",
+        )
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -9,6 +33,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     sim_count = serializers.IntegerField(required=False)
     user_count = serializers.IntegerField(required=False)
     latest_tag = serializers.CharField(allow_null=True, required=False)
+    visualizations = VisualizationSerializer(many=True, required=False)
     # see to_representation
     # has_write_access = serializers.BooleanField(source="has_write_access")
 
@@ -43,8 +68,14 @@ class ProjectSerializer(serializers.ModelSerializer):
             "sim_count",
             "status",
             "user_count",
+            "visualizations",
         )
-        read_only = ("sim_count", "user_count", "status")
+        read_only = (
+            "sim_count",
+            "user_count",
+            "status",
+            "visualizations",
+        )
 
 
 class ProjectWithVersionSerializer(serializers.ModelSerializer):

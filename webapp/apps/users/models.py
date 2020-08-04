@@ -296,3 +296,42 @@ class Project(models.Model):
 
     class Meta:
         permissions = (("write_project", "Write project"),)
+
+
+class Visualization(models.Model):
+    title = models.CharField(max_length=255)
+    oneliner = models.CharField(max_length=10000)
+    description = models.CharField(max_length=10000)
+    function_name = models.CharField(max_length=255)
+    project = models.ForeignKey(
+        Project, related_name="visualizations", on_delete=models.CASCADE
+    )
+    software = models.CharField(
+        max_length=64, choices=(("dash", "Dash"), ("bokeh", "Bokeh"))
+    )
+    requires_server = models.BooleanField()
+    is_live = models.BooleanField(default=False)
+    status = models.CharField(
+        choices=(
+            ("live", "live"),
+            ("updating", "updating"),
+            ("staging", "staging"),
+            ("requires fixes", "requires fixes"),
+        ),
+        default="live",
+        max_length=32,
+    )
+
+    @property
+    def app_url(self):
+        return reverse(
+            "viz_detail_api",
+            kwargs={
+                "title": self.project.title,
+                "username": self.project.owner.user.username,
+                "viz_title": self.title,
+            },
+        )
+
+    def has_write_access(self, user):
+        return self.project.has_write_access(user)

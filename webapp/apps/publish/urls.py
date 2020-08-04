@@ -7,6 +7,8 @@ from .views import (
     ProjectDetailAPIView,
     ProjectAPIView,
     DeploymentAPIView,
+    VisualizationAPIView,
+    VisualizationDetailAPIView,
 )
 
 
@@ -21,6 +23,16 @@ urlpatterns = [
         "api/<str:username>/<str:title>/deployments/",
         DeploymentAPIView.as_view(),
         name="project_deployments_api",
+    ),
+    path(
+        "api/<str:username>/<str:title>/viz/",
+        VisualizationAPIView.as_view(),
+        name="viz_create_api",
+    ),
+    path(
+        "api/<str:username>/<str:title>/viz/<str:viz_title>/",
+        VisualizationDetailAPIView.as_view(),
+        name="viz_detail_api",
     ),
     path("api/", ProjectAPIView.as_view(), name="project_create_api"),
 ]
