@@ -1,6 +1,6 @@
 // Create a Stripe client.
 // todo read token from environment variable
-var stripe = Stripe("pk_test_EXRaylwZlEb3BZ668mbRWCZz");
+var stripe = Stripe("pk_live_Zx81GNU4ZrCHs4NIRmmeTf4o");
 
 // Create an instance of Elements.
 var elements = stripe.elements();
