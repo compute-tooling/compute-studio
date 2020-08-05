@@ -887,7 +887,6 @@ camelcase@^5.0.0, camelcase@^5.2.0:
 
 "canvas2svg@https://github.com/bokeh/canvas2svg#v1.0.21":
   version "1.0.21"
-  uid "6c526739ab8b07fa335f51d5a78e15e021c2fe1b"
   resolved "https://github.com/bokeh/canvas2svg#6c526739ab8b07fa335f51d5a78e15e021c2fe1b"
 
 chalk@2.4.2, chalk@^2.3.0, chalk@^2.4.1, chalk@^2.4.2:
@@ -2079,7 +2078,6 @@ globby@^6.1.0:
 
 "gloo2@https://github.com/bokeh/gloo2.git#b41bd5d":
   version "0.0.1"
-  uid b41bd5daa5eeaac83850cd2586ad7ae05929f027
   resolved "https://github.com/bokeh/gloo2.git#b41bd5daa5eeaac83850cd2586ad7ae05929f027"
 
 graceful-fs@^4.1.11, graceful-fs@^4.1.15, graceful-fs@^4.1.2:
@@ -3155,7 +3153,6 @@ npm-run-path@^2.0.0:
 
 "numbro@https://github.com/bokeh/numbro.git#e1b6c52":
   version "1.6.2"
-  uid e1b6c52a220d0a1e05dca1bee35dbd1b761fd260
   resolved "https://github.com/bokeh/numbro.git#e1b6c52a220d0a1e05dca1bee35dbd1b761fd260"
 
 object-assign@^4.0.1, object-assign@^4.1.1:
@@ -3428,7 +3425,6 @@ pify@^4.0.1:
 
 "pikaday@https://github.com/bokeh/pikaday.git#6b7258e":
   version "1.8.0"
-  uid "6b7258eaff518c52b615a5286939aeb298cf0fb0"
   resolved "https://github.com/bokeh/pikaday.git#6b7258eaff518c52b615a5286939aeb298cf0fb0"
 
 pinkie-promise@^2.0.0:
@@ -4196,7 +4192,6 @@ slate@^0.57.1:
 
 "slickgrid@https://github.com/bokeh/SlickGrid.git#8e993bf":
   version "2.3.23"
-  uid "8e993bfe1e4c16c6115bbad2ee1b4476d2136675"
   resolved "https://github.com/bokeh/SlickGrid.git#8e993bfe1e4c16c6115bbad2ee1b4476d2136675"
   dependencies:
     "@types/slickgrid" "^2.1.27"
