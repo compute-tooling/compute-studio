@@ -92,6 +92,14 @@ class Server:
                     ),
                 )
             )
+
+        envs.append(
+            kclient.V1EnvVar(
+                name="URL_BASE_PATHNAME",
+                value=f"/{safeowner}/{safetitle}/{self.server_name}/",
+            )
+        )
+
         return envs
 
     def configure(self, owner, title, tag, server_name):
@@ -141,8 +149,11 @@ class Server:
             spec=kclient.V1ServiceSpec(
                 selector={"app": full_name},
                 ports=[kclient.V1ServicePort(port=80, target_port=PORT)],
+                type="LoadBalancer",
             ),
         )
+
+        # TODO: Update Viz Ingress here.
 
         if not self.quiet:
             sys.stdout.write(yaml.dump(deployment.to_dict()))
@@ -186,8 +197,8 @@ if __name__ == "__main__":
         project="cs-workers-dev",
         owner="hdoupe",
         title="ccc-widget",
-        tag="hank-test-3",
-        model_config=ModelConfig("cs-workers-dev", "http://localhost:8000"),
+        tag="hank-test-5",
+        model_config=ModelConfig("cs-workers-dev", "https://dev.compute.studio"),
         server_name="dash",
         incluster=False,
         quiet=False,
