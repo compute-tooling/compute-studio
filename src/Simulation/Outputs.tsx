@@ -86,7 +86,9 @@ const OutputModal: React.FC<{
       </Button>
       <Modal show={show} onHide={() => setShow(false)} size="xl" className="output-modal">
         <Modal.Header closeButton>
-          <Modal.Title>{output.title}</Modal.Title>
+          <Modal.Title className={"w-100"} style={{ textAlign: "center" }}>
+            {output.title}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Card style={{ backgroundColor: "white" }}>
