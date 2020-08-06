@@ -6,11 +6,17 @@ import { BrowserRouter, Route, Switch } from "react-router-dom";
 import axios from "axios";
 import { Formik, Field, Form, ErrorMessage, FormikHelpers } from "formik";
 import * as yup from "yup";
+import { Visualization, Project } from "../types";
 import { TextField, TextAreaField, ServerSizeField, Message, CheckboxField } from "../fields";
 import { Card } from "react-bootstrap";
+import { captureException } from "@sentry/browser";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
+
+interface Match {
+  params: { username: string; app_name: string; vizTitle?: string };
+}
 
 const inputStyle = {
   width: "100%"
@@ -60,6 +66,7 @@ interface PublishValues {
   memory: number;
   exp_task_time: number;
   listed: boolean;
+  visualizations: Array<Visualization>;
 }
 
 const initialValues: PublishValues = {
@@ -71,23 +78,184 @@ const initialValues: PublishValues = {
   cpu: 2,
   memory: 6,
   exp_task_time: 0,
-  listed: true
+  listed: true,
+  visualizations: []
 };
 
-interface PublishProps {
+interface PublishProps<T> {
   preview: boolean;
-  initialValues: PublishValues;
+  initialValues: T;
+  project?: Project;
   submitType: "Publish" | "Update";
-  fetchInitialValues: () => Promise<any>;
   doSubmit: (data: FormData) => Promise<void>;
 }
 
-type PublishState = Readonly<{
+type PublishState<T> = Readonly<{
   preview: boolean;
-  initialValues: PublishValues;
+  initialValues: T;
+  project?: Project;
 }>;
 
-class PublishForm extends React.Component<PublishProps, PublishState> {
+class VisualizationApp extends React.Component<
+  { preview: boolean; togglePreview: () => void; project: Project; viz?: Visualization },
+  { initialValues: Visualization }
+> {
+  constructor(props) {
+    super(props);
+    this.state = {
+      initialValues: this.props.viz || {
+        title: "",
+        oneliner: "",
+        description: "",
+        software: "",
+        requires_server: true,
+        function_name: ""
+      }
+    };
+  }
+
+  render() {
+    const project = this.props.project;
+    return (
+      <div>
+        <Formik
+          initialValues={this.state.initialValues}
+          onSubmit={async (values: Visualization, actions: FormikHelpers<Visualization>) => {
+            var formdata = new FormData();
+            for (const field in values) {
+              formdata.append(field, values[field]);
+            }
+            try {
+              const resp = await axios.post(
+                `/publish/api/${project.owner}/${project.title}/viz/`,
+                formdata
+              );
+              window.location.reload();
+            } catch (e) {
+              console.log(e);
+            }
+          }}
+          // validateOnChange={true}
+          // validationSchema={}
+          render={({ status, handleSubmit }) => (
+            <div>
+              {status && status.project_exists ? (
+                <div className="alert alert-danger" role="alert">
+                  {status.project_exists}
+                </div>
+              ) : null}
+              {status && status.auth ? (
+                <div className="alert alert-danger" role="alert">
+                  {status.auth}
+                </div>
+              ) : null}
+              <div className="mt-5">
+                <h3>About</h3>
+                <hr className="my-3" />
+                <div className="mt-1 mb-1">
+                  <label>
+                    <b>Title</b>
+                  </label>
+                  <Field
+                    type="text"
+                    name="title"
+                    component={TextField}
+                    placeholder="Name of the app"
+                    label="App Name"
+                    preview={false}
+                    exitPreview={() => this.props.togglePreview}
+                    allowSpecialChars={false}
+                    style={inputStyle}
+                  />
+                  <ErrorMessage name="title" render={msg => <Message msg={msg} />} />
+                </div>
+                <div className="mt-1 mb-1">
+                  <label>
+                    <b>Oneliner</b>
+                  </label>
+                  <Field
+                    type="text"
+                    name="oneliner"
+                    component={TextField}
+                    placeholder="Short description of this app"
+                    label="One-Liner"
+                    preview={false}
+                    exitPreview={() => this.props.togglePreview}
+                    style={inputStyle}
+                  />
+                  <ErrorMessage name="oneliner" render={msg => <Message msg={msg} />} />
+                </div>
+                <div className="mt-1 mb-1">
+                  <label>
+                    <b>README</b>
+                  </label>
+                  <Field
+                    as="text"
+                    name="description"
+                    component={TextAreaField}
+                    placeholder="Description of this app"
+                    label="README"
+                    preview={false}
+                    exitPreview={() => this.props.togglePreview}
+                    style={inputStyle}
+                  />
+                  <ErrorMessage name="description" render={msg => <Message msg={msg} />} />
+                </div>
+                <div className="mt-1 mb-1">
+                  <label>
+                    <b>Viz Software</b>
+                  </label>
+                  <Field className="form-control" as="select" name="software" style={inputStyle}>
+                    <option value="bokeh">Bokeh</option>
+                    <option value="dash">Dash</option>
+                  </Field>
+                  <ErrorMessage name="software" render={msg => <Message msg={msg} />} />
+                </div>
+                <div className="mt-1 mb-1">
+                  <label>
+                    <b>Function Name</b>
+                  </label>
+                  <Field name="function_name">
+                    {({ field, form: { touched, errors }, meta }) => (
+                      <div>
+                        <input
+                          type="text"
+                          className="form-control"
+                          {...field}
+                          onChange={e => {
+                            let val = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
+                            e.target.value = val;
+                            field.onChange(e);
+                          }}
+                        />
+                        {meta.touched && meta.error && <Message msg={meta.error} />}
+                      </div>
+                    )}
+                  </Field>
+                  <ErrorMessage name="software" render={msg => <Message msg={msg} />} />
+                </div>
+              </div>
+              <button
+                className="btn inline-block btn-success"
+                onClick={e => {
+                  e.preventDefault();
+                  handleSubmit();
+                }}
+              >
+                Publish
+              </button>
+            </div>
+          )}
+        />
+      </div>
+    );
+  }
+}
+
+class PublishForm extends React.Component<
+  PublishProps<PublishValues>,
+  PublishState<PublishValues>
+> {
   constructor(props) {
     super(props);
     this.state = {
@@ -102,18 +270,8 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
     this.setState({ preview: !this.state.preview });
   }
 
-  componentDidMount() {
-    if (this.props.fetchInitialValues) {
-      this.props.fetchInitialValues().then(data => {
-        this.setState({ initialValues: data });
-      });
-    }
-  }
-
   render() {
-    if (!this.state.initialValues) {
-      return <p> loading.... </p>;
-    }
+    const visualizations = this.props.project?.visualizations;
     return (
       <div>
         <Formik
@@ -312,6 +470,31 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
               <button className="btn inline-block btn-success" type="submit">
                 {this.props.submitType}
               </button>
+              {visualizations && visualizations.length && (
+                <div className="mt-5">
+                  <h3>My Interactive Visualizations</h3>
+                  {visualizations.map(viz => (
+                    <VisualizationApp
+                      preview={this.state.preview}
+                      togglePreview={() => {
+                        this.setState({ preview: false });
+                      }}
+                      project={this.props.project}
+                      viz={viz}
+                    />
+                  ))}
+                </div>
+              )}
+              <div className="mt-5">
+                <h3>Create New Interactive Visualization</h3>
+                <VisualizationApp
+                  preview={this.state.preview}
+                  togglePreview={() => {
+                    this.setState({ preview: false });
+                  }}
+                  project={this.props.project}
+                />
+              </div>
             </Form>
           )}
         />
@@ -320,7 +503,53 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
   }
 }
 
-class CreateApp extends React.Component<{ doSubmit: PublishProps["doSubmit"] }, {}> {
+class VisualizationDetailApp extends React.Component<
+  { match: Match },
+  { project?: Project; viz?: Visualization; preview: boolean }
+> {
+  constructor(props) {
+    super(props);
+    this.state = { preview: true };
+  }
+
+  async fetchInitialValues() {
+    const { username, app_name, vizTitle } = this.props.match.params;
+    const vizResp = await axios.get(`/publish/api/${username}/${app_name}/viz/${vizTitle}/`);
+    const projectResp = await axios.get(`/publish/api/${username}/${app_name}/detail/`);
+    let vizData: Visualization = vizResp.data;
+    let projectData: Project = projectResp.data;
+    this.setState({
+      project: projectData,
+      viz: vizData
+    });
+  }
+
+  render() {
+    if (!this.state.project || !this.state.viz) {
+      return <p>loading ....</p>;
+    }
+    const { username, app_name, vizTitle } = this.props.match.params;
+    return (
+      <Card className="card-outer">
+        <Card.Body>
+          <h2 style={{ marginBottom: "2rem" }}>
+            <a className="primary-text" href={`/${username}/${app_name}/viz/${vizTitle}/`}>
+              {`/${username}/${app_name}/viz/${vizTitle}/`}
+            </a>
+          </h2>
+          <VisualizationApp
+            viz={this.state.viz}
+            project={this.state.project}
+            preview={true}
+            togglePreview={() => this.setState({ preview: !this.state.project })}
+          />
+        </Card.Body>
+      </Card>
+    );
+  }
+}
+
+class CreateApp extends React.Component<{ doSubmit: PublishProps<PublishValues>["doSubmit"] }, {}> {
   constructor(props) {
     super(props);
     this.doSubmit = this.doSubmit.bind(this);
@@ -345,7 +574,6 @@ class CreateApp extends React.Component<{ doSubmit: PublishProps["doSubmit"] }, 
             learn more about the publishing criteria.
           </p>
           <PublishForm
-            fetchInitialValues={null}
             initialValues={initialValues}
             preview={false}
             submitType="Publish"
@@ -357,29 +585,19 @@ class CreateApp extends React.Component<{ doSubmit: PublishProps["doSubmit"] }, 
   }
 }
 
-interface Match {
-  params: { username: string; app_name: string };
-}
-class AppDetail extends React.Component<{ match: Match }, {}> {
+class AppDetail extends React.Component<{ match: Match }, { project?: Project }> {
   constructor(props) {
     super(props);
+    this.state = {};
     this.doSubmit = this.doSubmit.bind(this);
-    this.fetchInitialValues = this.fetchInitialValues.bind(this);
   }
 
-  fetchInitialValues() {
+  async componentDidMount() {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
-    return axios
-      .get(`/publish/api/${username}/${app_name}/detail/`)
-      .then(function(response) {
-        console.log(response);
-        let data: PublishValues = response.data;
-        return data;
-      })
-      .catch(function(error) {
-        console.log(error);
-      });
+    const resp = await axios.get(`/publish/api/${username}/${app_name}/detail/`);
+    let data: Project = resp.data;
+    this.setState({ project: data });
   }
 
   doSubmit(data: FormData) {
@@ -396,6 +614,9 @@ class AppDetail extends React.Component<{ match: Match }, {}> {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     const id = `${username}/${app_name}`;
+    if (!this.state.project) {
+      return <p>getting project...</p>;
+    }
     return (
       <Card className="card-outer">
         <Card.Body>
@@ -405,8 +626,8 @@ class AppDetail extends React.Component<{ match: Match }, {}> {
             </a>
           </h2>
           <PublishForm
-            fetchInitialValues={this.fetchInitialValues}
-            initialValues={null}
+            project={this.state.project}
+            initialValues={(this.state.project as unknown) as PublishValues}
             preview={true}
             submitType="Update"
             doSubmit={this.doSubmit}
@@ -422,6 +643,7 @@ ReactDOM.render(
     <Switch>
       <Route exact path="/publish/" component={CreateApp} />
       <Route path="/:username/:app_name/detail/" component={AppDetail} />
+      <Route path="/:username/:app_name/viz/:vizTitle/detail/" component={VisualizationDetailApp} />
     </Switch>
   </BrowserRouter>,
   domContainer

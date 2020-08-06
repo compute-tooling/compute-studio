@@ -32,7 +32,7 @@ from webapp.settings import DEBUG
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
 from webapp.apps.billing.utils import has_payment_method
-from webapp.apps.users.models import Project, is_profile_active
+from webapp.apps.users.models import Project, Visualization, is_profile_active
 
 from webapp.apps.comp.constants import WEBAPP_VERSION
 from webapp.apps.comp import exceptions
@@ -44,7 +44,7 @@ from webapp.apps.comp.exceptions import AppError, ValidationError
 from webapp.apps.comp.serializers import OutputsSerializer
 
 
-from .core import InputsMixin, GetOutputsObjectMixin
+from .core import InputsMixin, GetOutputsObjectMixin, GetVizObjectMixin
 
 BUCKET = os.environ.get("BUCKET")
 
@@ -140,6 +140,20 @@ class EditSimView(GetOutputsObjectMixin, InputsMixin, View):
         context = self.project_context(request, project)
         context["show_readme"] = False
         context["sim"] = self.object.context(request=request)
+        return render(request, self.template_name, context)
+
+
+class VisualizationView(GetOutputsObjectMixin, InputsMixin, View):
+    model = Visualization
+
+    def get(self, request, *args, **kwargs):
+        print("edit method=GET", request.GET)
+        self.object = self.get_object(
+            kwargs["viz_title"], kwargs["username"], kwargs["title"]
+        )
+        project = self.object.project
+        context = self.project_context(request, project)
+        context["show_readme"] = False
         return render(request, self.template_name, context)
 
 

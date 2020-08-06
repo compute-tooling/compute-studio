@@ -170,6 +170,18 @@ export interface AccessStatus {
   plan: { name: "free" | "plus" | "pro" | "team" };
 }
 
+export interface Visualization {
+  title: string;
+  oneliner: string;
+  description: string;
+  function_name: string;
+  project?: string;
+  software: string;
+  requires_server: boolean;
+  is_live?: boolean;
+  status?: "live" | "staging" | "updating";
+}
+
 export interface Project {
   title: string;
   owner: string;
@@ -185,6 +197,7 @@ export interface Project {
   listed: boolean;
   user_count?: number;
   version?: string;
+  visualizations?: Array<Visualization>;
 }
 
 export interface MiniSimulation {

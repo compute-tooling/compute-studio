@@ -96,6 +96,19 @@ class GetOutputsObjectMixin:
         return obj
 
 
+class GetVizObjectMixin:
+    def get_object(self, model_pk, username, title, viz_title):
+        obj = get_object_or_404(
+            self.model,
+            title=viz_title,
+            project__title__iexact=title,
+            project__owner__user__username__iexact=username,
+        )
+        if not obj.has_read_access(self.request.user):
+            raise PermissionDenied()
+        return obj
+
+
 class RecordOutputsMixin(ChargeRunMixin):
     def record_outputs(self, sim, data):
         self.charge_run(sim, data["meta"], use_stripe=USE_STRIPE)

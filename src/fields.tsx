@@ -79,7 +79,7 @@ export const TextField = (fieldProps: FieldProps<any> & CustomFieldProps) => {
       <input
         className="form-control"
         {...field}
-        {...props}
+        // {...props}
         style={style}
         onChange={e => (allowSpecialChars ? field.onChange(e) : titleChange(e, field.onChange))}
       />
@@ -148,11 +148,13 @@ export const TextAreaField = ({ field, form: { touched, errors }, ...props }) =>
   if (props.preview) {
     return markdownElement(field.value, props.exitPreview, style);
   } else {
-    return <textarea className="form-control" {...field} {...props} preview="" style={style} />;
+    return <textarea className="form-control" {...field} preview="" style={style} />;
   }
 };
 
-export const Message = ({ msg }) => <small className={`form-text text-muted`}>{msg}</small>;
+export const Message = ({ msg }) => (
+  <small className={`form-text text-muted text-danger`}>{msg}</small>
+);
 
 export const RedMessage = ({ msg }) => (
   <p className={`form-text font-weight-bold`} style={{ color: "#dc3545", fontSize: "80%" }}>
