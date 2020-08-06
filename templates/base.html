@@ -120,11 +120,18 @@
                   {{owner}}/{{project_name}}
                 </a>
                 <!-- </h1> -->
+
                 <div class="dropdown-menu w-100" aria-labelledby="navbarDropdownModel">
                   <a class="dropdown-item" href="/{{owner}}/{{project_name}}/">View README</a>
+                  {% if has_model %}
                   <a class="dropdown-item" href="/{{owner}}/{{project_name}}/new/"
                     >Create Simulation</a
                   >
+                  {% endif %} {% if visualizations %} {% for viz in visualizations %}
+                  <a class="dropdown-item" href="/{{owner}}/{{project_name}}/viz/{{viz.title}}/"
+                    >Go To {{viz.title}}</a
+                  >
+                  {% endfor %} {% endif %}
                 </div>
               </h5>
             </li>

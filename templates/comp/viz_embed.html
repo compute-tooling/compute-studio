@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html class="h-100" lang="en">
+  {% load static %}
+
+  <head>
+    <title>Compute Studio</title>
+    <link rel="icon" href="{% static 'imgs/cslashs.png' %}" type="image/x-icon" />
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div id="inputs-container"></div>
+      <!-- TODO: get viz name from viz object once kubernetes config is updated. -->
+      <iframe
+        title="{{object.title}}"
+        src="http://viz.compute.studio/hdoupe/cccwidget/dash/"
+        style="position: relative; height: 100vh; width: 100%; border: 0;"
+      ></iframe>
+    </div>
+    <div style="position: fixed; bottom: 0; right: 0;">
+      <a href="https://compute.studio"
+        ><img height="60" width="60" alt="Compute Studio Logo" src="{% static 'imgs/cslashs.png' %}"
+      /></a>
+    </div>
+  </body>
+</html>

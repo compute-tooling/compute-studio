@@ -138,6 +138,9 @@ class Project(models.Model):
     sponsor_message = models.CharField(null=True, blank=True, max_length=10000)
     pay_per_sim = models.BooleanField(default=True)
     is_public = models.BooleanField(default=True)
+
+    has_model = models.BooleanField(default=True)
+
     status = models.CharField(
         choices=(
             ("live", "live"),

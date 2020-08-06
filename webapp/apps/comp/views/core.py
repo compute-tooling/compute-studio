@@ -27,6 +27,7 @@ class InputsMixin:
             "app_description": project.safe_description,
             "app_oneliner": project.oneliner,
             "app_url": project.app_url,
+            "visualizations": project.visualizations.all(),
         }
         return context
 
@@ -97,15 +98,16 @@ class GetOutputsObjectMixin:
 
 
 class GetVizObjectMixin:
-    def get_object(self, model_pk, username, title, viz_title):
+    def get_object(self, username, title, viz_title):
         obj = get_object_or_404(
             self.model,
             title=viz_title,
             project__title__iexact=title,
             project__owner__user__username__iexact=username,
         )
-        if not obj.has_read_access(self.request.user):
-            raise PermissionDenied()
+        # TODO: ...
+        # if not obj.has_read_access(self.request.user):
+        #     raise PermissionDenied()
         return obj
 
 

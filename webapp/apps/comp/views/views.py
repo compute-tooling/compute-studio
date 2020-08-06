@@ -143,17 +143,32 @@ class EditSimView(GetOutputsObjectMixin, InputsMixin, View):
         return render(request, self.template_name, context)
 
 
-class VisualizationView(GetOutputsObjectMixin, InputsMixin, View):
+class VisualizationView(GetVizObjectMixin, InputsMixin, View):
     model = Visualization
+    template_name = "comp/viz.html"
 
     def get(self, request, *args, **kwargs):
         print("edit method=GET", request.GET)
         self.object = self.get_object(
-            kwargs["viz_title"], kwargs["username"], kwargs["title"]
+            kwargs["username"], kwargs["title"], kwargs["viz_title"],
         )
         project = self.object.project
         context = self.project_context(request, project)
         context["show_readme"] = False
+        context["viz"] = self.object
+        return render(request, self.template_name, context)
+
+
+class VisualizationEmbedView(GetVizObjectMixin, InputsMixin, View):
+    model = Visualization
+    template_name = "comp/viz_embed.html"
+
+    def get(self, request, *args, **kwargs):
+        print("edit method=GET", request.GET)
+        self.object = self.get_object(
+            kwargs["username"], kwargs["title"], kwargs["viz_title"],
+        )
+        context = {"viz": self.object}
         return render(request, self.template_name, context)
 
 
