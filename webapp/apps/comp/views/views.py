@@ -155,7 +155,8 @@ class VisualizationView(GetVizObjectMixin, InputsMixin, View):
         project = self.object.project
         context = self.project_context(request, project)
         context["show_readme"] = False
-        context["viz"] = self.object
+        context["object"] = self.object
+        context["protocol"] = "https" if request.is_secure() else "http"
         return render(request, self.template_name, context)
 
 
@@ -168,7 +169,10 @@ class VisualizationEmbedView(GetVizObjectMixin, InputsMixin, View):
         self.object = self.get_object(
             kwargs["username"], kwargs["title"], kwargs["viz_title"],
         )
-        context = {"viz": self.object}
+        context = {
+            "object": self.object,
+            "protocol": "https" if request.is_secure() else "http",
+        }
         return render(request, self.template_name, context)
 
 
