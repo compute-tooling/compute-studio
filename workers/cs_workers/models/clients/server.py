@@ -95,8 +95,7 @@ class Server:
 
         envs.append(
             kclient.V1EnvVar(
-                name="URL_BASE_PATHNAME",
-                value=f"/{safeowner}/{safetitle}/{self.server_name}/",
+                name="URL_BASE_PATHNAME", value=f"/{owner}/{title}/{self.server_name}/",
             )
         )
 
@@ -112,7 +111,7 @@ class Server:
         container = kclient.V1Container(
             name=name,
             image=f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{tag}",
-            command=["csw", "model-serve", "--server-name", server_name],
+            command=["gunicorn", f"cs_config.functions:{server_name}"],
             env=self.env(owner, title, config),
             resources=kclient.V1ResourceRequirements(**config["resources"]),
             ports=[kclient.V1ContainerPort(container_port=PORT)],
@@ -148,7 +147,9 @@ class Server:
             metadata=kclient.V1ObjectMeta(name=full_name),
             spec=kclient.V1ServiceSpec(
                 selector={"app": full_name},
-                ports=[kclient.V1ServicePort(port=80, target_port=PORT)],
+                ports=[
+                    kclient.V1ServicePort(port=80, target_port=PORT, protocol="TCP")
+                ],
                 type="LoadBalancer",
             ),
         )
@@ -197,12 +198,10 @@ if __name__ == "__main__":
         project="cs-workers-dev",
         owner="hdoupe",
         title="ccc-widget",
-        tag="hank-test-5",
+        tag="gunicorn-test-2",
         model_config=ModelConfig("cs-workers-dev", "https://dev.compute.studio"),
         server_name="dash",
         incluster=False,
         quiet=False,
     )
     res = s.create()
-
-    # breakpoint()

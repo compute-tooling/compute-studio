@@ -9,6 +9,7 @@ import sys
 import time
 from pathlib import Path
 
+from kubernetes import client as kclient, config as kconfig
 
 from cs_workers.services.secrets import ServicesSecrets, cli as secrets_cli
 
@@ -84,6 +85,8 @@ class Manager:
         self.use_kind = use_kind
         self.cs_url = cs_url
         self._cs_api_token = cs_api_token
+
+        kconfig.load_kube_config()
 
         if kubernetes_target is None:
             self.kubernetes_target = Manager.kubernetes_target
@@ -180,6 +183,8 @@ class Manager:
         self.write_secret()
         self.write_redis_deployment()
 
+        self.write_cloudflare_api_token()
+
     def write_scheduler_deployment(self):
         """
         Write scheduler deployment file. Only step is filling in the image uri.
@@ -239,6 +244,19 @@ class Manager:
                 secrets["stringData"][name] = sec
 
         self.write_config("secret.yaml", secrets)
+
+    def write_cloudflare_api_token(self):
+        api_token = self.secrets.get_secret("CLOUDFLARE_API_TOKEN")
+
+        secret = {
+            "apiVersion": "v1",
+            "kind": "Secret",
+            "metadata": {"name": "cloudflare-api-token-secret",},
+            "type": "Opaque",
+            "stringData": {"api-token": api_token},
+        }
+
+        self.write_config("cloudflare_token_secret.yaml", secret)
 
     def write_config(self, filename, config):
         if self.kubernetes_target == "-":

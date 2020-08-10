@@ -1,0 +1,48 @@
+# https://docs.traefik.io/https/acme/#certificate-resolvers
+
+certificatesResolvers:
+  myresolver:
+    # Enable ACME (Let's Encrypt): automatic SSL.
+    acme:
+      # Email address used for registration.
+      #
+      # Required
+      #
+      email: "admin@compute.studio"
+
+      # File or key used for certificates storage.
+      #
+      # Required
+      #
+      storage: "acme.json"
+
+      # CA server to use.
+      # Uncomment the line to use Let's Encrypt's staging server,
+      # leave commented to go to prod.
+      #
+      # Optional
+      # Default: "https://acme-v02.api.letsencrypt.org/directory"
+      #
+      # caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+      # Use a TLS-ALPN-01 ACME challenge.
+      #
+      # Optional (but recommended)
+      #
+      tlsChallenge:
+
+      dnsChallenge:
+        # DNS provider used.
+        #
+        # Required
+        #
+        provider: cloudflare
+
+env:
+  - name: CF_DNS_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: cloudflare-api-token-secret
+        key: api-token
+  - name: CF_API_EMAIL
+    value: admin@compute.studio
