@@ -130,8 +130,10 @@ class AccessStatusAPI(GetProjectMixin, APIView):
             exp_cost, exp_time = project.exp_job_info(adjust=True)
             if user.is_authenticated and user.profile:
                 can_run = user.profile.can_run(project)
+                can_write_project = project.has_write_access(user)
             else:
                 can_run = False
+                can_write_project = False
 
             return Response(
                 {
@@ -139,6 +141,7 @@ class AccessStatusAPI(GetProjectMixin, APIView):
                     "sponsor_message": project.sponsor_message,
                     "user_status": user_status,
                     "can_run": can_run,
+                    "can_write_project": can_write_project,
                     "server_cost": project.server_cost,
                     "exp_cost": exp_cost,
                     "exp_time": exp_time,

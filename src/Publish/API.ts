@@ -9,7 +9,11 @@ export default class API {
     this.title = title;
   }
   async getAccessStatus(): Promise<AccessStatus> {
-    return (await axios.get(`/users/status/`)).data;
+    if (this.owner && this.title) {
+      return (await axios.get(`/users/status/${this.owner}/${this.title}/`)).data;
+    } else {
+      return (await axios.get(`/users/status/`)).data;
+    }
   }
 
   async getProject(): Promise<Project> {

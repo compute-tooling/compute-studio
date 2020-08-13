@@ -163,7 +163,7 @@ class VizView(InputsMixin, View):
 
 class EmbedView(InputsMixin, View):
     model = Project
-    template_name = "comp/viz_embed.html"
+    template_name = "comp/embed.html"
 
     def get(self, request, *args, **kwargs):
         print("edit method=GET", request.GET)
@@ -172,6 +172,12 @@ class EmbedView(InputsMixin, View):
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
+        embed_approval = project.embed_approvals.filter(
+            profile__user__username__iexact=kwargs["site_owner"]
+        )
+        # request.META.set(
+        #     f"Content-Security-Policy: frame-ancestors {embed_approval.url}"
+        # )
         context = {
             "object": project,
             "protocol": "https" if request.is_secure() else "http",

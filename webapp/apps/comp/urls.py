@@ -31,7 +31,6 @@ from webapp.apps.comp.views import (
 # api/v1/<int:model_pk>/ - get all data related to sim, including inputs and outputs.
 
 urlpatterns = [
-    path("", ModelPageView.as_view(), name="app"),
     path("embed/<str:site_owner>/", EmbedView.as_view(), name="embed"),
     path("viz/", VizView.as_view(), name="viz"),
     path("new/", NewSimView.as_view(), name="simulation"),

@@ -27,7 +27,7 @@ class Server:
         title,
         tag,
         model_config,
-        server_name=None,
+        callable_name=None,
         cr="gcr.io",
         incluster=True,
         rclient=None,
@@ -38,7 +38,7 @@ class Server:
         self.title = title
         self.tag = tag
         self.model_config = model_config
-        self.server_name = server_name
+        self.callable_name = callable_name
         self.cr = cr
         self.quiet = quiet
 
@@ -53,7 +53,7 @@ class Server:
             kconfig.load_kube_config()
         self.deployment_api_client = kclient.AppsV1Api()
         self.service_api_client = kclient.CoreV1Api()
-        self.service, self.deployment = self.configure(owner, title, tag, server_name)
+        self.service, self.deployment = self.configure(owner, title, tag, callable_name)
 
     def env(self, owner, title, config):
         safeowner = clean(owner)
@@ -94,33 +94,28 @@ class Server:
             )
 
         envs.append(
-            kclient.V1EnvVar(
-                name="URL_BASE_PATHNAME", value=f"/{owner}/{title}/{self.server_name}/",
-            )
+            kclient.V1EnvVar(name="URL_BASE_PATHNAME", value=f"/{owner}/{title}/",)
         )
 
         return envs
 
-    def configure(self, owner, title, tag, server_name):
+    def configure(self, owner, title, tag, callable_name):
         config = self.model_config.projects()[f"{owner}/{title}"]
 
         safeowner = clean(owner)
         safetitle = clean(title)
         name = f"{safeowner}-{safetitle}"
-        full_name = f"{name}-{server_name}"
         container = kclient.V1Container(
             name=name,
             image=f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{tag}",
-            command=["gunicorn", f"cs_config.functions:{server_name}"],
+            command=["gunicorn", f"cs_config.functions:{callable_name}"],
             env=self.env(owner, title, config),
             resources=kclient.V1ResourceRequirements(**config["resources"]),
             ports=[kclient.V1ContainerPort(container_port=PORT)],
         )
         # Create and configurate a spec section
         template = kclient.V1PodTemplateSpec(
-            metadata=kclient.V1ObjectMeta(
-                labels={"app": full_name, "server-name": server_name}
-            ),
+            metadata=kclient.V1ObjectMeta(labels={"app": name}),
             spec=kclient.V1PodSpec(
                 restart_policy="Always",
                 containers=[container],
@@ -130,23 +125,23 @@ class Server:
         # Create the specification of deployment
         spec = kclient.V1DeploymentSpec(
             template=template,
-            selector=kclient.V1LabelSelector(match_labels={"app": full_name}),
+            selector=kclient.V1LabelSelector(match_labels={"app": name}),
             replicas=1,
         )
         # Instantiate the job object
         deployment = kclient.V1Deployment(
             api_version="apps/v1",
             kind="Deployment",
-            metadata=kclient.V1ObjectMeta(name=full_name),
+            metadata=kclient.V1ObjectMeta(name=name),
             spec=spec,
         )
 
         service = kclient.V1Service(
             api_version="v1",
             kind="Service",
-            metadata=kclient.V1ObjectMeta(name=full_name),
+            metadata=kclient.V1ObjectMeta(name=name),
             spec=kclient.V1ServiceSpec(
-                selector={"app": full_name},
+                selector={"app": name},
                 ports=[
                     kclient.V1ServicePort(port=80, target_port=PORT, protocol="TCP")
                 ],
@@ -163,17 +158,26 @@ class Server:
 
         return service, deployment
 
-    def create(self):
-
-        print(self.service_api_client.list_namespaced_service("default",))
-        return (
-            self.deployment_api_client.create_namespaced_deployment(
+    def apply(self):
+        try:
+            dep_resp = self.deployment_api_client.create_namespaced_deployment(
                 namespace="default", body=self.deployment
-            ),
-            self.service_api_client.create_namespaced_service(
+            )
+        except Exception:
+            dep_resp = self.deployment_api_client.patch_namespaced_deployment(
+                self.deployment.metadata.name, namespace="default", body=self.deployment
+            )
+
+        try:
+            service_resp = self.service_api_client.create_namespaced_service(
                 namespace="default", body=self.service
-            ),
-        )
+            )
+        except Exception:
+            service_resp = self.service_api_client.patch_namespaced_service(
+                self.service.metadata.name, namespace="default", body=self.service
+            )
+
+        return dep_resp, service_resp
 
     def delete(self):
         return (
@@ -189,19 +193,24 @@ class Server:
     def full_name(self):
         safeowner = clean(self.owner)
         safetitle = clean(self.title)
-        name = f"{safeowner}-{safetitle}"
-        return f"{name}-{self.server_name}"
+        return f"{safeowner}-{safetitle}"
 
 
 if __name__ == "__main__":
-    s = Server(
+    server = Server(
         project="cs-workers-dev",
         owner="hdoupe",
         title="ccc-widget",
-        tag="gunicorn-test-2",
+        tag="fix-iframe-link3",
         model_config=ModelConfig("cs-workers-dev", "https://dev.compute.studio"),
-        server_name="dash",
+        callable_name="dash",
         incluster=False,
         quiet=False,
     )
-    res = s.create()
+    res = server.apply()
+
+    # s.deployment_api_client.create_namespaced_deployment(
+    #     namespace="default", body=s.deployment
+    # )
+
+    # dclient = server.deployment_api_client

@@ -27,7 +27,6 @@ class InputsMixin:
             "app_description": project.safe_description,
             "app_oneliner": project.oneliner,
             "app_url": project.app_url,
-            "visualizations": project.visualizations.all(),
         }
         return context
 

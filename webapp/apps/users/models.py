@@ -329,4 +329,4 @@ class EmbedApproval(models.Model):
     profile = models.ForeignKey(
         Profile, on_delete=models.CASCADE, related_name="embed_approvals"
     )
-    host = models.CharField(max_length=256)
+    url = models.CharField(max_length=256)

@@ -2,19 +2,37 @@
 
 import * as ReactDOM from "react-dom";
 import * as React from "react";
+import * as ReactMarkdown from "react-markdown";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { Row, Col, Card, Dropdown } from "react-bootstrap";
+import { Row, Col, Card, Dropdown, Jumbotron } from "react-bootstrap";
 import axios from "axios";
 import { Formik, Field, Form, ErrorMessage, FormikHelpers, FormikProps } from "formik";
 import * as yup from "yup";
 import { Project, AccessStatus, Tech } from "../types";
-import { TextField, TextAreaField, ServerSizeField, Message, CheckboxField } from "../fields";
-
+import { CheckboxField } from "../fields";
 import API from "./API";
 import { Tip } from "../components";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
+
+const techLinks = {
+  "python-paramtools": "https://paramtools.dev",
+  bokeh: "https://bokeh.org",
+  dash: "https://dash.plotly.com/"
+};
+
+const techDocsLinks = {
+  "python-paramtools": "https://docs.compute.studio/publish/guide/",
+  bokeh: "https://bokeh.org",
+  dash: "https://dash.plotly.com/"
+};
+
+const techTitles = {
+  dash: "Dash",
+  bokeh: "Bokeh",
+  "python-paramtools": "ParamTools"
+};
 
 interface Match {
   params: { username: string; app_name: string; vizTitle?: string };
@@ -45,7 +63,13 @@ var Schema = yup.object().shape({
   callable_name: yup.string()
 });
 
-const specialRequests = (
+export const Message = ({ msg }) => (
+  <p className={`form-text font-weight-bold`} style={{ color: "#dc3545", fontSize: "80%" }}>
+    {msg}
+  </p>
+);
+
+const SpecialRequests: React.FC<{}> = () => (
   <div>
     <p>
       You may contact the Compute Studio admin at
@@ -105,11 +129,6 @@ const TechSelect: React.FC<{
   onSelectTech: (tech: Tech) => void;
 }> = ({ selectedTech, onSelectTech }) => {
   const techChoices: Array<Tech> = ["python-paramtools", "bokeh", "dash"];
-  const techLinks = [
-    "https://docs.compute.studio/publish/guide/",
-    "https://bokeh.org",
-    "https://dash.plotly.com/"
-  ];
   return (
     <Dropdown>
       <Dropdown.Toggle
@@ -180,11 +199,11 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
                 type="text"
                 className="form-control"
                 {...field}
-                // onChange={e => {
-                //   let val = e.target.value.replace(/[^a-zA-Z0-9]+/g, "_");
-                //   e.target.value = val;
-                //   field.onChange(e);
-                // }}
+                onChange={e => {
+                  let val = e.target.value.replace(/[^a-zA-Z0-9]+/g, "_");
+                  e.target.value = val;
+                  field.onChange(e);
+                }}
               />
               {meta.touched && meta.error && <Message msg={meta.error} />}
             </div>
@@ -262,6 +281,57 @@ const CommonFields: React.FC<any> = ({}) => {
         </div>
       </div>
     </div>
+  );
+};
+
+const ViewProject: React.FC<{
+  project: Project;
+  accessStatus: AccessStatus;
+  enterEditMode: () => void;
+}> = ({ project, accessStatus, enterEditMode }) => {
+  const id = `${project.owner}/${project.title}`;
+  const goto = project.tech === "python-paramtools" ? `/${id}/new/` : `/${id}/viz/`;
+  return (
+    <Jumbotron className="shadow" style={{ backgroundColor: "white" }}>
+      <h1 className="display-5">
+        <Row className="justify-content-between">
+          <Col className="col-auto">
+            <a
+              className="primary-text"
+              href={`${project.owner}/${project.title}`}
+            >{`${project.owner}/${project.title}`}</a>
+          </Col>
+          {accessStatus.can_write_project && (
+            <Col className="col-auto">
+              <button className="btn btn-outline-primary" onClick={() => enterEditMode()}>
+                Edit
+              </button>
+            </Col>
+          )}
+        </Row>
+      </h1>
+      <p className="lead">{project.oneliner}</p>
+      <hr className="my-4" />
+      <ReactMarkdown source={project.description} escapeHtml={false} />
+      <Row className="justify-content-between mt-5">
+        <Col className="col-auto align-self-center">
+          {project.status === "live" && (
+            <a className="btn btn-success" href={goto}>
+              <strong>Go to App</strong>
+            </a>
+          )}
+        </Col>
+        <Col className="col-auto align-self-center">
+          <p>
+            Built with{" "}
+            <a href={techLinks[project.tech]}>
+              <strong>{techTitles[project.tech]}</strong>
+            </a>
+            .
+          </p>
+        </Col>
+      </Row>
+    </Jumbotron>
   );
 };
 
@@ -441,12 +511,13 @@ class ProjectApp extends React.Component<PublishProps, PublishState & { showTech
                   </>
                 )}
               </div>
+              <SpecialRequests />
               <button className="btn inline-block" onClick={this.togglePreview}>
                 {this.state.preview ? "Edit" : "Preview"}
               </button>
               <div className="divider" />
               <button className="btn inline-block btn-success" type="submit">
-                {this.props.api?.owner ? "Update" : "Create"}
+                {this.props.api?.owner ? "Save" : "Create"}
               </button>
             </Form>
           )}
@@ -491,12 +562,12 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
 
 class ProjectDetail extends React.Component<
   { match: Match },
-  { project?: Project; accessStatus?: AccessStatus }
+  { project?: Project; accessStatus?: AccessStatus; edit: boolean }
 > {
   api: API;
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = { edit: false };
     const owner = this.props.match.params.username;
     const title = this.props.match.params.app_name;
     this.api = new API(owner, title);
@@ -515,7 +586,7 @@ class ProjectDetail extends React.Component<
     if (!this.state.project || !this.state.accessStatus) {
       return <p>getting project...</p>;
     }
-    return (
+    return this.state.edit ? (
       <Card className="card-outer">
         <Card.Body>
           <h2 style={{ marginBottom: "2rem" }}>
@@ -532,6 +603,12 @@ class ProjectDetail extends React.Component<
           />
         </Card.Body>
       </Card>
+    ) : (
+      <ViewProject
+        project={this.state.project}
+        accessStatus={this.state.accessStatus}
+        enterEditMode={() => this.setState({ edit: true })}
+      />
     );
   }
 }
@@ -542,6 +619,7 @@ ReactDOM.render(
       <Route exact path="/publish/" component={CreateProject} />
       <Route exact path="/new/" component={CreateProject} />
       <Route path="/:username/:app_name/detail/" component={ProjectDetail} />
+      <Route path="/:username/:app_name/" component={ProjectDetail} />
     </Switch>
   </BrowserRouter>,
   domContainer

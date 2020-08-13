@@ -123,15 +123,13 @@
 
                 <div class="dropdown-menu w-100" aria-labelledby="navbarDropdownModel">
                   <a class="dropdown-item" href="/{{owner}}/{{project_name}}/">View README</a>
-                  {% if has_model %}
+                  {% if tech == "python-paramtools" %}
                   <a class="dropdown-item" href="/{{owner}}/{{project_name}}/new/"
                     >Create Simulation</a
                   >
-                  {% endif %} {% if visualizations %} {% for viz in visualizations %}
-                  <a class="dropdown-item" href="/{{owner}}/{{project_name}}/viz/{{viz.title}}/"
-                    >Go To {{viz.title}}</a
-                  >
-                  {% endfor %} {% endif %}
+                  {% else %}
+                  <a class="dropdown-item" href="/{{owner}}/{{project_name}}/viz/">Go to App</a>
+                  {% endif %}
                 </div>
               </h5>
             </li>

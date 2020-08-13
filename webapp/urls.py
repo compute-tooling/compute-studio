@@ -21,6 +21,7 @@ from rest_framework.authtoken import views as rf_views
 from webapp.apps.comp import views as compviews
 from webapp.apps.publish import views as publishviews
 from webapp.apps.pages import views as pageviews
+from webapp.apps.publish import views as publishviews
 
 
 urlpatterns = [
@@ -28,8 +29,9 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api-token-auth/", rf_views.obtain_auth_token),
     path("", include("webapp.apps.pages.urls")),
-    path("app/", include("webapp.apps.publish.urls")),
+    path("apps/", include("webapp.apps.publish.urls")),
     path("publish/", include("webapp.apps.publish.urls")),
+    path("new/", publishviews.ProjectView.as_view(), name="new_project"),
     path("users/", include("webapp.apps.users.urls")),
     path("users/", include("django.contrib.auth.urls")),
     path("billing/", include("webapp.apps.billing.urls")),
@@ -65,6 +67,11 @@ urlpatterns = [
         "<str:username>/<str:title>/detail/",
         publishviews.ProjectDetailView.as_view(),
         name="project_detail",
+    ),
+    path(
+        "<str:username>/<str:title>/",
+        publishviews.ProjectDetailView.as_view(),
+        name="app",
     ),
     # add project URL's here
     path("<str:username>/<str:title>/", include("webapp.apps.comp.urls")),

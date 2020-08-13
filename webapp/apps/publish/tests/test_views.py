@@ -60,6 +60,8 @@ class TestPublishViews:
             "listed": True,
             "status": "live",
             "latest_tag": "v1",
+            "tech": "python-paramtools",
+            "callable_name": None,
         }
         owner = Profile.objects.get(user__username="modeler")
         project = Project.objects.create(**dict(exp, **{"owner": owner}))

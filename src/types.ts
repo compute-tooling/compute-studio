@@ -164,6 +164,7 @@ export interface AccessStatus {
   is_sponsored?: boolean;
   sponsor_message?: string;
   can_run?: boolean;
+  can_write_project?: boolean;
   server_cost?: number;
   exp_cost?: number;
   exp_time?: number;

@@ -43,13 +43,13 @@ class ProjectSerializer(serializers.ModelSerializer):
             "sim_count",
             "status",
             "user_count",
-            "visualizations",
+            "callable_name",
+            "tech",
         )
         read_only = (
             "sim_count",
             "user_count",
             "status",
-            "visualizations",
         )
 
 
@@ -95,6 +95,8 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
             "status",
             "user_count",
             "version",
+            "callable_name",
+            "tech",
         )
         read_only = ("sim_count", "status", "user_count", "version")
 

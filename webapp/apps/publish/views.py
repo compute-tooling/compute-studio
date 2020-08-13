@@ -120,6 +120,7 @@ class ProjectAPIView(GetProjectMixin, APIView):
             if is_valid:
                 title = title_fixup(serializer.validated_data["title"])
                 username = request.user.username
+                print("creating", title, username)
                 if (
                     Project.objects.filter(
                         owner__user__username__iexact=username, title__iexact=title
