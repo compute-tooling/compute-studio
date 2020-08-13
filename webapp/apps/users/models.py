@@ -111,6 +111,21 @@ class Profile(models.Model):
         permissions = (("access_public", "Has access to public projects"),)
 
 
+class ProjectPermissions:
+    READ = (
+        "read_project",
+        "Users with this permission may view and run this project, even if it's private.",
+    )
+    WRITE = (
+        "write_project",
+        "Users with this permission may edit the project and view its usage statistics.",
+    )
+    ADMIN = (
+        "admin_project",
+        "Users with this permission control the visibility of this project and who has read, write, and admin access to it.",
+    )
+
+
 class ProjectManager(models.Manager):
     def sync_products(self, projects=None):
         if projects is None:
@@ -123,7 +138,12 @@ class ProjectManager(models.Manager):
 
 
 class Project(models.Model):
+    READ = ProjectPermissions.READ
+    WRITE = ProjectPermissions.WRITE
+    ADMIN = ProjectPermissions.ADMIN
+
     SECS_IN_HOUR = 3600.0
+
     title = models.CharField(max_length=255)
     oneliner = models.CharField(max_length=10000)
     description = models.CharField(max_length=10000)
@@ -294,5 +314,95 @@ class Project(models.Model):
             and (self.owner.user == user or user.has_perm("write_project", self))
         )
 
+    """
+    The methods below are used for checking if a user has read, write, or admin
+    access to a specific project. Users can only have one of these permissions
+    at a time, but users with a higher level permission inherit the read/write
+    access from the lower level permissions, too.
+
+    This is similar to the permissions system used on the Simulation table. At
+    some point these implementations may be abstracted.
+    """
+
+    def has_admin_access(self, user):
+        if not user or not user.is_authenticated:
+            return False
+
+        return user.has_perm(Simulation.ADMIN[0], self)
+
+    def has_write_access(self, user):
+        if not user or not user.is_authenticated:
+            return False
+
+        return user.has_perm(Simulation.WRITE[0], self) or self.has_admin_access(user)
+
+    def has_read_access(self, user):
+        # Everyone has access to this sim.
+        if self.is_public:
+            return True
+
+        if not user or not user.is_authenticated:
+            return False
+        return user.has_perm(Simulation.READ[0], self) or self.has_write_access(user)
+
+    def remove_permissions(self, user):
+        for permission in get_perms(user, self):
+            remove_perm(permission, user, self)
+
+    def grant_admin_permissions(self, user):
+        self.remove_permissions(user)
+        self.add_collaborator_test()
+        assign_perm(Simulation.ADMIN[0], user, self)
+
+    def grant_write_permissions(self, user):
+        self.remove_permissions(user)
+        self.add_collaborator_test()
+        assign_perm(Simulation.WRITE[0], user, self)
+
+    def grant_read_permissions(self, user):
+        self.remove_permissions(user)
+        self.add_collaborator_test()
+        assign_perm(Simulation.READ[0], user, self)
+
+    @transaction.atomic
+    def assign_role(self, role, user):
+        """
+        Wrapper for granting and revoking permissions for a user.
+        Each of the methods below complete multiple DB transactions
+        which can cause some race condition-related bugs.
+
+        Roles: read, write, admin, None (none removes all perms.)
+        """
+        if role == None:
+            self.remove_permissions(user)
+        elif role == "read":
+            self.grant_read_permissions(user)
+        elif role == "write":
+            self.grant_write_permissions(user)
+        elif role == "admin":
+            self.grant_admin_permissions(user)
+        else:
+            raise ValueError(
+                f"Received invalid role: {role}. Choices are read, write, or admin."
+            )
+
+    def role(self, user):
+        if not user or not user.is_authenticated:
+            return None
+
+        perms = get_perms(user, self)
+        if not perms:
+            return None
+        elif perms == [Simulation.READ[0]]:
+            return "read"
+        elif perms == [Simulation.WRITE[0]]:
+            return "write"
+        elif perms == [Simulation.ADMIN[0]]:
+            return "admin"
+
     class Meta:
-        permissions = (("write_project", "Write project"),)
+        permissions = (
+            ProjectPermissions.READ,
+            ProjectPermissions.WRITE,
+            ProjectPermissions.ADMIN,
+        )

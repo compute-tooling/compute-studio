@@ -597,7 +597,7 @@ class Simulation(models.Model):
         return user.has_perm(Simulation.WRITE[0], self) or self.has_admin_access(user)
 
     def has_read_access(self, user):
-        # Everyone has access to this sim.
+        # Everyone has access to this project.
         if self.is_public:
             return True
 
