@@ -170,17 +170,7 @@ export interface AccessStatus {
   plan: { name: "free" | "plus" | "pro" | "team" };
 }
 
-export interface Visualization {
-  title: string;
-  oneliner: string;
-  description: string;
-  function_name: string;
-  project?: string;
-  software: string;
-  requires_server: boolean;
-  is_live?: boolean;
-  status?: "live" | "staging" | "updating";
-}
+export type Tech = "python-paramtools" | "dash" | "bokeh";
 
 export interface Project {
   title: string;
@@ -191,13 +181,14 @@ export interface Project {
   repo_url: string;
   server_size: [string, string];
   sim_count: number;
-  status: "live" | "pending" | "updating";
+  status: "live" | "pending" | "updating" | "staging";
   exp_task_time: number;
   server_cost: string;
   listed: boolean;
   user_count?: number;
   version?: string;
-  visualizations?: Array<Visualization>;
+  tech?: Tech;
+  callable_name?: string;
 }
 
 export interface MiniSimulation {
