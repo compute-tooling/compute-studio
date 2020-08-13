@@ -23,14 +23,13 @@ from guardian.shortcuts import assign_perm
 
 # from webapp.settings import DEBUG
 
-from webapp.apps.users.models import Project, Visualization, is_profile_active
+from webapp.apps.users.models import Project, is_profile_active
 from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 
 from webapp.apps.users.serializers import (
     ProjectSerializer,
     ProjectWithVersionSerializer,
     DeploymentSerializer,
-    VisualizationSerializer,
 )
 from .utils import title_fixup
 
@@ -41,15 +40,6 @@ class GetProjectMixin:
     def get_object(self, username, title):
         return get_object_or_404(
             Project, title__iexact=title, owner__user__username__iexact=username
-        )
-
-
-class GetVizMixin(GetProjectMixin):
-    def get_object(self, username, title, viz_title):
-        return get_object_or_404(
-            Visualization,
-            project=super().get_object(username, title),
-            title__iexact=viz_title,
         )
 
 
@@ -194,108 +184,6 @@ class DeploymentAPIView(GetProjectMixin, APIView):
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-
-class VisualizationAPIView(GetProjectMixin, APIView):
-    queryset = Project.objects.all()
-
-    def get(self, request, *args, **kwargs):
-        project = self.get_object(**kwargs)
-        ser = VisualizationSerializer(
-            project.visualizations.all(), many=True, context={"request": request}
-        )
-        return Response(ser.data, status=status.HTTP_200_OK)
-
-    def post(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            project = self.get_object(**kwargs)
-            if not project.has_write_access(request.user):
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
-            serializer = VisualizationSerializer(
-                data=request.POST, context={"request": request}
-            )
-            is_valid = serializer.is_valid()
-            if is_valid:
-                title = title_fixup(serializer.validated_data["title"])
-                if (
-                    project.visualizations.filter(
-                        project=project, title__iexact=title
-                    ).count()
-                    > 0
-                ):
-                    return Response(
-                        {"viz_exists": f"{project}/{title} already exists."},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-                model = serializer.save(
-                    project=project, title=title, status="staging", is_live=False
-                )
-                status_url = request.build_absolute_uri(model.app_url)
-                try:
-                    send_mail(
-                        f"{request.user.username} is publishing a visualization on Compute Studio!",
-                        (
-                            f"{model.title} will be live or you will have feedback within "
-                            f"the next 24 hours. Check the status of the submission at "
-                            f"{status_url}."
-                        ),
-                        "notifications@compute.studio",
-                        list({request.user.email, "hank@compute.studio"}),
-                        fail_silently=False,
-                    )
-                # Http 401 exception if mail credentials are not set up.
-                except Exception:
-                    pass
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                print("error", request, serializer.errors)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-
-class VisualizationDetailAPIView(GetVizMixin, APIView):
-    authentication_classes = (
-        SessionAuthentication,
-        BasicAuthentication,
-        TokenAuthentication,
-    )
-
-    def get(self, request, *args, **kwargs):
-        viz = self.get_object(**kwargs)
-        serializer = VisualizationSerializer(viz, context={"request": request})
-        data = serializer.data
-        return Response(data)
-
-    def put(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            viz = self.get_object(**kwargs)
-            if viz.has_write_access(request.user):
-                serializer = VisualizationSerializer(viz, data=request.data)
-                if serializer.is_valid():
-                    model = serializer.save()
-                    Project.objects.sync_projects_with_workers(
-                        ProjectSerializer(Project.objects.all(), many=True).data
-                    )
-                    status_url = request.build_absolute_uri(model.app_url)
-                    try:
-                        send_mail(
-                            f"{request.user.username} is updating a visualization on Compute Studio!",
-                            (
-                                f"{model.title} will be updated or you will have feedback within "
-                                f"the next 24 hours. Check the status of the update at "
-                                f"{status_url}."
-                            ),
-                            "notifications@compute.studio",
-                            list({request.user.email, "hank@compute.studio"}),
-                            fail_silently=False,
-                        )
-                    # Http 401 exception if mail credentials are not set up.
-                    except Exception:
-                        pass
-                    return Response(serializer.data)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_401_UNAUTHORIZED)
 

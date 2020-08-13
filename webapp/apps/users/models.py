@@ -139,13 +139,24 @@ class Project(models.Model):
     pay_per_sim = models.BooleanField(default=True)
     is_public = models.BooleanField(default=True)
 
-    has_model = models.BooleanField(default=True)
+    tech = models.CharField(
+        choices=(
+            ("python-paramtools", "Python-ParamTools"),
+            ("dash", "Dash"),
+            ("bokeh", "Bokeh"),
+        ),
+        default="python-paramtools",
+        max_length=64,
+    )
+
+    callable_name = models.CharField(null=True, max_length=128)
 
     status = models.CharField(
         choices=(
             ("live", "live"),
             ("updating", "updating"),
             ("pending", "pending"),
+            ("staging", "staging"),
             ("requires fixes", "requires fixes"),
         ),
         default="live",
@@ -301,40 +312,21 @@ class Project(models.Model):
         permissions = (("write_project", "Write project"),)
 
 
-class Visualization(models.Model):
-    title = models.CharField(max_length=255)
-    oneliner = models.CharField(max_length=10000)
-    description = models.CharField(max_length=10000)
-    function_name = models.CharField(max_length=255)
+class RunningDeployment(models.Model):
     project = models.ForeignKey(
-        Project, related_name="visualizations", on_delete=models.CASCADE
+        Project, on_delete=models.CASCADE, related_name="running_deployments"
     )
-    software = models.CharField(
-        max_length=64, choices=(("dash", "Dash"), ("bokeh", "Bokeh"))
-    )
-    requires_server = models.BooleanField()
-    is_live = models.BooleanField(default=False)
-    status = models.CharField(
-        choices=(
-            ("live", "live"),
-            ("updating", "updating"),
-            ("staging", "staging"),
-            ("requires fixes", "requires fixes"),
-        ),
-        default="live",
-        max_length=32,
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    # Uses max length of django username field.
+    name = models.CharField(null=True, max_length=150)
+    tag = models.CharField(null=True, max_length=64)
 
-    @property
-    def app_url(self):
-        return reverse(
-            "viz_detail_api",
-            kwargs={
-                "title": self.project.title,
-                "username": self.project.owner.user.username,
-                "viz_title": self.title,
-            },
-        )
 
-    def has_write_access(self, user):
-        return self.project.has_write_access(user)
+class EmbedApproval(models.Model):
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="embed_approvals"
+    )
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="embed_approvals"
+    )
+    host = models.CharField(max_length=256)

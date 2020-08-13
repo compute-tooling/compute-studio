@@ -7,8 +7,8 @@ from .views import (
     PermissionPendingView,
     PermissionGrantedView,
     DataView,
-    VisualizationView,
-    VisualizationEmbedView,
+    VizView,
+    EmbedView,
 )
 
 from .api import (

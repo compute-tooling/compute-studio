@@ -28,6 +28,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api-token-auth/", rf_views.obtain_auth_token),
     path("", include("webapp.apps.pages.urls")),
+    path("app/", include("webapp.apps.publish.urls")),
     path("publish/", include("webapp.apps.publish.urls")),
     path("users/", include("webapp.apps.users.urls")),
     path("users/", include("django.contrib.auth.urls")),

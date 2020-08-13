@@ -20,8 +20,8 @@ from webapp.apps.comp.views import (
     PermissionPendingView,
     PermissionGrantedView,
     SimulationAccessAPIView,
-    VisualizationView,
-    VisualizationEmbedView,
+    VizView,
+    EmbedView,
 )
 
 # API Routes:
@@ -32,10 +32,8 @@ from webapp.apps.comp.views import (
 
 urlpatterns = [
     path("", ModelPageView.as_view(), name="app"),
-    path(
-        "viz/<str:viz_title>/embed/", VisualizationEmbedView.as_view(), name="viz_embed"
-    ),
-    path("viz/<str:viz_title>/", VisualizationView.as_view(), name="viz"),
+    path("embed/<str:site_owner>/", EmbedView.as_view(), name="embed"),
+    path("viz/", VizView.as_view(), name="viz"),
     path("new/", NewSimView.as_view(), name="simulation"),
     path("api/v1/", CreateAPIView.as_view(), name="create_api"),
     path("api/v1/inputs/", InputsAPIView.as_view(), name="inputs_api"),

@@ -32,7 +32,7 @@ from webapp.settings import DEBUG
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
 from webapp.apps.billing.utils import has_payment_method
-from webapp.apps.users.models import Project, Visualization, is_profile_active
+from webapp.apps.users.models import Project, is_profile_active
 
 from webapp.apps.comp.constants import WEBAPP_VERSION
 from webapp.apps.comp import exceptions
@@ -44,7 +44,7 @@ from webapp.apps.comp.exceptions import AppError, ValidationError
 from webapp.apps.comp.serializers import OutputsSerializer
 
 
-from .core import InputsMixin, GetOutputsObjectMixin, GetVizObjectMixin
+from .core import InputsMixin, GetOutputsObjectMixin
 
 BUCKET = os.environ.get("BUCKET")
 
@@ -143,34 +143,37 @@ class EditSimView(GetOutputsObjectMixin, InputsMixin, View):
         return render(request, self.template_name, context)
 
 
-class VisualizationView(GetVizObjectMixin, InputsMixin, View):
-    model = Visualization
+class VizView(InputsMixin, View):
+    model = Project
     template_name = "comp/viz.html"
 
     def get(self, request, *args, **kwargs):
         print("edit method=GET", request.GET)
-        self.object = self.get_object(
-            kwargs["username"], kwargs["title"], kwargs["viz_title"],
+        project = get_object_or_404(
+            self.model,
+            owner__user__username__iexact=kwargs["username"],
+            title__iexact=kwargs["title"],
         )
-        project = self.object.project
         context = self.project_context(request, project)
         context["show_readme"] = False
-        context["object"] = self.object
+        context["object"] = project
         context["protocol"] = "https" if request.is_secure() else "http"
         return render(request, self.template_name, context)
 
 
-class VisualizationEmbedView(GetVizObjectMixin, InputsMixin, View):
-    model = Visualization
+class EmbedView(InputsMixin, View):
+    model = Project
     template_name = "comp/viz_embed.html"
 
     def get(self, request, *args, **kwargs):
         print("edit method=GET", request.GET)
-        self.object = self.get_object(
-            kwargs["username"], kwargs["title"], kwargs["viz_title"],
+        project = get_object_or_404(
+            self.model,
+            owner__user__username__iexact=kwargs["username"],
+            title__iexact=kwargs["title"],
         )
         context = {
-            "object": self.object,
+            "object": project,
             "protocol": "https" if request.is_secure() else "http",
         }
         return render(request, self.template_name, context)
