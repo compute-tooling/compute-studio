@@ -326,7 +326,16 @@ class EmbedApproval(models.Model):
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="embed_approvals"
     )
-    profile = models.ForeignKey(
+    owner = models.ForeignKey(
         Profile, on_delete=models.CASCADE, related_name="embed_approvals"
     )
     url = models.CharField(max_length=256)
+    name = models.CharField(max_length=32, null=False)
+
+    def get_absolute_url(self):
+        kwargs = {
+            "username": self.project.owner.user.username,
+            "title": self.project.title,
+            "ea_name": self.name,
+        }
+        return reverse("embed", kwargs=kwargs)

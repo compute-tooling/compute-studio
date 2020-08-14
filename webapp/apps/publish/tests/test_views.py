@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model, get_user
 from guardian.shortcuts import assign_perm, remove_perm
 
 from webapp.apps.comp.models import Simulation
-from webapp.apps.users.models import Project, Profile
+from webapp.apps.users.models import Project, Profile, EmbedApproval
 
 from webapp.apps.users.serializers import ProjectSerializer
 
@@ -261,3 +261,114 @@ class TestPublishViews:
         assert resp.status_code == 200
         project.refresh_from_db()
         assert project.latest_tag == "v5"
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("mock_sync_projects")
+class TestEmbedApprovalAPI:
+    def test_create_embed_approval(self, api_client, project, free_profile):
+        base = f"/apps/api/{project.owner}/{project.title}/embedapprovals/"
+        resp = api_client.post(
+            base, data={"name": "deny", "url": "example.com"}, format="json"
+        )
+        assert resp.status_code == 403
+
+        api_client.force_login(free_profile.user)
+        resp = api_client.post(
+            "/apps/api/doesnot/exist/embedapprovals/",
+            data={"name": "deny", "url": "example.com"},
+            format="json",
+        )
+        assert resp.status_code == 404
+
+        resp = api_client.post(
+            base, data={"name": "test", "url": "example.com"}, format="json"
+        )
+        assert resp.status_code == 400
+        assert "ParamTools" in resp.json()["tech"]
+
+        project.tech = "dash"
+        project.save()
+        resp = api_client.post(
+            base, data={"name": "test", "url": "example.com"}, format="json"
+        )
+        assert resp.status_code == 200, resp.json()
+        assert EmbedApproval.objects.get(
+            project=project, owner=free_profile, name="test"
+        )
+
+        resp = api_client.post(
+            base, data={"name": "test", "url": "example.com"}, format="json"
+        )
+        assert resp.status_code == 400
+        assert "exists" in resp.json()
+
+    def test_update_embed_approval(self, api_client, project, free_profile):
+        base = f"/apps/api/{project.owner}/{project.title}/embedapprovals/test/"
+
+        ea = EmbedApproval.objects.create(
+            project=project, owner=free_profile, name="test", url="example.com",
+        )
+
+        resp = api_client.put(base, data={"name": "test2"}, format="json")
+        assert resp.status_code == 403
+        resp = api_client.delete(base)
+        assert resp.status_code == 403
+
+        api_client.force_login(project.owner.user)
+        resp = api_client.delete(base)
+        assert resp.status_code == 404
+
+        api_client.force_login(free_profile.user)
+        resp = api_client.put(
+            base, data={"name": "test2", "url": "example.com"}, format="json"
+        )
+        assert resp.status_code == 200, resp.json()
+        ea.refresh_from_db()
+        assert ea.name == "test2"
+
+        resp = api_client.delete(
+            f"/apps/api/{project.owner}/{project.title}/embedapprovals/test2/"
+        )
+        assert resp.status_code == 204
+        assert (
+            EmbedApproval.objects.filter(project=project, owner=free_profile).count()
+            == 0
+        )
+
+    def test_list_embed_approval(self, api_client, project, free_profile):
+        base = f"/apps/api/{project.owner}/{project.title}/embedapprovals/"
+
+        for i in range(5):
+            EmbedApproval.objects.create(
+                project=project,
+                owner=free_profile,
+                name=f"test-{i}",
+                url="example.com",
+            )
+
+        for i in range(2):
+            EmbedApproval.objects.create(
+                project=project,
+                owner=project.owner,
+                name=f"test2-{i}",
+                url="example.com",
+            )
+
+        base = f"/apps/api/{project.owner}/{project.title}/embedapprovals/"
+        resp = api_client.get(base)
+        assert resp.status_code == 403
+
+        api_client.force_login(free_profile.user)
+        resp = api_client.get(base)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 5
+        assert all(ea["owner"] == str(free_profile) for ea in data)
+
+        api_client.force_login(project.owner.user)
+        resp = api_client.get(base)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 2
+        assert all(ea["owner"] == str(project.owner) for ea in data)

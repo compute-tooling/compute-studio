@@ -293,6 +293,11 @@ def subscription(db, customer, licensed_plan, metered_plan):
 
 
 @pytest.fixture
+def project(db):
+    return Project.objects.get(title="Used-for-testing")
+
+
+@pytest.fixture
 def test_models(db, profile):
     project = Project.objects.get(title="Used-for-testing")
     inputs = Inputs.objects.create(project=project)

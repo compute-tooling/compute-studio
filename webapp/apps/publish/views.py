@@ -23,13 +23,14 @@ from guardian.shortcuts import assign_perm
 
 # from webapp.settings import DEBUG
 
-from webapp.apps.users.models import Project, is_profile_active
+from webapp.apps.users.models import Project, EmbedApproval, is_profile_active
 from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 
 from webapp.apps.users.serializers import (
     ProjectSerializer,
     ProjectWithVersionSerializer,
     DeploymentSerializer,
+    EmbedApprovalSerializer,
 )
 from .utils import title_fixup
 
@@ -37,7 +38,7 @@ User = get_user_model()
 
 
 class GetProjectMixin:
-    def get_object(self, username, title):
+    def get_object(self, username, title, **kwargs):
         return get_object_or_404(
             Project, title__iexact=title, owner__user__username__iexact=username
         )
@@ -232,3 +233,117 @@ class ProfileModelsAPIView(generics.ListAPIView):
         username = self.request.parser_context["kwargs"].get("username", None)
         user = get_object_or_404(get_user_model(), username__iexact=username)
         return self.queryset.filter(owner__user=user, listed=True)
+
+
+class EmbedApprovalView(GetProjectMixin, APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    permission_classes = (StrictRequiresActive,)
+
+    def post(self, request, *args, **kwargs):
+        project = self.get_object(**kwargs)
+        if project.tech == "python-paramtools":
+            return Response(
+                {"tech": "Unable to embed ParamTools-based apps, yet. Stay tuned."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = EmbedApprovalSerializer(
+            data=request.data, context={"request": request}
+        )
+
+        if serializer.is_valid():
+            name = serializer.validated_data["name"]
+            if EmbedApproval.objects.filter(project=project, name=name).count() > 0:
+                return Response(
+                    {"exists": f"Embed Approval for {name} already exists."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            model = serializer.save(project=project, owner=request.user.profile)
+            return Response(
+                EmbedApprovalSerializer(instance=model).data, status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, *args, **kwargs):
+        eas = EmbedApproval.objects.filter(
+            project__owner__user__username__iexact=kwargs["username"],
+            project__title__iexact=kwargs["title"],
+            owner=request.user.profile,
+        )
+        serializer = EmbedApprovalSerializer(eas, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class EmbedApprovalDetailView(APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    permission_classes = (StrictRequiresActive,)
+
+    def get(self, request, *args, **kwargs):
+        ea = EmbedApproval.objects.get(
+            project__owner__user__username__iexact=kwargs["username"],
+            project__title__iexact=kwargs["title"],
+            name__iexact=kwargs["ea_name"],
+        )
+
+        # Throw 404 if user does not have access.
+        if ea.owner != request.user.profile:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = EmbedApprovalSerializer(ea)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, *args, **kwargs):
+        ea = EmbedApproval.objects.get(
+            project__owner__user__username__iexact=kwargs["username"],
+            project__title__iexact=kwargs["title"],
+            name__iexact=kwargs["ea_name"],
+        )
+
+        # Throw 404 if user does not have access.
+        if ea.owner != request.user.profile:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EmbedApprovalSerializer(
+            ea, data=request.data, context={"request": request}
+        )
+
+        if serializer.is_valid():
+            name = serializer.validated_data["name"]
+            if (
+                name != ea.name
+                and EmbedApproval.objects.filter(project=ea.project, name=name).count()
+                > 0
+            ):
+                return Response(
+                    {"exists": f"Embed Approval for {name} already exists."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            model = serializer.save(project=ea.project, owner=request.user.profile)
+            return Response(
+                EmbedApprovalSerializer(instance=model).data, status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        ea = EmbedApproval.objects.get(
+            project__owner__user__username__iexact=kwargs["username"],
+            project__title__iexact=kwargs["title"],
+            name__iexact=kwargs["ea_name"],
+        )
+
+        # Throw 404 if user does not have access.
+        if ea.owner != request.user.profile:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        ea.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

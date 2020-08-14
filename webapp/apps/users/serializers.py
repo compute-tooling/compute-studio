@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from webapp.apps.users.models import Project
+from webapp.apps.users.models import Project, EmbedApproval
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -108,3 +108,18 @@ class DeploymentSerializer(serializers.ModelSerializer):
             "latest_tag",
             "staging_tag",
         )
+
+
+class EmbedApprovalSerializer(serializers.ModelSerializer):
+    project = serializers.StringRelatedField()
+    owner = serializers.StringRelatedField()
+
+    class Meta:
+        model = EmbedApproval
+        fields = (
+            "name",
+            "project",
+            "owner",
+            "url",
+        )
+        read_only = ("owner", "project")

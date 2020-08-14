@@ -14,7 +14,12 @@ from rest_framework.test import APIClient
 from rest_framework.response import Response
 
 from webapp.apps.billing.tests.utils import gen_blank_customer
-from webapp.apps.users.models import Project, Profile, create_profile_from_user
+from webapp.apps.users.models import (
+    Project,
+    Profile,
+    EmbedApproval,
+    create_profile_from_user,
+)
 
 from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
 from webapp.apps.comp.ioutils import get_ioutils
@@ -1448,3 +1453,35 @@ def test_list_sim_api(db, api_client, profile, get_inputs, meta_param_dict):
     assert_status(200, resp, "unauthed list sims")
     assert len(resp.data["results"]) == 1
     assert resp.data["results"][0]["model_pk"] == tester_sims[1].model_pk
+
+
+@pytest.mark.django_db
+class TestViz:
+    def test_get_viz(self, client, project):
+        resp = client.get(f"/{project}/viz/")
+        assert resp.status_code == 200
+
+    def test_get_embed(self, client, project):
+
+        resp = client.get(f"/{project}/embed/test/")
+        assert resp.status_code == 404
+
+        (profile,) = gen_collabs(1)
+
+        ea = EmbedApproval.objects.create(
+            project=project,
+            owner=profile,
+            name="test",
+            url="http://embed.compute.studio",
+        )
+        url = ea.get_absolute_url()
+
+        resp = client.get(url)
+        assert resp.status_code == 200
+        assert resp._headers["content-security-policy"] == (
+            "Content-Security-Policy",
+            "frame-ancestors http://embed.compute.studio",
+        )
+
+        resp = client.get((f"/{project}/embed/doesnotexist/"))
+        assert resp.status_code == 404

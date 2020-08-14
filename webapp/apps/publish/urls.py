@@ -7,11 +7,23 @@ from .views import (
     ProjectDetailAPIView,
     ProjectAPIView,
     DeploymentAPIView,
+    EmbedApprovalView,
+    EmbedApprovalDetailView,
 )
 
 
 urlpatterns = [
     url(r"^$", ProjectView.as_view(), name="publish"),
+    path(
+        "api/<str:username>/<str:title>/embedapprovals/",
+        EmbedApprovalView.as_view(),
+        name="embed_approval",
+    ),
+    path(
+        "api/<str:username>/<str:title>/embedapprovals/<str:ea_name>/",
+        EmbedApprovalDetailView.as_view(),
+        name="embed_approval_detail",
+    ),
     path(
         "api/<str:username>/<str:title>/detail/",
         ProjectDetailAPIView.as_view(),

@@ -32,7 +32,7 @@ from webapp.settings import DEBUG
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
 from webapp.apps.billing.utils import has_payment_method
-from webapp.apps.users.models import Project, is_profile_active
+from webapp.apps.users.models import Project, EmbedApproval, is_profile_active
 
 from webapp.apps.comp.constants import WEBAPP_VERSION
 from webapp.apps.comp import exceptions
@@ -148,7 +148,7 @@ class VizView(InputsMixin, View):
     template_name = "comp/viz.html"
 
     def get(self, request, *args, **kwargs):
-        print("edit method=GET", request.GET)
+        print("viz method=GET", request.GET)
         project = get_object_or_404(
             self.model,
             owner__user__username__iexact=kwargs["username"],
@@ -162,22 +162,19 @@ class VizView(InputsMixin, View):
 
 
 class EmbedView(InputsMixin, View):
-    model = Project
+    model = EmbedApproval
     template_name = "comp/embed.html"
 
     def get(self, request, *args, **kwargs):
-        print("edit method=GET", request.GET)
-        project = get_object_or_404(
-            self.model,
-            owner__user__username__iexact=kwargs["username"],
-            title__iexact=kwargs["title"],
-        )
+        print("embed method=GET", request.GET)
         embed_approval = get_object_or_404(
-            project.embed_approvals,
-            profile__user__username__iexact=kwargs["site_owner"],
+            EmbedApproval,
+            project__owner__user__username__iexact=kwargs["username"],
+            project__title__iexact=kwargs["title"],
+            name__iexact=kwargs["ea_name"],
         )
         context = {
-            "object": project,
+            "object": embed_approval.project,
             "protocol": "https" if request.is_secure() else "http",
         }
         response = render(request, self.template_name, context)
