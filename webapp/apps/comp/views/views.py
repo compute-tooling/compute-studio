@@ -172,8 +172,9 @@ class EmbedView(InputsMixin, View):
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
-        embed_approval = project.embed_approvals.get(
-            profile__user__username__iexact=kwargs["site_owner"]
+        embed_approval = get_object_or_404(
+            project.embed_approvals,
+            profile__user__username__iexact=kwargs["site_owner"],
         )
         context = {
             "object": project,
