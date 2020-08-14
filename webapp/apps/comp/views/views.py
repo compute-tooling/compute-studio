@@ -172,17 +172,18 @@ class EmbedView(InputsMixin, View):
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
-        embed_approval = project.embed_approvals.filter(
+        embed_approval = project.embed_approvals.get(
             profile__user__username__iexact=kwargs["site_owner"]
         )
-        # request.META.set(
-        #     f"Content-Security-Policy: frame-ancestors {embed_approval.url}"
-        # )
         context = {
             "object": project,
             "protocol": "https" if request.is_secure() else "http",
         }
-        return render(request, self.template_name, context)
+        response = render(request, self.template_name, context)
+
+        response["Content-Security-Policy"] = f"frame-ancestors {embed_approval.url}"
+
+        return response
 
 
 class OutputsView(GetOutputsObjectMixin, DetailView):
