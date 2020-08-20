@@ -61,7 +61,7 @@ class Server:
         self.service_api_client = kclient.CoreV1Api()
         self.ir_api_client = IngressRouteApi()
 
-    def env(self, owner=None, title=None, config=None):
+    def env(self, owner, title, config):
         safeowner = clean(owner)
         safetitle = clean(title)
         envs = [

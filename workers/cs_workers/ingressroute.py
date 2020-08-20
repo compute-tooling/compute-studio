@@ -36,6 +36,6 @@ def ingress_route_template(namespace, name, routes, tls=True):
     return {
         "apiVersion": "traefik.containo.us/v1alpha1",
         "kind": "IngressRoute",
-        "metadata": {"name": name, "namespace": "default"},
+        "metadata": {"name": name, "namespace": namespace},
         "spec": {"entryPoints": ["websecure"], "routes": routes, **tls_config},
     }
