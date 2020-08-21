@@ -28,7 +28,7 @@ class IngressRouteApi:
         )
 
 
-def ingress_route_template(namespace, name, routes, tls=True):
+def ingressroute_template(namespace, name, routes, tls=True):
     if tls:
         tls_config = {"tls": {"certResolver": "myresolver"}}
     else:

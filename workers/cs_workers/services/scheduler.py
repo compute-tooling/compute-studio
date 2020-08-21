@@ -3,14 +3,14 @@ import json
 import os
 import uuid
 
-import httpx
+from kubernetes import config as kconfig
 import marshmallow as ma
 import redis
 import tornado.ioloop
 import tornado.web
 
-from cs_workers.utils import clean, hash_projects, redis_conn_from_env
-from cs_workers.models.clients import job, api_task
+from cs_workers.utils import hash_projects, redis_conn_from_env
+from cs_workers.models.clients import job, api_task, server
 from cs_workers.config import ModelConfig
 
 
@@ -24,6 +24,9 @@ redis_conn = dict(
 )
 
 
+incluster = os.environ.get("KUBERNETES_SERVICE_HOST", False) is not False
+
+
 class Payload(ma.Schema):
     task_id = ma.fields.UUID(required=False)
     task_name = ma.fields.Str(required=True)
@@ -31,6 +34,11 @@ class Payload(ma.Schema):
         keys=ma.fields.Str(), values=ma.fields.Field(), missing=dict
     )
     tag = ma.fields.Str(required=False, allow_none=True)
+
+
+class Deployment(ma.Schema):
+    tag = ma.fields.Str(required=True)
+    deployment_name = ma.fields.Str(required=True)
 
 
 class Scheduler(tornado.web.RequestHandler):
@@ -103,6 +111,124 @@ class SyncProjects(tornado.web.RequestHandler):
         self.set_status(200)
 
 
+class DeploymentsDetailApi(tornado.web.RequestHandler):
+    def initialize(self, config=None, rclient=None):
+        self.config = config
+        self.rclient = rclient
+        kconfig.load_kube_config()
+
+    def get(self, owner, title, deployment_name):
+        print("GET --", f"/deployments/{owner}/{title}/{deployment_name}/")
+        try:
+            project = self.config.get_project(owner, title)
+        except KeyError:
+            self.set_status(404)
+            return
+
+        # TODO: support more techs
+        if project["tech"] in ("dash",):
+            viz = server.Server(
+                project=PROJECT,
+                owner=project["owner"],
+                title=project["title"],
+                tag=None,
+                model_config=ModelConfig(PROJECT, CS_URL),
+                callable_name=project["callable_name"],
+                deployment_name=deployment_name,
+                incluster=incluster,
+            )
+            self.write(viz.ready_stats())
+            self.set_status(200)
+            return
+        else:
+            self.set_status(400)
+            self.write({"tech": f"Unsuported tech: {project['tech']}"})
+            return
+
+    def delete(self, owner, title, deployment_name):
+        print("DELETE --", f"/deployments/{owner}/{title}/{deployment_name}/")
+        try:
+            project = self.config.get_project(owner, title)
+        except KeyError:
+            self.set_status(404)
+            return
+
+        # TODO: support more techs
+        if project["tech"] in ("dash",):
+            viz = server.Server(
+                project=PROJECT,
+                owner=project["owner"],
+                title=project["title"],
+                tag=None,
+                model_config=ModelConfig(PROJECT, CS_URL),
+                callable_name=project["callable_name"],
+                deployment_name=deployment_name,
+                incluster=incluster,
+            )
+            self.write(viz.delete())
+            self.set_status(200)
+            return
+        else:
+            self.set_status(400)
+            self.write({"tech": f"Unsuported tech: {project['tech']}"})
+            return
+
+
+class DeploymentsApi(tornado.web.RequestHandler):
+    def initialize(self, config=None, rclient=None):
+        self.config = config
+        self.rclient = rclient
+        kconfig.load_kube_config()
+
+    def post(self, owner, title):
+        print("POST --", f"/deployments/{owner}/{title}/")
+        try:
+            project = self.config.get_project(owner, title)
+        except KeyError:
+            self.set_status(404)
+            return
+
+        if not self.request.body:
+            self.write({"errors": ["No content received."]})
+            self.set_status(400)
+            return
+
+        try:
+            data = Deployment().loads(self.request.body.decode("utf-8"))
+        except ma.ValidationError as ve:
+            self.write(ve.messages)
+            self.set_status(400)
+            return
+
+        # TODO: support more techs
+        if project["tech"] in ("dash",):
+            viz = server.Server(
+                project=PROJECT,
+                owner=project["owner"],
+                title=project["title"],
+                tag=data["tag"],
+                model_config=ModelConfig(PROJECT, CS_URL),
+                callable_name=project["callable_name"],
+                deployment_name=data["deployment_name"],
+                incluster=incluster,
+            )
+            dep = viz.deployment_from_cluster()
+            if dep is not None:
+                self.write({"errors": ["Deployment is already running."]})
+                self.set_status(400)
+                return
+            else:
+                viz.configure()
+                viz.create()
+                self.write(viz.ready_stats())
+                self.set_status(200)
+                return
+        else:
+            self.set_status(400)
+            self.write({"tech": f"Unsuported tech: {project['tech']}"})
+            return
+
+
 def get_app():
     assert PROJECT and CS_URL
     rclient = redis.Redis(**redis_conn)
@@ -116,6 +242,16 @@ def get_app():
                 Scheduler,
                 dict(config=config, rclient=rclient),
             ),
+            (
+                r"/deployments/([A-Za-z0-9-]+)/([A-Za-z0-9-]+)/([A-Za-z0-9-]+)/",
+                DeploymentsDetailApi,
+                dict(config=config, rclient=rclient),
+            ),
+            (
+                r"/deployments/([A-Za-z0-9-]+)/([A-Za-z0-9-]+)/",
+                DeploymentsApi,
+                dict(config=config, rclient=rclient),
+            ),
         ],
         debug=True,
         autoreload=True,
@@ -126,7 +262,7 @@ def start(args: argparse.Namespace):
     print("starting, now")
     if args.start:
         app = get_app()
-        app.listen(8888)
+        app.listen(8889)
         tornado.ioloop.IOLoop.current().start()
 
 

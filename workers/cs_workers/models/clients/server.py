@@ -8,7 +8,7 @@ from kubernetes import client as kclient, config as kconfig
 
 from cs_workers.utils import clean, redis_conn_from_env
 from cs_workers.config import ModelConfig
-from cs_workers.ingressroute import IngressRouteApi, ingress_route_template
+from cs_workers.ingressroute import IngressRouteApi, ingressroute_template
 
 PORT = 8010
 
@@ -29,7 +29,7 @@ class Server:
         title,
         tag,
         model_config,
-        callable_name=None,
+        callable_name,
         deployment_name="default",
         namespace="default",
         cr="gcr.io",
@@ -164,7 +164,7 @@ class Server:
                 "services": [{"name": name, "port": 80}],
             }
         ]
-        ingress_route = ingress_route_template(
+        ingressroute = ingressroute_template(
             namespace=self.namespace, name=name, routes=routes, tls=True
         )
 
@@ -173,10 +173,10 @@ class Server:
             sys.stdout.write("---\n")
             sys.stdout.write(yaml.dump(service.to_dict()))
 
-        self.service, self.deployment, self.ingress_route = (
+        self.service, self.deployment, self.ingressroute = (
             service,
             deployment,
-            ingress_route,
+            ingressroute,
         )
 
     def deployment_from_cluster(self):
@@ -209,54 +209,87 @@ class Server:
                 raise e
         return None
 
-    def apply(self):
-        try:
-            deployment_resp = self.deployment_api_client.create_namespaced_deployment(
-                namespace=self.namespace, body=self.deployment
-            )
-        except kclient.rest.ApiException as e:
-            if e.reason != "Not Found":
-                raise e
-            deployment_resp = self.deployment_api_client.patch_namespaced_deployment(
-                self.deployment.metadata.name,
-                namespace=self.namespace,
-                body=self.deployment,
-            )
-
-        curr_svc = self.service_from_cluster()
-        if not curr_svc:
-            service_resp = self.service_api_client.create_namespaced_service(
-                namespace=self.namespace, body=self.service
-            )
+    def ready_stats(self):
+        deployment = self.deployment_from_cluster()
+        if deployment is not None:
+            dep_ready = {
+                "ready": (deployment.status.ready_replicas or 0) > 0,
+                "created_at": str(deployment.metadata.creation_timestamp),
+            }
         else:
-            print("Service already exists", curr_svc)
-            service_resp = None
+            dep_ready = {"ready": False, "created_at": None}
 
-        curr_ir = self.ingressroute_from_cluster()
-        if not curr_ir:
-            ingressroute_resp = self.ir_api_client.create_namespaced_ingressroute(
-                namespace=self.namespace, body=self.ingress_route
-            )
+        svc = self.service_from_cluster()
+        if (
+            svc
+            and svc.status.load_balancer.ingress is not None
+            and len(svc.status.load_balancer.ingress)
+            and svc.status.load_balancer.ingress[0].ip is not None
+        ):
+            svc_ready = {
+                "ready": True,
+                "created_at": str(svc.metadata.creation_timestamp),
+            }
+        elif svc:
+            svc_ready = {
+                "ready": False,
+                "created_at": str(svc.metadata.creation_timestamp),
+            }
         else:
-            print("IngressRoute already exists:", curr_ir)
-            ingressroute_resp = None
+            svc_ready = {"ready": False, "created_at": None}
+
+        # IR will be ready just about immediately.
+        ir = self.ingressroute_from_cluster()
+        if ir is not None:
+            ir_ready = {
+                "ready": True,
+                "created_at": ir["metadata"]["creationTimestamp"],
+            }
+        else:
+            ir_ready = {"ready": False, "created_at": None}
+
+        return {
+            "deployment": dep_ready,
+            "svc": svc_ready,
+            "ingressroute": ir_ready,
+        }
+
+    def create(self):
+        deployment_resp = self.deployment_api_client.create_namespaced_deployment(
+            namespace=self.namespace, body=self.deployment
+        )
+
+        service_resp = self.service_api_client.create_namespaced_service(
+            namespace=self.namespace, body=self.service
+        )
+
+        ingressroute_resp = self.ir_api_client.create_namespaced_ingressroute(
+            namespace=self.namespace, body=self.ingressroute
+        )
 
         return deployment_resp, service_resp, ingressroute_resp
 
     def delete(self):
+        deleted = {
+            "deployment": {"deleted": False},
+            "svc": {"deleted": False},
+            "ingressroute": {"deleted": False},
+        }
         if self.deployment_from_cluster():
             print(f"deleting deployment: {self.full_name}")
             self.deployment_api_client.delete_namespaced_deployment(
-                namespace=self.namespace, name=self.deployment.metadata.name
+                namespace=self.namespace, name=self.full_name
             )
+            deleted["deployment"] = {"deleted": True}
         else:
             print(f"deployment not found: {self.full_name}")
 
         if self.service_from_cluster():
             print(f"deleting service: {self.full_name}")
             self.service_api_client.delete_namespaced_service(
-                namespace=self.namespace, name=self.service.metadata.name
+                namespace=self.namespace, name=self.full_name
             )
+            deleted["svc"] = {"deleted": True}
         else:
             print(f"service not found: {self.full_name}")
 
@@ -265,9 +298,11 @@ class Server:
             self.ir_api_client.delete_namespaced_ingressroute(
                 name=self.full_name, namespace=self.namespace
             )
+            deleted["ingressroute"] = {"deleted": True}
         else:
             print(f"ingressroute not found: {self.full_name}")
-        return
+
+        return deleted
 
     @property
     def full_name(self):

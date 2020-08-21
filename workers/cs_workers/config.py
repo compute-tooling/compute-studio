@@ -46,6 +46,9 @@ class ModelConfig:
             self.set_projects(models=models)
         return self._projects
 
+    def get_project(self, owner, title):
+        return self.projects()[f"{owner}/{title}"]
+
     def set_projects(self, models=None, projects=None):
         if projects is None:
             projects = get_projects(self.cs_url)
