@@ -1,6 +1,15 @@
 from rest_framework import serializers
 
-from webapp.apps.users.models import Project, EmbedApproval
+from webapp.apps.users.models import Project, EmbedApproval, RunningDeployment
+
+
+class RunningDeploymentSerializer(serializers.ModelSerializer):
+    project = serializers.StringRelatedField()
+
+    class Meta:
+        model = RunningDeployment
+        fields = ("project", "created_at", "deleted_at", "name", "tag", "ready")
+        read_only = ("project", "created_at", "name", "tag")
 
 
 class ProjectSerializer(serializers.ModelSerializer):

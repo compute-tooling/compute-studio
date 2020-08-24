@@ -32,7 +32,12 @@ from webapp.settings import DEBUG
 
 from webapp.apps.billing.models import SubscriptionItem, UsageRecord
 from webapp.apps.billing.utils import has_payment_method
-from webapp.apps.users.models import Project, EmbedApproval, is_profile_active
+from webapp.apps.users.models import (
+    Project,
+    EmbedApproval,
+    RunningDeployment,
+    is_profile_active,
+)
 
 from webapp.apps.comp.constants import WEBAPP_VERSION
 from webapp.apps.comp import exceptions
@@ -155,9 +160,16 @@ class VizView(InputsMixin, View):
             title__iexact=kwargs["title"],
         )
         context = self.project_context(request, project)
+        if is_profile_active(request.user):
+            owner = request.user.profile
+        rd, _ = RunningDeployment.objects.get_or_create_deployment(
+            project=project, name=kwargs.get("rd_name", "default"), owner=owner
+        )
         context["show_readme"] = False
         context["object"] = project
-        context["protocol"] = "https" if request.is_secure() else "http"
+        context["rd"] = rd
+        context["viz_host"] = os.environ.get("VIZ_HOST")
+        context["protocol"] = "https"
         return render(request, self.template_name, context)
 
 
@@ -173,9 +185,16 @@ class EmbedView(InputsMixin, View):
             project__title__iexact=kwargs["title"],
             name__iexact=kwargs["ea_name"],
         )
+        project = embed_approval.project
+        rd, _ = RunningDeployment.objects.get_or_create_deployment(
+            project=project, name=kwargs["ea_name"], embed_approval=embed_approval
+        )
+
         context = {
-            "object": embed_approval.project,
-            "protocol": "https" if request.is_secure() else "http",
+            "object": project,
+            "rd": rd,
+            "protocol": "https",
+            "viz_host": os.environ.get("VIZ_HOST"),
         }
         response = render(request, self.template_name, context)
 

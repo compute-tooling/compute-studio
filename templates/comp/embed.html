@@ -1,25 +1,28 @@
 <!DOCTYPE html>
-<html class="h-100" lang="en">
-  {% load static %}
+<html lang="en">
+{% load static %}
 
-  <head>
-    <title>Compute Studio</title>
-    <link rel="icon" href="{% static 'imgs/cslashs.png' %}" type="image/x-icon" />
-  </head>
-  <body>
-    <div class="container-fluid">
-      <div id="inputs-container"></div>
-      <!-- TODO: get viz name from viz object once kubernetes config is updated. -->
-      <iframe
-        title="{{object.title}}"
-        src="{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/"
-        style="position: relative; height: 100vh; width: 100%; border: 0;"
-      ></iframe>
-    </div>
-    <div style="position: fixed; bottom: 0; right: 0;">
-      <a href="https://compute.studio" target="_blank"
-        ><img height="50" width="50" alt="Compute Studio Logo" src="{% static 'imgs/cslashs.png' %}"
-      /></a>
-    </div>
-  </body>
+<head>
+  <title>Compute Studio</title>
+  <link rel="icon" href="{% static 'imgs/cslashs.png' %}" type="image/x-icon" />
+
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <iframe title="{{object.title}}"
+    src="{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{rd.name}}/"
+    style="position: relative; height: 100vh; width: 100%; border: 0;"></iframe>
+  <div style="position: fixed; bottom: 0; right: 0;">
+    <a href="https://compute.studio" target="_blank"><img height="50" width="50" alt="Compute Studio Logo"
+        src="{% static 'imgs/cslashs.png' %}" /></a>
+  </div>
+</body>
+
 </html>

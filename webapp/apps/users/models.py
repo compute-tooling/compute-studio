@@ -14,10 +14,11 @@ from django.urls import reverse
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
+from django.utils import timezone
 
 from webapp.apps.billing.models import create_billing_objects
 from webapp.apps.comp import actions
-from webapp.apps.comp.compute import SyncCompute, SyncProjects
+from webapp.apps.comp.compute import SyncCompute, SyncProjects, WORKER_HN
 from webapp.apps.comp.models import Inputs, ANON_BEFORE
 from webapp.settings import DEBUG, COMPUTE_PRICING
 
@@ -312,14 +313,109 @@ class Project(models.Model):
         permissions = (("write_project", "Write project"),)
 
 
+class RunningDeploymentException(Exception):
+    pass
+
+
+class RunningDeploymentManager(models.Manager):
+    def get_or_create_deployment(self, project, name, owner=None, embed_approval=None):
+        if project.sponsor is not None:
+            owner = project.sponsor
+        if owner is None and embed_approval is None:
+            raise RunningDeploymentException(
+                "There is no one to bill for this deployment."
+            )
+        rd, created = RunningDeployment.objects.get_or_create(
+            project=project,
+            name=name,
+            deleted_at__isnull=True,
+            defaults=dict(owner=owner, embed_approval=embed_approval),
+        )
+        if created:
+            rd.create_deployment()
+        else:
+            rd.is_ready(use_cache=False)
+
+        return rd, created
+
+
 class RunningDeployment(models.Model):
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="running_deployments"
     )
+    embed_approval = models.ForeignKey(
+        "EmbedApproval",
+        on_delete=models.SET_NULL,
+        related_name="running_deployments",
+        null=True,
+    )
+    owner = models.ForeignKey(
+        Profile,
+        on_delete=models.SET_NULL,
+        related_name="running_deployments",
+        null=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
+    deleted_at = models.DateTimeField(null=True)
     # Uses max length of django username field.
     name = models.CharField(null=True, max_length=150)
     tag = models.CharField(null=True, max_length=64)
+
+    ready = models.BooleanField(default=False)
+
+    objects = RunningDeploymentManager()
+
+    def is_ready(self, use_cache=False):
+        if use_cache:
+            return self.ready
+        ready_stats = self.get_deployment()
+        ready = (
+            ready_stats["deployment"]["ready"]
+            and ready_stats["svc"]["ready"]
+            and ready_stats["ingressroute"]["ready"]
+        )
+        self.ready = ready
+        self.save()
+        return ready
+
+    def create_deployment(self):
+        if self.tag is None:
+            self.tag = self.project.latest_tag
+            self.save()
+
+        resp = requests.post(
+            f"http://{WORKER_HN}/deployments/{self.project}/",
+            json={"deployment_name": self.name, "tag": self.tag},
+        )
+
+        if resp.status_code == 200:
+            return resp.json()
+        elif resp.status_code == 400:
+            data = resp.json()
+            if data.get("errors") == ["Deployment is already running"]:
+                return self.get_deployment()
+
+        raise Exception(f"{resp.status_code} {resp.text}")
+
+    def get_deployment(self):
+        resp = requests.get(
+            f"http://{WORKER_HN}/deployments/{self.project}/{self.name}/"
+        )
+        assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
+        return resp.json()
+
+    def delete_deployment(self):
+        resp = requests.delete(
+            f"http://{WORKER_HN}/deployments/{self.project}/{self.name}/"
+        )
+        assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
+        self.deleted_at = timezone.now()
+        self.save()
+        return resp.json()
+
+    def delete(self, *args, **kwargs):
+        self.delete_deployment()
+        return super().delete()
 
 
 class EmbedApproval(models.Model):

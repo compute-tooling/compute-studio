@@ -23,7 +23,12 @@ from guardian.shortcuts import assign_perm
 
 # from webapp.settings import DEBUG
 
-from webapp.apps.users.models import Project, EmbedApproval, is_profile_active
+from webapp.apps.users.models import (
+    Project,
+    EmbedApproval,
+    RunningDeployment,
+    is_profile_active,
+)
 from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 
 from webapp.apps.users.serializers import (
@@ -31,6 +36,7 @@ from webapp.apps.users.serializers import (
     ProjectWithVersionSerializer,
     DeploymentSerializer,
     EmbedApprovalSerializer,
+    RunningDeploymentSerializer,
 )
 from .utils import title_fixup
 
@@ -347,3 +353,31 @@ class EmbedApprovalDetailView(APIView):
 
         ea.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class RunningDeploymentsView(APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    def get(self, request, *args, **kwargs):
+        ready_kwarg = {}
+        ready = request.query_params.get("ready", None)
+        if ready is not None:
+            ready_kwarg.update({"ready": ready})
+
+        rd = get_object_or_404(
+            RunningDeployment,
+            name__iexact=kwargs["rd_name"],
+            project__owner__user__username__iexact=kwargs["username"],
+            project__title__iexact=kwargs["title"],
+            deleted_at__isnull=True,
+            **ready_kwarg,
+        )
+
+        return Response(
+            RunningDeploymentSerializer(rd).data, status=status.HTTP_200_OK,
+        )
+

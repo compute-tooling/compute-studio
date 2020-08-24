@@ -32,6 +32,7 @@ from webapp.apps.comp.views import (
 
 urlpatterns = [
     path("embed/<str:ea_name>/", EmbedView.as_view(), name="embed"),
+    path("viz/<str:rd_name>/", VizView.as_view(), name="viz"),
     path("viz/", VizView.as_view(), name="viz"),
     path("new/", NewSimView.as_view(), name="simulation"),
     path("api/v1/", CreateAPIView.as_view(), name="create_api"),

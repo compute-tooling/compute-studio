@@ -9,6 +9,7 @@ from .views import (
     DeploymentAPIView,
     EmbedApprovalView,
     EmbedApprovalDetailView,
+    RunningDeploymentsView,
 )
 
 
@@ -23,6 +24,11 @@ urlpatterns = [
         "api/<str:username>/<str:title>/embedapprovals/<str:ea_name>/",
         EmbedApprovalDetailView.as_view(),
         name="embed_approval_detail",
+    ),
+    path(
+        "api/<str:username>/<str:title>/rds/<str:rd_name>/",
+        RunningDeploymentsView.as_view(),
+        name="running_deployments_detail",
     ),
     path(
         "api/<str:username>/<str:title>/detail/",
