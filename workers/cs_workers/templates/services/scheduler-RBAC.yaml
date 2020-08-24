@@ -26,3 +26,27 @@ roleRef:
   kind: Role
   name: job-admin
   apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: viz-admin
+  namespace: default
+rules:
+  - apiGroups: ["apps", "", "traefik.containo.us"]
+    resources: ["deployments", "services", "ingressroutes"]
+    verbs: ["get", "list", "watch", "create", "update", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: viz-admin
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: scheduler
+    namespace: default
+roleRef:
+  kind: Role
+  name: viz-admin
+  apiGroup: rbac.authorization.k8s.io
