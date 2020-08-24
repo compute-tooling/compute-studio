@@ -35,7 +35,7 @@ from webapp.apps.billing.utils import has_payment_method
 from webapp.apps.users.models import (
     Project,
     EmbedApproval,
-    RunningDeployment,
+    Deployment,
     is_profile_active,
 )
 
@@ -164,12 +164,12 @@ class VizView(InputsMixin, View):
             owner = request.user.profile
         else:
             owner = None
-        rd, _ = RunningDeployment.objects.get_or_create_deployment(
+        deployment, _ = Deployment.objects.get_or_create_deployment(
             project=project, name=kwargs.get("rd_name", "default"), owner=owner
         )
         context["show_readme"] = False
         context["object"] = project
-        context["rd"] = rd
+        context["deployment"] = deployment
         context["viz_host"] = os.environ.get("VIZ_HOST")
         context["protocol"] = "https"
         return render(request, self.template_name, context)
@@ -188,13 +188,13 @@ class EmbedView(InputsMixin, View):
             name__iexact=kwargs["ea_name"],
         )
         project = embed_approval.project
-        rd, _ = RunningDeployment.objects.get_or_create_deployment(
+        deployment, _ = Deployment.objects.get_or_create_deployment(
             project=project, name=kwargs["ea_name"], embed_approval=embed_approval
         )
 
         context = {
             "object": project,
-            "rd": rd,
+            "deployment": deployment,
             "protocol": "https",
             "viz_host": os.environ.get("VIZ_HOST"),
         }

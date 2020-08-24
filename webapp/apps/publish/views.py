@@ -26,7 +26,7 @@ from guardian.shortcuts import assign_perm
 from webapp.apps.users.models import (
     Project,
     EmbedApproval,
-    RunningDeployment,
+    Deployment,
     is_profile_active,
 )
 from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
@@ -367,8 +367,8 @@ class DeploymentsView(APIView):
         else:
             status_kwarg = {"status": status_query}
         print("heyo")
-        rd = get_object_or_404(
-            RunningDeployment,
+        deployment = get_object_or_404(
+            Deployment,
             name__iexact=kwargs["dep_name"],
             project__owner__user__username__iexact=kwargs["username"],
             project__title__iexact=kwargs["title"],
@@ -376,7 +376,9 @@ class DeploymentsView(APIView):
             **status_kwarg,
         )
 
-        rd.refresh_status(use_cache=False)
+        deployment.refresh_status(use_cache=False)
 
-        return Response(DeploymentSerializer(rd).data, status=status.HTTP_200_OK,)
+        return Response(
+            DeploymentSerializer(deployment).data, status=status.HTTP_200_OK,
+        )
 

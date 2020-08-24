@@ -313,47 +313,42 @@ class Project(models.Model):
         permissions = (("write_project", "Write project"),)
 
 
-class RunningDeploymentException(Exception):
+class DeploymentException(Exception):
     pass
 
 
-class RunningDeploymentManager(models.Manager):
+class DeploymentManager(models.Manager):
     def get_or_create_deployment(self, project, name, owner=None, embed_approval=None):
         if project.sponsor is not None:
             owner = project.sponsor
         if owner is None and embed_approval is None:
-            raise RunningDeploymentException(
-                "There is no one to bill for this deployment."
-            )
-        rd, created = RunningDeployment.objects.get_or_create(
+            raise DeploymentException("There is no one to bill for this deployment.")
+        deployment, created = Deployment.objects.get_or_create(
             project=project,
             name=name,
             deleted_at__isnull=True,
             defaults=dict(owner=owner, embed_approval=embed_approval),
         )
         if created:
-            rd.create_deployment()
+            deployment.create_deployment()
         else:
-            rd.refresh_status(use_cache=False)
+            deployment.refresh_status(use_cache=False)
 
-        return rd, created
+        return deployment, created
 
 
-class RunningDeployment(models.Model):
+class Deployment(models.Model):
     project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="running_deployments"
+        Project, on_delete=models.CASCADE, related_name="deployments"
     )
     embed_approval = models.ForeignKey(
         "EmbedApproval",
         on_delete=models.SET_NULL,
-        related_name="running_deployments",
+        related_name="deployments",
         null=True,
     )
     owner = models.ForeignKey(
-        Profile,
-        on_delete=models.SET_NULL,
-        related_name="running_deployments",
-        null=True,
+        Profile, on_delete=models.SET_NULL, related_name="deployments", null=True,
     )
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True)
@@ -372,7 +367,7 @@ class RunningDeployment(models.Model):
         ),
     )
 
-    objects = RunningDeploymentManager()
+    objects = DeploymentManager()
 
     def refresh_status(self, use_cache=False):
         if use_cache:

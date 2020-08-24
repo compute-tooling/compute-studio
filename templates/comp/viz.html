@@ -12,12 +12,12 @@
 {% endblock %}{% block content %} {% csrf_token %}
 
 <div id="iframe-container" class="container-fluid" style="background: white;">
-  {% if rd.status == "running" %}
+  {% if deployment.status == "running" %}
   <iframe
     id="embedded-iframe"
     class="embedded"
     title="{{object.title}}"
-    src="{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{rd.name}}/"
+    src="{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.name}}/"
   ></iframe>
   {% else %}
   <div id="notready" style="height: 75vh;">
@@ -28,7 +28,7 @@
 <script>
   var checkReady = function() {
     const resp = fetch(
-      "/apps/api/v1/{{object.owner}}/{{object.title}}/deployments/{{rd.name}}/"
+      "/apps/api/v1/{{object.owner}}/{{object.title}}/deployments/{{deployment.name}}/"
     ).then(function(response) {
       response.json().then(function(data) {
         console.log("data", data);
@@ -38,7 +38,7 @@
           container.removeChild(placeholder);
           var iframe = document.createElement("iframe");
           iframe.src =
-            "{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{rd.name}}/";
+            "{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.name}}/";
           iframe.title = "{{object.title}}";
           iframe.className = "embedded";
           iframe.id = "embedded-iframe";
