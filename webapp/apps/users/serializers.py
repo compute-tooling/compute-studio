@@ -8,8 +8,16 @@ class DeploymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Deployment
-        fields = ("project", "created_at", "deleted_at", "name", "tag", "status")
-        read_only = ("project", "created_at", "name", "tag")
+        fields = (
+            "project",
+            "created_at",
+            "deleted_at",
+            "last_loaded_at",
+            "name",
+            "tag",
+            "status",
+        )
+        read_only = ("project", "created_at", "last_loaded_at", "name", "tag")
 
 
 class ProjectSerializer(serializers.ModelSerializer):

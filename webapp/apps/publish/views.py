@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.core.mail import send_mail
 
+
 from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework.response import Response
@@ -18,6 +19,7 @@ from rest_framework.authentication import (
     SessionAuthentication,
     TokenAuthentication,
 )
+from rest_framework.exceptions import PermissionDenied
 
 from guardian.shortcuts import assign_perm
 
@@ -353,12 +355,33 @@ class EmbedApprovalDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class DeploymentsView(APIView):
+class DeploymentsView(generics.ListAPIView):
+    permission_classes = (StrictRequiresActive,)
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
         TokenAuthentication,
     )
+
+    queryset = Deployment.objects.filter(
+        deleted_at__isnull=True, status__in=["creating", "running"]
+    )
+    serializer_class = DeploymentSerializer
+
+    def get_queryset(self):
+        if not self.request.user.username == "comp-api-user":
+            raise PermissionDenied()
+        return self.queryset
+
+
+class DeploymentsDetailView(APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    permission_classes = (RequiresActive,)
 
     def get(self, request, *args, **kwargs):
         status_query = request.query_params.get("status", None)
@@ -366,7 +389,7 @@ class DeploymentsView(APIView):
             status_kwarg = {"status__in": ["creating", "running"]}
         else:
             status_kwarg = {"status": status_query}
-        print("heyo")
+
         deployment = get_object_or_404(
             Deployment,
             name__iexact=kwargs["dep_name"],
@@ -382,3 +405,20 @@ class DeploymentsView(APIView):
             DeploymentSerializer(deployment).data, status=status.HTTP_200_OK,
         )
 
+    def delete(self, request, *args, **kwargs):
+        if not (
+            request.user.is_authenticated and request.user.username == "comp-api-user"
+        ):
+            raise PermissionDenied()
+        deployment = get_object_or_404(
+            Deployment,
+            name__iexact=kwargs["dep_name"],
+            project__owner__user__username__iexact=kwargs["username"],
+            project__title__iexact=kwargs["title"],
+            deleted_at__isnull=True,
+            status__in=["creating", "running"],
+        )
+
+        deployment.delete_deployment()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
