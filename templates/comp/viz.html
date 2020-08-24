@@ -1,12 +1,61 @@
-{% extends 'base.html' %} {% load static %}
-{% block content %} {% csrf_token %}
-<div class="container-fluid" style="background: white">
-  <!-- TODO: get viz name from viz object once kubernetes config is updated. -->
-  <iframe title="{{object.title}}"
-    src="{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{rd.name}}/"
-    style="position: relative; height: 100vh; width: 100%; border: 0;"></iframe>
-</div>
-</body>
+{% extends 'base.html' %} {% load static %} {% block style %}
 
-</html>
+<style>
+  .embedded {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    border: 0;
+  }
+</style>
+
+{% endblock %}{% block content %} {% csrf_token %}
+
+<div id="iframe-container" class="container-fluid" style="background: white;">
+  {% if rd.status == "running" %}
+  <iframe
+    id="embedded-iframe"
+    class="embedded"
+    title="{{object.title}}"
+    src="{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{rd.name}}/"
+  ></iframe>
+  {% else %}
+  <div id="notready" style="height: 75vh;">
+    <p class="lead">Starting the {{object.owner}}/{{object.title}} visualization...</p>
+  </div>
+</div>
+{% endif %} {% endblock %} {% block below_body %}
+<script>
+  var checkReady = function () {
+    const resp = fetch("/apps/api/{{object.owner}}/{{object.title}}/rds/{{rd.name}}/").then(
+      function (response) {
+        response.json().then(function (data) {
+          console.log("data", data);
+          if (data.status === "running") {
+            var container = document.getElementById("iframe-container");
+            var placeholder = document.getElementById("notready");
+            container.removeChild(placeholder);
+            var iframe = document.createElement("iframe");
+            iframe.src =
+              "{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{rd.name}}/";
+            iframe.title = "{{object.title}}";
+            iframe.className = "embedded";
+            iframe.id = "embedded-iframe";
+            container.appendChild(iframe);
+          } else {
+            setTimeout(checkReady, 3000);
+          }
+        });
+      }
+    );
+  };
+
+  window.onload = function () {
+    var initIframe = document.getElementById("embedded-iframe");
+    console.log("initIframe", initIframe);
+    if (initIframe === null) {
+      return checkReady();
+    }
+  };
+</script>
 {% endblock %}

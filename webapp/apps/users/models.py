@@ -334,7 +334,7 @@ class RunningDeploymentManager(models.Manager):
         if created:
             rd.create_deployment()
         else:
-            rd.is_ready(use_cache=False)
+            rd.refresh_status(use_cache=False)
 
         return rd, created
 
@@ -361,22 +361,33 @@ class RunningDeployment(models.Model):
     name = models.CharField(null=True, max_length=150)
     tag = models.CharField(null=True, max_length=64)
 
-    ready = models.BooleanField(default=False)
+    status = models.CharField(
+        default="creating",
+        max_length=32,
+        choices=(
+            ("creating", "Creating"),
+            ("running", "Running"),
+            ("terminated", "Terminated"),
+        ),
+    )
 
     objects = RunningDeploymentManager()
 
-    def is_ready(self, use_cache=False):
+    def refresh_status(self, use_cache=False):
         if use_cache:
             return self.ready
         ready_stats = self.get_deployment()
-        ready = (
+        running = (
             ready_stats["deployment"]["ready"]
-            and ready_stats["svc"]["ready"]
+            # and ready_stats["svc"]["ready"]
             and ready_stats["ingressroute"]["ready"]
         )
-        self.ready = ready
+        if running:
+            self.status = "running"
+        else:
+            self.status = "creating"
         self.save()
-        return ready
+        return self.status
 
     def create_deployment(self):
         if self.tag is None:
@@ -410,6 +421,7 @@ class RunningDeployment(models.Model):
         )
         assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
         self.deleted_at = timezone.now()
+        self.status = "terminated"
         self.save()
         return resp.json()
 

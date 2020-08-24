@@ -363,10 +363,11 @@ class RunningDeploymentsView(APIView):
     )
 
     def get(self, request, *args, **kwargs):
-        ready_kwarg = {}
-        ready = request.query_params.get("ready", None)
-        if ready is not None:
-            ready_kwarg.update({"ready": ready})
+        status_query = request.query_params.get("status", None)
+        if status_query is None:
+            status_kwarg = {"status__in": ["creating", "running"]}
+        else:
+            status_kwarg = {"status": status_query}
 
         rd = get_object_or_404(
             RunningDeployment,
@@ -374,10 +375,11 @@ class RunningDeploymentsView(APIView):
             project__owner__user__username__iexact=kwargs["username"],
             project__title__iexact=kwargs["title"],
             deleted_at__isnull=True,
-            **ready_kwarg,
+            **status_kwarg,
         )
+
+        rd.refresh_status(use_cache=False)
 
         return Response(
             RunningDeploymentSerializer(rd).data, status=status.HTTP_200_OK,
         )
-

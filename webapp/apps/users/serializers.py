@@ -8,7 +8,7 @@ class RunningDeploymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RunningDeployment
-        fields = ("project", "created_at", "deleted_at", "name", "tag", "ready")
+        fields = ("project", "created_at", "deleted_at", "name", "tag", "status")
         read_only = ("project", "created_at", "name", "tag")
 
 
