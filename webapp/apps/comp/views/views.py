@@ -162,6 +162,8 @@ class VizView(InputsMixin, View):
         context = self.project_context(request, project)
         if is_profile_active(request.user):
             owner = request.user.profile
+        else:
+            owner = None
         rd, _ = RunningDeployment.objects.get_or_create_deployment(
             project=project, name=kwargs.get("rd_name", "default"), owner=owner
         )
