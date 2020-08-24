@@ -1455,33 +1455,33 @@ def test_list_sim_api(db, api_client, profile, get_inputs, meta_param_dict):
     assert resp.data["results"][0]["model_pk"] == tester_sims[1].model_pk
 
 
-@pytest.mark.django_db
-class TestViz:
-    def test_get_viz(self, client, project):
-        resp = client.get(f"/{project}/viz/")
-        assert resp.status_code == 200
+# @pytest.mark.django_db
+# class TestViz:
+#     def test_get_viz(self, client, project):
+#         resp = client.get(f"/{project}/viz/")
+#         assert resp.status_code == 200
 
-    def test_get_embed(self, client, project):
+#     def test_get_embed(self, client, project):
 
-        resp = client.get(f"/{project}/embed/test/")
-        assert resp.status_code == 404
+#         resp = client.get(f"/{project}/embed/test/")
+#         assert resp.status_code == 404
 
-        (profile,) = gen_collabs(1)
+#         (profile,) = gen_collabs(1)
 
-        ea = EmbedApproval.objects.create(
-            project=project,
-            owner=profile,
-            name="test",
-            url="http://embed.compute.studio",
-        )
-        url = ea.get_absolute_url()
+#         ea = EmbedApproval.objects.create(
+#             project=project,
+#             owner=profile,
+#             name="test",
+#             url="http://embed.compute.studio",
+#         )
+#         url = ea.get_absolute_url()
 
-        resp = client.get(url)
-        assert resp.status_code == 200
-        assert resp._headers["content-security-policy"] == (
-            "Content-Security-Policy",
-            "frame-ancestors http://embed.compute.studio",
-        )
+#         resp = client.get(url)
+#         assert resp.status_code == 200
+#         assert resp._headers["content-security-policy"] == (
+#             "Content-Security-Policy",
+#             "frame-ancestors http://embed.compute.studio",
+#         )
 
-        resp = client.get((f"/{project}/embed/doesnotexist/"))
-        assert resp.status_code == 404
+#         resp = client.get((f"/{project}/embed/doesnotexist/"))
+#         assert resp.status_code == 404

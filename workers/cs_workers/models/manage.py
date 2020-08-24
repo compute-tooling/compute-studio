@@ -231,7 +231,7 @@ class Manager:
 
     def stage_app(self, app):
         resp = httpx.post(
-            f"{self.config.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
+            f"{self.config.cs_url}/apps/api/v1/{app['owner']}/{app['title']}/tags/",
             json={"staging_tag": self.staging_tag},
             headers={"Authorization": f"Token {self.cs_api_token}"},
         )
@@ -243,7 +243,7 @@ class Manager:
 
     def promote_app(self, app):
         resp = httpx.get(
-            f"{self.config.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
+            f"{self.config.cs_url}/apps/api/v1/{app['owner']}/{app['title']}/tags/",
             headers={"Authorization": f"Token {self.cs_api_token}"},
         )
         assert (
@@ -251,7 +251,7 @@ class Manager:
         ), f"Got: {resp.url} {resp.status_code} {resp.text}"
         staging_tag = resp.json()["staging_tag"]
         resp = httpx.post(
-            f"{self.config.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
+            f"{self.config.cs_url}/apps/api/v1/{app['owner']}/{app['title']}/tags/",
             json={"latest_tag": staging_tag or self.tag, "staging_tag": None},
             headers={"Authorization": f"Token {self.cs_api_token}"},
         )
@@ -364,7 +364,7 @@ class Manager:
 
     def get_latest_tag(self, app):
         resp = httpx.get(
-            f"{self.config.cs_url}/publish/api/{app['owner']}/{app['title']}/deployments/",
+            f"{self.config.cs_url}/apps/api/v1/{app['owner']}/{app['title']}/tags/",
             headers={"Authorization": f"Token {self.cs_api_token}"},
         )
         assert (

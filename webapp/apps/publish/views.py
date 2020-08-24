@@ -34,9 +34,9 @@ from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 from webapp.apps.users.serializers import (
     ProjectSerializer,
     ProjectWithVersionSerializer,
-    DeploymentSerializer,
+    TagSerializer,
     EmbedApprovalSerializer,
-    RunningDeploymentSerializer,
+    DeploymentSerializer,
 )
 from .utils import title_fixup
 
@@ -171,7 +171,7 @@ class ProjectAPIView(GetProjectMixin, APIView):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
-class DeploymentAPIView(GetProjectMixin, APIView):
+class TagAPIView(GetProjectMixin, APIView):
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
@@ -179,15 +179,13 @@ class DeploymentAPIView(GetProjectMixin, APIView):
     )
 
     def get(self, request, *args, **kwargs):
-        ser = DeploymentSerializer(
-            self.get_object(**kwargs), context={"request": request}
-        )
+        ser = TagSerializer(self.get_object(**kwargs), context={"request": request})
         return Response(ser.data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
         project = self.get_object(**kwargs)
         if request.user.is_authenticated and project.has_write_access(request.user):
-            serializer = DeploymentSerializer(project, data=request.data)
+            serializer = TagSerializer(project, data=request.data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
@@ -355,7 +353,7 @@ class EmbedApprovalDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class RunningDeploymentsView(APIView):
+class DeploymentsView(APIView):
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
@@ -368,10 +366,10 @@ class RunningDeploymentsView(APIView):
             status_kwarg = {"status__in": ["creating", "running"]}
         else:
             status_kwarg = {"status": status_query}
-
+        print("heyo")
         rd = get_object_or_404(
             RunningDeployment,
-            name__iexact=kwargs["rd_name"],
+            name__iexact=kwargs["dep_name"],
             project__owner__user__username__iexact=kwargs["username"],
             project__title__iexact=kwargs["title"],
             deleted_at__isnull=True,
@@ -380,6 +378,5 @@ class RunningDeploymentsView(APIView):
 
         rd.refresh_status(use_cache=False)
 
-        return Response(
-            RunningDeploymentSerializer(rd).data, status=status.HTTP_200_OK,
-        )
+        return Response(DeploymentSerializer(rd).data, status=status.HTTP_200_OK,)
+

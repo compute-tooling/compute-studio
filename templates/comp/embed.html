@@ -39,41 +39,37 @@
     {% endif %}
     <div style="position: fixed; bottom: 0; right: 0;">
       <a href="https://compute.studio" target="_blank"
-        ><img
-          height="50"
-          width="50"
-          alt="Compute Studio Logo"
-          src="{% static 'imgs/cslashs.png' %}"
+        ><img height="50" width="50" alt="Compute Studio Logo" src="{% static 'imgs/cslashs.png' %}"
       /></a>
     </div>
   </body>
 
   <script>
-    var checkReady = function () {
-      const resp = fetch("/apps/api/{{object.owner}}/{{object.title}}/rds/{{rd.name}}/").then(
-        function (response) {
-          response.json().then(function (data) {
-            console.log("data", data);
-            if (data.status === "running") {
-              var container = document.getElementById("iframe-container");
-              var placeholder = document.getElementById("notready");
-              container.removeChild(placeholder);
-              var iframe = document.createElement("iframe");
-              iframe.src =
-                "{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{rd.name}}/";
-              iframe.title = "{{object.title}}";
-              iframe.className = "embedded";
-              iframe.id = "embedded-iframe";
-              container.appendChild(iframe);
-            } else {
-              setTimeout(checkReady, 3000);
-            }
-          });
-        }
-      );
+    var checkReady = function() {
+      const resp = fetch(
+        "/apps/api/v1/{{object.owner}}/{{object.title}}/deployments/{{rd.name}}/"
+      ).then(function(response) {
+        response.json().then(function(data) {
+          console.log("data", data);
+          if (data.status === "running") {
+            var container = document.getElementById("iframe-container");
+            var placeholder = document.getElementById("notready");
+            container.removeChild(placeholder);
+            var iframe = document.createElement("iframe");
+            iframe.src =
+              "{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{rd.name}}/";
+            iframe.title = "{{object.title}}";
+            iframe.className = "embedded";
+            iframe.id = "embedded-iframe";
+            container.appendChild(iframe);
+          } else {
+            setTimeout(checkReady, 3000);
+          }
+        });
+      });
     };
 
-    window.onload = function () {
+    window.onload = function() {
       var initIframe = document.getElementById("embedded-iframe");
       if (initIframe === null) {
         return checkReady();

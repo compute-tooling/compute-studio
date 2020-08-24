@@ -17,15 +17,15 @@ export default class API {
   }
 
   async getProject(): Promise<Project> {
-    return (await axios.get(`/publish/api/${this.owner}/${this.title}/detail/`)).data;
+    return (await axios.get(`/apps/api/v1/${this.owner}/${this.title}/detail/`)).data;
   }
 
   async updateProject(data): Promise<Project> {
-    return (await axios.put(`/publish/api/${this.owner}/${this.title}/detail/`, data)).data;
+    return (await axios.put(`/apps/api/v1/${this.owner}/${this.title}/detail/`, data)).data;
   }
 
   async createProject(data): Promise<Project> {
-    return (await axios.post(`/publish/api/`, data)).data;
+    return (await axios.post(`/apps/api/v1/`, data)).data;
   }
 
   async save(data): Promise<Project> {

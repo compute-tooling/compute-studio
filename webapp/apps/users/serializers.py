@@ -3,7 +3,7 @@ from rest_framework import serializers
 from webapp.apps.users.models import Project, EmbedApproval, RunningDeployment
 
 
-class RunningDeploymentSerializer(serializers.ModelSerializer):
+class DeploymentSerializer(serializers.ModelSerializer):
     project = serializers.StringRelatedField()
 
     class Meta:
@@ -110,7 +110,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
         read_only = ("sim_count", "status", "user_count", "version")
 
 
-class DeploymentSerializer(serializers.ModelSerializer):
+class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = (

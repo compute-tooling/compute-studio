@@ -61,7 +61,7 @@ def redis_conn_from_env():
 
 
 def get_projects(cs_url):
-    resp = httpx.get(f"{cs_url}/apps/api/")
+    resp = httpx.get(f"{cs_url}/apps/api/v1/")
     assert resp.status_code == 200, f"Got code: {resp.status_code}"
     return hash_projects(resp.json())
 
