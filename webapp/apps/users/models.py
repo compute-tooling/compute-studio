@@ -357,6 +357,7 @@ class RunningDeployment(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True)
+    last_loaded_at = models.DateTimeField(auto_now_add=True)
     # Uses max length of django username field.
     name = models.CharField(null=True, max_length=150)
     tag = models.CharField(null=True, max_length=64)
@@ -386,6 +387,7 @@ class RunningDeployment(models.Model):
             self.status = "running"
         else:
             self.status = "creating"
+        self.last_loaded_at = timezone.now()
         self.save()
         return self.status
 
