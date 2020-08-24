@@ -115,7 +115,6 @@ class DeploymentsDetailApi(tornado.web.RequestHandler):
     def initialize(self, config=None, rclient=None):
         self.config = config
         self.rclient = rclient
-        kconfig.load_kube_config()
 
     def get(self, owner, title, deployment_name):
         print("GET --", f"/deployments/{owner}/{title}/{deployment_name}/")
@@ -160,7 +159,7 @@ class DeploymentsDetailApi(tornado.web.RequestHandler):
                 owner=project["owner"],
                 title=project["title"],
                 tag=None,
-                model_config=ModelConfig(PROJECT, CS_URL),
+                model_config=self.config,
                 callable_name=project["callable_name"],
                 deployment_name=deployment_name,
                 incluster=incluster,
@@ -178,7 +177,6 @@ class DeploymentsApi(tornado.web.RequestHandler):
     def initialize(self, config=None, rclient=None):
         self.config = config
         self.rclient = rclient
-        kconfig.load_kube_config()
 
     def post(self, owner, title):
         print("POST --", f"/deployments/{owner}/{title}/")
@@ -207,7 +205,7 @@ class DeploymentsApi(tornado.web.RequestHandler):
                 owner=project["owner"],
                 title=project["title"],
                 tag=data["tag"],
-                model_config=ModelConfig(PROJECT, CS_URL),
+                model_config=self.config,
                 callable_name=project["callable_name"],
                 deployment_name=data["deployment_name"],
                 incluster=incluster,
@@ -262,7 +260,7 @@ def start(args: argparse.Namespace):
     print("starting, now")
     if args.start:
         app = get_app()
-        app.listen(8889)
+        app.listen(8888)
         tornado.ioloop.IOLoop.current().start()
 
 

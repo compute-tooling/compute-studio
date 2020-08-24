@@ -61,29 +61,23 @@ class Server:
         self.service_api_client = kclient.CoreV1Api()
         self.ir_api_client = IngressRouteApi()
 
-    def env(self, owner, title, config):
+    def env(self, owner, title, deployment_name, config):
         safeowner = clean(owner)
         safetitle = clean(title)
         envs = [
             kclient.V1EnvVar("OWNER", config["owner"]),
             kclient.V1EnvVar("TITLE", config["title"]),
         ]
-        for sec in [
-            "CS_URL",
-            # "REDIS_HOST",
-            # "REDIS_PORT",
-            # "REDIS_EXECUTOR_PW",
-        ]:
-            envs.append(
-                kclient.V1EnvVar(
-                    sec,
-                    value_from=kclient.V1EnvVarSource(
-                        secret_key_ref=(
-                            kclient.V1SecretKeySelector(key=sec, name="worker-secret")
-                        )
-                    ),
-                )
+        envs.append(
+            kclient.V1EnvVar(
+                "CS_URL",
+                value_from=kclient.V1EnvVarSource(
+                    secret_key_ref=(
+                        kclient.V1SecretKeySelector(key="CS_URL", name="worker-secret")
+                    )
+                ),
             )
+        )
 
         for secret in self.model_config._list_secrets(config):
             envs.append(
@@ -100,7 +94,7 @@ class Server:
             )
 
         envs.append(
-            kclient.V1EnvVar(name="URL_BASE_PATHNAME", value=f"/{owner}/{title}/",)
+            kclient.V1EnvVar(name="URL_BASE_PATHNAME", value=f"/{owner}/{title}/{deployment_name}/",)
         )
 
         return envs
@@ -116,7 +110,7 @@ class Server:
             name=name,
             image=f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{self.tag}",
             command=["gunicorn", f"cs_config.functions:{self.callable_name}"],
-            env=self.env(self.owner, self.title, config),
+            env=self.env(self.owner, self.title, self.deployment_name, config),
             resources=kclient.V1ResourceRequirements(**config["resources"]),
             ports=[kclient.V1ContainerPort(container_port=PORT)],
         )
