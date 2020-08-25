@@ -3,6 +3,8 @@ import copy
 import os
 import sys
 import yaml
+from datetime import datetime
+from dateutil.parser import parse as dateutil_parse
 from pathlib import Path
 
 import docker
@@ -12,13 +14,27 @@ from cs_workers.utils import run, clean, parse_owner_title
 
 from cs_workers.services.secrets import ServicesSecrets  # TODO
 from cs_workers.config import ModelConfig
-from cs_workers.models import secrets
+from cs_workers.models import secrets, deployment_cleanup
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
 BASE_PATH = CURR_PATH / ".."
 
 
-class Manager:
+class BaseManager:
+    def __init__(self, project, cs_url, cs_api_token):
+        self.project = project
+        self.cs_url = cs_url
+        self._cs_api_token = cs_api_token
+
+    @property
+    def cs_api_token(self):
+        if self._cs_api_token is None:
+            svc_secrets = ServicesSecrets(self.project)
+            self._cs_api_token = svc_secrets.get_secret("CS_API_TOKEN")
+        return self._cs_api_token
+
+
+class Manager(BaseManager):
     """
     Build, test, and publish docker images for Compute Studio:
 
@@ -50,13 +66,10 @@ class Manager:
         quiet=False,
     ):
         self.config = ModelConfig(project, cs_url, base_branch, quiet)
-
-        self.project = project
+        super().__init__(project, cs_url, cs_api_token)
         self.tag = tag
         self.models = models.split(",") if models else None
         self.base_branch = base_branch
-        self.cs_url = cs_url
-        self._cs_api_token = cs_api_token
         self.cr = cr
 
         self.kubernetes_target = kubernetes_target or self.kubernetes_target
@@ -355,13 +368,6 @@ class Manager:
                 {"name": key, "valueFrom": {"secretKeyRef": {"name": name, "key": key}}}
             )
 
-    @property
-    def cs_api_token(self):
-        if self._cs_api_token is None:
-            svc_secrets = ServicesSecrets(self.project)
-            self._cs_api_token = svc_secrets.get_secret("CS_API_TOKEN")
-        return self._cs_api_token
-
     def get_latest_tag(self, app):
         resp = httpx.get(
             f"{self.config.cs_url}/apps/api/v1/{app['owner']}/{app['title']}/tags/",
@@ -371,6 +377,50 @@ class Manager:
             resp.status_code == 200
         ), f"Got: {resp.url} {resp.status_code} {resp.text}"
         return resp.json()["latest_tag"]
+
+
+class DeploymentManager(BaseManager):
+    def __init__(self, project, cs_url, cs_api_token=None, stale_after=3600):
+        super().__init__(project, cs_url, cs_api_token)
+        self.stale_after = stale_after
+        self.client = httpx.Client(
+            headers={"Authorization": f"Token {self.cs_api_token}"},
+        )
+
+    def get_deployments(self):
+        resp = self.client.get(f"{self.cs_url}/apps/api/v1/deployments/")
+        assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
+        page = resp.json()
+        results = page["results"]
+        next_url = page["next"]
+        while next_url is not None:
+            resp = self.client.get(next_url)
+            assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
+            page = resp.json()
+
+            results += page["results"]
+            next_url = page["next"]
+
+        return results
+
+    def rm_stale(self, dry_run=False):
+        for deployment in self.get_deployments():
+            project = deployment["project"]
+            name = deployment["name"]
+            last_loaded_at = dateutil_parse(deployment["last_loaded_at"])
+            now = datetime.utcnow()
+            seconds_stale = (now - last_loaded_at).seconds
+            if seconds_stale > self.stale_after:
+                print(
+                    f"Deleting {project} {name} since last use was {seconds_stale} "
+                    f"(> {self.stale_after})."
+                )
+                if dry_run:
+                    continue
+                resp = self.client.delete(
+                    f"{self.cs_url}/apps/api/v1/{project}/deployments/{name}/"
+                )
+                assert resp.status_code == 204, f"Got {resp.status_code} {resp.text}"
 
 
 def build(args: argparse.Namespace):
@@ -458,9 +508,19 @@ def stage(args: argparse.Namespace):
     manager.stage()
 
 
+def rm_stale_deployments(args: argparse.Namespace):
+    manager = DeploymentManager(
+        project=args.project,
+        cs_url=args.cs_url,
+        cs_api_token=args.cs_api_token,
+        stale_after=args.stale_after,
+    )
+    manager.rm_stale(dry_run=args.dry_run)
+
+
 def cli(subparsers: argparse._SubParsersAction):
     parser = subparsers.add_parser(
-        "models", description="Deploy models on C/S compute cluster."
+        "models", description="Deploy and manage models on C/S compute cluster."
     )
     parser.add_argument("--names", "-n", type=str, required=False, default=None)
     parser.add_argument("--base-branch", default="origin/master", required=False)
@@ -489,6 +549,13 @@ def cli(subparsers: argparse._SubParsersAction):
 
     promote_parser = model_subparsers.add_parser("promote")
     promote_parser.set_defaults(func=promote)
+
+    stale_deps_parser = model_subparsers.add_parser("rm-stale-deployments")
+    stale_deps_parser.add_argument("--dry-run", action="store_true")
+    stale_deps_parser.add_argument(
+        "--stale-after", type=int, required=False, default=3600
+    )
+    stale_deps_parser.set_defaults(func=rm_stale_deployments)
 
     secrets.cli(model_subparsers)
 

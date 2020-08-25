@@ -175,13 +175,13 @@ ACCOUNT_AUTHENTICATION_METHOD = "username"
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "EST"
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 # Email backend for developing pw reset functionality
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
