@@ -383,7 +383,6 @@ class DeploymentManager(BaseManager):
     def __init__(self, project, cs_url, cs_api_token=None, stale_after=3600):
         super().__init__(project, cs_url, cs_api_token)
         self.stale_after = stale_after
-        self.ping_stale_after = stale_after + (3600 / 2)
         self.client = httpx.Client(
             headers={"Authorization": f"Token {self.cs_api_token}"},
         )
@@ -420,20 +419,14 @@ class DeploymentManager(BaseManager):
             last_ping_at = dateutil_parse(deployment["last_ping_at"])
             now = datetime.utcnow()
 
-            secs_stale = (now - last_load_at).seconds
+            load_secs_stale = (now - last_load_at).seconds
             ping_secs_stale = (now - last_ping_at).seconds
 
+            secs_stale = min(load_secs_stale, ping_secs_stale)
             if secs_stale > self.stale_after:
                 print(
                     f"Deleting {project} {name} since last use was {secs_stale} "
                     f"(> {self.stale_after}) seconds ago."
-                )
-                self.delete(project, name, dry_run=dry_run)
-
-            elif ping_secs_stale > self.ping_stale_after:
-                print(
-                    f"Deleting {project} {name} since last ping was {ping_secs_stale} "
-                    f"(> {self.ping_stale_after}) seconds ago."
                 )
                 self.delete(project, name, dry_run=dry_run)
 
