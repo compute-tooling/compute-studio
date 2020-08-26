@@ -14,7 +14,7 @@ from cs_workers.utils import run, clean, parse_owner_title
 
 from cs_workers.services.secrets import ServicesSecrets  # TODO
 from cs_workers.config import ModelConfig
-from cs_workers.models import secrets, deployment_cleanup
+from cs_workers.models import secrets
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
 BASE_PATH = CURR_PATH / ".."
@@ -383,6 +383,7 @@ class DeploymentManager(BaseManager):
     def __init__(self, project, cs_url, cs_api_token=None, stale_after=3600):
         super().__init__(project, cs_url, cs_api_token)
         self.stale_after = stale_after
+        self.ping_stale_after = stale_after + (3600 / 2)
         self.client = httpx.Client(
             headers={"Authorization": f"Token {self.cs_api_token}"},
         )
@@ -403,24 +404,38 @@ class DeploymentManager(BaseManager):
 
         return results
 
+    def delete(self, project, name, dry_run=False):
+        if dry_run:
+            return
+        resp = self.client.delete(
+            f"{self.cs_url}/apps/api/v1/{project}/deployments/{name}/"
+        )
+        assert resp.status_code == 204, f"Got {resp.status_code} {resp.text}"
+
     def rm_stale(self, dry_run=False):
         for deployment in self.get_deployments():
             project = deployment["project"]
             name = deployment["name"]
-            last_loaded_at = dateutil_parse(deployment["last_loaded_at"])
+            last_load_at = dateutil_parse(deployment["last_load_at"])
+            last_ping_at = dateutil_parse(deployment["last_ping_at"])
             now = datetime.utcnow()
-            seconds_stale = (now - last_loaded_at).seconds
-            if seconds_stale > self.stale_after:
+
+            secs_stale = (now - last_load_at).seconds
+            ping_secs_stale = (now - last_ping_at).seconds
+
+            if secs_stale > self.stale_after:
                 print(
-                    f"Deleting {project} {name} since last use was {seconds_stale} "
-                    f"(> {self.stale_after})."
+                    f"Deleting {project} {name} since last use was {secs_stale} "
+                    f"(> {self.stale_after}) seconds ago."
                 )
-                if dry_run:
-                    continue
-                resp = self.client.delete(
-                    f"{self.cs_url}/apps/api/v1/{project}/deployments/{name}/"
+                self.delete(project, name, dry_run=dry_run)
+
+            elif ping_secs_stale > self.ping_stale_after:
+                print(
+                    f"Deleting {project} {name} since last ping was {ping_secs_stale} "
+                    f"(> {self.ping_stale_after}) seconds ago."
                 )
-                assert resp.status_code == 204, f"Got {resp.status_code} {resp.text}"
+                self.delete(project, name, dry_run=dry_run)
 
 
 def build(args: argparse.Namespace):

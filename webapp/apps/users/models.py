@@ -1,6 +1,7 @@
 from collections import defaultdict
 import json
 
+from hashids import Hashids
 import markdown
 import requests
 
@@ -15,12 +16,18 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.utils import timezone
+from django.http import Http404
 
 from webapp.apps.billing.models import create_billing_objects
 from webapp.apps.comp import actions
 from webapp.apps.comp.compute import SyncCompute, SyncProjects, WORKER_HN
 from webapp.apps.comp.models import Inputs, ANON_BEFORE
 from webapp.settings import DEBUG, COMPUTE_PRICING
+
+
+hashids = Hashids(
+    "cs-salt", min_length=6, alphabet="abcdefghijklmnopqrstuvwxyz1234567890"
+)
 
 
 def is_profile_active(user):
@@ -332,9 +339,34 @@ class DeploymentManager(models.Manager):
         if created:
             deployment.create_deployment()
         else:
-            deployment.refresh_status(use_cache=False)
+            deployment.load()
 
         return deployment, created
+
+    def from_hashid(self, hashid):
+        """
+        Get deployment object from a hash of its pk. Return None
+        if the decode does not resolve to a pk.
+        """
+        pk = hashids.decode(hashid)
+        if not pk:
+            return None
+        else:
+            return self.get(pk=pk[0])
+
+    def get_object_from_hashid_or_404(self, hashid):
+        """
+        Get deployment object from a hash of its pk and 
+        raise 404 exception if it does not exist.
+        """
+        try:
+            obj = self.from_hashid(hashid)
+        except Deployment.DoesNotExist:
+            raise Http404("Object matching query does not exist")
+        if obj:
+            return obj
+        else:
+            raise Http404("Object matching query does not exist")
 
 
 class Deployment(models.Model):
@@ -352,7 +384,8 @@ class Deployment(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True)
-    last_loaded_at = models.DateTimeField(auto_now_add=True)
+    last_load_at = models.DateTimeField(auto_now_add=True)
+    last_ping_at = models.DateTimeField(auto_now_add=True)
     # Uses max length of django username field.
     name = models.CharField(null=True, max_length=150)
     tag = models.CharField(null=True, max_length=64)
@@ -369,7 +402,7 @@ class Deployment(models.Model):
 
     objects = DeploymentManager()
 
-    def refresh_status(self, use_cache=False):
+    def _refresh_status(self, use_cache=False, save=True):
         if use_cache:
             return self.ready
         ready_stats = self.get_deployment()
@@ -378,13 +411,37 @@ class Deployment(models.Model):
             # and ready_stats["svc"]["ready"]
             and ready_stats["ingressroute"]["ready"]
         )
-        if running:
+        if self.deleted_at is not None:
+            self.status = "terminated"
+        elif running:
             self.status = "running"
         else:
             self.status = "creating"
-        self.last_loaded_at = timezone.now()
-        self.save()
+
+        if save:
+            self.save()
         return self.status
+
+    def load(self):
+        status = self._refresh_status(use_cache=False, save=False)
+        self.last_load_at = timezone.now()
+        self.last_ping_at = timezone.now()
+        self.save()
+        return status
+
+    def ping(self):
+        status = self._refresh_status(use_cache=False, save=False)
+        self.last_ping_at = timezone.now()
+        self.save()
+        return status
+
+    @property
+    def hashed_name(self):
+        return f"{self.name}-{self.hashid}"
+
+    @property
+    def hashid(self):
+        return hashids.encode(self.pk)
 
     def create_deployment(self):
         if self.tag is None:
@@ -393,7 +450,7 @@ class Deployment(models.Model):
 
         resp = requests.post(
             f"http://{WORKER_HN}/deployments/{self.project}/",
-            json={"deployment_name": self.name, "tag": self.tag},
+            json={"deployment_name": self.hashed_name, "tag": self.tag,},
         )
 
         if resp.status_code == 200:
@@ -407,14 +464,14 @@ class Deployment(models.Model):
 
     def get_deployment(self):
         resp = requests.get(
-            f"http://{WORKER_HN}/deployments/{self.project}/{self.name}/"
+            f"http://{WORKER_HN}/deployments/{self.project}/{self.hashed_name}/"
         )
         assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
         return resp.json()
 
     def delete_deployment(self):
         resp = requests.delete(
-            f"http://{WORKER_HN}/deployments/{self.project}/{self.name}/"
+            f"http://{WORKER_HN}/deployments/{self.project}/{self.hashed_name}/"
         )
         assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
         self.deleted_at = timezone.now()

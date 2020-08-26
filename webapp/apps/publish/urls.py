@@ -11,6 +11,7 @@ from .views import (
     EmbedApprovalDetailView,
     DeploymentsView,
     DeploymentsDetailView,
+    DeploymentsHashidView,
 )
 
 
@@ -40,6 +41,11 @@ urlpatterns = [
         "api/v1/<str:username>/<str:title>/tags/",
         TagAPIView.as_view(),
         name="project_tags_api",
+    ),
+    path(
+        "api/v1/deployments/<str:hashid>/",
+        DeploymentsHashidView.as_view(),
+        name="deployments_hashid_view",
     ),
     path("api/v1/deployments/", DeploymentsView.as_view(), name="list_deployments_api"),
     path("api/v1/", ProjectAPIView.as_view(), name="project_create_api"),

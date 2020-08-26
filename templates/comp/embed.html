@@ -30,11 +30,11 @@
       id="embedded-iframe"
       class="embedded"
       title="{{object.title}}"
-      src="{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.name}}/"
+      src="{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.hashed_name}}/"
     ></iframe>
     {% else %}
     <div id="notready">
-      <h4>Starting your {{object.owner}}/{{object.title}} visualization...</h4>
+      <p>Starting the {{object.owner}}/{{object.title}} visualization...</p>
     </div>
     {% endif %}
     <div style="position: fixed; bottom: 0; right: 0;">
@@ -62,8 +62,40 @@
             iframe.className = "embedded";
             iframe.id = "embedded-iframe";
             container.appendChild(iframe);
+            setTimeout(pingDeployment, 10000);
           } else {
             setTimeout(checkReady, 3000);
+          }
+        });
+      });
+    };
+
+    var pingDeployment = function() {
+      if (!document.hasFocus()) {
+        console.log("no focus");
+        setTimeout(pingDeployment, 10000);
+        return;
+      }
+      const resp = fetch("/apps/api/v1/deployments/{{deployment.hashid}}/?ping=true").then(function(
+        response
+      ) {
+        response.json().then(function(data) {
+          console.log("data", data);
+          if (data.status === "terminated") {
+            // reload modal
+            var container = document.getElementById("iframe-container");
+            var iframe = document.getElementById("embedded-iframe");
+            container.removeChild(iframe);
+            var restart = document.createElement("p");
+            restart.textContent =
+              "Restarting the {{object.owner}}/{{object.title}} visualization...";
+            restart.style.height = "75vh";
+            container.appendChild(restart);
+            setTimeout(function() {
+              window.location.reload();
+            }, 2000);
+          } else {
+            setTimeout(pingDeployment, 10000);
           }
         });
       });
@@ -73,6 +105,8 @@
       var initIframe = document.getElementById("embedded-iframe");
       if (initIframe === null) {
         return checkReady();
+      } else {
+        return pingDeployment();
       }
     };
   </script>

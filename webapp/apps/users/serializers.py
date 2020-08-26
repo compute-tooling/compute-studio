@@ -12,12 +12,19 @@ class DeploymentSerializer(serializers.ModelSerializer):
             "project",
             "created_at",
             "deleted_at",
-            "last_loaded_at",
+            "last_load_at",
+            "last_ping_at",
             "name",
             "tag",
             "status",
         )
-        read_only = ("project", "created_at", "last_loaded_at", "name", "tag")
+        read_only = (
+            "project",
+            "created_at",
+            "last_loaded_at",
+            "name",
+            "tag",
+        )
 
 
 class ProjectSerializer(serializers.ModelSerializer):

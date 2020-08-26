@@ -385,6 +385,7 @@ class DeploymentsDetailView(APIView):
 
     def get(self, request, *args, **kwargs):
         status_query = request.query_params.get("status", None)
+        ping = request.query_params.get("ping", None)
         if status_query is None:
             status_kwarg = {"status__in": ["creating", "running"]}
         else:
@@ -399,7 +400,10 @@ class DeploymentsDetailView(APIView):
             **status_kwarg,
         )
 
-        deployment.refresh_status(use_cache=False)
+        if ping is None:
+            deployment.load()
+        else:
+            deployment.ping()
 
         return Response(
             DeploymentSerializer(deployment).data, status=status.HTTP_200_OK,
@@ -422,3 +426,26 @@ class DeploymentsDetailView(APIView):
         deployment.delete_deployment()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DeploymentsHashidView(APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    permission_classes = (RequiresActive,)
+
+    def get(self, request, *args, **kwargs):
+        ping = request.query_params.get("ping", None)
+        deployment = Deployment.objects.get_object_from_hashid_or_404(kwargs["hashid"])
+
+        if ping is None:
+            deployment.load()
+        else:
+            deployment.ping()
+
+        return Response(
+            DeploymentSerializer(deployment).data, status=status.HTTP_200_OK,
+        )
