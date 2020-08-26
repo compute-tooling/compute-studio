@@ -54,7 +54,7 @@
   var pingDeployment = function() {
     if (!document.hasFocus()) {
       console.log("no focus");
-      setTimeout(pingDeployment, 10000);
+      setTimeout(pingDeployment, 2000);
       return;
     }
     const resp = fetch("/apps/api/v1/deployments/{{deployment.hashid}}/?ping=true").then(function(
