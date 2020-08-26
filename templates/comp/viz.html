@@ -31,14 +31,13 @@
       "/apps/api/v1/{{object.owner}}/{{object.title}}/deployments/{{deployment.name}}/"
     ).then(function(response) {
       response.json().then(function(data) {
-        console.log("data", data);
         if (data.status === "running") {
           var container = document.getElementById("iframe-container");
           var placeholder = document.getElementById("notready");
           container.removeChild(placeholder);
           var iframe = document.createElement("iframe");
           iframe.src =
-            "{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.name}}/";
+            "{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.hashed_name}}/";
           iframe.title = "{{object.title}}";
           iframe.className = "embedded";
           iframe.id = "embedded-iframe";
@@ -53,7 +52,6 @@
 
   var pingDeployment = function() {
     if (!document.hasFocus()) {
-      console.log("no focus");
       setTimeout(pingDeployment, 2000);
       return;
     }
@@ -61,7 +59,6 @@
       response
     ) {
       response.json().then(function(data) {
-        console.log("data", data);
         if (data.status === "terminated") {
           // reload modal
           var container = document.getElementById("iframe-container");
