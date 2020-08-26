@@ -1,0 +1,32 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: deployment-cleanup
+spec:
+  schedule: "*/15 * * * *"
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: deployment-cleanup
+              image: # Uses scheduler image and is filled in with script.
+              command: ["csw", "models", "rm-stale-deployments", "--stale-after", "1800"]
+              env:
+                - name: CS_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: worker-secret
+                      key: CS_URL
+                - name: CS_API_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: worker-secret
+                      key: CS_API_TOKEN
+                - name: PROJECT
+                  valueFrom:
+                    secretKeyRef:
+                      name: worker-secret
+                      key: PROJECT
+          restartPolicy: Never

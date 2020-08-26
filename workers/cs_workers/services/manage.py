@@ -118,6 +118,11 @@ class Manager:
         with open(self.templates_dir / "secret.template.yaml", "r") as f:
             self.secret_template = yaml.safe_load(f.read())
 
+        with open(
+            self.templates_dir / "services" / "deployment-cleanup.template.yaml", "r"
+        ) as f:
+            self.deployment_cleanup_template = yaml.safe_load(f.read())
+
         self._redis_secrets = None
         self._secrets = None
 
@@ -168,7 +173,7 @@ class Manager:
             "scheduler-RBAC.yaml",
             "outputs-processor-Service.yaml",
             "redis-master-Service.yaml",
-            "job-cleanup-Deployment.yaml",
+            "job-cleanup-Job.yaml",
             "job-cleanup-RBAC.yaml",
         ]
         for filename in config_filenames:
@@ -182,6 +187,7 @@ class Manager:
         self.write_outputs_processor_deployment()
         self.write_secret()
         self.write_redis_deployment()
+        self.write_deployment_cleanup_job()
 
         self.write_cloudflare_api_token()
 
@@ -257,6 +263,14 @@ class Manager:
         }
 
         self.write_config("cloudflare_token_secret.yaml", secret)
+
+    def write_deployment_cleanup_job(self):
+        template = copy.deepcopy(self.deployment_cleanup_template)
+        template["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0][
+            "image"
+        ] = f"gcr.io/{self.project}/scheduler:{self.tag}"
+
+        self.write_config("deployment-cleanup.yaml", template)
 
     def write_config(self, filename, config):
         if self.kubernetes_target == "-":
