@@ -26,16 +26,16 @@
 </div>
 {% endif %} {% endblock %} {% block below_body %}
 <script>
-  var checkReady = function() {
+  const checkReady = function() {
     const resp = fetch(
       "/apps/api/v1/{{object.owner}}/{{object.title}}/deployments/{{deployment.name}}/"
     ).then(function(response) {
       response.json().then(function(data) {
         if (data.status === "running") {
-          var container = document.getElementById("iframe-container");
-          var placeholder = document.getElementById("notready");
+          const container = document.getElementById("iframe-container");
+          const placeholder = document.getElementById("notready");
           container.removeChild(placeholder);
-          var iframe = document.createElement("iframe");
+          const iframe = document.createElement("iframe");
           iframe.src =
             "{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.hashed_name}}/";
           iframe.title = "{{object.title}}";
@@ -50,7 +50,7 @@
     });
   };
 
-  var pingDeployment = function() {
+  const pingDeployment = function() {
     if (!document.hasFocus()) {
       setTimeout(pingDeployment, 2000);
       return;
@@ -61,12 +61,12 @@
       response.json().then(function(data) {
         if (data.status === "terminated") {
           // reload modal
-          var container = document.getElementById("iframe-container");
-          var iframe = document.getElementById("embedded-iframe");
+          const container = document.getElementById("iframe-container");
+          const iframe = document.getElementById("embedded-iframe");
           container.removeChild(iframe);
-          var restart = document.createElement("p");
+          const restart = document.createElement("p");
           restart.textContent = "Restarting the {{object.owner}}/{{object.title}} visualization...";
-          restart.style = "height: 75vh;";
+          restart.style.height = "75vh";
           container.appendChild(restart);
           setTimeout(function() {
             window.location.reload();
@@ -79,7 +79,7 @@
   };
 
   window.onload = function() {
-    var initIframe = document.getElementById("embedded-iframe");
+    const initIframe = document.getElementById("embedded-iframe");
     if (initIframe === null) {
       return checkReady();
     } else {
