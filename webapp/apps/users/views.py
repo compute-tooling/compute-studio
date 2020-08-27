@@ -12,7 +12,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from webapp.settings import USE_STRIPE
-from webapp.apps.publish.views import GetProjectMixin
 
 from .forms import UserCreationForm, CancelSubscriptionForm, DeleteUserForm
 from .models import is_profile_active, Project, create_profile_from_user
@@ -110,52 +109,3 @@ class DeleteUserDone(generic.TemplateView):
 
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
-
-
-class AccessStatusAPI(GetProjectMixin, APIView):
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        plan = {"name": "free", "plan_duration": None}
-        if user.is_authenticated and user.profile:
-            user_status = user.profile.status
-            username = user.username
-            if getattr(user, "customer", None) is not None:
-                plan = user.customer.current_plan()
-        else:
-            user_status = "anon"
-            username = None
-
-        if kwargs:
-            project = self.get_object(**kwargs)
-            exp_cost, exp_time = project.exp_job_info(adjust=True)
-            if user.is_authenticated and user.profile:
-                can_run = user.profile.can_run(project)
-                can_write_project = project.has_write_access(user)
-            else:
-                can_run = False
-                can_write_project = False
-
-            return Response(
-                {
-                    "is_sponsored": project.is_sponsored,
-                    "sponsor_message": project.sponsor_message,
-                    "user_status": user_status,
-                    "can_run": can_run,
-                    "can_write_project": can_write_project,
-                    "server_cost": project.server_cost,
-                    "exp_cost": exp_cost,
-                    "exp_time": exp_time,
-                    "api_url": reverse("access_project", kwargs=kwargs),
-                    "username": username,
-                    "plan": plan,
-                }
-            )
-        else:
-            return Response(
-                {
-                    "user_status": user_status,
-                    "api_url": reverse("access_status"),
-                    "username": username,
-                    "plan": plan,
-                }
-            )
