@@ -20,6 +20,7 @@ spec:
     spec:
       containers:
         - env: []
+          command: ["redis-server", "--appendonly", "yes"]
           image: # redis-python
           lifecycle:
             postStart:
@@ -34,5 +35,14 @@ spec:
             requests:
               cpu: 100m
               memory: 100Mi
+          volumeMounts:
+          - mountPath: /data
+            name: redis-volume
+      volumes:
+      - name: redis-volume
+        # This GCE PD must already exist.
+        gcePersistentDisk:
+          pdName: redis-disk
+          fsType: ext4
       nodeSelector:
         component: api
