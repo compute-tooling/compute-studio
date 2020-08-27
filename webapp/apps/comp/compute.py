@@ -26,31 +26,26 @@ class Compute(object):
     def remote_submit_job(
         self, url: str, data: dict, timeout: int = TIMEOUT_IN_SECONDS, headers=None
     ):
-        response = requests.post(url, json=data, timeout=timeout)
+        response = requests.post(url, json=data, timeout=timeout, headers=headers)
         return response
-
-    def remote_query_job(self, theurl):
-        job_response = requests.get(theurl)
-        return job_response
-
-    def remote_get_job(self, theurl):
-        job_response = requests.get(theurl)
-        return job_response
 
     def submit_job(self, project, task_name, task_kwargs, tag=None):
         print("submitting", task_name)
-        url = f"http://{WORKER_HN}/{project.owner}/{project.title}/"
+        cluster = project.cluster
+        url = f"{cluster.url}/{project.owner}/{project.title}/"
         return self.submit(
-            tasks=dict(task_name=task_name, tag=tag, task_kwargs=task_kwargs), url=url
+            tasks=dict(task_name=task_name, tag=tag, task_kwargs=task_kwargs),
+            url=url,
+            headers=cluster.headers(),
         )
 
-    def submit(self, tasks, url):
+    def submit(self, tasks, url, headers):
         submitted = False
         attempts = 0
         while not submitted:
             try:
                 response = self.remote_submit_job(
-                    url, data=tasks, timeout=TIMEOUT_IN_SECONDS
+                    url, data=tasks, timeout=TIMEOUT_IN_SECONDS, headers=headers
                 )
                 if response.status_code == 200:
                     print("submitted: ", url)
@@ -74,13 +69,13 @@ class Compute(object):
 
 
 class SyncCompute(Compute):
-    def submit(self, tasks, url):
+    def submit(self, tasks, url, headers):
         submitted = False
         attempts = 0
         while not submitted:
             try:
                 response = self.remote_submit_job(
-                    url, data=tasks, timeout=TIMEOUT_IN_SECONDS
+                    url, data=tasks, timeout=TIMEOUT_IN_SECONDS, headers=headers
                 )
                 if response.status_code == 200:
                     print("submitted: ", url)
@@ -109,6 +104,7 @@ class SyncCompute(Compute):
 
 
 class SyncProjects(SyncCompute):
-    def submit_job(self, projects):
-        url = f"http://{WORKER_HN}/sync/"
-        return self.submit(tasks=projects, url=url)
+    def submit_job(self, project, cluster):
+        url = f"{cluster.url}/sync/"
+        headers = cluster.headers()
+        return self.submit(tasks=[project], url=url, headers=headers)

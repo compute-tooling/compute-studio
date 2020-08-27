@@ -1,6 +1,5 @@
 import binascii
 import os
-from contextlib import contextmanager
 
 import marshmallow as ma
 import redis

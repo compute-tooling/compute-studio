@@ -35,7 +35,7 @@ class Scheduler(tornado.web.RequestHandler):
 
     async def prepare(self):
         self.user = authenticate_request(self.request)
-        if self.user is None or getattr(self.user, "approved", False):
+        if self.user is None or not getattr(self.user, "approved", False):
             raise tornado.web.HTTPError(403)
 
     async def post(self, owner, title):
@@ -98,7 +98,8 @@ class SyncProjects(tornado.web.RequestHandler):
 
     async def prepare(self):
         self.user = authenticate_request(self.request)
-        if self.user is None or getattr(self.user, "approved", False):
+        print("got user", self.user)
+        if self.user is None or not getattr(self.user, "approved", False):
             raise tornado.web.HTTPError(403)
 
     def post(self):
@@ -115,7 +116,7 @@ class DeploymentsDetailApi(tornado.web.RequestHandler):
 
     async def prepare(self):
         self.user = authenticate_request(self.request)
-        if self.user is None:
+        if self.user is None or not getattr(self.user, "approved", False):
             raise tornado.web.HTTPError(403)
 
     def get(self, owner, title, deployment_name):
@@ -182,7 +183,7 @@ class DeploymentsApi(tornado.web.RequestHandler):
 
     async def prepare(self):
         self.user = authenticate_request(self.request)
-        if self.user is None or getattr(self.user, "approved", False):
+        if self.user is None or not getattr(self.user, "approved", False):
             raise tornado.web.HTTPError(403)
 
     def post(self, owner, title):

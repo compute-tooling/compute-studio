@@ -119,6 +119,35 @@ class Profile(models.Model):
         permissions = (("access_public", "Has access to public projects"),)
 
 
+class Cluster(models.Model):
+    url = models.URLField(max_length=64)
+    access_token = models.CharField(max_length=128, null=True)
+    service_account = models.OneToOneField(
+        Profile, null=True, on_delete=models.SET_NULL
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    deleted_at = models.DateTimeField(null=True)
+
+    def headers(self):
+        return {"Authorization": f"Token {self.access_token}"}
+
+    def create_user_in_cluster(self, cs_url):
+        resp = requests.post(
+            f"{self.url}/auth/",
+            json={
+                "username": self.service_account.user.username,
+                "url": cs_url,
+                "email": self.service_account.user.email,
+            },
+        )
+        if resp.status_code == 200:
+            self.access_token = resp.json()["token"]
+            self.save()
+            return self
+
+        raise Exception(f"{resp.status_code} {resp.text}")
+
+
 class ProjectManager(models.Manager):
     def sync_products(self, projects=None):
         if projects is None:
@@ -126,8 +155,8 @@ class ProjectManager(models.Manager):
         for project in projects:
             create_billing_objects(project)
 
-    def sync_projects_with_workers(self, data):
-        SyncProjects().submit_job(data)
+    def sync_project_with_workers(self, project, cluster):
+        SyncProjects().submit_job(project, cluster)
 
 
 class Project(models.Model):
@@ -146,6 +175,10 @@ class Project(models.Model):
     sponsor_message = models.CharField(null=True, blank=True, max_length=10000)
     pay_per_sim = models.BooleanField(default=True)
     is_public = models.BooleanField(default=True)
+
+    cluster = models.ForeignKey(
+        Cluster, null=True, related_name="projects", on_delete=models.SET_NULL
+    )
 
     tech = models.CharField(
         choices=(
@@ -449,8 +482,9 @@ class Deployment(models.Model):
             self.save()
 
         resp = requests.post(
-            f"http://{WORKER_HN}/deployments/{self.project}/",
+            f"{self.project.cluster.url}/deployments/{self.project}/",
             json={"deployment_name": self.hashed_name, "tag": self.tag,},
+            headers=self.project.cluster.headers(),
         )
 
         if resp.status_code == 200:
@@ -464,14 +498,16 @@ class Deployment(models.Model):
 
     def get_deployment(self):
         resp = requests.get(
-            f"http://{WORKER_HN}/deployments/{self.project}/{self.hashed_name}/"
+            f"{self.project.cluster.url}/deployments/{self.project}/{self.hashed_name}/",
+            headers=self.project.cluster.headers(),
         )
         assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
         return resp.json()
 
     def delete_deployment(self):
         resp = requests.delete(
-            f"http://{WORKER_HN}/deployments/{self.project}/{self.hashed_name}/"
+            f"{self.project.cluster.url}/deployments/{self.project}/{self.hashed_name}/",
+            headers=self.project.cluster.headers(),
         )
         assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
         self.deleted_at = timezone.now()
