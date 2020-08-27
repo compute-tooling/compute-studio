@@ -43,7 +43,7 @@ class Scheduler(tornado.web.RequestHandler):
         if not self.request.body:
             return
         payload = Payload().loads(self.request.body.decode("utf-8"))
-        print("payload", payload)
+
         if f"{owner}/{title}" not in self.config.projects():
             self.set_status(404)
 
@@ -98,11 +98,11 @@ class SyncProjects(tornado.web.RequestHandler):
 
     async def prepare(self):
         self.user = authenticate_request(self.request)
-        print("got user", self.user)
         if self.user is None or not getattr(self.user, "approved", False):
             raise tornado.web.HTTPError(403)
 
     def post(self):
+        print("POST -- /sync/")
         data = json.loads(self.request.body.decode("utf-8"))
         projects = hash_projects(data)
         self.config.set_projects(projects=projects)

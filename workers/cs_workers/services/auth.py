@@ -137,12 +137,14 @@ class AuthApi(tornado.web.RequestHandler):
         self.user = authenticate_request(self.request)
 
     def get(self):
+        print("GET -- /auth/")
         if self.user is None:
             raise tornado.web.HTTPError(403)
         self.set_status(200)
         self.write(self.user.dump())
 
     def post(self):
+        print("POST -- /auth")
         try:
             data = UserSerializer().loads(self.request.body.decode("utf-8"))
         except ma.ValidationError as ve:
@@ -161,6 +163,7 @@ class AuthApi(tornado.web.RequestHandler):
         self.write(user.dump())
 
     def delete(self):
+        print("DELETE -- /auth/")
         if self.user is None:
             raise tornado.web.HTTPError(403)
         self.user.delete()
