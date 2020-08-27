@@ -12,7 +12,8 @@ import tornado.web
 from cs_workers.utils import hash_projects, redis_conn_from_env
 from cs_workers.models.clients import job, api_task, server
 from cs_workers.config import ModelConfig
-
+from cs_workers.services.serializers import Payload, Deployment
+from cs_workers.services.auth import AuthApi, authenticate_request
 
 CS_URL = os.environ.get("CS_URL")
 PROJECT = os.environ.get("PROJECT")
@@ -27,24 +28,15 @@ redis_conn = dict(
 incluster = os.environ.get("KUBERNETES_SERVICE_HOST", False) is not False
 
 
-class Payload(ma.Schema):
-    task_id = ma.fields.UUID(required=False)
-    task_name = ma.fields.Str(required=True)
-    task_kwargs = ma.fields.Dict(
-        keys=ma.fields.Str(), values=ma.fields.Field(), missing=dict
-    )
-    tag = ma.fields.Str(required=False, allow_none=True)
-
-
-class Deployment(ma.Schema):
-    tag = ma.fields.Str(required=True)
-    deployment_name = ma.fields.Str(required=True)
-
-
 class Scheduler(tornado.web.RequestHandler):
     def initialize(self, config=None, rclient=None):
         self.config = config
         self.rclient = rclient
+
+    async def prepare(self):
+        self.user = authenticate_request(self.request)
+        if self.user is None or getattr(self.user, "approved", False):
+            raise tornado.web.HTTPError(403)
 
     async def post(self, owner, title):
         print("POST -- /", owner, title)
@@ -104,6 +96,11 @@ class SyncProjects(tornado.web.RequestHandler):
         self.config = config
         self.rclient = rclient
 
+    async def prepare(self):
+        self.user = authenticate_request(self.request)
+        if self.user is None or getattr(self.user, "approved", False):
+            raise tornado.web.HTTPError(403)
+
     def post(self):
         data = json.loads(self.request.body.decode("utf-8"))
         projects = hash_projects(data)
@@ -115,6 +112,11 @@ class DeploymentsDetailApi(tornado.web.RequestHandler):
     def initialize(self, config=None, rclient=None):
         self.config = config
         self.rclient = rclient
+
+    async def prepare(self):
+        self.user = authenticate_request(self.request)
+        if self.user is None:
+            raise tornado.web.HTTPError(403)
 
     def get(self, owner, title, deployment_name):
         print("GET --", f"/deployments/{owner}/{title}/{deployment_name}/")
@@ -178,6 +180,11 @@ class DeploymentsApi(tornado.web.RequestHandler):
         self.config = config
         self.rclient = rclient
 
+    async def prepare(self):
+        self.user = authenticate_request(self.request)
+        if self.user is None or getattr(self.user, "approved", False):
+            raise tornado.web.HTTPError(403)
+
     def post(self, owner, title):
         print("POST --", f"/deployments/{owner}/{title}/")
         try:
@@ -232,6 +239,7 @@ def get_app():
     rclient = redis.Redis(**redis_conn)
     config = ModelConfig(PROJECT, cs_url=CS_URL, rclient=rclient)
     config.set_projects()
+    assert rclient.get("projects") is not None
     return tornado.web.Application(
         [
             (r"/sync/", SyncProjects, dict(config=config, rclient=rclient),),
@@ -250,6 +258,7 @@ def get_app():
                 DeploymentsApi,
                 dict(config=config, rclient=rclient),
             ),
+            (r"/auth/", AuthApi, dict()),
         ],
         debug=True,
         autoreload=True,
