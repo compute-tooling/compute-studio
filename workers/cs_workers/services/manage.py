@@ -12,6 +12,7 @@ from pathlib import Path
 from kubernetes import client as kclient, config as kconfig
 
 from cs_workers.services.secrets import ServicesSecrets, cli as secrets_cli
+from cs_workers.services import scheduler
 
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
@@ -244,6 +245,7 @@ class Manager:
         secrets["stringData"]["CS_API_TOKEN"] = self.cs_api_token
         secrets["stringData"]["BUCKET"] = self.bucket
         secrets["stringData"]["PROJECT"] = self.project
+        secrets["stringData"]["CS_CRYPT_KEY"] = self.secrets.get_secret("CS_CRYPT_KEY")
         redis_secrets = self.redis_secrets()
         for name, sec in redis_secrets.items():
             if sec is not None:
@@ -346,8 +348,12 @@ def config(args: argparse.Namespace):
     cluster.config()
 
 
-def serve(args: argparse.Namespace):
+def port_forward(args: argparse.Namespace):
     run("kubectl port-forward svc/scheduler 8888:80")
+
+
+def serve(args: argparse.Namespace):
+    scheduler.run()
 
 
 def cli(subparsers: argparse._SubParsersAction):
@@ -366,6 +372,9 @@ def cli(subparsers: argparse._SubParsersAction):
     config_parser = svc_subparsers.add_parser("config")
     config_parser.add_argument("--out", "-o")
     config_parser.set_defaults(func=config)
+
+    pf_parser = svc_subparsers.add_parser("port-forward")
+    pf_parser.set_defaults(func=port_forward)
 
     serve_parser = svc_subparsers.add_parser("serve")
     serve_parser.set_defaults(func=serve)

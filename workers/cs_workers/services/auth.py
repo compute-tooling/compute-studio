@@ -1,10 +1,19 @@
 import binascii
 import os
 
+try:
+    import jwt
+    import cs_crypt
+
+    cryptkeeper = cs_crypt.CryptKeeper()
+except ImportError as ie:
+    jwt = None
+    cs_crypt = None
+    cryptkeeper = None
+
 import marshmallow as ma
 import redis
 import tornado.web
-
 
 from cs_workers.utils import redis_conn_from_env
 from cs_workers.services.serializers import UserSerializer
@@ -25,31 +34,41 @@ class UserExists(Exception):
 
 
 class User:
-    def __init__(self, username=None, email=None, url=None, token=None, approved=None):
+    def __init__(
+        self, username=None, email=None, url=None, jwt_secret=None, approved=None
+    ):
         self.username = username
         self.email = email
         self.url = url
-        self.token = token
+        self.jwt_secret = jwt_secret
         self.approved = int(approved)
 
     @property
     def fields(self):
-        return ["username", "email", "url", "token", "approved"]
+        return ["username", "email", "url", "approved"]
 
-    def items(self):
-        for field in self.fields:
+    def items(self, include_jwt_secret=False):
+        fields = list(self.fields)
+        if include_jwt_secret:
+            fields += ["jwt_secret"]
+        for field in fields:
             yield field, getattr(self, field)
         return
 
-    def dump(self):
-        return {field: value for field, value in self.items()}
+    def dump(self, include_jwt_secret=False):
+        values = {}
+        for field, value in self.items(include_jwt_secret=include_jwt_secret):
+            if field == "jwt_secret":
+                values[field] = cryptkeeper.decrypt(value)
+            else:
+                values[field] = value
+        return values
 
     def save(self, **kwargs):
         if kwargs.keys() - set(self.fields):
             raise ValueError(f"Unknown fields: {','.join(list(kwargs.keys()))}")
         with redis.Redis(**redis_conn) as rclient:
-            rclient.set(f"users-tokens-{self.token}", self.username)
-            for field, value in self.items():
+            for field, value in self.items(include_jwt_secret=True):
                 if field in kwargs:
                     value = kwargs[field]
                     setattr(self, field, value)
@@ -60,15 +79,20 @@ class User:
 
     def delete(self):
         with redis.Redis(**redis_conn) as rclient:
-            token_res = rclient.delete(f"users-tokens-{self.token}")
             user_res = rclient.delete(f"users-{self.username}")
-        return token_res and user_res
+        return bool(user_res)
 
     def __eq__(self, oth):
         for field in self.fields:
             if getattr(self, field) != getattr(oth, field):
                 return False
         return True
+
+    def get_jwt_token(self):
+        return jwt.encode(self.dump(), cryptkeeper.decrypt(self.jwt_secret))
+
+    def read_jwt_token(self, jwt_token):
+        return jwt.decode(jwt_token, cryptkeeper.decrypt(self.jwt_secret))
 
     @staticmethod
     def _load_values(values):
@@ -82,27 +106,15 @@ class User:
         return User(**result)
 
     @staticmethod
-    def get(username=None, token=None):
-        if username is None and token is None:
+    def get(username):
+        if username is None:
             raise UserNotFound()
-        if username is not None:
-            with redis.Redis(**redis_conn) as rclient:
-                values = rclient.hgetall(f"users-{username}")
-                if not values:
-                    raise UserNotFound()
-                user = User._load_values(values)
 
-        elif token is not None:
-            with redis.Redis(**redis_conn) as rclient:
-                username = rclient.get(f"users-tokens-{token}")
-                if username is None:
-                    raise UserNotFound()
-                values = rclient.hgetall(f"users-{username.decode()}")
-                if not values:
-                    raise UserNotFound()
-                user = User._load_values(values)
-
-        return user
+        with redis.Redis(**redis_conn) as rclient:
+            values = rclient.hgetall(f"users-{username}")
+            if not values:
+                raise UserNotFound()
+            return User._load_values(values)
 
     @staticmethod
     def create(username, email, url, approved):
@@ -111,25 +123,32 @@ class User:
             raise UserExists()
         except UserNotFound:
             pass
-        token = binascii.hexlify(os.urandom(32)).decode()
-        user = User(username, email, url, token, approved)
+        jwt_secret = binascii.hexlify(os.urandom(32)).decode()
+        encrypted = cryptkeeper.encrypt(jwt_secret)
+        user = User(username, email, url, encrypted, approved)
         return user.save()
 
 
 def authenticate_request(request):
-    auth_header = request.headers.get("Authorization")
-    if auth_header is None:
-        return None
-    token = auth_header.split(" ")
-    if len(token) != 2:
+    jwt_token = request.headers.get("Authorization")
+    cluster_user = request.headers.get("Cluster-User")
+    if jwt_token is None or cluster_user is None:
         return None
 
     try:
-        return User.get(token=token[1])
+        user = User.get(cluster_user)
     except UserNotFound:
-        pass
+        return None
 
-    return None
+    try:
+        user.read_jwt_token(jwt_token)
+    except Exception:
+        import traceback
+
+        traceback.print_exc()
+        return None
+
+    return user
 
 
 class AuthApi(tornado.web.RequestHandler):
@@ -160,7 +179,7 @@ class AuthApi(tornado.web.RequestHandler):
             return
 
         self.set_status(200)
-        self.write(user.dump())
+        self.write(user.dump(include_jwt_secret=True))
 
     def delete(self):
         print("DELETE -- /auth/")

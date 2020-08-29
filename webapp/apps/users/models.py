@@ -24,6 +24,10 @@ from webapp.apps.comp.compute import SyncCompute, SyncProjects, WORKER_HN
 from webapp.apps.comp.models import Inputs, ANON_BEFORE
 from webapp.settings import DEBUG, COMPUTE_PRICING
 
+from cs_crypt import CryptKeeper
+import jwt
+
+cryptkeeper = CryptKeeper()
 
 hashids = Hashids(
     "cs-salt", min_length=6, alphabet="abcdefghijklmnopqrstuvwxyz1234567890"
@@ -121,7 +125,7 @@ class Profile(models.Model):
 
 class Cluster(models.Model):
     url = models.URLField(max_length=64)
-    access_token = models.CharField(max_length=128, null=True)
+    jwt_secret = models.CharField(max_length=512, null=True)
     service_account = models.OneToOneField(
         Profile, null=True, on_delete=models.SET_NULL
     )
@@ -129,7 +133,18 @@ class Cluster(models.Model):
     deleted_at = models.DateTimeField(null=True)
 
     def headers(self):
-        return {"Authorization": f"Token {self.access_token}"}
+        jwt_token = jwt.encode(
+            {
+                "email": self.service_account.user.email,
+                "username": self.service_account.user.username,
+                "url": "http://localhost:8000",
+            },
+            cryptkeeper.decrypt(self.jwt_secret),
+        )
+        return {
+            "Authorization": jwt_token,
+            "Cluster-User": self.service_account.user.username,
+        }
 
     def create_user_in_cluster(self, cs_url):
         resp = requests.post(
@@ -141,7 +156,7 @@ class Cluster(models.Model):
             },
         )
         if resp.status_code == 200:
-            self.access_token = resp.json()["token"]
+            self.jwt_secret = cryptkeeper.encrypt(resp.json()["jwt_secret"])
             self.save()
             return self
 

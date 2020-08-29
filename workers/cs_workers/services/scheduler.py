@@ -266,12 +266,13 @@ def get_app():
     )
 
 
-def start(args: argparse.Namespace):
-    print("starting, now")
-    if args.start:
-        app = get_app()
-        app.listen(8888)
-        tornado.ioloop.IOLoop.current().start()
+def run(args: argparse.Namespace = None):
+    port = os.environ.get("PORT", 8888)
+    host = os.environ.get("HOST", "localhost")
+    print(f"App running on {host}:{port}")
+    app = get_app()
+    app.listen(port)
+    tornado.ioloop.IOLoop.current().start()
 
 
 def cli(subparsers: argparse._SubParsersAction):
@@ -279,4 +280,4 @@ def cli(subparsers: argparse._SubParsersAction):
         "scheduler", description="REST API for running jobs on C/S workers."
     )
     parser.add_argument("--start", required=False, action="store_true")
-    parser.set_defaults(func=start)
+    parser.set_defaults(func=run)

@@ -1,8 +1,9 @@
 import httpx
+import jwt
 import pytest
 import redis
 
-from cs_workers.services.auth import User, redis_conn, UserNotFound
+from cs_workers.services.auth import User, redis_conn, UserNotFound, cryptkeeper
 
 
 @pytest.fixture(scope="function")
@@ -31,24 +32,17 @@ class TestUser:
     def test_create_user(self, user):
         with redis.Redis(**redis_conn) as rclient:
             user_vals = rclient.hgetall("users-hdoupe")
-            username = rclient.get(f"users-tokens-{user.token}") == b"hdoupe"
 
         assert user_vals
-        assert username
+        assert cryptkeeper.decrypt(user.jwt_secret)
 
     def test_get_user(self, user):
         oth = User.get(username=user.username)
         assert oth == user
 
-        oth = User.get(token=user.token)
-        assert oth == user
-
     def test_not_found(self, user):
         with pytest.raises(UserNotFound):
             User.get(username="whoops")
-
-        with pytest.raises(UserNotFound):
-            User.get(token="whoops")
 
     def test_delete(self, user):
         assert user.delete()
@@ -57,8 +51,14 @@ class TestUser:
         with pytest.raises(UserNotFound):
             User.get(username=user.username)
 
-        with pytest.raises(UserNotFound):
-            User.get(token=user.token)
+    def test_dump(self, user):
+        assert list(user.dump().keys()) == user.fields
+        assert "jwt_secret" not in user.dump()
+        assert "jwt_secret" in user.dump(include_jwt_secret=True)
+
+    def test_jwt(self, user):
+        jwt_token = user.get_jwt_token()
+        assert user.read_jwt_token(jwt_token) == user.dump()
 
 
 class TestApi:
@@ -70,12 +70,17 @@ class TestApi:
         assert resp.status_code == 403
 
         resp = self.client.get(
-            "/auth/", headers={"Authorization": f"Token: {user.token}"}
+            "/auth/",
+            headers={"Authorization": user.get_jwt_token(), "Cluster-User": "hdoupe",},
         )
         assert resp.status_code == 200
         assert resp.json() == user.dump()
 
-        resp = self.client.get("/auth/", headers={"Authorization": f"Token: abc123"})
+        invalid_token = jwt.encode(user.dump(), "abc123")
+        resp = self.client.get(
+            "/auth/",
+            headers={"Authorization": invalid_token, "Cluster-User": "hdoupe",},
+        )
         assert resp.status_code == 403
 
     def test_post(self):
@@ -89,7 +94,8 @@ class TestApi:
         )
         assert resp.status_code == 200
         user = User.get(username="hdoupe")
-        assert resp.json() == user.dump()
+        data = resp.json()
+        assert data == user.dump(include_jwt_secret=True)
 
         resp = self.client.post(
             "/auth/",
@@ -106,12 +112,17 @@ class TestApi:
         assert resp.status_code == 403
 
         resp = self.client.delete(
-            "/auth/", headers={"Authorization": f"Token: {user.token}"}
+            "/auth/",
+            headers={"Authorization": user.get_jwt_token(), "Cluster-User": "hdoupe",},
         )
         assert resp.status_code == 204
 
         with pytest.raises(UserNotFound):
             User.get(username=user.username)
 
-        resp = self.client.delete("/auth/", headers={"Authorization": f"Token: abc123"})
+        invalid_token = jwt.encode(user.dump(), "abc123")
+        resp = self.client.delete(
+            "/auth/",
+            headers={"Authorization": invalid_token, "Cluster-User": "hdoupe",},
+        )
         assert resp.status_code == 403
