@@ -29,6 +29,11 @@ spec:
                 secretKeyRef:
                   name: worker-secret
                   key: PROJECT
+            - name: CS_CRYPT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: CS_CRYPT_KEY
             - name: REDIS_HOST
               valueFrom:
                 secretKeyRef:

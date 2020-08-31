@@ -4,9 +4,7 @@ import os
 try:
     import jwt
     import cs_crypt
-
-    cryptkeeper = cs_crypt.CryptKeeper()
-except ImportError as ie:
+except ImportError:
     jwt = None
     cs_crypt = None
     cryptkeeper = None
@@ -23,6 +21,19 @@ redis_conn = dict(
     password=os.environ.get("REDIS_SCHEDULER_PW"),
     **redis_conn_from_env(),
 )
+
+
+def get_cyptkeeper():
+    if cs_crypt is None:
+        return None
+    else:
+        try:
+            return cs_crypt.CryptKeeper()
+        except cs_crypt.EncryptionUnavailable:
+            return None
+
+
+cryptkeeper = get_cryptkeeper()
 
 
 class UserNotFound(Exception):
