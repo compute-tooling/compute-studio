@@ -1,6 +1,7 @@
 import base64
 import binascii
 import os
+from typing import List, Union
 
 
 try:
@@ -10,7 +11,10 @@ except ImportError:
     MultiFernet = None
 
 
+__version__ = "0.0.2"
+
 KEY_ENV = "CS_CRYPT_KEY"
+KEY_FROM_ENV = os.environ.get(KEY_ENV, "")
 
 
 def _validate_key(key):
@@ -48,24 +52,48 @@ def _validate_key(key):
 
 
 class CryptKeeper:
-    def __init__(self):
-        if not self.check_available():
-            return
-        self._keys = [
-            _validate_key(key) for key in os.environ[KEY_ENV].split(";") if key.strip()
-        ]
+    def __init__(self, keys: List[Union[str, bytes]] = None):
+        self._keys = self.read_keys(keys)
+
+        self.check_available()
+
         self._fernet = MultiFernet(
             [Fernet(base64.urlsafe_b64encode(key)) for key in self._keys]
         )
 
-    def encrypt(self, data):
+    def read_keys(self, keys: List[Union[str, bytes]] = None):
+        if keys is not None:
+            return [_validate_key(key) for key in keys]
+        else:
+            return [
+                _validate_key(key) for key in KEY_FROM_ENV.split(";") if key.strip()
+            ]
+
+    def encrypt(self, data: str):
+        self.check_available()
         return self._fernet.encrypt(data.encode("utf8")).decode("utf-8")
 
-    def decrypt(self, data):
+    def decrypt(self, data: str):
+        self.check_available()
         return self._fernet.decrypt(data.encode("utf-8")).decode("utf-8")
 
     def check_available(self):
-        if not os.environ.get(KEY_ENV) or Fernet is None or MultiFernet is None:
-            return False
-        else:
-            return True
+        if Fernet is None or MultiFernet is None:
+            raise CryptographyUnavailable()
+
+        if not self._keys:
+            raise NoEncryptionKeys()
+
+
+class EncryptionUnavailable(Exception):
+    pass
+
+
+class CryptographyUnavailable(EncryptionUnavailable):
+    def __str__(self):
+        return "cryptography library is required for encryption"
+
+
+class NoEncryptionKeys(EncryptionUnavailable):
+    def __str__(self):
+        return "Encryption keys must be specified in %s env" % KEY_ENV
