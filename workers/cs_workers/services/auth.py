@@ -23,7 +23,7 @@ redis_conn = dict(
 )
 
 
-def get_cyptkeeper():
+def get_cryptkeeper():
     if cs_crypt is None:
         return None
     else:
