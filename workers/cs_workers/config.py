@@ -59,7 +59,14 @@ class ModelConfig:
                 selected[f"{o}/{t}"] = projects[f"{o}/{t}"]
             projects = selected
         self.format_resources(projects)
+
         if self.rclient is not None:
+            blob = self.rclient.get("projects")
+            if blob is not None:
+                projects = {
+                    **json.loads(blob.decode()),
+                    **projects,
+                }
             self.rclient.set(
                 "projects", json.dumps(projects),
             )
