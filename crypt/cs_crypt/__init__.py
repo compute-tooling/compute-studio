@@ -1,3 +1,12 @@
+"""
+Module for encrypting and decrypting secrets. This is used internally by the
+Compute Studio webapp and kubernetes cluster for encrypting and decrypting
+JWT secrets.
+
+This module is a modified version of JupyterHub's crypto.py module:
+https://github.com/jupyterhub/jupyterhub/blob/1.1.0/jupyterhub/crypto.py
+"""
+
 import base64
 import binascii
 import os
