@@ -201,7 +201,7 @@ const ParamComponent: React.FC<{
   } else {
     colClass = "col-md";
   }
-  if ("checkbox" in data || "indexed" in data) {
+  if ("checkbox" in data) {
     checkbox = (
       <FastField
         name={`adjustment.${msect}.${param}.checkbox`}
