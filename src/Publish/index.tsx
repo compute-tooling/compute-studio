@@ -543,7 +543,7 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
   }
   render() {
     if (!this.state.accessStatus) {
-      return <p>loading...</p>;
+      return <div />;
     }
     return (
       <Card className="card-outer">
@@ -584,7 +584,7 @@ class ProjectDetail extends React.Component<
     const app_name = this.props.match.params.app_name;
     const id = `${username}/${app_name}`;
     if (!this.state.project || !this.state.accessStatus) {
-      return <p>getting project...</p>;
+      return <div />;
     }
     return this.state.edit ? (
       <Card className="card-outer">
