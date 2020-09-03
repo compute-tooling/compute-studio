@@ -8,6 +8,7 @@ import pytest
 import stripe
 
 from webapp.apps.users.models import Profile, Project
+from webapp.apps.publish.tests.utils import mock_sync_projects
 from webapp.apps.billing.models import (
     Customer,
     Plan,
@@ -133,7 +134,7 @@ class TestStripeModels:
         for sub in customer.subscriptions.all():
             assert sub.cancel_at_period_end
 
-    def test_customer_sync_subscriptions(self, db, client, mock_sync_projects):
+    def test_customer_sync_subscriptions(self, db, client):
         u = User.objects.create_user(
             username="synctest", email="synctest@email.com", password="syncer2222"
         )
@@ -159,11 +160,18 @@ class TestStripeModels:
         client.login(username=u.username, password="syncer2222")
         post_data = {
             "title": "New-Model",
-            "oneliner": "one liner",
+            "oneliner": "oneliner",
             "description": "**Super** new!",
             "repo_url": "https://github.com/compute-tooling/compute-studio",
+            "repo_tag": "dev",
+            "cpu": 3,
+            "memory": 9,
+            "listed": True,
+            "latest_tag": "v1",
         }
-        resp = client.post("/publish/api/", post_data)
+
+        with mock_sync_projects():
+            resp = client.post("/apps/api/v1/", post_data)
         assert resp.status_code == 200
         Project.objects.sync_products()
         Customer.objects.sync_subscriptions()
