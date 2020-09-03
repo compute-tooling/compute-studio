@@ -38,6 +38,8 @@ CSRF_COOKIE_NAME = "csrftoken"
 
 USE_STRIPE = os.environ.get("USE_STRIPE", "false").lower() == "true"
 
+DEFAULT_CLUSTER_USER = os.environ["DEFAULT_CLUSTER_USER"]
+
 # Indicates that this c/s instance uses billing restrictions.
 HAS_USAGE_RESTRICTIONS = (
     os.environ.get("HAS_USAGE_RESTRICTIONS", "true").lower() == "true"
@@ -181,7 +183,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = False
+USE_TZ = True
 
 # Email backend for developing pw reset functionality
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"

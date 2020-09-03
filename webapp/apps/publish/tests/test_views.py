@@ -8,12 +8,12 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from webapp.apps.comp.models import Simulation
 from webapp.apps.users.models import Project, Profile, EmbedApproval
-
 from webapp.apps.users.serializers import ProjectSerializer
+
+from .utils import mock_sync_projects, mock_get_version
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_sync_projects")
 class TestPublishViews:
     def test_get(self, client):
         resp = client.get("/publish/")
@@ -31,11 +31,13 @@ class TestPublishViews:
             "listed": True,
             "latest_tag": "v1",
         }
-        resp = client.post("/apps/api/v1/", post_data)
+        with mock_sync_projects():
+            resp = client.post("/apps/api/v1/", post_data)
         assert resp.status_code == 401
 
         client.login(username="modeler", password="modeler2222")
-        resp = client.post("/apps/api/v1/", post_data)
+        with mock_sync_projects():
+            resp = client.post("/apps/api/v1/", post_data)
         assert resp.status_code == 200
 
         project = Project.objects.get(
@@ -112,11 +114,12 @@ class TestPublishViews:
 
         # logged in and owner --> do update
         client.login(username="modeler", password="modeler2222")
-        resp = client.put(
-            "/apps/api/v1/modeler/Used-for-testing/detail/",
-            data=put_data,
-            content_type="application/json",
-        )
+        with mock_sync_projects():
+            resp = client.put(
+                "/apps/api/v1/modeler/Used-for-testing/detail/",
+                data=put_data,
+                content_type="application/json",
+            )
         assert resp.status_code == 200
         project = Project.objects.get(
             title="Used-for-testing", owner__user__username="modeler"
@@ -147,11 +150,12 @@ class TestPublishViews:
             title="Used-for-testing", owner__user__username="modeler"
         )
         assign_perm("write_project", profile.user, project)
-        resp = client.put(
-            "/apps/api/v1/modeler/Used-for-testing/detail/",
-            data=put_data,
-            content_type="application/json",
-        )
+        with mock_sync_projects():
+            resp = client.put(
+                "/apps/api/v1/modeler/Used-for-testing/detail/",
+                data=put_data,
+                content_type="application/json",
+            )
         assert resp.status_code == 200
         project = Project.objects.get(
             title="Used-for-testing", owner__user__username="modeler"
@@ -187,7 +191,8 @@ class TestPublishViews:
 
         modeler = test_models[0].project.owner
 
-        resp = api_client.get("/api/v1/models/modeler")
+        with mock_get_version():
+            resp = api_client.get("/api/v1/models/modeler")
         assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
         exp = set(
             proj.title for proj in Project.objects.filter(owner=modeler, listed=True)
@@ -206,7 +211,8 @@ class TestPublishViews:
         # test auth'ed get returns all projects.
         modeler = test_models[0].owner
         api_client.force_login(modeler.user)
-        resp = api_client.get("/api/v1/models")
+        with mock_get_version():
+            resp = api_client.get("/api/v1/models")
         assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
 
         exp = set(proj.title for proj in Project.objects.filter(owner=modeler))
@@ -264,7 +270,6 @@ class TestPublishViews:
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_sync_projects")
 class TestEmbedApprovalAPI:
     def test_create_embed_approval(self, api_client, project, free_profile):
         base = f"/apps/api/v1/{project.owner}/{project.title}/embedapprovals/"

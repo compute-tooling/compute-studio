@@ -6,7 +6,6 @@ import requests_mock
 
 requests_mock.Mocker.TEST_PREFIX = "test"
 
-WORKER_HN = os.environ.get("WORKERS")
 TIMEOUT_IN_SECONDS = 1.7
 MAX_ATTEMPTS_SUBMIT_JOB = 4
 
@@ -53,10 +52,10 @@ class Compute(object):
                     data = response.json()
                     job_id = data["task_id"]
                 else:
-                    print("FAILED: ", WORKER_HN)
+                    print("FAILED: ", url)
                     attempts += 1
             except Timeout:
-                print("Couldn't submit to: ", WORKER_HN)
+                print("Couldn't submit to: ", url)
                 attempts += 1
             except RequestException as re:
                 print("Something unexpected happened: ", re)
@@ -84,10 +83,10 @@ class SyncCompute(Compute):
                         return
                     data = response.json()
                 else:
-                    print("FAILED: ", WORKER_HN, response.status_code)
+                    print("FAILED: ", url, response.status_code)
                     attempts += 1
             except Timeout:
-                print("Couldn't submit to: ", WORKER_HN)
+                print("Couldn't submit to: ", url)
                 attempts += 1
             except RequestException as re:
                 print("Something unexpected happened: ", re)

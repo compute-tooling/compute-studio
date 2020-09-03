@@ -25,6 +25,8 @@ from guardian.shortcuts import assign_perm
 
 # from webapp.settings import DEBUG
 
+from webapp.settings import USE_STRIPE
+from webapp.apps.billing.utils import ChargeDeploymentMixin
 from webapp.apps.users.models import (
     Project,
     EmbedApproval,
@@ -147,6 +149,9 @@ class ProjectAPIView(GetProjectMixin, APIView):
                 api_user = User.objects.get(username="comp-api-user")
                 assign_perm("write_project", api_user, model)
                 Project.objects.sync_products(projects=[model])
+                Project.objects.sync_project_with_workers(
+                    ProjectSerializer(model).data, model.cluster
+                )
                 try:
                     send_mail(
                         f"{request.user.username} is publishing a model on Compute Studio!",
@@ -371,7 +376,7 @@ class DeploymentsView(generics.ListAPIView):
         return self.queryset
 
 
-class DeploymentsDetailView(APIView):
+class DeploymentsDetailView(ChargeDeploymentMixin, APIView):
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
@@ -421,6 +426,8 @@ class DeploymentsDetailView(APIView):
         )
 
         deployment.delete_deployment()
+
+        self.charge_deployment(deployment, use_stripe=USE_STRIPE)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

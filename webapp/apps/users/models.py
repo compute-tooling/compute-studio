@@ -20,9 +20,9 @@ from django.http import Http404
 
 from webapp.apps.billing.models import create_billing_objects
 from webapp.apps.comp import actions
-from webapp.apps.comp.compute import SyncCompute, SyncProjects, WORKER_HN
+from webapp.apps.comp.compute import SyncCompute, SyncProjects
 from webapp.apps.comp.models import Inputs, ANON_BEFORE
-from webapp.settings import DEBUG, COMPUTE_PRICING
+from webapp.settings import DEBUG, COMPUTE_PRICING, DEFAULT_CLUSTER_USER
 
 from cs_crypt import CryptKeeper
 import jwt
@@ -123,6 +123,11 @@ class Profile(models.Model):
         permissions = (("access_public", "Has access to public projects"),)
 
 
+class ClusterManager(models.Manager):
+    def default(self):
+        return self.get(service_account__user__username=DEFAULT_CLUSTER_USER)
+
+
 class Cluster(models.Model):
     url = models.URLField(max_length=64)
     jwt_secret = models.CharField(max_length=512, null=True)
@@ -131,6 +136,8 @@ class Cluster(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True)
+
+    objects = ClusterManager()
 
     def headers(self):
         jwt_token = jwt.encode(
@@ -172,6 +179,12 @@ class ProjectManager(models.Manager):
 
     def sync_project_with_workers(self, project, cluster):
         SyncProjects().submit_job(project, cluster)
+
+    def create(self, *args, **kwargs):
+        project = super().create(*args, **kwargs)
+        if project.cluster is None:
+            project.cluster = Cluster.objects.default()
+        return project
 
 
 class Project(models.Model):
@@ -404,7 +417,7 @@ class DeploymentManager(models.Manager):
 
     def get_object_from_hashid_or_404(self, hashid):
         """
-        Get deployment object from a hash of its pk and 
+        Get deployment object from a hash of its pk and
         raise 404 exception if it does not exist.
         """
         try:
