@@ -38,7 +38,7 @@ CSRF_COOKIE_NAME = "csrftoken"
 
 USE_STRIPE = os.environ.get("USE_STRIPE", "false").lower() == "true"
 
-DEFAULT_CLUSTER_USER = os.environ["DEFAULT_CLUSTER_USER"]
+DEFAULT_CLUSTER_USER = os.environ.get("DEFAULT_CLUSTER_USER")
 
 # Indicates that this c/s instance uses billing restrictions.
 HAS_USAGE_RESTRICTIONS = (
