@@ -1,11 +1,19 @@
+from datetime import timedelta
+
 import pytest
 
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 
-from webapp.apps.billing.utils import has_payment_method, ChargeRunMixin
+from webapp.apps.billing.utils import (
+    has_payment_method,
+    ChargeRunMixin,
+    ChargeDeploymentMixin,
+)
 from webapp.apps.billing.models import UsageRecord, SubscriptionItem
 from webapp.apps.comp.models import Inputs, Simulation
-from webapp.apps.users.models import Profile, Project
+from webapp.apps.users.models import Profile, Project, EmbedApproval, Deployment
+from webapp.apps.users.tests.utils import mock_post_to_cluster
 
 from .utils import gen_blank_customer
 
@@ -125,3 +133,83 @@ def test_charge_run_with_sponsored_model(db):
         ).count()
         == 0
     )
+
+
+class TestChargeDeployments:
+    def test_embed_approvals(self, db, profile):
+        project = Project.objects.get(title="Test-Viz")
+
+        ea = EmbedApproval.objects.create(
+            project=project,
+            owner=profile,
+            url="https://embed.compute.studio",
+            name="my-test-embed",
+        )
+
+        with mock_post_to_cluster():
+            deployment, _ = Deployment.objects.get_or_create_deployment(
+                project=project, name="my-deployment", owner=None, embed_approval=ea,
+            )
+
+        elapsed = timedelta(hours=2)
+        deleted_at = timezone.now() + elapsed
+
+        deployment.deleted_at = deleted_at
+        deployment.status = "terminated"
+        deployment.save()
+
+        ur_count = UsageRecord.objects.count()
+
+        cd = ChargeDeploymentMixin()
+        cd.charge_deployment(deployment, use_stripe=True)
+
+        si = SubscriptionItem.objects.get(
+            subscription__customer=ea.owner.user.customer,
+            plan=project.product.plans.get(usage_type="metered"),
+        )
+
+        assert ur_count + 1 == UsageRecord.objects.count()
+
+        assert si.usage_records.count() == 1
+
+        ur = si.usage_records.first()
+
+        quantity = deployment.project.run_cost(elapsed.seconds, adjust=True)
+        assert ur.quantity == quantity * 100
+
+    def test_sponsored(self, db, profile):
+        project = Project.objects.get(title="Test-Viz")
+        sponsor = Profile.objects.get(user__username="sponsor")
+        project.sponsor = sponsor
+        project.save()
+
+        with mock_post_to_cluster():
+            deployment, _ = Deployment.objects.get_or_create_deployment(
+                project=project, name="my-deployment", owner=None, embed_approval=None,
+            )
+
+        elapsed = timedelta(hours=2)
+        deleted_at = timezone.now() + elapsed
+
+        deployment.deleted_at = deleted_at
+        deployment.status = "terminated"
+        deployment.save()
+
+        ur_count = UsageRecord.objects.count()
+
+        cd = ChargeDeploymentMixin()
+        cd.charge_deployment(deployment, use_stripe=True)
+
+        si = SubscriptionItem.objects.get(
+            subscription__customer=sponsor.user.customer,
+            plan=project.product.plans.get(usage_type="metered"),
+        )
+
+        assert ur_count + 1 == UsageRecord.objects.count()
+
+        assert si.usage_records.count() == 1
+
+        ur = si.usage_records.first()
+
+        quantity = deployment.project.run_cost(elapsed.seconds, adjust=True)
+        assert ur.quantity == quantity * 100
