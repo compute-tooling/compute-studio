@@ -175,15 +175,18 @@ class Manager(BaseManager):
         safetitle = clean(app["title"])
         img_name = f"{safeowner}_{safetitle}_tasks"
 
+        repo_tag = os.environ.get("REPO_TAG") or app["repo_tag"]
+        repo_url = os.environ.get("REPO_URL") or app["repo_url"]
+
         reg_url = "https://github.com"
         raw_url = "https://raw.githubusercontent.com"
 
         buildargs = dict(
             OWNER=app["owner"],
             TITLE=app["title"],
-            REPO_TAG=app["repo_tag"],
-            REPO_URL=app["repo_url"],
-            RAW_REPO_URL=app["repo_url"].replace(reg_url, raw_url),
+            REPO_TAG=repo_tag,
+            REPO_URL=repo_url,
+            RAW_REPO_URL=repo_url.replace(reg_url, raw_url),
         )
 
         buildargs_str = " ".join(
@@ -419,8 +422,8 @@ class DeploymentManager(BaseManager):
             last_ping_at = dateutil_parse(deployment["last_ping_at"])
             now = datetime.utcnow()
 
-            load_secs_stale = (now - last_load_at).seconds
-            ping_secs_stale = (now - last_ping_at).seconds
+            load_secs_stale = (now - last_load_at.replace(tzinfo=None)).seconds
+            ping_secs_stale = (now - last_ping_at.replace(tzinfo=None)).seconds
 
             secs_stale = min(load_secs_stale, ping_secs_stale)
             if secs_stale > self.stale_after:
