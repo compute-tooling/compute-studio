@@ -1,7 +1,8 @@
 from collections import defaultdict
 import json
+import secrets
+import uuid
 
-from hashids import Hashids
 import markdown
 import requests
 
@@ -28,10 +29,6 @@ from cs_crypt import CryptKeeper
 import jwt
 
 cryptkeeper = CryptKeeper()
-
-hashids = Hashids(
-    "cs-salt", min_length=6, alphabet="abcdefghijklmnopqrstuvwxyz1234567890"
-)
 
 
 def is_profile_active(user):
@@ -404,33 +401,14 @@ class DeploymentManager(models.Manager):
 
         return deployment, created
 
-    def from_hashid(self, hashid):
-        """
-        Get deployment object from a hash of its pk. Return None
-        if the decode does not resolve to a pk.
-        """
-        pk = hashids.decode(hashid)
-        if not pk:
-            return None
-        else:
-            return self.get(pk=pk[0])
 
-    def get_object_from_hashid_or_404(self, hashid):
-        """
-        Get deployment object from a hash of its pk and
-        raise 404 exception if it does not exist.
-        """
-        try:
-            obj = self.from_hashid(hashid)
-        except Deployment.DoesNotExist:
-            raise Http404("Object matching query does not exist")
-        if obj:
-            return obj
-        else:
-            raise Http404("Object matching query does not exist")
+def default_short_id():
+    return secrets.token_hex(3)
 
 
 class Deployment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    short_id = models.CharField(max_length=6, default=default_short_id)
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="deployments"
     )
@@ -497,12 +475,8 @@ class Deployment(models.Model):
         return status
 
     @property
-    def hashed_name(self):
-        return f"{self.name}-{self.hashid}"
-
-    @property
-    def hashid(self):
-        return hashids.encode(self.pk)
+    def public_name(self):
+        return f"{self.name}-{self.short_id}"
 
     def create_deployment(self):
         if self.tag is None:
@@ -511,7 +485,7 @@ class Deployment(models.Model):
 
         resp = requests.post(
             f"{self.project.cluster.url}/deployments/{self.project}/",
-            json={"deployment_name": self.hashed_name, "tag": self.tag,},
+            json={"deployment_name": self.public_name, "tag": self.tag,},
             headers=self.project.cluster.headers(),
         )
 
@@ -526,7 +500,7 @@ class Deployment(models.Model):
 
     def get_deployment(self):
         resp = requests.get(
-            f"{self.project.cluster.url}/deployments/{self.project}/{self.hashed_name}/",
+            f"{self.project.cluster.url}/deployments/{self.project}/{self.public_name}/",
             headers=self.project.cluster.headers(),
         )
         assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
@@ -534,7 +508,7 @@ class Deployment(models.Model):
 
     def delete_deployment(self):
         resp = requests.delete(
-            f"{self.project.cluster.url}/deployments/{self.project}/{self.hashed_name}/",
+            f"{self.project.cluster.url}/deployments/{self.project}/{self.public_name}/",
             headers=self.project.cluster.headers(),
         )
         assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"

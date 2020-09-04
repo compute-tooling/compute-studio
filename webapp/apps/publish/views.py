@@ -29,8 +29,9 @@ from webapp.settings import USE_STRIPE
 from webapp.apps.billing.utils import ChargeDeploymentMixin
 from webapp.apps.users.models import (
     Project,
-    EmbedApproval,
+    Cluster,
     Deployment,
+    EmbedApproval,
     is_profile_active,
 )
 from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
@@ -143,7 +144,10 @@ class ProjectAPIView(GetProjectMixin, APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 model = serializer.save(
-                    owner=request.user.profile, status="pending", title=title,
+                    owner=request.user.profile,
+                    status="pending",
+                    title=title,
+                    cluster=Cluster.objects.default(),
                 )
                 status_url = request.build_absolute_uri(model.app_url)
                 api_user = User.objects.get(username="comp-api-user")
@@ -432,7 +436,7 @@ class DeploymentsDetailView(ChargeDeploymentMixin, APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class DeploymentsHashidView(APIView):
+class DeploymentsIdView(APIView):
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
@@ -443,7 +447,7 @@ class DeploymentsHashidView(APIView):
 
     def get(self, request, *args, **kwargs):
         ping = request.query_params.get("ping", None)
-        deployment = Deployment.objects.get_object_from_hashid_or_404(kwargs["hashid"])
+        deployment = get_object_or_404(Deployment, id=kwargs["id"])
 
         if ping is None:
             deployment.load()

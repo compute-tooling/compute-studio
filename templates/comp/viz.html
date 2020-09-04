@@ -17,7 +17,7 @@
     id="embedded-iframe"
     class="embedded"
     title="{{object.title}}"
-    src="{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.hashed_name}}/"
+    src="{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/"
   ></iframe>
   {% else %}
   <div id="notready" style="height: 75vh;">
@@ -37,7 +37,7 @@
           container.removeChild(placeholder);
           const iframe = document.createElement("iframe");
           iframe.src =
-            "{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.hashed_name}}/";
+            "{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/";
           iframe.title = "{{object.title}}";
           iframe.className = "embedded";
           iframe.id = "embedded-iframe";
@@ -55,7 +55,7 @@
       setTimeout(pingDeployment, 2000);
       return;
     }
-    const resp = fetch("/apps/api/v1/deployments/{{deployment.hashid}}/?ping=true").then(function(
+    const resp = fetch("/apps/api/v1/deployments/{{deployment.id}}/?ping=true").then(function(
       response
     ) {
       response.json().then(function(data) {

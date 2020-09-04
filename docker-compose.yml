@@ -38,6 +38,7 @@ services:
       - STRIPE_SECRET=${STRIPE_SECRET}
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
       - CS_CRYPT_KEY=${CS_CRYPT_KEY}
+      - DEFAULT_CLUSTER_USER=hdoupe
     ports:
       - "8000:8000"
     container_name: web
