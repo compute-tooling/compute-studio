@@ -79,6 +79,7 @@ class Manager:
         use_kind=False,
         cs_url=None,
         cs_api_token=None,
+        cluster_host=None,
     ):
         self.tag = tag
         self.project = project
@@ -86,6 +87,7 @@ class Manager:
         self.use_kind = use_kind
         self.cs_url = cs_url
         self._cs_api_token = cs_api_token
+        self.cluster_host = cluster_host
 
         kconfig.load_kube_config()
 
@@ -101,6 +103,12 @@ class Manager:
             self.templates_dir / "services" / "scheduler-Deployment.template.yaml", "r"
         ) as f:
             self.scheduler_template = yaml.safe_load(f.read())
+
+        with open(
+            self.templates_dir / "services" / "scheduler-ingressroute.template.yaml",
+            "r",
+        ) as f:
+            self.scheduler_ir_template = yaml.safe_load(f.read())
 
         with open(
             self.templates_dir
@@ -186,6 +194,7 @@ class Manager:
                 kind = config["kind"]
                 self.write_config(f"{name}-{kind}.yaml", config)
         self.write_scheduler_deployment()
+        self.write_scheduler_ingressroute()
         self.write_outputs_processor_deployment()
         self.write_secret()
         if update_redis:
@@ -205,6 +214,16 @@ class Manager:
         self.write_config("scheduler-Deployment.yaml", deployment)
 
         return deployment
+
+    def write_scheduler_ingressroute(self):
+        """
+        Write scheduler ingressroute file. Only step is filling in the cluster host.
+        """
+        ir = copy.deepcopy(self.scheduler_ir_template)
+        ir["spec"]["routes"][0]["match"] = f"Host(`{self.cluster_host}`)"
+        self.write_config("scheduler-ingressroute.yaml", ir)
+
+        return ir
 
     def write_outputs_processor_deployment(self):
         """
@@ -332,6 +351,7 @@ def manager_from_args(args: argparse.Namespace):
         use_kind=getattr(args, "use_kind", None),
         cs_url=getattr(args, "cs_url", None),
         cs_api_token=getattr(args, "cs_api_token", None),
+        cluster_host=getattr(args, "cluster_host", None),
     )
 
 
@@ -345,7 +365,7 @@ def push(args: argparse.Namespace):
     cluster.push()
 
 
-def config(args: argparse.Namespace):
+def config_(args: argparse.Namespace):
     cluster = manager_from_args(args)
     cluster.config(update_redis=args.update_redis)
 
@@ -358,7 +378,7 @@ def serve(args: argparse.Namespace):
     scheduler.run()
 
 
-def cli(subparsers: argparse._SubParsersAction):
+def cli(subparsers: argparse._SubParsersAction, config=None, **kwargs):
     parser = subparsers.add_parser("services", aliases=["svc"])
     svc_subparsers = parser.add_subparsers()
 
@@ -374,7 +394,10 @@ def cli(subparsers: argparse._SubParsersAction):
     config_parser = svc_subparsers.add_parser("config")
     config_parser.add_argument("--out", "-o")
     config_parser.add_argument("--update-redis", action="store_true")
-    config_parser.set_defaults(func=config)
+    config_parser.add_argument(
+        "--cluster-host", required=False, default=config["CLUSTER_HOST"]
+    )
+    config_parser.set_defaults(func=config_)
 
     pf_parser = svc_subparsers.add_parser("port-forward")
     pf_parser.set_defaults(func=port_forward)

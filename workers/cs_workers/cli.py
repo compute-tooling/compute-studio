@@ -38,7 +38,7 @@ def load_env():
     else:
         user_config = {}
 
-    for var in ["TAG", "PROJECT", "CS_URL", "CS_API_TOKEN", "BUCKET"]:
+    for var in ["TAG", "PROJECT", "CS_URL", "CS_API_TOKEN", "BUCKET", "CLUSTER_HOST"]:
         if os.environ.get(var):
             config[var] = os.environ.get(var)
         elif user_config.get(var):
@@ -58,7 +58,7 @@ def cli():
     )
     sub_parsers = parser.add_subparsers()
 
-    cs_workers.services.manage.cli(sub_parsers)
+    cs_workers.services.manage.cli(sub_parsers, config=config)
     cs_workers.services.scheduler.cli(sub_parsers)
     cs_workers.services.outputs_processor.cli(sub_parsers)
     cs_workers.models.manage.cli(sub_parsers)
