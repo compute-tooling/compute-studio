@@ -302,6 +302,8 @@ class Manager(BaseManager):
         return secret_config
 
     def _write_api_task(self, app):
+        if app["tech"] != "python-paramtools":
+            return
         deployment = copy.deepcopy(self.api_task_template)
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])

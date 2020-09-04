@@ -176,7 +176,7 @@ class Manager:
         run(f"{cmd_prefix} {self.cr}/{self.project}/outputs_processor:{self.tag}")
         run(f"{cmd_prefix} {self.cr}/{self.project}/scheduler:{self.tag}")
 
-    def config(self, update_redis=False):
+    def config(self, update_redis=False, update_dns=False):
         config_filenames = [
             "scheduler-Service.yaml",
             "scheduler-RBAC.yaml",
@@ -194,7 +194,8 @@ class Manager:
                 kind = config["kind"]
                 self.write_config(f"{name}-{kind}.yaml", config)
         self.write_scheduler_deployment()
-        self.write_scheduler_ingressroute()
+        if update_dns:
+            self.write_scheduler_ingressroute()
         self.write_outputs_processor_deployment()
         self.write_secret()
         if update_redis:
@@ -367,7 +368,7 @@ def push(args: argparse.Namespace):
 
 def config_(args: argparse.Namespace):
     cluster = manager_from_args(args)
-    cluster.config(update_redis=args.update_redis)
+    cluster.config(update_redis=args.update_redis, update_dns=args.update_dns)
 
 
 def port_forward(args: argparse.Namespace):
@@ -395,8 +396,9 @@ def cli(subparsers: argparse._SubParsersAction, config=None, **kwargs):
     config_parser.add_argument("--out", "-o")
     config_parser.add_argument("--update-redis", action="store_true")
     config_parser.add_argument(
-        "--cluster-host", required=False, default=config["CLUSTER_HOST"]
+        "--cluster-host", required=False, default=config.get("CLUSTER_HOST")
     )
+    config_parser.add_argument("--update-dns", action="store_true")
     config_parser.set_defaults(func=config_)
 
     pf_parser = svc_subparsers.add_parser("port-forward")
