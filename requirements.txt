@@ -17,7 +17,6 @@ psycopg2-binary
 ipython
 markdown
 django-guardian
-newrelic
 hashids
 django-rest-auth
 django-allauth

@@ -206,3 +206,14 @@ ANYMAIL = {
 EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
 DEFAULT_FROM_EMAIL = "hank@compute.studio"
 SERVER_EMAIL = "hank@compute.studio"
+
+
+if not os.environ.get("LOCAL") and os.environ.get("SENTRY_API_DSN"):
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=os.environ.get("SENTRY_API_DSN"),
+        integrations=[DjangoIntegration()],
+        send_default_pii=True,
+    )
