@@ -82,6 +82,7 @@ class NewSimView(InputsMixin, View):
         )
         context = self.project_context(request, project)
         context["show_readme"] = False
+        context["tech"] = project.tech
         if request.user.is_authenticated and getattr(request.user, "profile", None):
             sim = Simulation.objects.new_sim(user=request.user, project=project)
             return redirect(sim.get_absolute_edit_url())
@@ -144,6 +145,7 @@ class EditSimView(GetOutputsObjectMixin, InputsMixin, View):
         project = self.object.project
         context = self.project_context(request, project)
         context["show_readme"] = False
+        context["tech"] = project.tech
         context["sim"] = self.object.context(request=request)
         return render(request, self.template_name, context)
 
@@ -168,6 +170,7 @@ class VizView(InputsMixin, View):
             project=project, name=kwargs.get("rd_name", "default"), owner=owner
         )
         context["show_readme"] = False
+        context["tech"] = project.tech
         context["object"] = project
         context["deployment"] = deployment
         context["viz_host"] = os.environ.get("VIZ_HOST")

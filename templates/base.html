@@ -125,8 +125,8 @@
                   <a class="dropdown-item" href="/{{owner}}/{{project_name}}/">View README</a>
                   {% if tech == "python-paramtools" %}
                   <a class="dropdown-item" href="/{{owner}}/{{project_name}}/new/"
-                    >Create Simulation</a
-                  >
+                    >Create Simulation
+                  </a>
                   {% else %}
                   <a class="dropdown-item" href="/{{owner}}/{{project_name}}/viz/">Go to App</a>
                   {% endif %}
@@ -139,7 +139,7 @@
             <div class="dropdown mobile-mb-1 {% if not user.is_authenticated %}d-none{% endif %}">
               <a
                 class="nav-link btn btn-outline-match-nav dropdown-toggle mb-1"
-                style="display: inline-block;"
+                style="display: inline-block"
                 href="#"
                 id="navbarDropdown-prof"
                 role="button"
@@ -151,7 +151,7 @@
               </a>
               <div
                 class="dropdown-menu desktop-menu-right"
-                style="width:180px"
+                style="width: 180px"
                 aria-labelledby="navbarDropdown-prof"
               >
                 <!-- Add new projects to the dropdown menu here! -->
@@ -167,7 +167,7 @@
                 <li class="nav-item mr-2 mobile-mb-3">
                   <a
                     class="nav-link btn btn-match-nav"
-                    style="display: inline-block;"
+                    style="display: inline-block"
                     href="{% url 'login' %}"
                   >
                     Sign in
@@ -176,7 +176,7 @@
                 <li class="nav-item mobile-mb-1">
                   <a
                     class="nav-link btn btn-outline-match-nav mb-1 mobile-p-1"
-                    style="display: inline-block;"
+                    style="display: inline-block"
                     href="{% url 'signup' %}"
                   >
                     Sign up
@@ -188,13 +188,13 @@
         </div>
       </nav>
 
-      <div class="container-fluid mt-4" style="max-width:1400px;">
+      <div class="container-fluid mt-4" style="max-width: 1400px">
         {% block content %} {% endblock %}
       </div>
     </main>
     <footer class="footer mt-auto py-3">
       <hr className="my-4" />
-      <div class="container-fluid text-center" style="max-width:1400px;">
+      <div class="container-fluid text-center" style="max-width: 1400px">
         <div class="row">
           <div class="col">
             <a href="/about/">About</a>
