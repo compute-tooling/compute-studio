@@ -25,10 +25,17 @@ from webapp.apps.comp.compute import SyncCompute, SyncProjects
 from webapp.apps.comp.models import Inputs, ANON_BEFORE
 from webapp.settings import DEBUG, COMPUTE_PRICING, DEFAULT_CLUSTER_USER
 
-from cs_crypt import CryptKeeper
+import cs_crypt
 import jwt
 
-cryptkeeper = CryptKeeper()
+try:
+    cryptkeeper = cs_crypt.CryptKeeper()
+except cs_crypt.EncryptionUnavailable:
+    import warnings
+
+    warnings.warn("Encryption unavailable.")
+
+    cryptkeeper = None
 
 
 def is_profile_active(user):
