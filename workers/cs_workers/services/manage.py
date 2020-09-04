@@ -168,15 +168,16 @@ class Manager:
         run(f"{cmd_prefix} {self.cr}/{self.project}/outputs_processor:{self.tag}")
         run(f"{cmd_prefix} {self.cr}/{self.project}/scheduler:{self.tag}")
 
-    def config(self):
+    def config(self, update_redis=False):
         config_filenames = [
             "scheduler-Service.yaml",
             "scheduler-RBAC.yaml",
             "outputs-processor-Service.yaml",
-            "redis-master-Service.yaml",
             "job-cleanup-Job.yaml",
             "job-cleanup-RBAC.yaml",
         ]
+        if update_redis:
+            config_filenames.append("redis-master-Service.yaml")
         for filename in config_filenames:
             with open(self.templates_dir / "services" / f"{filename}", "r") as f:
                 configs = yaml.safe_load_all(f.read())
@@ -187,7 +188,8 @@ class Manager:
         self.write_scheduler_deployment()
         self.write_outputs_processor_deployment()
         self.write_secret()
-        self.write_redis_deployment()
+        if update_redis:
+            self.write_redis_deployment()
         self.write_deployment_cleanup_job()
 
         self.write_cloudflare_api_token()
@@ -345,7 +347,7 @@ def push(args: argparse.Namespace):
 
 def config(args: argparse.Namespace):
     cluster = manager_from_args(args)
-    cluster.config()
+    cluster.config(update_redis=args.update_redis)
 
 
 def port_forward(args: argparse.Namespace):
@@ -371,6 +373,7 @@ def cli(subparsers: argparse._SubParsersAction):
 
     config_parser = svc_subparsers.add_parser("config")
     config_parser.add_argument("--out", "-o")
+    config_parser.add_argument("--update-redis", action="store_true")
     config_parser.set_defaults(func=config)
 
     pf_parser = svc_subparsers.add_parser("port-forward")
