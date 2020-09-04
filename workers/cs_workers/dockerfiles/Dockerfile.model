@@ -6,7 +6,7 @@ RUN  apt-get update && apt install libgl1-mesa-glx --yes
 
 RUN conda config --append channels conda-forge
 RUN conda update conda
-RUN conda install "python>=3.7" pip tornado dask lz4 && pip install boto3
+RUN conda install "python>=3.7" pip tornado dask lz4 && pip install boto3 gunicorn
 
 
 WORKDIR /home

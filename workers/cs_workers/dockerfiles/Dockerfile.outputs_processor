@@ -22,4 +22,6 @@ RUN cd /home/ && pip install -e .
 
 WORKDIR /home
 
+ENV PYTHONUNBUFFERED 1
+
 CMD ["csw", "outputs", "--start"]
