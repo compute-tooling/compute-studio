@@ -216,4 +216,5 @@ if not os.environ.get("LOCAL") and os.environ.get("SENTRY_API_DSN"):
         dsn=os.environ.get("SENTRY_API_DSN"),
         integrations=[DjangoIntegration()],
         send_default_pii=True,
+        traces_sample_rate=0.75,
     )
