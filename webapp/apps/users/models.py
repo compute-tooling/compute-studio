@@ -356,6 +356,8 @@ class Project(models.Model):
 
     @cached_property
     def version(self):
+        if self.tech != "python-paramtools":
+            return None
         if self.status not in ("updating", "live"):
             return None
         try:
