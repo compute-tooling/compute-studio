@@ -396,7 +396,7 @@ def cli(subparsers: argparse._SubParsersAction, config=None, **kwargs):
     config_parser.add_argument("--out", "-o")
     config_parser.add_argument("--update-redis", action="store_true")
     config_parser.add_argument(
-        "--cluster-host", required=False, default=config["CLUSTER_HOST"]
+        "--cluster-host", required=False, default=config.get("CLUSTER_HOST")
     )
     config_parser.add_argument("--update-dns", action="store_true")
     config_parser.set_defaults(func=config_)
