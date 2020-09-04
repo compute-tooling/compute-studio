@@ -9,8 +9,10 @@ import sys
 import time
 from pathlib import Path
 
+from kubernetes import client as kclient, config as kconfig
 
 from cs_workers.services.secrets import ServicesSecrets, cli as secrets_cli
+from cs_workers.services import scheduler
 
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
@@ -77,6 +79,7 @@ class Manager:
         use_kind=False,
         cs_url=None,
         cs_api_token=None,
+        cluster_host=None,
     ):
         self.tag = tag
         self.project = project
@@ -84,6 +87,9 @@ class Manager:
         self.use_kind = use_kind
         self.cs_url = cs_url
         self._cs_api_token = cs_api_token
+        self.cluster_host = cluster_host
+
+        kconfig.load_kube_config()
 
         if kubernetes_target is None:
             self.kubernetes_target = Manager.kubernetes_target
@@ -97,6 +103,12 @@ class Manager:
             self.templates_dir / "services" / "scheduler-Deployment.template.yaml", "r"
         ) as f:
             self.scheduler_template = yaml.safe_load(f.read())
+
+        with open(
+            self.templates_dir / "services" / "scheduler-ingressroute.template.yaml",
+            "r",
+        ) as f:
+            self.scheduler_ir_template = yaml.safe_load(f.read())
 
         with open(
             self.templates_dir
@@ -114,6 +126,11 @@ class Manager:
 
         with open(self.templates_dir / "secret.template.yaml", "r") as f:
             self.secret_template = yaml.safe_load(f.read())
+
+        with open(
+            self.templates_dir / "services" / "deployment-cleanup.template.yaml", "r"
+        ) as f:
+            self.deployment_cleanup_template = yaml.safe_load(f.read())
 
         self._redis_secrets = None
         self._secrets = None
@@ -159,15 +176,16 @@ class Manager:
         run(f"{cmd_prefix} {self.cr}/{self.project}/outputs_processor:{self.tag}")
         run(f"{cmd_prefix} {self.cr}/{self.project}/scheduler:{self.tag}")
 
-    def config(self):
+    def config(self, update_redis=False):
         config_filenames = [
             "scheduler-Service.yaml",
             "scheduler-RBAC.yaml",
             "outputs-processor-Service.yaml",
-            "redis-master-Service.yaml",
-            "job-cleanup-Deployment.yaml",
+            "job-cleanup-Job.yaml",
             "job-cleanup-RBAC.yaml",
         ]
+        if update_redis:
+            config_filenames.append("redis-master-Service.yaml")
         for filename in config_filenames:
             with open(self.templates_dir / "services" / f"{filename}", "r") as f:
                 configs = yaml.safe_load_all(f.read())
@@ -176,9 +194,14 @@ class Manager:
                 kind = config["kind"]
                 self.write_config(f"{name}-{kind}.yaml", config)
         self.write_scheduler_deployment()
+        self.write_scheduler_ingressroute()
         self.write_outputs_processor_deployment()
         self.write_secret()
-        self.write_redis_deployment()
+        if update_redis:
+            self.write_redis_deployment()
+        self.write_deployment_cleanup_job()
+
+        self.write_cloudflare_api_token()
 
     def write_scheduler_deployment(self):
         """
@@ -191,6 +214,16 @@ class Manager:
         self.write_config("scheduler-Deployment.yaml", deployment)
 
         return deployment
+
+    def write_scheduler_ingressroute(self):
+        """
+        Write scheduler ingressroute file. Only step is filling in the cluster host.
+        """
+        ir = copy.deepcopy(self.scheduler_ir_template)
+        ir["spec"]["routes"][0]["match"] = f"Host(`{self.cluster_host}`)"
+        self.write_config("scheduler-ingressroute.yaml", ir)
+
+        return ir
 
     def write_outputs_processor_deployment(self):
         """
@@ -233,12 +266,34 @@ class Manager:
         secrets["stringData"]["CS_API_TOKEN"] = self.cs_api_token
         secrets["stringData"]["BUCKET"] = self.bucket
         secrets["stringData"]["PROJECT"] = self.project
+        secrets["stringData"]["CS_CRYPT_KEY"] = self.secrets.get_secret("CS_CRYPT_KEY")
         redis_secrets = self.redis_secrets()
         for name, sec in redis_secrets.items():
             if sec is not None:
                 secrets["stringData"][name] = sec
 
         self.write_config("secret.yaml", secrets)
+
+    def write_cloudflare_api_token(self):
+        api_token = self.secrets.get_secret("CLOUDFLARE_API_TOKEN")
+
+        secret = {
+            "apiVersion": "v1",
+            "kind": "Secret",
+            "metadata": {"name": "cloudflare-api-token-secret",},
+            "type": "Opaque",
+            "stringData": {"api-token": api_token},
+        }
+
+        self.write_config("cloudflare_token_secret.yaml", secret)
+
+    def write_deployment_cleanup_job(self):
+        template = copy.deepcopy(self.deployment_cleanup_template)
+        template["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0][
+            "image"
+        ] = f"gcr.io/{self.project}/scheduler:{self.tag}"
+
+        self.write_config("deployment-cleanup.yaml", template)
 
     def write_config(self, filename, config):
         if self.kubernetes_target == "-":
@@ -296,6 +351,7 @@ def manager_from_args(args: argparse.Namespace):
         use_kind=getattr(args, "use_kind", None),
         cs_url=getattr(args, "cs_url", None),
         cs_api_token=getattr(args, "cs_api_token", None),
+        cluster_host=getattr(args, "cluster_host", None),
     )
 
 
@@ -309,16 +365,20 @@ def push(args: argparse.Namespace):
     cluster.push()
 
 
-def config(args: argparse.Namespace):
+def config_(args: argparse.Namespace):
     cluster = manager_from_args(args)
-    cluster.config()
+    cluster.config(update_redis=args.update_redis)
 
 
-def serve(args: argparse.Namespace):
+def port_forward(args: argparse.Namespace):
     run("kubectl port-forward svc/scheduler 8888:80")
 
 
-def cli(subparsers: argparse._SubParsersAction):
+def serve(args: argparse.Namespace):
+    scheduler.run()
+
+
+def cli(subparsers: argparse._SubParsersAction, config=None, **kwargs):
     parser = subparsers.add_parser("services", aliases=["svc"])
     svc_subparsers = parser.add_subparsers()
 
@@ -333,7 +393,14 @@ def cli(subparsers: argparse._SubParsersAction):
 
     config_parser = svc_subparsers.add_parser("config")
     config_parser.add_argument("--out", "-o")
-    config_parser.set_defaults(func=config)
+    config_parser.add_argument("--update-redis", action="store_true")
+    config_parser.add_argument(
+        "--cluster-host", required=False, default=config["CLUSTER_HOST"]
+    )
+    config_parser.set_defaults(func=config_)
+
+    pf_parser = svc_subparsers.add_parser("port-forward")
+    pf_parser.set_defaults(func=port_forward)
 
     serve_parser = svc_subparsers.add_parser("serve")
     serve_parser.set_defaults(func=serve)

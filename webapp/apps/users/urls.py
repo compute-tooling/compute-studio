@@ -14,10 +14,10 @@ urlpatterns = [
     path("delete/", views.DeleteUser.as_view(), name="delete_user"),
     path("delete/done/", views.DeleteUserDone.as_view(), name="delete_user_done"),
     path("autocomplete", api.UsersAPIView.as_view(), name="query_users"),
-    path("status/", views.AccessStatusAPI.as_view(), name="access_status"),
+    path("status/", api.AccessStatusAPI.as_view(), name="access_status"),
     path(
         "status/<str:username>/<str:title>/",
-        views.AccessStatusAPI.as_view(),
+        api.AccessStatusAPI.as_view(),
         name="access_project",
     ),
 ]

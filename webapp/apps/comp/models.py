@@ -35,9 +35,9 @@ from webapp.apps.comp.exceptions import (
 
 
 # 11:59 on night of deployment
-ANON_BEFORE = datetime.datetime(
-    2020, 1, 16, 23, 59, 59, tzinfo=pytz.timezone("US/Eastern")
-)
+utc_tz = pytz.timezone("America/Sao_Paulo")
+
+ANON_BEFORE = timezone.make_aware(datetime.datetime(2020, 1, 16, 23, 59, 59), utc_tz)
 
 
 class JSONField(JSONBField):
@@ -486,7 +486,14 @@ class Simulation(models.Model):
         return eta if eta > 0 else 0
 
     def compute_original_eta(self):
-        return self.compute_eta(self.creation_date)
+        return self.compute_eta(self.creation_date_aware)
+
+    @property
+    def creation_date_aware(self):
+        if not timezone.is_aware(self.creation_date):
+            return timezone.make_aware(self.creation_date, utc_tz)
+        else:
+            return self.creation_date
 
     @cached_property
     def dimension(self):
@@ -676,7 +683,7 @@ class Simulation(models.Model):
         This ensures that simulations created under the assumption that
         they are unsigned remain unsigned.
         """
-        if self.creation_date < ANON_BEFORE:
+        if self.creation_date_aware < ANON_BEFORE:
             return "unsigned"
         else:
             return self.owner
@@ -686,7 +693,7 @@ class Simulation(models.Model):
         This protects the identity of users who created simulations
         before ANON_BEFORE. See get_owner for more information.
         """
-        if self.creation_date < ANON_BEFORE:
+        if self.creation_date_aware < ANON_BEFORE:
             return ["unsigned"]
         else:
             return self.authors

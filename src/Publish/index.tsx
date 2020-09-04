@@ -2,15 +2,41 @@
 
 import * as ReactDOM from "react-dom";
 import * as React from "react";
+import * as ReactMarkdown from "react-markdown";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
+import { Row, Col, Card, Dropdown, Jumbotron } from "react-bootstrap";
 import axios from "axios";
-import { Formik, Field, Form, ErrorMessage, FormikHelpers } from "formik";
+import { Formik, Field, Form, ErrorMessage, FormikHelpers, FormikProps } from "formik";
 import * as yup from "yup";
-import { TextField, TextAreaField, ServerSizeField, Message, CheckboxField } from "../fields";
-import { Card } from "react-bootstrap";
+import { Project, AccessStatus, Tech } from "../types";
+import { CheckboxField } from "../fields";
+import API from "./API";
+import { Tip } from "../components";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
+
+const techLinks = {
+  "python-paramtools": "https://paramtools.dev",
+  bokeh: "https://bokeh.org",
+  dash: "https://dash.plotly.com/"
+};
+
+const techDocsLinks = {
+  "python-paramtools": "https://docs.compute.studio/publish/guide/",
+  bokeh: "https://bokeh.org",
+  dash: "https://dash.plotly.com/"
+};
+
+const techTitles = {
+  dash: "Dash",
+  bokeh: "Bokeh",
+  "python-paramtools": "ParamTools"
+};
+
+interface Match {
+  params: { username: string; app_name: string; vizTitle?: string };
+}
 
 const inputStyle = {
   width: "100%"
@@ -22,7 +48,6 @@ const requiredMessage = "This field is required.";
 var Schema = yup.object().shape({
   title: yup.string().required(requiredMessage),
   oneliner: yup.string().required(requiredMessage),
-  description: yup.string().required(requiredMessage),
   repo_url: yup.string().url(),
   cpu: yup
     .number()
@@ -33,10 +58,18 @@ var Schema = yup.object().shape({
     .min(2, "Memory must be greater than ${min}.")
     .max(24, "Memory must be less than ${max}."),
   exp_task_time: yup.number().min(0, "Expected task time must be greater than ${min}."),
-  listed: yup.boolean().required(requiredMessage)
+  listed: yup.boolean().required(requiredMessage),
+  tech: yup.string(),
+  callable_name: yup.string()
 });
 
-const specialRequests = (
+export const Message = ({ msg }) => (
+  <p className={`form-text font-weight-bold`} style={{ color: "#dc3545", fontSize: "80%" }}>
+    {msg}
+  </p>
+);
+
+const SpecialRequests: React.FC<{}> = () => (
   <div>
     <p>
       You may contact the Compute Studio admin at
@@ -50,9 +83,9 @@ const specialRequests = (
   </div>
 );
 
-interface PublishValues {
+interface ProjectValues {
   title: string;
-  description: string;
+  description: string | null;
   oneliner: string;
   repo_url: string;
   repo_tag: string;
@@ -60,9 +93,11 @@ interface PublishValues {
   memory: number;
   exp_task_time: number;
   listed: boolean;
+  tech: Tech;
+  callable_name: string;
 }
 
-const initialValues: PublishValues = {
+const initialValues: ProjectValues = {
   title: "",
   description: "",
   oneliner: "",
@@ -71,28 +106,246 @@ const initialValues: PublishValues = {
   cpu: 2,
   memory: 6,
   exp_task_time: 0,
-  listed: true
+  listed: true,
+  tech: "python-paramtools",
+  callable_name: ""
 };
 
 interface PublishProps {
   preview: boolean;
-  initialValues: PublishValues;
-  submitType: "Publish" | "Update";
-  fetchInitialValues: () => Promise<any>;
-  doSubmit: (data: FormData) => Promise<void>;
+  initialValues: ProjectValues;
+  project?: Project;
+  accessStatus: AccessStatus;
+  api: API;
 }
 
 type PublishState = Readonly<{
   preview: boolean;
-  initialValues: PublishValues;
+  initialValues: ProjectValues;
 }>;
 
-class PublishForm extends React.Component<PublishProps, PublishState> {
+const TechSelect: React.FC<{
+  selectedTech: Tech | null;
+  onSelectTech: (tech: Tech) => void;
+}> = ({ selectedTech, onSelectTech }) => {
+  const techChoices: Array<Tech> = ["python-paramtools", "bokeh", "dash"];
+  return (
+    <Dropdown>
+      <Dropdown.Toggle
+        variant="primary"
+        id="dropdown-basic"
+        className="w-50"
+        style={{ backgroundColor: "white", color: "#007bff" }}
+      >
+        <strong>{selectedTech || "Select"}</strong>
+      </Dropdown.Toggle>
+      <Dropdown.Menu>
+        {techChoices.map((tech, ix) => (
+          <Dropdown.Item
+            key={ix}
+            href="#"
+            className={`w-100 ${selectedTech === tech && "bg-primary"}`}
+            onClick={() => onSelectTech(tech)}
+          >
+            <strong>{tech}</strong>
+          </Dropdown.Item>
+        ))}
+      </Dropdown.Menu>
+    </Dropdown>
+  );
+};
+
+const PythonParamTools: React.FC<{}> = ({}) => {
+  return (
+    <div className="mt-5">
+      <h4>ParamTools Configuration</h4>
+      <div className="my-3" />
+      <div className="mt-1 mb-1">
+        <label>
+          <b>Expected job time:</b> Time in seconds for simulation to complete
+        </label>
+        <p className="mt-1 mb-1">
+          <Field
+            className="form-control w-50rem"
+            type="number"
+            name="exp_task_time"
+            style={inputStyle}
+          />
+          <ErrorMessage name="exp_task_time" render={msg => <Message msg={msg} />} />
+        </p>
+      </div>
+    </div>
+  );
+};
+
+const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
+  const title = {
+    dash: "Dash",
+    bokeh: "Bokeh"
+  }[tech];
+  return (
+    <div className="mt-5">
+      <h4>{title} Configuration</h4>
+      <div className="my-3" />
+      <div className="mt-1 mb-1">
+        <label>
+          <b>Function Name</b>
+        </label>
+        <Field name="callable_name">
+          {({ field, meta }) => (
+            <div>
+              {console.log(field)}
+              <input
+                type="text"
+                className="form-control"
+                {...field}
+                onChange={e => {
+                  let val = e.target.value.replace(/[^a-zA-Z0-9]+/g, "_");
+                  e.target.value = val;
+                  field.onChange(e);
+                }}
+              />
+              {meta.touched && meta.error && <Message msg={meta.error} />}
+            </div>
+          )}
+        </Field>
+        <ErrorMessage name="software" render={msg => <Message msg={msg} />} />
+      </div>
+    </div>
+  );
+};
+
+const CommonFields: React.FC<any> = ({}) => {
+  return (
+    <div className="mt-5">
+      <h4>Environment</h4>
+      <div className="my-3" />
+      <div className="mt-1 mb-1">
+        <label>
+          <b>Repo URL</b>
+        </label>
+        <p className="mt-1 mb-1">
+          <Field
+            className="form-control w-50rem"
+            type="url"
+            name="repo_url"
+            placeholder="Link to the model's code repository"
+            style={inputStyle}
+          />
+          <ErrorMessage name="repo_url" render={msg => <Message msg={msg} />} />
+        </p>
+        <div className="mt-1 mb-1">
+          <label>
+            <b>Repo Tag:</b> Your project will be deployed from here
+          </label>
+          <p className="mt-1 mb-1">
+            <Field
+              className="form-control w-50rem"
+              type="text"
+              name="repo_tag"
+              placeholder="Link to the model's code repository"
+              style={inputStyle}
+            />
+            <ErrorMessage name="repo_tag" render={msg => <Message msg={msg} />} />
+          </p>
+        </div>
+      </div>
+      <div className="mt-5">
+        <h4>Resource Requirements</h4>
+        <div className="my-3" />
+        <div className="mt-1 mb-1">
+          <label>CPUs required:</label>
+          <p className="mt-1 mb-1">
+            <Field
+              className="form-control w-50rem"
+              type="number"
+              step="0.1"
+              name="cpu"
+              style={inputStyle}
+            />
+            <ErrorMessage name="cpu" render={msg => <Message msg={msg} />} />
+          </p>
+        </div>
+        <div className="mt-1 mb-1">
+          <label>Memory (GB) required:</label>
+          <p className="mt-1 mb-1">
+            <Field
+              className="form-control w-50rem"
+              type="number"
+              step="0.1"
+              name="memory"
+              style={inputStyle}
+            />
+            <ErrorMessage name="memory" render={msg => <Message msg={msg} />} />
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ViewProject: React.FC<{
+  project: Project;
+  accessStatus: AccessStatus;
+  enterEditMode: () => void;
+}> = ({ project, accessStatus, enterEditMode }) => {
+  const id = `${project.owner}/${project.title}`;
+  const goto = project.tech === "python-paramtools" ? `/${id}/new/` : `/${id}/viz/`;
+  return (
+    <Jumbotron className="shadow" style={{ backgroundColor: "white" }}>
+      <h1 className="display-5">
+        <Row className="justify-content-between">
+          <Col className="col-auto">
+            <a
+              className="primary-text"
+              href={`${project.owner}/${project.title}`}
+            >{`${project.owner}/${project.title}`}</a>
+          </Col>
+          {accessStatus.can_write_project && (
+            <Col className="col-auto">
+              <button className="btn btn-outline-primary" onClick={() => enterEditMode()}>
+                Edit
+              </button>
+            </Col>
+          )}
+        </Row>
+      </h1>
+      <p className="lead">{project.oneliner}</p>
+      <hr className="my-4" />
+      <ReactMarkdown source={project.description} escapeHtml={false} />
+      <Row className="justify-content-between mt-5">
+        <Col className="col-auto align-self-center">
+          {project.status === "live" && (
+            <a className="btn btn-success" href={goto}>
+              <strong>Go to App</strong>
+            </a>
+          )}
+        </Col>
+        <Col className="col-auto align-self-center">
+          <p>
+            Built with{" "}
+            <a href={techLinks[project.tech]}>
+              <strong>{techTitles[project.tech]}</strong>
+            </a>
+            .
+          </p>
+        </Col>
+      </Row>
+    </Jumbotron>
+  );
+};
+
+class ProjectApp extends React.Component<PublishProps, PublishState & { showTechOpts: boolean }> {
   constructor(props) {
     super(props);
+    let initialValues = {};
+    for (const [key, value] of Object.entries(this.props.initialValues)) {
+      initialValues[key] = value === null ? "" : value;
+    }
     this.state = {
       preview: this.props.preview,
-      initialValues: this.props.initialValues
+      initialValues: initialValues as ProjectValues,
+      showTechOpts: false
     };
     this.togglePreview = this.togglePreview.bind(this);
   }
@@ -102,31 +355,22 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
     this.setState({ preview: !this.state.preview });
   }
 
-  componentDidMount() {
-    if (this.props.fetchInitialValues) {
-      this.props.fetchInitialValues().then(data => {
-        this.setState({ initialValues: data });
-      });
-    }
-  }
-
   render() {
-    if (!this.state.initialValues) {
-      return <p> loading.... </p>;
-    }
+    const { accessStatus } = this.props;
     return (
       <div>
         <Formik
           initialValues={this.state.initialValues}
-          onSubmit={(values: PublishValues, actions: FormikHelpers<PublishValues>) => {
+          onSubmit={(values: ProjectValues, actions: FormikHelpers<ProjectValues>) => {
             var formdata = new FormData();
             for (const field in values) {
               formdata.append(field, values[field]);
             }
-            this.props
-              .doSubmit(formdata)
-              .then(response => {
+            this.props.api
+              .save(formdata)
+              .then(project => {
                 actions.setSubmitting(false);
+                window.location.href = `/${project.owner}/${project.title}/detail/`;
               })
               .catch(error => {
                 console.log("error", error);
@@ -144,103 +388,85 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
           }}
           validateOnChange={true}
           validationSchema={Schema}
-          render={({ status }) => (
+        >
+          {(props: FormikProps<ProjectValues>) => (
             <Form>
-              {status && status.project_exists ? (
+              {props.status && props.status.project_exists ? (
                 <div className="alert alert-danger" role="alert">
-                  {status.project_exists}
+                  {props.status.project_exists}
                 </div>
               ) : (
                 <div />
               )}
-              {status && status.auth ? (
+              {(props.status && props.status.auth) || !accessStatus.username ? (
                 <div className="alert alert-danger" role="alert">
-                  {status.auth}
+                  You must be logged in to publish a model.
                 </div>
               ) : (
                 <div />
               )}
-              <div className="mt-5">
-                <h3>About</h3>
-                <hr className="my-3" />
+              <div>
                 <div className="mt-1 mb-1">
-                  <label>
-                    <b>Title</b>
-                  </label>
-                  <Field
-                    type="text"
-                    name="title"
-                    component={TextField}
-                    placeholder="Name of the app"
-                    label="App Name"
-                    preview={this.state.preview}
-                    exitPreview={() => this.setState({ preview: false })}
-                    allowSpecialChars={false}
-                    style={inputStyle}
-                  />
-                  <ErrorMessage name="title" render={msg => <Message msg={msg} />} />
+                  <Field name="title">
+                    {({ field, meta }) => (
+                      <Row className="justify-content-md-center">
+                        <Col className="flex-grow-0 align-self-center">
+                          <h6 className="lead">{accessStatus.username}</h6>
+                        </Col>
+                        <Col className="flex-grow-0 align-self-center">
+                          <p className="lead pt-2">/</p>
+                        </Col>
+                        <Col className="flex-grow-0 align-self-center">
+                          <input
+                            type="text"
+                            {...field}
+                            onChange={e => {
+                              e.target.value = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
+                              field.onChange(e);
+                            }}
+                          />
+                          {meta.touched && meta.error && (
+                            <div className="text-danger">{meta.error}</div>
+                          )}
+                        </Col>
+                      </Row>
+                    )}
+                  </Field>
                 </div>
                 <div className="mt-1 mb-1">
-                  <label>
-                    <b>Oneliner</b>
-                  </label>
-                  <Field
-                    type="text"
-                    name="oneliner"
-                    component={TextField}
-                    placeholder="Short description of this app"
-                    label="One-Liner"
-                    preview={this.state.preview}
-                    exitPreview={() => this.setState({ preview: false })}
-                    style={inputStyle}
-                  />
-                  <ErrorMessage name="oneliner" render={msg => <Message msg={msg} />} />
+                  <label className="strong">Oneliner</label>
+                  <Field name="oneliner">
+                    {({ field, meta }) => (
+                      <Row className="w-100">
+                        <Col>
+                          <input type="text" className="w-100" {...field} />
+                          {meta.touched && meta.error && (
+                            <div className="text-danger">{meta.error}</div>
+                          )}
+                        </Col>
+                      </Row>
+                    )}
+                  </Field>
                 </div>
                 <div className="mt-1 mb-1">
-                  <label>
-                    <b>README</b>
+                  <label className="strong">
+                    README{" "}
+                    <Tip id="readme-markdown-icon" tip="Supports Markdown." placement="top">
+                      <i className="fab fa-markdown mr-3" style={{ opacity: 0.8 }}></i>
+                    </Tip>
                   </label>
-                  <Field
-                    type="text"
-                    name="description"
-                    component={TextAreaField}
-                    placeholder="Description of this app"
-                    label="README"
-                    preview={this.state.preview}
-                    exitPreview={() => this.setState({ preview: false })}
-                    style={inputStyle}
-                  />
-                  <ErrorMessage name="description" render={msg => <Message msg={msg} />} />
-                </div>
-                <div className="mt-1 mb-1">
-                  <label>
-                    <b>Repo URL</b>
-                  </label>
-                  <p className="mt-1 mb-1">
-                    <Field
-                      className="form-control w-50rem"
-                      type="url"
-                      name="repo_url"
-                      placeholder="Link to the model's code repository"
-                      style={inputStyle}
-                    />
-                    <ErrorMessage name="repo_url" render={msg => <Message msg={msg} />} />
-                  </p>
-                  <div className="mt-1 mb-1">
-                    <label>
-                      <b>Repo Tag:</b> Your project will be deployed from here
-                    </label>
-                    <p className="mt-1 mb-1">
-                      <Field
-                        className="form-control w-50rem"
-                        type="text"
-                        name="repo_tag"
-                        placeholder="Link to the model's code repository"
-                        style={inputStyle}
-                      />
-                      <ErrorMessage name="repo_tag" render={msg => <Message msg={msg} />} />
-                    </p>
-                  </div>
+                  <Field name="description">
+                    {({ field, meta }) => (
+                      <Row className="w-100">
+                        <Col>
+                          <textarea type="text" className="w-100" rows="10" {...field} />
+                          {meta.touched && meta.error && (
+                            <div className="text-danger">{meta.error}</div>
+                          )}
+                        </Col>
+                      </Row>
+                    )}
+                  </Field>
                 </div>
                 <div className="mt-3 mb-1">
                   <label>
@@ -255,101 +481,78 @@ class PublishForm extends React.Component<PublishProps, PublishState> {
                   />
                   <ErrorMessage name="listed" render={msg => <Message msg={msg} />} />
                 </div>
-              </div>
-              <div className="mt-5">
-                <h3>Environment</h3>
-                <hr className="my-3" />
-                <div className="mt-1 mb-1">
+                <div className="mt-5 mb-1">
                   <label>
-                    <b>Expected job time:</b> Time in seconds for simulation to complete
+                    <b>Tech</b>
                   </label>
-                  <p className="mt-1 mb-1">
-                    <Field
-                      className="form-control w-50rem"
-                      type="number"
-                      name="exp_task_time"
-                      style={inputStyle}
-                    />
-                    <ErrorMessage name="exp_task_time" render={msg => <Message msg={msg} />} />
-                  </p>
+                  <Field name="tech">
+                    {({ field, meta }) => (
+                      <TechSelect
+                        selectedTech={
+                          (props.values.tech && props.touched.tech) || this.props.api.title
+                            ? props.values.tech
+                            : null
+                        }
+                        onSelectTech={sel => {
+                          props.setFieldValue("tech", sel);
+                          props.setFieldTouched("tech", true);
+                        }}
+                      />
+                    )}
+                  </Field>
                 </div>
+                {((props.values.tech && props.touched.tech) || this.props.api.title) && (
+                  <>
+                    {props.values.tech === "python-paramtools" && <PythonParamTools />}
+                    {["bokeh", "dash"].includes(props.values.tech) && (
+                      <VizWithServer tech={props.values.tech} />
+                    )}
+                    <CommonFields />
+                  </>
+                )}
               </div>
-              <div className="mt-5">
-                <h4>Resource Requirements</h4>
-                <div className="my-3" />
-                <div className="mt-1 mb-1">
-                  <label>CPUs required:</label>
-                  <p className="mt-1 mb-1">
-                    <Field
-                      className="form-control w-50rem"
-                      type="number"
-                      step="0.1"
-                      name="cpu"
-                      style={inputStyle}
-                    />
-                    <ErrorMessage name="cpu" render={msg => <Message msg={msg} />} />
-                  </p>
-                </div>
-                <div className="mt-1 mb-1">
-                  <label>Memory (GB) required:</label>
-                  <p className="mt-1 mb-1">
-                    <Field
-                      className="form-control w-50rem"
-                      type="number"
-                      step="0.1"
-                      name="memory"
-                      style={inputStyle}
-                    />
-                    <ErrorMessage name="memory" render={msg => <Message msg={msg} />} />
-                  </p>
-                </div>
-              </div>
-              {specialRequests}
+              <SpecialRequests />
               <button className="btn inline-block" onClick={this.togglePreview}>
                 {this.state.preview ? "Edit" : "Preview"}
               </button>
               <div className="divider" />
               <button className="btn inline-block btn-success" type="submit">
-                {this.props.submitType}
+                {this.props.api?.owner ? "Save" : "Create"}
               </button>
             </Form>
           )}
-        />
+        </Formik>
       </div>
     );
   }
 }
 
-class CreateApp extends React.Component<{ doSubmit: PublishProps["doSubmit"] }, {}> {
+class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }> {
+  api: API;
   constructor(props) {
     super(props);
-    this.doSubmit = this.doSubmit.bind(this);
+    this.state = {};
+
+    this.api = new API(null, null);
   }
-  doSubmit(data) {
-    return axios.post("/publish/api/", data).then(function(response) {
-      console.log("post", response);
-      let data: { title: string; owner: string };
-      data = response.data;
-      window.location.href = `/${data.owner}/${data.title}/detail/`;
+  async componentDidMount() {
+    const accessStatus = await this.api.getAccessStatus();
+    this.setState({
+      accessStatus
     });
   }
   render() {
+    if (!this.state.accessStatus) {
+      return <div />;
+    }
     return (
       <Card className="card-outer">
         <Card.Body>
-          <h1 style={{ marginBottom: "2rem" }}>Publish</h1>
-
-          <p className="lead">
-            Publish your model on Compute Studio. Check out the
-            <a href="https://docs.compute.studio/publish/guide/"> developer documentation</a> to
-            learn more about the publishing criteria.
-          </p>
-          <PublishForm
-            fetchInitialValues={null}
+          <ProjectApp
             initialValues={initialValues}
             preview={false}
-            submitType="Publish"
-            doSubmit={this.doSubmit}
+            accessStatus={this.state.accessStatus}
+            api={this.api}
           />
         </Card.Body>
       </Card>
@@ -357,46 +560,33 @@ class CreateApp extends React.Component<{ doSubmit: PublishProps["doSubmit"] }, 
   }
 }
 
-interface Match {
-  params: { username: string; app_name: string };
-}
-class AppDetail extends React.Component<{ match: Match }, {}> {
+class ProjectDetail extends React.Component<
+  { match: Match },
+  { project?: Project; accessStatus?: AccessStatus; edit: boolean }
+> {
+  api: API;
   constructor(props) {
     super(props);
-    this.doSubmit = this.doSubmit.bind(this);
-    this.fetchInitialValues = this.fetchInitialValues.bind(this);
+    this.state = { edit: false };
+    const owner = this.props.match.params.username;
+    const title = this.props.match.params.app_name;
+    this.api = new API(owner, title);
   }
 
-  fetchInitialValues() {
-    const username = this.props.match.params.username;
-    const app_name = this.props.match.params.app_name;
-    return axios
-      .get(`/publish/api/${username}/${app_name}/detail/`)
-      .then(function(response) {
-        console.log(response);
-        let data: PublishValues = response.data;
-        return data;
-      })
-      .catch(function(error) {
-        console.log(error);
-      });
-  }
-
-  doSubmit(data: FormData) {
-    const username = this.props.match.params.username;
-    const app_name = this.props.match.params.app_name;
-    console.log(data);
-    return axios.put(`/publish/api/${username}/${app_name}/detail/`, data).then(function(response) {
-      console.log(response);
-      window.location.href = `/${username}/${app_name}/detail/`;
-    });
+  async componentDidMount() {
+    const project = await this.api.getProject();
+    const accessStatus = await this.api.getAccessStatus();
+    this.setState({ accessStatus, project });
   }
 
   render() {
     const username = this.props.match.params.username;
     const app_name = this.props.match.params.app_name;
     const id = `${username}/${app_name}`;
-    return (
+    if (!this.state.project || !this.state.accessStatus) {
+      return <div />;
+    }
+    return this.state.edit ? (
       <Card className="card-outer">
         <Card.Body>
           <h2 style={{ marginBottom: "2rem" }}>
@@ -404,15 +594,21 @@ class AppDetail extends React.Component<{ match: Match }, {}> {
               {id}
             </a>
           </h2>
-          <PublishForm
-            fetchInitialValues={this.fetchInitialValues}
-            initialValues={null}
+          <ProjectApp
+            project={this.state.project}
+            accessStatus={this.state.accessStatus}
+            initialValues={(this.state.project as unknown) as ProjectValues}
             preview={true}
-            submitType="Update"
-            doSubmit={this.doSubmit}
+            api={this.api}
           />
         </Card.Body>
       </Card>
+    ) : (
+      <ViewProject
+        project={this.state.project}
+        accessStatus={this.state.accessStatus}
+        enterEditMode={() => this.setState({ edit: true })}
+      />
     );
   }
 }
@@ -420,8 +616,10 @@ class AppDetail extends React.Component<{ match: Match }, {}> {
 ReactDOM.render(
   <BrowserRouter>
     <Switch>
-      <Route exact path="/publish/" component={CreateApp} />
-      <Route path="/:username/:app_name/detail/" component={AppDetail} />
+      <Route exact path="/publish/" component={CreateProject} />
+      <Route exact path="/new/" component={CreateProject} />
+      <Route path="/:username/:app_name/detail/" component={ProjectDetail} />
+      <Route path="/:username/:app_name/" component={ProjectDetail} />
     </Switch>
   </BrowserRouter>,
   domContainer

@@ -41,5 +41,35 @@ class ChargeRunMixin:
             UsageRecord.construct(stripe_ur, si)
 
 
+class ChargeDeploymentMixin:
+    def charge_deployment(self, deployment, use_stripe=True):
+        if use_stripe:
+            deployment_time = (deployment.deleted_at - deployment.created_at).seconds
+            quantity = deployment.project.run_cost(deployment_time, adjust=True)
+            plan = deployment.project.product.plans.get(usage_type="metered")
+
+            if getattr(deployment, "embed_approval", None) is not None:
+                customer = deployment.embed_approval.owner.user.customer
+            elif getattr(deployment.project, "sponsor", None) is not None:
+                customer = deployment.project.sponsor.user.customer
+            else:
+                customer = deployment.owner
+            try:
+                si = SubscriptionItem.objects.get(
+                    subscription__customer=customer, plan=plan
+                )
+            except SubscriptionItem.DoesNotExist:
+                customer.sync_subscriptions(plans=Plan.objects.filter(pk=plan.pk))
+                si = SubscriptionItem.objects.get(
+                    subscription__customer=customer, plan=plan
+                )
+            stripe_ur = UsageRecord.create_stripe_object(
+                quantity=Project.dollar_to_penny(quantity),
+                timestamp=None,
+                subscription_item=si,
+            )
+            UsageRecord.construct(stripe_ur, si)
+
+
 def has_payment_method(user):
     return hasattr(user, "customer") and user.customer is not None

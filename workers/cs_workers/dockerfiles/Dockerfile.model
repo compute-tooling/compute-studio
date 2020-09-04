@@ -6,7 +6,7 @@ RUN  apt-get update && apt install libgl1-mesa-glx --yes
 
 RUN conda config --append channels conda-forge
 RUN conda update conda
-RUN conda install "python>=3.7" pip tornado dask lz4 && pip install boto3
+RUN conda install "python>=3.7" pip tornado dask lz4 && pip install boto3 gunicorn
 
 
 WORKDIR /home
@@ -30,7 +30,14 @@ RUN bash /home/install.sh
 RUN pip install "git+${REPO_URL}.git@${REPO_TAG}#egg=cs-config&subdirectory=cs-config"
 ADD ${RAW_REPO_URL}/${REPO_TAG}/cs-config/cs_config/tests/test_functions.py /home
 
-RUN pip install "git+https://github.com/compute-tooling/compute-studio.git@master#egg=cs-workers&subdirectory=workers" cs-kit pytest
+ADD ./setup.py .
+COPY ./cs_workers ./cs_workers
+RUN pip install -e . && pip install cs-kit pytest
+# RUN pip install "git+https://github.com/compute-tooling/compute-studio.git@master#egg=cs-workers&subdirectory=workers" cs-kit pytest
 ######################
 
 WORKDIR /home
+
+EXPOSE 8010
+ENV PORT=8010
+ENV HOST=0.0.0.0

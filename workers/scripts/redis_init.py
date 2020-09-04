@@ -55,8 +55,8 @@ def main():
         enabled=True,
         nopass=nopass,
         passwords=f"+{sched_pw}" if not nopass else None,
-        commands=["-@all", "+set", "+get", "+acl|whoami"],
-        keys=["job-*", "projects"],
+        commands=["-@all", "+set", "+get", "+del", "+@hash", "+acl|whoami"],
+        keys=["job-*", "projects", "users*"],
     )
 
     exec_pw = os.environ.get("REDIS_EXECUTOR_PW")

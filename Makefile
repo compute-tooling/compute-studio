@@ -1,7 +1,6 @@
 PROJECT ?= cs-workers-dev
 CONFIG ?= worker_config.dev.yaml
 MODE ?= test
-NEW_RELIC_TOKEN ?= `cat ~/.newrelic-$(MODE)`
 MODELS ?= ""
 
 kube-config:
@@ -23,7 +22,7 @@ workers-apply:
 
 webapp-build:
 	docker build -t webbase:latest -f Dockerfile.base ./ && \
-	docker build --build-arg NEW_RELIC_TOKEN=$(NEW_RELIC_TOKEN) -t web:$(TAG) ./
+	docker build -t web:$(TAG) ./
 
 webapp-push:
 	docker tag web:$(TAG) registry.heroku.com/compute-studio/web

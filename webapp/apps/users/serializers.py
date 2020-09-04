@@ -1,6 +1,30 @@
 from rest_framework import serializers
 
-from webapp.apps.users.models import Project
+from webapp.apps.users.models import Project, EmbedApproval, Deployment
+
+
+class DeploymentSerializer(serializers.ModelSerializer):
+    project = serializers.StringRelatedField()
+
+    class Meta:
+        model = Deployment
+        fields = (
+            "project",
+            "created_at",
+            "deleted_at",
+            "last_load_at",
+            "last_ping_at",
+            "name",
+            "tag",
+            "status",
+        )
+        read_only = (
+            "project",
+            "created_at",
+            "last_loaded_at",
+            "name",
+            "tag",
+        )
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -43,8 +67,14 @@ class ProjectSerializer(serializers.ModelSerializer):
             "sim_count",
             "status",
             "user_count",
+            "callable_name",
+            "tech",
         )
-        read_only = ("sim_count", "user_count", "status")
+        read_only = (
+            "sim_count",
+            "user_count",
+            "status",
+        )
 
 
 class ProjectWithVersionSerializer(serializers.ModelSerializer):
@@ -89,14 +119,31 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
             "status",
             "user_count",
             "version",
+            "callable_name",
+            "tech",
         )
         read_only = ("sim_count", "status", "user_count", "version")
 
 
-class DeploymentSerializer(serializers.ModelSerializer):
+class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = (
             "latest_tag",
             "staging_tag",
         )
+
+
+class EmbedApprovalSerializer(serializers.ModelSerializer):
+    project = serializers.StringRelatedField()
+    owner = serializers.StringRelatedField()
+
+    class Meta:
+        model = EmbedApproval
+        fields = (
+            "name",
+            "project",
+            "owner",
+            "url",
+        )
+        read_only = ("owner", "project")

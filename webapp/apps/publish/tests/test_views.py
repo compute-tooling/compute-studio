@@ -7,13 +7,13 @@ from django.contrib.auth import get_user_model, get_user
 from guardian.shortcuts import assign_perm, remove_perm
 
 from webapp.apps.comp.models import Simulation
-from webapp.apps.users.models import Project, Profile
-
+from webapp.apps.users.models import Project, Profile, EmbedApproval
 from webapp.apps.users.serializers import ProjectSerializer
+
+from .utils import mock_sync_projects, mock_get_version
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_sync_projects")
 class TestPublishViews:
     def test_get(self, client):
         resp = client.get("/publish/")
@@ -31,11 +31,13 @@ class TestPublishViews:
             "listed": True,
             "latest_tag": "v1",
         }
-        resp = client.post("/publish/api/", post_data)
+        with mock_sync_projects():
+            resp = client.post("/apps/api/v1/", post_data)
         assert resp.status_code == 401
 
         client.login(username="modeler", password="modeler2222")
-        resp = client.post("/publish/api/", post_data)
+        with mock_sync_projects():
+            resp = client.post("/apps/api/v1/", post_data)
         assert resp.status_code == 200
 
         project = Project.objects.get(
@@ -60,10 +62,12 @@ class TestPublishViews:
             "listed": True,
             "status": "live",
             "latest_tag": "v1",
+            "tech": "python-paramtools",
+            "callable_name": None,
         }
         owner = Profile.objects.get(user__username="modeler")
         project = Project.objects.create(**dict(exp, **{"owner": owner}))
-        resp = client.get("/publish/api/modeler/Detail-Test/detail/")
+        resp = client.get("/apps/api/v1/modeler/Detail-Test/detail/")
         assert resp.status_code == 200
         data = resp.json()
         data.pop("owner")
@@ -73,11 +77,11 @@ class TestPublishViews:
         assert serializer.validated_data == exp
         assert serializer.data["has_write_access"] == False
 
-        resp = client.get("/publish/api/moDeler/detail-test/detail/")
+        resp = client.get("/apps/api/v1/moDeler/detail-test/detail/")
         assert resp.status_code == 200
 
         api_client.force_login(owner.user)
-        resp = api_client.get("/publish/api/moDeler/detail-test/detail/")
+        resp = api_client.get("/apps/api/v1/moDeler/detail-test/detail/")
         assert resp.data["has_write_access"] == True
 
     def test_put_detail_api(self, client, test_models, profile, password):
@@ -93,7 +97,7 @@ class TestPublishViews:
         }
         # not logged in --> not authorized
         resp = client.put(
-            "/publish/api/modeler/Used-for-testing/detail/",
+            "/apps/api/v1/modeler/Used-for-testing/detail/",
             data=put_data,
             content_type="application/json",
         )
@@ -102,7 +106,7 @@ class TestPublishViews:
         # not the owner --> not authorized
         client.login(username="sponsor", password="sponsor2222")
         resp = client.put(
-            "/publish/api/Modeler/Used-FOR-testing/detail/",
+            "/apps/api/v1/Modeler/Used-FOR-testing/detail/",
             data=put_data,
             content_type="application/json",
         )
@@ -110,11 +114,12 @@ class TestPublishViews:
 
         # logged in and owner --> do update
         client.login(username="modeler", password="modeler2222")
-        resp = client.put(
-            "/publish/api/modeler/Used-for-testing/detail/",
-            data=put_data,
-            content_type="application/json",
-        )
+        with mock_sync_projects():
+            resp = client.put(
+                "/apps/api/v1/modeler/Used-for-testing/detail/",
+                data=put_data,
+                content_type="application/json",
+            )
         assert resp.status_code == 200
         project = Project.objects.get(
             title="Used-for-testing", owner__user__username="modeler"
@@ -124,7 +129,7 @@ class TestPublishViews:
 
         # Description can't be empty.
         resp = client.put(
-            "/publish/api/modeler/Used-for-testing/detail/",
+            "/apps/api/v1/modeler/Used-for-testing/detail/",
             data=dict(put_data, **{"description": None}),
             content_type="application/json",
         )
@@ -134,7 +139,7 @@ class TestPublishViews:
         put_data["description"] = "hello world!!"
         client.login(username=profile.user.username, password=password)
         resp = client.put(
-            "/publish/api/modeler/Used-for-testing/detail/",
+            "/apps/api/v1/modeler/Used-for-testing/detail/",
             data=put_data,
             content_type="application/json",
         )
@@ -145,18 +150,17 @@ class TestPublishViews:
             title="Used-for-testing", owner__user__username="modeler"
         )
         assign_perm("write_project", profile.user, project)
-        resp = client.put(
-            "/publish/api/modeler/Used-for-testing/detail/",
-            data=put_data,
-            content_type="application/json",
-        )
+        with mock_sync_projects():
+            resp = client.put(
+                "/apps/api/v1/modeler/Used-for-testing/detail/",
+                data=put_data,
+                content_type="application/json",
+            )
         assert resp.status_code == 200
         project = Project.objects.get(
             title="Used-for-testing", owner__user__username="modeler"
         )
         assert project.description == put_data["description"]
-        remove_perm("write_project", profile.user, project)
-        assert not profile.user.has_perm("write_project", project)
 
     def test_get_detail_page(self, client, test_models):
         resp = client.get("/modeler/Used-for-testing/detail/")
@@ -166,7 +170,7 @@ class TestPublishViews:
         assert resp.status_code == 200
 
     def test_get_projects(self, client, test_models):
-        resp = client.get("/publish/api/")
+        resp = client.get("/apps/api/v1/")
         assert resp.status_code == 200
 
         exp = set(proj.title for proj in Project.objects.all())
@@ -187,7 +191,8 @@ class TestPublishViews:
 
         modeler = test_models[0].project.owner
 
-        resp = api_client.get("/api/v1/models/modeler")
+        with mock_get_version():
+            resp = api_client.get("/api/v1/models/modeler")
         assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
         exp = set(
             proj.title for proj in Project.objects.filter(owner=modeler, listed=True)
@@ -206,7 +211,8 @@ class TestPublishViews:
         # test auth'ed get returns all projects.
         modeler = test_models[0].owner
         api_client.force_login(modeler.user)
-        resp = api_client.get("/api/v1/models")
+        with mock_get_version():
+            resp = api_client.get("/api/v1/models")
         assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
 
         exp = set(proj.title for proj in Project.objects.filter(owner=modeler))
@@ -253,7 +259,7 @@ class TestPublishViews:
         assert project.has_write_access(prof.user)
 
         resp = api_client.post(
-            f"/publish/api/{project.owner}/{project.title}/deployments/",
+            f"/apps/api/v1/{project.owner}/{project.title}/tags/",
             data={"latest_tag": "v5"},
             format="json",
         )
@@ -261,3 +267,113 @@ class TestPublishViews:
         assert resp.status_code == 200
         project.refresh_from_db()
         assert project.latest_tag == "v5"
+
+
+@pytest.mark.django_db
+class TestEmbedApprovalAPI:
+    def test_create_embed_approval(self, api_client, project, free_profile):
+        base = f"/apps/api/v1/{project.owner}/{project.title}/embedapprovals/"
+        resp = api_client.post(
+            base, data={"name": "deny", "url": "example.com"}, format="json"
+        )
+        assert resp.status_code == 403
+
+        api_client.force_login(free_profile.user)
+        resp = api_client.post(
+            "/apps/api/doesnot/exist/embedapprovals/",
+            data={"name": "deny", "url": "example.com"},
+            format="json",
+        )
+        assert resp.status_code == 404
+
+        resp = api_client.post(
+            base, data={"name": "test", "url": "example.com"}, format="json"
+        )
+        assert resp.status_code == 400
+        assert "ParamTools" in resp.json()["tech"]
+
+        project.tech = "dash"
+        project.save()
+        resp = api_client.post(
+            base, data={"name": "test", "url": "example.com"}, format="json"
+        )
+        assert resp.status_code == 200, resp.json()
+        assert EmbedApproval.objects.get(
+            project=project, owner=free_profile, name="test"
+        )
+
+        resp = api_client.post(
+            base, data={"name": "test", "url": "example.com"}, format="json"
+        )
+        assert resp.status_code == 400
+        assert "exists" in resp.json()
+
+    def test_update_embed_approval(self, api_client, project, free_profile):
+        base = f"/apps/api/v1/{project.owner}/{project.title}/embedapprovals/test/"
+
+        ea = EmbedApproval.objects.create(
+            project=project, owner=free_profile, name="test", url="example.com",
+        )
+
+        resp = api_client.put(base, data={"name": "test2"}, format="json")
+        assert resp.status_code == 403
+        resp = api_client.delete(base)
+        assert resp.status_code == 403
+
+        api_client.force_login(project.owner.user)
+        resp = api_client.delete(base)
+        assert resp.status_code == 404
+
+        api_client.force_login(free_profile.user)
+        resp = api_client.put(
+            base, data={"name": "test2", "url": "example.com"}, format="json"
+        )
+        assert resp.status_code == 200, resp.json()
+        ea.refresh_from_db()
+        assert ea.name == "test2"
+
+        resp = api_client.delete(
+            f"/apps/api/v1/{project.owner}/{project.title}/embedapprovals/test2/"
+        )
+        assert resp.status_code == 204
+        assert (
+            EmbedApproval.objects.filter(project=project, owner=free_profile).count()
+            == 0
+        )
+
+    def test_list_embed_approval(self, api_client, project, free_profile):
+        base = f"/apps/api/v1/{project.owner}/{project.title}/embedapprovals/"
+
+        for i in range(5):
+            EmbedApproval.objects.create(
+                project=project,
+                owner=free_profile,
+                name=f"test-{i}",
+                url="example.com",
+            )
+
+        for i in range(2):
+            EmbedApproval.objects.create(
+                project=project,
+                owner=project.owner,
+                name=f"test2-{i}",
+                url="example.com",
+            )
+
+        base = f"/apps/api/v1/{project.owner}/{project.title}/embedapprovals/"
+        resp = api_client.get(base)
+        assert resp.status_code == 403
+
+        api_client.force_login(free_profile.user)
+        resp = api_client.get(base)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 5
+        assert all(ea["owner"] == str(free_profile) for ea in data)
+
+        api_client.force_login(project.owner.user)
+        resp = api_client.get(base)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 2
+        assert all(ea["owner"] == str(project.owner) for ea in data)

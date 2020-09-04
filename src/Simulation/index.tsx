@@ -29,7 +29,7 @@ import { convertToFormik, formikToJSON } from "../ParamTools";
 import { Formik, Form, FormikProps, FormikHelpers } from "formik";
 import { hasServerErrors } from "../utils";
 import { UnsavedChangesModal } from "./modal";
-import { AuthButtons } from "../auth";
+import { AuthPortal, AuthButtons } from "../auth";
 import { RolePerms } from "../roles";
 
 Sentry.init({
@@ -40,7 +40,6 @@ axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
 
 const domContainer = document.querySelector("#inputs-container");
-const authContainer = document.querySelector("#auth-group");
 
 interface URLProps {
   match: {
@@ -87,30 +86,6 @@ interface SimAppState {
   resetting?: boolean;
 
   error?: Error;
-}
-
-class AuthPortal extends React.Component<{}> {
-  el: HTMLDivElement;
-
-  constructor(props) {
-    super(props);
-    this.el = document.createElement("div");
-  }
-
-  componentDidMount() {
-    while (authContainer.firstChild) {
-      authContainer.removeChild(authContainer.firstChild);
-    }
-    authContainer.appendChild(this.el);
-  }
-
-  componentWillUnmount() {
-    authContainer.removeChild(this.el);
-  }
-
-  render() {
-    return ReactDOM.createPortal(this.props.children, this.el);
-  }
 }
 
 class SimTabs extends React.Component<

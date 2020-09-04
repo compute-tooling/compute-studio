@@ -38,6 +38,8 @@ CSRF_COOKIE_NAME = "csrftoken"
 
 USE_STRIPE = os.environ.get("USE_STRIPE", "false").lower() == "true"
 
+DEFAULT_CLUSTER_USER = os.environ.get("DEFAULT_CLUSTER_USER")
+
 # Indicates that this c/s instance uses billing restrictions.
 HAS_USAGE_RESTRICTIONS = (
     os.environ.get("HAS_USAGE_RESTRICTIONS", "true").lower() == "true"
@@ -175,7 +177,7 @@ ACCOUNT_AUTHENTICATION_METHOD = "username"
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "EST"
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -204,3 +206,14 @@ ANYMAIL = {
 EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
 DEFAULT_FROM_EMAIL = "hank@compute.studio"
 SERVER_EMAIL = "hank@compute.studio"
+
+
+if not os.environ.get("LOCAL") and os.environ.get("SENTRY_API_DSN"):
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=os.environ.get("SENTRY_API_DSN"),
+        integrations=[DjangoIntegration()],
+        send_default_pii=True,
+    )

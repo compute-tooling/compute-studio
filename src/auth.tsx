@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import axios from "axios";
 import { Button, Modal, Dropdown, Nav, Navbar } from "react-bootstrap";
@@ -291,3 +292,29 @@ export const AuthButtons: React.FC<{
     );
   }
 };
+
+const authContainer = document.querySelector("#auth-group");
+
+export class AuthPortal extends React.Component<{}> {
+  el: HTMLDivElement;
+
+  constructor(props) {
+    super(props);
+    this.el = document.createElement("div");
+  }
+
+  componentDidMount() {
+    while (authContainer.firstChild) {
+      authContainer.removeChild(authContainer.firstChild);
+    }
+    authContainer.appendChild(this.el);
+  }
+
+  componentWillUnmount() {
+    authContainer.removeChild(this.el);
+  }
+
+  render() {
+    return ReactDOM.createPortal(this.props.children, this.el);
+  }
+}
