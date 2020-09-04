@@ -291,15 +291,19 @@ const ViewProject: React.FC<{
 }> = ({ project, accessStatus, enterEditMode }) => {
   const id = `${project.owner}/${project.title}`;
   const goto = project.tech === "python-paramtools" ? `/${id}/new/` : `/${id}/viz/`;
+  const image = node => (
+    <div className="d-flex justify-content-center mb-2">
+      <img src={node.src} alt={node.alt} style={{ maxWidth: 500 }} />
+    </div>
+  );
   return (
     <Jumbotron className="shadow" style={{ backgroundColor: "white" }}>
       <h1 className="display-5">
         <Row className="justify-content-between">
           <Col className="col-auto">
-            <a
-              className="primary-text"
-              href={`${project.owner}/${project.title}`}
-            >{`${project.owner}/${project.title}`}</a>
+            <a className="primary-text" href={`/${id}/`}>
+              {id}
+            </a>
           </Col>
           {accessStatus.can_write_project && (
             <Col className="col-auto">
@@ -312,7 +316,7 @@ const ViewProject: React.FC<{
       </h1>
       <p className="lead">{project.oneliner}</p>
       <hr className="my-4" />
-      <ReactMarkdown source={project.description} escapeHtml={false} />
+      <ReactMarkdown source={project.description} escapeHtml={false} renderers={{ image: image }} />
       <Row className="justify-content-between mt-5">
         <Col className="col-auto align-self-center">
           {project.status === "live" && (
