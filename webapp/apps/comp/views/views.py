@@ -162,7 +162,7 @@ class VizView(InputsMixin, View):
             title__iexact=kwargs["title"],
         )
         if project.tech == "python-paramtools":
-            return redirect(f"/{project.title}/{project.owner}/new/")
+            return redirect(f"/{project.owner}/{project.title}/new/")
         context = self.project_context(request, project)
         if is_profile_active(request.user):
             owner = request.user.profile
