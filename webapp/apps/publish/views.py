@@ -32,6 +32,7 @@ from webapp.apps.users.models import (
     Cluster,
     Deployment,
     EmbedApproval,
+    Tag,
     is_profile_active,
 )
 from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
@@ -40,6 +41,7 @@ from webapp.apps.users.serializers import (
     ProjectSerializer,
     ProjectWithVersionSerializer,
     TagSerializer,
+    TagUpdateSerializer,
     EmbedApprovalSerializer,
     DeploymentSerializer,
 )
@@ -179,27 +181,63 @@ class ProjectAPIView(GetProjectMixin, APIView):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
-class TagAPIView(GetProjectMixin, APIView):
+class TagsAPIView(GetProjectMixin, APIView):
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
         TokenAuthentication,
     )
+    permission_classes = (StrictRequiresActive,)
 
     def get(self, request, *args, **kwargs):
-        ser = TagSerializer(self.get_object(**kwargs), context={"request": request})
-        return Response(ser.data, status=status.HTTP_200_OK)
+        project = self.get_object(**kwargs)
+        if not project.has_write_access(request.user):
+            raise PermissionDenied()
+        return Response(
+            {
+                "staging_tag": TagSerializer(instance=project.staging_tag).data,
+                "latest_tag": TagSerializer(instance=project.latest_tag).data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     def post(self, request, *args, **kwargs):
         project = self.get_object(**kwargs)
-        if request.user.is_authenticated and project.has_write_access(request.user):
-            serializer = TagSerializer(project, data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response(status=status.HTTP_401_UNAUTHORIZED)
+        if not project.has_write_access(request.user):
+            raise PermissionDenied()
+        serializer = TagUpdateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+        print("data", data)
+        if data.get("staging_tag") is not None:
+            tag, _ = Tag.objects.get_or_create(
+                project=project,
+                image_tag=data.get("staging_tag"),
+                defaults=dict(cpu=project.cpu, memory=project.memory),
+            )
+            project.staging_tag = tag
+        elif "staging_tag" in data:
+            project.staging_tag = None
+
+        if data.get("latest_tag") is not None:
+            tag, _ = Tag.objects.get_or_create(
+                project=project,
+                image_tag=data.get("latest_tag"),
+                defaults=dict(cpu=project.cpu, memory=project.memory),
+            )
+            project.latest_tag = tag
+
+        project.save()
+
+        return Response(
+            {
+                "staging_tag": TagSerializer(instance=project.staging_tag).data,
+                "latest_tag": TagSerializer(instance=project.latest_tag).data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class RecentModelsAPIView(generics.ListAPIView):

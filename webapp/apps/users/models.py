@@ -257,8 +257,15 @@ class Project(models.Model):
 
     cluster_type = models.CharField(default="single-core", max_length=32)
 
-    latest_tag = models.CharField(null=True, max_length=64)
-    staging_tag = models.CharField(null=True, max_length=64)
+    latest_tag_deprecated = models.CharField(null=True, max_length=64)
+    staging_tag_deprecated = models.CharField(null=True, max_length=64)
+
+    latest_tag = models.ForeignKey(
+        "Tag", null=True, on_delete=models.SET_NULL, related_name="latest"
+    )
+    staging_tag = models.ForeignKey(
+        "Tag", null=True, on_delete=models.SET_NULL, related_name="staging"
+    )
 
     objects = ProjectManager()
 
@@ -387,6 +394,26 @@ class Project(models.Model):
         permissions = (("write_project", "Write project"),)
 
 
+class Tag(models.Model):
+    project = models.ForeignKey(
+        "Project", on_delete=models.SET_NULL, related_name="tags", null=models.CASCADE
+    )
+    image_tag = models.CharField(null=True, max_length=64)
+    cpu = models.DecimalField(max_digits=5, decimal_places=1, null=True, default=2)
+    memory = models.DecimalField(max_digits=5, decimal_places=1, null=True, default=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.image_tag)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "image_tag"], name="unique_project_tag"
+            )
+        ]
+
+
 class DeploymentException(Exception):
     pass
 
@@ -436,7 +463,8 @@ class Deployment(models.Model):
     last_ping_at = models.DateTimeField(auto_now_add=True)
     # Uses max length of django username field.
     name = models.CharField(null=True, max_length=150)
-    tag = models.CharField(null=True, max_length=64)
+    tag_deprecated = models.CharField(null=True, max_length=64)
+    tag = models.ForeignKey("Tag", null=True, on_delete=models.SET_NULL)
 
     status = models.CharField(
         default="creating",
@@ -494,7 +522,7 @@ class Deployment(models.Model):
 
         resp = requests.post(
             f"{self.project.cluster.url}/deployments/{self.project}/",
-            json={"deployment_name": self.public_name, "tag": self.tag,},
+            json={"deployment_name": self.public_name, "tag": str(self.tag)},
             headers=self.project.cluster.headers(),
         )
 

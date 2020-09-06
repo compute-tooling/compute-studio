@@ -6,7 +6,7 @@ from .views import (
     ProjectDetailView,
     ProjectDetailAPIView,
     ProjectAPIView,
-    TagAPIView,
+    TagsAPIView,
     EmbedApprovalView,
     EmbedApprovalDetailView,
     DeploymentsView,
@@ -39,7 +39,7 @@ urlpatterns = [
     ),
     path(
         "api/v1/<str:username>/<str:title>/tags/",
-        TagAPIView.as_view(),
+        TagsAPIView.as_view(),
         name="project_tags_api",
     ),
     path(

@@ -267,6 +267,7 @@ class SimulationManager(models.Manager):
                 sim = self.create(
                     owner=user.profile,
                     project=project,
+                    tag=project.latest_tag,
                     model_pk=model_pk,
                     inputs=inputs,
                     status="STARTED",
@@ -319,6 +320,7 @@ class SimulationManager(models.Manager):
             traceback=sim.traceback,
             sponsor=sim.sponsor,
             project=sim.project,
+            tag=sim.tag,
             run_time=sim.run_time,
             run_cost=0,
             exp_comp_datetime=sim.exp_comp_datetime,
@@ -380,6 +382,9 @@ class Simulation(models.Model):
     )
     project = models.ForeignKey(
         "users.Project", on_delete=models.SET_NULL, related_name="sims", null=True
+    )
+    tag = models.ForeignKey(
+        "users.Tag", on_delete=models.SET_NULL, related_name="sims", null=True
     )
     notify_on_completion = models.BooleanField(default=False)
     # run-time in seconds

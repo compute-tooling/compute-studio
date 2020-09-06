@@ -255,7 +255,7 @@ class Manager(BaseManager):
             resp.status_code == 200
         ), f"Got: {resp.url} {resp.status_code} {resp.text}"
 
-        sys.stdout.write(resp.json()["staging_tag"])
+        sys.stdout.write(resp.json()["staging_tag"]["image_tag"])
 
     def promote_app(self, app):
         resp = httpx.get(
@@ -265,7 +265,7 @@ class Manager(BaseManager):
         assert (
             resp.status_code == 200
         ), f"Got: {resp.url} {resp.status_code} {resp.text}"
-        staging_tag = resp.json()["staging_tag"]
+        staging_tag = resp.json()["staging_tag"]["image_tag"]
         resp = httpx.post(
             f"{self.config.cs_url}/apps/api/v1/{app['owner']}/{app['title']}/tags/",
             json={"latest_tag": staging_tag or self.tag, "staging_tag": None},
@@ -275,7 +275,7 @@ class Manager(BaseManager):
             resp.status_code == 200
         ), f"Got: {resp.url} {resp.status_code} {resp.text}"
 
-        sys.stdout.write(resp.json()["latest_tag"])
+        sys.stdout.write(resp.json()["latest_tag"]["image_tag"])
 
     def write_secrets(self, app):
         secret_config = copy.deepcopy(self.secret_template)
