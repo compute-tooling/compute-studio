@@ -191,6 +191,13 @@ class ProjectManager(models.Manager):
         return project
 
 
+def get_server_cost(cpu, memory):
+    """Hourly compute costs"""
+    cpu_price = COMPUTE_PRICING["cpu"]
+    memory_price = COMPUTE_PRICING["memory"]
+    return float(cpu) * cpu_price + float(memory) * memory_price
+
+
 class Project(models.Model):
     SECS_IN_HOUR = 3600.0
     title = models.CharField(max_length=255)
@@ -312,9 +319,7 @@ class Project(models.Model):
     @property
     def server_cost(self):
         """Hourly compute costs"""
-        cpu_price = COMPUTE_PRICING["cpu"]
-        memory_price = COMPUTE_PRICING["memory"]
-        return float(self.cpu) * cpu_price + float(self.memory) * memory_price
+        return get_server_cost(self.cpu, self.memory)
 
     @property
     def server_cost_in_secs(self):
@@ -405,6 +410,11 @@ class Tag(models.Model):
 
     def __str__(self):
         return str(self.image_tag)
+
+    @property
+    def server_cost(self):
+        """Hourly compute costs"""
+        return get_server_cost(self.cpu, self.memory)
 
     class Meta:
         constraints = [
