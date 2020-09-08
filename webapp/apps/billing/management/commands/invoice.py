@@ -32,6 +32,9 @@ def process_simulations(simulations):
             server_cost = project.server_cost
         run_time = simulation.run_time
 
+        if run_time <= 0:
+            continue
+
         results[str(project)].append(
             {
                 "model_pk": simulation.model_pk,
@@ -53,6 +56,9 @@ def process_deployments(deployments):
             server_cost = project.server_cost
 
         run_time = (deployment.deleted_at - deployment.created_at).seconds
+
+        if run_time <= 0:
+            continue
 
         results[str(project)].append(
             {
