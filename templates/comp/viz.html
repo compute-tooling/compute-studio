@@ -1,36 +1,56 @@
-{% extends 'base.html' %} {% load static %} {% block style %}
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
 
-<style>
-  .embedded {
-    position: relative;
-    height: 100vh;
-    width: 100%;
-    border: 0;
-  }
-</style>
+<head>
+  <title>Compute Studio</title>
+  <link rel="icon" href="{% static 'imgs/cslashs.png' %}" type="image/x-icon" />
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
+    integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous" />
 
-{% endblock %}{% block content %} {% csrf_token %}
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
 
-<div id="iframe-container" class="container-fluid" style="background: white;">
+    .embedded {
+      position: relative;
+      height: 100vh;
+      width: 100%;
+      border: 0;
+    }
+  </style>
+</head>
+
+<body class="main" id="iframe-container">
   {% if deployment.status == "running" %}
-  <iframe
-    id="embedded-iframe"
-    class="embedded"
-    title="{{object.title}}"
-    src="{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/"
-  ></iframe>
+  <iframe id="embedded-iframe" class="embedded" title="{{object.title}}"
+    src="{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/"></iframe>
   {% else %}
-  <div id="notready" style="height: 75vh;">
-    <p class="lead">Starting the {{object.owner}}/{{object.title}} visualization...</p>
+  <div id="notready">
+    <p>Starting the {{object.owner}}/{{object.title}} visualization...</p>
   </div>
-</div>
-{% endif %} {% endblock %} {% block below_body %}
+  {% endif %}
+  <div style="position: fixed; top: 2rem; right: 2rem;">
+    <a href="/{{object.owner}}/{{object.title}}/" style="color:#586069 !important"><i
+        class="fas fa-times fa-lg"></i></a>
+  </div>
+
+  <div style="position: fixed; bottom: 1rem; right: 1rem;">
+    <a href="/"><img height="50" width="50" alt="Compute Studio Logo" src="{% static 'imgs/cslashs.png' %}" /></a>
+  </div>
+</body>
+
 <script>
-  const checkReady = function() {
+  const checkReady = function () {
     const resp = fetch(
       "/apps/api/v1/{{object.owner}}/{{object.title}}/deployments/{{deployment.name}}/"
-    ).then(function(response) {
-      response.json().then(function(data) {
+    ).then(function (response) {
+      response.json().then(function (data) {
         if (data.status === "running") {
           const container = document.getElementById("iframe-container");
           const placeholder = document.getElementById("notready");
@@ -50,25 +70,26 @@
     });
   };
 
-  const pingDeployment = function() {
+  const pingDeployment = function () {
     if (!document.hasFocus()) {
       setTimeout(pingDeployment, 2000);
       return;
     }
-    const resp = fetch("/apps/api/v1/deployments/{{deployment.id}}/?ping=true").then(function(
+    const resp = fetch("/apps/api/v1/deployments/{{deployment.id}}/?ping=true").then(function (
       response
     ) {
-      response.json().then(function(data) {
+      response.json().then(function (data) {
         if (data.status === "terminated") {
           // reload modal
           const container = document.getElementById("iframe-container");
           const iframe = document.getElementById("embedded-iframe");
           container.removeChild(iframe);
           const restart = document.createElement("p");
-          restart.textContent = "Restarting the {{object.owner}}/{{object.title}} visualization...";
+          restart.textContent =
+            "Restarting the {{object.owner}}/{{object.title}} visualization...";
           restart.style.height = "75vh";
           container.appendChild(restart);
-          setTimeout(function() {
+          setTimeout(function () {
             window.location.reload();
           }, 2000);
         } else {
@@ -78,7 +99,7 @@
     });
   };
 
-  window.onload = function() {
+  window.onload = function () {
     const initIframe = document.getElementById("embedded-iframe");
     if (initIframe === null) {
       return checkReady();
@@ -87,4 +108,5 @@
     }
   };
 </script>
-{% endblock %}
+
+</html>
