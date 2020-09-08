@@ -1,7 +1,7 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect, HttpResponse
 from django.views import View
 
-from webapp.apps.users.models import Project, Profile
+from webapp.apps.users.models import Project, Profile, EmbedApproval
 
 ABOUT_URL = "https://about.compute.studio"
 
@@ -70,3 +70,24 @@ class DMCAView(View):
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template)
+
+
+class RobotsText(View):
+    def get(self, request, *args, **kwargs):
+        lines = [
+            "User-Agent: *",
+        ]
+
+        viz_projects = Project.objects.exclude(
+            pk__in=Project.objects.filter(tech="python-paramtools")
+        )
+
+        for project in viz_projects:
+            lines.append(f"Disallow: /{project}/viz/")
+
+        eas = EmbedApproval.objects.all()
+
+        for ea in eas:
+            lines.append(f"Disallow: {ea.get_absolute_url()}")
+
+        return HttpResponse("\n".join(lines), content_type="text/plain")
