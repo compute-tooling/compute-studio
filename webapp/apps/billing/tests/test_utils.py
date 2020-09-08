@@ -135,6 +135,7 @@ def test_charge_run_with_sponsored_model(db):
     )
 
 
+@pytest.mark.requires_stripe
 class TestChargeDeployments:
     def test_embed_approvals(self, db, profile):
         project = Project.objects.get(title="Test-Viz")
