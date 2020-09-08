@@ -39,3 +39,6 @@ class TestPageViews:
         resp = client.get("/about/")
         assert resp.status_code == 302, f"Expected 302, got {resp.status_code}"
         assert resp.url == ABOUT_URL
+
+    def test_get_robots(self, client):
+        assert client.get(f"/robots.txt").status_code == 200
