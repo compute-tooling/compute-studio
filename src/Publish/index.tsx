@@ -293,7 +293,7 @@ const ViewProject: React.FC<{
   const goto = project.tech === "python-paramtools" ? `/${id}/new/` : `/${id}/viz/`;
   const image = node => (
     <div className="d-flex justify-content-center mb-2">
-      <img src={node.src} alt={node.alt} style={{ maxWidth: 500 }} />
+      <img src={node.src} alt={node.alt} />
     </div>
   );
   return (
