@@ -23,10 +23,19 @@
       width: 100%;
       border: 0;
     }
+
+    /* From bootstrap. */
+    .container-fluid {
+      width: 100%;
+      padding-right: 15px;
+      padding-left: 15px;
+      margin-right: auto;
+      margin-left: auto;
+    }
   </style>
 </head>
 
-<body class="main" id="iframe-container">
+<body class="main container-fluid" id="iframe-container">
   {% if deployment.status == "running" %}
   <iframe id="embedded-iframe" class="embedded" title="{{object.title}}"
     src="{{protocol}}://{{viz_host}}/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/"></iframe>
@@ -37,7 +46,7 @@
   {% endif %}
   <div style="position: fixed; top: 2rem; right: 2rem;">
     <a href="/{{object.owner}}/{{object.title}}/" style="color:#586069 !important"><i
-        class="fas fa-times fa-lg"></i></a>
+        class="fas fa-times fa-2x"></i></a>
   </div>
 
   <div style="position: fixed; bottom: 1rem; right: 1rem;">
