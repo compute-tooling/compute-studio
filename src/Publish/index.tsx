@@ -4,7 +4,7 @@ import * as ReactDOM from "react-dom";
 import * as React from "react";
 import * as ReactMarkdown from "react-markdown";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { Row, Col, Card, Dropdown, Jumbotron } from "react-bootstrap";
+import { Row, Col, Card, Dropdown, Jumbotron, Container } from "react-bootstrap";
 import axios from "axios";
 import { Formik, Field, Form, ErrorMessage, FormikHelpers, FormikProps } from "formik";
 import * as yup from "yup";
@@ -296,24 +296,27 @@ const ViewProject: React.FC<{
       <img src={node.src} alt={node.alt} />
     </div>
   );
+  const isMobile = window.innerWidth < 992;
   return (
     <Jumbotron className="shadow" style={{ backgroundColor: "white" }}>
-      <h1 className="display-5">
-        <Row className="justify-content-between">
+      <Row className="justify-content-between mb-2">
+        <Col className="col-auto">
+          <a className="primary-text" href={`/${id}/`}>
+            {isMobile ? (
+              <p className="lead font-weight-bold mt-1">{id}</p>
+            ) : (
+              <h1 className="display-5">{id}</h1>
+            )}
+          </a>
+        </Col>
+        {accessStatus.can_write_project && (
           <Col className="col-auto">
-            <a className="primary-text" href={`/${id}/`}>
-              {id}
-            </a>
+            <button className="btn btn-outline-primary" onClick={() => enterEditMode()}>
+              Edit
+            </button>
           </Col>
-          {accessStatus.can_write_project && (
-            <Col className="col-auto">
-              <button className="btn btn-outline-primary" onClick={() => enterEditMode()}>
-                Edit
-              </button>
-            </Col>
-          )}
-        </Row>
-      </h1>
+        )}
+      </Row>
       <p className="lead">{project.oneliner}</p>
       <hr className="my-4" />
       <ReactMarkdown source={project.description} escapeHtml={false} renderers={{ image: image }} />
