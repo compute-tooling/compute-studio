@@ -292,8 +292,8 @@ const ViewProject: React.FC<{
   const id = `${project.owner}/${project.title}`;
   const goto = project.tech === "python-paramtools" ? `/${id}/new/` : `/${id}/viz/`;
   const image = node => (
-    <div className="d-flex justify-content-center mb-2">
-      <img src={node.src} alt={node.alt} />
+    <div className="container-fluid">
+      <img className="h-100 w-100" src={node.src} alt={node.alt} style={{ objectFit: "cover" }} />
     </div>
   );
   const isMobile = window.innerWidth < 992;
