@@ -80,6 +80,7 @@ class Manager:
         cs_url=None,
         cs_api_token=None,
         cluster_host=None,
+        viz_host=None,
     ):
         self.tag = tag
         self.project = project
@@ -88,6 +89,7 @@ class Manager:
         self.cs_url = cs_url
         self._cs_api_token = cs_api_token
         self.cluster_host = cluster_host
+        self.viz_host = viz_host
 
         kconfig.load_kube_config()
 
@@ -212,6 +214,9 @@ class Manager:
         deployment["spec"]["template"]["spec"]["containers"][0][
             "image"
         ] = f"gcr.io/{self.project}/scheduler:{self.tag}"
+        deployment["spec"]["template"]["spec"]["containers"][0]["env"].append(
+            {"name": "VIZ_HOST", "value": self.viz_host}
+        )
         self.write_config("scheduler-Deployment.yaml", deployment)
 
         return deployment
@@ -353,6 +358,7 @@ def manager_from_args(args: argparse.Namespace):
         cs_url=getattr(args, "cs_url", None),
         cs_api_token=getattr(args, "cs_api_token", None),
         cluster_host=getattr(args, "cluster_host", None),
+        viz_host=getattr(args, "viz_host", None),
     )
 
 

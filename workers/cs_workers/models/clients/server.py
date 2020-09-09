@@ -33,6 +33,7 @@ class Server:
         deployment_name="default",
         namespace="default",
         cr="gcr.io",
+        viz_host=VIZ_HOST,
         incluster=True,
         rclient=None,
         quiet=True,
@@ -46,6 +47,7 @@ class Server:
         self.deployment_name = deployment_name
         self.namespace = namespace
         self.cr = cr
+        self.viz_host = viz_host
         self.quiet = quiet
 
         self.incluster = incluster
@@ -94,7 +96,9 @@ class Server:
             )
 
         envs.append(
-            kclient.V1EnvVar(name="URL_BASE_PATHNAME", value=f"/{owner}/{title}/{deployment_name}/",)
+            kclient.V1EnvVar(
+                name="URL_BASE_PATHNAME", value=f"/{owner}/{title}/{deployment_name}/",
+            )
         )
 
         return envs
@@ -154,7 +158,7 @@ class Server:
         routes = [
             {
                 "kind": "Rule",
-                "match": f"Host(`{VIZ_HOST}`) && PathPrefix(`{path_prefix}`)",
+                "match": f"Host(`{self.viz_host}`) && PathPrefix(`{path_prefix}`)",
                 "services": [{"name": name, "port": 80}],
             }
         ]
@@ -319,5 +323,5 @@ if __name__ == "__main__":
     )
     server
     server.configure()
-    server.apply()
+    server.create()
     # server.delete()
