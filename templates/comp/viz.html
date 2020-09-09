@@ -29,7 +29,7 @@
 <body class="main" id="iframe-container">
   {% if deployment.status == "running" %}
   <iframe id="embedded-iframe" class="embedded" title="{{object.title}}"
-    src="{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/"></iframe>
+    src="{{protocol}}://{{viz_host}}/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/"></iframe>
   {% else %}
   <div id="notready">
     <p>Starting the {{object.owner}}/{{object.title}} visualization...</p>
@@ -57,7 +57,7 @@
           container.removeChild(placeholder);
           const iframe = document.createElement("iframe");
           iframe.src =
-            "{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/";
+            "{{protocol}}://{{viz_host}}/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/";
           iframe.title = "{{object.title}}";
           iframe.className = "embedded";
           iframe.id = "embedded-iframe";

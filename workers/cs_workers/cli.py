@@ -38,7 +38,15 @@ def load_env():
     else:
         user_config = {}
 
-    for var in ["TAG", "PROJECT", "CS_URL", "CS_API_TOKEN", "BUCKET", "CLUSTER_HOST"]:
+    for var in [
+        "TAG",
+        "PROJECT",
+        "CS_URL",
+        "CS_API_TOKEN",
+        "BUCKET",
+        "CLUSTER_HOST",
+        "VIZ_HOST",
+    ]:
         if os.environ.get(var):
             config[var] = os.environ.get(var)
         elif user_config.get(var):
@@ -56,6 +64,7 @@ def cli():
     parser.add_argument(
         "--cs-api-token", required=False, default=config["CS_API_TOKEN"]
     )
+    parser.add_argument("--viz-host", required=False, default=config.get("VIZ_HOST"))
     sub_parsers = parser.add_subparsers()
 
     cs_workers.services.manage.cli(sub_parsers, config=config)
