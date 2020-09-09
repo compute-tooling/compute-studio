@@ -39,6 +39,7 @@ services:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
       - CS_CRYPT_KEY=${CS_CRYPT_KEY}
       - DEFAULT_CLUSTER_USER=hdoupe
+      - DEFAULT_VIZ_HOST=devviz.compute.studio
     ports:
       - "8000:8000"
     container_name: web
