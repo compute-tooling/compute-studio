@@ -292,28 +292,50 @@ const ViewProject: React.FC<{
   const id = `${project.owner}/${project.title}`;
   const goto = project.tech === "python-paramtools" ? `/${id}/new/` : `/${id}/viz/`;
   const image = node => (
-    <div className="d-flex justify-content-center mb-2">
-      <img src={node.src} alt={node.alt} style={{ maxWidth: 500 }} />
+    <div className="container-fluid">
+      <img className="h-100 w-100" src={node.src} alt={node.alt} style={{ objectFit: "cover" }} />
     </div>
   );
+  const isMobile = window.innerWidth < 992;
+  let title;
+  if (isMobile) {
+    title = (
+      <>
+        <p className="font-weight-light primary-text mb-0">
+          <a href={`/${project.owner}/`}>{project.owner}</a> /
+        </p>
+        <a href={`/${id}/`} className="primary-text">
+          <p className="lead font-weight-bold">{project.title}</p>
+        </a>
+      </>
+    );
+  } else {
+    title = (
+      <>
+        <h1 className="display-5">
+          <a href={`/${project.owner}/`} className="primary-text">
+            <span className="font-weight-light">{project.owner}</span>
+          </a>
+          <span className="font-weight-light mx-1">/</span>
+          <a href={`/${id}/`} className="primary-text">
+            <span className="font-weight-bold">{project.title}</span>
+          </a>
+        </h1>
+      </>
+    );
+  }
   return (
     <Jumbotron className="shadow" style={{ backgroundColor: "white" }}>
-      <h1 className="display-5">
-        <Row className="justify-content-between">
-          <Col className="col-auto">
-            <a className="primary-text" href={`/${id}/`}>
-              {id}
-            </a>
+      <Row className="justify-content-between mb-2">
+        <Col className="col-auto align-self-center">{title}</Col>
+        {accessStatus.can_write_project && (
+          <Col className="col-auto align-self-center">
+            <button className="btn btn-outline-primary" onClick={() => enterEditMode()}>
+              Edit
+            </button>
           </Col>
-          {accessStatus.can_write_project && (
-            <Col className="col-auto">
-              <button className="btn btn-outline-primary" onClick={() => enterEditMode()}>
-                Edit
-              </button>
-            </Col>
-          )}
-        </Row>
-      </h1>
+        )}
+      </Row>
       <p className="lead">{project.oneliner}</p>
       <hr className="my-4" />
       <ReactMarkdown source={project.description} escapeHtml={false} renderers={{ image: image }} />

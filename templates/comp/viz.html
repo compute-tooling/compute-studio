@@ -23,13 +23,22 @@
       width: 100%;
       border: 0;
     }
+
+    /* From bootstrap. */
+    .container-fluid {
+      width: 100%;
+      padding-right: 15px;
+      padding-left: 15px;
+      margin-right: auto;
+      margin-left: auto;
+    }
   </style>
 </head>
 
-<body class="main" id="iframe-container">
+<body class="main container-fluid" id="iframe-container">
   {% if deployment.status == "running" %}
   <iframe id="embedded-iframe" class="embedded" title="{{object.title}}"
-    src="{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/"></iframe>
+    src="{{protocol}}://{{viz_host}}/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/"></iframe>
   {% else %}
   <div id="notready">
     <p>Starting the {{object.owner}}/{{object.title}} visualization...</p>
@@ -37,7 +46,7 @@
   {% endif %}
   <div style="position: fixed; top: 2rem; right: 2rem;">
     <a href="/{{object.owner}}/{{object.title}}/" style="color:#586069 !important"><i
-        class="fas fa-times fa-lg"></i></a>
+        class="fas fa-times fa-2x"></i></a>
   </div>
 
   <div style="position: fixed; bottom: 1rem; right: 1rem;">
@@ -57,7 +66,7 @@
           container.removeChild(placeholder);
           const iframe = document.createElement("iframe");
           iframe.src =
-            "{{protocol}}://viz.compute.studio/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/";
+            "{{protocol}}://{{viz_host}}/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/";
           iframe.title = "{{object.title}}";
           iframe.className = "embedded";
           iframe.id = "embedded-iframe";

@@ -39,6 +39,7 @@ CSRF_COOKIE_NAME = "csrftoken"
 USE_STRIPE = os.environ.get("USE_STRIPE", "false").lower() == "true"
 
 DEFAULT_CLUSTER_USER = os.environ.get("DEFAULT_CLUSTER_USER")
+DEFAULT_VIZ_HOST = os.environ.get("DEFAULT_VIZ_HOST")
 
 # Indicates that this c/s instance uses billing restrictions.
 HAS_USAGE_RESTRICTIONS = (
@@ -91,7 +92,7 @@ INSTALLED_APPS = [
 
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 50,
+    "PAGE_SIZE": 25,
 }
 
 MIDDLEWARE = [

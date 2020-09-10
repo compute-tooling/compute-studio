@@ -20,6 +20,8 @@ from rest_framework.authentication import (
     TokenAuthentication,
 )
 from rest_framework.exceptions import PermissionDenied
+from rest_framework import filters
+
 
 from guardian.shortcuts import assign_perm
 
@@ -406,7 +408,9 @@ class DeploymentsView(generics.ListAPIView):
         BasicAuthentication,
         TokenAuthentication,
     )
-
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ["created_at"]
+    ordering = ["created_at"]
     queryset = Deployment.objects.filter(
         deleted_at__isnull=True, status__in=["creating", "running"]
     )
