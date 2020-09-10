@@ -527,12 +527,17 @@ class Deployment(models.Model):
 
     def create_deployment(self):
         if self.tag is None:
-            self.tag = self.project.latest_tag
+            if self.project.latest_tag is None:
+                self.tag_deprecated = self.project.latest_tag_deprecated
+                tag = self.tag_deprecated
+            else:
+                self.tag = self.project.latest_tag
+                tag = str(self.tag)
             self.save()
 
         resp = requests.post(
             f"{self.project.cluster.url}/deployments/{self.project}/",
-            json={"deployment_name": self.public_name, "tag": str(self.tag)},
+            json={"deployment_name": self.public_name, "tag": tag},
             headers=self.project.cluster.headers(),
         )
 
