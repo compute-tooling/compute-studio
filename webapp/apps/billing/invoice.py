@@ -11,7 +11,7 @@ import math
 import os
 from collections import defaultdict
 from datetime import datetime
-
+from pprint import pprint
 
 from django.utils import timezone
 
@@ -26,6 +26,9 @@ def process_simulations(simulations):
     results = defaultdict(list)
     for simulation in simulations.all():
         project = simulation.project
+        # Project is deleted.
+        if project is None:
+            continue
         # Projects not doing pay per sim are handled elsewhere.
         if not project.pay_per_sim:
             continue
@@ -106,7 +109,7 @@ def create_invoice_items(customer, aggregated_metrics, description, period):
         if total_time > 60:
             time_msg = f"{round(total_time / 60, 2)} hours"
         else:
-            time_msg = f"{int(round(total_time / 60, 0))} minutes"
+            time_msg = f"{int(round(total_time, 1))} minutes"
         stripe.InvoiceItem.create(
             customer=customer.stripe_id,
             amount=int(total_cost * 100),
@@ -120,10 +123,12 @@ def create_invoice_items(customer, aggregated_metrics, description, period):
 def invoice_customer(customer, start, end, send_invoice=True):
     profile = customer.user.profile
     owner_sims = process_simulations(
-        profile.sims.filter(sponsor__isnull=True, creation_date__gte=start)
+        profile.sims.filter(sponsor__isnull=True, creation_date__date__gte=start.date())
     )
     sponsor_sims = process_simulations(
-        customer.user.profile.sponsored_sims.filter(creation_date__gte=start)
+        customer.user.profile.sponsored_sims.filter(
+            creation_date__date__gte=start.date()
+        )
     )
 
     owner_sim_costs = aggregate_metrics(owner_sims)
@@ -131,7 +136,9 @@ def invoice_customer(customer, start, end, send_invoice=True):
 
     ea_deployments = process_deployments(
         profile.deployments.filter(
-            embed_approval__owner=profile, created_at__gte=start, deleted_at__lte=end,
+            embed_approval__owner=profile,
+            created_at__gte=start.date(),
+            deleted_at__lte=end.date(),
         )
     )
 
@@ -140,8 +147,8 @@ def invoice_customer(customer, start, end, send_invoice=True):
         profile.deployments.filter(
             owner=profile,
             embed_approval__isnull=True,
-            created_at__gte=start,
-            deleted_at__lte=end,
+            created_at__date__gte=start.date(),
+            deleted_at__date__lte=end.date(),
         )
     )
 
@@ -165,8 +172,9 @@ def invoice_customer(customer, start, end, send_invoice=True):
         },
     }
 
-    print(profile)
-    print(summary["summary"])
+    print()
+    print("Customer username:", profile)
+    pprint(summary["summary"])
 
     create_invoice = (
         bool(owner_sim_costs)
