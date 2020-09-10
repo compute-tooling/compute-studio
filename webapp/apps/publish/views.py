@@ -28,7 +28,6 @@ from guardian.shortcuts import assign_perm
 # from webapp.settings import DEBUG
 
 from webapp.settings import USE_STRIPE
-from webapp.apps.billing.utils import ChargeDeploymentMixin
 from webapp.apps.users.models import (
     Project,
     Cluster,
@@ -422,7 +421,7 @@ class DeploymentsView(generics.ListAPIView):
         return self.queryset
 
 
-class DeploymentsDetailView(ChargeDeploymentMixin, APIView):
+class DeploymentsDetailView(APIView):
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
@@ -473,7 +472,7 @@ class DeploymentsDetailView(ChargeDeploymentMixin, APIView):
 
         deployment.delete_deployment()
 
-        self.charge_deployment(deployment, use_stripe=USE_STRIPE)
+        # self.charge_deployment(deployment, use_stripe=USE_STRIPE)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
