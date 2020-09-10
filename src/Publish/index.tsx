@@ -297,20 +297,39 @@ const ViewProject: React.FC<{
     </div>
   );
   const isMobile = window.innerWidth < 992;
+  let title;
+  if (isMobile) {
+    title = (
+      <>
+        <p className="font-weight-light primary-text mb-0">
+          <a href={`/${project.owner}/`}>{project.owner}</a> /
+        </p>
+        <a href={`/${id}/`} className="primary-text">
+          <p className="lead font-weight-bold">{project.title}</p>
+        </a>
+      </>
+    );
+  } else {
+    title = (
+      <>
+        <h1 className="display-5">
+          <a href={`/${project.owner}/`} className="primary-text">
+            <span className="font-weight-light">{project.owner}</span>
+          </a>
+          <span className="font-weight-light mx-1">/</span>
+          <a href={`/${id}/`} className="primary-text">
+            <span className="font-weight-bold">{project.title}</span>
+          </a>
+        </h1>
+      </>
+    );
+  }
   return (
     <Jumbotron className="shadow" style={{ backgroundColor: "white" }}>
       <Row className="justify-content-between mb-2">
-        <Col className="col-auto">
-          <a className="primary-text" href={`/${id}/`}>
-            {isMobile ? (
-              <p className="lead font-weight-bold mt-1">{id}</p>
-            ) : (
-              <h1 className="display-5">{id}</h1>
-            )}
-          </a>
-        </Col>
+        <Col className="col-auto align-self-center">{title}</Col>
         {accessStatus.can_write_project && (
-          <Col className="col-auto">
+          <Col className="col-auto align-self-center">
             <button className="btn btn-outline-primary" onClick={() => enterEditMode()}>
               Edit
             </button>
