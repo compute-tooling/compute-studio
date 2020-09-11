@@ -126,10 +126,7 @@ class SubmitSim:
         }
         print("submit", data)
         project = self.sim.project
-        if project.latest_tag is None:
-            tag = project.latest_tag_deprecated
-        else:
-            tag = str(project.latest_tag)
+        tag = str(project.latest_tag)
         self.submitted_id = self.compute.submit_job(
             project=inputs.project, task_name=actions.SIM, task_kwargs=data, tag=tag,
         )

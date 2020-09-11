@@ -132,6 +132,7 @@ def ea_deployments(profile):
     )
 
 
+@pytest.mark.requires_stripe
 class TestInvoice:
     def test_owner_resources(
         self,
@@ -191,6 +192,7 @@ class TestInvoice:
                 "sponsor": {},
             },
         }
+
         stripe_invoice = profile_invoices["invoice"]
 
         assert profile_invoices["invoice"].amount_due == int(
@@ -250,6 +252,7 @@ class TestInvoice:
                 },
             },
         }
+
         stripe_invoice = profile_invoices["invoice"]
 
         assert profile_invoices["invoice"].amount_due == int(100 * sponsored_sims_cost)
@@ -297,6 +300,7 @@ class TestInvoice:
                 "sponsor": {},
             },
         }
+
         stripe_invoice = profile_invoices["invoice"]
 
         assert profile_invoices["invoice"].amount_due == int(

@@ -19,7 +19,6 @@ from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.http import Http404
 
-from webapp.apps.billing.models import create_billing_objects
 from webapp.apps.comp import actions
 from webapp.apps.comp.compute import SyncCompute, SyncProjects
 from webapp.apps.comp.models import Inputs, ANON_BEFORE
@@ -175,12 +174,6 @@ class Cluster(models.Model):
 
 
 class ProjectManager(models.Manager):
-    def sync_products(self, projects=None):
-        if projects is None:
-            projects = self.all()
-        for project in projects:
-            create_billing_objects(project)
-
     def sync_project_with_workers(self, project, cluster):
         SyncProjects().submit_job(project, cluster)
 
@@ -263,9 +256,6 @@ class Project(models.Model):
     listed = models.BooleanField(default=True)
 
     cluster_type = models.CharField(default="single-core", max_length=32)
-
-    latest_tag_deprecated = models.CharField(null=True, max_length=64)
-    staging_tag_deprecated = models.CharField(null=True, max_length=64)
 
     latest_tag = models.ForeignKey(
         "Tag", null=True, on_delete=models.SET_NULL, related_name="latest"
@@ -473,7 +463,6 @@ class Deployment(models.Model):
     last_ping_at = models.DateTimeField(auto_now_add=True)
     # Uses max length of django username field.
     name = models.CharField(null=True, max_length=150)
-    tag_deprecated = models.CharField(null=True, max_length=64)
     tag = models.ForeignKey("Tag", null=True, on_delete=models.SET_NULL)
 
     status = models.CharField(
@@ -527,17 +516,12 @@ class Deployment(models.Model):
 
     def create_deployment(self):
         if self.tag is None:
-            if self.project.latest_tag is None:
-                self.tag_deprecated = self.project.latest_tag_deprecated
-                tag = self.tag_deprecated
-            else:
-                self.tag = self.project.latest_tag
-                tag = str(self.tag)
+            self.tag = self.project.latest_tag
             self.save()
 
         resp = requests.post(
             f"{self.project.cluster.url}/deployments/{self.project}/",
-            json={"deployment_name": self.public_name, "tag": tag},
+            json={"deployment_name": self.public_name, "tag": str(self.tag)},
             headers=self.project.cluster.headers(),
         )
 
