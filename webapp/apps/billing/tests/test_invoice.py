@@ -132,6 +132,7 @@ def ea_deployments(profile):
     )
 
 
+@pytest.mark.requires_stripe
 class TestInvoice:
     def test_owner_resources(
         self,
@@ -192,30 +193,29 @@ class TestInvoice:
             },
         }
 
-        if USE_STRIPE:
-            stripe_invoice = profile_invoices["invoice"]
+        stripe_invoice = profile_invoices["invoice"]
 
-            assert profile_invoices["invoice"].amount_due == int(
-                100 * (owner_sims_cost + owner_deployments_cost + ea_deployments_cost)
-            )
+        assert profile_invoices["invoice"].amount_due == int(
+            100 * (owner_sims_cost + owner_deployments_cost + ea_deployments_cost)
+        )
 
-            assert len(stripe_invoice.lines.data) == 3
+        assert len(stripe_invoice.lines.data) == 3
 
-            for line in stripe_invoice.lines.data:
-                if (
-                    line.metadata.project == "modeler/Test-Viz"
-                    and line.metadata.description == "embedded deployments"
-                ):
-                    assert line.amount == int(100 * ea_deployments_cost)
-                elif (
-                    line.metadata.project == "modeler/Test-Viz"
-                    and line.metadata.description == "sponsored deployments"
-                ):
-                    assert line.amount == int(100 * owner_deployments_cost)
-                elif line.metadata.project == "modeler/Used-for-testing":
-                    assert line.amount == int(100 * owner_sims_cost)
-                else:
-                    raise ValueError(f"{line.name} {line.metadata}")
+        for line in stripe_invoice.lines.data:
+            if (
+                line.metadata.project == "modeler/Test-Viz"
+                and line.metadata.description == "embedded deployments"
+            ):
+                assert line.amount == int(100 * ea_deployments_cost)
+            elif (
+                line.metadata.project == "modeler/Test-Viz"
+                and line.metadata.description == "sponsored deployments"
+            ):
+                assert line.amount == int(100 * owner_deployments_cost)
+            elif line.metadata.project == "modeler/Used-for-testing":
+                assert line.amount == int(100 * owner_sims_cost)
+            else:
+                raise ValueError(f"{line.name} {line.metadata}")
 
     def test_sponsor_resources(
         self,
@@ -253,20 +253,17 @@ class TestInvoice:
             },
         }
 
-        if USE_STRIPE:
-            stripe_invoice = profile_invoices["invoice"]
+        stripe_invoice = profile_invoices["invoice"]
 
-            assert profile_invoices["invoice"].amount_due == int(
-                100 * sponsored_sims_cost
-            )
+        assert profile_invoices["invoice"].amount_due == int(100 * sponsored_sims_cost)
 
-            assert len(stripe_invoice.lines.data) == 1
+        assert len(stripe_invoice.lines.data) == 1
 
-            for line in stripe_invoice.lines.data:
-                if line.metadata.project == "modeler/Used-for-testing-sponsored-apps":
-                    assert line.amount == int(100 * sponsored_sims_cost)
-                else:
-                    raise ValueError(f"{line.name} {line.metadata}")
+        for line in stripe_invoice.lines.data:
+            if line.metadata.project == "modeler/Used-for-testing-sponsored-apps":
+                assert line.amount == int(100 * sponsored_sims_cost)
+            else:
+                raise ValueError(f"{line.name} {line.metadata}")
 
     def test_other_profile_resources(
         self,
@@ -303,17 +300,17 @@ class TestInvoice:
                 "sponsor": {},
             },
         }
-        if USE_STRIPE:
-            stripe_invoice = profile_invoices["invoice"]
 
-            assert profile_invoices["invoice"].amount_due == int(
-                100 * other_profiles_sims_cost
-            )
+        stripe_invoice = profile_invoices["invoice"]
 
-            assert len(stripe_invoice.lines.data) == 1
+        assert profile_invoices["invoice"].amount_due == int(
+            100 * other_profiles_sims_cost
+        )
 
-            for line in stripe_invoice.lines.data:
-                if line.metadata.project == "modeler/Used-for-testing":
-                    assert line.amount == int(100 * other_profiles_sims_cost)
-                else:
-                    raise ValueError(f"{line.name} {line.metadata}")
+        assert len(stripe_invoice.lines.data) == 1
+
+        for line in stripe_invoice.lines.data:
+            if line.metadata.project == "modeler/Used-for-testing":
+                assert line.amount == int(100 * other_profiles_sims_cost)
+            else:
+                raise ValueError(f"{line.name} {line.metadata}")
