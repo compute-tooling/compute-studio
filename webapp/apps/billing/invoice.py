@@ -137,8 +137,8 @@ def invoice_customer(customer, start, end, send_invoice=True):
     ea_deployments = process_deployments(
         profile.deployments.filter(
             embed_approval__owner=profile,
-            created_at__gte=start.date(),
-            deleted_at__lte=end.date(),
+            deleted_at__date__gte=start.date(),
+            deleted_at__date__lte=end.date(),
         )
     )
 
@@ -147,7 +147,7 @@ def invoice_customer(customer, start, end, send_invoice=True):
         profile.deployments.filter(
             owner=profile,
             embed_approval__isnull=True,
-            created_at__date__gte=start.date(),
+            deleted_at__date__gte=start.date(),
             deleted_at__date__lte=end.date(),
         )
     )
