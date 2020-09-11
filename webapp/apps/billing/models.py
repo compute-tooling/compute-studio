@@ -373,10 +373,6 @@ class Plan(models.Model):
             plan, created = Plan.objects.get(stripe_id), False
         return (plan, created)
 
-    @staticmethod
-    def get_public_plans(**kwargs):
-        return Plan.objects.filter(product__project__is_public=True, **kwargs)
-
 
 class Subscription(models.Model):
     # raises error on deletion
