@@ -99,7 +99,6 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
         if USE_STRIPE:
             create_pro_billing_objects()
-            Project.objects.sync_products()
             for u in [modeler, sponsor, hdoupe]:
                 stripe_customer = stripe.Customer.create(
                     email=u.email, source="tok_bypassPending"
@@ -165,8 +164,6 @@ def basiccustomer(db, stripe_customer, user):
 @pytest.fixture
 @use_stripe
 def customer(db, basiccustomer):
-    basiccustomer.sync_subscriptions()
-    assert basiccustomer.subscriptions.count() > 0
     return basiccustomer
 
 

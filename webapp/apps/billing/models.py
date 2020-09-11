@@ -33,10 +33,7 @@ class RequiredLocalInstances(Exception):
 
 
 class CustomerManager(models.Manager):
-    def sync_subscriptions(self):
-        for customer in self.all():
-            print("user", customer.user.username)
-            customer.sync_subscriptions()
+    pass
 
 
 class UpdateStatus(Enum):
@@ -81,44 +78,6 @@ class Customer(models.Model):
         stripe_customer.save()
         self.default_source = stripe_token
         self.save()
-
-    def sync_subscriptions(self, plans=None):
-        public_plans = Plan.get_public_plans(usage_type="metered")
-        if plans is None:
-            plans = public_plans
-        do_update = True
-        try:
-            sub = self.subscriptions.get(subscription_type="primary")
-            curr_plans = [plan.id for plan in sub.plans.all()]
-            not_subscribed = public_plans.filter(
-                ~Q(id__in=curr_plans), usage_type="metered"
-            )
-            # Don't call stripe api with empty list of plans!
-            if not_subscribed:
-                print(
-                    "adding plans: ",
-                    self.user.username,
-                    [ns.nickname for ns in not_subscribed],
-                )
-                stripe_sub = stripe.Subscription.modify(
-                    sub.stripe_id,
-                    items=[{"plan": plan.stripe_id} for plan in not_subscribed],
-                )
-                sub.plans.add(*not_subscribed)
-                sub.save()
-            else:
-                # no need to update.
-                do_update = False
-        except Subscription.DoesNotExist:
-            stripe_sub = Subscription.create_stripe_object(self, plans)
-            sub = Subscription.construct(
-                stripe_sub, self, plans, subscription_type="primary"
-            )
-        if do_update:
-            for raw_si in stripe_sub["items"]["data"]:
-                stripe_si = SubscriptionItem.get_stripe_object(raw_si["id"])
-                plan = public_plans.get(stripe_id=raw_si["plan"]["id"])
-                si, created = SubscriptionItem.get_or_construct(stripe_si.id, plan, sub)
 
     def card_info(self):
         """Returns last 4 digits and brand of default source or None"""
@@ -564,63 +523,6 @@ class SubscriptionItem(models.Model):
         return (si, created)
 
 
-class UsageRecord(models.Model):
-    INC = "increment"
-    SET = "set"
-    ACTION_CHOICES = ((INC, "increment"), (SET, "set"))
-    stripe_id = models.CharField(max_length=255, unique=True)
-    livemode = models.BooleanField(default=False)
-    action = models.CharField(max_length=9, choices=ACTION_CHOICES, default=INC)
-    quantity = models.IntegerField(default=0)
-    subscription_item = models.ForeignKey(
-        SubscriptionItem, on_delete=models.CASCADE, related_name="usage_records"
-    )
-    timestamp = models.DateTimeField()
-
-    @staticmethod
-    def create_stripe_object(
-        quantity, timestamp, subscription_item, action="increment"
-    ):
-        stripe_usage_record = stripe.UsageRecord.create(
-            quantity=quantity,
-            # None implies now
-            timestamp=timestamp or math.floor(datetime.now().timestamp()),
-            subscription_item=subscription_item.stripe_id,
-            action=action,
-        )
-        return stripe_usage_record
-
-    @staticmethod
-    def get_stripe_object(stripe_id):
-        """
-        `stripe.UsageRecord` does not have a `get` method
-        """
-        raise NotImplementedError()
-
-    @staticmethod
-    def construct(stripe_usage_record, subscription_item):
-        print("construct", stripe_usage_record)
-        usage_record = UsageRecord.objects.create(
-            stripe_id=stripe_usage_record.id,
-            livemode=stripe_usage_record.livemode,
-            quantity=stripe_usage_record.quantity,
-            subscription_item=subscription_item,
-            timestamp=timestamp_to_datetime(stripe_usage_record.timestamp),
-        )
-        return usage_record
-
-    @staticmethod
-    def get_or_construct(stripe_id, subscription_item=None):
-        try:
-            (usage_record, created) = (
-                UsageRecord.objects.get(stripe_id=stripe_id),
-                False,
-            )
-        except IntegrityError:
-            usage_record, created = UsageRecord.objects.get(stripe_id), False
-        return (usage_record, created)
-
-
 class Event(models.Model):
     stripe_id = models.CharField(max_length=255, unique=True)
     created = models.DateTimeField()
@@ -646,32 +548,6 @@ class Event(models.Model):
             metadata=stripe_event.to_dict(),
         )
         return event
-
-
-def create_billing_objects(project):
-    if USE_STRIPE and (not hasattr(project, "product") or project.product is None):
-        owner = project.owner.user.username
-        title = project.title
-        name = f"{owner}/{title}"
-        print("creating billing objects for ", name)
-        stripe_product = Product.create_stripe_object(name)
-        product = Product.construct(stripe_product, project)
-        stripe_plan_lic = Plan.create_stripe_object(
-            amount=0,
-            product=product,
-            usage_type="licensed",
-            interval="month",
-            currency="usd",
-        )
-        Plan.construct(stripe_plan_lic, product)
-        stripe_plan_met = Plan.create_stripe_object(
-            amount=1,
-            product=product,
-            usage_type="metered",
-            interval="month",
-            currency="usd",
-        )
-        Plan.construct(stripe_plan_met, product)
 
 
 def create_pro_billing_objects():
