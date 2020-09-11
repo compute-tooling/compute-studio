@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from webapp.apps.users.models import Project, EmbedApproval, Deployment
+from webapp.apps.users.models import Project, EmbedApproval, Deployment, Tag
 
 
 class DeploymentSerializer(serializers.ModelSerializer):
@@ -32,7 +32,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     cluster_type = serializers.CharField(required=False)
     sim_count = serializers.IntegerField(required=False)
     user_count = serializers.IntegerField(required=False)
-    latest_tag = serializers.CharField(allow_null=True, required=False)
+    latest_tag = serializers.StringRelatedField(required=False)
     # see to_representation
     # has_write_access = serializers.BooleanField(source="has_write_access")
 
@@ -83,7 +83,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
     sim_count = serializers.IntegerField(required=False)
     version = serializers.CharField(required=False)
     user_count = serializers.IntegerField(required=False)
-    latest_tag = serializers.CharField(allow_null=True, required=False)
+    latest_tag = serializers.StringRelatedField(required=False)
     # see to_representation
     # has_write_access = serializers.BooleanField(source="has_write_access")
 
@@ -122,15 +122,39 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
             "callable_name",
             "tech",
         )
-        read_only = ("sim_count", "status", "user_count", "version")
+        read_only = ("sim_count", "status", "user_count", "version", "latest_tag")
+
+
+class TagUpdateSerializer(serializers.Serializer):
+    latest_tag = serializers.CharField(allow_null=True, required=False)
+    staging_tag = serializers.CharField(allow_null=True, required=False)
+
+    def validate(self, attrs):
+        if attrs.get("latest_tag") is None and attrs.get("staging_tag") is None:
+            raise serializers.ValidationError(
+                "Either latest_tag or staging_tag must be specificied"
+            )
+        return attrs
 
 
 class TagSerializer(serializers.ModelSerializer):
+    project = serializers.StringRelatedField()
+
     class Meta:
-        model = Project
+        model = Tag
         fields = (
-            "latest_tag",
-            "staging_tag",
+            "project",
+            "image_tag",
+            "memory",
+            "cpu",
+            "created_at",
+        )
+
+        read_only = (
+            "project",
+            "memory",
+            "cpu",
+            "created_at",
         )
 
 

@@ -191,6 +191,13 @@ class ProjectManager(models.Manager):
         return project
 
 
+def get_server_cost(cpu, memory):
+    """Hourly compute costs"""
+    cpu_price = COMPUTE_PRICING["cpu"]
+    memory_price = COMPUTE_PRICING["memory"]
+    return float(cpu) * cpu_price + float(memory) * memory_price
+
+
 class Project(models.Model):
     SECS_IN_HOUR = 3600.0
     title = models.CharField(max_length=255)
@@ -257,8 +264,15 @@ class Project(models.Model):
 
     cluster_type = models.CharField(default="single-core", max_length=32)
 
-    latest_tag = models.CharField(null=True, max_length=64)
-    staging_tag = models.CharField(null=True, max_length=64)
+    latest_tag_deprecated = models.CharField(null=True, max_length=64)
+    staging_tag_deprecated = models.CharField(null=True, max_length=64)
+
+    latest_tag = models.ForeignKey(
+        "Tag", null=True, on_delete=models.SET_NULL, related_name="latest"
+    )
+    staging_tag = models.ForeignKey(
+        "Tag", null=True, on_delete=models.SET_NULL, related_name="staging"
+    )
 
     objects = ProjectManager()
 
@@ -305,9 +319,7 @@ class Project(models.Model):
     @property
     def server_cost(self):
         """Hourly compute costs"""
-        cpu_price = COMPUTE_PRICING["cpu"]
-        memory_price = COMPUTE_PRICING["memory"]
-        return float(self.cpu) * cpu_price + float(self.memory) * memory_price
+        return get_server_cost(self.cpu, self.memory)
 
     @property
     def server_cost_in_secs(self):
@@ -387,6 +399,31 @@ class Project(models.Model):
         permissions = (("write_project", "Write project"),)
 
 
+class Tag(models.Model):
+    project = models.ForeignKey(
+        "Project", on_delete=models.SET_NULL, related_name="tags", null=models.CASCADE
+    )
+    image_tag = models.CharField(null=True, max_length=64)
+    cpu = models.DecimalField(max_digits=5, decimal_places=1, null=True, default=2)
+    memory = models.DecimalField(max_digits=5, decimal_places=1, null=True, default=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.image_tag)
+
+    @property
+    def server_cost(self):
+        """Hourly compute costs"""
+        return get_server_cost(self.cpu, self.memory)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "image_tag"], name="unique_project_tag"
+            )
+        ]
+
+
 class DeploymentException(Exception):
     pass
 
@@ -436,7 +473,8 @@ class Deployment(models.Model):
     last_ping_at = models.DateTimeField(auto_now_add=True)
     # Uses max length of django username field.
     name = models.CharField(null=True, max_length=150)
-    tag = models.CharField(null=True, max_length=64)
+    tag_deprecated = models.CharField(null=True, max_length=64)
+    tag = models.ForeignKey("Tag", null=True, on_delete=models.SET_NULL)
 
     status = models.CharField(
         default="creating",
@@ -489,12 +527,17 @@ class Deployment(models.Model):
 
     def create_deployment(self):
         if self.tag is None:
-            self.tag = self.project.latest_tag
+            if self.project.latest_tag is None:
+                self.tag_deprecated = self.project.latest_tag_deprecated
+                tag = self.tag_deprecated
+            else:
+                self.tag = self.project.latest_tag
+                tag = str(self.tag)
             self.save()
 
         resp = requests.post(
             f"{self.project.cluster.url}/deployments/{self.project}/",
-            json={"deployment_name": self.public_name, "tag": self.tag,},
+            json={"deployment_name": self.public_name, "tag": tag},
             headers=self.project.cluster.headers(),
         )
 

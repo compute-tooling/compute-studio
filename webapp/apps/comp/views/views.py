@@ -30,7 +30,6 @@ import cs_storage
 
 from webapp.settings import DEBUG, DEFAULT_VIZ_HOST
 
-from webapp.apps.billing.models import SubscriptionItem, UsageRecord
 from webapp.apps.billing.utils import has_payment_method
 from webapp.apps.users.models import (
     Project,

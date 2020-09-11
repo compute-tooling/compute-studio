@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model, get_user
 from guardian.shortcuts import assign_perm, remove_perm
 
 from webapp.apps.comp.models import Simulation
-from webapp.apps.users.models import Project, Profile, EmbedApproval
+from webapp.apps.users.models import Project, Profile, EmbedApproval, Tag
 from webapp.apps.users.serializers import ProjectSerializer
 
 from .utils import mock_sync_projects, mock_get_version
@@ -29,7 +29,6 @@ class TestPublishViews:
             "cpu": 3,
             "memory": 9,
             "listed": True,
-            "latest_tag": "v1",
         }
         with mock_sync_projects():
             resp = client.post("/apps/api/v1/", post_data)
@@ -61,7 +60,6 @@ class TestPublishViews:
             "exp_task_time": 20,
             "listed": True,
             "status": "live",
-            "latest_tag": "v1",
             "tech": "python-paramtools",
             "callable_name": None,
         }
@@ -266,7 +264,40 @@ class TestPublishViews:
 
         assert resp.status_code == 200
         project.refresh_from_db()
-        assert project.latest_tag == "v5"
+        assert project.latest_tag == Tag.objects.get(project=project, image_tag="v5")
+
+        resp = api_client.post(
+            f"/apps/api/v1/{project.owner}/{project.title}/tags/",
+            data={"staging_tag": "v6"},
+            format="json",
+        )
+
+        assert resp.status_code == 200
+        project.refresh_from_db()
+        assert project.staging_tag == Tag.objects.get(project=project, image_tag="v6")
+        assert project.latest_tag == Tag.objects.get(project=project, image_tag="v5")
+
+        resp = api_client.post(
+            f"/apps/api/v1/{project.owner}/{project.title}/tags/",
+            data={"latest_tag": "v6", "staging_tag": None},
+            format="json",
+        )
+
+        assert resp.status_code == 200
+        project.refresh_from_db()
+        assert project.staging_tag is None
+        assert project.latest_tag == Tag.objects.get(project=project, image_tag="v6")
+
+        resp = api_client.post(
+            f"/apps/api/v1/{project.owner}/{project.title}/tags/",
+            data={},
+            format="json",
+        )
+
+        assert resp.status_code == 400
+        project.refresh_from_db()
+        assert project.staging_tag is None
+        assert project.latest_tag == Tag.objects.get(project=project, image_tag="v6")
 
 
 @pytest.mark.django_db

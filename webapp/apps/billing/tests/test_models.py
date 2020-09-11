@@ -167,7 +167,6 @@ class TestStripeModels:
             "cpu": 3,
             "memory": 9,
             "listed": True,
-            "latest_tag": "v1",
         }
 
         with mock_sync_projects():

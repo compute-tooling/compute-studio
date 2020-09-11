@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from webapp.apps.users.permissions import RequiresActive, RequiresPayment
 
 from webapp.settings import USE_STRIPE
-from webapp.apps.billing.utils import has_payment_method, ChargeRunMixin
+from webapp.apps.billing.utils import has_payment_method
 from webapp.apps.users.models import is_profile_active
 
 
@@ -96,9 +96,9 @@ class GetOutputsObjectMixin:
         return obj
 
 
-class RecordOutputsMixin(ChargeRunMixin):
+class RecordOutputsMixin:
     def record_outputs(self, sim, data):
-        self.charge_run(sim, data["meta"], use_stripe=USE_STRIPE)
+        sim.run_time = sum(data["meta"]["task_times"])
         sim.meta_data = data["meta"]
         sim.model_version = data.get("model_version", "NA")
         # successful run
