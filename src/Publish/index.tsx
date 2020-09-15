@@ -93,7 +93,7 @@ interface ProjectValues {
   memory: number;
   exp_task_time: number;
   listed: boolean;
-  tech: Tech;
+  tech: Tech | null;
   callable_name: string;
 }
 
@@ -103,11 +103,11 @@ const initialValues: ProjectValues = {
   oneliner: "",
   repo_url: "",
   repo_tag: "master",
-  cpu: 2,
-  memory: 6,
+  cpu: 1,
+  memory: 2,
   exp_task_time: 0,
   listed: true,
-  tech: "python-paramtools",
+  tech: null,
   callable_name: ""
 };
 
@@ -134,10 +134,10 @@ const TechSelect: React.FC<{
       <Dropdown.Toggle
         variant="primary"
         id="dropdown-basic"
-        className="w-50"
-        style={{ backgroundColor: "white", color: "#007bff" }}
+        className="w-100"
+        // style={{ backgroundColor: "white", color: "#007bff" }}
       >
-        <strong>{selectedTech || "Select"}</strong>
+        <strong>{selectedTech || "Select Technology"}</strong>
       </Dropdown.Toggle>
       <Dropdown.Menu>
         {techChoices.map((tech, ix) => (
@@ -215,72 +215,156 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
   );
 };
 
-const CommonFields: React.FC<any> = ({}) => {
+const CommonFields: React.FC<{ api: API; formikProps: FormikProps<ProjectValues> }> = ({
+  api,
+  formikProps
+}) => {
   return (
-    <div className="mt-5">
-      <h4>Environment</h4>
-      <div className="my-3" />
-      <div className="mt-1 mb-1">
-        <label>
-          <b>Repo URL</b>
-        </label>
-        <p className="mt-1 mb-1">
-          <Field
-            className="form-control w-50rem"
-            type="url"
-            name="repo_url"
-            placeholder="Link to the model's code repository"
-            style={inputStyle}
-          />
-          <ErrorMessage name="repo_url" render={msg => <Message msg={msg} />} />
-        </p>
+    <div>
+      <div className="mt-5">
         <div className="mt-1 mb-1">
           <label>
-            <b>Repo Tag:</b> Your project will be deployed from here
+            <b>Repo URL</b>
           </label>
           <p className="mt-1 mb-1">
             <Field
               className="form-control w-50rem"
-              type="text"
-              name="repo_tag"
+              type="url"
+              name="repo_url"
               placeholder="Link to the model's code repository"
               style={inputStyle}
             />
-            <ErrorMessage name="repo_tag" render={msg => <Message msg={msg} />} />
+            <ErrorMessage name="repo_url" render={msg => <Message msg={msg} />} />
           </p>
+          <div className="mt-1 mb-1">
+            <label>
+              <b>Repo Tag:</b> Your project will be deployed from here
+            </label>
+            <p className="mt-1 mb-1">
+              <Field
+                className="form-control w-50rem"
+                type="text"
+                name="repo_tag"
+                placeholder="Link to the model's code repository"
+                style={inputStyle}
+              />
+              <ErrorMessage name="repo_tag" render={msg => <Message msg={msg} />} />
+            </p>
+          </div>
         </div>
       </div>
-      <div className="mt-5">
-        <h4>Resource Requirements</h4>
-        <div className="my-3" />
-        <div className="mt-1 mb-1">
-          <label>CPUs required:</label>
-          <p className="mt-1 mb-1">
-            <Field
-              className="form-control w-50rem"
-              type="number"
-              step="0.1"
-              name="cpu"
-              style={inputStyle}
-            />
-            <ErrorMessage name="cpu" render={msg => <Message msg={msg} />} />
-          </p>
+      <details className="my-5">
+        <summary>
+          <span className="h6">Advanced Configuration</span>
+        </summary>
+        <div className="mt-1">
+          <p className="lead">Resource Requirements</p>
+          <div className="my-3" />
+          <div className="mt-1 mb-1">
+            <label>CPUs required:</label>
+            <p className="mt-1 mb-1">
+              <Field
+                className="form-control w-50rem"
+                type="number"
+                step="0.1"
+                name="cpu"
+                style={inputStyle}
+              />
+              <ErrorMessage name="cpu" render={msg => <Message msg={msg} />} />
+            </p>
+          </div>
+          <div className="mt-1 mb-1">
+            <label>Memory (GB) required:</label>
+            <p className="mt-1 mb-1">
+              <Field
+                className="form-control w-50rem"
+                type="number"
+                step="0.1"
+                name="memory"
+                style={inputStyle}
+              />
+              <ErrorMessage name="memory" render={msg => <Message msg={msg} />} />
+            </p>
+          </div>
         </div>
-        <div className="mt-1 mb-1">
-          <label>Memory (GB) required:</label>
-          <p className="mt-1 mb-1">
-            <Field
-              className="form-control w-50rem"
-              type="number"
-              step="0.1"
-              name="memory"
-              style={inputStyle}
-            />
-            <ErrorMessage name="memory" render={msg => <Message msg={msg} />} />
-          </p>
-        </div>
-      </div>
+      </details>
     </div>
+  );
+};
+
+const AboutAppFields: React.FC<{ accessStatus: AccessStatus }> = ({ accessStatus }) => {
+  return (
+    <>
+      <div className="mt-1 mb-1">
+        <Field name="title">
+          {({ field, meta }) => (
+            <Row className="justify-content-md-center">
+              <Col className="flex-grow-0 align-self-center">
+                <h6 className="lead">{accessStatus.username}</h6>
+              </Col>
+              <Col className="flex-grow-0 align-self-center">
+                <p className="lead pt-2">/</p>
+              </Col>
+              <Col className="flex-grow-0 align-self-center">
+                <input
+                  type="text"
+                  {...field}
+                  onChange={e => {
+                    e.target.value = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
+                    field.onChange(e);
+                  }}
+                />
+                {meta.touched && meta.error && <div className="text-danger">{meta.error}</div>}
+              </Col>
+            </Row>
+          )}
+        </Field>
+      </div>
+      <div className="mt-1 mb-1">
+        <label className="strong">Oneliner</label>
+        <Field name="oneliner">
+          {({ field, meta }) => (
+            <Row className="w-100">
+              <Col>
+                <input type="text" className="w-100" {...field} />
+                {meta.touched && meta.error && <div className="text-danger">{meta.error}</div>}
+              </Col>
+            </Row>
+          )}
+        </Field>
+      </div>
+      <div className="mt-1 mb-1">
+        <label className="strong">
+          README{" "}
+          <Tip id="readme-markdown-icon" tip="Supports Markdown." placement="top">
+            <i className="fab fa-markdown mr-3" style={{ opacity: 0.8 }}></i>
+          </Tip>
+        </label>
+        <Field name="description">
+          {({ field, meta }) => (
+            <Row className="w-100">
+              <Col>
+                <textarea type="text" className="w-100" rows="10" {...field} />
+                {meta.touched && meta.error && <div className="text-danger">{meta.error}</div>}
+              </Col>
+            </Row>
+          )}
+        </Field>
+      </div>
+      <div className="mt-3 mb-1">
+        <label>
+          <b>Listed:</b>Include this app in the public list of apps
+        </label>
+
+        <Field
+          component={CheckboxField}
+          label="Listed: "
+          description="Include this app in the public list of apps"
+          name="listed"
+        />
+        <ErrorMessage name="listed" render={msg => <Message msg={msg} />} />
+      </div>
+    </>
   );
 };
 
@@ -361,7 +445,10 @@ const ViewProject: React.FC<{
   );
 };
 
-class ProjectApp extends React.Component<PublishProps, PublishState & { showTechOpts: boolean }> {
+class ProjectApp extends React.Component<
+  PublishProps,
+  PublishState & { showTechOpts: boolean; project?: Project }
+> {
   constructor(props) {
     super(props);
     let initialValues = {};
@@ -371,7 +458,8 @@ class ProjectApp extends React.Component<PublishProps, PublishState & { showTech
     this.state = {
       preview: this.props.preview,
       initialValues: initialValues as ProjectValues,
-      showTechOpts: false
+      showTechOpts: false,
+      project: this.props.project
     };
     this.togglePreview = this.togglePreview.bind(this);
   }
@@ -396,7 +484,11 @@ class ProjectApp extends React.Component<PublishProps, PublishState & { showTech
               .save(formdata)
               .then(project => {
                 actions.setSubmitting(false);
-                window.location.href = `/${project.owner}/${project.title}/detail/`;
+                this.setState({ project });
+                console.log("project", project);
+                if (project.status === "staging") {
+                  window.location.href = `/${project.owner}/${project.title}/`;
+                }
               })
               .catch(error => {
                 console.log("error", error);
@@ -431,112 +523,41 @@ class ProjectApp extends React.Component<PublishProps, PublishState & { showTech
               ) : (
                 <div />
               )}
-              <div>
-                <div className="mt-1 mb-1">
-                  <Field name="title">
-                    {({ field, meta }) => (
-                      <Row className="justify-content-md-center">
-                        <Col className="flex-grow-0 align-self-center">
-                          <h6 className="lead">{accessStatus.username}</h6>
-                        </Col>
-                        <Col className="flex-grow-0 align-self-center">
-                          <p className="lead pt-2">/</p>
-                        </Col>
-                        <Col className="flex-grow-0 align-self-center">
-                          <input
-                            type="text"
-                            {...field}
-                            onChange={e => {
-                              e.target.value = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
-                              field.onChange(e);
-                            }}
-                          />
-                          {meta.touched && meta.error && (
-                            <div className="text-danger">{meta.error}</div>
-                          )}
-                        </Col>
-                      </Row>
-                    )}
-                  </Field>
-                </div>
-                <div className="mt-1 mb-1">
-                  <label className="strong">Oneliner</label>
-                  <Field name="oneliner">
-                    {({ field, meta }) => (
-                      <Row className="w-100">
-                        <Col>
-                          <input type="text" className="w-100" {...field} />
-                          {meta.touched && meta.error && (
-                            <div className="text-danger">{meta.error}</div>
-                          )}
-                        </Col>
-                      </Row>
-                    )}
-                  </Field>
-                </div>
-                <div className="mt-1 mb-1">
-                  <label className="strong">
-                    README{" "}
-                    <Tip id="readme-markdown-icon" tip="Supports Markdown." placement="top">
-                      <i className="fab fa-markdown mr-3" style={{ opacity: 0.8 }}></i>
-                    </Tip>
-                  </label>
-                  <Field name="description">
-                    {({ field, meta }) => (
-                      <Row className="w-100">
-                        <Col>
-                          <textarea type="text" className="w-100" rows="10" {...field} />
-                          {meta.touched && meta.error && (
-                            <div className="text-danger">{meta.error}</div>
-                          )}
-                        </Col>
-                      </Row>
-                    )}
-                  </Field>
-                </div>
-                <div className="mt-3 mb-1">
-                  <label>
-                    <b>Listed:</b>Include this app in the public list of apps
-                  </label>
+              {!this.props.api.title && <AboutAppFields accessStatus={accessStatus} />}
+              {this.state.project?.status === "created" && (
+                <Row className="my-5 w-100 justify-content-center">
+                  <Col className="col-auto">
+                    <Field name="tech">
+                      {({ field, meta }) => (
+                        <TechSelect
+                          selectedTech={
+                            (props.values.tech && props.touched.tech) || this.props.api.title
+                              ? props.values.tech
+                              : null
+                          }
+                          onSelectTech={sel => {
+                            props.setFieldValue("tech", sel);
+                            props.setFieldTouched("tech", true);
+                          }}
+                        />
+                      )}
+                    </Field>
+                  </Col>
+                </Row>
+              )}
+              {this.state.project?.status === "connecting" && (
+                <>
+                  {props.values.tech === "python-paramtools" && <PythonParamTools />}
+                  {["bokeh", "dash"].includes(props.values.tech) && (
+                    <VizWithServer tech={props.values.tech} />
+                  )}
+                </>
+              )}
 
-                  <Field
-                    component={CheckboxField}
-                    label="Listed: "
-                    description="Include this app in the public list of apps"
-                    name="listed"
-                  />
-                  <ErrorMessage name="listed" render={msg => <Message msg={msg} />} />
-                </div>
-                <div className="mt-5 mb-1">
-                  <label>
-                    <b>Tech</b>
-                  </label>
-                  <Field name="tech">
-                    {({ field, meta }) => (
-                      <TechSelect
-                        selectedTech={
-                          (props.values.tech && props.touched.tech) || this.props.api.title
-                            ? props.values.tech
-                            : null
-                        }
-                        onSelectTech={sel => {
-                          props.setFieldValue("tech", sel);
-                          props.setFieldTouched("tech", true);
-                        }}
-                      />
-                    )}
-                  </Field>
-                </div>
-                {((props.values.tech && props.touched.tech) || this.props.api.title) && (
-                  <>
-                    {props.values.tech === "python-paramtools" && <PythonParamTools />}
-                    {["bokeh", "dash"].includes(props.values.tech) && (
-                      <VizWithServer tech={props.values.tech} />
-                    )}
-                    <CommonFields />
-                  </>
-                )}
-              </div>
+              {this.state.project?.status == "connecting" && this.state.project.tech ? (
+                <CommonFields api={this.props.api} formikProps={props} />
+              ) : null}
+
               <SpecialRequests />
               <button className="btn inline-block" onClick={this.togglePreview}>
                 {this.state.preview ? "Edit" : "Preview"}
@@ -587,13 +608,13 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
 }
 
 class ProjectDetail extends React.Component<
-  { match: Match },
+  { match: Match; edit: boolean },
   { project?: Project; accessStatus?: AccessStatus; edit: boolean }
 > {
   api: API;
   constructor(props) {
     super(props);
-    this.state = { edit: false };
+    this.state = { edit: this.props.edit };
     const owner = this.props.match.params.username;
     const title = this.props.match.params.app_name;
     this.api = new API(owner, title);
@@ -644,8 +665,14 @@ ReactDOM.render(
     <Switch>
       <Route exact path="/publish/" component={CreateProject} />
       <Route exact path="/new/" component={CreateProject} />
-      <Route path="/:username/:app_name/detail/" component={ProjectDetail} />
-      <Route path="/:username/:app_name/" component={ProjectDetail} />
+      <Route
+        path="/:username/:app_name/detail/"
+        render={routeProps => <ProjectDetail edit={true} {...routeProps} />}
+      />
+      <Route
+        path="/:username/:app_name/"
+        render={routeProps => <ProjectDetail edit={false} {...routeProps} />}
+      />
     </Switch>
   </BrowserRouter>,
   domContainer
