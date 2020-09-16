@@ -1,3 +1,4 @@
+import binascii
 import os
 import json
 import datetime
@@ -17,7 +18,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 from guardian.shortcuts import assign_perm
 
-from webapp.settings import USE_STRIPE
+from webapp.settings import USE_STRIPE, DEFAULT_CLUSTER_USER
 from webapp.apps.billing.models import (
     Customer,
     Product,
@@ -26,7 +27,7 @@ from webapp.apps.billing.models import (
     SubscriptionItem,
     create_pro_billing_objects,
 )
-from webapp.apps.users.models import Profile, Project
+from webapp.apps.users.models import Profile, Project, Cluster, cryptkeeper
 from webapp.apps.comp.model_parameters import ModelParameters
 from webapp.apps.comp.models import Inputs, Simulation
 
@@ -64,6 +65,15 @@ def django_db_setup(django_db_setup, django_db_blocker):
             Token.objects.create(user=u)
             Profile.objects.create(user=u, is_active=True)
 
+        comp_api_user.refresh_from_db()
+
+        service_account = User.objects.get(username=DEFAULT_CLUSTER_USER)
+        cluster = Cluster.objects.create(
+            service_account=service_account.profile,
+            url="http://scheduler",
+            jwt_secret=cryptkeeper.encrypt(binascii.hexlify(os.urandom(32)).decode()),
+        )
+
         common = {
             "description": "[Matchups](https://github.com/hdoupe/Matchups) provides pitch data on pitcher and batter matchups.. Select a date range using the format YYYY-MM-DD. Keep in mind that Matchups only provides data on matchups going back to 2008. Two datasets are offered to run this model: one that only has the most recent season, 2018, and one that contains data on every single pitch going back to 2008. Next, select your favorite pitcher and some batters who he's faced in the past. Click submit to start analyzing the selected matchups!",
             "oneliner": "oneliner",
@@ -71,6 +81,8 @@ def django_db_setup(django_db_setup, django_db_blocker):
             "exp_task_time": 10,
             "owner": modeler.profile,
             "listed": True,
+            "tech": "python-paramtools",
+            "cluster": cluster,
         }
 
         projects = [
@@ -78,6 +90,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
             {"title": "Used-for-testing", "listed": False},
             {"title": "Tax-Brain"},
             {"title": "Used-for-testing-sponsored-apps", "sponsor": sponsor.profile},
+            {"title": "Test-Viz", "tech": "dash", "callable_name": "serve"},
         ]
 
         for project_config in projects:
@@ -86,7 +99,6 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
         if USE_STRIPE:
             create_pro_billing_objects()
-            Project.objects.sync_products()
             for u in [modeler, sponsor, hdoupe]:
                 stripe_customer = stripe.Customer.create(
                     email=u.email, source="tok_bypassPending"
@@ -152,8 +164,6 @@ def basiccustomer(db, stripe_customer, user):
 @pytest.fixture
 @use_stripe
 def customer(db, basiccustomer):
-    basiccustomer.sync_subscriptions()
-    assert basiccustomer.subscriptions.count() > 0
     return basiccustomer
 
 
@@ -291,6 +301,11 @@ def subscription(db, customer, licensed_plan, metered_plan):
 
 
 @pytest.fixture
+def project(db):
+    return Project.objects.get(title="Used-for-testing")
+
+
+@pytest.fixture
 def test_models(db, profile):
     project = Project.objects.get(title="Used-for-testing")
     inputs = Inputs.objects.create(project=project)
@@ -389,12 +404,3 @@ def worker_url():
 @pytest.fixture
 def comp_api_user(db):
     return Profile.objects.get(user__username="comp-api-user")
-
-
-@pytest.fixture
-def mock_sync_projects(db, worker_url):
-    with requests_mock.Mocker(real_http=True) as mock:
-        mock.register_uri(
-            "POST", f"{worker_url}sync/",
-        )
-        yield

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  {% load static %}
+
+  <head>
+    <title>Compute Studio</title>
+    <link rel="icon" href="{% static 'imgs/cslashs.png' %}" type="image/x-icon" />
+
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        font-family: sans-serif;
+      }
+
+      .embedded {
+        position: relative;
+        height: 100vh;
+        width: 100%;
+        border: 0;
+      }
+    </style>
+  </head>
+
+  <body class="main" id="iframe-container">
+    {% if deployment.status == "running" %}
+    <iframe
+      id="embedded-iframe"
+      class="embedded"
+      title="{{object.title}}"
+      src="{{protocol}}://{{viz_host}}/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/"
+    ></iframe>
+    {% else %}
+    <div id="notready">
+      <p>Starting the {{object.owner}}/{{object.title}} visualization...</p>
+    </div>
+    {% endif %}
+    <div style="position: fixed; bottom: 0; right: 0;">
+      <a href="https://compute.studio" target="_blank"
+        ><img height="50" width="50" alt="Compute Studio Logo" src="{% static 'imgs/cslashs.png' %}"
+      /></a>
+    </div>
+  </body>
+
+  <script>
+    const checkReady = function() {
+      const resp = fetch(
+        "/apps/api/v1/{{object.owner}}/{{object.title}}/deployments/{{deployment.name}}/"
+      ).then(function(response) {
+        response.json().then(function(data) {
+          if (data.status === "running") {
+            const container = document.getElementById("iframe-container");
+            const placeholder = document.getElementById("notready");
+            container.removeChild(placeholder);
+            const iframe = document.createElement("iframe");
+            iframe.src =
+              "{{protocol}}://{{viz_host}}/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/";
+            iframe.title = "{{object.title}}";
+            iframe.className = "embedded";
+            iframe.id = "embedded-iframe";
+            container.appendChild(iframe);
+            setTimeout(pingDeployment, 10000);
+          } else {
+            setTimeout(checkReady, 3000);
+          }
+        });
+      });
+    };
+
+    const pingDeployment = function() {
+      if (!document.hasFocus()) {
+        setTimeout(pingDeployment, 2000);
+        return;
+      }
+      const resp = fetch("/apps/api/v1/deployments/{{deployment.id}}/?ping=true").then(function(
+        response
+      ) {
+        response.json().then(function(data) {
+          if (data.status === "terminated") {
+            // reload modal
+            const container = document.getElementById("iframe-container");
+            const iframe = document.getElementById("embedded-iframe");
+            container.removeChild(iframe);
+            const restart = document.createElement("p");
+            restart.textContent =
+              "Restarting the {{object.owner}}/{{object.title}} visualization...";
+            restart.style.height = "75vh";
+            container.appendChild(restart);
+            setTimeout(function() {
+              window.location.reload();
+            }, 2000);
+          } else {
+            setTimeout(pingDeployment, 10000);
+          }
+        });
+      });
+    };
+
+    window.onload = function() {
+      const initIframe = document.getElementById("embedded-iframe");
+      if (initIframe === null) {
+        return checkReady();
+      } else {
+        return pingDeployment();
+      }
+    };
+  </script>
+</html>

@@ -164,11 +164,14 @@ export interface AccessStatus {
   is_sponsored?: boolean;
   sponsor_message?: string;
   can_run?: boolean;
+  can_write_project?: boolean;
   server_cost?: number;
   exp_cost?: number;
   exp_time?: number;
   plan: { name: "free" | "plus" | "pro" | "team" };
 }
+
+export type Tech = "python-paramtools" | "dash" | "bokeh";
 
 export interface Project {
   title: string;
@@ -179,12 +182,14 @@ export interface Project {
   repo_url: string;
   server_size: [string, string];
   sim_count: number;
-  status: "live" | "pending" | "updating";
+  status: "live" | "pending" | "updating" | "staging";
   exp_task_time: number;
   server_cost: string;
   listed: boolean;
   user_count?: number;
   version?: string;
+  tech?: Tech;
+  callable_name?: string;
 }
 
 export interface MiniSimulation {

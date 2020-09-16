@@ -46,6 +46,9 @@ class ModelConfig:
             self.set_projects(models=models)
         return self._projects
 
+    def get_project(self, owner, title):
+        return self.projects()[f"{owner}/{title}"]
+
     def set_projects(self, models=None, projects=None):
         if projects is None:
             projects = get_projects(self.cs_url)
@@ -56,7 +59,14 @@ class ModelConfig:
                 selected[f"{o}/{t}"] = projects[f"{o}/{t}"]
             projects = selected
         self.format_resources(projects)
+
         if self.rclient is not None:
+            blob = self.rclient.get("projects")
+            if blob is not None:
+                projects = {
+                    **json.loads(blob.decode()),
+                    **projects,
+                }
             self.rclient.set(
                 "projects", json.dumps(projects),
             )

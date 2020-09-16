@@ -14,7 +14,12 @@ from rest_framework.test import APIClient
 from rest_framework.response import Response
 
 from webapp.apps.billing.tests.utils import gen_blank_customer
-from webapp.apps.users.models import Project, Profile, create_profile_from_user
+from webapp.apps.users.models import (
+    Project,
+    Profile,
+    EmbedApproval,
+    create_profile_from_user,
+)
 
 from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
 from webapp.apps.comp.ioutils import get_ioutils
@@ -115,7 +120,6 @@ class RunMockModel(CoreTestMixin):
         errors_warnings: dict,
         client: Client,
         api_client: APIClient,
-        worker_url: str,
         comp_api_user: User,
         monkeypatch,
         mockcompute: MockCompute,
@@ -128,7 +132,6 @@ class RunMockModel(CoreTestMixin):
         self.errors_warnings = errors_warnings
         self.client = client
         self.api_client = api_client
-        self.worker_url = worker_url
         self.comp_api_user = comp_api_user
         self.monkeypatch = monkeypatch
         self.mockcompute = mockcompute
@@ -182,11 +185,11 @@ class RunMockModel(CoreTestMixin):
     ) -> Response:
         mock.register_uri(
             "POST",
-            f"{self.worker_url}{self.owner}/{self.title}/",
+            f"{self.project.cluster.url}/{self.owner}/{self.title}/",
             json=lambda request, context: {
                 "defaults": defaults_resp_data,
                 "parse": adj_resp_data,
-                "version": {"status": "success", "version": "v1"},
+                "version": {"status": "SUCCESS", "version": "v1"},
             }[request.json()["task_name"]],
         )
 
@@ -384,7 +387,7 @@ class TestPaidModel(CoreTestMixin):
     mockcompute = MatchupsMockCompute
 
     def test_runmodel_no_existing_subs(
-        self, monkeypatch, client, api_client, worker_url, comp_api_user,
+        self, monkeypatch, client, api_client, comp_api_user,
     ):
         """
         Test lifetime of submitting a model.
@@ -403,7 +406,6 @@ class TestPaidModel(CoreTestMixin):
             errors_warnings=self.errors_warnings(),
             client=client,
             api_client=api_client,
-            worker_url=worker_url,
             comp_api_user=comp_api_user,
             monkeypatch=monkeypatch,
             mockcompute=self.mockcompute,
@@ -412,7 +414,7 @@ class TestPaidModel(CoreTestMixin):
         rmm.run()
 
     def test_runmodel_existing_subs(
-        self, monkeypatch, client, api_client, profile, worker_url, comp_api_user,
+        self, monkeypatch, client, api_client, profile, comp_api_user,
     ):
         """
         Test lifetime of submitting a model.
@@ -427,7 +429,6 @@ class TestPaidModel(CoreTestMixin):
             errors_warnings=self.errors_warnings(),
             client=client,
             api_client=api_client,
-            worker_url=worker_url,
             comp_api_user=comp_api_user,
             monkeypatch=monkeypatch,
             mockcompute=self.mockcompute,
@@ -449,13 +450,13 @@ class TestAsyncAPI(CoreTestMixin):
     def errors_warnings(self):
         return {"matchup": {"errors": {}, "warnings": {}}}
 
-    def test_get_inputs(self, api_client, worker_url):
+    def test_get_inputs(self, api_client):
         defaults = self.defaults()
         resp_data = {"status": "SUCCESS", **defaults}
         with requests_mock.Mocker() as mock:
             mock.register_uri(
                 "POST",
-                f"{worker_url}{self.owner}/{self.title}/",
+                f"{self.project.cluster.url}/{self.owner}/{self.title}/",
                 text=json.dumps(resp_data),
             )
             resp = api_client.get(f"/{self.owner}/{self.title}/api/v1/inputs/")
@@ -466,7 +467,7 @@ class TestAsyncAPI(CoreTestMixin):
             assert exp == resp.data
 
     @pytest.mark.parametrize("use_api", [True, False])
-    def test_new_sim(self, use_api, client, api_client, profile, worker_url):
+    def test_new_sim(self, use_api, client, api_client, profile):
         resp = client.get(f"/{self.owner}/{self.title}/")
         assert_status(200, resp, "test_new_sim")
 
@@ -521,7 +522,7 @@ class TestAsyncAPI(CoreTestMixin):
         with requests_mock.Mocker() as mock:
             mock.register_uri(
                 "POST",
-                f"{worker_url}{self.owner}/{self.title}/",
+                f"{self.project.cluster.url}/{self.owner}/{self.title}/",
                 json=lambda request, context: {
                     "defaults": inputs_resp_data,
                     "parse": adj_resp_data,
@@ -541,15 +542,18 @@ class TestAsyncAPI(CoreTestMixin):
             )
             assert_status(201, anon_resp, "test_new_sim_owner")
 
-    def test_post_inputs(self, api_client, worker_url):
+    def test_post_inputs(self, api_client):
         defaults = self.defaults()
         resp_data = {"status": "SUCCESS", **defaults}
         meta_params = {"meta_parameters": self.inputs_ok()["meta_parameters"]}
         with requests_mock.Mocker() as mock:
-            print("mocking", f"{worker_url}{self.owner}/{self.title}/inputs")
+            print(
+                "mocking",
+                f"{self.project.cluster.url}/{self.owner}/{self.title}/inputs",
+            )
             mock.register_uri(
                 "POST",
-                f"{worker_url}{self.owner}/{self.title}/",
+                f"{self.project.cluster.url}/{self.owner}/{self.title}/",
                 json=lambda request, context: {
                     "defaults": resp_data,
                     "version": {"status": "SUCCESS", "version": "1.0.0"},
@@ -569,14 +573,7 @@ class TestAsyncAPI(CoreTestMixin):
 
     @pytest.mark.parametrize("test_lower", [False, True])
     def test_runmodel(
-        self,
-        monkeypatch,
-        client,
-        api_client,
-        profile,
-        worker_url,
-        comp_api_user,
-        test_lower,
+        self, monkeypatch, client, api_client, profile, comp_api_user, test_lower,
     ):
         """
         Test lifetime of submitting a model.
@@ -591,7 +588,6 @@ class TestAsyncAPI(CoreTestMixin):
             errors_warnings=self.errors_warnings(),
             client=client,
             api_client=api_client,
-            worker_url=worker_url,
             comp_api_user=comp_api_user,
             monkeypatch=monkeypatch,
             mockcompute=self.mockcompute,
@@ -606,7 +602,6 @@ class TestAsyncAPI(CoreTestMixin):
         api_client,
         profile,
         profile_w_mockcustomer,
-        worker_url,
         comp_api_user,
     ):
         """
@@ -620,7 +615,6 @@ class TestAsyncAPI(CoreTestMixin):
             errors_warnings=self.errors_warnings(),
             client=client,
             api_client=api_client,
-            worker_url=worker_url,
             comp_api_user=comp_api_user,
             monkeypatch=monkeypatch,
             mockcompute=self.mockcompute,
@@ -661,14 +655,7 @@ class TestAsyncAPI(CoreTestMixin):
 
     @pytest.mark.parametrize("test_lower", [False, True])
     def test_fork(
-        self,
-        monkeypatch,
-        client,
-        api_client,
-        profile,
-        worker_url,
-        comp_api_user,
-        test_lower,
+        self, monkeypatch, client, api_client, profile, comp_api_user, test_lower,
     ):
         """
         Test creating and forking a sim.
@@ -683,7 +670,6 @@ class TestAsyncAPI(CoreTestMixin):
             errors_warnings=self.errors_warnings(),
             client=client,
             api_client=api_client,
-            worker_url=worker_url,
             comp_api_user=comp_api_user,
             monkeypatch=monkeypatch,
             mockcompute=self.mockcompute,
@@ -1448,3 +1434,35 @@ def test_list_sim_api(db, api_client, profile, get_inputs, meta_param_dict):
     assert_status(200, resp, "unauthed list sims")
     assert len(resp.data["results"]) == 1
     assert resp.data["results"][0]["model_pk"] == tester_sims[1].model_pk
+
+
+# @pytest.mark.django_db
+# class TestViz:
+#     def test_get_viz(self, client, project):
+#         resp = client.get(f"/{project}/viz/")
+#         assert resp.status_code == 200
+
+#     def test_get_embed(self, client, project):
+
+#         resp = client.get(f"/{project}/embed/test/")
+#         assert resp.status_code == 404
+
+#         (profile,) = gen_collabs(1)
+
+#         ea = EmbedApproval.objects.create(
+#             project=project,
+#             owner=profile,
+#             name="test",
+#             url="http://embed.compute.studio",
+#         )
+#         url = ea.get_absolute_url()
+
+#         resp = client.get(url)
+#         assert resp.status_code == 200
+#         assert resp._headers["content-security-policy"] == (
+#             "Content-Security-Policy",
+#             "frame-ancestors http://embed.compute.studio",
+#         )
+
+#         resp = client.get((f"/{project}/embed/doesnotexist/"))
+#         assert resp.status_code == 404

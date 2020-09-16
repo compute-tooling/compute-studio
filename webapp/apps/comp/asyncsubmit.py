@@ -125,11 +125,10 @@ class SubmitSim:
             "adjustment": inputs.deserialized_inputs,
         }
         print("submit", data)
+        project = self.sim.project
+        tag = str(project.latest_tag)
         self.submitted_id = self.compute.submit_job(
-            project=inputs.project,
-            task_name=actions.SIM,
-            task_kwargs=data,
-            tag=self.sim.project.latest_tag,
+            project=inputs.project, task_name=actions.SIM, task_kwargs=data, tag=tag,
         )
         print(f"job id: {self.submitted_id}")
 

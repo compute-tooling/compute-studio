@@ -12,7 +12,7 @@ import cs_workers.services.outputs_processor
 import cs_workers.models.manage
 import cs_workers.models.executors.job
 import cs_workers.models.executors.api_task
-
+import cs_workers.models.executors.server
 
 TAG = os.environ.get("TAG", "")
 PROJECT = os.environ.get("PROJECT")
@@ -38,7 +38,15 @@ def load_env():
     else:
         user_config = {}
 
-    for var in ["TAG", "PROJECT", "CS_URL", "CS_API_TOKEN", "BUCKET"]:
+    for var in [
+        "TAG",
+        "PROJECT",
+        "CS_URL",
+        "CS_API_TOKEN",
+        "BUCKET",
+        "CLUSTER_HOST",
+        "VIZ_HOST",
+    ]:
         if os.environ.get(var):
             config[var] = os.environ.get(var)
         elif user_config.get(var):
@@ -56,14 +64,16 @@ def cli():
     parser.add_argument(
         "--cs-api-token", required=False, default=config["CS_API_TOKEN"]
     )
+    parser.add_argument("--viz-host", required=False, default=config.get("VIZ_HOST"))
     sub_parsers = parser.add_subparsers()
 
-    cs_workers.services.manage.cli(sub_parsers)
+    cs_workers.services.manage.cli(sub_parsers, config=config)
     cs_workers.services.scheduler.cli(sub_parsers)
     cs_workers.services.outputs_processor.cli(sub_parsers)
     cs_workers.models.manage.cli(sub_parsers)
     cs_workers.models.executors.job.cli(sub_parsers)
     cs_workers.models.executors.api_task.cli(sub_parsers)
+    cs_workers.models.executors.server.cli(sub_parsers)
 
     args = parser.parse_args()
     args.func(args)

@@ -83,7 +83,7 @@ def mock_project(db, worker_url):
     with requests_mock.Mocker() as mock:
         mock.register_uri(
             "POST",
-            f"{worker_url}{project.owner}/{project.title}/",
+            f"{project.cluster.url}/{project.owner}/{project.title}/",
             json=mock_callback,
             status_code=200,
         )

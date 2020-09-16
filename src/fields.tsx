@@ -1,10 +1,3 @@
-import * as hljs from "highlight.js/lib/highlight";
-import * as python from "highlight.js/lib/languages/python";
-import * as json from "highlight.js/lib/languages/json";
-hljs.registerLanguage("python", python);
-hljs.registerLanguage("json", json);
-
-import "highlight.js/styles/default.css";
 import * as React from "react";
 import { Button, Row, Col } from "react-bootstrap";
 import { FastField, FieldProps, FieldArray, Field } from "formik";
@@ -21,71 +14,10 @@ interface CustomFieldProps {
   style?: any;
 }
 
-var Remarkable = require("remarkable");
-
-hljs.initHighlightingOnLoad();
-
-var md = new Remarkable({
-  highlight: function(str, lang) {
-    if ((lang && hljs.getLanguage(lang)) || true) {
-      try {
-        return hljs.highlight(lang, str).value;
-      } catch (err) {}
-    }
-
-    try {
-      return hljs.highlightAuto(str).value;
-    } catch (err) {}
-    return ""; // use external default escaping
-  }
-});
-
-export function markdownElement(markdownText, exitPreview: () => void, style: any = {}) {
-  // Box is not displayed if markdownText is an empty string.
-  if (!markdownText) {
-    markdownText = "&#8203;"; // space character
-  }
-  const marked = {
-    __html: md.render(markdownText)
-  };
-  return (
-    <div className="markdown-wrapper" onClick={exitPreview}>
-      <div
-        dangerouslySetInnerHTML={marked} // needs to be sanitized somehow.
-        className="card publish markdown"
-        style={style}
-      />
-    </div>
-  );
-}
-
 function titleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, onChange) {
   e.target.value = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
   onChange(e);
 }
-
-export const TextField = (fieldProps: FieldProps<any> & CustomFieldProps) => {
-  const {
-    field,
-    form: { touched, errors },
-    ...props
-  } = fieldProps;
-  let allowSpecialChars = props.allowSpecialChars !== null ? true : props.allowSpecialChars;
-  let style = props.style ? props.style : {};
-  if (props.preview) {
-    return markdownElement(field.value, props.exitPreview, (style = props.style));
-  } else {
-    return (
-      <input
-        className="form-control"
-        {...field}
-        {...props}
-        style={style}
-        onChange={e => (allowSpecialChars ? field.onChange(e) : titleChange(e, field.onChange))}
-      />
-    );
-  }
-};
 
 function checkboxChange(e: React.ChangeEvent<HTMLInputElement>, onChange, placeholder = null) {
   let value = e.target.value != null && e.target.value !== "" ? e.target.value : placeholder;
@@ -143,33 +75,15 @@ export const CPIField = ({ field, form: { touched, errors }, ...props }) => {
   );
 };
 
-export const TextAreaField = ({ field, form: { touched, errors }, ...props }) => {
-  let style = props.style ? props.style : {};
-  if (props.preview) {
-    return markdownElement(field.value, props.exitPreview, style);
-  } else {
-    return <textarea className="form-control" {...field} {...props} preview="" style={style} />;
-  }
-};
-
-export const Message = ({ msg }) => <small className={`form-text text-muted`}>{msg}</small>;
+export const Message = ({ msg }) => (
+  <small className={`form-text text-muted text-danger`}>{msg}</small>
+);
 
 export const RedMessage = ({ msg }) => (
   <p className={`form-text font-weight-bold`} style={{ color: "#dc3545", fontSize: "80%" }}>
     {msg}
   </p>
 );
-
-export const CodeSnippetField = ({ field, form: { touched, errors }, ...props }) => {
-  let style = props.style ? props.style : {};
-  if (props.preview) {
-    const ticks = "```";
-    const markdownText = `${ticks}${props.language}\n${field.value}\n${ticks}`;
-    return markdownElement(markdownText, props.exitPreview, style);
-  } else {
-    return <textarea className="form-control" {...field} {...props} preview="" style={style} />;
-  }
-};
 
 export const ServerSizeField = ({ field, form: { touched, errors }, ...props }) => {
   return (

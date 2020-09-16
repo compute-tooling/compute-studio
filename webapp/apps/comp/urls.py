@@ -20,6 +20,8 @@ from webapp.apps.comp.views import (
     PermissionPendingView,
     PermissionGrantedView,
     SimulationAccessAPIView,
+    VizView,
+    EmbedView,
 )
 
 # API Routes:
@@ -29,7 +31,9 @@ from webapp.apps.comp.views import (
 # api/v1/<int:model_pk>/ - get all data related to sim, including inputs and outputs.
 
 urlpatterns = [
-    path("", ModelPageView.as_view(), name="app"),
+    path("embed/<str:ea_name>/", EmbedView.as_view(), name="embed"),
+    path("viz/<str:rd_name>/", VizView.as_view(), name="viz"),
+    path("viz/", VizView.as_view(), name="viz"),
     path("new/", NewSimView.as_view(), name="simulation"),
     path("api/v1/", CreateAPIView.as_view(), name="create_api"),
     path("api/v1/inputs/", InputsAPIView.as_view(), name="inputs_api"),

@@ -28,11 +28,15 @@ from rest_framework import status
 import fsspec as fs
 import cs_storage
 
-from webapp.settings import DEBUG
+from webapp.settings import DEBUG, DEFAULT_VIZ_HOST
 
-from webapp.apps.billing.models import SubscriptionItem, UsageRecord
 from webapp.apps.billing.utils import has_payment_method
-from webapp.apps.users.models import Project, is_profile_active
+from webapp.apps.users.models import (
+    Project,
+    EmbedApproval,
+    Deployment,
+    is_profile_active,
+)
 
 from webapp.apps.comp.constants import WEBAPP_VERSION
 from webapp.apps.comp import exceptions
@@ -77,6 +81,7 @@ class NewSimView(InputsMixin, View):
         )
         context = self.project_context(request, project)
         context["show_readme"] = False
+        context["tech"] = project.tech
         if request.user.is_authenticated and getattr(request.user, "profile", None):
             sim = Simulation.objects.new_sim(user=request.user, project=project)
             return redirect(sim.get_absolute_edit_url())
@@ -139,8 +144,69 @@ class EditSimView(GetOutputsObjectMixin, InputsMixin, View):
         project = self.object.project
         context = self.project_context(request, project)
         context["show_readme"] = False
+        context["tech"] = project.tech
         context["sim"] = self.object.context(request=request)
         return render(request, self.template_name, context)
+
+
+class VizView(InputsMixin, View):
+    model = Project
+    template_name = "comp/viz.html"
+
+    def get(self, request, *args, **kwargs):
+        print("viz method=GET", request.GET)
+        project = get_object_or_404(
+            self.model,
+            owner__user__username__iexact=kwargs["username"],
+            title__iexact=kwargs["title"],
+        )
+        if project.tech == "python-paramtools":
+            return redirect(f"/{project.owner}/{project.title}/new/")
+        context = self.project_context(request, project)
+        if is_profile_active(request.user):
+            owner = request.user.profile
+        else:
+            owner = None
+        deployment, _ = Deployment.objects.get_or_create_deployment(
+            project=project, name=kwargs.get("rd_name", "default"), owner=owner
+        )
+        context["show_readme"] = False
+        context["tech"] = project.tech
+        context["object"] = project
+        context["deployment"] = deployment
+        context["viz_host"] = DEFAULT_VIZ_HOST
+        context["protocol"] = "https"
+        return render(request, self.template_name, context)
+
+
+class EmbedView(InputsMixin, View):
+    model = EmbedApproval
+    template_name = "comp/embed.html"
+
+    def get(self, request, *args, **kwargs):
+        print("embed method=GET", request.GET)
+        embed_approval = get_object_or_404(
+            EmbedApproval,
+            project__owner__user__username__iexact=kwargs["username"],
+            project__title__iexact=kwargs["title"],
+            name__iexact=kwargs["ea_name"],
+        )
+        project = embed_approval.project
+        deployment, _ = Deployment.objects.get_or_create_deployment(
+            project=project, name=kwargs["ea_name"], embed_approval=embed_approval
+        )
+
+        context = {
+            "object": project,
+            "deployment": deployment,
+            "protocol": "https",
+            "viz_host": DEFAULT_VIZ_HOST,
+        }
+        response = render(request, self.template_name, context)
+
+        response["Content-Security-Policy"] = f"frame-ancestors {embed_approval.url}"
+
+        return response
 
 
 class OutputsView(GetOutputsObjectMixin, DetailView):
