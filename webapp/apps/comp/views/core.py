@@ -44,7 +44,7 @@ class AbstractRouter:
             title__iexact=kwargs["title"],
         )
 
-        if project.status in ["updating", "live"]:
+        if project.status == "live":
             if project.sponsor is None:
                 return self.payment_view.as_view()(request, *args, **kwargs)
             else:

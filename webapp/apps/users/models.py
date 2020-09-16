@@ -218,23 +218,11 @@ class Project(models.Model):
             ("dash", "Dash"),
             ("bokeh", "Bokeh"),
         ),
-        default="python-paramtools",
         max_length=64,
+        null=True,
     )
 
     callable_name = models.CharField(null=True, max_length=128)
-
-    status = models.CharField(
-        choices=(
-            ("live", "live"),
-            ("updating", "updating"),
-            ("pending", "pending"),
-            ("staging", "staging"),
-            ("requires fixes", "requires fixes"),
-        ),
-        default="live",
-        max_length=32,
-    )
 
     # ram, vcpus
     def callabledefault():
@@ -276,6 +264,17 @@ class Project(models.Model):
         except Project.DoesNotExist:
             res = None
         return res
+
+    @property
+    def status(self):
+        if self.latest_tag is not None:
+            return "live"
+        elif self.repo_url not in (None, ""):
+            return "staging"
+        elif self.tech is not None:
+            return "connecting"
+        else:
+            return "created"
 
     def exp_job_info(self, adjust=False):
         rate_per_sec = self.server_cost / 3600
@@ -360,7 +359,7 @@ class Project(models.Model):
     def version(self):
         if self.tech != "python-paramtools":
             return None
-        if self.status not in ("updating", "live"):
+        if self.status != "live":
             return None
         try:
             success, result = SyncCompute().submit_job(

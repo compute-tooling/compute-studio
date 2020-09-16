@@ -785,21 +785,20 @@ const simStatus = (status: MiniSimulation["status"]) => {
 const modelStatus = (status: Project["status"]) => {
   switch (status) {
     case "live":
-    case "updating":
       return (
-        <Tip id="live" tip="This model is live.">
+        <Tip id="live" tip="This app is live.">
           <Button className="btn-sm btn-outline-success">live</Button>
         </Tip>
       );
-    case "pending":
+    case "connecting":
       return (
-        <Tip id="staging" tip="This model is not live right now.">
+        <Tip id="staging" tip="This app is still being connected.">
           <Button className="btn-sm btn-outline-primary">staging</Button>
         </Tip>
       );
     default:
       return (
-        <Tip id="staging" tip="This model is not live right now.">
+        <Tip id="staging" tip="This app waiting to be deployed.">
           <Button className="btn-sm btn-outline-primary">staging</Button>
         </Tip>
       );

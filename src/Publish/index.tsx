@@ -16,6 +16,9 @@ import { Tip } from "../components";
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
 
+const newTechEmail =
+  "mailto:hank@compute.studio?subject=Requesting%20New%20App%20Technology&body=I%20am%20interested%20in%20publishing%20an%20app%20using:";
+
 const techLinks = {
   "python-paramtools": "https://paramtools.dev",
   bokeh: "https://bokeh.org",
@@ -112,7 +115,6 @@ const initialValues: ProjectValues = {
 };
 
 interface PublishProps {
-  preview: boolean;
   initialValues: ProjectValues;
   project?: Project;
   accessStatus: AccessStatus;
@@ -120,7 +122,6 @@ interface PublishProps {
 }
 
 type PublishState = Readonly<{
-  preview: boolean;
   initialValues: ProjectValues;
 }>;
 
@@ -150,6 +151,9 @@ const TechSelect: React.FC<{
             <strong>{tech}</strong>
           </Dropdown.Item>
         ))}
+        <Dropdown.Item key="another" href={newTechEmail} className="w-100">
+          <strong>Request Another</strong>
+        </Dropdown.Item>
       </Dropdown.Menu>
     </Dropdown>
   );
@@ -215,10 +219,7 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
   );
 };
 
-const CommonFields: React.FC<{ api: API; formikProps: FormikProps<ProjectValues> }> = ({
-  api,
-  formikProps
-}) => {
+const AdvancedFields: React.FC<{}> = ({}) => {
   return (
     <div>
       <div className="mt-5">
@@ -287,6 +288,7 @@ const CommonFields: React.FC<{ api: API; formikProps: FormikProps<ProjectValues>
             </p>
           </div>
         </div>
+        <SpecialRequests />
       </details>
     </div>
   );
@@ -337,7 +339,9 @@ const AboutAppFields: React.FC<{ accessStatus: AccessStatus }> = ({ accessStatus
         <label className="strong">
           README{" "}
           <Tip id="readme-markdown-icon" tip="Supports Markdown." placement="top">
-            <i className="fab fa-markdown mr-3" style={{ opacity: 0.8 }}></i>
+            <a href="https://hackmd.io/new" target="_blank">
+              <i className="fab fa-markdown mr-3" style={{ opacity: 0.8 }}></i>
+            </a>
           </Tip>
         </label>
         <Field name="description">
@@ -425,29 +429,102 @@ const ViewProject: React.FC<{
       <ReactMarkdown source={project.description} escapeHtml={false} renderers={{ image: image }} />
       <Row className="justify-content-between mt-5">
         <Col className="col-auto align-self-center">
-          {project.status === "live" && (
+          {project.status === "live" ? (
             <a className="btn btn-success" href={goto}>
               <strong>Go to App</strong>
+            </a>
+          ) : (
+            <a className="btn btn-success" href={`/${id}/detail/`}>
+              <strong>Connect App</strong>
             </a>
           )}
         </Col>
         <Col className="col-auto align-self-center">
-          <p>
-            Built with{" "}
-            <a href={techLinks[project.tech]}>
-              <strong>{techTitles[project.tech]}</strong>
-            </a>
-            .
-          </p>
+          {project.tech && (
+            <p>
+              Built with{" "}
+              <a href={techLinks[project.tech]}>
+                <strong>{techTitles[project.tech]}</strong>
+              </a>
+              .
+            </p>
+          )}
         </Col>
       </Row>
     </Jumbotron>
   );
 };
 
+type Section = "about" | "tech" | "configure" | "advanced";
+
+const ProjectForm: React.FC<{
+  props: FormikProps<ProjectValues>;
+  project?: Project;
+  accessStatus: AccessStatus;
+  section: Section;
+}> = ({ props, project, accessStatus, section }) => (
+  <Form>
+    {props.status && props.status.project_exists ? (
+      <div className="alert alert-danger" role="alert">
+        {props.status.project_exists}
+      </div>
+    ) : (
+      <div />
+    )}
+    {(props.status && props.status.auth) || !accessStatus.username ? (
+      <div className="alert alert-danger" role="alert">
+        You must be logged in to publish a model.
+      </div>
+    ) : (
+      <div />
+    )}
+    {section === "about" && <AboutAppFields accessStatus={accessStatus} />}
+    {section === "tech" && (
+      <Row className="my-5 w-100 justify-content-center">
+        <Col className="col-auto">
+          <Field name="tech">
+            {({ field, meta }) => (
+              <TechSelect
+                selectedTech={
+                  (props.values.tech && props.touched.tech) || !!project ? props.values.tech : null
+                }
+                onSelectTech={sel => {
+                  props.setFieldValue("tech", sel);
+                  props.setFieldTouched("tech", true);
+                  props.submitForm();
+                }}
+              />
+            )}
+          </Field>
+        </Col>
+      </Row>
+    )}
+    {section === "configure" && (
+      <>
+        {props.values.tech === "python-paramtools" && <PythonParamTools />}
+        {["bokeh", "dash"].includes(props.values.tech) && (
+          <VizWithServer tech={props.values.tech} />
+        )}
+      </>
+    )}
+
+    {section === "advanced" ? <AdvancedFields /> : null}
+
+    {section !== "tech" && (
+      <button className="btn inline-block btn-success mt-4" type="submit">
+        <strong>{project ? "Connect" : "Create"}</strong>
+      </button>
+    )}
+  </Form>
+);
+
 class ProjectApp extends React.Component<
   PublishProps,
-  PublishState & { showTechOpts: boolean; project?: Project }
+  PublishState & {
+    showTechOpts: boolean;
+    project?: Project;
+    section: Section | null;
+  }
 > {
   constructor(props) {
     super(props);
@@ -456,21 +533,29 @@ class ProjectApp extends React.Component<
       initialValues[key] = value === null ? "" : value;
     }
     this.state = {
-      preview: this.props.preview,
       initialValues: initialValues as ProjectValues,
       showTechOpts: false,
-      project: this.props.project
+      project: this.props.project,
+      section: null
     };
-    this.togglePreview = this.togglePreview.bind(this);
+    this.sectionFromProject = this.sectionFromProject.bind(this);
   }
 
-  togglePreview() {
-    event.preventDefault();
-    this.setState({ preview: !this.state.preview });
+  sectionFromProject(project) {
+    if (!project) {
+      return "about";
+    } else if (project?.status === "created") {
+      return "tech";
+    } else if (project?.status === "connecting" && project?.tech) {
+      return "advanced";
+    } else if (project?.status === "connecting") {
+      return "configure";
+    }
   }
 
   render() {
     const { accessStatus } = this.props;
+    const section = this.state.section || this.sectionFromProject(this.state.project);
     return (
       <div>
         <Formik
@@ -484,11 +569,10 @@ class ProjectApp extends React.Component<
               .save(formdata)
               .then(project => {
                 actions.setSubmitting(false);
-                this.setState({ project });
-                console.log("project", project);
-                if (project.status === "staging") {
+                if (project.status === "staging" || project.status === "created") {
                   window.location.href = `/${project.owner}/${project.title}/`;
                 }
+                this.setState({ project });
               })
               .catch(error => {
                 console.log("error", error);
@@ -508,65 +592,12 @@ class ProjectApp extends React.Component<
           validationSchema={Schema}
         >
           {(props: FormikProps<ProjectValues>) => (
-            <Form>
-              {props.status && props.status.project_exists ? (
-                <div className="alert alert-danger" role="alert">
-                  {props.status.project_exists}
-                </div>
-              ) : (
-                <div />
-              )}
-              {(props.status && props.status.auth) || !accessStatus.username ? (
-                <div className="alert alert-danger" role="alert">
-                  You must be logged in to publish a model.
-                </div>
-              ) : (
-                <div />
-              )}
-              {!this.props.api.title && <AboutAppFields accessStatus={accessStatus} />}
-              {this.state.project?.status === "created" && (
-                <Row className="my-5 w-100 justify-content-center">
-                  <Col className="col-auto">
-                    <Field name="tech">
-                      {({ field, meta }) => (
-                        <TechSelect
-                          selectedTech={
-                            (props.values.tech && props.touched.tech) || this.props.api.title
-                              ? props.values.tech
-                              : null
-                          }
-                          onSelectTech={sel => {
-                            props.setFieldValue("tech", sel);
-                            props.setFieldTouched("tech", true);
-                          }}
-                        />
-                      )}
-                    </Field>
-                  </Col>
-                </Row>
-              )}
-              {this.state.project?.status === "connecting" && (
-                <>
-                  {props.values.tech === "python-paramtools" && <PythonParamTools />}
-                  {["bokeh", "dash"].includes(props.values.tech) && (
-                    <VizWithServer tech={props.values.tech} />
-                  )}
-                </>
-              )}
-
-              {this.state.project?.status == "connecting" && this.state.project.tech ? (
-                <CommonFields api={this.props.api} formikProps={props} />
-              ) : null}
-
-              <SpecialRequests />
-              <button className="btn inline-block" onClick={this.togglePreview}>
-                {this.state.preview ? "Edit" : "Preview"}
-              </button>
-              <div className="divider" />
-              <button className="btn inline-block btn-success" type="submit">
-                {this.props.api?.owner ? "Save" : "Create"}
-              </button>
-            </Form>
+            <ProjectForm
+              props={props}
+              project={this.state.project}
+              accessStatus={accessStatus}
+              section={section}
+            />
           )}
         </Formik>
       </div>
@@ -597,7 +628,6 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
         <Card.Body>
           <ProjectApp
             initialValues={initialValues}
-            preview={false}
             accessStatus={this.state.accessStatus}
             api={this.api}
           />
@@ -645,7 +675,6 @@ class ProjectDetail extends React.Component<
             project={this.state.project}
             accessStatus={this.state.accessStatus}
             initialValues={(this.state.project as unknown) as ProjectValues}
-            preview={true}
             api={this.api}
           />
         </Card.Body>

@@ -51,6 +51,60 @@ from .utils import title_fixup
 User = get_user_model()
 
 
+def send_new_app_email(user, model, status_url):
+    try:
+        send_mail(
+            f"{user.username} created a new app on Compute Studio!",
+            (
+                f"{model.title} will be live or you will have feedback within "
+                f"the next 24 hours. Check the status of the submission at "
+                f"{status_url}."
+            ),
+            "notifications@compute.studio",
+            list({user.email, "hank@compute.studio"}),
+            fail_silently=False,
+        )
+    # Http 401 exception if mail credentials are not set up.
+    except Exception:
+        pass
+
+
+def send_updated_app_email(user, model, status_url):
+    try:
+        send_mail(
+            f"{model} has been updated",
+            (
+                f"{model.title} will be updated or you will have feedback within "
+                f"the next 24 hours. Check the status of the update at "
+                f"{status_url}."
+            ),
+            "notifications@compute.studio",
+            list({user.email, "hank@compute.studio"}),
+            fail_silently=False,
+        )
+    # Http 401 exception if mail credentials are not set up.
+    except Exception:
+        pass
+
+
+def send_app_ready_email(user, model, status_url):
+    try:
+        send_mail(
+            f"{model} is ready to be connected on Compute Studio!",
+            (
+                f"{model.title} will be live or you will have feedback within "
+                f"the next 24 hours. Check the status of the update at "
+                f"{status_url}."
+            ),
+            "notifications@compute.studio",
+            list({user.email, "hank@compute.studio"}),
+            fail_silently=False,
+        )
+    # Http 401 exception if mail credentials are not set up.
+    except Exception:
+        pass
+
+
 class GetProjectMixin:
     def get_object(self, username, title, **kwargs):
         return get_object_or_404(
@@ -90,28 +144,21 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
         if request.user.is_authenticated:
             project = self.get_object(**kwargs)
             if project.has_write_access(request.user):
+                previous_status = project.status
                 serializer = ProjectSerializer(project, data=request.data)
                 if serializer.is_valid():
-                    model = serializer.save(status="live")
+                    model = serializer.save()
+                    new_status = model.status
                     Project.objects.sync_project_with_workers(
                         ProjectSerializer(model).data, model.cluster
                     )
                     status_url = request.build_absolute_uri(model.app_url)
-                    try:
-                        send_mail(
-                            f"{request.user.username} is updating a model on Compute Studio!",
-                            (
-                                f"{model.title} will be updated or you will have feedback within "
-                                f"the next 24 hours. Check the status of the update at "
-                                f"{status_url}."
-                            ),
-                            "notifications@compute.studio",
-                            list({request.user.email, "hank@compute.studio"}),
-                            fail_silently=False,
+                    if previous_status != "staging" and new_status == "staging":
+                        send_app_ready_email(
+                            request.user, model, status_url,
                         )
-                    # Http 401 exception if mail credentials are not set up.
-                    except Exception:
-                        pass
+                    elif previous_status in ("staging", "live"):
+                        send_updated_app_email(request.user, model, status_url)
                     return Response(serializer.data)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -148,31 +195,16 @@ class ProjectAPIView(GetProjectMixin, APIView):
                     )
                 model = serializer.save(
                     owner=request.user.profile,
-                    status="pending",
                     title=title,
                     cluster=Cluster.objects.default(),
                 )
                 status_url = request.build_absolute_uri(model.app_url)
+                send_new_app_email(request.user, model, status_url)
                 api_user = User.objects.get(username="comp-api-user")
                 assign_perm("write_project", api_user, model)
                 Project.objects.sync_project_with_workers(
                     ProjectSerializer(model).data, model.cluster
                 )
-                try:
-                    send_mail(
-                        f"{request.user.username} is publishing a model on Compute Studio!",
-                        (
-                            f"{model.title} will be live or you will have feedback within "
-                            f"the next 24 hours. Check the status of the submission at "
-                            f"{status_url}."
-                        ),
-                        "notifications@compute.studio",
-                        list({request.user.email, "hank@compute.studio"}),
-                        fail_silently=False,
-                    )
-                # Http 401 exception if mail credentials are not set up.
-                except Exception:
-                    pass
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
                 print("error", request, serializer.errors)

@@ -33,6 +33,8 @@ class ProjectSerializer(serializers.ModelSerializer):
     sim_count = serializers.IntegerField(required=False)
     user_count = serializers.IntegerField(required=False)
     latest_tag = serializers.StringRelatedField(required=False)
+    repo_tag = serializers.CharField(required=False)
+    repo_url = serializers.CharField(required=False)
     # see to_representation
     # has_write_access = serializers.BooleanField(source="has_write_access")
 
