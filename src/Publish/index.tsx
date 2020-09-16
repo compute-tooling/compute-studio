@@ -433,6 +433,8 @@ const ViewProject: React.FC<{
             <a className="btn btn-success" href={goto}>
               <strong>Go to App</strong>
             </a>
+          ) : project.status === "staging" ? (
+            <strong>Our team is preparing your app to be published.</strong>
           ) : (
             <a className="btn btn-success" href={`/${id}/detail/`}>
               <strong>Connect App</strong>
