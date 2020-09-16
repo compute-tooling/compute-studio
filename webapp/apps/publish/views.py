@@ -56,9 +56,10 @@ def send_new_app_email(user, model, status_url):
         send_mail(
             f"{user.username} created a new app on Compute Studio!",
             (
-                f"{model.title} will be live or you will have feedback within "
-                f"the next 24 hours. Check the status of the submission at "
-                f"{status_url}."
+                f"{model.title} has been created. When you are ready, you can finish "
+                f"connecting your app at {status_url}.\n\n"
+                f"If you have any questions, pleae feel welcome to send me an email at "
+                f"hank@compute.studio."
             ),
             "notifications@compute.studio",
             list({user.email, "hank@compute.studio"}),
@@ -199,6 +200,7 @@ class ProjectAPIView(GetProjectMixin, APIView):
                     cluster=Cluster.objects.default(),
                 )
                 status_url = request.build_absolute_uri(model.app_url)
+                status_url += "detail/"
                 send_new_app_email(request.user, model, status_url)
                 api_user = User.objects.get(username="comp-api-user")
                 assign_perm("write_project", api_user, model)
