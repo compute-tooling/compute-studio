@@ -6,7 +6,7 @@ import uuid
 import markdown
 import requests
 
-from django.db import models
+from django.db import models, transaction
 from django.db.models.functions import TruncMonth
 from django.db.models import F, Case, When, Sum, Max
 from django.contrib.auth.models import AbstractUser
@@ -19,10 +19,17 @@ from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.http import Http404
 
+from guardian.shortcuts import assign_perm, remove_perm, get_perms, get_users_with_perms
+
 from webapp.apps.comp import actions
 from webapp.apps.comp.compute import SyncCompute, SyncProjects
 from webapp.apps.comp.models import Inputs, ANON_BEFORE
-from webapp.settings import DEBUG, COMPUTE_PRICING, DEFAULT_CLUSTER_USER
+from webapp.settings import (
+    DEBUG,
+    COMPUTE_PRICING,
+    DEFAULT_CLUSTER_USER,
+    HAS_USAGE_RESTRICTIONS,
+)
 
 import cs_crypt
 import jwt
@@ -71,6 +78,7 @@ class User(AbstractUser):
 
 
 class Profile(models.Model):
+    objects: models.Manager
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=False)
 
@@ -196,6 +204,8 @@ class ProjectManager(models.Manager):
         project = super().create(*args, **kwargs)
         if project.cluster is None:
             project.cluster = Cluster.objects.default()
+        project.assign_role("admin", project.owner.user)
+        project.assign_role("write", project.cluster.service_account.user)
         return project
 
 
@@ -398,12 +408,33 @@ class Project(models.Model):
             traceback.print_exc()
             return None
 
-    def has_write_access(self, user):
-        return bool(
-            user
-            and user.is_authenticated
-            and (self.owner.user == user or user.has_perm("write_project", self))
-        )
+    def is_owner(self, user):
+        return user == self.owner.user
+
+    def _collaborator_test(self, test_name, adding_collaborator=True):
+        """
+        Not implemented for now. See Simulation._collaborator_test
+        """
+        if not HAS_USAGE_RESTRICTIONS:
+            return
+
+        pass
+
+    def add_collaborator_test(self):
+        """
+        Test if user's plan allows them to add more collaborators
+        to this simulation.
+        """
+        if self.is_public:
+            return
+        return self._collaborator_test("add_collaborator", adding_collaborator=True)
+
+    def make_private_test(self):
+        """
+        Test if user's plan allows them to make the simulation private with
+        the existing number of collaborators.
+        """
+        return self._collaborator_test("make_private", adding_collaborator=False)
 
     """
     The methods below are used for checking if a user has read, write, or admin
@@ -419,13 +450,13 @@ class Project(models.Model):
         if not user or not user.is_authenticated:
             return False
 
-        return user.has_perm(Simulation.ADMIN[0], self)
+        return user.has_perm(Project.ADMIN[0], self)
 
     def has_write_access(self, user):
         if not user or not user.is_authenticated:
             return False
 
-        return user.has_perm(Simulation.WRITE[0], self) or self.has_admin_access(user)
+        return user.has_perm(Project.WRITE[0], self) or self.has_admin_access(user)
 
     def has_read_access(self, user):
         # Everyone has access to this sim.
@@ -434,7 +465,7 @@ class Project(models.Model):
 
         if not user or not user.is_authenticated:
             return False
-        return user.has_perm(Simulation.READ[0], self) or self.has_write_access(user)
+        return user.has_perm(Project.READ[0], self) or self.has_write_access(user)
 
     def remove_permissions(self, user):
         for permission in get_perms(user, self):
@@ -443,17 +474,17 @@ class Project(models.Model):
     def grant_admin_permissions(self, user):
         self.remove_permissions(user)
         self.add_collaborator_test()
-        assign_perm(Simulation.ADMIN[0], user, self)
+        assign_perm(Project.ADMIN[0], user, self)
 
     def grant_write_permissions(self, user):
         self.remove_permissions(user)
         self.add_collaborator_test()
-        assign_perm(Simulation.WRITE[0], user, self)
+        assign_perm(Project.WRITE[0], user, self)
 
     def grant_read_permissions(self, user):
         self.remove_permissions(user)
         self.add_collaborator_test()
-        assign_perm(Simulation.READ[0], user, self)
+        assign_perm(Project.READ[0], user, self)
 
     @transaction.atomic
     def assign_role(self, role, user):
@@ -484,11 +515,11 @@ class Project(models.Model):
         perms = get_perms(user, self)
         if not perms:
             return None
-        elif perms == [Simulation.READ[0]]:
+        elif perms == [Project.READ[0]]:
             return "read"
-        elif perms == [Simulation.WRITE[0]]:
+        elif perms == [Project.WRITE[0]]:
             return "write"
-        elif perms == [Simulation.ADMIN[0]]:
+        elif perms == [Project.ADMIN[0]]:
             return "admin"
 
     class Meta:
@@ -500,6 +531,8 @@ class Project(models.Model):
 
 
 class Tag(models.Model):
+    objects: models.Manager
+
     project = models.ForeignKey(
         "Project", on_delete=models.SET_NULL, related_name="tags", null=models.CASCADE
     )

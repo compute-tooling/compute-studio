@@ -87,6 +87,8 @@ class ModelConfig(models.Model):
 
 
 class Inputs(models.Model):
+    objects: models.Manager
+
     parent_sim = models.ForeignKey(
         "Simulation", null=True, related_name="child_inputs", on_delete=models.SET_NULL
     )

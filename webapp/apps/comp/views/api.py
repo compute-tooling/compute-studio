@@ -342,38 +342,40 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
     authentication_classes = (TokenAuthentication,)
 
     def put(self, request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.username == "comp-api-user":
-            ser = OutputsSerializer(data=request.data)
-            if ser.is_valid():
-                data = ser.validated_data
-                sim = get_object_or_404(Simulation, job_id=data["job_id"])
-                if sim.status == "PENDING":
-                    self.record_outputs(sim, data)
-                    if sim.notify_on_completion:
-                        try:
-                            host = f"https://{request.get_host()}"
-                            sim_url = f"{host}{sim.get_absolute_url()}"
-                            send_mail(
-                                f"{sim} has finished!",
-                                (
-                                    f"Here's a link to your simulation:\n\n{sim_url}."
-                                    f"\n\nPlease write back if you have any questions or feedback!"
-                                ),
-                                "notifications@compute.studio",
-                                [sim.owner.user.email],
-                                fail_silently=True,
-                            )
-                        # Http 401 exception if mail credentials are not set up.
-                        except Exception:
-                            import traceback
+        print("myoutputs api method=PUT", kwargs)
+        ser = OutputsSerializer(data=request.data)
+        if ser.is_valid():
+            data = ser.validated_data
+            sim = get_object_or_404(
+                Simulation.objects.prefetch_related("project"), job_id=data["job_id"]
+            )
+            if not sim.project.has_write_access(request.user):
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+            if sim.status == "PENDING":
+                self.record_outputs(sim, data)
+                if sim.notify_on_completion:
+                    try:
+                        host = f"https://{request.get_host()}"
+                        sim_url = f"{host}{sim.get_absolute_url()}"
+                        send_mail(
+                            f"{sim} has finished!",
+                            (
+                                f"Here's a link to your simulation:\n\n{sim_url}."
+                                f"\n\nPlease write back if you have any questions or feedback!"
+                            ),
+                            "notifications@compute.studio",
+                            [sim.owner.user.email],
+                            fail_silently=True,
+                        )
+                    # Http 401 exception if mail credentials are not set up.
+                    except Exception:
+                        import traceback
 
-                            traceback.print_exc()
-                            pass
-                return Response(status=status.HTTP_200_OK)
-            else:
-                return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+                        traceback.print_exc()
+                        pass
+            return Response(status=status.HTTP_200_OK)
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class MyInputsAPIView(APIView):
@@ -381,34 +383,33 @@ class MyInputsAPIView(APIView):
 
     def put(self, request, *args, **kwargs):
         print("myinputs api method=PUT", kwargs)
-
-        if request.user.username == "comp-api-user":
-            data = request.data
-            ser = InputsSerializer(data=request.data)
-            if ser.is_valid():
-                data = ser.validated_data
-                inputs = get_object_or_404(Inputs, job_id=data["job_id"])
-                if inputs.status in ("PENDING", "INVALID"):
-                    # successful run
-                    if data["status"] == "SUCCESS":
-                        inputs.errors_warnings = data["errors_warnings"]
-                        inputs.custom_adjustment = data.get("custom_adjustment", None)
-                        inputs.status = "SUCCESS" if is_valid(inputs) else "INVALID"
-                        inputs.save()
-                        if inputs.status == "SUCCESS":
-                            submit_sim = SubmitSim(inputs.sim, compute=Compute())
-                            submit_sim.submit()
-                    # failed run, exception was caught
-                    else:
-                        inputs.status = "FAIL"
-                        inputs.traceback = data["traceback"]
-                        inputs.save()
-                return Response(status=status.HTTP_200_OK)
-            else:
-                print("inputs put error", ser.errors)
-                return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+        ser = InputsSerializer(data=request.data)
+        if ser.is_valid():
+            data = ser.validated_data
+            inputs = get_object_or_404(
+                Inputs.objects.prefetch_related("project"), job_id=data["job_id"]
+            )
+            if not inputs.project.has_write_access(request.user):
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+            if inputs.status in ("PENDING", "INVALID"):
+                # successful run
+                if data["status"] == "SUCCESS":
+                    inputs.errors_warnings = data["errors_warnings"]
+                    inputs.custom_adjustment = data.get("custom_adjustment", None)
+                    inputs.status = "SUCCESS" if is_valid(inputs) else "INVALID"
+                    inputs.save()
+                    if inputs.status == "SUCCESS":
+                        submit_sim = SubmitSim(inputs.sim, compute=Compute())
+                        submit_sim.submit()
+                # failed run, exception was caught
+                else:
+                    inputs.status = "FAIL"
+                    inputs.traceback = data["traceback"]
+                    inputs.save()
+            return Response(status=status.HTTP_200_OK)
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            print("inputs put error", ser.errors)
+            return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):

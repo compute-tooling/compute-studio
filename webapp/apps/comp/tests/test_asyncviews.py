@@ -20,7 +20,7 @@ from webapp.apps.users.models import (
     EmbedApproval,
     create_profile_from_user,
 )
-
+from webapp.apps.users.tests.utils import gen_collabs
 from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.exceptions import ResourceLimitException
@@ -30,7 +30,6 @@ from .utils import (
     _submit_inputs,
     _submit_sim,
     _shuffled_sims,
-    gen_collabs,
 )
 
 User = auth.get_user_model()
@@ -214,6 +213,20 @@ class RunMockModel(CoreTestMixin):
         assert_status(200, edit_inputs_resp, "poll_adjustment")
 
     def put_adjustment(self, adj_callback_data: dict) -> Response:
+        # Test permissions on /inputs/api/ endpoint.
+        self.api_client.logout()
+        not_authed = self.api_client.put(
+            f"/inputs/api/", data=adj_callback_data, format="json"
+        )
+        assert_status(401, not_authed, "put_adjustment_not_authed")
+
+        self.api_client.force_login(User.objects.get(username="hdoupe"))
+        not_authed = self.api_client.put(
+            f"/inputs/api/", data=adj_callback_data, format="json"
+        )
+        assert_status(401, not_authed, "put_adjustment_no_perms")
+        self.api_client.logout()
+
         set_auth_token(self.api_client, self.comp_api_user.user)
         self.mockcompute.client = self.api_client
         self.monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
@@ -249,6 +262,29 @@ class RunMockModel(CoreTestMixin):
 
     def check_simulation_finished(self, model_pk: int):
         self.sim = Simulation.objects.get(project=self.project, model_pk=model_pk)
+
+        # Test permissions on /outputs/api/ endpoint.
+        self.api_client.logout()
+        not_authed = self.api_client.put(
+            "/outputs/api/",
+            data=dict(
+                json.loads(self.mockcompute.outputs), **{"task_id": self.sim.job_id}
+            ),
+            format="json",
+        )
+        assert_status(401, not_authed, "put_outputs_not_authed")
+
+        self.api_client.force_login(User.objects.get(username="hdoupe"))
+        no_perms = self.api_client.put(
+            "/outputs/api/",
+            data=dict(
+                json.loads(self.mockcompute.outputs), **{"task_id": self.sim.job_id}
+            ),
+            format="json",
+        )
+        assert_status(401, not_authed, "put_outputs_no_perms")
+        self.api_client.logout()
+
         set_auth_token(self.api_client, self.comp_api_user.user)
         resp = self.api_client.put(
             "/outputs/api/",
@@ -723,23 +759,6 @@ def test_placeholder_page(db, client):
     project.save()
     resp = client.get(f"/{owner}/{title}/")
     assert resp.status_code == 200
-
-
-def test_outputs_api(db, api_client, profile, password):
-    # Test auth errors return 401.
-    anon_user = auth.get_user(api_client)
-    assert not anon_user.is_authenticated
-    assert api_client.put("/outputs/api/").status_code == 401
-    api_client.login(username=profile.user.username, password=password)
-    assert api_client.put("/outputs/api/").status_code == 401
-
-    # Test data errors return 400
-    user = User.objects.get(username="comp-api-user")
-    api_client.credentials(HTTP_AUTHORIZATION=f"Token {user.auth_token.key}")
-    assert (
-        api_client.put("/outputs/api/", data={"bad": "data"}, format="json").status_code
-        == 400
-    )
 
 
 def test_anon_get_create_api(db, api_client):

@@ -11,7 +11,7 @@ from django.http.response import Http404
 from guardian.shortcuts import get_perms
 
 from webapp.apps.users.models import Project, Profile, create_profile_from_user
-
+from webapp.apps.users.tests.utils import gen_collabs
 from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
 from webapp.apps.comp.exceptions import (
     ForkObjectException,
@@ -25,7 +25,6 @@ from .utils import (
     read_outputs,
     _shuffled_sims,
     Customer,
-    gen_collabs,
 )
 
 User = auth.get_user_model()

@@ -119,6 +119,7 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
 
 class ProjectAPIView(GetProjectMixin, APIView):
     queryset = Project.objects.all()
+    api_user = User.objects.get(username="comp-api-user")
 
     def get(self, request, *args, **kwargs):
         ser = ProjectSerializer(
@@ -153,8 +154,7 @@ class ProjectAPIView(GetProjectMixin, APIView):
                     cluster=Cluster.objects.default(),
                 )
                 status_url = request.build_absolute_uri(model.app_url)
-                api_user = User.objects.get(username="comp-api-user")
-                assign_perm("write_project", api_user, model)
+                model.assign_role("write", self.api_user)
                 Project.objects.sync_project_with_workers(
                     ProjectSerializer(model).data, model.cluster
                 )

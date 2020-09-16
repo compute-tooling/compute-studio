@@ -3,7 +3,8 @@ import datetime
 import pytest
 
 from django.contrib.auth import get_user_model
-from guardian.shortcuts import assign_perm, remove_perm
+from guardian.shortcuts import assign_perm, remove_perm, get_perms, get_users_with_perms
+
 
 from webapp.apps.billing.models import Customer
 from webapp.apps.users.tests.utils import mock_post_to_cluster
@@ -15,6 +16,7 @@ from webapp.apps.users.models import (
     DeploymentException,
     EmbedApproval,
 )
+from webapp.apps.users.tests.utils import gen_collabs
 from webapp.apps.comp.models import Simulation, ANON_BEFORE
 
 User = get_user_model()
@@ -98,16 +100,6 @@ class TestUserModels:
         assert not profile.can_run(reg.project)
         assert not profile.can_run(sponsored.project)
 
-    def test_project_access(self, profile):
-        project = Project.objects.get(
-            title="Used-for-testing", owner__user__username="modeler"
-        )
-        assert not profile.user.has_perm("write_project")
-        assign_perm("write_project", profile.user, project)
-        assert profile.user.has_perm("write_project", project)
-        remove_perm("write_project", profile.user, project)
-        assert not profile.user.has_perm("write_project", project)
-
     def test_recent_models(self, profile, test_models):
 
         assert profile.recent_models(limit=10) == [
@@ -123,6 +115,125 @@ class TestUserModels:
         ]
 
         assert profile.recent_models(limit=1) == [test_models[1].project]
+
+
+class TestProjectPermissionse:
+    def test_project_access(self, profile):
+        project = Project.objects.get(
+            title="Used-for-testing", owner__user__username="modeler"
+        )
+        assert not profile.user.has_perm("write_project")
+        assign_perm("write_project", profile.user, project)
+        assert profile.user.has_perm("write_project", project)
+        remove_perm("write_project", profile.user, project)
+        assert not profile.user.has_perm("write_project", project)
+
+    def test_project_permissions(self, db, plus_profile):
+        collab = next(gen_collabs(1))
+        project = Project.objects.get(
+            title="Used-for-testing", owner__user__username="modeler"
+        )
+        project.is_public = False
+        project.save()
+
+        # check permissions for owner and random profile
+        assert get_perms(project.owner.user, project) == ["admin_project"]
+        assert project.role(project.owner.user) == "admin"
+        assert get_perms(collab.user, project) == []
+        assert project.role(collab.user) is None
+
+        # project owner has all levels of access
+        assert (
+            project.is_owner(project.owner.user)
+            and project.has_admin_access(project.owner.user)
+            and project.has_write_access(project.owner.user)
+            and project.has_read_access(project.owner.user)
+        )
+        # random user has no access
+        assert (
+            not project.is_owner(collab.user)
+            and not project.has_admin_access(collab.user)
+            and not project.has_write_access(collab.user)
+            and not project.has_read_access(collab.user)
+        )
+        # None has no access and does not cause errors
+        assert (
+            not project.is_owner(None)
+            and not project.has_admin_access(None)
+            and not project.has_write_access(None)
+            and not project.has_read_access(None)
+        )
+
+        # test grant/removal of read access.
+        project.grant_read_permissions(collab.user)
+        assert (
+            get_perms(collab.user, project) == ["read_project"]
+            and project.role(collab.user) == "read"
+        )
+        assert (
+            not project.is_owner(collab.user)
+            and not project.has_admin_access(collab.user)
+            and not project.has_write_access(collab.user)
+            and project.has_read_access(collab.user)
+        )
+        project.remove_permissions(collab.user)
+        assert (
+            get_perms(collab.user, project) == [] and project.role(collab.user) is None
+        )
+        assert (
+            not project.is_owner(collab.user)
+            and not project.has_admin_access(collab.user)
+            and not project.has_write_access(collab.user)
+            and not project.has_read_access(collab.user)
+        )
+
+        # test grant/remove are idempotent:
+        for _ in range(3):
+            project.grant_read_permissions(collab.user)
+            assert project.has_read_access(collab.user)
+        for _ in range(3):
+            project.remove_permissions(collab.user)
+            assert not project.has_read_access(collab.user)
+
+        # test that only one permission is applied at a time.
+        project.grant_read_permissions(collab.user)
+        assert get_perms(collab.user, project) == ["read_project"]
+        project.grant_write_permissions(collab.user)
+        assert get_perms(collab.user, project) == ["write_project"]
+        project.grant_admin_permissions(collab.user)
+        assert get_perms(collab.user, project) == ["admin_project"]
+
+        project.is_public = True
+        project.save()
+        assert project.has_read_access(plus_profile.user)
+        assert project.has_read_access(collab.user)
+        assert project.has_read_access(None) is True
+
+        # test role
+        project.is_public = False
+        project.save()
+        project.assign_role("admin", collab.user)
+        assert (
+            project.has_admin_access(collab.user)
+            and project.role(collab.user) == "admin"
+        )
+        project.assign_role("write", collab.user)
+        assert (
+            project.has_write_access(collab.user)
+            and project.role(collab.user) == "write"
+        )
+        project.assign_role("read", collab.user)
+        assert (
+            project.has_read_access(collab.user) and project.role(collab.user) == "read"
+        )
+        project.assign_role(None, collab.user)
+        assert (
+            not project.has_read_access(collab.user)
+            and project.role(collab.user) == None
+        )
+
+        with pytest.raises(ValueError):
+            project.assign_role("dne", collab.user)
 
 
 class TestDeployments:

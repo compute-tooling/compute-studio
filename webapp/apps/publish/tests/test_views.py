@@ -47,6 +47,9 @@ class TestPublishViews:
 
         api_user = Profile.objects.get(user__username="comp-api-user")
         assert project.has_write_access(api_user.user)
+        assert project.role(api_user.user) == "write"
+        assert project.role(project.cluster.service_account.user) == "write"
+        assert project.role(project.owner.user) == "admin"
 
     def test_get_detail_api(self, api_client, client, test_models):
         exp = {
