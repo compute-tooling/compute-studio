@@ -105,18 +105,17 @@ const MakePrivateException = (upgradeTo: "plus" | "pro") => {
   );
 };
 
-
 const PrivateAppException = (collaborator?: string) => {
   return (
     <div className="alert alert-primary alert-dismissible fade show" role="alert">
-      {collaborator || "This user"} must be granted access to this app before they can become a collaborator.
+      {collaborator || "This user"} must be granted access to this app before they can become a
+      collaborator.
       <button type="button" className="close" data-dismiss="alert" aria-label="Close">
         <span aria-hidden="true">&times;</span>
       </button>
     </div>
   );
 };
-
 
 const prettyRole = (role: Role | "owner") => {
   switch (role) {
@@ -181,11 +180,11 @@ const ConfirmSelected: React.FC<{
                   ...formikProps.values,
                   author: {
                     add: { username: selectedUser, msg: msg },
-                    remove: { username: "" }
+                    remove: { username: "" },
                   },
                   access: {
-                    read: { grant: { username: "", msg: "" }, remove: { username: "" } }
-                  }
+                    read: { grant: { username: "", msg: "" }, remove: { username: "" } },
+                  },
                 });
               } else {
                 setValues({
@@ -194,9 +193,9 @@ const ConfirmSelected: React.FC<{
                   access: {
                     read: {
                       grant: { username: selectedUser, msg: msg },
-                      remove: { username: "" }
-                    }
-                  }
+                      remove: { username: "" },
+                    },
+                  },
                 });
               }
 
@@ -206,7 +205,7 @@ const ConfirmSelected: React.FC<{
                 setValues({
                   ...values,
                   author: { add: { username: "", msg: "" }, remove: { username: "" } },
-                  access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } }
+                  access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } },
                 })
               );
 
@@ -224,7 +223,7 @@ const ConfirmSelected: React.FC<{
               setValues({
                 ...values,
                 author: { add: { username: "", msg: "" }, remove: { username: "" } },
-                access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } }
+                access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } },
               });
               setMsg("");
               resetState();
@@ -383,11 +382,11 @@ export const CollaborationModal: React.FC<{
                   This simulation is <strong>public</strong> and can be viewed by anyone.
                 </p>
               ) : (
-                  <p>
-                    This simulation is <strong>private</strong> and can only be viewed by users who
+                <p>
+                  This simulation is <strong>private</strong> and can only be viewed by users who
                   have been granted access to it.
-                  </p>
-                )}
+                </p>
+              )}
               <Row className="w-100 justify-content-center">
                 <Col className="col-auto">
                   <Button
@@ -439,8 +438,8 @@ export const CollaborationModal: React.FC<{
                           {accessobj.is_owner ? (
                             <span>Owner</span>
                           ) : (
-                              <span>{prettyRole(accessobj.role)}</span>
-                            )}
+                            <span>{prettyRole(accessobj.role)}</span>
+                          )}
                         </Col>
                         <Col className="col-md-4 align-self-center">
                           {!!author ? (
@@ -450,28 +449,28 @@ export const CollaborationModal: React.FC<{
                                 <span className="text-muted">Author &#183; pending</span>
                               </span>
                             ) : (
-                                <span className="text-success">
-                                  <i className="fas fa-user-friends mr-1"></i>Author
-                                </span>
-                              )
+                              <span className="text-success">
+                                <i className="fas fa-user-friends mr-1"></i>Author
+                              </span>
+                            )
                           ) : (
-                              <a
-                                href="#"
-                                className="btn btn-outline-secondary lh-1"
-                                onClick={e => {
-                                  e.preventDefault();
-                                  console.log("author set", accessobj.username);
-                                  setSelectedUser(accessobj.username);
-                                  setTimeout(() => {
-                                    setAuthorSelected(true);
-                                    setAccessSelected(false);
-                                    setAccessQuery([]);
-                                  });
-                                }}
-                              >
-                                Invite to coauthor
-                              </a>
-                            )}
+                            <a
+                              href="#"
+                              className="btn btn-outline-secondary lh-1"
+                              onClick={e => {
+                                e.preventDefault();
+                                console.log("author set", accessobj.username);
+                                setSelectedUser(accessobj.username);
+                                setTimeout(() => {
+                                  setAuthorSelected(true);
+                                  setAccessSelected(false);
+                                  setAccessQuery([]);
+                                });
+                              }}
+                            >
+                              Invite to coauthor
+                            </a>
+                          )}
                         </Col>
                         <Col className="col-md-1 align-self-center">
                           {/* owner cannot lose access, and authors must be removed as authors
@@ -649,8 +648,8 @@ export const saveCollaborators = (
           {
             username: values.access.read.grant.username,
             role: "read" as Role,
-            msg: values.access.read.grant.msg
-          }
+            msg: values.access.read.grant.msg,
+          },
         ])
         .then(() => {
           handleSuccess();

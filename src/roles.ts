@@ -11,5 +11,5 @@ export const RolePerms = {
 
   hasReadAccess(obj?: Simulation<any> | MiniSimulation | InputsDetail) {
     return obj?.role == "read" || RolePerms.hasWriteAccess(obj);
-  }
+  },
 };

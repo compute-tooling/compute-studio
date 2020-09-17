@@ -206,7 +206,7 @@ const Dialog: React.FC<{
   setNotify,
   notify,
   setIsPublic,
-  isPublic
+  isPublic,
 }) => {
   // pass new show and setShow so main run dialog is not closed.
   const [authShow, setAuthShow] = React.useState(true);
@@ -266,7 +266,7 @@ export const RunModal: React.FC<{
   setNotify,
   notify,
   setIsPublic,
-  isPublic
+  isPublic,
 }) => {
   let runbuttontext: string;
   if (!accessStatus.is_sponsored) {
@@ -302,7 +302,7 @@ export const RunModal: React.FC<{
 };
 
 export const AuthModal: React.FC<{ msg?: string }> = ({
-  msg = "You must be logged in to run simulations."
+  msg = "You must be logged in to run simulations.",
 }) => {
   const [show, setShow] = React.useState(true);
 
@@ -386,7 +386,7 @@ const PreviewComponent: React.FC<{
     const [meta_parameters, model_parameters] = parseValues();
     setPreview({
       meta_parameters: meta_parameters,
-      adjustment: model_parameters
+      adjustment: model_parameters,
     });
   };
   const handleShow = show => {

@@ -19,19 +19,19 @@ axios.defaults.xsrfCookieName = "csrftoken";
 const techLinks = {
   "python-paramtools": "https://paramtools.dev",
   bokeh: "https://bokeh.org",
-  dash: "https://dash.plotly.com/"
+  dash: "https://dash.plotly.com/",
 };
 
 const techDocsLinks = {
   "python-paramtools": "https://docs.compute.studio/publish/guide/",
   bokeh: "https://bokeh.org",
-  dash: "https://dash.plotly.com/"
+  dash: "https://dash.plotly.com/",
 };
 
 const techTitles = {
   dash: "Dash",
   bokeh: "Bokeh",
-  "python-paramtools": "ParamTools"
+  "python-paramtools": "ParamTools",
 };
 
 interface Match {
@@ -39,7 +39,7 @@ interface Match {
 }
 
 const inputStyle = {
-  width: "100%"
+  width: "100%",
 };
 
 const domContainer = document.querySelector("#publish-container");
@@ -60,7 +60,7 @@ var Schema = yup.object().shape({
   exp_task_time: yup.number().min(0, "Expected task time must be greater than ${min}."),
   listed: yup.boolean().required(requiredMessage),
   tech: yup.string(),
-  callable_name: yup.string()
+  callable_name: yup.string(),
 });
 
 export const Message = ({ msg }) => (
@@ -108,7 +108,7 @@ const initialValues: ProjectValues = {
   exp_task_time: 0,
   listed: true,
   tech: "python-paramtools",
-  callable_name: ""
+  callable_name: "",
 };
 
 interface PublishProps {
@@ -155,7 +155,7 @@ const TechSelect: React.FC<{
   );
 };
 
-const PythonParamTools: React.FC<{}> = ({ }) => {
+const PythonParamTools: React.FC<{}> = ({}) => {
   return (
     <div className="mt-5">
       <h4>ParamTools Configuration</h4>
@@ -181,7 +181,7 @@ const PythonParamTools: React.FC<{}> = ({ }) => {
 const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
   const title = {
     dash: "Dash",
-    bokeh: "Bokeh"
+    bokeh: "Bokeh",
   }[tech];
   return (
     <div className="mt-5">
@@ -215,7 +215,7 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
   );
 };
 
-const CommonFields: React.FC<any> = ({ }) => {
+const CommonFields: React.FC<any> = ({}) => {
   return (
     <div className="mt-5">
       <h4>Environment</h4>
@@ -371,7 +371,7 @@ class ProjectApp extends React.Component<PublishProps, PublishState & { showTech
     this.state = {
       preview: this.props.preview,
       initialValues: initialValues as ProjectValues,
-      showTechOpts: false
+      showTechOpts: false,
     };
     this.togglePreview = this.togglePreview.bind(this);
   }
@@ -406,7 +406,7 @@ class ProjectApp extends React.Component<PublishProps, PublishState & { showTech
                   actions.setStatus(error.response.data);
                 } else if (error.response.status == 401) {
                   actions.setStatus({
-                    auth: "You must be logged in to publish a model."
+                    auth: "You must be logged in to publish a model.",
                   });
                 }
                 window.scroll(0, 0);
@@ -422,15 +422,15 @@ class ProjectApp extends React.Component<PublishProps, PublishState & { showTech
                   {props.status.project_exists}
                 </div>
               ) : (
-                  <div />
-                )}
+                <div />
+              )}
               {(props.status && props.status.auth) || !accessStatus.username ? (
                 <div className="alert alert-danger" role="alert">
                   You must be logged in to publish a model.
                 </div>
               ) : (
-                  <div />
-                )}
+                <div />
+              )}
               <div>
                 <div className="mt-1 mb-1">
                   <Field name="title">
@@ -564,7 +564,7 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
   async componentDidMount() {
     const accessStatus = await this.api.getAccessStatus();
     this.setState({
-      accessStatus
+      accessStatus,
     });
   }
   render() {
@@ -589,7 +589,7 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
 class ProjectDetail extends React.Component<
   { match: Match },
   { project?: Project; accessStatus?: AccessStatus; edit: boolean }
-  > {
+> {
   api: API;
   constructor(props) {
     super(props);
@@ -630,12 +630,12 @@ class ProjectDetail extends React.Component<
         </Card.Body>
       </Card>
     ) : (
-        <ViewProject
-          project={this.state.project}
-          accessStatus={this.state.accessStatus}
-          enterEditMode={() => this.setState({ edit: true })}
-        />
-      );
+      <ViewProject
+        project={this.state.project}
+        accessStatus={this.state.accessStatus}
+        enterEditMode={() => this.setState({ edit: true })}
+      />
+    );
   }
 }
 

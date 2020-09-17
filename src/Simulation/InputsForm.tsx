@@ -9,7 +9,7 @@ import {
   MajorSection,
   LoadingElement,
   SectionHeaderList,
-  ErrorCard
+  ErrorCard,
 } from "./components";
 import { ValidatingModal, RunModal, AuthModal, PreviewModal } from "./modal";
 import { AccessStatus, Sects, InitialValues, Inputs, InputsDetail, Simulation } from "../types";
@@ -22,7 +22,7 @@ export const tbLabelSchema = yup.object().shape({
   idedtype: yup.string(),
   EIC: yup.string(),
   data_source: yup.string(),
-  use_full_sample: yup.bool()
+  use_full_sample: yup.bool(),
 });
 
 interface InputsFormProps {
@@ -75,13 +75,13 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
     extend,
     unknownParams,
     readOnly,
-    simStatus
+    simStatus,
   } = props;
   let { meta_parameters, model_parameters, label_to_extend } = inputs;
 
   let hasUnknownParams = unknownParams.length > 0;
   let unknownParamsErrors: { [sect: string]: { errors: any } } = {
-    "Unknown Parameters": { errors: {} }
+    "Unknown Parameters": { errors: {} },
   };
   if (hasUnknownParams) {
     for (const param of unknownParams) {
@@ -111,7 +111,7 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
                 values={values}
                 schema={yup.object().shape({
                   adjustment: schema.adjustment,
-                  meta_parameters: schema.meta_parameters
+                  meta_parameters: schema.meta_parameters,
                 })}
                 tbLabelSchema={tbLabelSchema}
                 model_parameters={model_parameters}

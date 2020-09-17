@@ -8,7 +8,7 @@ import {
   Tooltip,
   Modal,
   Button,
-  ProgressBar
+  ProgressBar,
 } from "react-bootstrap";
 import * as moment from "moment";
 import { RemoteOutputs, Outputs, Simulation, Output, TableOutput, BokehOutput } from "../types";

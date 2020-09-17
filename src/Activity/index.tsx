@@ -18,7 +18,7 @@ import { Message } from "../fields";
 import {
   saveCollaborators,
   CollaboratorValues,
-  CollaborationModal
+  CollaborationModal,
 } from "../Simulation/collaborators";
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
@@ -160,7 +160,7 @@ const ModelFeed: React.FC<{ models: Array<Project> }> = ({ models }) => {
 const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: AccessStatus }> = ({
   initMiniSim,
   index,
-  accessStatus
+  accessStatus,
 }) => {
   const [miniSim, setMiniSim] = React.useState(initMiniSim);
   const [remoteSim, setRemoteSim] = React.useState(null as Simulation<RemoteOutputs> | null);
@@ -202,7 +202,7 @@ const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: 
         title: miniSim.title,
         is_public: miniSim.is_public,
         author: { add: { username: "", msg: "" }, remove: { username: "" } },
-        access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } }
+        access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } },
       }}
       validationSchema={yup.object().shape({ title: yup.string(), is_public: yup.boolean() })}
       onSubmit={(values, actions) => {
@@ -219,7 +219,7 @@ const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: 
                 setMiniSim(prevSim => ({
                   ...prevSim,
                   title: newMiniSim.title,
-                  is_public: newMiniSim.is_public
+                  is_public: newMiniSim.is_public,
                 }));
                 resetRemoteSim();
               })
@@ -227,7 +227,7 @@ const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: 
                 if (error.response.status == 400 && error.response.data.collaborators) {
                   resetRemoteSim().then(() => {
                     actions.setStatus({
-                      collaboratorLimit: error.response.data.collaborators
+                      collaboratorLimit: error.response.data.collaborators,
                     });
                     setShowCollabModal(true);
                   });
@@ -238,7 +238,7 @@ const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: 
             if (error.response.status == 400 && error.response.data.collaborators) {
               resetRemoteSim().then(() => {
                 actions.setStatus({
-                  collaboratorLimit: error.response.data.collaborators
+                  collaboratorLimit: error.response.data.collaborators,
                 });
                 setShowCollabModal(true);
               });
@@ -330,8 +330,8 @@ const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: 
                         {miniSim.is_public ? (
                           <i className="fas fa-lock-open"></i>
                         ) : (
-                            <i className="fas fa-lock"></i>
-                          )}
+                          <i className="fas fa-lock"></i>
+                        )}
                       </Tip>
                     </Col>
                     {RolePerms.hasAdminAccess(miniSim) ? (
@@ -405,7 +405,7 @@ const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: 
 
 const SimFeed: React.FC<{ sims: Array<MiniSimulation>; accessStatus: AccessStatus }> = ({
   sims,
-  accessStatus
+  accessStatus,
 }) => {
   if (sims.length > 0) {
     return (
@@ -467,61 +467,61 @@ const RecentModelsPanel: React.FC<{ recentModels: Array<Project> }> = ({ recentM
 
 const LoadSimulationsButton: React.FC<{ loading: boolean; loadNextSimulations: () => void }> = ({
   loading,
-  loadNextSimulations
+  loadNextSimulations,
 }) => (
-    <Row className="text-center">
-      <Col>
-        <Button variant="outline-primary" onClick={loadNextSimulations}>
-          <div className="mb-0" style={{ display: "flex", justifyContent: "center" }}>
-            {loading ? (
-              <ReactLoading type="spokes" color="#2b2c2d" height={"20%"} width={"20%"} />
-            ) : (
-                "Load more"
-              )}
-          </div>
-        </Button>
-      </Col>
-    </Row>
-  );
+  <Row className="text-center">
+    <Col>
+      <Button variant="outline-primary" onClick={loadNextSimulations}>
+        <div className="mb-0" style={{ display: "flex", justifyContent: "center" }}>
+          {loading ? (
+            <ReactLoading type="spokes" color="#2b2c2d" height={"20%"} width={"20%"} />
+          ) : (
+            "Load more"
+          )}
+        </div>
+      </Button>
+    </Col>
+  </Row>
+);
 
 const OrderingDropDown: React.FC<{ ordering: Array<string>; updateOrder: (string) => void }> = ({
   ordering,
-  updateOrder
+  updateOrder,
 }) => (
-    <Dropdown drop="left">
-      <Dropdown.Toggle
-        variant="link"
-        style={{ border: 0 }}
-        id="dropdown-sort"
-        className="color-inherit p-0"
+  <Dropdown drop="left">
+    <Dropdown.Toggle
+      variant="link"
+      style={{ border: 0 }}
+      id="dropdown-sort"
+      className="color-inherit p-0"
+    >
+      <i style={{ fontSize: "1.5rem" }} className="fas fa-sort"></i>
+    </Dropdown.Toggle>
+    <Dropdown.Menu>
+      <Dropdown.Item
+        key={0}
+        active={ordering.includes("creation_date")}
+        onClick={() => updateOrder("creation_date")}
       >
-        <i style={{ fontSize: "1.5rem" }} className="fas fa-sort"></i>
-      </Dropdown.Toggle>
-      <Dropdown.Menu>
-        <Dropdown.Item
-          key={0}
-          active={ordering.includes("creation_date")}
-          onClick={() => updateOrder("creation_date")}
-        >
-          Creation Date
+        Creation Date
       </Dropdown.Item>
-        <Dropdown.Item
-          key={1}
-          active={ordering.includes("project__owner")}
-          onClick={() => updateOrder("project__owner")}
-        >
-          Model Owner
+      <Dropdown.Item
+        key={1}
+        active={ordering.includes("project__owner")}
+        onClick={() => updateOrder("project__owner")}
+      >
+        Model Owner
       </Dropdown.Item>
-        <Dropdown.Item
-          key={2}
-          active={ordering.includes("project__title")}
-          onClick={() => updateOrder("project__title")}
-        >
-          Model Title
+      <Dropdown.Item
+        key={2}
+        active={ordering.includes("project__title")}
+        onClick={() => updateOrder("project__title")}
+      >
+        Model Title
       </Dropdown.Item>
-      </Dropdown.Menu>
-    </Dropdown>
-  );
+    </Dropdown.Menu>
+  </Dropdown>
+);
 
 class Activity extends React.Component<ActivityProps, ActivityState> {
   api: API;
@@ -533,7 +533,7 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
       loading: false,
       ordering: [],
       homeTab: "sims",
-      accessStatus: null
+      accessStatus: null,
     };
 
     this.loadNext = this.loadNext.bind(this);
@@ -559,8 +559,8 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
           count: 0,
           next: null,
           previous: null,
-          results: []
-        }
+          results: [],
+        },
       });
     } else {
       this.api.getModels().then(modelFeed => {
@@ -584,7 +584,7 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
       }
       this.setState(prevState => ({
         simFeed: { ...simFeed, results: [...prevState.simFeed.results, ...simFeed.results] },
-        loading: false
+        loading: false,
       }));
     });
   }
@@ -599,7 +599,7 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
     };
     this.setState(prevState => ({
       ordering: toggleOrder(prevState.ordering),
-      loading: true
+      loading: true,
     }));
     if (this.props.pageName === "home" || this.props.pageName === "profile") {
       this.api.updateSimsOrder(toggleOrder(this.state.ordering)).then(simFeed => {
@@ -656,8 +656,9 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
       >
         <Row className="w-100 px-0 m-0 justify-content-between mb-3 d-flex flex-md-row">
           <Col
-            className={`col-md-auto ${this.props.pageName !== "home" ? "" : " offset-md-3"
-              } align-self-center`}
+            className={`col-md-auto ${
+              this.props.pageName !== "home" ? "" : " offset-md-3"
+            } align-self-center`}
           >
             <Nav variant="pills" className="d-flex d-sm-block">
               <Row className="flex-1">
@@ -700,10 +701,10 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
             <Col className="col-md-9 px-0">{feed}</Col>
           </Row>
         ) : (
-            <Row className="w-100 m-0">
-              <Col className="p-0">{feed}</Col>
-            </Row>
-          )}
+          <Row className="w-100 m-0">
+            <Col className="p-0">{feed}</Col>
+          </Row>
+        )}
       </Tab.Container>
     );
   }
