@@ -155,7 +155,7 @@ const TechSelect: React.FC<{
   );
 };
 
-const PythonParamTools: React.FC<{}> = ({}) => {
+const PythonParamTools: React.FC<{}> = ({ }) => {
   return (
     <div className="mt-5">
       <h4>ParamTools Configuration</h4>
@@ -215,7 +215,7 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
   );
 };
 
-const CommonFields: React.FC<any> = ({}) => {
+const CommonFields: React.FC<any> = ({ }) => {
   return (
     <div className="mt-5">
       <h4>Environment</h4>
@@ -396,7 +396,7 @@ class ProjectApp extends React.Component<PublishProps, PublishState & { showTech
               .save(formdata)
               .then(project => {
                 actions.setSubmitting(false);
-                window.location.href = `/${project.owner}/${project.title}/detail/`;
+                window.location.href = `/${project.owner}/${project.title}/`;
               })
               .catch(error => {
                 console.log("error", error);
@@ -422,15 +422,15 @@ class ProjectApp extends React.Component<PublishProps, PublishState & { showTech
                   {props.status.project_exists}
                 </div>
               ) : (
-                <div />
-              )}
+                  <div />
+                )}
               {(props.status && props.status.auth) || !accessStatus.username ? (
                 <div className="alert alert-danger" role="alert">
                   You must be logged in to publish a model.
                 </div>
               ) : (
-                <div />
-              )}
+                  <div />
+                )}
               <div>
                 <div className="mt-1 mb-1">
                   <Field name="title">
@@ -589,7 +589,7 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
 class ProjectDetail extends React.Component<
   { match: Match },
   { project?: Project; accessStatus?: AccessStatus; edit: boolean }
-> {
+  > {
   api: API;
   constructor(props) {
     super(props);
@@ -630,12 +630,12 @@ class ProjectDetail extends React.Component<
         </Card.Body>
       </Card>
     ) : (
-      <ViewProject
-        project={this.state.project}
-        accessStatus={this.state.accessStatus}
-        enterEditMode={() => this.setState({ edit: true })}
-      />
-    );
+        <ViewProject
+          project={this.state.project}
+          accessStatus={this.state.accessStatus}
+          enterEditMode={() => this.setState({ edit: true })}
+        />
+      );
   }
 }
 
@@ -644,7 +644,6 @@ ReactDOM.render(
     <Switch>
       <Route exact path="/publish/" component={CreateProject} />
       <Route exact path="/new/" component={CreateProject} />
-      <Route path="/:username/:app_name/detail/" component={ProjectDetail} />
       <Route path="/:username/:app_name/" component={ProjectDetail} />
     </Switch>
   </BrowserRouter>,

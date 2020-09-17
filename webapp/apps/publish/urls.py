@@ -33,7 +33,7 @@ urlpatterns = [
         name="deployments_detail",
     ),
     path(
-        "api/v1/<str:username>/<str:title>/detail/",
+        "api/v1/<str:username>/<str:title>/",
         ProjectDetailAPIView.as_view(),
         name="project_detail_api",
     ),

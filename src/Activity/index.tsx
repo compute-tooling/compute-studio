@@ -123,7 +123,7 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
               {model.has_write_access ? (
                 <Col className="col-3 align-self-center">
                   <Tip id="edit-widget" tip="Click to edit">
-                    <a className="color-inherit" href={`/${model.owner}/${model.title}/detail/`}>
+                    <a className="color-inherit" href={`/${model.owner}/${model.title}/`}>
                       <i className="fas fa-edit ml-2 hover-blue" style={{ fontSize: "1.4rem" }}></i>
                     </a>
                   </Tip>
@@ -330,8 +330,8 @@ const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: 
                         {miniSim.is_public ? (
                           <i className="fas fa-lock-open"></i>
                         ) : (
-                          <i className="fas fa-lock"></i>
-                        )}
+                            <i className="fas fa-lock"></i>
+                          )}
                       </Tip>
                     </Col>
                     {RolePerms.hasAdminAccess(miniSim) ? (
@@ -469,59 +469,59 @@ const LoadSimulationsButton: React.FC<{ loading: boolean; loadNextSimulations: (
   loading,
   loadNextSimulations
 }) => (
-  <Row className="text-center">
-    <Col>
-      <Button variant="outline-primary" onClick={loadNextSimulations}>
-        <div className="mb-0" style={{ display: "flex", justifyContent: "center" }}>
-          {loading ? (
-            <ReactLoading type="spokes" color="#2b2c2d" height={"20%"} width={"20%"} />
-          ) : (
-            "Load more"
-          )}
-        </div>
-      </Button>
-    </Col>
-  </Row>
-);
+    <Row className="text-center">
+      <Col>
+        <Button variant="outline-primary" onClick={loadNextSimulations}>
+          <div className="mb-0" style={{ display: "flex", justifyContent: "center" }}>
+            {loading ? (
+              <ReactLoading type="spokes" color="#2b2c2d" height={"20%"} width={"20%"} />
+            ) : (
+                "Load more"
+              )}
+          </div>
+        </Button>
+      </Col>
+    </Row>
+  );
 
 const OrderingDropDown: React.FC<{ ordering: Array<string>; updateOrder: (string) => void }> = ({
   ordering,
   updateOrder
 }) => (
-  <Dropdown drop="left">
-    <Dropdown.Toggle
-      variant="link"
-      style={{ border: 0 }}
-      id="dropdown-sort"
-      className="color-inherit p-0"
-    >
-      <i style={{ fontSize: "1.5rem" }} className="fas fa-sort"></i>
-    </Dropdown.Toggle>
-    <Dropdown.Menu>
-      <Dropdown.Item
-        key={0}
-        active={ordering.includes("creation_date")}
-        onClick={() => updateOrder("creation_date")}
+    <Dropdown drop="left">
+      <Dropdown.Toggle
+        variant="link"
+        style={{ border: 0 }}
+        id="dropdown-sort"
+        className="color-inherit p-0"
       >
-        Creation Date
+        <i style={{ fontSize: "1.5rem" }} className="fas fa-sort"></i>
+      </Dropdown.Toggle>
+      <Dropdown.Menu>
+        <Dropdown.Item
+          key={0}
+          active={ordering.includes("creation_date")}
+          onClick={() => updateOrder("creation_date")}
+        >
+          Creation Date
       </Dropdown.Item>
-      <Dropdown.Item
-        key={1}
-        active={ordering.includes("project__owner")}
-        onClick={() => updateOrder("project__owner")}
-      >
-        Model Owner
+        <Dropdown.Item
+          key={1}
+          active={ordering.includes("project__owner")}
+          onClick={() => updateOrder("project__owner")}
+        >
+          Model Owner
       </Dropdown.Item>
-      <Dropdown.Item
-        key={2}
-        active={ordering.includes("project__title")}
-        onClick={() => updateOrder("project__title")}
-      >
-        Model Title
+        <Dropdown.Item
+          key={2}
+          active={ordering.includes("project__title")}
+          onClick={() => updateOrder("project__title")}
+        >
+          Model Title
       </Dropdown.Item>
-    </Dropdown.Menu>
-  </Dropdown>
-);
+      </Dropdown.Menu>
+    </Dropdown>
+  );
 
 class Activity extends React.Component<ActivityProps, ActivityState> {
   api: API;
@@ -656,9 +656,8 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
       >
         <Row className="w-100 px-0 m-0 justify-content-between mb-3 d-flex flex-md-row">
           <Col
-            className={`col-md-auto ${
-              this.props.pageName !== "home" ? "" : " offset-md-3"
-            } align-self-center`}
+            className={`col-md-auto ${this.props.pageName !== "home" ? "" : " offset-md-3"
+              } align-self-center`}
           >
             <Nav variant="pills" className="d-flex d-sm-block">
               <Row className="flex-1">
@@ -701,10 +700,10 @@ class Activity extends React.Component<ActivityProps, ActivityState> {
             <Col className="col-md-9 px-0">{feed}</Col>
           </Row>
         ) : (
-          <Row className="w-100 m-0">
-            <Col className="p-0">{feed}</Col>
-          </Row>
-        )}
+            <Row className="w-100 m-0">
+              <Col className="p-0">{feed}</Col>
+            </Row>
+          )}
       </Tab.Container>
     );
   }

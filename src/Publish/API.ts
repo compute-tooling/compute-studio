@@ -17,11 +17,11 @@ export default class API {
   }
 
   async getProject(): Promise<Project> {
-    return (await axios.get(`/apps/api/v1/${this.owner}/${this.title}/detail/`)).data;
+    return (await axios.get(`/apps/api/v1/${this.owner}/${this.title}/`)).data;
   }
 
   async updateProject(data): Promise<Project> {
-    return (await axios.put(`/apps/api/v1/${this.owner}/${this.title}/detail/`, data)).data;
+    return (await axios.put(`/apps/api/v1/${this.owner}/${this.title}/`, data)).data;
   }
 
   async createProject(data): Promise<Project> {

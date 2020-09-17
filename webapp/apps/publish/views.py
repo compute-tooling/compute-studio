@@ -92,34 +92,37 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
         return Response(data)
 
     def put(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            project = self.get_object(**kwargs)
-            if project.has_write_access(request.user):
-                serializer = ProjectSerializer(project, data=request.data)
-                if serializer.is_valid():
-                    model = serializer.save(status="live")
-                    Project.objects.sync_project_with_workers(
-                        ProjectSerializer(model).data, model.cluster
-                    )
-                    status_url = request.build_absolute_uri(model.app_url)
-                    try:
-                        send_mail(
-                            f"{request.user.username} is updating a model on Compute Studio!",
-                            (
-                                f"{model.title} will be updated or you will have feedback within "
-                                f"the next 24 hours. Check the status of the update at "
-                                f"{status_url}."
-                            ),
-                            "notifications@compute.studio",
-                            list({request.user.email, "hank@compute.studio"}),
-                            fail_silently=False,
-                        )
-                    # Http 401 exception if mail credentials are not set up.
-                    except Exception:
-                        pass
-                    return Response(serializer.data)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response(status=status.HTTP_401_UNAUTHORIZED)
+        if not request.user.is_authenticated:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        project = self.get_object(**kwargs)
+        if not project.has_write_access(request.user):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        serializer = ProjectSerializer(project, data=request.data)
+        if serializer.is_valid():
+            model = serializer.save(status="live")
+            Project.objects.sync_project_with_workers(
+                ProjectSerializer(model).data, model.cluster
+            )
+            status_url = request.build_absolute_uri(model.app_url)
+            try:
+                send_mail(
+                    f"{request.user.username} is updating a model on Compute Studio!",
+                    (
+                        f"{model.title} will be updated or you will have feedback within "
+                        f"the next 24 hours. Check the status of the update at "
+                        f"{status_url}."
+                    ),
+                    "notifications@compute.studio",
+                    list({request.user.email, "hank@compute.studio"}),
+                    fail_silently=False,
+                )
+            # Http 401 exception if mail credentials are not set up.
+            except Exception:
+                pass
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProjectAPIView(GetProjectMixin, APIView):
@@ -216,7 +219,6 @@ class TagsAPIView(GetProjectMixin, APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         data = serializer.validated_data
-        print("data", data)
         if data.get("staging_tag") is not None:
             tag, _ = Tag.objects.get_or_create(
                 project=project,
