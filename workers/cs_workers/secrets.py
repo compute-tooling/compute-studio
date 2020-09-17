@@ -28,14 +28,22 @@ class Secrets:
         try:
             self._get_secret(name)
         except SecretNotFound:
-            proj_parent = client.project_path(self.project)
-            client.create_secret(proj_parent, name, {"replication": {"automatic": {}}})
-
+            parent = f"projects/{self.project}"
+            client.create_secret(
+                request={
+                    "parent": parent,
+                    "secret_id": name,
+                    "secret": {"replication": {"automatic": {}}},
+                }
+            )
+        parent = client.secret_path(self.project, name)
         secret_bytes = value.encode("utf-8")
 
         secret_parent = client.secret_path(self.project, name)
 
-        return client.add_secret_version(secret_parent, {"data": secret_bytes})
+        return client.add_secret_version(
+            request={"parent": secret_parent, "payload": {"data": secret_bytes}}
+        )
 
     def _get_secret(self, name):
         from google.api_core import exceptions
@@ -44,7 +52,9 @@ class Secrets:
 
         try:
             response = client.access_secret_version(
-                f"projects/{self.project}/secrets/{name}/versions/latest"
+                request={
+                    "name": f"projects/{self.project}/secrets/{name}/versions/latest"
+                }
             )
 
             return response.payload.data.decode("utf-8")
@@ -65,7 +75,8 @@ class Secrets:
         if self.client:
             return self.client
 
-        from google.cloud import secretmanager
+        from google.cloud import secretmanager_v1
 
-        self.client = secretmanager.SecretManagerServiceClient()
+        self.client = secretmanager_v1.SecretManagerServiceClient()
+
         return self.client
