@@ -9,7 +9,7 @@ from webapp.apps.users.permissions import RequiresActive, RequiresPayment
 
 from webapp.settings import USE_STRIPE
 from webapp.apps.billing.utils import has_payment_method
-from webapp.apps.users.models import is_profile_active
+from webapp.apps.users.models import is_profile_active, get_project_or_404
 
 
 class InputsMixin:
@@ -39,14 +39,12 @@ class AbstractRouter:
 
     def handle(self, request, action, *args, **kwargs):
         print("router handle", args, kwargs)
-        project = get_object_or_404(
+        project = get_project_or_404(
             self.projects,
+            user=request.user,
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
-
-        if not project.has_read_access(request.user):
-            raise Http404()
 
         if project.status in ["staging", "live"]:
             if project.sponsor is None:
@@ -89,7 +87,13 @@ class GetOutputsObjectMixin:
             project__title__iexact=title,
             project__owner__user__username__iexact=username,
         )
+        print(
+            "got object", obj, self.request.user, obj.has_read_access(self.request.user)
+        )
         if not obj.has_read_access(self.request.user):
+            # Throw 404 on private apps to keep their names secret.
+            if not obj.project.has_read_access(self.request.user):
+                raise Http404()
             raise PermissionDenied()
         return obj
 

@@ -76,8 +76,9 @@ class NewSimView(InputsMixin, View):
 
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET, kwargs)
-        project = get_object_or_404(
+        project = get_project_or_404(
             self.projects,
+            user=self.request.user,
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )

@@ -632,7 +632,6 @@ class Simulation(models.Model):
         sims created with it.
         """
         # Everyone with access to the project has access to this sim.
-        print("heyo", user, self.is_public, self.project.has_read_access(user))
         has_project_access = self.project.has_read_access(user)
         if self.is_public and has_project_access:
             return True

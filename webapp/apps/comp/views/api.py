@@ -3,6 +3,7 @@ from django.core.mail import send_mail
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.http import Http404
 
 from rest_framework.authentication import (
     BasicAuthentication,
@@ -117,6 +118,8 @@ class DetailMyInputsAPIView(APIView):
             project__owner__user__username__iexact=kwargs["username"],
         )
         if not inputs.has_read_access(request.user):
+            if not inputs.project.has_read_access(request.user):
+                raise Http404()
             raise PermissionDenied()
         ser = InputsSerializer(inputs, context={"request": self.request})
         return Response(ser.data)
@@ -225,9 +228,11 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
         return Response(status=status.HTTP_401_UNAUTHORIZED)
 
     def post(self, request, *args, **kwargs):
+        print("getting objects", kwargs)
         self.object = self.get_object(
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
+        print("got self.object", self.object)
         if not self.object.has_write_access(request.user):
             return Response(status=status.HTTP_403_FORBIDDEN)
         if self.object.status == "STARTED":

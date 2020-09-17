@@ -105,7 +105,9 @@ class ResponseStatusException(Exception):
 
 
 def assert_status(exp_status, act_resp, stage):
-    if exp_status != act_resp.status_code:
+    if isinstance(exp_status, list) and act_resp.status_code not in exp_status:
+        raise ResponseStatusException(exp_status, act_resp, stage)
+    elif not isinstance(exp_status, list) and exp_status != act_resp.status_code:
         raise ResponseStatusException(exp_status, act_resp, stage)
 
 
@@ -191,7 +193,6 @@ class RunMockModel(CoreTestMixin):
                 "version": {"status": "SUCCESS", "version": "v1"},
             }[request.json()["task_name"]],
         )
-
         init_resp = self.api_client.post(
             f"/{self.owner}/{self.title}/api/v1/", data=adj, format="json"
         )
@@ -328,7 +329,7 @@ class RunMockModel(CoreTestMixin):
             project__title__iexact=self.title,
             model_pk=model_pk,
         )
-        set_auth_token(self.api_client, sim.owner.user)
+        self.api_client.force_login(sim.owner.user)
         get_sim_resp = self.api_client.get(
             f"/{self.owner}/{self.title}/api/v1/{model_pk}/remote/"
         )
@@ -375,33 +376,38 @@ class RunMockModel(CoreTestMixin):
         # test with public sim
         self.sim.is_public = True
         self.sim.save()
-        set_auth_token(self.api_client, self.sim_owner.user)
+        self.api_client.force_login(self.sim_owner.user)
         self.client.force_login(self.sim_owner.user)
         fetch_sims(200)
 
         self.api_client.logout()
         self.client.logout()
-        fetch_sims(200)
+        if self.project.is_public:
+            fetch_sims(200)
+        else:
+            fetch_sims([404, 403])
 
         # test with private sim
         self.sim.is_public = False
         self.sim.save()
-        set_auth_token(self.api_client, self.sim.owner.user)
+        self.api_client.force_login(self.sim.owner.user)
         self.client.force_login(self.sim_owner.user)
 
         fetch_sims(200)
 
         self.api_client.logout()
         self.client.logout()
-        fetch_sims(403)
+        fetch_sims([403, 404])
 
 
-@pytest.fixture
-def sponsored_matchups(db):
+@pytest.fixture(params=[True, False])
+def sponsored_matchups(request, db):
     sponsor = Profile.objects.get(user__username="sponsor")
     matchups = Project.objects.get(title="Matchups", owner__user__username="hdoupe")
     matchups.sponsor = sponsor
+    matchups.is_public = request.param
     matchups.save()
+    return matchups
 
 
 @pytest.fixture
@@ -409,6 +415,7 @@ def paid_matchups(db):
     matchups = Project.objects.get(title="Matchups", owner__user__username="hdoupe")
     matchups.sponsor = None
     matchups.save()
+    return matchups
 
 
 @pytest.mark.requires_stripe
@@ -496,19 +503,23 @@ class TestAsyncAPI(CoreTestMixin):
                 text=json.dumps(resp_data),
             )
             resp = api_client.get(f"/{self.owner}/{self.title}/api/v1/inputs/")
-            assert resp.status_code == 200
-
+            if self.project.is_public:
+                assert resp.status_code == 200
+            else:
+                assert resp.status_code == 404
+                return
             ioutils = get_ioutils(self.project)
             exp = ioutils.model_parameters.defaults()
             assert exp == resp.data
 
     @pytest.mark.parametrize("use_api", [True, False])
     def test_new_sim(self, use_api, client, api_client, profile):
+        self.project.assign_role("read", profile.user)
         resp = client.get(f"/{self.owner}/{self.title}/")
-        assert_status(200, resp, "test_new_sim")
+        assert_status(200 if self.project.is_public else 404, resp, "test_new_sim")
 
         new_resp = client.get(f"/{self.owner}/{self.title}/new/")
-        assert_status(200, new_resp, "test_new_sim")
+        assert_status(200 if self.project.is_public else 404, new_resp, "test_new_sim")
 
         api_client.force_login(profile.user)
         client.force_login(profile.user)
@@ -536,12 +547,13 @@ class TestAsyncAPI(CoreTestMixin):
         assert sim.inputs.status == "STARTED"
 
         api_client.logout()
+        exp_unauthed_status = 403 if self.project.is_public else 404
         anon_resp = api_client.post(
             sim.get_absolute_api_url(),
             data={"adjustment": {}, "meta_parameters": {}},
             format="json",
         )
-        assert_status(403, anon_resp, "test_new_sim_anon")
+        assert_status(exp_unauthed_status, anon_resp, "test_new_sim_anon")
 
         u = User.objects.get(username="hdoupe")
         set_auth_token(api_client, u)
@@ -550,7 +562,7 @@ class TestAsyncAPI(CoreTestMixin):
             data={"adjustment": {}, "meta_parameters": {}},
             format="json",
         )
-        assert_status(403, anon_resp, "test_new_sim_oth_user")
+        assert_status(exp_unauthed_status, anon_resp, "test_new_sim_oth_user")
 
         defaults = self.defaults()
         inputs_resp_data = {"status": "SUCCESS", **defaults}
@@ -570,7 +582,17 @@ class TestAsyncAPI(CoreTestMixin):
             resp = api_client.get(sim.get_absolute_api_url())
             assert_status(200, resp, "test_new_sim_outputs")
 
-            set_auth_token(api_client, profile.user)
+            api_client.force_login(profile.user)
+            if not self.project.is_public:
+                self.project.assign_role(None, profile.user)
+                anon_resp = api_client.post(
+                    sim.get_absolute_api_url(),
+                    data={"adjustment": {}, "meta_parameters": {}},
+                    format="json",
+                )
+                assert_status(404, anon_resp, "test_new_sim_owner-private")
+                self.project.assign_role("read", profile.user)
+
             anon_resp = api_client.post(
                 sim.get_absolute_api_url(),
                 data={"adjustment": {}, "meta_parameters": {}},
@@ -578,7 +600,7 @@ class TestAsyncAPI(CoreTestMixin):
             )
             assert_status(201, anon_resp, "test_new_sim_owner")
 
-    def test_post_inputs(self, api_client):
+    def test_post_inputs(self, api_client, profile):
         defaults = self.defaults()
         resp_data = {"status": "SUCCESS", **defaults}
         meta_params = {"meta_parameters": self.inputs_ok()["meta_parameters"]}
@@ -595,6 +617,15 @@ class TestAsyncAPI(CoreTestMixin):
                     "version": {"status": "SUCCESS", "version": "1.0.0"},
                 }[request.json()["task_name"]],
             )
+            if not self.project.is_public:
+                no_access = api_client.post(
+                    f"/{self.owner}/{self.title}/api/v1/inputs/",
+                    data=meta_params,
+                    format="json",
+                )
+                assert no_access.status_code == 404
+                api_client.force_login(profile.user)
+                self.project.assign_role("read", profile.user)
 
             resp = api_client.post(
                 f"/{self.owner}/{self.title}/api/v1/inputs/",
@@ -615,7 +646,8 @@ class TestAsyncAPI(CoreTestMixin):
         Test lifetime of submitting a model.
         """
         set_auth_token(api_client, profile.user)
-
+        api_client.force_login(profile.user)
+        self.project.assign_role("read", profile.user)
         rmm = RunMockModel(
             owner=self.owner,
             title=self.title,
@@ -661,7 +693,10 @@ class TestAsyncAPI(CoreTestMixin):
             rmm.run()
         assert excinfo.value.stage == "post_adjustment"
         assert excinfo.value.exp_status == 201
-        assert excinfo.value.act_status == 403
+        if self.project.is_public:
+            assert excinfo.value.act_status == 403
+        else:
+            assert excinfo.value.act_status == 404
 
         proj = Project.objects.get(
             title__iexact=self.title, owner__user__username__iexact=self.owner
@@ -670,9 +705,13 @@ class TestAsyncAPI(CoreTestMixin):
         proj.save()
 
         if getattr(profile.user, "customer", None) is None:
-            set_auth_token(api_client, profile_w_mockcustomer.user)
+            api_client.force_login(profile_w_mockcustomer.user)
+            if not self.project.is_public:
+                self.project.assign_role("read", profile_w_mockcustomer.user)
         else:
-            set_auth_token(api_client, profile.user)
+            api_client.force_login(profile.user)
+            if not self.project.is_public:
+                self.project.assign_role("read", profile.user)
 
         rmm = RunMockModel(**kwargs)
         rmm.run()
@@ -681,7 +720,10 @@ class TestAsyncAPI(CoreTestMixin):
             profile.user.customer.delete()
             profile.save()
 
-        set_auth_token(api_client, profile.user)
+        api_client.force_login(profile.user)
+        if not self.project.is_public:
+            self.project.assign_role("read", profile.user)
+
         rmm = RunMockModel(**kwargs)
         with pytest.raises(ResponseStatusException) as excinfo:
             rmm.run()
@@ -696,8 +738,9 @@ class TestAsyncAPI(CoreTestMixin):
         """
         Test creating and forking a sim.
         """
-        set_auth_token(api_client, profile.user)
-
+        api_client.force_login(profile.user)
+        if not self.project.is_public:
+            self.project.assign_role("read", profile.user)
         rmm = RunMockModel(
             owner=self.owner,
             title=self.title,
@@ -713,20 +756,38 @@ class TestAsyncAPI(CoreTestMixin):
         )
         rmm.run()
 
-        set_auth_token(api_client, profile.user)
+        # Remove perms to test fork endpoint.
+        if not self.project.is_public:
+            self.project.assign_role(None, profile.user)
+
+        api_client.force_login(profile.user)
         resp = api_client.post(
             f"/{self.owner}/{self.title}/api/v1/{rmm.sim.model_pk}/fork/"
         )
+        if not self.project.is_public:
+            assert resp.status_code == 404
+            self.project.assign_role("read", profile.user)
+            resp = api_client.post(
+                f"/{self.owner}/{self.title}/api/v1/{rmm.sim.model_pk}/fork/"
+            )
+
         assert resp.status_code == 201
 
         u = User.objects.get(username="modeler")
         assert profile.user != u
-        set_auth_token(api_client, u)
+        api_client.force_login(u)
         rmm.sim.is_public = True
         rmm.sim.save()
         resp = api_client.post(
             f"/{self.owner}/{self.title}/api/v1/{rmm.sim.model_pk}/fork/"
         )
+        if not self.project.is_public:
+            assert resp.status_code == 404
+            self.project.assign_role("read", u)
+            resp = api_client.post(
+                f"/{self.owner}/{self.title}/api/v1/{rmm.sim.model_pk}/fork/"
+            )
+
         assert resp.status_code == 201
 
         api_client.logout()
@@ -786,6 +847,8 @@ def test_v0_urls(
     - title update
     """
     modeler = User.objects.get(username="hdoupe").profile
+    if not sponsored_matchups.is_public:
+        sponsored_matchups.assign_role("read", modeler.user)
     inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, modeler)
 
     _, submit_sim = _submit_sim(inputs)
@@ -799,36 +862,45 @@ def test_v0_urls(
     assert sim.outputs_version() == "v0"
 
     # Test public responses.
+    if sponsored_matchups.is_public:
+        exp_unauthed_redirect_status = 302
+        exp_unauthed_status = 200
+    else:
+        exp_unauthed_status = exp_unauthed_redirect_status = 404
     resp = client.get(f"/{sim.project.owner}/{sim.project.title}/{sim.model_pk}/")
-    assert_status(302, resp, "v0-redirect")
+    assert_status(exp_unauthed_redirect_status, resp, "v0-redirect")
     resp = client.get(f"/{sim.project.owner}/{sim.project.title}/{sim.model_pk}/v0/")
-    assert_status(200, resp, "v0")
+    assert_status(exp_unauthed_status, resp, "v0")
     resp = client.get(f"/{sim.project.owner}/{sim.project.title}/{sim.model_pk}/edit/")
-    assert_status(200, resp, "v0-edit")
+    assert_status(exp_unauthed_status, resp, "v0-edit")
     resp = api_client.get(
         f"/{sim.project.owner}/{sim.project.title}/api/v1/{sim.model_pk}/"
     )
-    assert_status(200, resp, "v0-api-get")
+    assert_status(exp_unauthed_status, resp, "v0-api-get")
     resp = api_client.get(
         f"/{sim.project.owner}/{sim.project.title}/api/v1/{sim.model_pk}/edit/"
     )
-    assert_status(200, resp, "v0-edit-api-get")
+    assert_status(exp_unauthed_status, resp, "v0-edit-api-get")
 
     # Test private responses.
     s = Simulation.objects.get(pk=sim.pk)
     s.is_public = False
     s.save()
 
+    if sponsored_matchups.is_public:
+        forbidden_status = 403
+    else:
+        forbidden_status = 404
     resp = client.get(f"/{sim.project.owner}/{sim.project.title}/{sim.model_pk}/")
-    assert_status(403, resp, "v0-redirect")
+    assert_status(forbidden_status, resp, "v0-redirect")
     resp = client.get(f"/{sim.project.owner}/{sim.project.title}/{sim.model_pk}/v0/")
-    assert_status(403, resp, "v0")
+    assert_status(forbidden_status, resp, "v0")
     resp = client.get(f"/{sim.project.owner}/{sim.project.title}/{sim.model_pk}/edit/")
-    assert_status(403, resp, "v0-edit")
+    assert_status(forbidden_status, resp, "v0-edit")
     resp = api_client.get(
         f"/{sim.project.owner}/{sim.project.title}/api/v1/{sim.model_pk}/"
     )
-    assert_status(403, resp, "v0-api-get")
+    assert_status(forbidden_status, resp, "v0-api-get")
 
     api_client.force_login(sim.owner.user)
     client.force_login(sim.owner.user)
@@ -874,6 +946,7 @@ class TestCollaboration:
         """
         Test full add new author flow.
         """
+        sponsored_matchups.assign_role("read", pro_profile.user)
         inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, pro_profile)
 
         _, submit_sim = _submit_sim(inputs)
@@ -901,7 +974,11 @@ class TestCollaboration:
             data={"authors": [{"username": collab.user.username}]},
             format="json",
         )
-        assert_status(403, resp, "denied_authors")
+        if sponsored_matchups.is_public:
+            not_authed_code = 403
+        else:
+            not_authed_code = 404
+        assert_status(not_authed_code, resp, "denied_authors")
 
         # Successful update
         api_client.force_login(pro_profile.user)
@@ -910,6 +987,16 @@ class TestCollaboration:
             data={"authors": [{"username": collab.user.username}]},
             format="json",
         )
+
+        if not sponsored_matchups.is_public:
+            assert_status(400, resp, "collab doesn't have access to app")
+            sponsored_matchups.assign_role("read", collab.user)
+            resp = api_client.put(
+                f"{sim.get_absolute_api_url()}authors/",
+                data={"authors": [{"username": collab.user.username}]},
+                format="json",
+            )
+
         assert_status(200, resp, "success_authors")
 
         sim = Simulation.objects.get(pk=sim.pk)
@@ -1101,7 +1188,12 @@ class TestCollaboration:
 
         api_client.force_login(profile.user)
         resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
-        assert_status(204, resp, "author_can_deletle_themselves")
+        if not sponsored_matchups.is_public:
+            assert_status(404, resp, "no access to app to delete self")
+            sponsored_matchups.assign_role("read", profile.user)
+            resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
+
+        assert_status(204, resp, "author_can_delete_themselves")
 
         # test must have write access or be removing oneself
         u = User.objects.create_user("danger", "danger@example.com", "heyhey2222")
@@ -1109,6 +1201,11 @@ class TestCollaboration:
         danger = Profile.objects.get(user__username="danger")
         api_client.force_login(danger.user)
         resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
+        if not sponsored_matchups.is_public:
+            assert_status(404, resp, "user needs access access to app")
+            sponsored_matchups.assign_role("read", danger.user)
+            resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
+
         assert_status(403, resp, "auth'ed user cannot delete authors")
 
     def test_sim_read_access_management(
@@ -1130,6 +1227,7 @@ class TestCollaboration:
         - Make sure user with read access cannot add others to list
         - Remove read access from user successfully.
         """
+        sponsored_matchups.assign_role("read", pro_profile.user)
         inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, pro_profile)
 
         _, submit_sim = _submit_sim(inputs)
@@ -1144,6 +1242,11 @@ class TestCollaboration:
         # Check user does not have access to sim
         api_client.force_login(collabs[0].user)
         resp = api_client.get(sim.get_absolute_api_url())
+        if not sponsored_matchups.is_public:
+            assert_status(404, resp, "user does not have read access to app")
+            sponsored_matchups.assign_role("read", collabs[0].user)
+            resp = api_client.get(sim.get_absolute_api_url())
+
         assert_status(403, resp, "user does not have read access to sim yet")
 
         # Check user cannot update read access list
@@ -1168,6 +1271,8 @@ class TestCollaboration:
         assert_status(200, resp, "user has read access to sim")
 
         # Check user with read access cannot grant others read access
+        if not sponsored_matchups.is_public:
+            sponsored_matchups.assign_role("read", collabs[1].user)
         resp = api_client.put(
             f"{sim.get_absolute_api_url()}access/",
             data=[{"username": str(collabs[1]), "role": "read"}],
@@ -1182,7 +1287,7 @@ class TestCollaboration:
             data=[{"username": str(collabs[0]), "role": None}],
             format="json",
         )
-        assert_status(204, resp, "user granted read access")
+        assert_status(204, resp, "user no longer has read access")
 
         api_client.force_login(collabs[0].user)
         resp = api_client.get(sim.get_absolute_api_url())
@@ -1207,6 +1312,7 @@ class TestCollaboration:
         error.
         - Able to make user with read access an author.
         """
+        sponsored_matchups.assign_role("read", plus_profile.user)
         inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, plus_profile)
 
         _, submit_sim = _submit_sim(inputs)
@@ -1217,6 +1323,10 @@ class TestCollaboration:
         sim.save()
 
         collabs = list(gen_collabs(2))
+
+        if not sponsored_matchups.is_public:
+            for collab in collabs:
+                sponsored_matchups.assign_role("read", collab.user)
 
         # Grant read access to user
         api_client.force_login(plus_profile.user)
@@ -1294,7 +1404,7 @@ class TestCollaboration:
         pro_profile,
         customer_pro_by_default,
     ):
-
+        sponsored_matchups.assign_role("read", pro_profile.user)
         inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, pro_profile)
 
         _, submit_sim = _submit_sim(inputs)
@@ -1304,13 +1414,9 @@ class TestCollaboration:
         sim.is_public = False
         sim.save()
 
-        collabs = []
-        for i in range(2):
-            u = User.objects.create_user(
-                f"collab-{i}", f"collab{i}@example.com", "heyhey2222"
-            )
-            create_profile_from_user(u)
-            collabs.append(Profile.objects.get(user__username=f"collab-{i}"))
+        collabs = list(gen_collabs(2))
+        for collab in collabs:
+            sponsored_matchups.assign_role("read", collab.user)
 
         # Grant read access to user
         api_client.force_login(sim.owner.user)
@@ -1355,6 +1461,7 @@ class TestCollaboration:
         - Test add 3 collaborators to public sim is OK.
         - Test user can not make sim private afterwards.
         """
+        sponsored_matchups.assign_role("read", free_profile.user)
         inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, free_profile)
 
         _, submit_sim = _submit_sim(inputs)
@@ -1364,13 +1471,9 @@ class TestCollaboration:
         sim.is_public = True
         sim.save()
 
-        collabs = []
-        for i in range(3):
-            u = User.objects.create_user(
-                f"collab-{i}", f"collab{i}@example.com", "heyhey2222"
-            )
-            create_profile_from_user(u)
-            collabs.append(Profile.objects.get(user__username=f"collab-{i}"))
+        collabs = list(gen_collabs(3))
+        for collab in collabs:
+            sponsored_matchups.assign_role("read", collab.user)
 
         # Grant read access to users
         api_client.force_login(sim.owner.user)
