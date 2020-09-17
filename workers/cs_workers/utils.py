@@ -60,9 +60,11 @@ def redis_conn_from_env():
     return kwargs
 
 
-def get_projects(cs_url):
-    resp = httpx.get(f"{cs_url}/apps/api/v1/")
-    assert resp.status_code == 200, f"Got code: {resp.status_code}"
+def get_projects(cs_url, api_token):
+    resp = httpx.get(
+        f"{cs_url}/apps/api/v1/", headers={"Authorization": f"Token {api_token}"}
+    )
+    assert resp.status_code == 200, f"Got code {resp.status_code}"
     return hash_projects(resp.json())
 
 

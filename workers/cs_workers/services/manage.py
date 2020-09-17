@@ -214,9 +214,15 @@ class Manager:
         deployment["spec"]["template"]["spec"]["containers"][0][
             "image"
         ] = f"gcr.io/{self.project}/scheduler:{self.tag}"
-        deployment["spec"]["template"]["spec"]["containers"][0]["env"].append(
-            {"name": "VIZ_HOST", "value": self.viz_host}
-        )
+        deployment["spec"]["template"]["spec"]["containers"][0]["env"] += [
+            {"name": "VIZ_HOST", "value": self.viz_host},
+            {
+                "name": "CS_API_TOKEN",
+                "valueFrom": {
+                    "secretKeyRef": {"key": "CS_API_TOKEN", "name": "worker-secret"}
+                },
+            },
+        ]
         self.write_config("scheduler-Deployment.yaml", deployment)
 
         return deployment
