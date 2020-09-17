@@ -126,6 +126,11 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
 
 
 class ProjectAPIView(GetProjectMixin, APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
     api_user = User.objects.get(username="comp-api-user")
 
     def get(self, request, *args, **kwargs):
