@@ -8,7 +8,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.core.mail import send_mail
-
+from django.http import Http404
+from django.db.models import Q
 
 from rest_framework.views import APIView
 from rest_framework import generics
@@ -19,11 +20,9 @@ from rest_framework.authentication import (
     SessionAuthentication,
     TokenAuthentication,
 )
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied as APIPermissionDenied
 from rest_framework import filters
 
-
-from guardian.shortcuts import assign_perm
 
 # from webapp.settings import DEBUG
 
@@ -35,6 +34,8 @@ from webapp.apps.users.models import (
     EmbedApproval,
     Tag,
     is_profile_active,
+    get_project_or_404,
+    projects_with_access,
 )
 from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 
@@ -53,8 +54,12 @@ User = get_user_model()
 
 class GetProjectMixin:
     def get_object(self, username, title, **kwargs):
-        return get_object_or_404(
-            Project, title__iexact=title, owner__user__username__iexact=username
+        print(self.request.user, username, title)
+        return get_project_or_404(
+            Project.objects.all(),
+            user=self.request.user,
+            title__iexact=title,
+            owner__user__username__iexact=username,
         )
 
 
@@ -118,12 +123,13 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
 
 
 class ProjectAPIView(GetProjectMixin, APIView):
-    queryset = Project.objects.all()
     api_user = User.objects.get(username="comp-api-user")
 
     def get(self, request, *args, **kwargs):
         ser = ProjectSerializer(
-            self.queryset.all(), many=True, context={"request": request}
+            projects_with_access(self.request.user),
+            many=True,
+            context={"request": request},
         )
         return Response(ser.data, status=status.HTTP_200_OK)
 
@@ -192,7 +198,7 @@ class TagsAPIView(GetProjectMixin, APIView):
     def get(self, request, *args, **kwargs):
         project = self.get_object(**kwargs)
         if not project.has_write_access(request.user):
-            raise PermissionDenied()
+            raise APIPermissionDenied()
         return Response(
             {
                 "staging_tag": TagSerializer(instance=project.staging_tag).data,
@@ -204,7 +210,7 @@ class TagsAPIView(GetProjectMixin, APIView):
     def post(self, request, *args, **kwargs):
         project = self.get_object(**kwargs)
         if not project.has_write_access(request.user):
-            raise PermissionDenied()
+            raise APIPermissionDenied()
         serializer = TagUpdateSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -282,7 +288,11 @@ class ProfileModelsAPIView(generics.ListAPIView):
     def get_queryset(self):
         username = self.request.parser_context["kwargs"].get("username", None)
         user = get_object_or_404(get_user_model(), username__iexact=username)
-        return self.queryset.filter(owner__user=user, listed=True)
+        return self.queryset.filter(
+            owner__user=user,
+            listed=True,
+            pk__in=projects_with_access(self.request.user),
+        )
 
 
 class EmbedApprovalView(GetProjectMixin, APIView):
@@ -416,7 +426,7 @@ class DeploymentsView(generics.ListAPIView):
 
     def get_queryset(self):
         if not self.request.user.username == "comp-api-user":
-            raise PermissionDenied()
+            raise APIPermissionDenied()
         return self.queryset
 
 
@@ -446,6 +456,9 @@ class DeploymentsDetailView(APIView):
             **status_kwarg,
         )
 
+        if not deployment.project.has_write_acces(request.user):
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
         if ping is None:
             deployment.load()
         else:
@@ -459,7 +472,7 @@ class DeploymentsDetailView(APIView):
         if not (
             request.user.is_authenticated and request.user.username == "comp-api-user"
         ):
-            raise PermissionDenied()
+            raise APIPermissionDenied()
         deployment = get_object_or_404(
             Deployment,
             name__iexact=kwargs["dep_name"],

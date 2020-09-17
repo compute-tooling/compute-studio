@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 from rest_framework.authentication import (
     BasicAuthentication,
@@ -20,7 +21,12 @@ from rest_framework import filters
 import paramtools as pt
 import cs_storage
 
-from webapp.apps.users.models import Project, Profile
+from webapp.apps.users.models import (
+    Project,
+    Profile,
+    get_project_or_404,
+    projects_with_access,
+)
 from webapp.apps.users.permissions import RequiresActive, StrictRequiresActive
 
 from webapp.apps.comp.asyncsubmit import SubmitInputs, SubmitSim
@@ -31,6 +37,7 @@ from webapp.apps.comp.exceptions import (
     BadPostException,
     ForkObjectException,
     ResourceLimitException,
+    PrivateAppException,
 )
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
@@ -59,8 +66,9 @@ class InputsAPIView(APIView):
     queryset = Project.objects.all()
 
     def get_inputs(self, kwargs, meta_parameters=None):
-        project = get_object_or_404(
+        project = get_project_or_404(
             self.queryset,
+            user=self.request.user,
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
@@ -156,8 +164,9 @@ class BaseCreateAPIView(APIView):
     queryset = Project.objects.all()
 
     def post(self, request, *args, **kwargs):
-        project = get_object_or_404(
+        project = get_project_or_404(
             self.queryset,
+            user=request.user,
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
@@ -207,9 +216,9 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
                     return Response(
                         serializer.errors, status=status.HTTP_400_BAD_REQUEST
                     )
-                except ResourceLimitException as rle:
+                except (ResourceLimitException, PrivateAppException) as e:
                     return Response(
-                        {rle.resource: rle.todict()}, status=status.HTTP_400_BAD_REQUEST
+                        {e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST
                     )
             else:
                 return Response(status=status.HTTP_403_FORBIDDEN)
@@ -305,7 +314,6 @@ class ForkDetailAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView
         except ForkObjectException as e:
             msg = str(e)
             return Response({"fork": msg}, status=status.HTTP_400_BAD_REQUEST)
-
         data = MiniSimulationSerializer(sim).data
         return Response(data, status=status.HTTP_201_CREATED)
 
@@ -319,8 +327,9 @@ class NewSimulationAPIView(RequiresLoginPermissions, APIView):
     )
 
     def post(self, request, *args, **kwargs):
-        project = get_object_or_404(
+        project = get_project_or_404(
             self.projects,
+            user=request.user,
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
@@ -446,9 +455,9 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                     pp, created = PendingPermission.objects.get_or_create(
                         sim=self.object, profile=profile, permission_name="add_author"
                     )
-                except ResourceLimitException as rle:
+                except (ResourceLimitException, PrivateAppException) as e:
                     return Response(
-                        data={rle.resource: rle.todict()},
+                        data={e.resource: e.todict()},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 # PP already exists and is not expired.
@@ -579,9 +588,9 @@ class SimulationAccessAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, A
                 previous_role = self.object.role(user)
                 try:
                     self.object.assign_role(access_obj["role"], user)
-                except ResourceLimitException as rle:
+                except (ResourceLimitException, PrivateAppException) as e:
                     return Response(
-                        data={rle.resource: rle.todict()},
+                        data={e.resource: e.todict()},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 updated_role = self.object.role(user)
@@ -640,9 +649,13 @@ class UserSimsAPIView(SimsAPIView):
 
 class PublicSimsAPIView(SimsAPIView):
     permission_classes = (RequiresActive,)
+    queryset = Simulation.objects.public_sims()
 
     def get_queryset(self):
-        return self.queryset.filter(is_public=True, creation_date__gte=ANON_BEFORE)
+        return self.queryset.filter(
+            creation_date__gte=ANON_BEFORE,
+            project__pk__in=projects_with_access(self.request.user),
+        )
 
 
 class ProfileSimsAPIView(SimsAPIView):
@@ -652,4 +665,6 @@ class ProfileSimsAPIView(SimsAPIView):
     def get_queryset(self):
         username = self.request.parser_context["kwargs"].get("username", None)
         user = get_object_or_404(get_user_model(), username__iexact=username)
-        return self.queryset.filter(owner__user=user)
+        return self.queryset.filter(
+            owner__user=user, project__pk__in=projects_with_access(self.request.user),
+        )

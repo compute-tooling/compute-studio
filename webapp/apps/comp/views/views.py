@@ -36,6 +36,7 @@ from webapp.apps.users.models import (
     EmbedApproval,
     Deployment,
     is_profile_active,
+    get_project_or_404,
 )
 
 from webapp.apps.comp.constants import WEBAPP_VERSION
@@ -59,8 +60,9 @@ class ModelPageView(InputsMixin, View):
 
     def get(self, request, *args, **kwargs):
         print("method=GET", request.GET, kwargs)
-        project = get_object_or_404(
+        project = get_project_or_404(
             self.projects,
+            user=request.user,
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )

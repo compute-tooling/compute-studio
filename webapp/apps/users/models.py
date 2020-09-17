@@ -8,7 +8,7 @@ import requests
 
 from django.db import models, transaction
 from django.db.models.functions import TruncMonth
-from django.db.models import F, Case, When, Sum, Max
+from django.db.models import F, Case, When, Sum, Max, Q
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.core.mail import EmailMessage, send_mail
@@ -19,7 +19,13 @@ from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.http import Http404
 
-from guardian.shortcuts import assign_perm, remove_perm, get_perms, get_users_with_perms
+from guardian.shortcuts import (
+    assign_perm,
+    remove_perm,
+    get_perms,
+    get_users_with_perms,
+    get_objects_for_user,
+)
 
 from webapp.apps.comp import actions
 from webapp.apps.comp.compute import SyncCompute, SyncProjects
@@ -193,6 +199,45 @@ class ProjectPermissions:
     ADMIN = (
         "admin_project",
         "Users with this permission control the visibility of this project and who has read, write, and admin access to it.",
+    )
+
+
+def get_project_or_404(queryset, user=None, raise_http404=True, **kwargs):
+    try:
+        if user is None:
+            return queryset.objects.get(is_public=True, **kwargs)
+
+        user_has_perms = get_objects_for_user(
+            user,
+            perms=["read_project", "write_project", "admin_project"],
+            klass=queryset,
+            any_perm=True,
+        )
+        return queryset.get(Q(is_public=True) | Q(pk__in=user_has_perms), **kwargs)
+
+    except Project.DoesNotExist as dne:
+        if raise_http404:
+            raise Http404()
+        else:
+            raise dne
+
+
+def projects_with_perms(user, queryset=None):
+    if queryset is None:
+        queryset = Project.objects.all()
+    return get_objects_for_user(
+        user,
+        perms=["read_project", "write_project", "admin_project"],
+        klass=queryset,
+        any_perm=True,
+    )
+
+
+def projects_with_access(user, queryset=None):
+    if queryset is None:
+        queryset = Project.objects.all()
+    return queryset.filter(
+        Q(is_public=True) | Q(pk__in=projects_with_perms(user, queryset))
     )
 
 

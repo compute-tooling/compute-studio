@@ -1,5 +1,6 @@
 from django.views.generic.base import View
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
@@ -44,19 +45,16 @@ class AbstractRouter:
             title__iexact=kwargs["title"],
         )
 
-        if project.status in ["updating", "live"]:
+        if not project.has_read_access(request.user):
+            raise Http404()
+
+        if project.status in ["staging", "live"]:
             if project.sponsor is None:
                 return self.payment_view.as_view()(request, *args, **kwargs)
             else:
                 return self.login_view.as_view()(request, *args, **kwargs)
         else:
-            if action == "GET":
-                return self.unauthenticated_get(request, *args, **kwargs)
-            else:
-                raise PermissionDenied()
-
-    def unauthenticated_get(self, request, *args, **kwargs):
-        return PermissionDenied()
+            raise Http404()
 
     def get(self, request, *args, **kwargs):
         return self.handle(request, "GET", *args, **kwargs)

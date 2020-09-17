@@ -59,3 +59,24 @@ class ResourceLimitException(CSException):
             upgrade_to=self.upgrade_to,
             msg=str(self),
         )
+
+
+class PrivateAppException(CSException):
+    collaborators_msg = (
+        "This user does not have access to this app. You must grant access"
+        "for them to use the app before you can add them as a collaborator."
+    )
+
+    def __init__(self, resource, test_name, collaborator, *args, **kwargs):
+        self.resource = resource
+        self.test_name = test_name
+        self.collaborator = collaborator
+        super().__init__(*args, **kwargs)
+
+    def todict(self):
+        return dict(
+            resource=self.resource,
+            test_name=self.test_name,
+            collaborator=str(self.collaborator),
+            msg=str(self),
+        )
