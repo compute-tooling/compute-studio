@@ -1060,6 +1060,15 @@ class TestCollaboration:
             data={"authors": [{"username": profile.user.username}]},
             format="json",
         )
+        if not sponsored_matchups.is_public:
+            assert_status(400, resp, "user doesn't have access to app")
+            sponsored_matchups.assign_role("read", profile.user)
+            resp = api_client.put(
+                f"{sim.get_absolute_api_url()}authors/",
+                data={"authors": [{"username": profile.user.username}]},
+                format="json",
+            )
+
         assert_status(200, resp, "success_authors")
 
         # check that resubmit has no effect on non-expired permissions.
@@ -1136,6 +1145,15 @@ class TestCollaboration:
             data={"authors": [{"username": profile.user.username}]},
             format="json",
         )
+        if not sponsored_matchups.is_public:
+            assert_status(400, resp, "user doesn't have access to app")
+            sponsored_matchups.assign_role("read", profile.user)
+            resp = api_client.put(
+                f"{sim.get_absolute_api_url()}authors/",
+                data={"authors": [{"username": profile.user.username}]},
+                format="json",
+            )
+
         assert_status(200, resp, "success_authors")
 
         init_pp = sim.pending_permissions.get(profile__pk=profile.pk)
@@ -1188,11 +1206,6 @@ class TestCollaboration:
 
         api_client.force_login(profile.user)
         resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
-        if not sponsored_matchups.is_public:
-            assert_status(404, resp, "no access to app to delete self")
-            sponsored_matchups.assign_role("read", profile.user)
-            resp = api_client.delete(f"{sim.get_absolute_api_url()}authors/{profile}/")
-
         assert_status(204, resp, "author_can_delete_themselves")
 
         # test must have write access or be removing oneself

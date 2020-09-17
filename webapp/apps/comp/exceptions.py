@@ -77,6 +77,6 @@ class PrivateAppException(CSException):
         return dict(
             resource=self.resource,
             test_name=self.test_name,
-            collaborator=str(self.collaborator),
+            collaborator=getattr(self.collaborator, "username", str(self.collaborator)),
             msg=str(self),
         )

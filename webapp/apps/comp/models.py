@@ -592,9 +592,8 @@ class Simulation(models.Model):
         Test if user's plan allows them to add more collaborators
         to this simulation.
         """
-        if self.is_public:
-            return
-        self._collaborator_test("add_collaborator", adding_collaborator=True)
+        if not self.is_public:
+            self._collaborator_test("add_collaborator", adding_collaborator=True)
         self._private_app_test(collaborator=collaborator)
 
     def make_private_test(self, **kwargs):
