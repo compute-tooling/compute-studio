@@ -158,8 +158,9 @@ class VizView(InputsMixin, View):
 
     def get(self, request, *args, **kwargs):
         print("viz method=GET", request.GET)
-        project = get_object_or_404(
-            self.model,
+        project = get_project_or_404(
+            self.model.objects.all(),
+            user=request.user,
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
@@ -195,6 +196,8 @@ class EmbedView(InputsMixin, View):
             name__iexact=kwargs["ea_name"],
         )
         project = embed_approval.project
+        if not project.has_read_access(request.user):
+            raise Http404()
         deployment, _ = Deployment.objects.get_or_create_deployment(
             project=project, name=kwargs["ea_name"], embed_approval=embed_approval
         )
