@@ -463,7 +463,7 @@ class DeploymentsDetailView(APIView):
             **status_kwarg,
         )
 
-        if not deployment.project.has_write_acces(request.user):
+        if not deployment.project.has_write_access(request.user):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         if ping is None:
