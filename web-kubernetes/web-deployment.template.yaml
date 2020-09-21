@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: web:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: PORT
+              value: "8000"
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: web-configmap
+                  key: DATABASE_URL
+
+            - name: DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: web-configmap
+                  key: DEBUG
+                  optional: true
+
+            - name: LOCAL
+              valueFrom:
+                configMapKeyRef:
+                  name: web-configmap
+                  key: LOCAL
+                  optional: true
+
+            - name: BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: web-configmap
+                  key: BUCKET
+
+            - name: DEFAULT_CLUSTER_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: web-configmap
+                  key: DEFAULT_CLUSTER_USER
+
+            - name: DEFAULT_VIZ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: web-configmap
+                  key: DEFAULT_VIZ_HOST
+
+            - name: DJANGO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: DJANGO_SECRET_KEY
+
+            - name: CS_CRYPT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: WEB_CS_CRYPT_KEY
+
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: POSTGRES_PASSWORD
+
+            # - name: STRIPE_SECRET
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: web-secret
+            #       key: STRIPE_SECRET
+            #       optional: true
+
+            # - name: WEBHOOK_SECRET
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: web-secret
+            #       key: WEBHOOK_SECRET
+            #       optional: true
+
+            # - name: MAILGUN_API_KEY
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: web-secret
+            #       key: MAILGUN_API_KEY
+            #       optional: true
+
+      nodeSelector:
+        component: web

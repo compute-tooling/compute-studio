@@ -14,11 +14,6 @@ import cs_workers.models.executors.job
 import cs_workers.models.executors.api_task
 import cs_workers.models.executors.server
 
-TAG = os.environ.get("TAG", "")
-PROJECT = os.environ.get("PROJECT")
-CS_URL = os.environ.get("CS_URL", None)
-BUCKET = os.environ.get("BUCKET")
-
 defaults = dict(
     TAG=datetime.datetime.now().strftime("%Y-%m-%d"),
     PROJECT=None,

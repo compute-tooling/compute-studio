@@ -133,8 +133,21 @@ WSGI_APPLICATION = "webapp.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
+
+
+def default_db_url():
+    db_config = dj_database_url.config()
+    if os.environ.get("POSTGRES_PASSWORD"):
+        print("Using pg password from env.")
+        return dict(
+            db_config, USER="postgres", PASSWORD=os.environ.get("POSTGRES_PASSWORD")
+        )
+    else:
+        return db_config
+
+
 DATABASES = {
-    "default": dj_database_url.config(),
+    "default": default_db_url(),
     # override database name for tests.
     "TEST": dict(dj_database_url.config(), **{"NAME": "testdb"}),
 }
