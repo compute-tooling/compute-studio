@@ -11,9 +11,9 @@ from pathlib import Path
 
 from kubernetes import client as kclient, config as kconfig
 
+from cs_deploy.config import workers_config
 from cs_workers.services.secrets import ServicesSecrets
 from cs_workers.services import scheduler
-
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
 BASE_PATH = CURR_PATH / ".."
@@ -260,6 +260,11 @@ class Manager:
                         },
                     }
                 )
+
+        if workers_config.get("redisVolume"):
+            deployment["spec"]["template"]["spec"]["volumes"] = workers_config[
+                "redisVolume"
+            ]
         self.write_config("redis-master-Deployment.yaml", deployment)
 
     def write_secret(self):

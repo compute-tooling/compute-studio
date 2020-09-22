@@ -20,6 +20,6 @@ class Deployment(ma.Schema):
 class UserSerializer(ma.Schema):
     username = ma.fields.Str(validate=ma.validate.Length(min=2, max=20))
     email = ma.fields.Email()
-    url = ma.fields.URL()
+    url = ma.fields.URL(require_tld=False)  # For kubernetes service urls.
     hashed_token = ma.fields.Str(required=False)
     approved = ma.fields.Bool(default=False)

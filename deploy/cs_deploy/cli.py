@@ -10,34 +10,14 @@ from cs_workers.cli import cli as workers_cli
 from cs_deploy.webapp import cli as webapp_cli
 from cs_secrets.cli import cli as secrets_cli
 
-defaults = dict(
-    TAG=datetime.datetime.now().strftime("%Y-%m-%d"), PROJECT=None, CS_URL=None
-)
-
-
-def load_env():
-    config = copy.deepcopy(defaults)
-
-    path = Path("cs-config.yaml")
-    if path.exists():
-        with open(path, "r") as f:
-            user_config = yaml.safe_load(f.read())["webapp"]
-    else:
-        user_config = {}
-
-    for var in defaults:
-        if os.environ.get(var):
-            config[var] = os.environ.get(var)
-        elif user_config.get(var):
-            config[var] = user_config.get(var)
-    return config
+from .config import webapp_config
 
 
 def cli():
     parser = argparse.ArgumentParser(
         "CLI for managing C/S Kubernetes cluster and services."
     )
-    user_config = load_env()
+    user_config = webapp_config
     parser.add_argument(
         "--tag", "-t", default=user_config.get("TAG"),
     )

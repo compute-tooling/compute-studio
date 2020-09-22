@@ -13,7 +13,7 @@ import warnings
 import yaml
 
 import cs_secrets
-
+from .config import webapp_config
 
 secret_vars = [
     "STRIPE_SECRET",
@@ -93,29 +93,16 @@ class Manager:
     def web_image(self):
         return f"{self.cr}/{self.project}/web:{self.tag}"
 
-    def config(
-        self, update_db=False, volume_type="emptydir", volume_args=None, dev=False
-    ):
+    def config(self, update_db=False, dev=False):
         self.write_secret()
         self.write_web(dev=dev)
         if update_db:
-            self.write_db(volume_type, volume_args)
+            self.write_db()
 
-    def write_db(self, volume_type="emptyDir", volume_args=None):
+    def write_db(self):
         db_deployment = self.db_deployment
-
-        if isinstance(volume_args, str):
-            volume_args = json.loads(volume_args)
-        elif volume_args is None:
-            volume_args = {}
-        elif isinstance(volume_args, dict):
-            volume_args = volume_args
-        else:
-            raise TypeError("Disk args must be a string, dict, or None.")
-
-        if volume_type is not None:
-            volumes = db_deployment["spec"]["template"]["spec"]["volumes"]
-            volumes[0] = {"name": volumes[0]["name"], volume_type: volume_args}
+        volumes = db_deployment["spec"]["template"]["spec"]["volumes"]
+        volumes[:] = webapp_config["dbVolume"]["volumes"]
         self.write_config(self.db_deployment, filename="db-deployment.yaml")
         self.write_config(self.db_service, filename="db-service.yaml")
 
@@ -137,6 +124,7 @@ class Manager:
                 }
             ]
             web_configmap["data"]["DEBUG"] = "true"
+            web_configmap["data"]["LOCAL"] = "true"
         if self.host is not None:
             web_ir = copy.deepcopy(self.web_ingressroute)
             web_ir["spec"]["routes"][0]["match"] = f"Host(`{self.host}`)"
@@ -193,10 +181,7 @@ def push(args):
 def config(args):
     manager = manager_from_args(args)
     manager.config(
-        update_db=args.update_db,
-        volume_type=args.volume_type,
-        volume_args=args.volume_args,
-        dev=args.dev,
+        update_db=args.update_db, dev=args.dev,
     )
 
 
@@ -220,14 +205,6 @@ def cli(subparsers: argparse._SubParsersAction):
     )
     config_parser.add_argument("--out", "-o")
     config_parser.add_argument("--update-db", action="store_true")
-    config_parser.add_argument(
-        "--volume-type",
-        default="emptyDir",
-        help="Disk type as specified here: https://kubernetes.io/docs/concepts/storage/volumes/#types-of-volumes",
-    )
-    config_parser.add_argument(
-        "--volume-args", required=False, help="Arguments for disk type.",
-    )
     config_parser.add_argument(
         "--dev",
         action="store_true",

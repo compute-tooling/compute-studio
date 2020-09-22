@@ -149,7 +149,7 @@ def default_db_url():
 DATABASES = {
     "default": default_db_url(),
     # override database name for tests.
-    "TEST": dict(dj_database_url.config(), **{"NAME": "testdb"}),
+    "TEST": dict(default_db_url(), **{"NAME": "testdb",}),
 }
 
 AUTHENTICATION_BACKENDS = (

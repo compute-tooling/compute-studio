@@ -37,6 +37,8 @@ spec:
           # gcePersistentDisk:
           #   pdName: db-disk
           #   fsType: ext4
-          emptyDir: {}
+          hostPath:
+            path: /db-data
+            type: Directory
       nodeSelector:
         component: web
