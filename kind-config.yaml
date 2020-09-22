@@ -5,3 +5,6 @@ nodes:
   - role: worker
   - role: worker
   - role: worker
+    extraMounts:
+      - hostPath: /home/hankdoupe/compute-studio
+        containerPath: /code

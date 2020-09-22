@@ -14,13 +14,7 @@ import cs_workers.models.executors.job
 import cs_workers.models.executors.api_task
 import cs_workers.models.executors.server
 
-defaults = dict(
-    TAG=datetime.datetime.now().strftime("%Y-%m-%d"),
-    PROJECT=None,
-    CS_URL=None,
-    CS_API_TOKEN=None,
-    BUCKET=None,
-)
+defaults = dict(CS_API_TOKEN=None, BUCKET=None,)
 
 
 def load_env():
@@ -30,13 +24,12 @@ def load_env():
     if path.exists():
         with open(path, "r") as f:
             user_config = yaml.safe_load(f.read())
+            if "workers" in user_config:
+                user_config = user_config["workers"]
     else:
         user_config = {}
 
     for var in [
-        "TAG",
-        "PROJECT",
-        "CS_URL",
         "CS_API_TOKEN",
         "BUCKET",
         "CLUSTER_HOST",
@@ -49,13 +42,13 @@ def load_env():
     return config
 
 
-def cli():
+def cli(subparsers: argparse._SubParsersAction):
+    dsc = "CLI for deploying Compute Studio."
+    parser = subparsers.add_parser("workers", description=dsc)
+
     config = load_env()
     parser = argparse.ArgumentParser(description="C/S Workers CLI")
-    parser.add_argument("--tag", required=False, default=config["TAG"])
-    parser.add_argument("--project", required=False, default=config["PROJECT"])
     parser.add_argument("--bucket", required=False, default=config["BUCKET"])
-    parser.add_argument("--cs-url", required=False, default=config["CS_URL"])
     parser.add_argument(
         "--cs-api-token", required=False, default=config["CS_API_TOKEN"]
     )
@@ -69,6 +62,3 @@ def cli():
     cs_workers.models.executors.job.cli(sub_parsers)
     cs_workers.models.executors.api_task.cli(sub_parsers)
     cs_workers.models.executors.server.cli(sub_parsers)
-
-    args = parser.parse_args()
-    args.func(args)

@@ -3,10 +3,10 @@ import json
 import os
 
 from cs_workers.utils import clean
-from cs_workers import secrets
+import cs_secrets
 
 
-class ModelSecrets(secrets.Secrets):
+class ModelSecrets(cs_secrets.Secrets):
     def __init__(self, owner=None, title=None, name=None, project=None):
         if owner and title:
             self.owner = owner
@@ -22,9 +22,9 @@ class ModelSecrets(secrets.Secrets):
         secret_name = f"{self.safe_owner}_{self.safe_title}"
         try:
             secret_val = self.get()
-        except secrets.SecretNotFound:
+        except cs_secrets.SecretNotFound:
             secret_val = {name: value}
-            return super().set_secret(secret_name, json.dumps(secret_val))
+            return super().set(secret_name, json.dumps(secret_val))
         else:
             if secret_val is not None:
                 secret_val[name] = value
@@ -33,13 +33,13 @@ class ModelSecrets(secrets.Secrets):
             if value is None:
                 secret_val.pop(name)
 
-        return super().set_secret(secret_name, json.dumps(secret_val))
+        return super().set(secret_name, json.dumps(secret_val))
 
     def get(self, name=None):
         secret_name = f"{self.safe_owner}_{self.safe_title}"
         try:
             secret = json.loads(super().get(secret_name))
-        except secrets.SecretNotFound:
+        except cs_secrets.SecretNotFound:
             return {}
 
         if name and name in secret:

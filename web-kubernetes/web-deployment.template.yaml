@@ -96,6 +96,5 @@ spec:
             #       name: web-secret
             #       key: MAILGUN_API_KEY
             #       optional: true
-
       nodeSelector:
         component: web

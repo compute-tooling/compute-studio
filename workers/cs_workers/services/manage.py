@@ -11,7 +11,7 @@ from pathlib import Path
 
 from kubernetes import client as kclient, config as kconfig
 
-from cs_workers.services.secrets import ServicesSecrets, cli as secrets_cli
+from cs_workers.services.secrets import ServicesSecrets
 from cs_workers.services import scheduler
 
 
@@ -272,7 +272,7 @@ class Manager:
         secrets["stringData"]["CS_API_TOKEN"] = self.cs_api_token
         secrets["stringData"]["BUCKET"] = self.bucket
         secrets["stringData"]["PROJECT"] = self.project
-        secrets["stringData"]["CS_CRYPT_KEY"] = self.secrets.get_secret("CS_CRYPT_KEY")
+        secrets["stringData"]["CS_CRYPT_KEY"] = self.secrets.get("CS_CRYPT_KEY")
         redis_secrets = self.redis_secrets()
         for name, sec in redis_secrets.items():
             if sec is not None:
@@ -281,7 +281,7 @@ class Manager:
         self.write_config("secret.yaml", secrets)
 
     def write_cloudflare_api_token(self):
-        api_token = self.secrets.get_secret("CLOUDFLARE_API_TOKEN")
+        api_token = self.secrets.get("CLOUDFLARE_API_TOKEN")
 
         secret = {
             "apiVersion": "v1",
@@ -325,11 +325,11 @@ class Manager:
         )
         for sec in redis_secrets:
             try:
-                value = self.secrets.get_secret(sec)
+                value = self.secrets.get(sec)
             except exceptions.NotFound:
                 try:
                     value = redis_acl_genpass()
-                    self.secrets.set_secret(sec, value)
+                    self.secrets.set(sec, value)
                 except Exception:
                     value = ""
             redis_secrets[sec] = value
@@ -388,8 +388,6 @@ def serve(args: argparse.Namespace):
 def cli(subparsers: argparse._SubParsersAction, config=None, **kwargs):
     parser = subparsers.add_parser("services", aliases=["svc"])
     svc_subparsers = parser.add_subparsers()
-
-    secrets_cli(svc_subparsers)
 
     build_parser = svc_subparsers.add_parser("build")
     build_parser.set_defaults(func=build)

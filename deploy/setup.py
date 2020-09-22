@@ -20,7 +20,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=["cs-secrets", "pyyaml"],
     include_package_data=True,
-    entry_points={"console_scripts": ["cs=cs_deploy:cli"]},
+    entry_points={"console_scripts": ["cs=cs_deploy.cli:cli"]},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Affero General Public License v3",
