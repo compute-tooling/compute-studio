@@ -41,9 +41,7 @@ class UsersAPIView(APIView):
             return Response([], status=status.HTTP_200_OK)
 
         suggested = (
-            User.objects.filter(
-                Q(username__icontains=search_term) | Q(email__iexact=search_term)
-            )
+            User.objects.filter(username__icontains=search_term)
             .annotate(
                 exact_match=Case(
                     When(username__iexact=search_term, then=Value(True)),
