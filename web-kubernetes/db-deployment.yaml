@@ -30,6 +30,7 @@ spec:
           volumeMounts:
             - mountPath: /var/lib/postgresql/data/
               name: db-volume
+              subPath: postgres
       volumes:
         - name: db-volume
           # This GCE PD must already exist.
