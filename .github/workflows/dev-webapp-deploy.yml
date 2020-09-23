@@ -3,7 +3,7 @@ name: Dev Webapp Deploy
 on:
   push:
     branches:
-      - use-kubernetes
+      - dev
     paths:
       - "webapp/**"
       - "deploy/**"

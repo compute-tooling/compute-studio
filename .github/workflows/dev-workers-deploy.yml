@@ -3,7 +3,7 @@ name: Dev Workers Deploy
 on:
   push:
     branches:
-      - use-kubernetes
+      - dev
     paths:
       - "workers/**"
       - "deploy/**"
