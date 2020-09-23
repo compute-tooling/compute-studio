@@ -10,6 +10,7 @@ from pathlib import Path
 import docker
 import httpx
 
+from cs_deploy.config import workers_config
 from cs_workers.utils import run, clean, parse_owner_title
 
 from cs_workers.services.secrets import ServicesSecrets  # TODO
@@ -443,7 +444,7 @@ def build(args: argparse.Namespace):
     manager = Manager(
         project=args.project,
         tag=args.tag,
-        cs_url=args.cs_url,
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
@@ -456,7 +457,7 @@ def test(args: argparse.Namespace):
     manager = Manager(
         project=args.project,
         tag=args.tag,
-        cs_url=args.cs_url,
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
@@ -469,7 +470,7 @@ def push(args: argparse.Namespace):
     manager = Manager(
         project=args.project,
         tag=args.tag,
-        cs_url=args.cs_url,
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
         models=args.names,
         base_branch=args.base_branch,
         use_kind=args.use_kind,
@@ -485,7 +486,7 @@ def config(args: argparse.Namespace):
     manager = Manager(
         project=args.project,
         tag=args.tag,
-        cs_url=args.cs_url,
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
         models=args.names,
         base_branch=args.base_branch,
         kubernetes_target=args.out,
@@ -501,7 +502,7 @@ def promote(args: argparse.Namespace):
     manager = Manager(
         project=args.project,
         tag=args.tag,
-        cs_url=args.cs_url,
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
@@ -514,7 +515,7 @@ def stage(args: argparse.Namespace):
     manager = Manager(
         project=args.project,
         tag=args.tag,
-        cs_url=args.cs_url,
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
@@ -527,7 +528,7 @@ def stage(args: argparse.Namespace):
 def rm_stale_deployments(args: argparse.Namespace):
     manager = DeploymentManager(
         project=args.project,
-        cs_url=args.cs_url,
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
         cs_api_token=args.cs_api_token,
         stale_after=args.stale_after,
     )

@@ -106,4 +106,4 @@ class ModelConfig:
 
     def _list_secrets(self, app):
         secret = ModelSecrets(app["owner"], app["title"], project=self.project)
-        return secret.list_secrets()
+        return secret.list()

@@ -568,7 +568,7 @@ export const CollaborationModal: React.FC<{
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Search by email or username."
+                      placeholder="Search by username."
                       value={selectedUser}
                       onFocus={() => {
                         setViewAccessQuery(true);

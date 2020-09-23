@@ -6,6 +6,7 @@ from pathlib import Path
 import random
 import yaml
 
+from cs_deploy.config import workers_config as config
 import cs_workers.services.manage
 import cs_workers.services.scheduler
 import cs_workers.services.outputs_processor
@@ -14,53 +15,15 @@ import cs_workers.models.executors.job
 import cs_workers.models.executors.api_task
 import cs_workers.models.executors.server
 
-TAG = os.environ.get("TAG", "")
-PROJECT = os.environ.get("PROJECT")
-CS_URL = os.environ.get("CS_URL", None)
-BUCKET = os.environ.get("BUCKET")
 
-defaults = dict(
-    TAG=datetime.datetime.now().strftime("%Y-%m-%d"),
-    PROJECT=None,
-    CS_URL=None,
-    CS_API_TOKEN=None,
-    BUCKET=None,
-)
-
-
-def load_env():
-    config = copy.deepcopy(defaults)
-
-    path = Path("cs-config.yaml")
-    if path.exists():
-        with open(path, "r") as f:
-            user_config = yaml.safe_load(f.read())
+def cli(subparsers: argparse._SubParsersAction = None):
+    dsc = "CLI for deploying Compute Studio."
+    if subparsers is None:
+        parser = argparse.ArgumentParser(dsc)
     else:
-        user_config = {}
+        parser = subparsers.add_parser("workers", description=dsc)
 
-    for var in [
-        "TAG",
-        "PROJECT",
-        "CS_URL",
-        "CS_API_TOKEN",
-        "BUCKET",
-        "CLUSTER_HOST",
-        "VIZ_HOST",
-    ]:
-        if os.environ.get(var):
-            config[var] = os.environ.get(var)
-        elif user_config.get(var):
-            config[var] = user_config.get(var)
-    return config
-
-
-def cli():
-    config = load_env()
-    parser = argparse.ArgumentParser(description="C/S Workers CLI")
-    parser.add_argument("--tag", required=False, default=config["TAG"])
-    parser.add_argument("--project", required=False, default=config["PROJECT"])
     parser.add_argument("--bucket", required=False, default=config["BUCKET"])
-    parser.add_argument("--cs-url", required=False, default=config["CS_URL"])
     parser.add_argument(
         "--cs-api-token", required=False, default=config["CS_API_TOKEN"]
     )
@@ -75,5 +38,6 @@ def cli():
     cs_workers.models.executors.api_task.cli(sub_parsers)
     cs_workers.models.executors.server.cli(sub_parsers)
 
-    args = parser.parse_args()
-    args.func(args)
+    if subparsers is None:
+        args = parser.parse_args()
+        args.func(args)

@@ -12,7 +12,7 @@ spec:
           containers:
             - name: deployment-cleanup
               image: # Uses scheduler image and is filled in with script.
-              command: ["csw", "models", "rm-stale-deployments", "--stale-after", "1800"]
+              command: ["cs", "workers", "models", "rm-stale-deployments", "--stale-after", "1800"]
               env:
                 - name: CS_URL
                   valueFrom:
