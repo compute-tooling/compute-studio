@@ -76,25 +76,25 @@ spec:
                   name: web-secret
                   key: POSTGRES_PASSWORD
 
-            # - name: STRIPE_SECRET
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: web-secret
-            #       key: STRIPE_SECRET
-            #       optional: true
+            - name: STRIPE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: STRIPE_SECRET
+                  optional: true
 
-            # - name: WEBHOOK_SECRET
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: web-secret
-            #       key: WEBHOOK_SECRET
-            #       optional: true
+            - name: WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: WEBHOOK_SECRET
+                  optional: true
 
-            # - name: MAILGUN_API_KEY
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: web-secret
-            #       key: MAILGUN_API_KEY
-            #       optional: true
+            - name: MAILGUN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: MAILGUN_API_KEY
+                  optional: true
       nodeSelector:
         component: web
