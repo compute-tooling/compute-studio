@@ -5,11 +5,11 @@ on:
     branches:
       - use-kubernetes
     paths:
-      - "webapp/"
-      - "workers/"
-      - "deploy/"
-      - "secrets/"
-      - "web-kubernetes/"
+      - "webapp/**"
+      - "workers/**"
+      - "deploy/**"
+      - "secrets/**"
+      - "web-kubernetes/**"
       - ".github/workflows/dev-deploy.yml"
 
 # Environment variables available to all jobs and steps in this workflow
