@@ -1,4 +1,4 @@
-FROM heroku/miniconda:3
+FROM continuumio/miniconda3
 
 # allow print statements
 ENV PYTHONUNBUFFERED 1
