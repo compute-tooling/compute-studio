@@ -106,19 +106,19 @@
 
    Now you should be able to view the login page at http://loalhost:8000/users/login/.
 
-1) Time to set up the worker cluster. First build the images:
+1. Time to set up the worker cluster. First build the images:
 
    ```bash
    cs workers svc build
    ```
 
-1) Push the docker images to the kind cluster:
+1. Push the docker images to the kind cluster:
 
    ```bash
    cs workers svc push --use-kind
    ```
 
-1) Generate and apply kind configuration:
+1. Generate and apply kind configuration:
 
    ```bash
    cs workers svc config -o - --update-redis | kubectl apply -f -
