@@ -198,13 +198,12 @@ class Manager:
         self.write_scheduler_deployment()
         if update_dns:
             self.write_scheduler_ingressroute()
+            self.write_cloudflare_api_token()
         self.write_outputs_processor_deployment()
         self.write_secret()
         if update_redis:
             self.write_redis_deployment()
         self.write_deployment_cleanup_job()
-
-        self.write_cloudflare_api_token()
 
     def write_scheduler_deployment(self):
         """
@@ -264,7 +263,7 @@ class Manager:
         if workers_config.get("redisVolume"):
             deployment["spec"]["template"]["spec"]["volumes"] = workers_config[
                 "redisVolume"
-            ]
+            ]["volumes"]
         self.write_config("redis-master-Deployment.yaml", deployment)
 
     def write_secret(self):
@@ -360,7 +359,7 @@ def manager_from_args(args: argparse.Namespace):
         bucket=args.bucket,
         kubernetes_target=getattr(args, "out", None),
         use_kind=getattr(args, "use_kind", None),
-        cs_url=getattr(args, "cs_url", None),
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
         cs_api_token=getattr(args, "cs_api_token", None),
         cluster_host=getattr(args, "cluster_host", None),
         viz_host=getattr(args, "viz_host", None),

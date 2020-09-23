@@ -23,6 +23,9 @@ RUN cd /home/ && pip install -e .
 COPY secrets /home/secrets
 RUN pip install -e ./secrets
 
+COPY deploy /home/deploy
+RUN pip install -e ./deploy
+
 WORKDIR /home
 
 ENV PYTHONUNBUFFERED 1
