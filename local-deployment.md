@@ -1,3 +1,31 @@
+1. Create the `cs-config.yaml` file:
+
+   ```yaml
+   webapp:
+    PROJECT: cs-workers-dev
+    HOST: null # internal networking for now but e.g. dev.compute.studio
+
+    dbVolume:
+        volumes:
+        - name: db-volume
+            hostPath:
+            path: /db-data
+            type: Directory
+
+   workers:
+    CS_URL: "http://web"
+    CLUSTER_HOST: null # internal networking for now but e.g. devcluster.compute.studio
+    BUCKET: "some-bucket"
+    PROJECT: "cs-workers-dev"
+
+    redisVolume:
+        volumes:
+        - name: redis-volume
+            hostPath:
+            path: /redis-data
+            type: Directory
+   ```
+
 1. Update `kind-config.yaml` with your username:
 
    ```bash
@@ -64,13 +92,13 @@
 
    - (optional) Data migration from another machine/cluster. See block below at the end of this doc.
 
-1) Run migrations
+1. Run migrations
 
    ```bash
    kubectl exec -t deployments/web -- python manage.py migrate
    ```
 
-1) Check that the login page renders:
+1. Check that the login page renders:
 
    ```bash
    kubectl port-forward deployments/web 8000
@@ -108,17 +136,59 @@
    web-68dd6445c6-5hk6q                1/1     Running   0          44m
    ```
 
-1) Finally, let's deploy a model. (Make sure you've created it on the C/S instance first!)
-   Run the port-forward command from earlier (`kubectl port-forward deployments/web 8000`), and swap to another terminal tab.
+1. Connect the webapp with the workers cluster. Create a user with the username `comp-api-user` through the login page. Retrieve the users API token with the `csk` tool (`pip install -U cs-kit`):
+
+   Set the api token as an environment variable. C/S is transitioning to using a new authentication mechanism for communicating between the cluster and the webapp. For now, we still need this token to make requests to the webapp.
+
+   ```bash
+   export CS_API_TOKEN=$(csk --host http://localhost:8000 --username comp-api-user --password password-here --quiet)
+   ```
+
+   Open up a shell to the webapp pod:
+
+   ```bash
+   kubectl exec -it deployments/web -- python manage.py shell
+   ```
+
+   Run these commands to create a cluster for the comp-api-user and register it with the worker cluster that we just set up.
+
+   ```python
+   from webapp.apps.users.models import Cluster, Profile
+   p = Profile.objects.get(user__username="comp-api-user")
+   c = Cluster.objects.create(service_account=p, url="http://scheduler")
+   c.create_user_in_cluster("http://web")
+   ```
+
+   Approve the user in the workers cluster by running:
+
+   ```bash
+   kubectl exec -it deployments/scheduler -- python
+   ```
+
+   ```python
+   from cs_workers.services.auth import User
+   u = User.get("comp-api-user")
+   u.approved = True
+   u.save()
+   ```
+
+   Now the webapp and the compute cluster are connected and it's time to publish an app.
+
+1. Create an app through the publish page: http://localhost:8000/publish/
+1. Build, push and deploy the app!
 
    ```bash
    export TAG=a-model-tag
+   # Use the external URL since this is being run from outside the cluster.
+   export CS_URL=http://localhost:8000
    cs workers models -n PSLmodels/Tax-Cruncher build
+   # Optionally, you can test the app before deploying it:
+   # cs workers models -n PSLmodels/Tax-Cruncher test
    cs workers models -n PSLmodels/Tax-Cruncher push --use-kind
    cs workers models -n PSLmodels/Tax-Cruncher config -o - | kubectl apply -f -
    ```
 
-1) Check out the model on the webapp at http://localhost:8000/PSLmodels/Tax-Cruncher/new/
+1. Check out the model on the webapp at http://localhost:8000/PSLmodels/Tax-Cruncher/new/
 
 ### Migrate data from another cluster/machine.
 
