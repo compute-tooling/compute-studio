@@ -9,8 +9,6 @@ import sys
 import time
 from pathlib import Path
 
-from kubernetes import client as kclient, config as kconfig
-
 from cs_deploy.config import workers_config
 from cs_workers.services.secrets import ServicesSecrets
 from cs_workers.services import scheduler
@@ -90,8 +88,6 @@ class Manager:
         self._cs_api_token = cs_api_token
         self.cluster_host = cluster_host
         self.viz_host = viz_host
-
-        kconfig.load_kube_config()
 
         if kubernetes_target is None:
             self.kubernetes_target = Manager.kubernetes_target
