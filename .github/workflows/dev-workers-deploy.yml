@@ -1,15 +1,12 @@
-name: Dev Deploy
+name: Dev Workers Deploy
 
 on:
   push:
     branches:
       - use-kubernetes
     paths:
-      - "webapp/**"
       - "workers/**"
       - "deploy/**"
-      - "secrets/**"
-      - "web-kubernetes/**"
       - ".github/workflows/dev-deploy.yml"
 
 # Environment variables available to all jobs and steps in this workflow
@@ -68,17 +65,14 @@ jobs:
       - name: Build Docker Images
         run: |
           cs workers svc build
-          cs webapp build
 
       - name: Push Docker Images
         run: |
           cs workers svc push
-          cs webapp push
 
       # Apply updates to cluster
       - name: Deploy
         run: |
           gcloud container clusters get-credentials $GKE_CLUSTER --zone $GKE_ZONE --project $GKE_PROJECT
           cs workers svc config -o - --update-dns| kubectl apply -f -
-          cs webapp config -o - --update-db | kubectl apply -f -
           kubectl get pods -o wide

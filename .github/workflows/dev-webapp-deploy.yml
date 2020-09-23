@@ -1,0 +1,79 @@
+name: Dev Webapp Deploy
+
+on:
+  push:
+    branches:
+      - use-kubernetes
+    paths:
+      - "webapp/**"
+      - "deploy/**"
+      - "web-kubernetes/**"
+      - ".github/workflows/dev-webapp-deploy.yml"
+
+# Environment variables available to all jobs and steps in this workflow
+env:
+  GITHUB_SHA: ${{ github.sha }}
+
+  GKE_PROJECT: ${{ secrets.DEV_GKE_PROJECT }}
+  GKE_EMAIL: ${{ secrets.DEV_GKE_EMAIL }}
+  GKE_ZONE: us-central1-c
+  GKE_CLUSTER: cluster-1
+  REGISTRY_HOSTNAME: gcr.io
+
+  PROJECT: ${{ secrets.DEV_GKE_PROJECT }}
+  HOST: dev.compute.studio
+  TAG: ${{ github.sha }}
+
+  CS_CONFIG: ${{ secrets.DEV_CS_CONFIG }}
+
+jobs:
+  setup-build-publish-deploy:
+    name: Setup, Build, Test, Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.8"
+
+      # Install pip and pytest
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ./secrets
+          python -m pip install -e ./workers
+          python -m pip install -e ./deploy
+
+      # Setup gcloud CLI
+      - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+          service_account_email: ${{ secrets.DEV_GKE_EMAIL }}
+          service_account_key: ${{ secrets.DEV_GOOGLE_APPLICATION_CREDENTIALS }}
+          export_default_credentials: true
+
+      # Configure docker to use the gcloud command-line tool as a credential helper
+      - run: |
+          # Set up docker to authenticate
+          gcloud auth configure-docker
+
+      - name: Set cs-config.yaml file.
+        run: |
+          echo $CS_CONFIG | base64 --decode > cs-config.yaml
+
+      - name: Build Docker Images
+        run: |
+          cs webapp build
+
+      - name: Push Docker Images
+        run: |
+          cs webapp push
+
+      # Apply updates to cluster
+      - name: Deploy
+        run: |
+          gcloud container clusters get-credentials $GKE_CLUSTER --zone $GKE_ZONE --project $GKE_PROJECT
+          cs webapp config -o - --update-db | kubectl apply -f -
+          kubectl get pods -o wide
