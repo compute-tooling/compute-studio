@@ -80,5 +80,5 @@ jobs:
         run: |
           gcloud container clusters get-credentials $GKE_CLUSTER --zone $GKE_ZONE --project $GKE_PROJECT
           cs workers svc config -o - --update-dns| kubectl apply -f -
-          cs config -o - --update-db | kubectl apply -f -
+          cs webapp config -o - --update-db | kubectl apply -f -
           kubectl get pods -o wide
