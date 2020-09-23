@@ -11,16 +11,22 @@ class Secrets:
         self.project = project
         self.client = None
 
-    def set_secret(self, name, value):
+    def set(self, name, value):
         return self._set_secret(name, value)
 
-    def get_secret(self, name):
+    def get(self, name):
         return self._get_secret(name)
 
-    def list_secrets(self):
+    def get_or_none(self, name):
+        try:
+            return self.get(name)
+        except SecretNotFound:
+            return None
+
+    def list(self):
         raise NotImplementedError()
 
-    def delete_secret(self, name):
+    def delete(self, name):
         return self._delete_secret(name)
 
     def _set_secret(self, name, value):

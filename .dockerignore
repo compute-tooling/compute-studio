@@ -17,3 +17,5 @@ coverage.xml
 *,cover
 *.log
 .git
+redis-data
+db-data

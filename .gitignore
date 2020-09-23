@@ -44,3 +44,5 @@ secret.yaml
 
 *google-creds.json
 *cs-config.yaml
+redis-data
+db-data

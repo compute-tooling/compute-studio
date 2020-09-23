@@ -9,11 +9,9 @@ import sys
 import time
 from pathlib import Path
 
-from kubernetes import client as kclient, config as kconfig
-
-from cs_workers.services.secrets import ServicesSecrets, cli as secrets_cli
+from cs_deploy.config import workers_config
+from cs_workers.services.secrets import ServicesSecrets
 from cs_workers.services import scheduler
-
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
 BASE_PATH = CURR_PATH / ".."
@@ -90,8 +88,6 @@ class Manager:
         self._cs_api_token = cs_api_token
         self.cluster_host = cluster_host
         self.viz_host = viz_host
-
-        kconfig.load_kube_config()
 
         if kubernetes_target is None:
             self.kubernetes_target = Manager.kubernetes_target
@@ -198,13 +194,12 @@ class Manager:
         self.write_scheduler_deployment()
         if update_dns:
             self.write_scheduler_ingressroute()
+            self.write_cloudflare_api_token()
         self.write_outputs_processor_deployment()
         self.write_secret()
         if update_redis:
             self.write_redis_deployment()
         self.write_deployment_cleanup_job()
-
-        self.write_cloudflare_api_token()
 
     def write_scheduler_deployment(self):
         """
@@ -260,6 +255,11 @@ class Manager:
                         },
                     }
                 )
+
+        if workers_config.get("redisVolume"):
+            deployment["spec"]["template"]["spec"]["volumes"] = workers_config[
+                "redisVolume"
+            ]["volumes"]
         self.write_config("redis-master-Deployment.yaml", deployment)
 
     def write_secret(self):
@@ -272,7 +272,7 @@ class Manager:
         secrets["stringData"]["CS_API_TOKEN"] = self.cs_api_token
         secrets["stringData"]["BUCKET"] = self.bucket
         secrets["stringData"]["PROJECT"] = self.project
-        secrets["stringData"]["CS_CRYPT_KEY"] = self.secrets.get_secret("CS_CRYPT_KEY")
+        secrets["stringData"]["CS_CRYPT_KEY"] = self.secrets.get("CS_CRYPT_KEY")
         redis_secrets = self.redis_secrets()
         for name, sec in redis_secrets.items():
             if sec is not None:
@@ -281,7 +281,7 @@ class Manager:
         self.write_config("secret.yaml", secrets)
 
     def write_cloudflare_api_token(self):
-        api_token = self.secrets.get_secret("CLOUDFLARE_API_TOKEN")
+        api_token = self.secrets.get("CLOUDFLARE_API_TOKEN")
 
         secret = {
             "apiVersion": "v1",
@@ -325,11 +325,11 @@ class Manager:
         )
         for sec in redis_secrets:
             try:
-                value = self.secrets.get_secret(sec)
+                value = self.secrets.get(sec)
             except exceptions.NotFound:
                 try:
                     value = redis_acl_genpass()
-                    self.secrets.set_secret(sec, value)
+                    self.secrets.set(sec, value)
                 except Exception:
                     value = ""
             redis_secrets[sec] = value
@@ -355,7 +355,7 @@ def manager_from_args(args: argparse.Namespace):
         bucket=args.bucket,
         kubernetes_target=getattr(args, "out", None),
         use_kind=getattr(args, "use_kind", None),
-        cs_url=getattr(args, "cs_url", None),
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
         cs_api_token=getattr(args, "cs_api_token", None),
         cluster_host=getattr(args, "cluster_host", None),
         viz_host=getattr(args, "viz_host", None),
@@ -388,8 +388,6 @@ def serve(args: argparse.Namespace):
 def cli(subparsers: argparse._SubParsersAction, config=None, **kwargs):
     parser = subparsers.add_parser("services", aliases=["svc"])
     svc_subparsers = parser.add_subparsers()
-
-    secrets_cli(svc_subparsers)
 
     build_parser = svc_subparsers.add_parser("build")
     build_parser.set_defaults(func=build)

@@ -3,10 +3,10 @@ import json
 import os
 
 from cs_workers.utils import clean
-from cs_workers import secrets
+import cs_secrets
 
 
-class ModelSecrets(secrets.Secrets):
+class ModelSecrets(cs_secrets.Secrets):
     def __init__(self, owner=None, title=None, name=None, project=None):
         if owner and title:
             self.owner = owner
@@ -18,13 +18,13 @@ class ModelSecrets(secrets.Secrets):
         self.safe_title = clean(self.title)
         super().__init__(project)
 
-    def set_secret(self, name, value):
+    def set(self, name, value):
         secret_name = f"{self.safe_owner}_{self.safe_title}"
         try:
-            secret_val = self.get_secret()
-        except secrets.SecretNotFound:
+            secret_val = self.get()
+        except cs_secrets.SecretNotFound:
             secret_val = {name: value}
-            return super().set_secret(secret_name, json.dumps(secret_val))
+            return super().set(secret_name, json.dumps(secret_val))
         else:
             if secret_val is not None:
                 secret_val[name] = value
@@ -33,13 +33,13 @@ class ModelSecrets(secrets.Secrets):
             if value is None:
                 secret_val.pop(name)
 
-        return super().set_secret(secret_name, json.dumps(secret_val))
+        return super().set(secret_name, json.dumps(secret_val))
 
-    def get_secret(self, name=None):
+    def get(self, name=None):
         secret_name = f"{self.safe_owner}_{self.safe_title}"
         try:
-            secret = json.loads(super().get_secret(secret_name))
-        except secrets.SecretNotFound:
+            secret = json.loads(super().get(secret_name))
+        except cs_secrets.SecretNotFound:
             return {}
 
         if name and name in secret:
@@ -49,31 +49,31 @@ class ModelSecrets(secrets.Secrets):
         else:
             return secret
 
-    def list_secrets(self):
-        return self.get_secret()
+    def list(self):
+        return self.get()
 
-    def delete_secret(self, name):
-        return self.set_secret(name, None)
+    def delete(self, name):
+        return self.set(name, None)
 
 
 def get_secret(args: argparse.Namespace):
     secrets = ModelSecrets(args.owner, args.title, args.names, args.project)
-    print(secrets.get_secret(args.secret_name))
+    print(secrets.get(args.secret_name))
 
 
 def set_secret(args: argparse.Namespace):
     secrets = ModelSecrets(args.owner, args.title, args.names, args.project)
-    secrets.set_secret(args.secret_name, args.secret_value)
+    secrets.set(args.secret_name, args.secret_value)
 
 
 def list_secrets(args: argparse.Namespace):
     secrets = ModelSecrets(args.owner, args.title, args.names, args.project)
-    print(json.dumps(secrets.list_secrets(), indent=2))
+    print(json.dumps(secrets.list(), indent=2))
 
 
 def delete_secret(args: argparse.Namespace):
     secrets = ModelSecrets(args.owner, args.title, args.names, args.project)
-    secrets.delete_secret(args.delete)
+    secrets.delete(args.delete)
 
 
 def cli(subparsers: argparse._SubParsersAction):
