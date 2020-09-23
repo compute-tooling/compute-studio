@@ -138,7 +138,6 @@ WSGI_APPLICATION = "webapp.wsgi.application"
 def default_db_url():
     db_config = dj_database_url.config()
     if os.environ.get("POSTGRES_PASSWORD"):
-        print("Using pg password from env.")
         return dict(
             db_config, USER="postgres", PASSWORD=os.environ.get("POSTGRES_PASSWORD")
         )
