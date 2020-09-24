@@ -397,10 +397,5 @@ def get_inputs(comp_inputs_json):
 
 
 @pytest.fixture
-def worker_url():
-    return f"http://{os.environ['WORKERS']}/"
-
-
-@pytest.fixture
 def comp_api_user(db):
     return Profile.objects.get(user__username="comp-api-user")
