@@ -64,7 +64,7 @@ class Secrets:
             )
 
             return response.payload.data.decode("utf-8")
-        except exceptions.NotFound:
+        except (exceptions.NotFound, exceptions.PermissionDenied):
             raise SecretNotFound()
 
     def _delete_secret(self, name):
