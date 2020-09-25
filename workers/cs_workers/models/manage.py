@@ -31,7 +31,7 @@ class BaseManager:
     def cs_api_token(self):
         if self._cs_api_token is None:
             svc_secrets = ServicesSecrets(self.project)
-            self._cs_api_token = svc_secrets.get_secret("CS_API_TOKEN")
+            self._cs_api_token = svc_secrets.get("CS_API_TOKEN")
         return self._cs_api_token
 
 
@@ -445,6 +445,7 @@ def build(args: argparse.Namespace):
         project=args.project,
         tag=args.tag,
         cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
+        cs_api_token=getattr(args, "cs_api_token", None),
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
@@ -458,6 +459,7 @@ def test(args: argparse.Namespace):
         project=args.project,
         tag=args.tag,
         cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
+        cs_api_token=getattr(args, "cs_api_token", None),
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
@@ -471,11 +473,11 @@ def push(args: argparse.Namespace):
         project=args.project,
         tag=args.tag,
         cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
+        cs_api_token=getattr(args, "cs_api_token", None),
         models=args.names,
         base_branch=args.base_branch,
         use_kind=args.use_kind,
         cr=args.cr,
-        cs_api_token=getattr(args, "cs_api_token", None),
         ignore_ci_errors=args.ignore_ci_errors,
         use_latest_tag=args.use_latest_tag,
     )
@@ -487,11 +489,11 @@ def config(args: argparse.Namespace):
         project=args.project,
         tag=args.tag,
         cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
+        cs_api_token=getattr(args, "cs_api_token", None),
         models=args.names,
         base_branch=args.base_branch,
         kubernetes_target=args.out,
         cr=args.cr,
-        cs_api_token=getattr(args, "cs_api_token", None),
         ignore_ci_errors=args.ignore_ci_errors,
         use_latest_tag=args.use_latest_tag,
     )
@@ -503,10 +505,10 @@ def promote(args: argparse.Namespace):
         project=args.project,
         tag=args.tag,
         cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
+        cs_api_token=getattr(args, "cs_api_token", None),
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
-        cs_api_token=getattr(args, "cs_api_token", None),
     )
     manager.promote()
 
@@ -516,10 +518,10 @@ def stage(args: argparse.Namespace):
         project=args.project,
         tag=args.tag,
         cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
+        cs_api_token=getattr(args, "cs_api_token", None),
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
-        cs_api_token=getattr(args, "cs_api_token", None),
         staging_tag=getattr(args, "staging_tag", None),
     )
     manager.stage()
@@ -529,7 +531,7 @@ def rm_stale_deployments(args: argparse.Namespace):
     manager = DeploymentManager(
         project=args.project,
         cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
-        cs_api_token=args.cs_api_token,
+        cs_api_token=getattr(args, "cs_api_token", None),
         stale_after=args.stale_after,
     )
     manager.rm_stale(dry_run=args.dry_run)

@@ -88,8 +88,8 @@ def cli(subparsers: argparse._SubParsersAction):
     get_parser.set_defaults(func=get_secret)
 
     set_parser = secrets_subparsers.add_parser("set")
-    set_parser.add_argument("--secret-name", "-s", required=False)
-    set_parser.add_argument("--secret-value", "-v", required=False)
+    set_parser.add_argument("secret_name")
+    set_parser.add_argument("secret_value")
     set_parser.set_defaults(func=set_secret)
 
     list_parser = secrets_subparsers.add_parser("list")
