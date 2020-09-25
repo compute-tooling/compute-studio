@@ -10,7 +10,6 @@ from webapp.apps.billing import invoice
 
 from webapp.apps.comp.models import Simulation
 from webapp.apps.users.models import Deployment, Project, Profile, EmbedApproval
-from webapp.apps.users.tests.utils import mock_post_to_cluster
 
 
 def round4(val):
@@ -44,18 +43,17 @@ def gen_simulations(owner, sponsor, project, run_times):
     return qs
 
 
-def gen_deployments(owner, embed_approval, project, run_times):
-    with mock_post_to_cluster():
-        results = []
-        for i, run_time in enumerate(run_times):
-            deployment, _ = Deployment.objects.get_or_create_deployment(
-                project, f"test-{i}", owner=owner, embed_approval=embed_approval
-            )
-            deployment.status = "terminated"
-            deployment.created_at = timezone.now() - timedelta(seconds=run_time)
-            deployment.deleted_at = timezone.now()
-            deployment.save()
-            results.append(deployment)
+def gen_deployments(owner, embed_approval, project, run_times, mock_post_to_cluster):
+    results = []
+    for i, run_time in enumerate(run_times):
+        deployment, _ = Deployment.objects.get_or_create_deployment(
+            project, f"test-{i}", owner=owner, embed_approval=embed_approval
+        )
+        deployment.status = "terminated"
+        deployment.created_at = timezone.now() - timedelta(seconds=run_time)
+        deployment.deleted_at = timezone.now()
+        deployment.save()
+        results.append(deployment)
 
     qs = Deployment.objects.filter(
         owner=owner, embed_approval=embed_approval, project=project

@@ -3,6 +3,7 @@ import os
 import json
 import datetime
 import functools
+import re
 
 import requests
 import requests_mock
@@ -306,6 +307,11 @@ def project(db):
 
 
 @pytest.fixture
+def viz_project(db):
+    return Project.objects.get(title="Test-Viz")
+
+
+@pytest.fixture
 def test_models(db, profile):
     project = Project.objects.get(title="Used-for-testing")
     inputs = Inputs.objects.create(project=project)
@@ -399,3 +405,43 @@ def get_inputs(comp_inputs_json):
 @pytest.fixture
 def comp_api_user(db):
     return Profile.objects.get(user__username="comp-api-user")
+
+
+####### Mock requests to kubernetes cluster ##########
+
+
+@pytest.fixture
+def mock_post_to_cluster():
+    matcher = re.compile(Cluster.objects.default().url)
+    with requests_mock.Mocker(real_http=True) as mock:
+        mock.register_uri("POST", matcher, json={})
+        mock.register_uri("GET", matcher, json={})
+        yield
+
+
+@pytest.fixture
+def mock_deployments_requests_to_cluster():
+    matcher = re.compile(f"{Cluster.objects.default().url}/deployments*")
+    print(matcher)
+    print(f"{Cluster.objects.default().url}/deployments*")
+    with requests_mock.Mocker(real_http=True) as mock:
+        mock.register_uri(
+            "POST",
+            matcher,
+            json={
+                "deployment": {"ready": True},
+                "ingressroute": {"ready": True},
+                "svc": {"ready": True},
+            },
+        )
+        mock.register_uri(
+            "GET",
+            matcher,
+            json={
+                "deployment": {"ready": True},
+                "ingressroute": {"ready": True},
+                "svc": {"ready": True},
+            },
+        )
+        mock.register_uri("DELETE", matcher, json={})
+        yield

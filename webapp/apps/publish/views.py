@@ -346,7 +346,7 @@ class EmbedApprovalView(GetProjectMixin, APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class EmbedApprovalDetailView(APIView):
+class EmbedApprovalDetailView(GetProjectMixin, APIView):
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
@@ -355,11 +355,8 @@ class EmbedApprovalDetailView(APIView):
     permission_classes = (StrictRequiresActive,)
 
     def get(self, request, *args, **kwargs):
-        ea = EmbedApproval.objects.get(
-            project__owner__user__username__iexact=kwargs["username"],
-            project__title__iexact=kwargs["title"],
-            name__iexact=kwargs["ea_name"],
-        )
+        project = self.get_object(**kwargs)
+        ea = EmbedApproval.objects.get(project=project, name__iexact=kwargs["ea_name"],)
 
         # Throw 404 if user does not have access.
         if ea.owner != request.user.profile:
@@ -368,11 +365,8 @@ class EmbedApprovalDetailView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, *args, **kwargs):
-        ea = EmbedApproval.objects.get(
-            project__owner__user__username__iexact=kwargs["username"],
-            project__title__iexact=kwargs["title"],
-            name__iexact=kwargs["ea_name"],
-        )
+        project = self.get_object(**kwargs)
+        ea = EmbedApproval.objects.get(project=project, name__iexact=kwargs["ea_name"],)
 
         # Throw 404 if user does not have access.
         if ea.owner != request.user.profile:
@@ -402,11 +396,8 @@ class EmbedApprovalDetailView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, *args, **kwargs):
-        ea = EmbedApproval.objects.get(
-            project__owner__user__username__iexact=kwargs["username"],
-            project__title__iexact=kwargs["title"],
-            name__iexact=kwargs["ea_name"],
-        )
+        project = self.get_object(**kwargs)
+        ea = EmbedApproval.objects.get(project=project, name__iexact=kwargs["ea_name"],)
 
         # Throw 404 if user does not have access.
         if ea.owner != request.user.profile:
@@ -437,7 +428,7 @@ class DeploymentsView(generics.ListAPIView):
         return self.queryset
 
 
-class DeploymentsDetailView(APIView):
+class DeploymentsDetailView(GetProjectMixin, APIView):
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
@@ -447,6 +438,8 @@ class DeploymentsDetailView(APIView):
     permission_classes = (RequiresActive,)
 
     def get(self, request, *args, **kwargs):
+        project = self.get_object(**kwargs)
+
         status_query = request.query_params.get("status", None)
         ping = request.query_params.get("ping", None)
         if status_query is None:
@@ -457,14 +450,10 @@ class DeploymentsDetailView(APIView):
         deployment = get_object_or_404(
             Deployment,
             name__iexact=kwargs["dep_name"],
-            project__owner__user__username__iexact=kwargs["username"],
-            project__title__iexact=kwargs["title"],
+            project=project,
             deleted_at__isnull=True,
             **status_kwarg,
         )
-
-        if not deployment.project.has_write_access(request.user):
-            return Response(status=status.HTTP_404_NOT_FOUND)
 
         if ping is None:
             deployment.load()
@@ -476,22 +465,20 @@ class DeploymentsDetailView(APIView):
         )
 
     def delete(self, request, *args, **kwargs):
-        if not (
-            request.user.is_authenticated and request.user.username == "comp-api-user"
-        ):
+        project = self.get_object(**kwargs)
+
+        if not project.has_write_access(request.user):
             raise APIPermissionDenied()
+
         deployment = get_object_or_404(
             Deployment,
             name__iexact=kwargs["dep_name"],
-            project__owner__user__username__iexact=kwargs["username"],
-            project__title__iexact=kwargs["title"],
+            project=project,
             deleted_at__isnull=True,
             status__in=["creating", "running"],
         )
 
         deployment.delete_deployment()
-
-        # self.charge_deployment(deployment, use_stripe=USE_STRIPE)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -507,7 +494,11 @@ class DeploymentsIdView(APIView):
 
     def get(self, request, *args, **kwargs):
         ping = request.query_params.get("ping", None)
-        deployment = get_object_or_404(Deployment, id=kwargs["id"])
+        deployment = get_object_or_404(
+            Deployment.objects.prefetch_related("project"), pk=kwargs["id"]
+        )
+        if not deployment.project.has_read_access(request.user):
+            raise Http404()
 
         if ping is None:
             deployment.load()

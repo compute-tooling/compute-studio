@@ -7,7 +7,6 @@ from guardian.shortcuts import assign_perm, remove_perm, get_perms, get_users_wi
 
 
 from webapp.apps.billing.models import Customer
-from webapp.apps.users.tests.utils import mock_post_to_cluster
 from webapp.apps.users.models import (
     Profile,
     Project,
@@ -237,7 +236,7 @@ class TestProjectPermissionse:
 
 
 class TestDeployments:
-    def test_create_deployment_with_ea(self, db, profile):
+    def test_create_deployment_with_ea(self, db, profile, mock_post_to_cluster):
         project = Project.objects.get(title="Test-Viz")
 
         ea = EmbedApproval.objects.create(
@@ -247,39 +246,35 @@ class TestDeployments:
             name="my-test-embed",
         )
 
-        with mock_post_to_cluster():
-            deployment, created = Deployment.objects.get_or_create_deployment(
-                project=project, name="my-deployment", owner=None, embed_approval=ea,
-            )
+        deployment, created = Deployment.objects.get_or_create_deployment(
+            project=project, name="my-deployment", owner=None, embed_approval=ea,
+        )
 
         assert created
         assert deployment.embed_approval == ea
         assert deployment.owner is None
 
-    def test_create_deployment_with_sponsored_project(self, db, profile):
+    def test_create_deployment_with_sponsored_project(
+        self, db, profile, mock_post_to_cluster
+    ):
         project = Project.objects.get(title="Test-Viz")
         sponsor = Profile.objects.get(user__username="sponsor")
         project.sponsor = sponsor
         project.save()
 
-        with mock_post_to_cluster():
-            deployment, created = Deployment.objects.get_or_create_deployment(
-                project=project, name="my-deployment", owner=None, embed_approval=None,
-            )
+        deployment, created = Deployment.objects.get_or_create_deployment(
+            project=project, name="my-deployment", owner=None, embed_approval=None,
+        )
 
         assert created
         assert deployment.embed_approval is None
         assert deployment.owner == sponsor
 
-    def test_create_deployment_exception(self, db, profile):
+    def test_create_deployment_exception(self, db, profile, mock_post_to_cluster):
         project = Project.objects.get(title="Test-Viz")
         project.save()
 
         with pytest.raises(DeploymentException):
-            with mock_post_to_cluster():
-                Deployment.objects.get_or_create_deployment(
-                    project=project,
-                    name="my-deployment",
-                    owner=None,
-                    embed_approval=None,
-                )
+            Deployment.objects.get_or_create_deployment(
+                project=project, name="my-deployment", owner=None, embed_approval=None,
+            )

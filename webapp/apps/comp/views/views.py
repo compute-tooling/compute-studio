@@ -35,6 +35,7 @@ from webapp.apps.users.models import (
     Project,
     EmbedApproval,
     Deployment,
+    DeploymentException,
     is_profile_active,
     get_project_or_404,
 )
@@ -171,9 +172,12 @@ class VizView(InputsMixin, View):
             owner = request.user.profile
         else:
             owner = None
-        deployment, _ = Deployment.objects.get_or_create_deployment(
-            project=project, name=kwargs.get("rd_name", "default"), owner=owner
-        )
+        try:
+            deployment, _ = Deployment.objects.get_or_create_deployment(
+                project=project, name=kwargs.get("rd_name", "default"), owner=owner
+            )
+        except DeploymentException:
+            raise Http404("Viz apps must have a sponsor.")
         context["show_readme"] = False
         context["tech"] = project.tech
         context["object"] = project

@@ -1,6 +1,7 @@
 import datetime
 import os
 import json
+import time
 import uuid
 
 import pytest
@@ -18,6 +19,7 @@ from webapp.apps.users.models import (
     Project,
     Profile,
     EmbedApproval,
+    Deployment,
     create_profile_from_user,
 )
 from webapp.apps.users.tests.utils import gen_collabs
@@ -1571,33 +1573,130 @@ def test_list_sim_api(db, api_client, profile, get_inputs, meta_param_dict):
     assert resp.data["results"][0]["model_pk"] == tester_sims[1].model_pk
 
 
-# @pytest.mark.django_db
-# class TestViz:
-#     def test_get_viz(self, client, project):
-#         resp = client.get(f"/{project}/viz/")
-#         assert resp.status_code == 200
+@pytest.mark.django_db
+class TestViz:
+    def test_not_sponsored(
+        self, client, viz_project, mock_deployments_requests_to_cluster
+    ):
+        """
+        For now, test unsponsored viz projects return 404.
+        """
+        resp = client.get(f"/{viz_project}/viz/")
+        assert resp.status_code == 404
 
-#     def test_get_embed(self, client, project):
+    def test_get_viz(self, client, viz_project, mock_deployments_requests_to_cluster):
+        viz_project.sponsor = viz_project.owner
+        viz_project.save()
 
-#         resp = client.get(f"/{project}/embed/test/")
-#         assert resp.status_code == 404
+        resp = client.get(f"/{viz_project}/viz/")
+        assert resp.status_code == 200
 
-#         (profile,) = gen_collabs(1)
+        deployment = Deployment.objects.get(project=viz_project, status="creating")
 
-#         ea = EmbedApproval.objects.create(
-#             project=project,
-#             owner=profile,
-#             name="test",
-#             url="http://embed.compute.studio",
-#         )
-#         url = ea.get_absolute_url()
+        resp = client.get(f"/apps/api/v1/{viz_project}/deployments/{deployment.name}/")
+        assert resp.status_code == 200
 
-#         resp = client.get(url)
-#         assert resp.status_code == 200
-#         assert resp._headers["content-security-policy"] == (
-#             "Content-Security-Policy",
-#             "frame-ancestors http://embed.compute.studio",
-#         )
+        deployment.refresh_from_db()
 
-#         resp = client.get((f"/{project}/embed/doesnotexist/"))
-#         assert resp.status_code == 404
+        assert deployment.status == "running"
+
+        last_load_at = deployment.last_load_at
+        last_ping_at = deployment.last_ping_at
+        time.sleep(0.1)
+
+        resp = client.get(f"/apps/api/v1/deployments/{deployment.pk}/")
+        assert resp.status_code == 200
+
+        deployment.refresh_from_db()
+        assert last_load_at < deployment.last_load_at
+        assert last_ping_at < deployment.last_ping_at
+
+        last_load_at = deployment.last_load_at
+        last_ping_at = deployment.last_ping_at
+        time.sleep(0.1)
+        resp = client.get(f"/apps/api/v1/deployments/{deployment.pk}/?ping=True")
+
+    def test_delete_viz_deployment(
+        self, client, api_client, viz_project, mock_deployments_requests_to_cluster
+    ):
+        viz_project.sponsor = viz_project.owner
+        viz_project.save()
+
+        resp = client.get(f"/{viz_project}/viz/")
+        assert resp.status_code == 200
+
+        deployment = Deployment.objects.get(project=viz_project, status="creating")
+
+        deployment.load()
+
+        assert deployment.status == "running"
+
+        resp = api_client.get(
+            f"/apps/api/v1/{viz_project}/deployments/{deployment.name}/"
+        )
+        assert resp.status_code == 200
+
+        resp = api_client.delete(
+            f"/apps/api/v1/{viz_project}/deployments/{deployment.name}/"
+        )
+        assert resp.status_code == 403
+        deployment.refresh_from_db()
+        assert deployment.status == "running"
+
+        api_client.force_login(viz_project.cluster.service_account.user)
+        resp = api_client.delete(
+            f"/apps/api/v1/{viz_project}/deployments/{deployment.name}/"
+        )
+        assert resp.status_code == 204
+
+        deployment.refresh_from_db()
+        assert deployment.status == "terminated"
+
+        resp = api_client.get(
+            f"/apps/api/v1/{viz_project}/deployments/{deployment.name}/"
+        )
+        assert resp.status_code == 404
+
+        resp = client.get(f"/{viz_project}/viz/")
+        assert resp.status_code == 200
+
+        assert Deployment.objects.get(project=viz_project, status="creating")
+
+        assert Deployment.objects.filter(project=viz_project).count() == 2
+
+    def test_get_embed(self, client, viz_project, mock_deployments_requests_to_cluster):
+        viz_project.sponsor = viz_project.owner
+        viz_project.save()
+
+        resp = client.get(f"/{viz_project}/embed/test/")
+        assert resp.status_code == 404
+
+        (profile,) = gen_collabs(1)
+
+        ea = EmbedApproval.objects.create(
+            project=viz_project,
+            owner=profile,
+            name="test",
+            url="http://embed.compute.studio",
+        )
+        url = ea.get_absolute_url()
+
+        resp = client.get(url)
+        assert resp.status_code == 200
+        assert resp._headers["content-security-policy"] == (
+            "Content-Security-Policy",
+            "frame-ancestors http://embed.compute.studio",
+        )
+
+        resp = client.get((f"/{viz_project}/embed/doesnotexist/"))
+        assert resp.status_code == 404
+
+        deployment = Deployment.objects.get(project=viz_project, status="creating")
+        resp = client.get(f"/{viz_project}/viz/{ea.name}/")
+        assert resp.status_code == 200
+
+        resp = client.get(f"/apps/api/v1/{viz_project}/deployments/{deployment.name}/")
+        assert resp.status_code == 200
+
+        resp = client.get(f"/apps/api/v1/deployments/{deployment.pk}/")
+        assert resp.status_code == 200
