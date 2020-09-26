@@ -54,7 +54,6 @@ User = get_user_model()
 
 class GetProjectMixin:
     def get_object(self, username, title, **kwargs):
-        print(self.request.user, username, title)
         return get_project_or_404(
             Project.objects.all(),
             user=self.request.user,
@@ -125,7 +124,7 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ProjectAPIView(GetProjectMixin, APIView):
+class ProjectAPIView(APIView):
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
