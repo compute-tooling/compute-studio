@@ -1573,27 +1573,54 @@ def test_list_sim_api(db, api_client, profile, get_inputs, meta_param_dict):
     assert resp.data["results"][0]["model_pk"] == tester_sims[1].model_pk
 
 
+@pytest.fixture(params=[True, False])
+def viz(request, db, viz_project):
+    sponsor = Profile.objects.get(user__username="sponsor")
+    viz_project.sponsor = sponsor
+    viz_project.is_public = request.param
+    viz_project.save()
+    return viz_project
+
+
 @pytest.mark.django_db
-class TestViz:
-    def test_not_sponsored(
-        self, client, viz_project, mock_deployments_requests_to_cluster
-    ):
+class TestDeployments:
+    def test_not_sponsored(self, client, viz, mock_deployments_requests_to_cluster):
         """
         For now, test unsponsored viz projects return 404.
         """
-        resp = client.get(f"/{viz_project}/viz/")
+        viz.sponsor = None
+        viz.save()
+        resp = client.get(f"/{viz}/viz/")
         assert resp.status_code == 404
 
-    def test_get_viz(self, client, viz_project, mock_deployments_requests_to_cluster):
-        viz_project.sponsor = viz_project.owner
-        viz_project.save()
+    def test_get_viz(
+        self, client, api_client, viz, mock_deployments_requests_to_cluster
+    ):
+        resp = client.get(f"/{viz}/viz/")
+        if not viz.is_public:
+            assert resp.status_code == 404
+            client.force_login(viz.owner.user)
+            resp = client.get(f"/{viz}/viz/")
 
-        resp = client.get(f"/{viz_project}/viz/")
         assert resp.status_code == 200
 
-        deployment = Deployment.objects.get(project=viz_project, status="creating")
+        deployment = Deployment.objects.get(project=viz, status="creating")
 
-        resp = client.get(f"/apps/api/v1/{viz_project}/deployments/{deployment.name}/")
+        (collab,) = gen_collabs(1)
+        client.force_login(collab.user)
+        resp = client.get(f"/{viz}/viz/")
+        if not viz.is_public:
+            assert resp.status_code == 404
+            viz.assign_role("read", collab.user)
+            resp = client.get(f"/{viz}/viz/")
+
+        assert resp.status_code == 200
+
+        resp = api_client.get(f"/apps/api/v1/{viz}/deployments/{deployment.name}/")
+        if not viz.is_public:
+            assert resp.status_code == 404
+            api_client.force_login(collab.user)
+            resp = api_client.get(f"/apps/api/v1/{viz}/deployments/{deployment.name}/")
         assert resp.status_code == 200
 
         deployment.refresh_from_db()
@@ -1604,7 +1631,13 @@ class TestViz:
         last_ping_at = deployment.last_ping_at
         time.sleep(0.1)
 
-        resp = client.get(f"/apps/api/v1/deployments/{deployment.pk}/")
+        api_client.logout()
+        resp = api_client.get(f"/apps/api/v1/deployments/{deployment.pk}/")
+        if not viz.is_public:
+            assert resp.status_code == 404
+            api_client.force_login(collab.user)
+            resp = api_client.get(f"/apps/api/v1/deployments/{deployment.pk}/")
+
         assert resp.status_code == 200
 
         deployment.refresh_from_db()
@@ -1616,87 +1649,100 @@ class TestViz:
         time.sleep(0.1)
         resp = client.get(f"/apps/api/v1/deployments/{deployment.pk}/?ping=True")
 
-    def test_delete_viz_deployment(
-        self, client, api_client, viz_project, mock_deployments_requests_to_cluster
-    ):
-        viz_project.sponsor = viz_project.owner
-        viz_project.save()
-
-        resp = client.get(f"/{viz_project}/viz/")
         assert resp.status_code == 200
 
-        deployment = Deployment.objects.get(project=viz_project, status="creating")
+        deployment.refresh_from_db()
+        assert last_load_at == deployment.last_load_at
+        assert last_ping_at < deployment.last_ping_at
+
+    def test_delete_viz_deployment(
+        self, client, api_client, viz, mock_deployments_requests_to_cluster
+    ):
+        (collab,) = gen_collabs(1)
+        viz.assign_role("read", collab.user)
+        client.force_login(collab.user)
+        resp = client.get(f"/{viz}/viz/")
+        assert resp.status_code == 200
+
+        deployment = Deployment.objects.get(project=viz, status="creating")
 
         deployment.load()
 
         assert deployment.status == "running"
 
-        resp = api_client.get(
-            f"/apps/api/v1/{viz_project}/deployments/{deployment.name}/"
-        )
-        assert resp.status_code == 200
+        resp = api_client.delete(f"/apps/api/v1/{viz}/deployments/{deployment.name}/")
+        if viz.is_public:
+            assert resp.status_code == 403  # Public returns permission denied
+        else:
+            assert resp.status_code == 404  # Private returns not found
 
-        resp = api_client.delete(
-            f"/apps/api/v1/{viz_project}/deployments/{deployment.name}/"
-        )
-        assert resp.status_code == 403
+        api_client.force_login(collab.user)
+        resp = api_client.delete(f"/apps/api/v1/{viz}/deployments/{deployment.name}/")
+        assert resp.status_code == 403  # Only has read access for project.
+
         deployment.refresh_from_db()
         assert deployment.status == "running"
 
-        api_client.force_login(viz_project.cluster.service_account.user)
-        resp = api_client.delete(
-            f"/apps/api/v1/{viz_project}/deployments/{deployment.name}/"
-        )
+        api_client.force_login(viz.cluster.service_account.user)
+        resp = api_client.delete(f"/apps/api/v1/{viz}/deployments/{deployment.name}/")
         assert resp.status_code == 204
 
         deployment.refresh_from_db()
         assert deployment.status == "terminated"
 
-        resp = api_client.get(
-            f"/apps/api/v1/{viz_project}/deployments/{deployment.name}/"
-        )
+        resp = api_client.get(f"/apps/api/v1/{viz}/deployments/{deployment.name}/")
         assert resp.status_code == 404
 
-        resp = client.get(f"/{viz_project}/viz/")
+        resp = client.get(f"/{viz}/viz/")
         assert resp.status_code == 200
 
-        assert Deployment.objects.get(project=viz_project, status="creating")
+        assert Deployment.objects.get(project=viz, status="creating")
 
-        assert Deployment.objects.filter(project=viz_project).count() == 2
+        assert Deployment.objects.filter(project=viz).count() == 2
 
-    def test_get_embed(self, client, viz_project, mock_deployments_requests_to_cluster):
-        viz_project.sponsor = viz_project.owner
-        viz_project.save()
-
-        resp = client.get(f"/{viz_project}/embed/test/")
+    def test_get_embed(
+        self, client, api_client, viz, mock_deployments_requests_to_cluster
+    ):
+        (collab, profile,) = gen_collabs(2)
+        viz.assign_role("read", profile.user)
+        resp = client.get(f"/{viz}/embed/test/")
         assert resp.status_code == 404
 
-        (profile,) = gen_collabs(1)
+        # Check that viz doesn't exist.e.g. the 404 above is not just from
+        # the anon user not having access to the project.
+        if not viz.is_public:
+            viz.assign_role("read", collab.user)
+            client.force_login(collab.user)
+            resp = client.get(f"/{viz}/embed/test/")
+            assert resp.status_code == 404
+            client.logout()
 
         ea = EmbedApproval.objects.create(
-            project=viz_project,
-            owner=profile,
-            name="test",
-            url="http://embed.compute.studio",
+            project=viz, owner=profile, name="test", url="http://embed.compute.studio",
         )
         url = ea.get_absolute_url()
-
         resp = client.get(url)
+        if not viz.is_public:
+            assert resp.status_code == 404
+            client.force_login(collab.user)
+            resp = client.get(f"/{viz}/embed/test/")
+
         assert resp.status_code == 200
         assert resp._headers["content-security-policy"] == (
             "Content-Security-Policy",
             "frame-ancestors http://embed.compute.studio",
         )
 
-        resp = client.get((f"/{viz_project}/embed/doesnotexist/"))
+        resp = client.get((f"/{viz}/embed/doesnotexist/"))
         assert resp.status_code == 404
 
-        deployment = Deployment.objects.get(project=viz_project, status="creating")
-        resp = client.get(f"/{viz_project}/viz/{ea.name}/")
+        deployment = Deployment.objects.get(project=viz, status="creating")
+        resp = client.get(f"/{viz}/viz/{ea.name}/")
         assert resp.status_code == 200
 
-        resp = client.get(f"/apps/api/v1/{viz_project}/deployments/{deployment.name}/")
+        api_client.force_login(collab.user)
+        resp = api_client.get(f"/apps/api/v1/{viz}/deployments/{deployment.name}/")
         assert resp.status_code == 200
 
-        resp = client.get(f"/apps/api/v1/deployments/{deployment.pk}/")
+        resp = api_client.get(f"/apps/api/v1/deployments/{deployment.pk}/")
         assert resp.status_code == 200

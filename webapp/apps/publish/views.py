@@ -423,9 +423,9 @@ class DeploymentsView(generics.ListAPIView):
     serializer_class = DeploymentSerializer
 
     def get_queryset(self):
-        if not self.request.user.username == "comp-api-user":
-            raise APIPermissionDenied()
-        return self.queryset
+        return self.queryset.filter(
+            project__cluster__service_account__user=self.request.user
+        )
 
 
 class DeploymentsDetailView(GetProjectMixin, APIView):

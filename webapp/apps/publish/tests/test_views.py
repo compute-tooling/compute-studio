@@ -7,8 +7,8 @@ from django.contrib.auth import get_user_model, get_user
 from guardian.shortcuts import assign_perm, remove_perm
 
 from webapp.apps.comp.models import Simulation
-from webapp.apps.users.models import Project, Profile, EmbedApproval, Tag
-from webapp.apps.users.serializers import ProjectSerializer
+from webapp.apps.users.models import Project, Profile, Deployment, EmbedApproval, Tag
+from webapp.apps.users.serializers import ProjectSerializer, DeploymentSerializer
 
 from .utils import mock_sync_projects, mock_get_version
 from webapp.apps.users.tests.utils import gen_collabs
@@ -402,6 +402,36 @@ class TestPublishViews:
         project.refresh_from_db()
         assert project.staging_tag is None
         assert project.latest_tag == Tag.objects.get(project=project, image_tag="v6")
+
+
+class TestDeployments:
+    def test_list_deployments(
+        self, db, client, api_client, viz_project, mock_deployments_requests_to_cluster
+    ):
+        viz_project.sponsor = viz_project.owner
+        viz_project.save()
+
+        resp = client.get(f"/{viz_project}/viz/")
+        assert resp.status_code == 200
+
+        resp = api_client.get(f"/apps/api/v1/deployments/")
+        assert resp.status_code == 403
+
+        (collab,) = gen_collabs(1)
+        api_client.force_login(collab.user)
+        resp = api_client.get(f"/apps/api/v1/deployments/")
+        assert resp.status_code == 200
+        assert resp.json()["results"] == []
+
+        api_client.force_login(viz_project.cluster.service_account.user)
+        resp = api_client.get(f"/apps/api/v1/deployments/")
+        assert resp.status_code == 200
+        assert (
+            resp.json()["results"]
+            == DeploymentSerializer(
+                Deployment.objects.filter(project=viz_project), many=True
+            ).data
+        )
 
 
 @pytest.mark.django_db
