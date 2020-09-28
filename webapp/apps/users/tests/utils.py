@@ -2,6 +2,7 @@ import os
 import pytest
 import re
 from contextlib import contextmanager
+import secrets
 
 from django.contrib.auth import get_user_model
 
@@ -20,9 +21,10 @@ User = get_user_model()
 
 
 def gen_collabs(n, plan=None):
-    for i in range(n):
+    for _ in range(n):
+        key = secrets.token_hex(3)
         u = User.objects.create_user(
-            f"collab-{i}", f"collab{i}@example.com", "heyhey2222"
+            f"collab-{key}", f"collab-{key}@example.com", "heyhey2222"
         )
         create_profile_from_user(u)
         profile = Profile.objects.get(user=u)
