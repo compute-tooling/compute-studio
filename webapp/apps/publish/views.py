@@ -27,6 +27,7 @@ from rest_framework import filters
 # from webapp.settings import DEBUG
 
 from webapp.settings import USE_STRIPE
+from webapp.apps.users.exceptions import ResourceLimitException
 from webapp.apps.users.models import (
     Project,
     Cluster,
@@ -99,7 +100,13 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         serializer = ProjectSerializer(project, data=request.data)
-        if serializer.is_valid():
+        try:
+            is_valid = serializer.is_valid()
+        except ResourceLimitException as e:
+            return Response(
+                {e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST
+            )
+        if is_valid:
             model = serializer.save(status="live")
             Project.objects.sync_project_with_workers(
                 ProjectSerializer(model).data, model.cluster
@@ -160,12 +167,17 @@ class ProjectAPIView(APIView):
                         {"project_exists": f"{username}/{title} already exists."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-                model = serializer.save(
-                    owner=request.user.profile,
-                    status="pending",
-                    title=title,
-                    cluster=Cluster.objects.default(),
-                )
+                try:
+                    model = serializer.save(
+                        owner=request.user.profile,
+                        status="pending",
+                        title=title,
+                        cluster=Cluster.objects.default(),
+                    )
+                except ResourceLimitException as e:
+                    return Response(
+                        {e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST
+                    )
                 status_url = request.build_absolute_uri(model.app_url)
                 model.assign_role("write", self.api_user)
                 Project.objects.sync_project_with_workers(

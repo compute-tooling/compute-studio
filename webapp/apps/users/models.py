@@ -247,10 +247,13 @@ class ProjectManager(models.Manager):
     def sync_project_with_workers(self, project, cluster):
         SyncProjects().submit_job(project, cluster)
 
+    @transaction.atomic
     def create(self, *args, **kwargs):
         project = super().create(*args, **kwargs)
         if project.cluster is None:
             project.cluster = Cluster.objects.default()
+        if not project.is_public:
+            project.make_private_test()
         project.assign_role("admin", project.owner.user)
         project.assign_role("write", project.cluster.service_account.user)
         return project

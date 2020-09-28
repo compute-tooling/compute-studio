@@ -413,6 +413,43 @@ class TestPublishViews:
         assert project.staging_tag is None
         assert project.latest_tag == Tag.objects.get(project=project, image_tag="v6")
 
+    def test_private_app_restrictions(self, api_client):
+        post_data = {
+            "title": "New-Model",
+            "oneliner": "oneliner",
+            "description": "**Super** new!",
+            "repo_url": "https://github.com/compute-tooling/compute-studio",
+            "repo_tag": "dev",
+            "cpu": 3,
+            "memory": 9,
+            "listed": True,
+            "is_public": False,
+        }
+
+        (free_user,) = gen_collabs(1)
+        api_client.force_login(free_user.user)
+        with mock_sync_projects():
+            resp = api_client.post("/apps/api/v1/", post_data)
+        assert resp.status_code == 400
+        data = resp.json()
+        assert "make_private" == data["collaborators"]["test_name"]
+
+        with pytest.raises(Project.DoesNotExist):
+            Project.objects.get(title="New-Model")
+
+        post_data["is_public"] = True
+        with mock_sync_projects():
+            resp = api_client.post("/apps/api/v1/", post_data)
+        assert resp.status_code == 200
+
+        with mock_sync_projects():
+            resp = api_client.put(
+                f"/apps/api/v1/{free_user}/New-Model/", {"is_public": False},
+            )
+        assert resp.status_code == 400
+        data = resp.json()
+        assert "make_private" == data["collaborators"]["test_name"]
+
 
 class TestDeployments:
     def test_list_deployments(

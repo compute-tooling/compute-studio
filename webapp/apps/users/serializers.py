@@ -50,6 +50,11 @@ class ProjectSerializer(serializers.ModelSerializer):
             rep.pop("user_count")
         return rep
 
+    def validate_is_public(self, value):
+        if getattr(self, "instance", None) is not None and value is False:
+            self.instance.make_private_test()
+        return value
+
     class Meta:
         model = Project
         fields = (
