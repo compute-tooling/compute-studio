@@ -13,3 +13,12 @@ nodes:
         containerPath: /code
       - hostPath: /home/hankdoupe/compute-studio/db-data
         containerPath: /db-data
+    # extraPortMappings:
+    #   - containerPort: 8000
+    #     hostPort: 8000
+    #     # optional: set the bind address on the host
+    #     # 0.0.0.0 is the current default
+    #     listenAddress: "127.0.0.1"
+    #     # optional: set the protocol to one of TCP, UDP, SCTP.
+    #     # TCP is the default
+    #     protocol: TCP

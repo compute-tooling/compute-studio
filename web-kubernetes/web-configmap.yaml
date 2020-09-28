@@ -8,4 +8,4 @@ data:
   USE_STRIPE: "false"
   DEFAULT_CLUSTER_USER: "comp-api-user"
   DEFAULT_VIZ_HOST: "devviz.compute.studio"
-  USE_STRIPE: true
+  USE_STRIPE: "true"
