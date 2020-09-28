@@ -9,7 +9,7 @@ import {
   Simulation,
   RemoteOutputs,
   Role,
-  DescriptionValues
+  DescriptionValues,
 } from "../types";
 import { Formik, FormikHelpers, ErrorMessage, Field, Form, FormikProps } from "formik";
 import { Message } from "../fields";
@@ -29,7 +29,7 @@ interface DescriptionProps {
 }
 
 let Schema = yup.object().shape({
-  title: yup.string()
+  title: yup.string(),
 });
 
 type DescriptionState = Readonly<{
@@ -45,8 +45,8 @@ type DescriptionState = Readonly<{
 const defaultReadme: { [key: string]: any }[] = [
   {
     type: "paragraph",
-    children: [{ text: "" }]
-  }
+    children: [{ text: "" }],
+  },
 ];
 
 const HistoryDropDownItems = (
@@ -78,7 +78,7 @@ const HistoryDropDownItems = (
       <Row>
         <Col>{`${historyType + " History: "}${nsims + 1}${suffix} Simulation in this line`}</Col>
       </Row>
-    </Dropdown.Header>
+    </Dropdown.Header>,
   ];
   dropdownItems.push(
     ...viewableHistory.map((sim, ix) => {
@@ -166,7 +166,7 @@ export default class DescriptionComponent extends React.Component<
       readme: this.props.remoteSim?.readme || defaultReadme,
       is_public: this.props.remoteSim?.is_public || false,
       author: { add: { username: "", msg: "" }, remove: { username: "" } },
-      access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } }
+      access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } },
     };
     this.state = {
       initialValues: initialValues,
@@ -174,7 +174,7 @@ export default class DescriptionComponent extends React.Component<
       parentSims: null,
       showAuth: false,
       showTitleBorder: false,
-      dirty: false
+      dirty: false,
     };
 
     this.toggleEditMode = this.toggleEditMode.bind(this);
@@ -251,7 +251,7 @@ export default class DescriptionComponent extends React.Component<
   toggleEditMode() {
     if (this.hasWriteAccess()) {
       this.setState({
-        isEditMode: !this.state.isEditMode
+        isEditMode: !this.state.isEditMode,
       });
     }
   }
@@ -321,9 +321,9 @@ export default class DescriptionComponent extends React.Component<
                     // remoteSim has not been defined...i.e. new sim.
                     is_public: !!this.props.remoteSim
                       ? this.props.remoteSim?.is_public
-                      : values.is_public
-                  }
-                }
+                      : values.is_public,
+                  },
+                },
               });
             })
             .catch(error => {
@@ -331,7 +331,7 @@ export default class DescriptionComponent extends React.Component<
               if (error.response.status == 400 && error.response.data.collaborators) {
                 window.scroll(0, 0);
                 actions.setStatus({
-                  collaboratorLimit: error.response.data.collaborators
+                  collaboratorLimit: error.response.data.collaborators,
                 });
               }
               setSubmitting(false);
@@ -342,7 +342,7 @@ export default class DescriptionComponent extends React.Component<
           if (error.response.status == 400 && error.response.data.collaborators) {
             window.scroll(0, 0);
             actions.setStatus({
-              collaboratorLimit: error.response.data.collaborators
+              collaboratorLimit: error.response.data.collaborators,
             });
           }
           setSubmitting(false);
@@ -355,7 +355,7 @@ export default class DescriptionComponent extends React.Component<
           if (error.response.status == 400 && error.response.data.collaborators) {
             window.scroll(0, 0);
             actions.setStatus({
-              collaboratorLimit: error.response.data.collaborators
+              collaboratorLimit: error.response.data.collaborators,
             });
           }
           setSubmitting(false);
@@ -388,10 +388,10 @@ export default class DescriptionComponent extends React.Component<
             this.setState(prevState => ({
               initialValues: {
                 ...prevState.initialValues,
-                ...values
+                ...values,
               },
               dirty: true,
-              isEditMode: false
+              isEditMode: false,
             }));
           } else {
             this.save(values, actions);

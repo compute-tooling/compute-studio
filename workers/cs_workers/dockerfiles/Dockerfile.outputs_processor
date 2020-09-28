@@ -16,9 +16,15 @@ RUN pip install httpx pyppeteer2
 RUN conda install -c conda-forge jinja2 bokeh tornado dask && pyppeteer-install
 
 RUN mkdir /home/cs_workers
-COPY cs_workers /home/cs_workers
-COPY setup.py /home
+COPY workers/cs_workers /home/cs_workers
+COPY workers/setup.py /home
 RUN cd /home/ && pip install -e .
+
+COPY secrets /home/secrets
+RUN pip install -e ./secrets
+
+COPY deploy /home/deploy
+RUN pip install -e ./deploy
 
 WORKDIR /home
 

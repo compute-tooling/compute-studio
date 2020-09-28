@@ -20,7 +20,7 @@ import {
   RemoteOutputs,
   Outputs,
   Sects,
-  InputsDetail
+  InputsDetail,
 } from "../types";
 import DescriptionComponent from "./Description";
 import API from "./API";
@@ -33,7 +33,7 @@ import { AuthPortal, AuthButtons } from "../auth";
 import { RolePerms } from "../roles";
 
 Sentry.init({
-  dsn: "https://fde6bcb39fda4af38471b16e2c1711af@sentry.io/1530834"
+  dsn: "https://fde6bcb39fda4af38471b16e2c1711af@sentry.io/1530834",
 });
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
@@ -103,7 +103,7 @@ class SimTabs extends React.Component<
       hasShownDirtyWarning: false,
       showDirtyWarning: false,
       notifyOnCompletion: false,
-      isPublic: false
+      isPublic: false,
     };
 
     this.handleTabChange = this.handleTabChange.bind(this);
@@ -121,7 +121,7 @@ class SimTabs extends React.Component<
   componentDidMount() {
     this.api.getAccessStatus().then(data => {
       this.setState({
-        accessStatus: data
+        accessStatus: data,
       });
     });
     this.api
@@ -134,7 +134,7 @@ class SimTabs extends React.Component<
           sects: sects,
           schema: schema,
           unknownParams: unknownParams,
-          extend: "extend" in data ? data.extend : false
+          extend: "extend" in data ? data.extend : false,
         });
       })
       .catch(error => {
@@ -149,7 +149,7 @@ class SimTabs extends React.Component<
     this.setState({ resetting: true });
     this.api
       .resetInitialValues({
-        meta_parameters: tbLabelSchema.cast(metaParameters)
+        meta_parameters: tbLabelSchema.cast(metaParameters),
       })
       .then(data => {
         const [
@@ -157,21 +157,21 @@ class SimTabs extends React.Component<
           sects,
           { meta_parameters, model_parameters },
           schema,
-          unknownParams
+          unknownParams,
         ] = convertToFormik(data);
         this.setState(prevState => ({
           inputs: {
             ...prevState.inputs,
             ...{
               meta_parameters: meta_parameters,
-              model_parameters: model_parameters
-            }
+              model_parameters: model_parameters,
+            },
           },
           initialValues: initialValues,
           sects: sects,
           schema: schema,
           unknownParams: unknownParams,
-          resetting: false
+          resetting: false,
         }));
       });
   }
@@ -192,8 +192,8 @@ class SimTabs extends React.Component<
           this.setState(prevState => ({
             inputs: {
               ...prevState.inputs,
-              ...{ detail: inputsDetail }
-            }
+              ...{ detail: inputsDetail },
+            },
           }));
         });
       });
@@ -213,9 +213,9 @@ class SimTabs extends React.Component<
             accessStatus: accessStatus,
             inputs: {
               ...prevState.inputs,
-              ...{ detail: newSim.inputs }
+              ...{ detail: newSim.inputs },
             },
-            remoteSim: newSim.sim
+            remoteSim: newSim.sim,
           }));
         });
       }
@@ -231,8 +231,8 @@ class SimTabs extends React.Component<
           notifyOnCompletion: notify,
           remoteSim: {
             ...prevState.remoteSim,
-            ...{ notify_on_completion: notify }
-          }
+            ...{ notify_on_completion: notify },
+          },
         }));
       });
     } else {
@@ -250,8 +250,8 @@ class SimTabs extends React.Component<
           isPublic: is_public,
           remoteSim: {
             ...prevState.remoteSim,
-            ...{ is_public: is_public }
-          }
+            ...{ is_public: is_public },
+          },
         }));
       });
     } else {
@@ -304,11 +304,11 @@ class SimTabs extends React.Component<
             inputs: { ...prevState.inputs, ...{ detail: data } },
             key: "inputs",
             accessStatus: accessStatus,
-            hasShownDirtyWarning: false
+            hasShownDirtyWarning: false,
           }));
         });
         actions.setStatus({
-          status: "PENDING"
+          status: "PENDING",
         });
         // set submitting as false in poll func.
         if (data.status === "PENDING") {
@@ -320,7 +320,7 @@ class SimTabs extends React.Component<
         actions.setSubmitting(false);
         if (error.response.status == 403) {
           actions.setStatus({
-            auth: "You must be logged in to create a simulation."
+            auth: "You must be logged in to create a simulation.",
           });
         }
       });
@@ -343,11 +343,11 @@ class SimTabs extends React.Component<
                 initialValues: values, // reset form with updated init vals.
                 inputs: { ...prevState.inputs, ...{ detail: data } },
                 key: "outputs",
-                accessStatus: accessStatus
+                accessStatus: accessStatus,
               }));
             });
             actions.setStatus({
-              status: data.status
+              status: data.status,
             });
             actions.setSubmitting(false);
 
@@ -357,12 +357,12 @@ class SimTabs extends React.Component<
               this.setState(prevState => ({
                 inputs: { ...prevState.inputs, ...{ detail: data } },
                 key: "inputs",
-                accessStatus: accessStatus
+                accessStatus: accessStatus,
               }));
             });
             actions.setStatus({
               status: data.status,
-              serverErrors: data.errors_warnings
+              serverErrors: data.errors_warnings,
             });
             actions.setSubmitting(false);
             window.scroll(0, 0);
@@ -406,7 +406,7 @@ class SimTabs extends React.Component<
       .then(remoteSim => {
         this.setState(prevState => ({
           remoteSim,
-          isPublic: remoteSim.status === "SUCCESS" ? false : prevState.isPublic
+          isPublic: remoteSim.status === "SUCCESS" ? false : prevState.isPublic,
         }));
         if (remoteSim.status !== "STARTED" && remoteSim.status !== "PENDING") {
           api.getOutputs().then(sim => {
@@ -470,7 +470,7 @@ class SimTabs extends React.Component<
       initialValues,
       unknownParams,
       extend,
-      sects
+      sects,
     } = this.state;
     let initialServerErrors = hasServerErrors(inputs?.detail?.errors_warnings)
       ? inputs.detail.errors_warnings
@@ -479,7 +479,7 @@ class SimTabs extends React.Component<
     if (initialServerErrors) {
       initialStatus = {
         serverErrors: initialServerErrors,
-        status: "INVALID"
+        status: "INVALID",
       };
     }
     return (

@@ -1,0 +1,24 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+  - role: worker
+    extraMounts:
+      - hostPath: /home/hankdoupe/compute-studio/redis-data
+        containerPath: /redis-data
+  - role: worker
+  - role: worker
+    extraMounts:
+      - hostPath: /home/hankdoupe/compute-studio
+        containerPath: /code
+      - hostPath: /home/hankdoupe/compute-studio/db-data
+        containerPath: /db-data
+    # extraPortMappings:
+    #   - containerPort: 8000
+    #     hostPort: 8000
+    #     # optional: set the bind address on the host
+    #     # 0.0.0.0 is the current default
+    #     listenAddress: "127.0.0.1"
+    #     # optional: set the protocol to one of TCP, UDP, SCTP.
+    #     # TCP is the default
+    #     protocol: TCP

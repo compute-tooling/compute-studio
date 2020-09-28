@@ -34,6 +34,7 @@ interface ResourceLimitException {
   test_name: "add_collaborator" | "make_private";
   msg: string;
   upgrade_to: "plus" | "pro";
+  collaborator?: string;
 }
 
 const AddCollaboratorException = (upgradeTo: "plus" | "pro") => {
@@ -104,6 +105,18 @@ const MakePrivateException = (upgradeTo: "plus" | "pro") => {
   );
 };
 
+const PrivateAppException = (collaborator?: string) => {
+  return (
+    <div className="alert alert-primary alert-dismissible fade show" role="alert">
+      {collaborator || "This user"} must be granted access to this app before they can become a
+      collaborator.
+      <button type="button" className="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+  );
+};
+
 const prettyRole = (role: Role | "owner") => {
   switch (role) {
     case "read":
@@ -167,11 +180,11 @@ const ConfirmSelected: React.FC<{
                   ...formikProps.values,
                   author: {
                     add: { username: selectedUser, msg: msg },
-                    remove: { username: "" }
+                    remove: { username: "" },
                   },
                   access: {
-                    read: { grant: { username: "", msg: "" }, remove: { username: "" } }
-                  }
+                    read: { grant: { username: "", msg: "" }, remove: { username: "" } },
+                  },
                 });
               } else {
                 setValues({
@@ -180,9 +193,9 @@ const ConfirmSelected: React.FC<{
                   access: {
                     read: {
                       grant: { username: selectedUser, msg: msg },
-                      remove: { username: "" }
-                    }
-                  }
+                      remove: { username: "" },
+                    },
+                  },
                 });
               }
 
@@ -192,7 +205,7 @@ const ConfirmSelected: React.FC<{
                 setValues({
                   ...values,
                   author: { add: { username: "", msg: "" }, remove: { username: "" } },
-                  access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } }
+                  access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } },
                 })
               );
 
@@ -210,7 +223,7 @@ const ConfirmSelected: React.FC<{
               setValues({
                 ...values,
                 author: { add: { username: "", msg: "" }, remove: { username: "" } },
-                access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } }
+                access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } },
               });
               setMsg("");
               resetState();
@@ -344,6 +357,8 @@ export const CollaborationModal: React.FC<{
       collabExceptionMsg = MakePrivateException(collabMsg.upgrade_to);
     } else if (collabMsg.test_name === "add_collaborator") {
       collabExceptionMsg = AddCollaboratorException(collabMsg.upgrade_to);
+    } else if (collabMsg.test_name === "add_collaborator_on_private_app") {
+      collabExceptionMsg = PrivateAppException(collabMsg.collaborator);
     }
   }
 
@@ -553,7 +568,7 @@ export const CollaborationModal: React.FC<{
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Search by email or username."
+                      placeholder="Search by username."
                       value={selectedUser}
                       onFocus={() => {
                         setViewAccessQuery(true);
@@ -633,8 +648,8 @@ export const saveCollaborators = (
           {
             username: values.access.read.grant.username,
             role: "read" as Role,
-            msg: values.access.read.grant.msg
-          }
+            msg: values.access.read.grant.msg,
+          },
         ])
         .then(() => {
           handleSuccess();

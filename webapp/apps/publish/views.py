@@ -8,7 +8,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.core.mail import send_mail
-
+from django.http import Http404
+from django.db.models import Q
 
 from rest_framework.views import APIView
 from rest_framework import generics
@@ -19,15 +20,14 @@ from rest_framework.authentication import (
     SessionAuthentication,
     TokenAuthentication,
 )
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied as APIPermissionDenied
 from rest_framework import filters
 
-
-from guardian.shortcuts import assign_perm
 
 # from webapp.settings import DEBUG
 
 from webapp.settings import USE_STRIPE
+from webapp.apps.users.exceptions import ResourceLimitException
 from webapp.apps.users.models import (
     Project,
     Cluster,
@@ -35,6 +35,8 @@ from webapp.apps.users.models import (
     EmbedApproval,
     Tag,
     is_profile_active,
+    get_project_or_404,
+    projects_with_access,
 )
 from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 
@@ -108,8 +110,11 @@ def send_app_ready_email(user, model, status_url):
 
 class GetProjectMixin:
     def get_object(self, username, title, **kwargs):
-        return get_object_or_404(
-            Project, title__iexact=title, owner__user__username__iexact=username
+        return get_project_or_404(
+            Project.objects.all(),
+            user=self.request.user,
+            title__iexact=title,
+            owner__user__username__iexact=username,
         )
 
 
@@ -142,35 +147,51 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
         return Response(data)
 
     def put(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            project = self.get_object(**kwargs)
-            if project.has_write_access(request.user):
-                previous_status = project.status
-                serializer = ProjectSerializer(project, data=request.data)
-                if serializer.is_valid():
-                    model = serializer.save()
-                    new_status = model.status
-                    Project.objects.sync_project_with_workers(
-                        ProjectSerializer(model).data, model.cluster
-                    )
-                    status_url = request.build_absolute_uri(model.app_url)
-                    if previous_status != "staging" and new_status == "staging":
-                        send_app_ready_email(
-                            request.user, model, status_url,
-                        )
-                    elif previous_status in ("staging", "live"):
-                        send_updated_app_email(request.user, model, status_url)
-                    return Response(serializer.data)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response(status=status.HTTP_401_UNAUTHORIZED)
+        if not request.user.is_authenticated:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        project = self.get_object(**kwargs)
+        if not project.has_write_access(request.user):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        previous_status = project.status
+        serializer = ProjectSerializer(project, data=request.data)
+        try:
+            is_valid = serializer.is_valid()
+        except ResourceLimitException as e:
+            return Response(
+                {e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST
+            )
+        if is_valid:
+            model = serializer.save()
+            new_status = model.status
+            Project.objects.sync_project_with_workers(
+                ProjectSerializer(model).data, model.cluster
+            )
+            status_url = request.build_absolute_uri(model.app_url)
+            if previous_status != "staging" and new_status == "staging":
+                send_app_ready_email(
+                    request.user, model, status_url,
+                )
+            elif previous_status in ("staging", "live"):
+                send_updated_app_email(request.user, model, status_url)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ProjectAPIView(GetProjectMixin, APIView):
-    queryset = Project.objects.all()
+class ProjectAPIView(APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    api_user = User.objects.get(username="comp-api-user")
 
     def get(self, request, *args, **kwargs):
         ser = ProjectSerializer(
-            self.queryset.all(), many=True, context={"request": request}
+            projects_with_access(self.request.user),
+            many=True,
+            context={"request": request},
         )
         return Response(ser.data, status=status.HTTP_200_OK)
 
@@ -194,16 +215,20 @@ class ProjectAPIView(GetProjectMixin, APIView):
                         {"project_exists": f"{username}/{title} already exists."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-                model = serializer.save(
-                    owner=request.user.profile,
-                    title=title,
-                    cluster=Cluster.objects.default(),
-                )
+                try:
+                    model = serializer.save(
+                        owner=request.user.profile,
+                        status="pending",
+                        title=title,
+                        cluster=Cluster.objects.default(),
+                    )
+                except ResourceLimitException as e:
+                    return Response(
+                        {e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST
+                    )
                 status_url = request.build_absolute_uri(model.app_url)
-                status_url += "detail/"
                 send_new_app_email(request.user, model, status_url)
-                api_user = User.objects.get(username="comp-api-user")
-                assign_perm("write_project", api_user, model)
+                model.assign_role("write", self.api_user)
                 Project.objects.sync_project_with_workers(
                     ProjectSerializer(model).data, model.cluster
                 )
@@ -226,7 +251,7 @@ class TagsAPIView(GetProjectMixin, APIView):
     def get(self, request, *args, **kwargs):
         project = self.get_object(**kwargs)
         if not project.has_write_access(request.user):
-            raise PermissionDenied()
+            raise APIPermissionDenied()
         return Response(
             {
                 "staging_tag": TagSerializer(instance=project.staging_tag).data,
@@ -238,13 +263,12 @@ class TagsAPIView(GetProjectMixin, APIView):
     def post(self, request, *args, **kwargs):
         project = self.get_object(**kwargs)
         if not project.has_write_access(request.user):
-            raise PermissionDenied()
+            raise APIPermissionDenied()
         serializer = TagUpdateSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         data = serializer.validated_data
-        print("data", data)
         if data.get("staging_tag") is not None:
             tag, _ = Tag.objects.get_or_create(
                 project=project,
@@ -316,7 +340,11 @@ class ProfileModelsAPIView(generics.ListAPIView):
     def get_queryset(self):
         username = self.request.parser_context["kwargs"].get("username", None)
         user = get_object_or_404(get_user_model(), username__iexact=username)
-        return self.queryset.filter(owner__user=user, listed=True)
+        return self.queryset.filter(
+            owner__user=user,
+            listed=True,
+            pk__in=projects_with_access(self.request.user),
+        )
 
 
 class EmbedApprovalView(GetProjectMixin, APIView):
@@ -363,7 +391,7 @@ class EmbedApprovalView(GetProjectMixin, APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class EmbedApprovalDetailView(APIView):
+class EmbedApprovalDetailView(GetProjectMixin, APIView):
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
@@ -372,11 +400,8 @@ class EmbedApprovalDetailView(APIView):
     permission_classes = (StrictRequiresActive,)
 
     def get(self, request, *args, **kwargs):
-        ea = EmbedApproval.objects.get(
-            project__owner__user__username__iexact=kwargs["username"],
-            project__title__iexact=kwargs["title"],
-            name__iexact=kwargs["ea_name"],
-        )
+        project = self.get_object(**kwargs)
+        ea = EmbedApproval.objects.get(project=project, name__iexact=kwargs["ea_name"],)
 
         # Throw 404 if user does not have access.
         if ea.owner != request.user.profile:
@@ -385,11 +410,8 @@ class EmbedApprovalDetailView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, *args, **kwargs):
-        ea = EmbedApproval.objects.get(
-            project__owner__user__username__iexact=kwargs["username"],
-            project__title__iexact=kwargs["title"],
-            name__iexact=kwargs["ea_name"],
-        )
+        project = self.get_object(**kwargs)
+        ea = EmbedApproval.objects.get(project=project, name__iexact=kwargs["ea_name"],)
 
         # Throw 404 if user does not have access.
         if ea.owner != request.user.profile:
@@ -419,11 +441,8 @@ class EmbedApprovalDetailView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, *args, **kwargs):
-        ea = EmbedApproval.objects.get(
-            project__owner__user__username__iexact=kwargs["username"],
-            project__title__iexact=kwargs["title"],
-            name__iexact=kwargs["ea_name"],
-        )
+        project = self.get_object(**kwargs)
+        ea = EmbedApproval.objects.get(project=project, name__iexact=kwargs["ea_name"],)
 
         # Throw 404 if user does not have access.
         if ea.owner != request.user.profile:
@@ -449,12 +468,12 @@ class DeploymentsView(generics.ListAPIView):
     serializer_class = DeploymentSerializer
 
     def get_queryset(self):
-        if not self.request.user.username == "comp-api-user":
-            raise PermissionDenied()
-        return self.queryset
+        return self.queryset.filter(
+            project__cluster__service_account__user=self.request.user
+        )
 
 
-class DeploymentsDetailView(APIView):
+class DeploymentsDetailView(GetProjectMixin, APIView):
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
@@ -464,6 +483,8 @@ class DeploymentsDetailView(APIView):
     permission_classes = (RequiresActive,)
 
     def get(self, request, *args, **kwargs):
+        project = self.get_object(**kwargs)
+
         status_query = request.query_params.get("status", None)
         ping = request.query_params.get("ping", None)
         if status_query is None:
@@ -474,8 +495,7 @@ class DeploymentsDetailView(APIView):
         deployment = get_object_or_404(
             Deployment,
             name__iexact=kwargs["dep_name"],
-            project__owner__user__username__iexact=kwargs["username"],
-            project__title__iexact=kwargs["title"],
+            project=project,
             deleted_at__isnull=True,
             **status_kwarg,
         )
@@ -490,22 +510,20 @@ class DeploymentsDetailView(APIView):
         )
 
     def delete(self, request, *args, **kwargs):
-        if not (
-            request.user.is_authenticated and request.user.username == "comp-api-user"
-        ):
-            raise PermissionDenied()
+        project = self.get_object(**kwargs)
+
+        if not project.has_write_access(request.user):
+            raise APIPermissionDenied()
+
         deployment = get_object_or_404(
             Deployment,
             name__iexact=kwargs["dep_name"],
-            project__owner__user__username__iexact=kwargs["username"],
-            project__title__iexact=kwargs["title"],
+            project=project,
             deleted_at__isnull=True,
             status__in=["creating", "running"],
         )
 
         deployment.delete_deployment()
-
-        # self.charge_deployment(deployment, use_stripe=USE_STRIPE)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -521,7 +539,11 @@ class DeploymentsIdView(APIView):
 
     def get(self, request, *args, **kwargs):
         ping = request.query_params.get("ping", None)
-        deployment = get_object_or_404(Deployment, id=kwargs["id"])
+        deployment = get_object_or_404(
+            Deployment.objects.prefetch_related("project"), pk=kwargs["id"]
+        )
+        if not deployment.project.has_read_access(request.user):
+            raise Http404()
 
         if ping is None:
             deployment.load()

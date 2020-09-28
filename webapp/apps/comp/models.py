@@ -7,6 +7,7 @@ import os
 from dataclasses import dataclass, field
 from typing import List, Union
 
+from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.db import IntegrityError, transaction
 from django.http import Http404
@@ -31,6 +32,7 @@ from webapp.apps.comp.exceptions import (
     PermissionExpiredException,
     ResourceLimitException,
     VersionMismatchException,
+    PrivateAppException,
 )
 
 
@@ -87,6 +89,8 @@ class ModelConfig(models.Model):
 
 
 class Inputs(models.Model):
+    objects: models.Manager
+
     parent_sim = models.ForeignKey(
         "Simulation", null=True, related_name="child_inputs", on_delete=models.SET_NULL
     )
@@ -250,6 +254,8 @@ class SimulationManager(models.Manager):
         PENDING by default and thus force new Simulation objects to be
         created on each request even if they arrive at the same time.
         """
+        if not project.has_read_access(user):
+            raise PermissionDenied()
         model_pk = None
         try:
             # transaction.atomic will roll back any changes
@@ -296,6 +302,9 @@ class SimulationManager(models.Manager):
                 "Simulations may not be forked while they are in a pending state. "
                 "Please try again once the simulation has completed."
             )
+        if not sim.project.has_read_access(user):
+            raise PermissionDenied()
+
         inputs = Inputs.objects.create(
             owner=user.profile,
             project=sim.project,
@@ -529,6 +538,9 @@ class Simulation(models.Model):
         return user == self.owner.user
 
     def _collaborator_test(self, test_name, adding_collaborator=True):
+        """
+        Related: Project._collaborator_test
+        """
         if not HAS_USAGE_RESTRICTIONS:
             return
 
@@ -550,8 +562,7 @@ class Simulation(models.Model):
                     "plus",
                     ResourceLimitException.collaborators_msg,
                 )
-
-        if customer is not None:
+        else:
             current_plan = customer.current_plan()
 
             if num_collaborators > 0 and current_plan["name"] == "free":
@@ -570,16 +581,24 @@ class Simulation(models.Model):
                     ResourceLimitException.collaborators_msg,
                 )
 
-    def add_collaborator_test(self):
+    def _private_app_test(self, collaborator):
+        if not self.project.has_read_access(collaborator):
+            raise PrivateAppException(
+                "collaborators",
+                "add_collaborator_on_private_app",
+                collaborator=collaborator,
+            )
+
+    def add_collaborator_test(self, collaborator=None, **kwargs):
         """
         Test if user's plan allows them to add more collaborators
         to this simulation.
         """
-        if self.is_public:
-            return
-        return self._collaborator_test("add_collaborator", adding_collaborator=True)
+        if not self.is_public:
+            self._collaborator_test("add_collaborator", adding_collaborator=True)
+        self._private_app_test(collaborator=collaborator)
 
-    def make_private_test(self):
+    def make_private_test(self, **kwargs):
         """
         Test if user's plan allows them to make the simulation private with
         the existing number of collaborators.
@@ -609,13 +628,21 @@ class Simulation(models.Model):
         return user.has_perm(Simulation.WRITE[0], self) or self.has_admin_access(user)
 
     def has_read_access(self, user):
-        # Everyone has access to this sim.
-        if self.is_public:
+        """
+        If the project is private, then users without access to the project cannot access
+        sims created with it.
+        """
+        # Everyone with access to the project has access to this sim.
+        has_project_access = self.project.has_read_access(user)
+        if self.is_public and has_project_access:
             return True
 
         if not user or not user.is_authenticated:
             return False
-        return user.has_perm(Simulation.READ[0], self) or self.has_write_access(user)
+
+        return (
+            user.has_perm(Simulation.READ[0], self) or self.has_write_access(user)
+        ) and has_project_access
 
     def remove_permissions(self, user):
         for permission in get_perms(user, self):
@@ -623,17 +650,17 @@ class Simulation(models.Model):
 
     def grant_admin_permissions(self, user):
         self.remove_permissions(user)
-        self.add_collaborator_test()
+        self.add_collaborator_test(collaborator=user)
         assign_perm(Simulation.ADMIN[0], user, self)
 
     def grant_write_permissions(self, user):
         self.remove_permissions(user)
-        self.add_collaborator_test()
+        self.add_collaborator_test(collaborator=user)
         assign_perm(Simulation.WRITE[0], user, self)
 
     def grant_read_permissions(self, user):
         self.remove_permissions(user)
-        self.add_collaborator_test()
+        self.add_collaborator_test(collaborator=user)
         assign_perm(Simulation.READ[0], user, self)
 
     @transaction.atomic

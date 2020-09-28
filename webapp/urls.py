@@ -64,11 +64,6 @@ urlpatterns = [
         name="recent_models_api",
     ),
     path(
-        "<str:username>/<str:title>/detail/",
-        publishviews.ProjectDetailView.as_view(),
-        name="project_detail",
-    ),
-    path(
         "<str:username>/<str:title>/",
         publishviews.ProjectDetailView.as_view(),
         name="app",

@@ -6,9 +6,9 @@ import uuid
 import markdown
 import requests
 
-from django.db import models
+from django.db import models, transaction
 from django.db.models.functions import TruncMonth
-from django.db.models import F, Case, When, Sum, Max
+from django.db.models import F, Case, When, Sum, Max, Q
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.core.mail import EmailMessage, send_mail
@@ -19,10 +19,25 @@ from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.http import Http404
 
+from guardian.shortcuts import (
+    assign_perm,
+    remove_perm,
+    get_perms,
+    get_users_with_perms,
+    get_objects_for_user,
+)
+
 from webapp.apps.comp import actions
 from webapp.apps.comp.compute import SyncCompute, SyncProjects
 from webapp.apps.comp.models import Inputs, ANON_BEFORE
-from webapp.settings import DEBUG, COMPUTE_PRICING, DEFAULT_CLUSTER_USER
+from webapp.settings import (
+    DEBUG,
+    COMPUTE_PRICING,
+    DEFAULT_CLUSTER_USER,
+    HAS_USAGE_RESTRICTIONS,
+)
+
+from webapp.apps.users.exceptions import ResourceLimitException
 
 import cs_crypt
 import jwt
@@ -71,6 +86,7 @@ class User(AbstractUser):
 
 
 class Profile(models.Model):
+    objects: models.Manager
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=False)
 
@@ -173,14 +189,73 @@ class Cluster(models.Model):
         raise Exception(f"{resp.status_code} {resp.text}")
 
 
+class ProjectPermissions:
+    READ = (
+        "read_project",
+        "Users with this permission may view and run this project, even if it's private.",
+    )
+    WRITE = (
+        "write_project",
+        "Users with this permission may edit the project and view its usage statistics.",
+    )
+    ADMIN = (
+        "admin_project",
+        "Users with this permission control the visibility of this project and who has read, write, and admin access to it.",
+    )
+
+
+def get_project_or_404(queryset, user=None, raise_http404=True, **kwargs):
+    try:
+        if user is None:
+            return queryset.objects.get(is_public=True, **kwargs)
+
+        user_has_perms = get_objects_for_user(
+            user,
+            perms=["read_project", "write_project", "admin_project"],
+            klass=queryset,
+            any_perm=True,
+        )
+        return queryset.get(Q(is_public=True) | Q(pk__in=user_has_perms), **kwargs)
+
+    except Project.DoesNotExist as dne:
+        if raise_http404:
+            raise Http404()
+        else:
+            raise dne
+
+
+def projects_with_perms(user, queryset=None):
+    if queryset is None:
+        queryset = Project.objects.all()
+    return get_objects_for_user(
+        user,
+        perms=["read_project", "write_project", "admin_project"],
+        klass=queryset,
+        any_perm=True,
+    )
+
+
+def projects_with_access(user, queryset=None):
+    if queryset is None:
+        queryset = Project.objects.all()
+    return queryset.filter(
+        Q(is_public=True) | Q(pk__in=projects_with_perms(user, queryset))
+    )
+
+
 class ProjectManager(models.Manager):
     def sync_project_with_workers(self, project, cluster):
         SyncProjects().submit_job(project, cluster)
 
+    @transaction.atomic
     def create(self, *args, **kwargs):
         project = super().create(*args, **kwargs)
         if project.cluster is None:
             project.cluster = Cluster.objects.default()
+        if not project.is_public:
+            project.make_private_test()
+        project.assign_role("admin", project.owner.user)
+        project.assign_role("write", project.cluster.service_account.user)
         return project
 
 
@@ -192,7 +267,12 @@ def get_server_cost(cpu, memory):
 
 
 class Project(models.Model):
+    READ = ProjectPermissions.READ
+    WRITE = ProjectPermissions.WRITE
+    ADMIN = ProjectPermissions.ADMIN
+
     SECS_IN_HOUR = 3600.0
+
     title = models.CharField(max_length=255)
     oneliner = models.CharField(max_length=10000)
     description = models.CharField(max_length=10000)
@@ -377,18 +457,166 @@ class Project(models.Model):
             traceback.print_exc()
             return None
 
+    def is_owner(self, user):
+        return user == self.owner.user
+
+    def _collaborator_test(self, test_name, adding_collaborator=True):
+        """
+        Related: Simulation._collaborator_test
+        """
+        if not HAS_USAGE_RESTRICTIONS:
+            return
+
+        permission_objects = get_users_with_perms(self)
+
+        # number of additional collaborators besides owner and cluster
+        # service account.
+        num_collaborators = permission_objects.count() - 2
+
+        if adding_collaborator:
+            num_collaborators += 1
+
+        user = self.owner.user
+        customer = getattr(user, "customer", None)
+        if customer is None:
+            raise ResourceLimitException(
+                "collaborators",
+                test_name,
+                "plus",
+                ResourceLimitException.collaborators_msg,
+            )
+        else:
+            current_plan = customer.current_plan()
+
+            if current_plan["name"] == "free":
+                raise ResourceLimitException(
+                    "collaborators",
+                    test_name,
+                    "plus",
+                    ResourceLimitException.collaborators_msg,
+                )
+
+            if num_collaborators > 3 and current_plan["name"] == "plus":
+                raise ResourceLimitException(
+                    "collaborators",
+                    test_name,
+                    "pro",
+                    ResourceLimitException.collaborators_msg,
+                )
+
+    def add_collaborator_test(self):
+        """
+        Test if user's plan allows them to add more collaborators
+        to this app.
+        """
+        if self.is_public:
+            return
+        return self._collaborator_test("add_collaborator", adding_collaborator=True)
+
+    def make_private_test(self):
+        """
+        Test if user's plan allows them to make the app private with
+        the existing number of collaborators.
+        """
+        return self._collaborator_test("make_private", adding_collaborator=False)
+
+    """
+    The methods below are used for checking if a user has read, write, or admin
+    access to a specific project. Users can only have one of these permissions
+    at a time, but users with a higher level permission inherit the read/write
+    access from the lower level permissions, too.
+
+    This is similar to the permissions system used on the Simulation table. At
+    some point these implementations may be abstracted.
+    """
+
+    def has_admin_access(self, user):
+        if not user or not user.is_authenticated:
+            return False
+
+        return user.has_perm(Project.ADMIN[0], self)
+
     def has_write_access(self, user):
-        return bool(
-            user
-            and user.is_authenticated
-            and (self.owner.user == user or user.has_perm("write_project", self))
-        )
+        if not user or not user.is_authenticated:
+            return False
+
+        return user.has_perm(Project.WRITE[0], self) or self.has_admin_access(user)
+
+    def has_read_access(self, user):
+        # Everyone has access to this sim.
+        if self.is_public:
+            return True
+
+        if not user or not user.is_authenticated:
+            return False
+        return user.has_perm(Project.READ[0], self) or self.has_write_access(user)
+
+    def remove_permissions(self, user):
+        for permission in get_perms(user, self):
+            remove_perm(permission, user, self)
+
+    def grant_admin_permissions(self, user):
+        self.remove_permissions(user)
+        self.add_collaborator_test()
+        assign_perm(Project.ADMIN[0], user, self)
+
+    def grant_write_permissions(self, user):
+        self.remove_permissions(user)
+        self.add_collaborator_test()
+        assign_perm(Project.WRITE[0], user, self)
+
+    def grant_read_permissions(self, user):
+        self.remove_permissions(user)
+        self.add_collaborator_test()
+        assign_perm(Project.READ[0], user, self)
+
+    @transaction.atomic
+    def assign_role(self, role, user):
+        """
+        Wrapper for granting and revoking permissions for a user.
+        Each of the methods below complete multiple DB transactions
+        which can cause some race condition-related bugs.
+
+        Roles: read, write, admin, None (none removes all perms.)
+        """
+        if role == None:
+            self.remove_permissions(user)
+        elif role == "read":
+            self.grant_read_permissions(user)
+        elif role == "write":
+            self.grant_write_permissions(user)
+        elif role == "admin":
+            self.grant_admin_permissions(user)
+        else:
+            raise ValueError(
+                f"Received invalid role: {role}. Choices are read, write, or admin."
+            )
+
+    def role(self, user):
+        if not user or not user.is_authenticated:
+            return None
+
+        perms = get_perms(user, self)
+        if not perms:
+            return None
+        elif perms == [Project.READ[0]]:
+            return "read"
+        elif perms == [Project.WRITE[0]]:
+            return "write"
+        elif perms == [Project.ADMIN[0]]:
+            return "admin"
 
     class Meta:
-        permissions = (("write_project", "Write project"),)
+        permissions = (
+            ProjectPermissions.READ,
+            ProjectPermissions.WRITE,
+            ProjectPermissions.ADMIN,
+        )
 
 
 class Tag(models.Model):
+    objects: models.Manager
+
     project = models.ForeignKey(
         "Project", on_delete=models.SET_NULL, related_name="tags", null=models.CASCADE
     )

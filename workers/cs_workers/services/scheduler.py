@@ -128,13 +128,13 @@ class DeploymentsDetailApi(tornado.web.RequestHandler):
             return
 
         # TODO: support more techs
-        if project["tech"] in ("dash",):
+        if project["tech"] in ("dash", "bokeh"):
             viz = server.Server(
                 project=PROJECT,
                 owner=project["owner"],
                 title=project["title"],
                 tag=None,
-                model_config=ModelConfig(PROJECT, CS_URL),
+                model_config=self.config,
                 callable_name=project["callable_name"],
                 deployment_name=deployment_name,
                 incluster=incluster,
@@ -156,7 +156,7 @@ class DeploymentsDetailApi(tornado.web.RequestHandler):
             return
 
         # TODO: support more techs
-        if project["tech"] in ("dash",):
+        if project["tech"] in ("dash", "bokeh"):
             viz = server.Server(
                 project=PROJECT,
                 owner=project["owner"],
@@ -238,7 +238,9 @@ class DeploymentsApi(tornado.web.RequestHandler):
 def get_app():
     assert PROJECT and CS_URL
     rclient = redis.Redis(**redis_conn)
-    config = ModelConfig(PROJECT, cs_url=CS_URL, rclient=rclient)
+    config = ModelConfig(
+        PROJECT, cs_url=CS_URL, cs_api_token=os.environ["CS_API_TOKEN"], rclient=rclient
+    )
     config.set_projects()
     assert rclient.get("projects") is not None
     return tornado.web.Application(

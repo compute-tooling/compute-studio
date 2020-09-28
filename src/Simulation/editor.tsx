@@ -25,7 +25,7 @@ interface SlateValue {
 const HOTKEYS = {
   "mod+b": "bold",
   "mod+i": "italic",
-  "mod+u": "underline"
+  "mod+u": "underline",
   // 'mod+k': 'link', TODO
 };
 
@@ -222,7 +222,7 @@ const Controller = {
 
   isBlockActive(editor: Editor, block: Block) {
     const [match] = Editor.nodes(editor, {
-      match: n => n.type === block
+      match: n => n.type === block,
     });
 
     return !!match;
@@ -244,11 +244,11 @@ const Controller = {
 
     Transforms.unwrapNodes(editor, {
       match: n => LIST_TYPES.includes(n.type),
-      split: true
+      split: true,
     });
 
     Transforms.setNodes(editor, {
-      type: isActive ? "paragraph" : isList ? "list-item" : block
+      type: isActive ? "paragraph" : isList ? "list-item" : block,
     });
 
     if (!isActive && isList) {
@@ -277,7 +277,7 @@ const Controller = {
     const link = {
       type: "link",
       url,
-      children: isCollapsed ? [{ text: url }] : []
+      children: isCollapsed ? [{ text: url }] : [],
     };
 
     if (isCollapsed) {
@@ -286,7 +286,7 @@ const Controller = {
       Transforms.wrapNodes(editor, link, { split: true });
       Transforms.collapse(editor, { edge: "end" });
     }
-  }
+  },
 };
 
 export default ReadmeEditor;

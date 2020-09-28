@@ -10,7 +10,6 @@ from webapp.apps.billing import invoice
 
 from webapp.apps.comp.models import Simulation
 from webapp.apps.users.models import Deployment, Project, Profile, EmbedApproval
-from webapp.apps.users.tests.utils import mock_post_to_cluster
 
 
 def round4(val):
@@ -45,17 +44,16 @@ def gen_simulations(owner, sponsor, project, run_times):
 
 
 def gen_deployments(owner, embed_approval, project, run_times):
-    with mock_post_to_cluster():
-        results = []
-        for i, run_time in enumerate(run_times):
-            deployment, _ = Deployment.objects.get_or_create_deployment(
-                project, f"test-{i}", owner=owner, embed_approval=embed_approval
-            )
-            deployment.status = "terminated"
-            deployment.created_at = timezone.now() - timedelta(seconds=run_time)
-            deployment.deleted_at = timezone.now()
-            deployment.save()
-            results.append(deployment)
+    results = []
+    for i, run_time in enumerate(run_times):
+        deployment, _ = Deployment.objects.get_or_create_deployment(
+            project, f"test-{i}", owner=owner, embed_approval=embed_approval
+        )
+        deployment.status = "terminated"
+        deployment.created_at = timezone.now() - timedelta(seconds=run_time)
+        deployment.deleted_at = timezone.now()
+        deployment.save()
+        results.append(deployment)
 
     qs = Deployment.objects.filter(
         owner=owner, embed_approval=embed_approval, project=project
@@ -104,7 +102,7 @@ def sponsored_sims(profile):
 
 
 @pytest.fixture
-def deployments(profile):
+def deployments(profile, mock_deployments_requests_to_cluster):
     """
     Generate deployments where the owner is the primary one being tested.
     """
@@ -115,7 +113,7 @@ def deployments(profile):
 
 
 @pytest.fixture
-def ea_deployments(profile):
+def ea_deployments(profile, mock_deployments_requests_to_cluster):
     """
     Generate deployments with embed approvals where the owner is the primary
     one being tested.
@@ -142,6 +140,7 @@ class TestInvoice:
         sponsored_sims,
         deployments,
         ea_deployments,
+        mock_deployments_requests_to_cluster,
     ):
         start = timezone.now() - timedelta(days=7)
         end = timezone.now()
@@ -225,6 +224,7 @@ class TestInvoice:
         sponsored_sims,
         deployments,
         ea_deployments,
+        mock_deployments_requests_to_cluster,
     ):
         start = timezone.now() - timedelta(days=7)
         end = timezone.now()

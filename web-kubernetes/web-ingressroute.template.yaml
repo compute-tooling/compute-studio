@@ -1,0 +1,16 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: web-tls
+  namespace: default
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match:
+      kind: Rule
+      services:
+        - name: web
+          port: 80
+  tls:
+    certResolver: myresolver

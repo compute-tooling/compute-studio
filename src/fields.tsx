@@ -245,7 +245,7 @@ const twoDimArray = (
                         {({
                           field, // { name, value, onChange, onBlur }
                           form: { touched }, // also values, setXXXX, handleXXXX, dirty, isValid, status, etc.
-                          meta
+                          meta,
                         }) => (
                           <div>
                             <input

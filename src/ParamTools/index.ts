@@ -12,7 +12,7 @@ import {
   InitialValues,
   Sects,
   Inputs,
-  Schema
+  Schema,
 } from "../types";
 
 const integerMsg: string = "Must be an integer.";
@@ -65,7 +65,7 @@ function testReverseOp(value: any): boolean {
   return true;
 }
 
-yup.number.prototype._typeCheck = function(value: any): boolean {
+yup.number.prototype._typeCheck = function (value: any): boolean {
   if (value instanceof Number) value = value.valueOf();
 
   return (
@@ -74,7 +74,7 @@ yup.number.prototype._typeCheck = function(value: any): boolean {
   );
 };
 
-yup.bool.prototype._typeCheck = function(value) {
+yup.bool.prototype._typeCheck = function (value) {
   if (value instanceof Boolean) value = value.valueOf();
   return (
     (typeof value === "string" && (value === "*" || value === "<")) || typeof value === "boolean"
@@ -87,7 +87,7 @@ const minObj = min => {
     name: "contrib.min",
     exclusive: true,
     params: { min },
-    test: value => value == null || value === "*" || value === "<" || value >= min
+    test: value => value == null || value === "*" || value === "<" || value >= min,
   };
 };
 
@@ -97,7 +97,7 @@ const maxObj = max => {
     name: "contrib.max",
     exclusive: true,
     params: { max },
-    test: (value: any): boolean => value == null || value === "*" || value === "<" || value <= max
+    test: (value: any): boolean => value == null || value === "*" || value === "<" || value <= max,
   };
 };
 
@@ -106,7 +106,7 @@ const reverseObj = {
   name: "reverseOpValidator",
   exclusive: true,
   params: {},
-  test: testReverseOp
+  test: testReverseOp,
 };
 
 const integerObj = {
@@ -114,37 +114,20 @@ const integerObj = {
   name: "contrib.integer",
   exclusive: true,
   params: {},
-  test: value => value == null || value === "*" || value === "<" || Number.isInteger(value)
+  test: value => value == null || value === "*" || value === "<" || Number.isInteger(value),
 };
 
 export function yupType(
   type: "int" | "float" | "bool" | "date" | "string"
 ): yup.Schema<number> | yup.Schema<boolean> | yup.Schema<Date> | yup.Schema<string> {
   if (type == "int") {
-    return yup
-      .number()
-      .typeError(integerMsg)
-      .nullable()
-      .transform(transform)
-      .test(integerObj);
+    return yup.number().typeError(integerMsg).nullable().transform(transform).test(integerObj);
   } else if (type == "float") {
-    return yup
-      .number()
-      .typeError(floatMsg)
-      .nullable()
-      .transform(transform);
+    return yup.number().typeError(floatMsg).nullable().transform(transform);
   } else if (type == "bool") {
-    return yup
-      .bool()
-      .typeError(boolMsg)
-      .nullable()
-      .transform(transform);
+    return yup.bool().typeError(boolMsg).nullable().transform(transform);
   } else if (type == "date") {
-    return yup
-      .date()
-      .typeError(dateMsg)
-      .nullable()
-      .transform(transform);
+    return yup.date().typeError(dateMsg).nullable().transform(transform);
   } else {
     return yup.string();
   }
@@ -400,7 +383,7 @@ export function convertToFormik(
   }
   let schema = {
     adjustment: yup.object().shape(adjShape),
-    meta_parameters: yup.object().shape(mpShape)
+    meta_parameters: yup.object().shape(mpShape),
   };
   return [initialValues, sects, data, schema, unknownParams];
 }
