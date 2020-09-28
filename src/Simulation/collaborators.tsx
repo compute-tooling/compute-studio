@@ -1,7 +1,7 @@
 import React = require("react");
 import { Row, Col, Button, Modal, Dropdown } from "react-bootstrap";
 import API from "./API";
-import { Simulation, RemoteOutputs, DescriptionValues, Role, AccessStatus } from "../types";
+import { Simulation, RemoteOutputs, DescriptionValues, Role, AccessStatus, ResourceLimitException } from "../types";
 import { FormikProps, FormikHelpers } from "formik";
 import ReactLoading from "react-loading";
 import { RolePerms } from "../roles";
@@ -29,13 +29,6 @@ export interface CollaboratorValues {
   };
 }
 
-interface ResourceLimitException {
-  resource: "collaborators";
-  test_name: "add_collaborator" | "make_private";
-  msg: string;
-  upgrade_to: "plus" | "pro";
-  collaborator?: string;
-}
 
 const AddCollaboratorException = (upgradeTo: "plus" | "pro") => {
   let plan;
@@ -382,11 +375,11 @@ export const CollaborationModal: React.FC<{
                   This simulation is <strong>public</strong> and can be viewed by anyone.
                 </p>
               ) : (
-                <p>
-                  This simulation is <strong>private</strong> and can only be viewed by users who
+                  <p>
+                    This simulation is <strong>private</strong> and can only be viewed by users who
                   have been granted access to it.
-                </p>
-              )}
+                  </p>
+                )}
               <Row className="w-100 justify-content-center">
                 <Col className="col-auto">
                   <Button
@@ -438,8 +431,8 @@ export const CollaborationModal: React.FC<{
                           {accessobj.is_owner ? (
                             <span>Owner</span>
                           ) : (
-                            <span>{prettyRole(accessobj.role)}</span>
-                          )}
+                              <span>{prettyRole(accessobj.role)}</span>
+                            )}
                         </Col>
                         <Col className="col-md-4 align-self-center">
                           {!!author ? (
@@ -449,28 +442,28 @@ export const CollaborationModal: React.FC<{
                                 <span className="text-muted">Author &#183; pending</span>
                               </span>
                             ) : (
-                              <span className="text-success">
-                                <i className="fas fa-user-friends mr-1"></i>Author
-                              </span>
-                            )
+                                <span className="text-success">
+                                  <i className="fas fa-user-friends mr-1"></i>Author
+                                </span>
+                              )
                           ) : (
-                            <a
-                              href="#"
-                              className="btn btn-outline-secondary lh-1"
-                              onClick={e => {
-                                e.preventDefault();
-                                console.log("author set", accessobj.username);
-                                setSelectedUser(accessobj.username);
-                                setTimeout(() => {
-                                  setAuthorSelected(true);
-                                  setAccessSelected(false);
-                                  setAccessQuery([]);
-                                });
-                              }}
-                            >
-                              Invite to coauthor
-                            </a>
-                          )}
+                              <a
+                                href="#"
+                                className="btn btn-outline-secondary lh-1"
+                                onClick={e => {
+                                  e.preventDefault();
+                                  console.log("author set", accessobj.username);
+                                  setSelectedUser(accessobj.username);
+                                  setTimeout(() => {
+                                    setAuthorSelected(true);
+                                    setAccessSelected(false);
+                                    setAccessQuery([]);
+                                  });
+                                }}
+                              >
+                                Invite to coauthor
+                              </a>
+                            )}
                         </Col>
                         <Col className="col-md-1 align-self-center">
                           {/* owner cannot lose access, and authors must be removed as authors

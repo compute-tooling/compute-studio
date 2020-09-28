@@ -347,12 +347,17 @@ class Project(models.Model):
 
     @property
     def status(self):
+        print(self.tech, self.callable_name, self.exp_task_time)
         if self.latest_tag is not None:
             return "live"
-        elif self.repo_url not in (None, ""):
+        elif self.repo_url:
             return "staging"
-        elif self.tech is not None:
-            return "connecting"
+        elif (
+            self.tech is not None and not self.callable_name and not self.exp_task_time
+        ):
+            return "configuring"
+        elif not self.repo_url:
+            return "installing"
         else:
             return "created"
 

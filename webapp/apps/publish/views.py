@@ -218,7 +218,6 @@ class ProjectAPIView(APIView):
                 try:
                     model = serializer.save(
                         owner=request.user.profile,
-                        status="pending",
                         title=title,
                         cluster=Cluster.objects.default(),
                     )

@@ -164,14 +164,6 @@ class TestPublishViews:
         assert project.description == put_data["description"]
         assert project.status == "live"
 
-        # Description can't be empty.
-        resp = client.put(
-            f"/apps/api/v1/{owner}/Used-for-testing/",
-            data=dict(put_data, **{"description": None}),
-            content_type="application/json",
-        )
-        assert resp.status_code == 400
-
         # test add write_project permission allows update
         put_data["description"] = "hello world!!"
         (collab,) = gen_collabs(1)

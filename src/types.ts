@@ -90,17 +90,17 @@ export interface RemoteOutput {
   screenshot: string;
   title: string;
   media_type:
-    | "bokeh"
-    | "table"
-    | "CSV"
-    | "PNG"
-    | "JPEG"
-    | "MP3"
-    | "MP4"
-    | "HDF5"
-    | "PDF"
-    | "Markdown"
-    | "Text";
+  | "bokeh"
+  | "table"
+  | "CSV"
+  | "PNG"
+  | "JPEG"
+  | "MP3"
+  | "MP4"
+  | "HDF5"
+  | "PDF"
+  | "Markdown"
+  | "Text";
 }
 
 export interface Output extends RemoteOutput {
@@ -182,7 +182,7 @@ export interface Project {
   repo_url: string;
   server_size: [string, string];
   sim_count: number;
-  status: "created" | "connecting" | "staging" | "live";
+  status: "created" | "configuring" | "installing" | "staging" | "live";
   exp_task_time: number;
   server_cost: string;
   listed: boolean;
@@ -262,4 +262,13 @@ export interface Simulation<T> {
   status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
   title: string;
   traceback: string;
+}
+
+
+export interface ResourceLimitException {
+  resource: "collaborators";
+  test_name: "add_collaborator" | "make_private";
+  msg: string;
+  upgrade_to: "plus" | "pro";
+  collaborator?: string;
 }
