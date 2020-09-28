@@ -87,9 +87,6 @@ class GetOutputsObjectMixin:
             project__title__iexact=title,
             project__owner__user__username__iexact=username,
         )
-        print(
-            "got object", obj, self.request.user, obj.has_read_access(self.request.user)
-        )
         if not obj.has_read_access(self.request.user):
             # Throw 404 on private apps to keep their names secret.
             if not obj.project.has_read_access(self.request.user):
