@@ -90,17 +90,17 @@ export interface RemoteOutput {
   screenshot: string;
   title: string;
   media_type:
-  | "bokeh"
-  | "table"
-  | "CSV"
-  | "PNG"
-  | "JPEG"
-  | "MP3"
-  | "MP4"
-  | "HDF5"
-  | "PDF"
-  | "Markdown"
-  | "Text";
+    | "bokeh"
+    | "table"
+    | "CSV"
+    | "PNG"
+    | "JPEG"
+    | "MP3"
+    | "MP4"
+    | "HDF5"
+    | "PDF"
+    | "Markdown"
+    | "Text";
 }
 
 export interface Output extends RemoteOutput {
@@ -263,7 +263,6 @@ export interface Simulation<T> {
   title: string;
   traceback: string;
 }
-
 
 export interface ResourceLimitException {
   resource: "collaborators";

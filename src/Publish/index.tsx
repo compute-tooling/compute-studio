@@ -4,7 +4,7 @@ import * as ReactDOM from "react-dom";
 import * as React from "react";
 import * as ReactMarkdown from "react-markdown";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { Row, Col, Card, Dropdown, Jumbotron, Button } from "react-bootstrap";
+import { Row, Col, Card, Dropdown, Jumbotron, Button, ListGroup } from "react-bootstrap";
 import axios from "axios";
 import { Formik, Field, Form, ErrorMessage, FormikHelpers, FormikProps } from "formik";
 import * as yup from "yup";
@@ -113,7 +113,7 @@ const initialValues: ProjectValues = {
   listed: true,
   tech: null,
   callable_name: "",
-  is_public: true
+  is_public: true,
 };
 
 interface PublishProps {
@@ -126,7 +126,6 @@ interface PublishProps {
 type PublishState = Readonly<{
   initialValues: ProjectValues;
 }>;
-
 
 const PrivateAppException: React.FC<{ upgradeTo: "plus" | "pro" }> = ({ upgradeTo }) => {
   let plan;
@@ -161,7 +160,6 @@ const PrivateAppException: React.FC<{ upgradeTo: "plus" | "pro" }> = ({ upgradeT
   );
 };
 
-
 const TechSelectDropdown: React.FC<{
   selectedTech: Tech | null;
   onSelectTech: (tech: Tech) => void;
@@ -173,7 +171,7 @@ const TechSelectDropdown: React.FC<{
         variant="primary"
         id="dropdown-basic"
         className="w-100"
-      // style={{ backgroundColor: "white", color: "#007bff" }}
+        // style={{ backgroundColor: "white", color: "#007bff" }}
       >
         <strong>{selectedTech || "Select Technology"}</strong>
       </Dropdown.Toggle>
@@ -196,9 +194,11 @@ const TechSelectDropdown: React.FC<{
   );
 };
 
-
-const TechSelect: React.FC<{ project: Project, props: FormikProps<ProjectValues> }> = ({ project, props }) => (
-  <Row className="my-5 w-100 justify-content-center">
+const TechSelect: React.FC<{ project: Project; props: FormikProps<ProjectValues> }> = ({
+  project,
+  props,
+}) => (
+  <Row className="w-100 justify-content-center">
     <Col className="col-auto">
       <Field name="tech">
         {({ field, meta }) => (
@@ -207,7 +207,7 @@ const TechSelect: React.FC<{ project: Project, props: FormikProps<ProjectValues>
               (props.values.tech && props.touched.tech) || !!project ? props.values.tech : null
             }
             onSelectTech={sel => {
-              TechSelect
+              TechSelect;
               props.setFieldValue("tech", sel);
               props.setFieldTouched("tech", true);
             }}
@@ -216,12 +216,11 @@ const TechSelect: React.FC<{ project: Project, props: FormikProps<ProjectValues>
       </Field>
     </Col>
   </Row>
+);
 
-)
-
-const PythonParamTools: React.FC<{}> = ({ }) => {
+const PythonParamTools: React.FC<{}> = ({}) => {
   return (
-    <div className="mt-5">
+    <div>
       <h4>ParamTools Configuration</h4>
       <div className="my-3" />
       <div className="mt-1 mb-1">
@@ -248,7 +247,7 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
     bokeh: "Bokeh",
   }[tech];
   return (
-    <div className="mt-5">
+    <div>
       <h4>{title} Configuration</h4>
       <div className="my-3" />
       <div className="mt-1 mb-1">
@@ -279,10 +278,10 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
   );
 };
 
-const AdvancedFields: React.FC<{}> = ({ }) => {
+const AdvancedFields: React.FC<{}> = ({}) => {
   return (
     <div>
-      <div className="mt-5">
+      <div>
         <div className="mt-1 mb-1">
           <label>
             <b>Repo URL</b>
@@ -354,36 +353,132 @@ const AdvancedFields: React.FC<{}> = ({ }) => {
   );
 };
 
-const AboutAppFields: React.FC<{ accessStatus: AccessStatus, props: FormikProps<ProjectValues>, project: Project }> = ({ accessStatus, props, project }) => {
+const PublicPrivateRadio: React.FC<{ props: FormikProps<ProjectValues> }> = ({ props }) => (
+  <>
+    <p>
+      <label>
+        <input
+          id="make-public"
+          name="is_public"
+          type="radio"
+          checked={props.values.is_public}
+          onChange={() => props.setFieldValue("is_public", true)}
+        />
+        <span className="ml-1">
+          <strong>Public:</strong> Anyone on the internet can see and use this app. You will be
+          given an option later to make it discoverable.
+        </span>
+      </label>
+    </p>
+    <p>
+      <label>
+        <input
+          id="make-private"
+          name="is_public"
+          type="radio"
+          checked={!props.values.is_public}
+          onChange={() => props.setFieldValue("is_public", false)}
+        />
+        <span className="ml-1">
+          <strong>Private:</strong> You choose who can see and use this app.
+        </span>
+      </label>
+    </p>
+  </>
+);
+
+const Visibility: React.FC<{ props: FormikProps<ProjectValues> }> = ({ props }) => (
+  <>
+    <div className="mb-2">
+      <PublicPrivateRadio props={props} />
+    </div>
+    {props.values.is_public && (
+      <div className="my-2">
+        <label>
+          <strong>Listed:</strong>
+          <span className="ml-1">Include this app in the public list of apps.</span>
+        </label>
+        <Field
+          component={CheckboxField}
+          label="Listed: "
+          description="Include this app in the public list of apps"
+          name="listed"
+        />
+        <ErrorMessage name="listed" render={msg => <Message msg={msg} />} />
+      </div>
+    )}
+  </>
+);
+
+const AppTitle: React.FC<{ project: Project }> = ({ project }) => {
+  const isMobile = window.innerWidth < 992;
+  const id = `${project.owner}/${project.title}`;
+  if (isMobile) {
+    return (
+      <>
+        <p className="font-weight-light primary-text mb-0">
+          <a href={`/${project.owner}/`}>{project.owner}</a> /
+        </p>
+        <a href={`/${id}/`} className="primary-text">
+          <p className="lead font-weight-bold">{project.title}</p>
+        </a>
+      </>
+    );
+  } else {
+    return (
+      <>
+        <h1 className="display-5">
+          <a href={`/${project.owner}/`} className="primary-text">
+            <span className="font-weight-light">{project.owner}</span>
+          </a>
+          <span className="font-weight-light mx-1">/</span>
+          <a href={`/${id}/`} className="primary-text">
+            <span className="font-weight-bold">{project.title}</span>
+          </a>
+        </h1>
+      </>
+    );
+  }
+};
+
+const AboutAppFields: React.FC<{
+  accessStatus: AccessStatus;
+  props: FormikProps<ProjectValues>;
+  project: Project;
+}> = ({ accessStatus, props, project }) => {
   return (
     <>
-      <div className="mt-1 mb-1">
-        <Field name="title">
-          {({ field, meta }) => (
-            <Row className="justify-content-md-center">
-              <Col className="flex-grow-0 align-self-center">
-                <h6 className="lead">{accessStatus.username}</h6>
-              </Col>
-              <Col className="flex-grow-0 align-self-center">
-                <p className="lead pt-2">/</p>
-              </Col>
-              <Col className="flex-grow-0 align-self-center">
-                <input
-                  type="text"
-                  {...field}
-                  onChange={e => {
-                    e.target.value = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
-                    field.onChange(e);
-                  }}
-                />
-                {meta.touched && meta.error && <div className="text-danger">{meta.error}</div>}
-              </Col>
-            </Row>
-          )}
-        </Field>
+      <div>
+        {!project && (
+          <Field name="title">
+            {({ field, meta }) => (
+              <Row className="justify-content-md-center">
+                <Col className="flex-grow-0 align-self-center">
+                  <h6 className="lead">{accessStatus.username}</h6>
+                </Col>
+                <Col className="flex-grow-0 align-self-center">
+                  <p className="lead pt-2">/</p>
+                </Col>
+                <Col className="flex-grow-0 align-self-center">
+                  <input
+                    type="text"
+                    {...field}
+                    onChange={e => {
+                      e.target.value = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
+                      field.onChange(e);
+                    }}
+                  />
+                  {meta.touched && meta.error && <div className="text-danger">{meta.error}</div>}
+                </Col>
+              </Row>
+            )}
+          </Field>
+        )}
       </div>
       <div className="mt-1 mb-1">
-        <label className="strong">Oneliner</label>
+        <label>
+          <strong>Oneliner</strong>
+        </label>
         <Field name="oneliner">
           {({ field, meta }) => (
             <Row className="w-100">
@@ -395,9 +490,9 @@ const AboutAppFields: React.FC<{ accessStatus: AccessStatus, props: FormikProps<
           )}
         </Field>
       </div>
-      <div className="mt-1 mb-1">
-        <label className="strong">
-          README{" "}
+      <div className="mt-3 mb-1">
+        <label>
+          <strong>README</strong>{" "}
           <Tip id="readme-markdown-icon" tip="Supports Markdown." placement="top">
             <a href="https://hackmd.io/new" target="_blank">
               <i className="fab fa-markdown mr-3" style={{ opacity: 0.8 }}></i>
@@ -416,35 +511,9 @@ const AboutAppFields: React.FC<{ accessStatus: AccessStatus, props: FormikProps<
         </Field>
       </div>
       <div className="mt-4">
-        <p>
-          <label>
-            <input id="make-public" name="is_public" type="radio" checked={props.values.is_public} onChange={() => props.setFieldValue("is_public", true)} />
-            <span className="ml-1"><strong>Public:</strong> Anyone on the internet can see and use this app. You will be given an option later to make it discoverable.</span>
-          </label>
-        </p>
-        <p>
-          <label>
-            <input id="make-private" name="is_public" type="radio" checked={!props.values.is_public} onChange={() => props.setFieldValue("is_public", false)} />
-            <span className="ml-1"><strong>Private:</strong> You choose who can see and use this app.</span>
-          </label>
-        </p>
+        <PublicPrivateRadio props={props} />
       </div>
-
       <TechSelect props={props} project={project} />
-
-      {/* <div className="mt-3 mb-1">
-        <label>
-          <b>Listed:</b>Include this app in the public list of apps
-        </label>
-
-        <Field
-          component={CheckboxField}
-          label="Listed: "
-          description="Include this app in the public list of apps"
-          name="listed"
-        />
-        <ErrorMessage name="listed" render={msg => <Message msg={msg} />} />
-      </div> */}
     </>
   );
 };
@@ -461,38 +530,12 @@ const ViewProject: React.FC<{
       <img className="h-100 w-100" src={node.src} alt={node.alt} style={{ objectFit: "cover" }} />
     </div>
   );
-  const isMobile = window.innerWidth < 992;
-  let title;
-  if (isMobile) {
-    title = (
-      <>
-        <p className="font-weight-light primary-text mb-0">
-          <a href={`/${project.owner}/`}>{project.owner}</a> /
-        </p>
-        <a href={`/${id}/`} className="primary-text">
-          <p className="lead font-weight-bold">{project.title}</p>
-        </a>
-      </>
-    );
-  } else {
-    title = (
-      <>
-        <h1 className="display-5">
-          <a href={`/${project.owner}/`} className="primary-text">
-            <span className="font-weight-light">{project.owner}</span>
-          </a>
-          <span className="font-weight-light mx-1">/</span>
-          <a href={`/${id}/`} className="primary-text">
-            <span className="font-weight-bold">{project.title}</span>
-          </a>
-        </h1>
-      </>
-    );
-  }
   return (
     <Jumbotron className="shadow" style={{ backgroundColor: "white" }}>
       <Row className="justify-content-between mb-2">
-        <Col className="col-auto align-self-center">{title}</Col>
+        <Col className="col-auto align-self-center">
+          <AppTitle project={project} />
+        </Col>
         {accessStatus.can_write_project && (
           <Col className="col-auto align-self-center">
             <button className="btn btn-outline-primary" onClick={enterEditMode}>
@@ -513,10 +556,10 @@ const ViewProject: React.FC<{
           ) : project.status === "staging" ? (
             <strong>Our team is preparing your app to be published.</strong>
           ) : (
-                <Button variant="success" onClick={enterEditMode}>
-                  <strong>Connect App</strong>
-                </Button>
-              )}
+            <Button variant="success" onClick={enterEditMode}>
+              <strong>Connect App</strong>
+            </Button>
+          )}
         </Col>
         <Col className="col-auto align-self-center">
           {project.tech && (
@@ -534,7 +577,7 @@ const ViewProject: React.FC<{
   );
 };
 
-type Step = "create" | "configure" | "advanced" | "staging";
+type Step = "create" | "configure" | "advanced" | "staging" | "visibility";
 
 const ProjectForm: React.FC<{
   props: FormikProps<ProjectValues>;
@@ -554,28 +597,33 @@ const ProjectForm: React.FC<{
       </div>
     )}
     {props.status?.collaborators && (
-      <PrivateAppException upgradeTo={(props.status.collaborators as ResourceLimitException).upgrade_to} />
+      <PrivateAppException
+        upgradeTo={(props.status.collaborators as ResourceLimitException).upgrade_to}
+      />
     )}
 
-    {step === "create" && <AboutAppFields accessStatus={accessStatus} props={props} project={project} />}
-    {
-      step === "configure" && (
-        <>
-          <TechSelect props={props} project={project} />
-          {props.values.tech === "python-paramtools" && <PythonParamTools />}
-          {["bokeh", "dash"].includes(props.values.tech) && (
-            <VizWithServer tech={props.values.tech} />
-          )}
-        </>
-      )
-    }
+    {step === "create" && (
+      <AboutAppFields accessStatus={accessStatus} props={props} project={project} />
+    )}
+    {step === "configure" && (
+      <>
+        <h4>Select app technology:</h4>
+        <TechSelect props={props} project={project} />
+        {props.values.tech === "python-paramtools" && <PythonParamTools />}
+        {["bokeh", "dash"].includes(props.values.tech) && (
+          <VizWithServer tech={props.values.tech} />
+        )}
+      </>
+    )}
 
-    { step === "advanced" ? <AdvancedFields /> : null}
+    {step === "advanced" && <AdvancedFields />}
+
+    {step === "visibility" && <Visibility props={props} />}
 
     <button className="btn inline-block btn-success mt-4" type="submit">
-      <strong>{project ? "Connect" : "Create"}</strong>
+      <strong>{project ? "Save" : "Create"}</strong>
     </button>
-  </Form >
+  </Form>
 );
 
 class ProjectApp extends React.Component<
@@ -585,7 +633,7 @@ class ProjectApp extends React.Component<
     project?: Project;
     step: Step | null;
   }
-  > {
+> {
   constructor(props) {
     super(props);
     let initialValues = {};
@@ -608,6 +656,8 @@ class ProjectApp extends React.Component<
       return "configure";
     } else if (project?.status === "installing") {
       return "advanced";
+    } else {
+      return "create";
     }
   }
 
@@ -627,7 +677,8 @@ class ProjectApp extends React.Component<
               .save(formdata)
               .then(project => {
                 actions.setSubmitting(false);
-                window.location.href = `/${project.owner}/${project.title}/`;
+
+                history.pushState(null, null, `/${project.owner}/${project.title}/`);
                 this.setState({ project });
               })
               .catch(error => {
@@ -648,12 +699,51 @@ class ProjectApp extends React.Component<
           validationSchema={Schema}
         >
           {(props: FormikProps<ProjectValues>) => (
-            <ProjectForm
-              props={props}
-              project={this.state.project}
-              accessStatus={accessStatus}
-              step={step}
-            />
+            <>
+              <Row>
+                <Col className="col-3">
+                  <Card>
+                    <Card.Header>Settings</Card.Header>
+                    <ListGroup variant="flush">
+                      <ListGroup.Item onClick={() => this.setState({ step: "create" })}>
+                        <a href="#">
+                          <span className={step === "create" && "font-weight-bold"}>About</span>
+                        </a>
+                      </ListGroup.Item>
+                      <ListGroup.Item onClick={() => this.setState({ step: "configure" })}>
+                        <a href="#">
+                          <span className={step === "configure" && "font-weight-bold"}>
+                            Configure
+                          </span>
+                        </a>
+                      </ListGroup.Item>
+                      <ListGroup.Item onClick={() => this.setState({ step: "advanced" })}>
+                        <a href="#">
+                          <span className={step === "advanced" && "font-weight-bold"}>
+                            Environment
+                          </span>
+                        </a>
+                      </ListGroup.Item>
+                      <ListGroup.Item onClick={() => this.setState({ step: "visibility" })}>
+                        <a href="#">
+                          <span className={step === "visibility" && "font-weight-bold"}>
+                            Visibility
+                          </span>
+                        </a>
+                      </ListGroup.Item>
+                    </ListGroup>
+                  </Card>
+                </Col>
+                <Col className="col-9">
+                  <ProjectForm
+                    props={props}
+                    project={this.state.project}
+                    accessStatus={accessStatus}
+                    step={step}
+                  />
+                </Col>
+              </Row>
+            </>
           )}
         </Formik>
       </div>
@@ -696,7 +786,7 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
 class ProjectDetail extends React.Component<
   { match: Match; edit: boolean },
   { project?: Project; accessStatus?: AccessStatus; edit: boolean }
-  > {
+> {
   api: API;
   constructor(props) {
     super(props);
@@ -722,26 +812,24 @@ class ProjectDetail extends React.Component<
     return this.state.edit ? (
       <Card className="card-outer">
         <Card.Body>
-          <h2 style={{ marginBottom: "2rem" }}>
-            <a className="primary-text" href={`/${id}/`}>
-              {id}
-            </a>
-          </h2>
-          <ProjectApp
-            project={this.state.project}
-            accessStatus={this.state.accessStatus}
-            initialValues={(this.state.project as unknown) as ProjectValues}
-            api={this.api}
-          />
+          <AppTitle project={this.state.project} />
+          <div className="mt-5 mx-5">
+            <ProjectApp
+              project={this.state.project}
+              accessStatus={this.state.accessStatus}
+              initialValues={(this.state.project as unknown) as ProjectValues}
+              api={this.api}
+            />
+          </div>
         </Card.Body>
       </Card>
     ) : (
-        <ViewProject
-          project={this.state.project}
-          accessStatus={this.state.accessStatus}
-          enterEditMode={() => this.setState({ edit: true })}
-        />
-      );
+      <ViewProject
+        project={this.state.project}
+        accessStatus={this.state.accessStatus}
+        enterEditMode={() => this.setState({ edit: true })}
+      />
+    );
   }
 }
 
