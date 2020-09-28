@@ -103,7 +103,7 @@ const MetaParametersComponent: React.FC<{
     <div className="card card-body card-outer">
       <div className="form-group">
         <ul className="list-unstyled components">
-          {Object.entries(meta_parameters).map(function(mp_item, ix) {
+          {Object.entries(meta_parameters).map(function (mp_item, ix) {
             let paramName = `${mp_item[0]}`;
             let fieldName = `meta_parameters.${paramName}`;
             return (
@@ -164,7 +164,7 @@ const ValueComponent: React.FC<{
   extend,
   label,
   readOnly,
-  values
+  values,
 }) => {
   let style = isTouched ? { backgroundColor: "rgba(102, 175, 233, 0.2)" } : {};
   return (
@@ -219,7 +219,7 @@ const ParamComponent: React.FC<{
     <div className="container mb-3" style={{ padding: "left 0" }} key={param}>
       {paramElement}
       <div className="form-row has-statuses" style={{ marginLeft: "-20px" }}>
-        {Object.entries(data.form_fields).map(function(form_field, ix) {
+        {Object.entries(data.form_fields).map(function (form_field, ix) {
           let labels = form_field[0];
           let vo = data.value[ix];
           let commaSepLabs = Object.entries(vo)
@@ -277,13 +277,13 @@ const Section2Component: React.FC<{
   values,
   extend,
   meta_parameters,
-  readOnly
+  readOnly,
 }) => {
   let section_2_id = makeID(section_2);
   return (
     <div key={section_2_id} className="mb-2">
       <h3 className="mb-1">{section_2}</h3>
-      {param_list.map(function(param) {
+      {param_list.map(function (param) {
         return (
           <Param
             key={`${param}-component`}
@@ -327,7 +327,7 @@ const Section1Component: React.FC<{
   values,
   extend,
   meta_parameters,
-  readOnly
+  readOnly,
 }) => {
   let section_1_id = makeID(section_1);
   return (
@@ -339,7 +339,7 @@ const Section1Component: React.FC<{
           id={`${makeID(section_1)}-collapse-section-1`}
         >
           <div className="card card-body card-inner mb-3" style={{ padding: "0rem" }}>
-            {Object.entries(section_2_dict).map(function(param_list_item, ix) {
+            {Object.entries(section_2_dict).map(function (param_list_item, ix) {
               let section_2 = param_list_item[0];
               let param_list = param_list_item[1];
               return (
@@ -391,7 +391,7 @@ const MajorSectionComponent: React.FC<{
       <hr className="mb-1" style={{ borderTop: "0" }} />
       <div className="collapse show collapse-plus-minus" id={`${makeID(msect)}-collapse-major`}>
         <div className="card card-body card-inner" style={{ padding: "0rem" }}>
-          {Object.entries(section_1_dict).map(function(section_2_item, ix) {
+          {Object.entries(section_1_dict).map(function (section_2_item, ix) {
             let section_1 = section_2_item[0];
             let section_2_dict = section_2_item[1];
             return (
@@ -435,7 +435,7 @@ export const SectionHeaderList: React.FC<{ sects: Sects }> = ({ sects }) => {
                 style={{
                   border: "0px",
                   padding: "0rem",
-                  color: "inherit"
+                  color: "inherit",
                 }}
               >
                 <h3 style={{ color: "inherit" }}>{msect}</h3>
@@ -449,7 +449,7 @@ export const SectionHeaderList: React.FC<{ sects: Sects }> = ({ sects }) => {
                     style={{
                       padding: ".3rem 0rem",
                       border: "0px",
-                      color: "inherit"
+                      color: "inherit",
                     }}
                   >
                     {section1Title}

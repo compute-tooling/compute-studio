@@ -19,19 +19,19 @@ axios.defaults.xsrfCookieName = "csrftoken";
 const techLinks = {
   "python-paramtools": "https://paramtools.dev",
   bokeh: "https://bokeh.org",
-  dash: "https://dash.plotly.com/"
+  dash: "https://dash.plotly.com/",
 };
 
 const techDocsLinks = {
   "python-paramtools": "https://docs.compute.studio/publish/guide/",
   bokeh: "https://bokeh.org",
-  dash: "https://dash.plotly.com/"
+  dash: "https://dash.plotly.com/",
 };
 
 const techTitles = {
   dash: "Dash",
   bokeh: "Bokeh",
-  "python-paramtools": "ParamTools"
+  "python-paramtools": "ParamTools",
 };
 
 interface Match {
@@ -39,7 +39,7 @@ interface Match {
 }
 
 const inputStyle = {
-  width: "100%"
+  width: "100%",
 };
 
 const domContainer = document.querySelector("#publish-container");
@@ -60,7 +60,7 @@ var Schema = yup.object().shape({
   exp_task_time: yup.number().min(0, "Expected task time must be greater than ${min}."),
   listed: yup.boolean().required(requiredMessage),
   tech: yup.string(),
-  callable_name: yup.string()
+  callable_name: yup.string(),
 });
 
 export const Message = ({ msg }) => (
@@ -108,7 +108,7 @@ const initialValues: ProjectValues = {
   exp_task_time: 0,
   listed: true,
   tech: "python-paramtools",
-  callable_name: ""
+  callable_name: "",
 };
 
 interface PublishProps {
@@ -181,7 +181,7 @@ const PythonParamTools: React.FC<{}> = ({}) => {
 const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
   const title = {
     dash: "Dash",
-    bokeh: "Bokeh"
+    bokeh: "Bokeh",
   }[tech];
   return (
     <div className="mt-5">
@@ -371,7 +371,7 @@ class ProjectApp extends React.Component<PublishProps, PublishState & { showTech
     this.state = {
       preview: this.props.preview,
       initialValues: initialValues as ProjectValues,
-      showTechOpts: false
+      showTechOpts: false,
     };
     this.togglePreview = this.togglePreview.bind(this);
   }
@@ -396,7 +396,7 @@ class ProjectApp extends React.Component<PublishProps, PublishState & { showTech
               .save(formdata)
               .then(project => {
                 actions.setSubmitting(false);
-                window.location.href = `/${project.owner}/${project.title}/detail/`;
+                window.location.href = `/${project.owner}/${project.title}/`;
               })
               .catch(error => {
                 console.log("error", error);
@@ -406,7 +406,7 @@ class ProjectApp extends React.Component<PublishProps, PublishState & { showTech
                   actions.setStatus(error.response.data);
                 } else if (error.response.status == 401) {
                   actions.setStatus({
-                    auth: "You must be logged in to publish a model."
+                    auth: "You must be logged in to publish a model.",
                   });
                 }
                 window.scroll(0, 0);
@@ -564,7 +564,7 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
   async componentDidMount() {
     const accessStatus = await this.api.getAccessStatus();
     this.setState({
-      accessStatus
+      accessStatus,
     });
   }
   render() {
@@ -644,7 +644,6 @@ ReactDOM.render(
     <Switch>
       <Route exact path="/publish/" component={CreateProject} />
       <Route exact path="/new/" component={CreateProject} />
-      <Route path="/:username/:app_name/detail/" component={ProjectDetail} />
       <Route path="/:username/:app_name/" component={ProjectDetail} />
     </Switch>
   </BrowserRouter>,

@@ -13,7 +13,7 @@ axios.defaults.xsrfCookieName = "csrftoken";
 
 let LoginSchema = yup.object().shape({
   username: yup.string().required("Username is required."),
-  password: yup.string().required("Password is required.")
+  password: yup.string().required("Password is required."),
 });
 
 let SignupSchema = yup.object().shape({
@@ -26,7 +26,7 @@ let SignupSchema = yup.object().shape({
   password2: yup
     .string()
     .oneOf([yup.ref("password1"), null], "Passwords don't match")
-    .required("Confirmation password is required.")
+    .required("Confirmation password is required."),
 });
 
 const tos = (
@@ -235,7 +235,7 @@ export const AuthButtons: React.FC<{
 }> = ({ accessStatus, resetAccessStatus }) => {
   const [state, setState] = React.useState({
     show: false,
-    initialAction: "sign-in"
+    initialAction: "sign-in",
   } as AuthButtonState);
 
   const setShow = show => {

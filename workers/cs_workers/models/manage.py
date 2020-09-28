@@ -66,8 +66,11 @@ class Manager(BaseManager):
         ignore_ci_errors=False,
         quiet=False,
     ):
-        self.config = ModelConfig(project, cs_url, base_branch, quiet)
         super().__init__(project, cs_url, cs_api_token)
+        self.config = ModelConfig(
+            project, cs_url, self.cs_api_token, base_branch, quiet
+        )
+
         self.tag = tag
         self.models = models.split(",") if models else None
         self.base_branch = base_branch

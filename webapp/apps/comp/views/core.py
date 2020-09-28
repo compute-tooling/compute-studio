@@ -1,5 +1,6 @@
 from django.views.generic.base import View
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
@@ -8,7 +9,7 @@ from webapp.apps.users.permissions import RequiresActive, RequiresPayment
 
 from webapp.settings import USE_STRIPE
 from webapp.apps.billing.utils import has_payment_method
-from webapp.apps.users.models import is_profile_active
+from webapp.apps.users.models import is_profile_active, get_project_or_404
 
 
 class InputsMixin:
@@ -38,25 +39,20 @@ class AbstractRouter:
 
     def handle(self, request, action, *args, **kwargs):
         print("router handle", args, kwargs)
-        project = get_object_or_404(
+        project = get_project_or_404(
             self.projects,
+            user=request.user,
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
 
-        if project.status in ["updating", "live"]:
+        if project.status in ["staging", "live"]:
             if project.sponsor is None:
                 return self.payment_view.as_view()(request, *args, **kwargs)
             else:
                 return self.login_view.as_view()(request, *args, **kwargs)
         else:
-            if action == "GET":
-                return self.unauthenticated_get(request, *args, **kwargs)
-            else:
-                raise PermissionDenied()
-
-    def unauthenticated_get(self, request, *args, **kwargs):
-        return PermissionDenied()
+            raise Http404()
 
     def get(self, request, *args, **kwargs):
         return self.handle(request, "GET", *args, **kwargs)
@@ -92,6 +88,9 @@ class GetOutputsObjectMixin:
             project__owner__user__username__iexact=username,
         )
         if not obj.has_read_access(self.request.user):
+            # Throw 404 on private apps to keep their names secret.
+            if not obj.project.has_read_access(self.request.user):
+                raise Http404()
             raise PermissionDenied()
         return obj
 

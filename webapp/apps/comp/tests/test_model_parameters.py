@@ -67,7 +67,7 @@ def mock_callback(request, context):
 
 
 @pytest.fixture
-def mock_project(db, worker_url):
+def mock_project(db):
     profile = Profile.objects.get(user__username="modeler")
     project = Project.objects.create(
         owner=profile,

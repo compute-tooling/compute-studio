@@ -13,9 +13,7 @@ def mock_sync_projects(project=None):
     else:
         cluster = project.cluster
     with requests_mock.Mocker(real_http=True) as mock:
-        mock.register_uri(
-            "POST", f"{cluster.url}/sync/",
-        )
+        mock.register_uri("POST", f"{cluster.url}/sync/", json={"status": "SUCCESS"})
         yield
 
 

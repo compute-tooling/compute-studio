@@ -24,13 +24,13 @@ export default class ErrorBoundary extends React.Component<{}, ErrorState> {
         this.setState({
           eventId,
           error: error,
-          errorInfo: errorInfo
+          errorInfo: errorInfo,
         });
       });
     } else {
       this.setState({
         error,
-        errorInfo
+        errorInfo,
       });
     }
   }

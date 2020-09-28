@@ -25,9 +25,16 @@ BASE_PATH = CURR_PATH / ".." / ".."
 
 class ModelConfig:
     def __init__(
-        self, project, cs_url, base_branch="origin/master", quiet=False, rclient=None,
+        self,
+        project,
+        cs_url,
+        cs_api_token,
+        base_branch="origin/master",
+        quiet=False,
+        rclient=None,
     ):
         self.cs_url = cs_url
+        self.cs_api_token = cs_api_token
         self.project = project
         self.base_branch = base_branch
         self.quiet = quiet
@@ -51,7 +58,7 @@ class ModelConfig:
 
     def set_projects(self, models=None, projects=None):
         if projects is None:
-            projects = get_projects(self.cs_url)
+            projects = get_projects(self.cs_url, self.cs_api_token)
         if models is not None:
             selected = {}
             for model in models:

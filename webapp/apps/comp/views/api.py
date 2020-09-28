@@ -2,6 +2,8 @@ from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.db.models import Q
+from django.http import Http404
 
 from rest_framework.authentication import (
     BasicAuthentication,
@@ -20,7 +22,12 @@ from rest_framework import filters
 import paramtools as pt
 import cs_storage
 
-from webapp.apps.users.models import Project, Profile
+from webapp.apps.users.models import (
+    Project,
+    Profile,
+    get_project_or_404,
+    projects_with_access,
+)
 from webapp.apps.users.permissions import RequiresActive, StrictRequiresActive
 
 from webapp.apps.comp.asyncsubmit import SubmitInputs, SubmitSim
@@ -31,6 +38,7 @@ from webapp.apps.comp.exceptions import (
     BadPostException,
     ForkObjectException,
     ResourceLimitException,
+    PrivateAppException,
 )
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
@@ -59,8 +67,9 @@ class InputsAPIView(APIView):
     queryset = Project.objects.all()
 
     def get_inputs(self, kwargs, meta_parameters=None):
-        project = get_object_or_404(
+        project = get_project_or_404(
             self.queryset,
+            user=self.request.user,
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
@@ -109,6 +118,8 @@ class DetailMyInputsAPIView(APIView):
             project__owner__user__username__iexact=kwargs["username"],
         )
         if not inputs.has_read_access(request.user):
+            if not inputs.project.has_read_access(request.user):
+                raise Http404()
             raise PermissionDenied()
         ser = InputsSerializer(inputs, context={"request": self.request})
         return Response(ser.data)
@@ -156,8 +167,9 @@ class BaseCreateAPIView(APIView):
     queryset = Project.objects.all()
 
     def post(self, request, *args, **kwargs):
-        project = get_object_or_404(
+        project = get_project_or_404(
             self.queryset,
+            user=request.user,
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
@@ -207,18 +219,20 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
                     return Response(
                         serializer.errors, status=status.HTTP_400_BAD_REQUEST
                     )
-                except ResourceLimitException as rle:
+                except (ResourceLimitException, PrivateAppException) as e:
                     return Response(
-                        {rle.resource: rle.todict()}, status=status.HTTP_400_BAD_REQUEST
+                        {e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST
                     )
             else:
                 return Response(status=status.HTTP_403_FORBIDDEN)
         return Response(status=status.HTTP_401_UNAUTHORIZED)
 
     def post(self, request, *args, **kwargs):
+        print("getting objects", kwargs)
         self.object = self.get_object(
             kwargs["model_pk"], kwargs["username"], kwargs["title"]
         )
+        print("got self.object", self.object)
         if not self.object.has_write_access(request.user):
             return Response(status=status.HTTP_403_FORBIDDEN)
         if self.object.status == "STARTED":
@@ -305,7 +319,6 @@ class ForkDetailAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView
         except ForkObjectException as e:
             msg = str(e)
             return Response({"fork": msg}, status=status.HTTP_400_BAD_REQUEST)
-
         data = MiniSimulationSerializer(sim).data
         return Response(data, status=status.HTTP_201_CREATED)
 
@@ -319,8 +332,9 @@ class NewSimulationAPIView(RequiresLoginPermissions, APIView):
     )
 
     def post(self, request, *args, **kwargs):
-        project = get_object_or_404(
+        project = get_project_or_404(
             self.projects,
+            user=request.user,
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
@@ -342,38 +356,40 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
     authentication_classes = (TokenAuthentication,)
 
     def put(self, request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.username == "comp-api-user":
-            ser = OutputsSerializer(data=request.data)
-            if ser.is_valid():
-                data = ser.validated_data
-                sim = get_object_or_404(Simulation, job_id=data["job_id"])
-                if sim.status == "PENDING":
-                    self.record_outputs(sim, data)
-                    if sim.notify_on_completion:
-                        try:
-                            host = f"https://{request.get_host()}"
-                            sim_url = f"{host}{sim.get_absolute_url()}"
-                            send_mail(
-                                f"{sim} has finished!",
-                                (
-                                    f"Here's a link to your simulation:\n\n{sim_url}."
-                                    f"\n\nPlease write back if you have any questions or feedback!"
-                                ),
-                                "notifications@compute.studio",
-                                [sim.owner.user.email],
-                                fail_silently=True,
-                            )
-                        # Http 401 exception if mail credentials are not set up.
-                        except Exception:
-                            import traceback
+        print("myoutputs api method=PUT", kwargs)
+        ser = OutputsSerializer(data=request.data)
+        if ser.is_valid():
+            data = ser.validated_data
+            sim = get_object_or_404(
+                Simulation.objects.prefetch_related("project"), job_id=data["job_id"]
+            )
+            if not sim.project.has_write_access(request.user):
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+            if sim.status == "PENDING":
+                self.record_outputs(sim, data)
+                if sim.notify_on_completion:
+                    try:
+                        host = f"https://{request.get_host()}"
+                        sim_url = f"{host}{sim.get_absolute_url()}"
+                        send_mail(
+                            f"{sim} has finished!",
+                            (
+                                f"Here's a link to your simulation:\n\n{sim_url}."
+                                f"\n\nPlease write back if you have any questions or feedback!"
+                            ),
+                            "notifications@compute.studio",
+                            [sim.owner.user.email],
+                            fail_silently=True,
+                        )
+                    # Http 401 exception if mail credentials are not set up.
+                    except Exception:
+                        import traceback
 
-                            traceback.print_exc()
-                            pass
-                return Response(status=status.HTTP_200_OK)
-            else:
-                return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+                        traceback.print_exc()
+                        pass
+            return Response(status=status.HTTP_200_OK)
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class MyInputsAPIView(APIView):
@@ -381,34 +397,33 @@ class MyInputsAPIView(APIView):
 
     def put(self, request, *args, **kwargs):
         print("myinputs api method=PUT", kwargs)
-
-        if request.user.username == "comp-api-user":
-            data = request.data
-            ser = InputsSerializer(data=request.data)
-            if ser.is_valid():
-                data = ser.validated_data
-                inputs = get_object_or_404(Inputs, job_id=data["job_id"])
-                if inputs.status in ("PENDING", "INVALID"):
-                    # successful run
-                    if data["status"] == "SUCCESS":
-                        inputs.errors_warnings = data["errors_warnings"]
-                        inputs.custom_adjustment = data.get("custom_adjustment", None)
-                        inputs.status = "SUCCESS" if is_valid(inputs) else "INVALID"
-                        inputs.save()
-                        if inputs.status == "SUCCESS":
-                            submit_sim = SubmitSim(inputs.sim, compute=Compute())
-                            submit_sim.submit()
-                    # failed run, exception was caught
-                    else:
-                        inputs.status = "FAIL"
-                        inputs.traceback = data["traceback"]
-                        inputs.save()
-                return Response(status=status.HTTP_200_OK)
-            else:
-                print("inputs put error", ser.errors)
-                return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+        ser = InputsSerializer(data=request.data)
+        if ser.is_valid():
+            data = ser.validated_data
+            inputs = get_object_or_404(
+                Inputs.objects.prefetch_related("project"), job_id=data["job_id"]
+            )
+            if not inputs.project.has_write_access(request.user):
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+            if inputs.status in ("PENDING", "INVALID"):
+                # successful run
+                if data["status"] == "SUCCESS":
+                    inputs.errors_warnings = data["errors_warnings"]
+                    inputs.custom_adjustment = data.get("custom_adjustment", None)
+                    inputs.status = "SUCCESS" if is_valid(inputs) else "INVALID"
+                    inputs.save()
+                    if inputs.status == "SUCCESS":
+                        submit_sim = SubmitSim(inputs.sim, compute=Compute())
+                        submit_sim.submit()
+                # failed run, exception was caught
+                else:
+                    inputs.status = "FAIL"
+                    inputs.traceback = data["traceback"]
+                    inputs.save()
+            return Response(status=status.HTTP_200_OK)
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            print("inputs put error", ser.errors)
+            return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
@@ -445,9 +460,9 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                     pp, created = PendingPermission.objects.get_or_create(
                         sim=self.object, profile=profile, permission_name="add_author"
                     )
-                except ResourceLimitException as rle:
+                except (ResourceLimitException, PrivateAppException) as e:
                     return Response(
-                        data={rle.resource: rle.todict()},
+                        data={e.resource: e.todict()},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 # PP already exists and is not expired.
@@ -578,9 +593,9 @@ class SimulationAccessAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, A
                 previous_role = self.object.role(user)
                 try:
                     self.object.assign_role(access_obj["role"], user)
-                except ResourceLimitException as rle:
+                except (ResourceLimitException, PrivateAppException) as e:
                     return Response(
-                        data={rle.resource: rle.todict()},
+                        data={e.resource: e.todict()},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 updated_role = self.object.role(user)
@@ -639,9 +654,13 @@ class UserSimsAPIView(SimsAPIView):
 
 class PublicSimsAPIView(SimsAPIView):
     permission_classes = (RequiresActive,)
+    queryset = Simulation.objects.public_sims()
 
     def get_queryset(self):
-        return self.queryset.filter(is_public=True, creation_date__gte=ANON_BEFORE)
+        return self.queryset.filter(
+            creation_date__gte=ANON_BEFORE,
+            project__pk__in=projects_with_access(self.request.user),
+        )
 
 
 class ProfileSimsAPIView(SimsAPIView):
@@ -651,4 +670,6 @@ class ProfileSimsAPIView(SimsAPIView):
     def get_queryset(self):
         username = self.request.parser_context["kwargs"].get("username", None)
         user = get_object_or_404(get_user_model(), username__iexact=username)
-        return self.queryset.filter(owner__user=user)
+        return self.queryset.filter(
+            owner__user=user, project__pk__in=projects_with_access(self.request.user),
+        )

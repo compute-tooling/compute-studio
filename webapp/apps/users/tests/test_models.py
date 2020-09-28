@@ -3,10 +3,10 @@ import datetime
 import pytest
 
 from django.contrib.auth import get_user_model
-from guardian.shortcuts import assign_perm, remove_perm
+from guardian.shortcuts import assign_perm, remove_perm, get_perms, get_users_with_perms
+
 
 from webapp.apps.billing.models import Customer
-from webapp.apps.users.tests.utils import mock_post_to_cluster
 from webapp.apps.users.models import (
     Profile,
     Project,
@@ -15,6 +15,8 @@ from webapp.apps.users.models import (
     DeploymentException,
     EmbedApproval,
 )
+from webapp.apps.users.exceptions import ResourceLimitException
+from webapp.apps.users.tests.utils import gen_collabs, replace_owner
 from webapp.apps.comp.models import Simulation, ANON_BEFORE
 
 User = get_user_model()
@@ -98,16 +100,6 @@ class TestUserModels:
         assert not profile.can_run(reg.project)
         assert not profile.can_run(sponsored.project)
 
-    def test_project_access(self, profile):
-        project = Project.objects.get(
-            title="Used-for-testing", owner__user__username="modeler"
-        )
-        assert not profile.user.has_perm("write_project")
-        assign_perm("write_project", profile.user, project)
-        assert profile.user.has_perm("write_project", project)
-        remove_perm("write_project", profile.user, project)
-        assert not profile.user.has_perm("write_project", project)
-
     def test_recent_models(self, profile, test_models):
 
         assert profile.recent_models(limit=10) == [
@@ -125,8 +117,124 @@ class TestUserModels:
         assert profile.recent_models(limit=1) == [test_models[1].project]
 
 
+class TestProjectPermissionse:
+    def test_project_access(self, profile):
+        project = Project.objects.get(
+            title="Used-for-testing", owner__user__username="modeler"
+        )
+        assert not profile.user.has_perm("write_project")
+        assign_perm("write_project", profile.user, project)
+        assert profile.user.has_perm("write_project", project)
+        remove_perm("write_project", profile.user, project)
+        assert not profile.user.has_perm("write_project", project)
+
+    def test_project_permissions(self, db, project, plus_profile):
+        collab = next(gen_collabs(1))
+        project.is_public = False
+        replace_owner(project, plus_profile)
+
+        # check permissions for owner and random profile
+        assert get_perms(project.owner.user, project) == ["admin_project"]
+        assert project.role(project.owner.user) == "admin"
+        assert get_perms(collab.user, project) == []
+        assert project.role(collab.user) is None
+
+        # project owner has all levels of access
+        assert (
+            project.is_owner(project.owner.user)
+            and project.has_admin_access(project.owner.user)
+            and project.has_write_access(project.owner.user)
+            and project.has_read_access(project.owner.user)
+        )
+        # random user has no access
+        assert (
+            not project.is_owner(collab.user)
+            and not project.has_admin_access(collab.user)
+            and not project.has_write_access(collab.user)
+            and not project.has_read_access(collab.user)
+        )
+        # None has no access and does not cause errors
+        assert (
+            not project.is_owner(None)
+            and not project.has_admin_access(None)
+            and not project.has_write_access(None)
+            and not project.has_read_access(None)
+        )
+
+        # test grant/removal of read access.
+        project.grant_read_permissions(collab.user)
+        assert (
+            get_perms(collab.user, project) == ["read_project"]
+            and project.role(collab.user) == "read"
+        )
+        assert (
+            not project.is_owner(collab.user)
+            and not project.has_admin_access(collab.user)
+            and not project.has_write_access(collab.user)
+            and project.has_read_access(collab.user)
+        )
+        project.remove_permissions(collab.user)
+        assert (
+            get_perms(collab.user, project) == [] and project.role(collab.user) is None
+        )
+        assert (
+            not project.is_owner(collab.user)
+            and not project.has_admin_access(collab.user)
+            and not project.has_write_access(collab.user)
+            and not project.has_read_access(collab.user)
+        )
+
+        # test grant/remove are idempotent:
+        for _ in range(3):
+            project.grant_read_permissions(collab.user)
+            assert project.has_read_access(collab.user)
+        for _ in range(3):
+            project.remove_permissions(collab.user)
+            assert not project.has_read_access(collab.user)
+
+        # test that only one permission is applied at a time.
+        project.grant_read_permissions(collab.user)
+        assert get_perms(collab.user, project) == ["read_project"]
+        project.grant_write_permissions(collab.user)
+        assert get_perms(collab.user, project) == ["write_project"]
+        project.grant_admin_permissions(collab.user)
+        assert get_perms(collab.user, project) == ["admin_project"]
+
+        project.is_public = True
+        project.save()
+        assert project.has_read_access(plus_profile.user)
+        assert project.has_read_access(collab.user)
+        assert project.has_read_access(None) is True
+
+        # test role
+        project.is_public = False
+        project.save()
+        project.assign_role("admin", collab.user)
+        assert (
+            project.has_admin_access(collab.user)
+            and project.role(collab.user) == "admin"
+        )
+        project.assign_role("write", collab.user)
+        assert (
+            project.has_write_access(collab.user)
+            and project.role(collab.user) == "write"
+        )
+        project.assign_role("read", collab.user)
+        assert (
+            project.has_read_access(collab.user) and project.role(collab.user) == "read"
+        )
+        project.assign_role(None, collab.user)
+        assert (
+            not project.has_read_access(collab.user)
+            and project.role(collab.user) == None
+        )
+
+        with pytest.raises(ValueError):
+            project.assign_role("dne", collab.user)
+
+
 class TestDeployments:
-    def test_create_deployment_with_ea(self, db, profile):
+    def test_create_deployment_with_ea(self, db, profile, mock_post_to_cluster):
         project = Project.objects.get(title="Test-Viz")
 
         ea = EmbedApproval.objects.create(
@@ -136,39 +244,182 @@ class TestDeployments:
             name="my-test-embed",
         )
 
-        with mock_post_to_cluster():
-            deployment, created = Deployment.objects.get_or_create_deployment(
-                project=project, name="my-deployment", owner=None, embed_approval=ea,
-            )
+        deployment, created = Deployment.objects.get_or_create_deployment(
+            project=project, name="my-deployment", owner=None, embed_approval=ea,
+        )
 
         assert created
         assert deployment.embed_approval == ea
         assert deployment.owner is None
 
-    def test_create_deployment_with_sponsored_project(self, db, profile):
+    def test_create_deployment_with_sponsored_project(
+        self, db, profile, mock_post_to_cluster
+    ):
         project = Project.objects.get(title="Test-Viz")
         sponsor = Profile.objects.get(user__username="sponsor")
         project.sponsor = sponsor
         project.save()
 
-        with mock_post_to_cluster():
-            deployment, created = Deployment.objects.get_or_create_deployment(
-                project=project, name="my-deployment", owner=None, embed_approval=None,
-            )
+        deployment, created = Deployment.objects.get_or_create_deployment(
+            project=project, name="my-deployment", owner=None, embed_approval=None,
+        )
 
         assert created
         assert deployment.embed_approval is None
         assert deployment.owner == sponsor
 
-    def test_create_deployment_exception(self, db, profile):
+    def test_create_deployment_exception(self, db, profile, mock_post_to_cluster):
         project = Project.objects.get(title="Test-Viz")
         project.save()
 
         with pytest.raises(DeploymentException):
-            with mock_post_to_cluster():
-                Deployment.objects.get_or_create_deployment(
-                    project=project,
-                    name="my-deployment",
-                    owner=None,
-                    embed_approval=None,
-                )
+            Deployment.objects.get_or_create_deployment(
+                project=project, name="my-deployment", owner=None, embed_approval=None,
+            )
+
+
+class TestCollaborators:
+    """
+    Test plan restrictions regarding making apps private and adding
+    collaborators to private apps.
+
+    Related: webapp/apps/comp/tests/test_models.py::TestCollaborators
+    """
+
+    def test_free_tier(self, db, project, free_profile):
+        """
+        Test private app can not have any collaborators but
+        public is unlimited.
+        """
+        project.is_public = False
+        replace_owner(project, free_profile)
+
+        collabs = list(gen_collabs(3))
+
+        # Test cannot add collaborator when app is private.
+        with pytest.raises(ResourceLimitException) as excinfo:
+            project.assign_role("read", collabs[0].user)
+
+        assert excinfo.value.todict() == {
+            "upgrade_to": "plus",
+            "resource": "collaborators",
+            "test_name": "add_collaborator",
+            "msg": ResourceLimitException.collaborators_msg,
+        }
+        assert (
+            get_perms(collabs[0].user, project) == []
+            and project.role(collabs[1].user) == None
+        )
+
+        # Unable for free users to make apps private.
+        with pytest.raises(ResourceLimitException):
+            project.make_private_test()
+
+        # Test no limit on collaborators when app is public.
+        project.is_public = True
+        project.save()
+
+        for collab in collabs:
+            project.assign_role("read", collab.user)
+            assert (
+                get_perms(collab.user, project) == ["read_project"]
+                and project.role(collab.user) == "read"
+            )
+
+        with pytest.raises(ResourceLimitException):
+            project.make_private_test()
+
+    def test_plus_tier(self, db, project, plus_profile):
+        """
+        Test can only add three collaborators to private app but
+        public is unlimited.
+        """
+        project.is_public = False
+        replace_owner(project, plus_profile)
+
+        collabs = list(gen_collabs(4))
+
+        # Add first three collaborators.
+        project.assign_role("read", collabs[0].user)
+        project.assign_role("read", collabs[1].user)
+        project.assign_role("read", collabs[2].user)
+        for collab in collabs[:3]:
+            assert (
+                get_perms(collab.user, project) == ["read_project"]
+                and project.role(collab.user) == "read"
+            )
+
+        # Cannot add fourth collaborator when app is private.
+        with pytest.raises(ResourceLimitException) as excinfo:
+            project.assign_role("read", collabs[-1].user)
+
+        assert excinfo.value.todict() == {
+            "resource": "collaborators",
+            "test_name": "add_collaborator",
+            "upgrade_to": "pro",
+            "msg": ResourceLimitException.collaborators_msg,
+        }
+        assert (
+            get_perms(collabs[-1].user, project) == []
+            and project.role(collabs[-1].user) == None
+        )
+        # Make sure first collaborator is not affected.
+        assert (
+            get_perms(collabs[0].user, project) == ["read_project"]
+            and project.role(collabs[0].user) == "read"
+        )
+
+        # OK to make app private.
+        project.make_private_test()
+
+        # Test no limit on collaborators when app is public.
+        project.is_public = True
+        project.save()
+
+        for collab in collabs:
+            project.assign_role("read", collab.user)
+            assert (
+                get_perms(collab.user, project) == ["read_project"]
+                and project.role(collab.user) == "read"
+            )
+
+        # Making app private is not allowed.
+        with pytest.raises(ResourceLimitException):
+            project.make_private_test()
+
+    def test_pro_tier(self, db, project, pro_profile, profile):
+        """
+        Test able to add more than three collaborators with a private
+        and public app.
+        """
+        project.is_public = False
+        replace_owner(project, pro_profile)
+
+        collabs = list(gen_collabs(4))
+
+        for collab in collabs:
+            project.assign_role("read", collab.user)
+            assert (
+                get_perms(collab.user, project) == ["read_project"]
+                and project.role(collab.user) == "read"
+            )
+
+        # OK making app private.
+        project.make_private_test()
+
+        project.is_public = True
+        project.save()
+
+        for collab in collabs:
+            project.assign_role(None, collab.user)
+            assert project.role(collab.user) == None
+
+        for collab in collabs:
+            project.assign_role("read", collab.user)
+            assert (
+                get_perms(collab.user, project) == ["read_project"]
+                and project.role(collab.user) == "read"
+            )
+
+        # OK making app private.
+        project.make_private_test()
