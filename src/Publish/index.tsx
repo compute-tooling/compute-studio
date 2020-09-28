@@ -171,7 +171,7 @@ const TechSelectDropdown: React.FC<{
         variant="primary"
         id="dropdown-basic"
         className="w-100"
-        // style={{ backgroundColor: "white", color: "#007bff" }}
+      // style={{ backgroundColor: "white", color: "#007bff" }}
       >
         <strong>{selectedTech || "Select Technology"}</strong>
       </Dropdown.Toggle>
@@ -198,27 +198,27 @@ const TechSelect: React.FC<{ project: Project; props: FormikProps<ProjectValues>
   project,
   props,
 }) => (
-  <Row className="w-100 justify-content-center">
-    <Col className="col-auto">
-      <Field name="tech">
-        {({ field, meta }) => (
-          <TechSelectDropdown
-            selectedTech={
-              (props.values.tech && props.touched.tech) || !!project ? props.values.tech : null
-            }
-            onSelectTech={sel => {
-              TechSelect;
-              props.setFieldValue("tech", sel);
-              props.setFieldTouched("tech", true);
-            }}
-          />
-        )}
-      </Field>
-    </Col>
-  </Row>
-);
+    <Row className="w-100 justify-content-center">
+      <Col className="col-auto">
+        <Field name="tech">
+          {({ field, meta }) => (
+            <TechSelectDropdown
+              selectedTech={
+                (props.values.tech && props.touched.tech) || !!project ? props.values.tech : null
+              }
+              onSelectTech={sel => {
+                TechSelect;
+                props.setFieldValue("tech", sel);
+                props.setFieldTouched("tech", true);
+              }}
+            />
+          )}
+        </Field>
+      </Col>
+    </Row>
+  );
 
-const PythonParamTools: React.FC<{}> = ({}) => {
+const PythonParamTools: React.FC<{}> = ({ }) => {
   return (
     <div>
       <h4>ParamTools Configuration</h4>
@@ -278,7 +278,7 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
   );
 };
 
-const AdvancedFields: React.FC<{}> = ({}) => {
+const AdvancedFields: React.FC<{}> = ({ }) => {
   return (
     <div>
       <div>
@@ -387,12 +387,12 @@ const PublicPrivateRadio: React.FC<{ props: FormikProps<ProjectValues> }> = ({ p
   </>
 );
 
-const Visibility: React.FC<{ props: FormikProps<ProjectValues> }> = ({ props }) => (
+const Visibility: React.FC<{ props: FormikProps<ProjectValues>, project: Project }> = ({ props, project }) => (
   <>
     <div className="mb-2">
       <PublicPrivateRadio props={props} />
     </div>
-    {props.values.is_public && (
+    {props.values.is_public && project.status === "live" && (
       <div className="my-2">
         <label>
           <strong>Listed:</strong>
@@ -556,10 +556,10 @@ const ViewProject: React.FC<{
           ) : project.status === "staging" ? (
             <strong>Our team is preparing your app to be published.</strong>
           ) : (
-            <Button variant="success" onClick={enterEditMode}>
-              <strong>Connect App</strong>
-            </Button>
-          )}
+                <Button variant="success" onClick={enterEditMode}>
+                  <strong>Connect App</strong>
+                </Button>
+              )}
         </Col>
         <Col className="col-auto align-self-center">
           {project.tech && (
@@ -618,7 +618,7 @@ const ProjectForm: React.FC<{
 
     {step === "advanced" && <AdvancedFields />}
 
-    {step === "visibility" && <Visibility props={props} />}
+    {step === "visibility" && <Visibility props={props} project={project} />}
 
     <button className="btn inline-block btn-success mt-4" type="submit">
       <strong>{project ? "Save" : "Create"}</strong>
@@ -633,7 +633,7 @@ class ProjectApp extends React.Component<
     project?: Project;
     step: Step | null;
   }
-> {
+  > {
   constructor(props) {
     super(props);
     let initialValues = {};
@@ -786,7 +786,7 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
 class ProjectDetail extends React.Component<
   { match: Match; edit: boolean },
   { project?: Project; accessStatus?: AccessStatus; edit: boolean }
-> {
+  > {
   api: API;
   constructor(props) {
     super(props);
@@ -824,12 +824,12 @@ class ProjectDetail extends React.Component<
         </Card.Body>
       </Card>
     ) : (
-      <ViewProject
-        project={this.state.project}
-        accessStatus={this.state.accessStatus}
-        enterEditMode={() => this.setState({ edit: true })}
-      />
-    );
+        <ViewProject
+          project={this.state.project}
+          accessStatus={this.state.accessStatus}
+          enterEditMode={() => this.setState({ edit: true })}
+        />
+      );
   }
 }
 
