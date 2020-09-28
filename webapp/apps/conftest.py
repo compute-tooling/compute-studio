@@ -19,7 +19,9 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 from guardian.shortcuts import assign_perm
 
-from webapp.settings import USE_STRIPE, DEFAULT_CLUSTER_USER
+import webapp.settings
+import webapp.apps.users.models
+from webapp.settings import USE_STRIPE
 from webapp.apps.billing.models import (
     Customer,
     Product,
@@ -62,15 +64,16 @@ def django_db_setup(django_db_setup, django_db_blocker):
             password="heyhey2222",
         )
 
+        webapp.settings.DEFAULT_CLUSTER_USER = "comp-api-user"
+        webapp.apps.users.models.DEFAULT_CLUSTER_USER = "comp-api-user"
         for u in [modeler, sponsor, hdoupe, comp_api_user]:
             Token.objects.create(user=u)
             Profile.objects.create(user=u, is_active=True)
 
         comp_api_user.refresh_from_db()
 
-        service_account = User.objects.get(username=DEFAULT_CLUSTER_USER)
         cluster = Cluster.objects.create(
-            service_account=service_account.profile,
+            service_account=comp_api_user.profile,
             url="http://scheduler",
             jwt_secret=cryptkeeper.encrypt(binascii.hexlify(os.urandom(32)).decode()),
         )
@@ -96,7 +99,8 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
         for project_config in projects:
             project = Project.objects.create(**dict(common, **project_config))
-            assign_perm("write_project", comp_api_user, project)
+            project.assign_role("admin", project.owner.user)
+            assign_perm("write_project", project.cluster.service_account.user, project)
 
         if USE_STRIPE:
             create_pro_billing_objects()

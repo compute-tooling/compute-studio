@@ -387,6 +387,13 @@ def test_public_sims(db, shuffled_sims, profile):
 
 
 class TestCollaborators:
+    """
+    Test plan restrictions regarding making sims private and adding
+    collaborators to private sims.
+
+    Related: webapp/apps/users/tests/test_models.py::TestCollaborators
+    """
+
     def test_free_tier(self, db, get_inputs, meta_param_dict, free_profile):
         """
         Test private sim can not have any collaborators but

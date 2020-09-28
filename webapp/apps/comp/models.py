@@ -538,6 +538,9 @@ class Simulation(models.Model):
         return user == self.owner.user
 
     def _collaborator_test(self, test_name, adding_collaborator=True):
+        """
+        Related: Project._collaborator_test
+        """
         if not HAS_USAGE_RESTRICTIONS:
             return
 
@@ -559,8 +562,7 @@ class Simulation(models.Model):
                     "plus",
                     ResourceLimitException.collaborators_msg,
                 )
-
-        if customer is not None:
+        else:
             current_plan = customer.current_plan()
 
             if num_collaborators > 0 and current_plan["name"] == "free":

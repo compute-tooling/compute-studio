@@ -1,12 +1,6 @@
 import json
 
-
-class CSException(Exception):
-    pass
-
-
-class CSError(CSException):
-    pass
+from webapp.apps.exceptions import CSException, CSError
 
 
 class AppError(CSError):

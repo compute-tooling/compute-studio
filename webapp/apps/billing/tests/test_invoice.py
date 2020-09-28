@@ -43,7 +43,7 @@ def gen_simulations(owner, sponsor, project, run_times):
     return qs
 
 
-def gen_deployments(owner, embed_approval, project, run_times, mock_post_to_cluster):
+def gen_deployments(owner, embed_approval, project, run_times):
     results = []
     for i, run_time in enumerate(run_times):
         deployment, _ = Deployment.objects.get_or_create_deployment(
@@ -102,7 +102,7 @@ def sponsored_sims(profile):
 
 
 @pytest.fixture
-def deployments(profile):
+def deployments(profile, mock_deployments_requests_to_cluster):
     """
     Generate deployments where the owner is the primary one being tested.
     """
@@ -113,7 +113,7 @@ def deployments(profile):
 
 
 @pytest.fixture
-def ea_deployments(profile):
+def ea_deployments(profile, mock_deployments_requests_to_cluster):
     """
     Generate deployments with embed approvals where the owner is the primary
     one being tested.
@@ -140,6 +140,7 @@ class TestInvoice:
         sponsored_sims,
         deployments,
         ea_deployments,
+        mock_deployments_requests_to_cluster,
     ):
         start = timezone.now() - timedelta(days=7)
         end = timezone.now()
@@ -223,6 +224,7 @@ class TestInvoice:
         sponsored_sims,
         deployments,
         ea_deployments,
+        mock_deployments_requests_to_cluster,
     ):
         start = timezone.now() - timedelta(days=7)
         end = timezone.now()

@@ -37,6 +37,8 @@ from webapp.settings import (
     HAS_USAGE_RESTRICTIONS,
 )
 
+from webapp.apps.users.exceptions import ResourceLimitException
+
 import cs_crypt
 import jwt
 
@@ -458,17 +460,52 @@ class Project(models.Model):
 
     def _collaborator_test(self, test_name, adding_collaborator=True):
         """
-        Not implemented for now. See Simulation._collaborator_test
+        Related: Simulation._collaborator_test
         """
         if not HAS_USAGE_RESTRICTIONS:
             return
 
-        pass
+        permission_objects = get_users_with_perms(self)
+
+        # number of additional collaborators besides owner and cluster
+        # service account.
+        num_collaborators = permission_objects.count() - 2
+
+        if adding_collaborator:
+            num_collaborators += 1
+
+        user = self.owner.user
+        customer = getattr(user, "customer", None)
+        if customer is None:
+            raise ResourceLimitException(
+                "collaborators",
+                test_name,
+                "plus",
+                ResourceLimitException.collaborators_msg,
+            )
+        else:
+            current_plan = customer.current_plan()
+
+            if current_plan["name"] == "free":
+                raise ResourceLimitException(
+                    "collaborators",
+                    test_name,
+                    "plus",
+                    ResourceLimitException.collaborators_msg,
+                )
+
+            if num_collaborators > 3 and current_plan["name"] == "plus":
+                raise ResourceLimitException(
+                    "collaborators",
+                    test_name,
+                    "pro",
+                    ResourceLimitException.collaborators_msg,
+                )
 
     def add_collaborator_test(self):
         """
         Test if user's plan allows them to add more collaborators
-        to this simulation.
+        to this app.
         """
         if self.is_public:
             return
@@ -476,7 +513,7 @@ class Project(models.Model):
 
     def make_private_test(self):
         """
-        Test if user's plan allows them to make the simulation private with
+        Test if user's plan allows them to make the app private with
         the existing number of collaborators.
         """
         return self._collaborator_test("make_private", adding_collaborator=False)
