@@ -88,6 +88,11 @@ urlpatterns = [
         publishviews.ProjectDetailView.as_view(),
         name="app",
     ),
+    path(
+        "<str:username>/<str:title>/settings/",
+        publishviews.ProjectDetailView.as_view(),
+        name="app",
+    ),
     # add project URL's here
     path("<str:username>/<str:title>/", include("webapp.apps.comp.urls")),
     path("<str:username>/", pageviews.ProfileView.as_view(), name="userprofile"),

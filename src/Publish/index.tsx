@@ -537,8 +537,7 @@ const AboutAppFields: React.FC<{
 const ViewProject: React.FC<{
   project: Project;
   accessStatus: AccessStatus;
-  enterEditMode: () => void;
-}> = ({ project, accessStatus, enterEditMode }) => {
+}> = ({ project, accessStatus }) => {
   const id = `${project.owner}/${project.title}`;
   const goto = project.tech === "python-paramtools" ? `/${id}/new/` : `/${id}/viz/`;
   const image = node => (
@@ -554,9 +553,12 @@ const ViewProject: React.FC<{
         </Col>
         {accessStatus.can_write_project && (
           <Col className="col-auto align-self-center">
-            <button className="btn btn-outline-primary" onClick={enterEditMode}>
+            <a
+              className="btn btn-outline-primary"
+              href={`/${project.owner}/${project.title}/settings/about/`}
+            >
               Edit
-            </button>
+            </a>
           </Col>
         )}
       </Row>
@@ -572,9 +574,12 @@ const ViewProject: React.FC<{
           ) : project.status === "staging" ? (
             <strong>Our team is preparing your app to be published.</strong>
           ) : (
-            <Button variant="success" onClick={enterEditMode}>
+            <a
+              className="btn btn-success"
+              href={`/${project.owner}/${project.title}/settings/about/`}
+            >
               <strong>Connect App</strong>
-            </Button>
+            </a>
           )}
         </Col>
         <Col className="col-auto align-self-center">
@@ -651,14 +656,8 @@ const ProjectSettings: React.FC<{
   props: FormikProps<ProjectValues>;
   project?: Project;
   accessStatus: AccessStatus;
-  initSection?: ProjectSettingsSection;
-}> = ({ props, project, accessStatus, initSection }) => {
-  const [section, setSection] = React.useState(initSection || "about");
-
-  const handleSection = (section: ProjectSettingsSection) => {
-    history.pushState(null, null, `/${project.owner}/${project.title}/settings/${section}/`);
-    setSection(section);
-  };
+  section?: ProjectSettingsSection;
+}> = ({ props, project, accessStatus, section }) => {
   return (
     <>
       <Row>
@@ -666,25 +665,25 @@ const ProjectSettings: React.FC<{
           <Card>
             <Card.Header>Settings</Card.Header>
             <ListGroup variant="flush">
-              <ListGroup.Item onClick={() => handleSection("about")}>
-                <a>
+              <ListGroup.Item>
+                <a href={`/${project.owner}/${project.title}/settings/about/`}>
                   <span className={section === "about" && "font-weight-bold"}>About</span>
                 </a>
               </ListGroup.Item>
-              <ListGroup.Item onClick={() => handleSection("configure")}>
-                <a>
+              <ListGroup.Item>
+                <a href={`/${project.owner}/${project.title}/settings/configure/`}>
                   <span className={section === "configure" && "font-weight-bold"}>Configure</span>
                 </a>
               </ListGroup.Item>
-              <ListGroup.Item onClick={() => handleSection("environment")}>
-                <a>
+              <ListGroup.Item>
+                <a href={`/${project.owner}/${project.title}/settings/environment/`}>
                   <span className={section === "environment" && "font-weight-bold"}>
                     Environment
                   </span>
                 </a>
               </ListGroup.Item>
-              <ListGroup.Item onClick={() => handleSection("access")}>
-                <a>
+              <ListGroup.Item>
+                <a href={`/${project.owner}/${project.title}/settings/access/`}>
                   <span className={section === "access" && "font-weight-bold"}>Access</span>
                 </a>
               </ListGroup.Item>
@@ -789,7 +788,8 @@ class ProjectApp extends React.Component<
               .save(formdata)
               .then(project => {
                 actions.setSubmitting(false);
-                history.pushState(null, null, `/${project.owner}/${project.title}/`);
+                if (["running", "staging"].includes())
+                  history.pushState(null, null, `/${project.owner}/${project.title}/`);
                 window.location.href = `/${project.owner}/${project.title}/`;
                 this.setState({ project });
               })
@@ -832,7 +832,7 @@ class ProjectApp extends React.Component<
                   props={props}
                   project={project}
                   accessStatus={accessStatus}
-                  initSection={this.props.section}
+                  section={this.props.section}
                 />
               ) : (
                 <NewProjectForm
@@ -900,8 +900,6 @@ class ProjectDetail extends React.Component<
     const owner = this.props.match.params.username;
     const title = this.props.match.params.app_name;
     this.api = new API(owner, title);
-
-    this.enterEditMode = this.enterEditMode.bind(this);
   }
 
   async componentDidMount() {
@@ -911,15 +909,6 @@ class ProjectDetail extends React.Component<
       accessStatus,
       project,
     });
-  }
-
-  enterEditMode() {
-    history.pushState(
-      null,
-      null,
-      `/${this.state.project.owner}/${this.state.project.title}/settings/about/`
-    );
-    this.setState({ edit: true });
   }
 
   render() {
@@ -955,11 +944,7 @@ class ProjectDetail extends React.Component<
         </Row>
       </Card>
     ) : (
-      <ViewProject
-        project={this.state.project}
-        accessStatus={this.state.accessStatus}
-        enterEditMode={this.enterEditMode}
-      />
+      <ViewProject project={this.state.project} accessStatus={this.state.accessStatus} />
     );
   }
 }
@@ -984,6 +969,10 @@ ReactDOM.render(
       <Route
         path="/:username/:app_name/settings/access/"
         render={routeProps => <ProjectDetail edit={true} section="access" {...routeProps} />}
+      />
+      <Route
+        path="/:username/:app_name/settings/"
+        render={routeProps => <ProjectDetail edit={true} section="about" {...routeProps} />}
       />
 
       <Route
