@@ -30,6 +30,7 @@ class DeploymentSerializer(serializers.ModelSerializer):
 class ProjectSerializer(serializers.ModelSerializer):
     owner = serializers.StringRelatedField(read_only=True)
     description = serializers.CharField(required=False)
+    oneliner = serializers.CharField(required=False)
     cluster_type = serializers.CharField(required=False)
     sim_count = serializers.IntegerField(required=False)
     user_count = serializers.IntegerField(required=False)

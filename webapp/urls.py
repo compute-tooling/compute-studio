@@ -70,27 +70,27 @@ urlpatterns = [
     ),
     path(
         "<str:username>/<str:title>/settings/about/",
-        publishviews.ProjectDetailView.as_view(),
+        publishviews.ProjectSettingsView.as_view(),
         name="app",
     ),
     path(
         "<str:username>/<str:title>/settings/configure/",
-        publishviews.ProjectDetailView.as_view(),
+        publishviews.ProjectSettingsView.as_view(),
         name="app",
     ),
     path(
         "<str:username>/<str:title>/settings/environment/",
-        publishviews.ProjectDetailView.as_view(),
+        publishviews.ProjectSettingsView.as_view(),
         name="app",
     ),
     path(
         "<str:username>/<str:title>/settings/access/",
-        publishviews.ProjectDetailView.as_view(),
+        publishviews.ProjectSettingsView.as_view(),
         name="app",
     ),
     path(
         "<str:username>/<str:title>/settings/",
-        publishviews.ProjectDetailView.as_view(),
+        publishviews.ProjectSettingsView.as_view(),
         name="app",
     ),
     # add project URL's here

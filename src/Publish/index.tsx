@@ -49,7 +49,7 @@ const requiredMessage = "This field is required.";
 
 var Schema = yup.object().shape({
   title: yup.string().required(requiredMessage),
-  oneliner: yup.string().required(requiredMessage),
+  oneliner: yup.string(),
   repo_url: yup.string().url(),
   cpu: yup
     .number()
@@ -61,7 +61,7 @@ var Schema = yup.object().shape({
     .max(24, "Memory must be less than ${max}."),
   exp_task_time: yup.number().min(0, "Expected task time must be greater than ${min}."),
   listed: yup.boolean().required(requiredMessage),
-  tech: yup.string(),
+  tech: yup.string().required(requiredMessage),
   callable_name: yup.string(),
   is_public: yup.boolean(),
 });
@@ -224,6 +224,7 @@ const TechSelect: React.FC<{ project: Project; props: FormikProps<ProjectValues>
           />
         )}
       </Field>
+      <ErrorMessage name="tech" render={msg => <Message msg={msg} />} />
     </Col>
   </Row>
 );
@@ -555,7 +556,7 @@ const ViewProject: React.FC<{
           <Col className="col-auto align-self-center">
             <a
               className="btn btn-outline-primary"
-              href={`/${project.owner}/${project.title}/settings/about/`}
+              href={`/${project.owner}/${project.title}/settings/`}
             >
               Edit
             </a>
@@ -574,10 +575,7 @@ const ViewProject: React.FC<{
           ) : project.status === "staging" ? (
             <strong>Our team is preparing your app to be published.</strong>
           ) : (
-            <a
-              className="btn btn-success"
-              href={`/${project.owner}/${project.title}/settings/about/`}
-            >
+            <a className="btn btn-success" href={`/${project.owner}/${project.title}/settings/`}>
               <strong>Connect App</strong>
             </a>
           )}
@@ -772,9 +770,9 @@ class ProjectApp extends React.Component<
   }
 
   render() {
-    const { accessStatus, project } = this.props;
+    const { accessStatus } = this.props;
+    const { project } = this.state;
     const step = this.state.step || this.stepFromProject(this.state.project);
-    console.log("app", this.props.section);
     return (
       <div>
         <Formik
@@ -788,10 +786,14 @@ class ProjectApp extends React.Component<
               .save(formdata)
               .then(project => {
                 actions.setSubmitting(false);
-                if (["running", "staging"].includes())
+                this.props.api.owner = project.owner;
+                this.props.api.title = project.title;
+                if (project.status !== "created" && project.status !== "configuring") {
+                  window.location.href = `/${project.owner}/${project.title}/`;
+                } else {
                   history.pushState(null, null, `/${project.owner}/${project.title}/`);
-                window.location.href = `/${project.owner}/${project.title}/`;
-                this.setState({ project });
+                  this.setState({ project, step: this.stepFromProject(project) });
+                }
               })
               .catch(error => {
                 console.log("error", error);

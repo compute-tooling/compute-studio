@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.core.mail import send_mail
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.db.models import Q
 
@@ -130,6 +131,16 @@ class ProjectDetailView(GetProjectMixin, View):
 
     def get(self, request, *args, **kwargs):
         self.get_object(**kwargs)
+        return render(request, self.template_name)
+
+
+class ProjectSettingsView(GetProjectMixin, View):
+    template_name = "publish/publish.html"
+
+    def get(self, request, *args, **kwargs):
+        project = self.get_object(**kwargs)
+        if not project.has_write_access(request.user):
+            raise PermissionDenied()
         return render(request, self.template_name)
 
 
