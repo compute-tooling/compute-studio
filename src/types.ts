@@ -182,7 +182,7 @@ export interface Project {
   repo_url: string;
   server_size: [string, string];
   sim_count: number;
-  status: "created" | "configuring" | "installing" | "staging" | "live";
+  status: "created" | "configuring" | "installing" | "staging" | "running";
   exp_task_time: number;
   server_cost: string;
   listed: boolean;

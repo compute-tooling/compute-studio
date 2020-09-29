@@ -116,11 +116,15 @@ const initialValues: ProjectValues = {
   is_public: true,
 };
 
+type ProjectSettingsSection = "about" | "configure" | "environment" | "access";
+
 interface PublishProps {
   initialValues: ProjectValues;
   project?: Project;
   accessStatus: AccessStatus;
   api: API;
+  edit?: boolean;
+  section?: ProjectSettingsSection;
 }
 
 type PublishState = Readonly<{
@@ -168,12 +172,18 @@ const TechSelectDropdown: React.FC<{
   return (
     <Dropdown>
       <Dropdown.Toggle
-        variant="primary"
+        variant="outline-primary"
         id="dropdown-basic"
         className="w-100"
-      // style={{ backgroundColor: "white", color: "#007bff" }}
+        // style={{ backgroundColor: "white", color: "#007bff" }}
       >
-        <strong>{selectedTech || "Select Technology"}</strong>
+        {selectedTech ? (
+          <span>
+            Tech: <strong className="px-3">{selectedTech}</strong>
+          </span>
+        ) : (
+          <strong>Specify technology</strong>
+        )}
       </Dropdown.Toggle>
       <Dropdown.Menu>
         {techChoices.map((tech, ix) => (
@@ -198,30 +208,29 @@ const TechSelect: React.FC<{ project: Project; props: FormikProps<ProjectValues>
   project,
   props,
 }) => (
-    <Row className="w-100 justify-content-center">
-      <Col className="col-auto">
-        <Field name="tech">
-          {({ field, meta }) => (
-            <TechSelectDropdown
-              selectedTech={
-                (props.values.tech && props.touched.tech) || !!project ? props.values.tech : null
-              }
-              onSelectTech={sel => {
-                TechSelect;
-                props.setFieldValue("tech", sel);
-                props.setFieldTouched("tech", true);
-              }}
-            />
-          )}
-        </Field>
-      </Col>
-    </Row>
-  );
+  <Row className="w-100 justify-content-left">
+    <Col className="col-auto">
+      <Field name="tech">
+        {({ field, meta }) => (
+          <TechSelectDropdown
+            selectedTech={
+              (props.values.tech && props.touched.tech) || !!project ? props.values.tech : null
+            }
+            onSelectTech={sel => {
+              TechSelect;
+              props.setFieldValue("tech", sel);
+              props.setFieldTouched("tech", true);
+            }}
+          />
+        )}
+      </Field>
+    </Col>
+  </Row>
+);
 
-const PythonParamTools: React.FC<{}> = ({ }) => {
+const PythonParamTools: React.FC<{}> = ({}) => {
   return (
     <div>
-      <h4>ParamTools Configuration</h4>
       <div className="my-3" />
       <div className="mt-1 mb-1">
         <label>
@@ -248,7 +257,6 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
   }[tech];
   return (
     <div>
-      <h4>{title} Configuration</h4>
       <div className="my-3" />
       <div className="mt-1 mb-1">
         <label>
@@ -278,42 +286,43 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
   );
 };
 
-const AdvancedFields: React.FC<{}> = ({ }) => {
+const SourceCodeFields: React.FC<{}> = ({}) => (
+  <div>
+    <label>
+      <b>Repo URL</b>
+    </label>
+    <p className="mt-1 mb-1">
+      <Field
+        className="form-control w-50rem"
+        type="url"
+        name="repo_url"
+        placeholder="Link to the model's code repository"
+        style={inputStyle}
+      />
+      <ErrorMessage name="repo_url" render={msg => <Message msg={msg} />} />
+    </p>
+    <div className="mt-1 mb-1">
+      <label>
+        <b>Repo Tag:</b> Your project will be deployed from here
+      </label>
+      <p className="mt-1 mb-1">
+        <Field
+          className="form-control w-50rem"
+          type="text"
+          name="repo_tag"
+          placeholder="Link to the model's code repository"
+          style={inputStyle}
+        />
+        <ErrorMessage name="repo_tag" render={msg => <Message msg={msg} />} />
+      </p>
+    </div>
+  </div>
+);
+
+const AdvancedFields: React.FC<{}> = ({}) => {
   return (
     <div>
-      <div>
-        <div className="mt-1 mb-1">
-          <label>
-            <b>Repo URL</b>
-          </label>
-          <p className="mt-1 mb-1">
-            <Field
-              className="form-control w-50rem"
-              type="url"
-              name="repo_url"
-              placeholder="Link to the model's code repository"
-              style={inputStyle}
-            />
-            <ErrorMessage name="repo_url" render={msg => <Message msg={msg} />} />
-          </p>
-          <div className="mt-1 mb-1">
-            <label>
-              <b>Repo Tag:</b> Your project will be deployed from here
-            </label>
-            <p className="mt-1 mb-1">
-              <Field
-                className="form-control w-50rem"
-                type="text"
-                name="repo_tag"
-                placeholder="Link to the model's code repository"
-                style={inputStyle}
-              />
-              <ErrorMessage name="repo_tag" render={msg => <Message msg={msg} />} />
-            </p>
-          </div>
-        </div>
-      </div>
-      <details className="my-5">
+      <details className="my-2">
         <summary>
           <span className="h6">Advanced Configuration</span>
         </summary>
@@ -353,7 +362,10 @@ const AdvancedFields: React.FC<{}> = ({ }) => {
   );
 };
 
-const PublicPrivateRadio: React.FC<{ props: FormikProps<ProjectValues> }> = ({ props }) => (
+const PublicPrivateRadio: React.FC<{ props: FormikProps<ProjectValues>; project?: Project }> = ({
+  props,
+  project,
+}) => (
   <>
     <p>
       <label>
@@ -365,8 +377,9 @@ const PublicPrivateRadio: React.FC<{ props: FormikProps<ProjectValues> }> = ({ p
           onChange={() => props.setFieldValue("is_public", true)}
         />
         <span className="ml-1">
-          <strong>Public:</strong> Anyone on the internet can see and use this app. You will be
-          given an option later to make it discoverable.
+          <strong>Public:</strong> Anyone on the internet can see and use this app.{" "}
+          {project?.status !== "running" &&
+            "You will be given an option later to make it discoverable."}
         </span>
       </label>
     </p>
@@ -387,25 +400,28 @@ const PublicPrivateRadio: React.FC<{ props: FormikProps<ProjectValues> }> = ({ p
   </>
 );
 
-const Visibility: React.FC<{ props: FormikProps<ProjectValues>, project: Project }> = ({ props, project }) => (
+const Access: React.FC<{ props: FormikProps<ProjectValues>; project: Project }> = ({
+  props,
+  project,
+}) => (
   <>
     <div className="mb-2">
-      <PublicPrivateRadio props={props} />
+      <PublicPrivateRadio props={props} project={project} />
     </div>
-    {props.values.is_public && project.status === "live" && (
-      <div className="my-2">
+    {props.values.is_public && project.status === "running" && (
+      <p className="my-2">
         <label>
+          <Field
+            component={CheckboxField}
+            label="Listed: "
+            description="Include this app in the public list of apps"
+            name="listed"
+            className="mt-1 d-inline-block mr-2"
+          />
           <strong>Listed:</strong>
           <span className="ml-1">Include this app in the public list of apps.</span>
         </label>
-        <Field
-          component={CheckboxField}
-          label="Listed: "
-          description="Include this app in the public list of apps"
-          name="listed"
-        />
-        <ErrorMessage name="listed" render={msg => <Message msg={msg} />} />
-      </div>
+      </p>
     )}
   </>
 );
@@ -445,16 +461,17 @@ const AboutAppFields: React.FC<{
   accessStatus: AccessStatus;
   props: FormikProps<ProjectValues>;
   project: Project;
-}> = ({ accessStatus, props, project }) => {
+  showReadme?: boolean;
+}> = ({ accessStatus, props, project, showReadme }) => {
   return (
     <>
       <div>
         {!project && (
           <Field name="title">
             {({ field, meta }) => (
-              <Row className="justify-content-md-center">
+              <Row className="justify-content-md-left">
                 <Col className="flex-grow-0 align-self-center">
-                  <h6 className="lead">{accessStatus.username}</h6>
+                  <h5 className="lead font-weight-bold">{accessStatus.username}</h5>
                 </Col>
                 <Col className="flex-grow-0 align-self-center">
                   <p className="lead pt-2">/</p>
@@ -475,9 +492,10 @@ const AboutAppFields: React.FC<{
           </Field>
         )}
       </div>
-      <div className="mt-1 mb-1">
+      <div className="my-2">
         <label>
-          <strong>Oneliner</strong>
+          <strong>Description</strong>
+          <span className="text-muted ml-1">(optional)</span>
         </label>
         <Field name="oneliner">
           {({ field, meta }) => (
@@ -490,30 +508,28 @@ const AboutAppFields: React.FC<{
           )}
         </Field>
       </div>
-      <div className="mt-3 mb-1">
-        <label>
-          <strong>README</strong>{" "}
-          <Tip id="readme-markdown-icon" tip="Supports Markdown." placement="top">
-            <a href="https://hackmd.io/new" target="_blank">
-              <i className="fab fa-markdown mr-3" style={{ opacity: 0.8 }}></i>
-            </a>
-          </Tip>
-        </label>
-        <Field name="description">
-          {({ field, meta }) => (
-            <Row className="w-100">
-              <Col>
-                <textarea type="text" className="w-100" rows="10" {...field} />
-                {meta.touched && meta.error && <div className="text-danger">{meta.error}</div>}
-              </Col>
-            </Row>
-          )}
-        </Field>
-      </div>
-      <div className="mt-4">
-        <PublicPrivateRadio props={props} />
-      </div>
-      <TechSelect props={props} project={project} />
+      {showReadme && (
+        <div className="mt-3 mb-1">
+          <label>
+            <strong>README</strong>{" "}
+            <Tip id="readme-markdown-icon" tip="Supports Markdown." placement="top">
+              <a href="https://hackmd.io/new" target="_blank">
+                <i className="fab fa-markdown mr-3" style={{ opacity: 0.8 }}></i>
+              </a>
+            </Tip>
+          </label>
+          <Field name="description">
+            {({ field, meta }) => (
+              <Row className="w-100">
+                <Col>
+                  <textarea type="text" className="w-100" rows="10" {...field} />
+                  {meta.touched && meta.error && <div className="text-danger">{meta.error}</div>}
+                </Col>
+              </Row>
+            )}
+          </Field>
+        </div>
+      )}
     </>
   );
 };
@@ -549,17 +565,17 @@ const ViewProject: React.FC<{
       <ReactMarkdown source={project.description} escapeHtml={false} renderers={{ image: image }} />
       <Row className="justify-content-between mt-5">
         <Col className="col-auto align-self-center">
-          {project.status === "live" ? (
+          {project.status === "running" ? (
             <a className="btn btn-success" href={goto}>
               <strong>Go to App</strong>
             </a>
           ) : project.status === "staging" ? (
             <strong>Our team is preparing your app to be published.</strong>
           ) : (
-                <Button variant="success" onClick={enterEditMode}>
-                  <strong>Connect App</strong>
-                </Button>
-              )}
+            <Button variant="success" onClick={enterEditMode}>
+              <strong>Connect App</strong>
+            </Button>
+          )}
         </Col>
         <Col className="col-auto align-self-center">
           {project.tech && (
@@ -577,54 +593,149 @@ const ViewProject: React.FC<{
   );
 };
 
-type Step = "create" | "configure" | "advanced" | "staging" | "visibility";
+type Step = "create" | "configure" | "advanced" | "staging" | "access";
 
-const ProjectForm: React.FC<{
+const NewProjectForm: React.FC<{
   props: FormikProps<ProjectValues>;
   project?: Project;
   accessStatus: AccessStatus;
   step: Step;
 }> = ({ props, project, accessStatus, step }) => (
   <Form>
-    {props.status?.project_exists && (
-      <div className="alert alert-danger" role="alert">
-        {props.status.project_exists}
-      </div>
-    )}
-    {(props.status?.auth || !accessStatus.username) && (
-      <div className="alert alert-danger" role="alert">
-        You must be logged in to publish a model.
-      </div>
-    )}
-    {props.status?.collaborators && (
-      <PrivateAppException
-        upgradeTo={(props.status.collaborators as ResourceLimitException).upgrade_to}
-      />
-    )}
-
     {step === "create" && (
-      <AboutAppFields accessStatus={accessStatus} props={props} project={project} />
-    )}
-    {step === "configure" && (
       <>
-        <h4>Select app technology:</h4>
+        <AboutAppFields
+          accessStatus={accessStatus}
+          props={props}
+          project={project}
+          showReadme={false}
+        />
+        <div className="mt-4">
+          <PublicPrivateRadio props={props} project={project} />
+        </div>
         <TechSelect props={props} project={project} />
+      </>
+    )}
+    {project && !["running", "staging"].includes(step) && (
+      <>
+        <AboutAppFields
+          accessStatus={accessStatus}
+          props={props}
+          project={project}
+          showReadme={false}
+        />
+        <div className="py-4">
+          <h5>Connect app:</h5>
+          <TechSelect props={props} project={project} />
+        </div>
         {props.values.tech === "python-paramtools" && <PythonParamTools />}
         {["bokeh", "dash"].includes(props.values.tech) && (
           <VizWithServer tech={props.values.tech} />
         )}
+        <div className="py-4">
+          <SourceCodeFields />
+        </div>
       </>
     )}
 
-    {step === "advanced" && <AdvancedFields />}
-
-    {step === "visibility" && <Visibility props={props} project={project} />}
-
-    <button className="btn inline-block btn-success mt-4" type="submit">
-      <strong>{project ? "Save" : "Create"}</strong>
+    <button className="btn inline-block btn-success mt-5" type="submit">
+      <strong>{step === "create" ? "Create app" : "Connect app"}</strong>
     </button>
+    {!project && (
+      <p className="mt-3">Next, you will learn how to connect your app based on your technology.</p>
+    )}
   </Form>
 );
+
+const ProjectSettings: React.FC<{
+  props: FormikProps<ProjectValues>;
+  project?: Project;
+  accessStatus: AccessStatus;
+  initSection?: ProjectSettingsSection;
+}> = ({ props, project, accessStatus, initSection }) => {
+  const [section, setSection] = React.useState(initSection || "about");
+
+  const handleSection = (section: ProjectSettingsSection) => {
+    history.pushState(null, null, `/${project.owner}/${project.title}/settings/${section}/`);
+    setSection(section);
+  };
+  return (
+    <>
+      <Row>
+        <Col className="col-3">
+          <Card>
+            <Card.Header>Settings</Card.Header>
+            <ListGroup variant="flush">
+              <ListGroup.Item onClick={() => handleSection("about")}>
+                <a>
+                  <span className={section === "about" && "font-weight-bold"}>About</span>
+                </a>
+              </ListGroup.Item>
+              <ListGroup.Item onClick={() => handleSection("configure")}>
+                <a>
+                  <span className={section === "configure" && "font-weight-bold"}>Configure</span>
+                </a>
+              </ListGroup.Item>
+              <ListGroup.Item onClick={() => handleSection("environment")}>
+                <a>
+                  <span className={section === "environment" && "font-weight-bold"}>
+                    Environment
+                  </span>
+                </a>
+              </ListGroup.Item>
+              <ListGroup.Item onClick={() => handleSection("access")}>
+                <a>
+                  <span className={section === "access" && "font-weight-bold"}>Access</span>
+                </a>
+              </ListGroup.Item>
+            </ListGroup>
+          </Card>
+        </Col>
+        <Col className="col-9">
+          <Form>
+            {section === "about" && (
+              <AboutAppFields
+                accessStatus={accessStatus}
+                props={props}
+                project={project}
+                showReadme={true}
+              />
+            )}
+
+            {section === "configure" && (
+              <>
+                <div className="py-2">
+                  <TechSelect props={props} project={project} />
+                </div>
+                {props.values.tech === "python-paramtools" && <PythonParamTools />}
+                {["bokeh", "dash"].includes(props.values.tech) && (
+                  <VizWithServer tech={props.values.tech} />
+                )}
+              </>
+            )}
+
+            {section === "environment" && (
+              <div className="py-2">
+                <SourceCodeFields />
+                <AdvancedFields />
+              </div>
+            )}
+
+            {section === "access" && (
+              <div className="py-2">
+                <Access props={props} project={project} />
+              </div>
+            )}
+
+            <button className="btn inline-block btn-success mt-5" type="submit">
+              <strong>Save changes</strong>
+            </button>
+          </Form>
+        </Col>
+      </Row>
+    </>
+  );
+};
 
 class ProjectApp extends React.Component<
   PublishProps,
@@ -633,7 +744,7 @@ class ProjectApp extends React.Component<
     project?: Project;
     step: Step | null;
   }
-  > {
+> {
   constructor(props) {
     super(props);
     let initialValues = {};
@@ -662,8 +773,9 @@ class ProjectApp extends React.Component<
   }
 
   render() {
-    const { accessStatus } = this.props;
+    const { accessStatus, project } = this.props;
     const step = this.state.step || this.stepFromProject(this.state.project);
+    console.log("app", this.props.section);
     return (
       <div>
         <Formik
@@ -677,8 +789,8 @@ class ProjectApp extends React.Component<
               .save(formdata)
               .then(project => {
                 actions.setSubmitting(false);
-
                 history.pushState(null, null, `/${project.owner}/${project.title}/`);
+                window.location.href = `/${project.owner}/${project.title}/`;
                 this.setState({ project });
               })
               .catch(error => {
@@ -700,49 +812,36 @@ class ProjectApp extends React.Component<
         >
           {(props: FormikProps<ProjectValues>) => (
             <>
-              <Row>
-                <Col className="col-3">
-                  <Card>
-                    <Card.Header>Settings</Card.Header>
-                    <ListGroup variant="flush">
-                      <ListGroup.Item onClick={() => this.setState({ step: "create" })}>
-                        <a href="#">
-                          <span className={step === "create" && "font-weight-bold"}>About</span>
-                        </a>
-                      </ListGroup.Item>
-                      <ListGroup.Item onClick={() => this.setState({ step: "configure" })}>
-                        <a href="#">
-                          <span className={step === "configure" && "font-weight-bold"}>
-                            Configure
-                          </span>
-                        </a>
-                      </ListGroup.Item>
-                      <ListGroup.Item onClick={() => this.setState({ step: "advanced" })}>
-                        <a href="#">
-                          <span className={step === "advanced" && "font-weight-bold"}>
-                            Environment
-                          </span>
-                        </a>
-                      </ListGroup.Item>
-                      <ListGroup.Item onClick={() => this.setState({ step: "visibility" })}>
-                        <a href="#">
-                          <span className={step === "visibility" && "font-weight-bold"}>
-                            Visibility
-                          </span>
-                        </a>
-                      </ListGroup.Item>
-                    </ListGroup>
-                  </Card>
-                </Col>
-                <Col className="col-9">
-                  <ProjectForm
-                    props={props}
-                    project={this.state.project}
-                    accessStatus={accessStatus}
-                    step={step}
-                  />
-                </Col>
-              </Row>
+              {props.status?.project_exists && (
+                <div className="alert alert-danger" role="alert">
+                  {props.status.project_exists}
+                </div>
+              )}
+              {(props.status?.auth || !accessStatus.username) && (
+                <div className="alert alert-danger" role="alert">
+                  You must be logged in to publish a model.
+                </div>
+              )}
+              {props.status?.collaborators && (
+                <PrivateAppException
+                  upgradeTo={(props.status.collaborators as ResourceLimitException).upgrade_to}
+                />
+              )}
+              {project?.status === "running" || project?.status === "staging" ? (
+                <ProjectSettings
+                  props={props}
+                  project={project}
+                  accessStatus={accessStatus}
+                  initSection={this.props.section}
+                />
+              ) : (
+                <NewProjectForm
+                  props={props}
+                  project={project}
+                  accessStatus={accessStatus}
+                  step={step}
+                />
+              )}
             </>
           )}
         </Formik>
@@ -771,22 +870,29 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
     }
     return (
       <Card className="card-outer">
-        <Card.Body>
-          <ProjectApp
-            initialValues={initialValues}
-            accessStatus={this.state.accessStatus}
-            api={this.api}
-          />
-        </Card.Body>
+        <Row className="w-100 justify-content-center">
+          <Col style={{ maxWidth: "1000px" }}>
+            <Card.Body>
+              <Card.Title>
+                <h1 className="mb-3 pb-2 border-bottom">Create a new application</h1>
+              </Card.Title>
+              <ProjectApp
+                initialValues={initialValues}
+                accessStatus={this.state.accessStatus}
+                api={this.api}
+              />
+            </Card.Body>
+          </Col>
+        </Row>
       </Card>
     );
   }
 }
 
 class ProjectDetail extends React.Component<
-  { match: Match; edit: boolean },
+  { match: Match; edit: boolean; section?: ProjectSettingsSection },
   { project?: Project; accessStatus?: AccessStatus; edit: boolean }
-  > {
+> {
   api: API;
   constructor(props) {
     super(props);
@@ -794,12 +900,26 @@ class ProjectDetail extends React.Component<
     const owner = this.props.match.params.username;
     const title = this.props.match.params.app_name;
     this.api = new API(owner, title);
+
+    this.enterEditMode = this.enterEditMode.bind(this);
   }
 
   async componentDidMount() {
     const project = await this.api.getProject();
     const accessStatus = await this.api.getAccessStatus();
-    this.setState({ accessStatus, project });
+    this.setState({
+      accessStatus,
+      project,
+    });
+  }
+
+  enterEditMode() {
+    history.pushState(
+      null,
+      null,
+      `/${this.state.project.owner}/${this.state.project.title}/settings/about/`
+    );
+    this.setState({ edit: true });
   }
 
   render() {
@@ -809,27 +929,38 @@ class ProjectDetail extends React.Component<
     if (!this.state.project || !this.state.accessStatus) {
       return <div />;
     }
+    let style;
+    if (!["staging", "running"].includes(this.state.project?.status)) {
+      style = { maxWidth: "1000px" };
+    }
+    console.log("this.state.edit", this.state.edit, this.props.section);
     return this.state.edit ? (
       <Card className="card-outer">
-        <Card.Body>
-          <AppTitle project={this.state.project} />
-          <div className="mt-5 mx-5">
-            <ProjectApp
-              project={this.state.project}
-              accessStatus={this.state.accessStatus}
-              initialValues={(this.state.project as unknown) as ProjectValues}
-              api={this.api}
-            />
-          </div>
-        </Card.Body>
+        <Row className="w-100 justify-content-center">
+          <Col style={style}>
+            <Card.Body>
+              <Card.Title>
+                <AppTitle project={this.state.project} />
+              </Card.Title>
+              <ProjectApp
+                project={this.state.project}
+                accessStatus={this.state.accessStatus}
+                initialValues={(this.state.project as unknown) as ProjectValues}
+                api={this.api}
+                section={this.props.section}
+                edit={this.props.edit}
+              />
+            </Card.Body>
+          </Col>
+        </Row>
       </Card>
     ) : (
-        <ViewProject
-          project={this.state.project}
-          accessStatus={this.state.accessStatus}
-          enterEditMode={() => this.setState({ edit: true })}
-        />
-      );
+      <ViewProject
+        project={this.state.project}
+        accessStatus={this.state.accessStatus}
+        enterEditMode={this.enterEditMode}
+      />
+    );
   }
 }
 
@@ -838,6 +969,23 @@ ReactDOM.render(
     <Switch>
       <Route exact path="/publish/" component={CreateProject} />
       <Route exact path="/new/" component={CreateProject} />
+      <Route
+        path="/:username/:app_name/settings/about/"
+        render={routeProps => <ProjectDetail edit={true} section="about" {...routeProps} />}
+      />
+      <Route
+        path="/:username/:app_name/settings/configure/"
+        render={routeProps => <ProjectDetail edit={true} section="configure" {...routeProps} />}
+      />
+      <Route
+        path="/:username/:app_name/settings/environment/"
+        render={routeProps => <ProjectDetail edit={true} section="environment" {...routeProps} />}
+      />
+      <Route
+        path="/:username/:app_name/settings/access/"
+        render={routeProps => <ProjectDetail edit={true} section="access" {...routeProps} />}
+      />
+
       <Route
         path="/:username/:app_name/"
         render={routeProps => <ProjectDetail edit={false} {...routeProps} />}

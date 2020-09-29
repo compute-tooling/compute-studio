@@ -349,7 +349,7 @@ class Project(models.Model):
     def status(self):
         print(self.tech, self.callable_name, self.exp_task_time)
         if self.latest_tag is not None:
-            return "live"
+            return "running"
         elif self.repo_url:
             return "staging"
         elif (
@@ -444,7 +444,7 @@ class Project(models.Model):
     def version(self):
         if self.tech != "python-paramtools":
             return None
-        if self.status != "live":
+        if self.status != "running":
             return None
         try:
             success, result = SyncCompute().submit_job(

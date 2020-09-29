@@ -173,7 +173,7 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
                 send_app_ready_email(
                     request.user, model, status_url,
                 )
-            elif previous_status in ("staging", "live"):
+            elif previous_status in ("staging", "running"):
                 send_updated_app_email(request.user, model, status_url)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

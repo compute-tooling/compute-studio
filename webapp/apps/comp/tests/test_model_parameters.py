@@ -72,7 +72,7 @@ def mock_project(db):
     project = Project.objects.create(
         owner=profile,
         title="test",
-        status="live",
+        status="running",
         description="",
         oneliner="oneliner",
         repo_url="https://repo.com/test",

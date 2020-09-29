@@ -88,7 +88,7 @@ class TestPublishViews:
             "memory": 6,
             "exp_task_time": 20,
             "listed": True,
-            "status": "live",
+            "status": "running",
             "tech": "python-paramtools",
             "callable_name": None,
             "is_public": is_public,
@@ -162,7 +162,7 @@ class TestPublishViews:
         assert resp.status_code == 200
         project = Project.objects.get(title="Used-for-testing", owner=owner)
         assert project.description == put_data["description"]
-        assert project.status == "live"
+        assert project.status == "running"
 
         # test add write_project permission allows update
         put_data["description"] = "hello world!!"
