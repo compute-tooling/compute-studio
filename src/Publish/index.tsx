@@ -213,13 +213,11 @@ const TechSelect: React.FC<{ project: Project; props: FormikProps<ProjectValues>
       <Field name="tech">
         {({ field, meta }) => (
           <TechSelectDropdown
-            selectedTech={
-              (props.values.tech && props.touched.tech) || !!project ? props.values.tech : null
-            }
+            selectedTech={props.values.tech || !!project ? props.values.tech : null}
             onSelectTech={sel => {
               TechSelect;
               props.setFieldValue("tech", sel);
-              props.setFieldTouched("tech", true);
+              // props.setFieldTouched("tech", true);
             }}
           />
         )}
@@ -458,6 +456,29 @@ const AppTitle: React.FC<{ project: Project }> = ({ project }) => {
   }
 };
 
+const ReadmeField: React.FC<{}> = ({}) => (
+  <div className="mt-3 mb-1">
+    <label>
+      <strong>README</strong>{" "}
+      <Tip id="readme-markdown-icon" tip="Supports Markdown." placement="top">
+        <a href="https://hackmd.io/new" target="_blank">
+          <i className="fab fa-markdown mr-3" style={{ opacity: 0.8 }}></i>
+        </a>
+      </Tip>
+    </label>
+    <Field name="description">
+      {({ field, meta }) => (
+        <Row className="w-100">
+          <Col>
+            <textarea type="text" className="w-100" rows="10" {...field} />
+            {meta.touched && meta.error && <div className="text-danger">{meta.error}</div>}
+          </Col>
+        </Row>
+      )}
+    </Field>
+  </div>
+);
+
 const AboutAppFields: React.FC<{
   accessStatus: AccessStatus;
   props: FormikProps<ProjectValues>;
@@ -509,28 +530,7 @@ const AboutAppFields: React.FC<{
           )}
         </Field>
       </div>
-      {showReadme && (
-        <div className="mt-3 mb-1">
-          <label>
-            <strong>README</strong>{" "}
-            <Tip id="readme-markdown-icon" tip="Supports Markdown." placement="top">
-              <a href="https://hackmd.io/new" target="_blank">
-                <i className="fab fa-markdown mr-3" style={{ opacity: 0.8 }}></i>
-              </a>
-            </Tip>
-          </label>
-          <Field name="description">
-            {({ field, meta }) => (
-              <Row className="w-100">
-                <Col>
-                  <textarea type="text" className="w-100" rows="10" {...field} />
-                  {meta.touched && meta.error && <div className="text-danger">{meta.error}</div>}
-                </Col>
-              </Row>
-            )}
-          </Field>
-        </div>
-      )}
+      {showReadme && <ReadmeField />}
     </>
   );
 };
@@ -621,12 +621,7 @@ const NewProjectForm: React.FC<{
     )}
     {project && !["running", "staging"].includes(step) && (
       <>
-        <AboutAppFields
-          accessStatus={accessStatus}
-          props={props}
-          project={project}
-          showReadme={false}
-        />
+        <ReadmeField />
         <div className="py-4">
           <h5>Connect app:</h5>
           <TechSelect props={props} project={project} />
