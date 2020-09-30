@@ -1,0 +1,8 @@
+title: Compute Studio Developer Docs
+author: Hank Doupe
+copyright: "2020"
+logo: "logo.png"
+
+repository:
+  url: https://github.com/compute-tooling/compute-studio
+  path_to_book: "book"
