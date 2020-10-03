@@ -1,3 +1,4 @@
+import asyncio
 import functools
 import json
 import os
@@ -51,7 +52,7 @@ async def sync_task_wrapper(task_id, task_name, func, task_kwargs=None):
     return res
 
 
-async def async_task_wrapper(task_id, task_name, func, task_kwargs=None):
+async def async_task_wrapper(task_id, task_name, func, timeout=None, task_kwargs=None):
     print("async task", task_id, func, task_kwargs)
     start = time.time()
     traceback_str = None
@@ -66,7 +67,13 @@ async def async_task_wrapper(task_id, task_name, func, task_kwargs=None):
                 task_kwargs = rclient.get(_task_id)
             if task_kwargs is not None:
                 task_kwargs = json.loads(task_kwargs.decode())
-        outputs = func(task_id, **(task_kwargs or {}))
+
+        if timeout:
+            loop = asyncio.get_event_loop()
+            fut = loop.run_in_executor(None, func, task_id, **(task_kwargs or {}))
+            outputs = await asyncio.wait_for(fut, timeout=timeout)
+        else:
+            outputs = func(task_id, **(task_kwargs or {}))
         res.update(
             {
                 "model_version": functions.get_version(),

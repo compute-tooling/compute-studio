@@ -39,7 +39,9 @@ routes = {"sim": sim_handler}
 
 def main(args: argparse.Namespace):
     asyncio.run(
-        async_task_wrapper(args.job_id, args.route_name, routes[args.route_name])
+        async_task_wrapper(
+            args.job_id, args.route_name, routes[args.route_name], timeout=args.timeout
+        )
     )
 
 
@@ -47,4 +49,5 @@ def cli(subparsers: argparse._SubParsersAction):
     parser = subparsers.add_parser("job", description="CLI for C/S jobs.")
     parser.add_argument("--job-id", "-t", required=True)
     parser.add_argument("--route-name", "-r", required=True)
+    parser.add_argument("--timeout", required=False, type=int)
     parser.set_defaults(func=main)

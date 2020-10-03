@@ -99,6 +99,7 @@ class Job:
             job_id = str(job_id)
 
         config = self.model_config.projects()[f"{owner}/{title}"]
+        timeout = config["expected_task_time"] * 1.25
 
         safeowner = clean(owner)
         safetitle = clean(title)
@@ -106,7 +107,16 @@ class Job:
         container = kclient.V1Container(
             name=job_id,
             image=f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{tag}",
-            command=["csw", "job", "--job-id", job_id, "--route-name", "sim"],
+            command=[
+                "csw",
+                "job",
+                "--job-id",
+                job_id,
+                "--route-name",
+                "sim",
+                "--timeout",
+                timeout,
+            ],
             env=self.env(owner, title, config),
             resources=kclient.V1ResourceRequirements(**config["resources"]),
         )
