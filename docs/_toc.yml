@@ -1,5 +1,14 @@
 - file: intro
-- file: content
-  sections:
-    - file: markdown
-    - file: notebooks
+- part: Publish
+  chapters:
+    - file: publish/guide
+    - file: publish/inputs
+    - file: publish/outputs
+    - file: publish/functions
+    - file: publish/environment
+
+- part: API
+  chapters:
+    - file: api/guide
+    - file: api/auth
+    - file: api/python

@@ -5,4 +5,4 @@ logo: "logo.png"
 
 repository:
   url: https://github.com/compute-tooling/compute-studio
-  path_to_book: "book"
+  path_to_book: "docs"
