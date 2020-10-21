@@ -12,6 +12,7 @@ import { Project, AccessStatus, Tech, ResourceLimitException } from "../types";
 import { CheckboxField } from "../fields";
 import API from "./API";
 import { Tip } from "../components";
+import { AuthPortal, AuthButtons, AuthDialog } from "../auth";
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
 
@@ -122,6 +123,7 @@ interface PublishProps {
   initialValues: ProjectValues;
   project?: Project;
   accessStatus: AccessStatus;
+  resetAccessStatus: () => void;
   api: API;
   edit?: boolean;
   section?: ProjectSettingsSection;
@@ -735,6 +737,7 @@ class ProjectApp extends React.Component<
     showTechOpts: boolean;
     project?: Project;
     step: Step | null;
+    showAuthDialog: boolean;
   }
 > {
   constructor(props) {
@@ -748,6 +751,7 @@ class ProjectApp extends React.Component<
       showTechOpts: false,
       project: this.props.project,
       step: null,
+      showAuthDialog: true,
     };
     this.stepFromProject = this.stepFromProject.bind(this);
   }
@@ -766,7 +770,7 @@ class ProjectApp extends React.Component<
 
   render() {
     const { accessStatus } = this.props;
-    const { project } = this.state;
+    const { project, showAuthDialog } = this.state;
     const step = this.state.step || this.stepFromProject(this.state.project);
     return (
       <div>
@@ -817,6 +821,12 @@ class ProjectApp extends React.Component<
               {(props.status?.auth || !accessStatus.username) && (
                 <div className="alert alert-danger" role="alert">
                   You must be logged in to publish a model.
+                  <AuthDialog
+                    show={showAuthDialog}
+                    setShow={show => this.setState({ showAuthDialog: show })}
+                    initialAction="sign-up"
+                    resetAccessStatus={this.props.resetAccessStatus}
+                  />
                 </div>
               )}
               {props.status?.collaborators && (
@@ -854,7 +864,13 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
     this.state = {};
 
     this.api = new API(null, null);
+    this.resetAccessStatus = this.resetAccessStatus.bind(this);
   }
+
+  resetAccessStatus() {
+    this.api.getAccessStatus().then(accessStatus => this.setState({ accessStatus }));
+  }
+
   async componentDidMount() {
     const accessStatus = await this.api.getAccessStatus();
     this.setState({
@@ -866,22 +882,32 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
       return <div />;
     }
     return (
-      <Card className="card-outer">
-        <Row className="w-100 justify-content-center">
-          <Col style={{ maxWidth: "1000px" }}>
-            <Card.Body>
-              <Card.Title>
-                <h1 className="mb-3 pb-2 border-bottom">Create a new application</h1>
-              </Card.Title>
-              <ProjectApp
-                initialValues={initialValues}
-                accessStatus={this.state.accessStatus}
-                api={this.api}
-              />
-            </Card.Body>
-          </Col>
-        </Row>
-      </Card>
+      <>
+        <AuthPortal>
+          <AuthButtons
+            accessStatus={this.state.accessStatus}
+            resetAccessStatus={this.resetAccessStatus}
+          />
+        </AuthPortal>
+
+        <Card className="card-outer">
+          <Row className="w-100 justify-content-center">
+            <Col style={{ maxWidth: "1000px" }}>
+              <Card.Body>
+                <Card.Title>
+                  <h1 className="mb-3 pb-2 border-bottom">Create a new application</h1>
+                </Card.Title>
+                <ProjectApp
+                  initialValues={initialValues}
+                  accessStatus={this.state.accessStatus}
+                  resetAccessStatus={this.resetAccessStatus}
+                  api={this.api}
+                />
+              </Card.Body>
+            </Col>
+          </Row>
+        </Card>
+      </>
     );
   }
 }
@@ -897,6 +923,12 @@ class ProjectDetail extends React.Component<
     const owner = this.props.match.params.username;
     const title = this.props.match.params.app_name;
     this.api = new API(owner, title);
+
+    this.resetAccessStatus = this.resetAccessStatus.bind(this);
+  }
+
+  resetAccessStatus() {
+    this.api.getAccessStatus().then(accessStatus => this.setState({ accessStatus }));
   }
 
   async componentDidMount() {
@@ -920,28 +952,40 @@ class ProjectDetail extends React.Component<
       style = { maxWidth: "1000px" };
     }
     console.log("this.state.edit", this.state.edit, this.props.section);
-    return this.state.edit ? (
-      <Card className="card-outer">
-        <Row className="w-100 justify-content-center">
-          <Col style={style}>
-            <Card.Body>
-              <Card.Title>
-                <AppTitle project={this.state.project} />
-              </Card.Title>
-              <ProjectApp
-                project={this.state.project}
-                accessStatus={this.state.accessStatus}
-                initialValues={(this.state.project as unknown) as ProjectValues}
-                api={this.api}
-                section={this.props.section}
-                edit={this.props.edit}
-              />
-            </Card.Body>
-          </Col>
-        </Row>
-      </Card>
-    ) : (
-      <ViewProject project={this.state.project} accessStatus={this.state.accessStatus} />
+    return (
+      <>
+        <AuthPortal>
+          <AuthButtons
+            accessStatus={this.state.accessStatus}
+            resetAccessStatus={this.resetAccessStatus}
+          />
+        </AuthPortal>
+
+        {this.state.edit ? (
+          <Card className="card-outer">
+            <Row className="w-100 justify-content-center">
+              <Col style={style}>
+                <Card.Body>
+                  <Card.Title>
+                    <AppTitle project={this.state.project} />
+                  </Card.Title>
+                  <ProjectApp
+                    project={this.state.project}
+                    accessStatus={this.state.accessStatus}
+                    resetAccessStatus={this.resetAccessStatus}
+                    initialValues={(this.state.project as unknown) as ProjectValues}
+                    api={this.api}
+                    section={this.props.section}
+                    edit={this.props.edit}
+                  />
+                </Card.Body>
+              </Col>
+            </Row>
+          </Card>
+        ) : (
+          <ViewProject project={this.state.project} accessStatus={this.state.accessStatus} />
+        )}
+      </>
     );
   }
 }
