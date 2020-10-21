@@ -215,6 +215,7 @@ def get_project_or_404(queryset, user=None, raise_http404=True, **kwargs):
             klass=queryset,
             any_perm=True,
         )
+
         return queryset.get(Q(is_public=True) | Q(pk__in=user_has_perms), **kwargs)
 
     except Project.DoesNotExist as dne:
@@ -347,7 +348,6 @@ class Project(models.Model):
 
     @property
     def status(self):
-        print(self.tech, self.callable_name, self.exp_task_time)
         if self.latest_tag is not None:
             return "running"
         elif self.repo_url:

@@ -88,7 +88,6 @@ class TestPublishViews:
             "memory": 6,
             "exp_task_time": 20,
             "listed": True,
-            "status": "running",
             "tech": "python-paramtools",
             "callable_name": None,
             "is_public": is_public,
