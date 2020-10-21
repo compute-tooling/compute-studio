@@ -231,6 +231,7 @@ const Dialog: React.FC<{
         setShow={setAuthShow}
         initialAction="sign-up"
         resetAccessStatus={resetAccessStatus}
+        message="You must be logged in to run simulations."
       />
     );
   } else if (accessStatus.user_status === "profile") {

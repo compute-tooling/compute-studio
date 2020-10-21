@@ -179,24 +179,18 @@ class SimTabs extends React.Component<
   resetAccessStatus() {
     // Update authentication status, then the output
     // and inputs access statuses.
-    this.api
-      .getAccessStatus()
-      .then(accessStatus => {
-        this.setState({ accessStatus });
-      })
-      .then(() => {
-        this.setOutputs();
-      })
-      .then(() => {
-        this.api.getInputsDetail().then(inputsDetail => {
-          this.setState(prevState => ({
-            inputs: {
-              ...prevState.inputs,
-              ...{ detail: inputsDetail },
-            },
-          }));
-        });
+    this.api.getAccessStatus().then(accessStatus => {
+      this.setState({ accessStatus });
+      this.setOutputs();
+      this.api.getInputsDetail().then(inputsDetail => {
+        this.setState(prevState => ({
+          inputs: {
+            ...prevState.inputs,
+            ...{ detail: inputsDetail },
+          },
+        }));
       });
+    });
   }
 
   authenticateAndCreateSimulation() {
@@ -501,6 +495,7 @@ class SimTabs extends React.Component<
                   resetAccessStatus={
                     this.api.modelpk ? this.resetAccessStatus : this.authenticateAndCreateSimulation
                   }
+                  message="You must be logged in to run simulations."
                 />
               </AuthPortal>
               {this.state.showDirtyWarning ? (

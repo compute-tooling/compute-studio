@@ -173,12 +173,7 @@ const TechSelectDropdown: React.FC<{
   const techChoices: Array<Tech> = ["python-paramtools", "bokeh", "dash"];
   return (
     <Dropdown>
-      <Dropdown.Toggle
-        variant="outline-primary"
-        id="dropdown-basic"
-        className="w-100"
-        // style={{ backgroundColor: "white", color: "#007bff" }}
-      >
+      <Dropdown.Toggle variant="outline-primary" id="dropdown-basic" className="w-100">
         {selectedTech ? (
           <span>
             Tech: <strong className="px-3">{selectedTech}</strong>
@@ -219,7 +214,6 @@ const TechSelect: React.FC<{ project: Project; props: FormikProps<ProjectValues>
             onSelectTech={sel => {
               TechSelect;
               props.setFieldValue("tech", sel);
-              // props.setFieldTouched("tech", true);
             }}
           />
         )}
@@ -266,7 +260,6 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
         <Field name="callable_name">
           {({ field, meta }) => (
             <div>
-              {console.log(field)}
               <input
                 type="text"
                 className="form-control"
@@ -493,25 +486,33 @@ const AboutAppFields: React.FC<{
         {!project && (
           <Field name="title">
             {({ field, meta }) => (
-              <Row className="justify-content-md-left">
-                <Col className="flex-grow-0 align-self-center">
-                  <h5 className="lead font-weight-bold">{accessStatus.username}</h5>
-                </Col>
-                <Col className="flex-grow-0 align-self-center">
-                  <p className="lead pt-2">/</p>
-                </Col>
-                <Col className="flex-grow-0 align-self-center">
-                  <input
-                    type="text"
-                    {...field}
-                    onChange={e => {
-                      e.target.value = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
-                      field.onChange(e);
-                    }}
-                  />
-                  {meta.touched && meta.error && <div className="text-danger">{meta.error}</div>}
-                </Col>
-              </Row>
+              <label>
+                {" "}
+                <strong>Title</strong>
+                <Row className="justify-content-md-left">
+                  {accessStatus.username && (
+                    <>
+                      <Col className="flex-grow-0 align-self-center">
+                        <h5 className="lead font-weight-bold">{accessStatus.username}</h5>
+                      </Col>
+                      <Col className="flex-grow-0 align-self-center">
+                        <p className="lead pt-2">/</p>
+                      </Col>
+                    </>
+                  )}
+                  <Col className="flex-grow-0 align-self-center">
+                    <input
+                      type="text"
+                      {...field}
+                      onChange={e => {
+                        e.target.value = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
+                        field.onChange(e);
+                      }}
+                    />
+                    {meta.touched && meta.error && <div className="text-danger">{meta.error}</div>}
+                  </Col>
+                </Row>
+              </label>
             )}
           </Field>
         )}
@@ -623,6 +624,7 @@ const NewProjectForm: React.FC<{
     )}
     {project && !["running", "staging"].includes(step) && (
       <>
+        <AppTitle project={project} />
         <ReadmeField />
         <div className="py-4">
           <h5>Connect app:</h5>
@@ -793,6 +795,7 @@ class ProjectApp extends React.Component<
                   history.pushState(null, null, `/${project.owner}/${project.title}/`);
                   this.setState({ project, step: this.stepFromProject(project) });
                 }
+                actions.setStatus({ auth: null });
               })
               .catch(error => {
                 console.log("error", error);
@@ -802,7 +805,7 @@ class ProjectApp extends React.Component<
                   actions.setStatus(error.response.data);
                 } else if (error.response.status == 401) {
                   actions.setStatus({
-                    auth: "You must be logged in to publish a model.",
+                    auth: "You must be logged in to publish an app.",
                   });
                 }
                 window.scroll(0, 0);
@@ -819,15 +822,21 @@ class ProjectApp extends React.Component<
                 </div>
               )}
               {(props.status?.auth || !accessStatus.username) && (
-                <div className="alert alert-danger" role="alert">
+                <div className="alert alert-primary alert-dismissible" role="alert">
                   You must be logged in to publish a model.
-                  <AuthDialog
-                    show={showAuthDialog}
-                    setShow={show => this.setState({ showAuthDialog: show })}
-                    initialAction="sign-up"
-                    resetAccessStatus={this.props.resetAccessStatus}
-                  />
                 </div>
+              )}
+              {props.status?.auth && !accessStatus.username && (
+                <AuthDialog
+                  show={showAuthDialog}
+                  setShow={show => this.setState({ showAuthDialog: show })}
+                  initialAction="sign-up"
+                  resetAccessStatus={async () => {
+                    await this.props.resetAccessStatus();
+                    props.handleSubmit();
+                  }}
+                  message="You must be logged in to create or update an app."
+                />
               )}
               {props.status?.collaborators && (
                 <PrivateAppException
@@ -867,8 +876,10 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
     this.resetAccessStatus = this.resetAccessStatus.bind(this);
   }
 
-  resetAccessStatus() {
-    this.api.getAccessStatus().then(accessStatus => this.setState({ accessStatus }));
+  async resetAccessStatus() {
+    const accessStatus = await this.api.getAccessStatus();
+    this.setState({ accessStatus });
+    return accessStatus;
   }
 
   async componentDidMount() {
@@ -877,6 +888,7 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
       accessStatus,
     });
   }
+
   render() {
     if (!this.state.accessStatus) {
       return <div />;
@@ -887,6 +899,7 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
           <AuthButtons
             accessStatus={this.state.accessStatus}
             resetAccessStatus={this.resetAccessStatus}
+            message="You must be logged in to create an app."
           />
         </AuthPortal>
 
@@ -927,8 +940,10 @@ class ProjectDetail extends React.Component<
     this.resetAccessStatus = this.resetAccessStatus.bind(this);
   }
 
-  resetAccessStatus() {
-    this.api.getAccessStatus().then(accessStatus => this.setState({ accessStatus }));
+  async resetAccessStatus() {
+    const accessStatus = await this.api.getAccessStatus();
+    this.setState({ accessStatus });
+    return accessStatus;
   }
 
   async componentDidMount() {
@@ -951,13 +966,13 @@ class ProjectDetail extends React.Component<
     if (!["staging", "running"].includes(this.state.project?.status)) {
       style = { maxWidth: "1000px" };
     }
-    console.log("this.state.edit", this.state.edit, this.props.section);
     return (
       <>
         <AuthPortal>
           <AuthButtons
             accessStatus={this.state.accessStatus}
             resetAccessStatus={this.resetAccessStatus}
+            message="You must be logged in to update an app."
           />
         </AuthPortal>
 
