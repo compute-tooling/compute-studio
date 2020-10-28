@@ -2,9 +2,14 @@
 - part: Publish
   chapters:
     - file: publish/guide
-    - file: publish/inputs
-    - file: publish/outputs
-    - file: publish/functions
+    - file: publish/model/guide
+      sections:
+        - file: publish/model/inputs
+        - file: publish/model/outputs
+        - file: publish/model/functions
+
+    - file: publish/data-viz/guide
+
     - file: publish/environment
 
 - part: API

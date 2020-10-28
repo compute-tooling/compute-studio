@@ -24,7 +24,7 @@ def get_version():
 
 ## Model Parameters
 
-Accepts Meta Parameters, if they are being utilized. Returns data in the form specified in the [inputs page](/publish/inputs/).
+Accepts Meta Parameters, if they are being utilized. Returns data in the form specified in the [inputs page](/publish/model/inputs/).
 
 - **Python Example**:
 
@@ -109,7 +109,7 @@ Here's what you get after filling in this function:
 
 ## Run simulation
 
-Accepts Meta Parameters values and model parameters. Returns outputs as specified in the [outputs page](/publish/outputs/)
+Accepts Meta Parameters values and model parameters. Returns outputs as specified in the [outputs page](/publish/model/outputs/)
 
 Compute Studio submits the model's meta parameters and the parsed and formatted user adjustments:
 
