@@ -231,6 +231,8 @@ class Manager(BaseManager):
                 "0.0.0.0",
                 "--port",
                 "8010",
+                "--prefix",
+                f"/{app['owner']}/{app['owner']}/test/",
             ]
             ports = viz_ports
         else:
@@ -257,7 +259,9 @@ class Manager(BaseManager):
             for line in container.logs(stream=True):
                 print(strip_secrets(line, secrets))
 
-                resp = httpx.get("http://localhost:8010")
+                resp = httpx.get(
+                    f"http://localhost:8010/{app['owner']}/{app['owner']}/test/"
+                )
                 if resp.status_code == 200:
                     print(f"Received successful response: {resp}")
                     break
