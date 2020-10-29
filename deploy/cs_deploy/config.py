@@ -6,6 +6,9 @@ from pathlib import Path
 import yaml
 
 
+config_file = os.environ.get("CS_CONFIG", "cs-config.yaml")
+
+
 def load_webapp_config():
     defaults = dict(
         TAG=datetime.datetime.now().strftime("%Y-%m-%d"), PROJECT=None, CS_URL=None
@@ -13,7 +16,7 @@ def load_webapp_config():
 
     config = copy.deepcopy(defaults)
 
-    path = Path("cs-config.yaml")
+    path = Path(config_file)
     if path.exists():
         with open(path, "r") as f:
             user_config = yaml.safe_load(f.read())["webapp"]
@@ -33,7 +36,7 @@ def load_workers_config():
 
     config = copy.deepcopy(defaults)
 
-    path = Path("cs-config.yaml")
+    path = Path(config_file)
     if path.exists():
         with open(path, "r") as f:
             user_config = yaml.safe_load(f.read())
