@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev
+      - simplify-publish
     paths:
       - "workers/**"
       - "deploy/**"
