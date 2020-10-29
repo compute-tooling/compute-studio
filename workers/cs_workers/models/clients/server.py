@@ -122,16 +122,22 @@ class Server:
                 "0.0.0.0",
                 "--port",
                 str(PORT),
+                "--prefix",
+                f"/{self.owner}/{self.title}/{self.deployment_name}/",
+                f"--allow-websocket-origin={self.viz_host}",
             ]
         else:
             raise ValueError(
                 f"Unknown tech: {config['tech']}. Must be one of: bokeh, dash."
             )
 
+        print("got config", config)
+        print("running cmd", cmd)
+
         container = kclient.V1Container(
             name=name,
             image=f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{self.tag}",
-            command=["gunicorn", f"cs_config.functions:{self.callable_name}"],
+            command=cmd,
             env=self.env(self.owner, self.title, self.deployment_name, config),
             resources=kclient.V1ResourceRequirements(**config["resources"]),
             ports=[kclient.V1ContainerPort(container_port=PORT)],
