@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml
 
 
-config_file = os.environ.get("CS_CONFIG", "cs-config.yaml")
+config_file = os.environ.get("CS_CONFIG_PATH", "cs-config.yaml")
 
 
 def load_webapp_config():
