@@ -62,6 +62,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = (
+            "app_location",
             "title",
             "oneliner",
             "description",
@@ -116,6 +117,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = (
+            "app_location",
             "title",
             "oneliner",
             "description",

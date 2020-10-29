@@ -2,6 +2,7 @@ import argparse
 import copy
 import os
 import sys
+import time
 import yaml
 from datetime import datetime
 from dateutil.parser import parse as dateutil_parse
@@ -212,23 +213,78 @@ class Manager(BaseManager):
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])
         img_name = f"{safeowner}_{safetitle}_tasks"
-        cmd = ["py.test", "/home/test_functions.py", "-v", "-s"]
+
+        viz_ports = {"8010/tcp": ("127.0.0.1", "8010")}
+        if app["tech"] == "python-paramtools":
+            cmd = ["py.test", "/home/test_functions.py", "-v", "-s"]
+            ports = None
+        elif app["tech"] == "dash":
+            app_module = app.get("app_location", None) or "cs_config.functions"
+            cmd = ["gunicorn", f"{app_module}:{app['callable_name']}"]
+            ports = viz_ports
+        elif app["tech"] == "bokeh":
+            cmd = [
+                "bokeh",
+                "serve",
+                app["app_location"],
+                "--address",
+                "0.0.0.0",
+                "--port",
+                "8010",
+            ]
+            ports = viz_ports
+        else:
+            raise ValueError(f"Unknown tech: {app['tech']}")
+
         secrets = self.config._list_secrets(app)
         client = docker.from_env()
         container = client.containers.run(
-            f"{img_name}:{self.tag}", cmd, environment=secrets, detach=True
+            f"{img_name}:{self.tag}",
+            cmd,
+            environment=secrets,
+            detach=True,
+            ports=ports,
         )
 
-        for line in container.logs(stream=True):
+        def strip_secrets(line, secrets):
             line = line.decode()
             for name, value in secrets.items():
                 line = line.replace(name, "******").replace(value, "******")
-            print(line.strip("\n"))
+            return line.strip("\n")
 
-        container.reload()
-        exit_status = container.wait()
-        if exit_status["StatusCode"] == 1:
-            raise RuntimeError("Tests failed with exit status 1.")
+        if app["tech"] in ("bokeh", "dash"):
+            attempts = 1
+            for line in container.logs(stream=True):
+                print(strip_secrets(line, secrets))
+
+                resp = httpx.get("http://localhost:8010")
+                if resp.status_code == 200:
+                    print(f"Received successful response: {resp}")
+                    break
+
+                attempts += 1
+                time.sleep(1)
+
+                if attempts > 10:
+                    break
+
+            container.reload()
+            if attempts < 10:
+                print(f"Successful response received after {attempts} attempts.")
+                container.kill()
+            else:
+                try:
+                    raise ValueError(f"Unable to get 200 response after {attempts}.")
+                finally:
+                    container.kill()
+        else:
+            for line in container.logs(stream=True):
+                print(strip_secrets(line, secrets))
+
+            container.reload()
+            exit_status = container.wait()
+            if exit_status["StatusCode"] == 1:
+                raise RuntimeError("Tests failed with exit status 1.")
 
     def push_app_image(self, app):
         assert self.cr is not None

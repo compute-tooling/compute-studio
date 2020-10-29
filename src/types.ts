@@ -190,6 +190,7 @@ export interface Project {
   version?: string;
   tech?: Tech;
   callable_name?: string;
+  app_location?: string;
 }
 
 export interface MiniSimulation {

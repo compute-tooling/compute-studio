@@ -253,29 +253,48 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
   return (
     <div>
       <div className="my-3" />
-      <div className="mt-1 mb-1">
-        <label>
-          <b>Function Name</b>
-        </label>
-        <Field name="callable_name">
-          {({ field, meta }) => (
-            <div>
-              <input
-                type="text"
-                className="form-control"
-                {...field}
-                onChange={e => {
-                  let val = e.target.value.replace(/[^a-zA-Z0-9]+/g, "_");
-                  e.target.value = val;
-                  field.onChange(e);
-                }}
-              />
-              {meta.touched && meta.error && <Message msg={meta.error} />}
-            </div>
-          )}
-        </Field>
-        <ErrorMessage name="software" render={msg => <Message msg={msg} />} />
-      </div>
+      {tech === "dash" && (
+        <div className="mt-1 mb-1">
+          <label>
+            <b>Function Name</b>
+          </label>
+          <Field name="callable_name">
+            {({ field, meta }) => (
+              <div>
+                <input
+                  type="text"
+                  className="form-control w-50"
+                  {...field}
+                  placeholder={`Name of the ${title} server.`}
+                  onChange={e => {
+                    let val = e.target.value.replace(/[^a-zA-Z0-9]+/g, "_");
+                    e.target.value = val;
+                    field.onChange(e);
+                  }}
+                />
+                {meta.touched && meta.error && <Message msg={meta.error} />}
+              </div>
+            )}
+          </Field>
+          <ErrorMessage name="callable_name" render={msg => <Message msg={msg} />} />
+        </div>
+      )}
+      {tech === "bokeh" && (
+        <div className="mt-1 mb-1">
+          <label>
+            <b>App Location</b>
+          </label>
+          <div>
+            <Field
+              required={true}
+              name="app_location"
+              placeholder="Directory or file containing app."
+              className="w-50"
+            />
+            <ErrorMessage name="app_location" render={msg => <Message msg={msg} />} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -624,7 +643,7 @@ const NewProjectForm: React.FC<{
     )}
     {project && !["running", "staging"].includes(step) && (
       <>
-        <AppTitle project={project} />
+        {/* <AppTitle project={project} /> */}
         <ReadmeField />
         <div className="py-4">
           <h5>Connect app:</h5>

@@ -110,6 +110,24 @@ class Server:
         app_name = f"{safeowner}-{safetitle}"
         name = f"{app_name}-{self.deployment_name}"
 
+        if config["tech"] == "dash":
+            app_module = config.get("app_location", None) or "cs_config.functions"
+            cmd = ["gunicorn", f"{app_module}:{self.callable_name}"]
+        elif config["tech"] == "bokeh":
+            cmd = [
+                "bokeh",
+                "serve",
+                config["app_location"],
+                "--address",
+                "0.0.0.0",
+                "--port",
+                str(PORT),
+            ]
+        else:
+            raise ValueError(
+                f"Unknown tech: {config['tech']}. Must be one of: bokeh, dash."
+            )
+
         container = kclient.V1Container(
             name=name,
             image=f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{self.tag}",

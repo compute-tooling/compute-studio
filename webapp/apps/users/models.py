@@ -304,6 +304,7 @@ class Project(models.Model):
     )
 
     callable_name = models.CharField(null=True, max_length=128)
+    app_location = models.CharField(null=True, max_length=256)
 
     # ram, vcpus
     def callabledefault():

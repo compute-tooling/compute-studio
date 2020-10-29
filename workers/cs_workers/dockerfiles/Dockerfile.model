@@ -1,15 +1,5 @@
 ARG TAG
-FROM continuumio/miniconda3
-
-USER root
-RUN  apt-get update && apt install libgl1-mesa-glx --yes
-
-RUN conda config --append channels conda-forge
-RUN conda update conda
-RUN conda install "python>=3.7" pip tornado dask lz4 && pip install boto3 gunicorn
-
-
-WORKDIR /home
+FROM computestudio/appbase:simplify-publish
 
 ARG TITLE
 ARG OWNER
@@ -30,7 +20,6 @@ RUN bash /home/install.sh
 RUN pip install "git+${REPO_URL}.git@${REPO_TAG}#egg=cs-config&subdirectory=cs-config"
 ADD ${RAW_REPO_URL}/${REPO_TAG}/cs-config/cs_config/tests/test_functions.py /home
 
-RUN pip install "git+https://github.com/compute-tooling/compute-studio.git@master#egg=cs-workers&subdirectory=workers" cs-kit pytest
 ######################
 
 WORKDIR /home
