@@ -4,8 +4,8 @@ There are two ways to publish an app on Compute Studio. **Data visualizations** 
 
 ## 1. Publish a data visualization.
 
-C/S can host Bokeh and Dash visualizations and plans to add more data-viz software like RStudio and Streamlit. Check out the data viz docs to get started.
+C/S can host Bokeh and Dash visualizations and plans to add more data-viz software like RStudio and Streamlit. Check out the [data viz docs](/publish/data-viz/guide/) to get started.
 
 ## 2. Publish a model.
 
-C/S uses ParamTools to host compuational models where model runs can take anywhere from a few seconds to days. Checkout the model docs to get started.
+C/S uses ParamTools to host computational models with complex interfaces or long-running compute times. Checkout the [model docs](/publish/model/guide/) to get started.

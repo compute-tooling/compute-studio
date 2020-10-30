@@ -279,22 +279,20 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
           <ErrorMessage name="callable_name" render={msg => <Message msg={msg} />} />
         </div>
       )}
-      {tech === "bokeh" && (
-        <div className="mt-1 mb-1">
-          <label>
-            <b>App Location</b>
-          </label>
-          <div>
-            <Field
-              required={true}
-              name="app_location"
-              placeholder="Directory or file containing app."
-              className="w-50"
-            />
-            <ErrorMessage name="app_location" render={msg => <Message msg={msg} />} />
-          </div>
+      <div className="mt-1 mb-1">
+        <label>
+          <b>App Location</b>
+        </label>
+        <div>
+          <Field
+            required={tech === "bokeh"}
+            name="app_location"
+            placeholder="Directory or file containing app."
+            className="w-50"
+          />
+          <ErrorMessage name="app_location" render={msg => <Message msg={msg} />} />
         </div>
-      )}
+      </div>
     </div>
   );
 };

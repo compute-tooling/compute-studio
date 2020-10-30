@@ -4,6 +4,7 @@ FROM computestudio/appbase:simplify-publish
 ARG TITLE
 ARG OWNER
 ARG REPO_URL
+ARG REPO_NAME
 ARG RAW_REPO_URL
 ARG REPO_TAG=master
 
@@ -12,13 +13,13 @@ ARG REPO_TAG=master
 # Bump to trigger build
 ARG TIME_STAMP=0
 
-ADD ${RAW_REPO_URL}/${REPO_TAG}/cs-config/install.sh /home
-RUN cat /home/install.sh
-RUN bash /home/install.sh
+RUN git clone -b ${REPO_TAG} ${REPO_URL} 
+WORKDIR ${REPO_NAME}
 
-# Bump to trigger re-install of source, without re-installing dependencies.
-RUN pip install "git+${REPO_URL}.git@${REPO_TAG}#egg=cs-config&subdirectory=cs-config"
-ADD ${RAW_REPO_URL}/${REPO_TAG}/cs-config/cs_config/tests/test_functions.py /home
+RUN cat ./cs-config/install.sh
+RUN bash ./cs-config/install.sh
+RUN if test -f "./cs-config/setup.py"; then  pip install -e ./cs-config; fi
+
 
 ######################
 

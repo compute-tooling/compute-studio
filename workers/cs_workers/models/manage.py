@@ -3,6 +3,7 @@ import copy
 import os
 import sys
 import time
+from urllib.parse import urlparse
 import yaml
 from datetime import datetime
 from dateutil.parser import parse as dateutil_parse
@@ -183,6 +184,9 @@ class Manager(BaseManager):
         repo_tag = os.environ.get("REPO_TAG") or app["repo_tag"]
         repo_url = os.environ.get("REPO_URL") or app["repo_url"]
 
+        parsed_url = urlparse(repo_url)
+        repo_name = parsed_url.path.split("/")[-1]
+
         reg_url = "https://github.com"
         raw_url = "https://raw.githubusercontent.com"
 
@@ -191,6 +195,7 @@ class Manager(BaseManager):
             TITLE=app["title"],
             REPO_TAG=repo_tag,
             REPO_URL=repo_url,
+            REPO_NAME=repo_name,
             RAW_REPO_URL=repo_url.replace(reg_url, raw_url),
         )
 
@@ -216,7 +221,12 @@ class Manager(BaseManager):
 
         viz_ports = {"8010/tcp": ("127.0.0.1", "8010")}
         if app["tech"] == "python-paramtools":
-            cmd = ["py.test", "/home/test_functions.py", "-v", "-s"]
+            cmd = [
+                "py.test",
+                "./cs-config/cs-config/tests/test_functions.py",
+                "-v",
+                "-s",
+            ]
             ports = None
         elif app["tech"] == "dash":
             app_module = app.get("app_location", None) or "cs_config.functions"
