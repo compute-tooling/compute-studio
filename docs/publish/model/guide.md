@@ -1,4 +1,4 @@
-# Model Publishing Guide
+# Model Guide
 
 Compute Studio uses [ParamTools](https://paramtools.dev) to serve models. Once you have set up your model inputs with ParamTools, you can quickly publish a model using C/S.
 

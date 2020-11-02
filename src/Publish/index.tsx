@@ -31,6 +31,12 @@ const techDocsLinks = {
   dash: "https://dash.plotly.com/",
 };
 
+const techGuideLinks = {
+  bokeh: "https://docs.compute.studio/publish/data-viz/guide.html#bokeh",
+  dash: "https://docs.compute.studio/publish/data-viz/guide.html#dash",
+  "python-paramtools": "https://docs.compute.studio/publish/model/guide.html",
+};
+
 const techTitles = {
   dash: "Dash",
   bokeh: "Bokeh",
@@ -641,11 +647,19 @@ const NewProjectForm: React.FC<{
     )}
     {project && !["running", "staging"].includes(step) && (
       <>
-        {/* <AppTitle project={project} /> */}
         <ReadmeField />
         <div className="py-4">
           <h5>Connect app:</h5>
           <TechSelect props={props} project={project} />
+        </div>
+        <div className="py-2">
+          <i>
+            Go to the{" "}
+            <a href={`${techGuideLinks[props.values.tech]}`} target="_blank">
+              {techTitles[props.values.tech]} guide
+            </a>{" "}
+            for more information.
+          </i>
         </div>
         {props.values.tech === "python-paramtools" && <PythonParamTools />}
         {["bokeh", "dash"].includes(props.values.tech) && (
@@ -657,9 +671,12 @@ const NewProjectForm: React.FC<{
       </>
     )}
 
-    <button className="btn inline-block btn-success mt-5" type="submit">
-      <strong>{step === "create" ? "Create app" : "Connect app"}</strong>
-    </button>
+    <div className="mt-5">
+      <button className="btn inline-block btn-success" type="submit">
+        <strong>{step === "create" ? "Create app" : "Connect app"}</strong>
+      </button>
+    </div>
+
     {!project && (
       <p className="mt-3">Next, you will learn how to connect your app based on your technology.</p>
     )}
@@ -925,7 +942,13 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
             <Col style={{ maxWidth: "1000px" }}>
               <Card.Body>
                 <Card.Title>
-                  <h1 className="mb-3 pb-2 border-bottom">Create a new application</h1>
+                  <h1 className="mb-2 pb-2 border-bottom">Create a new application</h1>
+                  <small className="mb-3">
+                    <i>
+                      Not sure where to get started? Check out the{" "}
+                      <a href="https://docs.compute.studio/publish/guide.html">guide</a>.
+                    </i>
+                  </small>
                 </Card.Title>
                 <ProjectApp
                   initialValues={initialValues}
