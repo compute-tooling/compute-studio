@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-deploy:
-    if: github.repository == 'PSLmodels/ParamTools'
+    if: github.repository == 'compute-tooling/compute-studio'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
