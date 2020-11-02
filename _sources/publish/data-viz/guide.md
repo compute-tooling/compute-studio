@@ -153,7 +153,7 @@ bokeh serve app.py
 
 And, here is the source code:
 
-````python
+```python
 # app.py
 
 # Downloaded from: https://github.com/bokeh/bokeh/blob/branch-2.3/examples/app/sliders.py
@@ -250,7 +250,7 @@ $ tree .
 
 1 directory, 2 files
 
-````
+```
 
 The `app.py` file contains the code from the above example, and `install.sh` is where you will add your app's installation instructions:
 

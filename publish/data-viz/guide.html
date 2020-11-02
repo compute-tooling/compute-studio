@@ -109,7 +109,7 @@
  </li>
  <li class="toctree-l1">
   <a class="reference internal" href="../model/guide.html">
-   Model Publishing Guide
+   Model Guide
   </a>
  </li>
  <li class="toctree-l1 current active">
@@ -255,11 +255,16 @@
    </li>
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#id2">
-     3. Publish your app on C/S.
+     2. Set up your app’s git repository.
     </a>
    </li>
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#id3">
+     3. Publish your app on C/S.
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#id4">
      4. The C/S team will take over from here to get your app online as soon as possible!
     </a>
    </li>
@@ -410,98 +415,97 @@ pip install -U dash
 </pre></div>
 </div>
 <p>And, here is the source code:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span># app.py
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># app.py</span>
 
-# Downloaded from: https://github.com/bokeh/bokeh/blob/branch-2.3/examples/app/sliders.py
+<span class="c1"># Downloaded from: https://github.com/bokeh/bokeh/blob/branch-2.3/examples/app/sliders.py</span>
 
-import numpy as np
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-from bokeh.io import curdoc
-from bokeh.layouts import column, row
-from bokeh.models import ColumnDataSource, Slider, TextInput
-from bokeh.plotting import figure
+<span class="kn">from</span> <span class="nn">bokeh.io</span> <span class="kn">import</span> <span class="n">curdoc</span>
+<span class="kn">from</span> <span class="nn">bokeh.layouts</span> <span class="kn">import</span> <span class="n">column</span><span class="p">,</span> <span class="n">row</span>
+<span class="kn">from</span> <span class="nn">bokeh.models</span> <span class="kn">import</span> <span class="n">ColumnDataSource</span><span class="p">,</span> <span class="n">Slider</span><span class="p">,</span> <span class="n">TextInput</span>
+<span class="kn">from</span> <span class="nn">bokeh.plotting</span> <span class="kn">import</span> <span class="n">figure</span>
 
-# Set up data
-N = 200
-x = np.linspace(0, 4*np.pi, N)
-y = np.sin(x)
-source = ColumnDataSource(data=dict(x=x, y=y))
-
-
-# Set up plot
-plot = figure(plot_height=400, plot_width=400, title=&quot;my sine wave&quot;,
-              tools=&quot;crosshair,pan,reset,save,wheel_zoom&quot;,
-              x_range=[0, 4*np.pi], y_range=[-2.5, 2.5])
-
-plot.line(&#39;x&#39;, &#39;y&#39;, source=source, line_width=3, line_alpha=0.6)
+<span class="c1"># Set up data</span>
+<span class="n">N</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">source</span> <span class="o">=</span> <span class="n">ColumnDataSource</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">))</span>
 
 
-# Set up widgets
-text = TextInput(title=&quot;title&quot;, value=&#39;my sine wave&#39;)
-offset = Slider(title=&quot;offset&quot;, value=0.0, start=-5.0, end=5.0, step=0.1)
-amplitude = Slider(title=&quot;amplitude&quot;, value=1.0, start=-5.0, end=5.0, step=0.1)
-phase = Slider(title=&quot;phase&quot;, value=0.0, start=0.0, end=2*np.pi)
-freq = Slider(title=&quot;frequency&quot;, value=1.0, start=0.1, end=5.1, step=0.1)
+<span class="c1"># Set up plot</span>
+<span class="n">plot</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">plot_height</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;my sine wave&quot;</span><span class="p">,</span>
+              <span class="n">tools</span><span class="o">=</span><span class="s2">&quot;crosshair,pan,reset,save,wheel_zoom&quot;</span><span class="p">,</span>
+              <span class="n">x_range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">],</span> <span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">])</span>
+
+<span class="n">plot</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span> <span class="n">line_width</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">line_alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
 
 
-# Set up callbacks
-def update_title(attrname, old, new):
-    plot.title.text = text.value
-
-text.on_change(&#39;value&#39;, update_title)
-
-def update_data(attrname, old, new):
-
-    # Get the current slider values
-    a = amplitude.value
-    b = offset.value
-    w = phase.value
-    k = freq.value
-
-    # Generate the new curve
-    x = np.linspace(0, 4*np.pi, N)
-    y = a*np.sin(k*x + w) + b
-
-    source.data = dict(x=x, y=y)
-
-for w in [offset, amplitude, phase, freq]:
-    w.on_change(&#39;value&#39;, update_data)
+<span class="c1"># Set up widgets</span>
+<span class="n">text</span> <span class="o">=</span> <span class="n">TextInput</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;my sine wave&#39;</span><span class="p">)</span>
+<span class="n">offset</span> <span class="o">=</span> <span class="n">Slider</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;offset&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">start</span><span class="o">=-</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">amplitude</span> <span class="o">=</span> <span class="n">Slider</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">start</span><span class="o">=-</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">phase</span> <span class="o">=</span> <span class="n">Slider</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;phase&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+<span class="n">freq</span> <span class="o">=</span> <span class="n">Slider</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;frequency&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mf">5.1</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 
 
-# Set up layouts and add to document
-inputs = column(text, offset, amplitude, phase, freq)
+<span class="c1"># Set up callbacks</span>
+<span class="k">def</span> <span class="nf">update_title</span><span class="p">(</span><span class="n">attrname</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">value</span>
 
-curdoc().add_root(row(inputs, plot, width=800))
-curdoc().title = &quot;Sliders&quot;
+<span class="n">text</span><span class="o">.</span><span class="n">on_change</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">,</span> <span class="n">update_title</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">update_data</span><span class="p">(</span><span class="n">attrname</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
+
+    <span class="c1"># Get the current slider values</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">amplitude</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">offset</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">phase</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">freq</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="c1"># Generate the new curve</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">a</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">k</span><span class="o">*</span><span class="n">x</span> <span class="o">+</span> <span class="n">w</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span>
+
+    <span class="n">source</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="p">[</span><span class="n">offset</span><span class="p">,</span> <span class="n">amplitude</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">freq</span><span class="p">]:</span>
+    <span class="n">w</span><span class="o">.</span><span class="n">on_change</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">,</span> <span class="n">update_data</span><span class="p">)</span>
+
+
+<span class="c1"># Set up layouts and add to document</span>
+<span class="n">inputs</span> <span class="o">=</span> <span class="n">column</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">amplitude</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">freq</span><span class="p">)</span>
+
+<span class="n">curdoc</span><span class="p">()</span><span class="o">.</span><span class="n">add_root</span><span class="p">(</span><span class="n">row</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">800</span><span class="p">))</span>
+<span class="n">curdoc</span><span class="p">()</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;Sliders&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h3>2. Set up your app’s git repository.<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>Once you’ve set up a git repository, you can quickly publish an app on C/S. First, create a new file named <code class="docutils literal notranslate"><span class="pre">app.py</span></code> and add the above code to it.</p>
+<p>Next, install the compute-studio-kit CLI tool to initialize your Compute Studio configuration:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+pip install -U cs-kit
+
 ```
 
-### 2. Set up your app&#39;s git repository.
+Now, create the configuration:
 
-Once you&#39;ve set up a git repository, you can quickly publish an app on C/S. First, create a new file named `app.py` and add the above code to it.
+```
 
-Next, install the compute-studio-kit CLI tool to initialize your Compute Studio configuration:
-
-</pre></div>
-</div>
-<p>pip install -U cs-kit</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
-<span class="n">Now</span><span class="p">,</span> <span class="n">create</span> <span class="n">the</span> <span class="n">configuration</span><span class="p">:</span>
+csk init --app-type data-viz
 
 </pre></div>
 </div>
-<p>csk init –app-type data-viz</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
-Now your git repository should look like this:
-
-```bash
-$ tree .
+<p>Now your git repository should look like this:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ tree .
 .
 ├── app.py
 └── cs-config
     └── install.sh
 
-1 directory, 2 files
-
+<span class="m">1</span> directory, <span class="m">2</span> files
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">app.py</span></code> file contains the code from the above example, and <code class="docutils literal notranslate"><span class="pre">install.sh</span></code> is where you will add your app’s installation instructions:</p>
@@ -510,12 +514,12 @@ pip install -U bokeh
 </pre></div>
 </div>
 </div>
-<div class="section" id="id2">
-<h3>3. Publish your app on C/S.<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id3">
+<h3>3. Publish your app on C/S.<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <p>The Compute Studio publish page will walk you through the final steps for creating your app: <a class="reference external" href="https://compute.studio/new/">https://compute.studio/new/</a></p>
 </div>
-<div class="section" id="id3">
-<h3>4. The C/S team will take over from here to get your app online as soon as possible!<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id4">
+<h3>4. The C/S team will take over from here to get your app online as soon as possible!<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 </div>
 </div>
 </div>
