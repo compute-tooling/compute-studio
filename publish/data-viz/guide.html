@@ -289,13 +289,16 @@
 <h2>Dash<a class="headerlink" href="#dash" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="create-your-app">
 <h3>1. Create your app.<a class="headerlink" href="#create-your-app" title="Permalink to this headline">¶</a></h3>
-<p>We are going to use an example app from the <a class="reference external" href="https://dash.plotly.com/basic-callbacks">Dash documentation</a>. The key part is setting the <code class="docutils literal notranslate"><span class="pre">url_base_pathname</span></code> for the app:</p>
+<p>We are going to use an example app from the <a class="reference external" href="https://dash.plotly.com/basic-callbacks">Dash documentation</a>. The only changes required are setting the <code class="docutils literal notranslate"><span class="pre">url_base_pathname</span></code> for the app and setting the <code class="docutils literal notranslate"><span class="pre">server</span></code> variable:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">url_base_pathname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;URL_BASE_PATHNAME&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">)</span>
 
 <span class="n">app</span> <span class="o">=</span> <span class="n">dash</span><span class="o">.</span><span class="n">Dash</span><span class="p">(</span>
     <span class="n">url_base_pathname</span><span class="o">=</span><span class="n">url_base_pathname</span><span class="p">,</span>
     <span class="n">external_stylesheets</span><span class="o">=</span><span class="n">external_stylesheets</span><span class="p">,</span>
 <span class="p">)</span>
+
+<span class="c1"># This will be called by gunicorn when serving the app on C/S.</span>
+<span class="n">server</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">server</span>
 
 </pre></div>
 </div>
@@ -327,6 +330,9 @@
 <span class="n">app</span> <span class="o">=</span> <span class="n">dash</span><span class="o">.</span><span class="n">Dash</span><span class="p">(</span>
     <span class="vm">__name__</span><span class="p">,</span> <span class="n">external_stylesheets</span><span class="o">=</span><span class="n">external_stylesheets</span><span class="p">,</span> <span class="n">url_base_pathname</span><span class="o">=</span><span class="n">url_base_pathname</span>
 <span class="p">)</span>
+
+<span class="c1"># This will be called by gunicorn when serving the app on C/S.</span>
+<span class="n">server</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">server</span>
 
 <span class="n">app</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">([</span>
     <span class="n">dcc</span><span class="o">.</span><span class="n">Graph</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s1">&#39;graph-with-slider&#39;</span><span class="p">),</span>

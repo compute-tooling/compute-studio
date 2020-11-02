@@ -8,7 +8,7 @@ You can publish Dash and Bokeh apps on C/S, and we plan to support even more viz
 
 ### 1. Create your app.
 
-We are going to use an example app from the [Dash documentation](https://dash.plotly.com/basic-callbacks). The key part is setting the `url_base_pathname` for the app:
+We are going to use an example app from the [Dash documentation](https://dash.plotly.com/basic-callbacks). The only changes required are setting the `url_base_pathname` for the app and setting the `server` variable:
 
 ```python
 url_base_pathname = os.environ.get("URL_BASE_PATHNAME", "/")
@@ -17,6 +17,9 @@ app = dash.Dash(
     url_base_pathname=url_base_pathname,
     external_stylesheets=external_stylesheets,
 )
+
+# This will be called by gunicorn when serving the app on C/S.
+server = app.server
 
 ```
 
@@ -52,6 +55,9 @@ url_base_pathname = os.environ.get("URL_BASE_PATHNAME", "/")
 app = dash.Dash(
     __name__, external_stylesheets=external_stylesheets, url_base_pathname=url_base_pathname
 )
+
+# This will be called by gunicorn when serving the app on C/S.
+server = app.server
 
 app.layout = html.Div([
     dcc.Graph(id='graph-with-slider'),
