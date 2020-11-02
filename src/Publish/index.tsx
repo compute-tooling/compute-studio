@@ -266,6 +266,11 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
                   className="form-control w-50"
                   {...field}
                   placeholder={`Name of the ${title} server.`}
+                  onChange={e => {
+                    let val = e.target.value.replace(/[^a-zA-Z0-9]+/g, "_");
+                    e.target.value = val;
+                    field.onChange(e);
+                  }}
                 />
                 {meta.touched && meta.error && <Message msg={meta.error} />}
               </div>
