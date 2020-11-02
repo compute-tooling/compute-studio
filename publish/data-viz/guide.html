@@ -255,16 +255,11 @@
    </li>
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#id2">
-     2. Set up your app’s git repository.
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#id3">
      3. Publish your app on C/S.
     </a>
    </li>
    <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#id4">
+    <a class="reference internal nav-link" href="#id3">
      4. The C/S team will take over from here to get your app online as soon as possible!
     </a>
    </li>
@@ -287,6 +282,7 @@
 <p>You can publish Dash and Bokeh apps on C/S, and we plan to support even more viz libraries like Streamlit and RStudio.</p>
 <div class="section" id="dash">
 <h2>Dash<a class="headerlink" href="#dash" title="Permalink to this headline">¶</a></h2>
+<p><em>Full source code for app available <a class="reference external" href="https://github.com/hdoupe/cs-dash-demo">here</a>.</em></p>
 <div class="section" id="create-your-app">
 <h3>1. Create your app.<a class="headerlink" href="#create-your-app" title="Permalink to this headline">¶</a></h3>
 <p>We are going to use an example app from the <a class="reference external" href="https://dash.plotly.com/basic-callbacks">Dash documentation</a>. The only changes required are setting the <code class="docutils literal notranslate"><span class="pre">url_base_pathname</span></code> for the app and setting the <code class="docutils literal notranslate"><span class="pre">server</span></code> variable:</p>
@@ -405,94 +401,121 @@ pip install -U dash
 </div>
 <div class="section" id="bokeh">
 <h2>Bokeh<a class="headerlink" href="#bokeh" title="Permalink to this headline">¶</a></h2>
+<p><em>Full source code for app available <a class="reference external" href="https://github.com/hdoupe/cs-bokeh-demo">here</a>.</em></p>
 <div class="section" id="id1">
 <h3>1. Create your app.<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
-<p>We are going to use an example app from the <a class="reference external" href="https://docs.bokeh.org/en/latest/docs/user_guide/server.html#single-module-format">Bokeh documentation</a>.</p>
+<p>We are going to use an example app from the <a class="reference external" href="https://demo.bokeh.org/">Bokeh documentation</a>.</p>
 <p>Here’s a full working Bokeh App that you can run locally with this command:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bokeh</span> <span class="n">serve</span> <span class="n">myapp</span><span class="o">.</span><span class="n">py</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bokeh</span> <span class="n">serve</span> <span class="n">app</span><span class="o">.</span><span class="n">py</span>
 </pre></div>
 </div>
 <p>And, here is the source code:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># myapp.py</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span># app.py
 
-<span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">random</span>
+# Downloaded from: https://github.com/bokeh/bokeh/blob/branch-2.3/examples/app/sliders.py
 
-<span class="kn">from</span> <span class="nn">bokeh.layouts</span> <span class="kn">import</span> <span class="n">column</span>
-<span class="kn">from</span> <span class="nn">bokeh.models</span> <span class="kn">import</span> <span class="n">Button</span>
-<span class="kn">from</span> <span class="nn">bokeh.palettes</span> <span class="kn">import</span> <span class="n">RdYlBu3</span>
-<span class="kn">from</span> <span class="nn">bokeh.plotting</span> <span class="kn">import</span> <span class="n">figure</span><span class="p">,</span> <span class="n">curdoc</span>
+import numpy as np
 
-<span class="c1"># create a plot and style its properties</span>
-<span class="n">p</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">x_range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span> <span class="n">y_range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span> <span class="n">toolbar_location</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-<span class="n">p</span><span class="o">.</span><span class="n">border_fill_color</span> <span class="o">=</span> <span class="s1">&#39;black&#39;</span>
-<span class="n">p</span><span class="o">.</span><span class="n">background_fill_color</span> <span class="o">=</span> <span class="s1">&#39;black&#39;</span>
-<span class="n">p</span><span class="o">.</span><span class="n">outline_line_color</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="n">p</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">grid_line_color</span> <span class="o">=</span> <span class="kc">None</span>
+from bokeh.io import curdoc
+from bokeh.layouts import column, row
+from bokeh.models import ColumnDataSource, Slider, TextInput
+from bokeh.plotting import figure
 
-<span class="c1"># add a text renderer to our plot (no data yet)</span>
-<span class="n">r</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">[],</span> <span class="n">y</span><span class="o">=</span><span class="p">[],</span> <span class="n">text</span><span class="o">=</span><span class="p">[],</span> <span class="n">text_color</span><span class="o">=</span><span class="p">[],</span> <span class="n">text_font_size</span><span class="o">=</span><span class="s2">&quot;26px&quot;</span><span class="p">,</span>
-           <span class="n">text_baseline</span><span class="o">=</span><span class="s2">&quot;middle&quot;</span><span class="p">,</span> <span class="n">text_align</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">)</span>
+# Set up data
+N = 200
+x = np.linspace(0, 4*np.pi, N)
+y = np.sin(x)
+source = ColumnDataSource(data=dict(x=x, y=y))
 
-<span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
 
-<span class="n">ds</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">data_source</span>
+# Set up plot
+plot = figure(plot_height=400, plot_width=400, title=&quot;my sine wave&quot;,
+              tools=&quot;crosshair,pan,reset,save,wheel_zoom&quot;,
+              x_range=[0, 4*np.pi], y_range=[-2.5, 2.5])
 
-<span class="c1"># create a callback that will add a number in a random location</span>
-<span class="k">def</span> <span class="nf">callback</span><span class="p">():</span>
-    <span class="k">global</span> <span class="n">i</span>
+plot.line(&#39;x&#39;, &#39;y&#39;, source=source, line_width=3, line_alpha=0.6)
 
-    <span class="c1"># BEST PRACTICE --- update .data in one step with a new dict</span>
-    <span class="n">new_data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-    <span class="n">new_data</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">random</span><span class="p">()</span><span class="o">*</span><span class="mi">70</span> <span class="o">+</span> <span class="mi">15</span><span class="p">]</span>
-    <span class="n">new_data</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">random</span><span class="p">()</span><span class="o">*</span><span class="mi">70</span> <span class="o">+</span> <span class="mi">15</span><span class="p">]</span>
-    <span class="n">new_data</span><span class="p">[</span><span class="s1">&#39;text_color&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;text_color&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">RdYlBu3</span><span class="p">[</span><span class="n">i</span><span class="o">%</span><span class="mi">3</span><span class="p">]]</span>
-    <span class="n">new_data</span><span class="p">[</span><span class="s1">&#39;text&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;text&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span>
-    <span class="n">ds</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">new_data</span>
 
-    <span class="n">i</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+# Set up widgets
+text = TextInput(title=&quot;title&quot;, value=&#39;my sine wave&#39;)
+offset = Slider(title=&quot;offset&quot;, value=0.0, start=-5.0, end=5.0, step=0.1)
+amplitude = Slider(title=&quot;amplitude&quot;, value=1.0, start=-5.0, end=5.0, step=0.1)
+phase = Slider(title=&quot;phase&quot;, value=0.0, start=0.0, end=2*np.pi)
+freq = Slider(title=&quot;frequency&quot;, value=1.0, start=0.1, end=5.1, step=0.1)
 
-<span class="c1"># add a button widget and configure with the call back</span>
-<span class="n">button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Press Me&quot;</span><span class="p">)</span>
-<span class="n">button</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
 
-<span class="c1"># put the button and plot in a layout and add to the document</span>
-<span class="n">curdoc</span><span class="p">()</span><span class="o">.</span><span class="n">add_root</span><span class="p">(</span><span class="n">column</span><span class="p">(</span><span class="n">button</span><span class="p">,</span> <span class="n">p</span><span class="p">))</span>
+# Set up callbacks
+def update_title(attrname, old, new):
+    plot.title.text = text.value
+
+text.on_change(&#39;value&#39;, update_title)
+
+def update_data(attrname, old, new):
+
+    # Get the current slider values
+    a = amplitude.value
+    b = offset.value
+    w = phase.value
+    k = freq.value
+
+    # Generate the new curve
+    x = np.linspace(0, 4*np.pi, N)
+    y = a*np.sin(k*x + w) + b
+
+    source.data = dict(x=x, y=y)
+
+for w in [offset, amplitude, phase, freq]:
+    w.on_change(&#39;value&#39;, update_data)
+
+
+# Set up layouts and add to document
+inputs = column(text, offset, amplitude, phase, freq)
+
+curdoc().add_root(row(inputs, plot, width=800))
+curdoc().title = &quot;Sliders&quot;
+```
+
+### 2. Set up your app&#39;s git repository.
+
+Once you&#39;ve set up a git repository, you can quickly publish an app on C/S. First, create a new file named `app.py` and add the above code to it.
+
+Next, install the compute-studio-kit CLI tool to initialize your Compute Studio configuration:
+
 </pre></div>
 </div>
-</div>
-<div class="section" id="id2">
-<h3>2. Set up your app’s git repository.<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
-<p>Once you’ve set up a git repository, you can quickly publish an app on C/S. First, create a new file named <code class="docutils literal notranslate"><span class="pre">app.py</span></code> and add the above code to it.</p>
-<p>Next, install the compute-studio-kit CLI tool to initialize your Compute Studio configuration:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">U</span> <span class="n">cs</span><span class="o">-</span><span class="n">kit</span>
+<p>pip install -U cs-kit</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<span class="n">Now</span><span class="p">,</span> <span class="n">create</span> <span class="n">the</span> <span class="n">configuration</span><span class="p">:</span>
+
 </pre></div>
 </div>
-<p>Now, create the configuration:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">csk</span> <span class="n">init</span> <span class="o">--</span><span class="n">app</span><span class="o">-</span><span class="nb">type</span> <span class="n">data</span><span class="o">-</span><span class="n">viz</span>
-</pre></div>
-</div>
-<p>Now your git repository should look like this:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ tree .
+<p>csk init –app-type data-viz</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+Now your git repository should look like this:
+
+```bash
+$ tree .
 .
-├── myapp.py
+├── app.py
 └── cs-config
     └── install.sh
 
-<span class="m">1</span> directory, <span class="m">2</span> files
+1 directory, 2 files
+
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">myapp.py</span></code> file contains the code from the above example, and <code class="docutils literal notranslate"><span class="pre">install.sh</span></code> is where you will add your app’s installation instructions:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">app.py</span></code> file contains the code from the above example, and <code class="docutils literal notranslate"><span class="pre">install.sh</span></code> is where you will add your app’s installation instructions:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># bash commands for installing your package</span>
 pip install -U bokeh
 </pre></div>
 </div>
 </div>
-<div class="section" id="id3">
-<h3>3. Publish your app on C/S.<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id2">
+<h3>3. Publish your app on C/S.<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <p>The Compute Studio publish page will walk you through the final steps for creating your app: <a class="reference external" href="https://compute.studio/new/">https://compute.studio/new/</a></p>
 </div>
-<div class="section" id="id4">
-<h3>4. The C/S team will take over from here to get your app online as soon as possible!<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id3">
+<h3>4. The C/S team will take over from here to get your app online as soon as possible!<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 </div>
 </div>
 </div>

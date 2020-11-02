@@ -6,6 +6,8 @@ You can publish Dash and Bokeh apps on C/S, and we plan to support even more viz
 
 ## Dash
 
+_Full source code for app available [here](https://github.com/hdoupe/cs-dash-demo)._
+
 ### 1. Create your app.
 
 We are going to use an example app from the [Dash documentation](https://dash.plotly.com/basic-callbacks). The only changes required are setting the `url_base_pathname` for the app and setting the `server` variable:
@@ -137,63 +139,84 @@ The Compute Studio publish page will walk you through the final steps for creati
 
 ## Bokeh
 
+_Full source code for app available [here](https://github.com/hdoupe/cs-bokeh-demo)._
+
 ### 1. Create your app.
 
-We are going to use an example app from the [Bokeh documentation](https://docs.bokeh.org/en/latest/docs/user_guide/server.html#single-module-format).
+We are going to use an example app from the [Bokeh documentation](https://demo.bokeh.org/).
 
 Here's a full working Bokeh App that you can run locally with this command:
 
 ```
-bokeh serve myapp.py
+bokeh serve app.py
 ```
 
 And, here is the source code:
 
-```python
-# myapp.py
+````python
+# app.py
 
-from random import random
+# Downloaded from: https://github.com/bokeh/bokeh/blob/branch-2.3/examples/app/sliders.py
 
-from bokeh.layouts import column
-from bokeh.models import Button
-from bokeh.palettes import RdYlBu3
-from bokeh.plotting import figure, curdoc
+import numpy as np
 
-# create a plot and style its properties
-p = figure(x_range=(0, 100), y_range=(0, 100), toolbar_location=None)
-p.border_fill_color = 'black'
-p.background_fill_color = 'black'
-p.outline_line_color = None
-p.grid.grid_line_color = None
+from bokeh.io import curdoc
+from bokeh.layouts import column, row
+from bokeh.models import ColumnDataSource, Slider, TextInput
+from bokeh.plotting import figure
 
-# add a text renderer to our plot (no data yet)
-r = p.text(x=[], y=[], text=[], text_color=[], text_font_size="26px",
-           text_baseline="middle", text_align="center")
+# Set up data
+N = 200
+x = np.linspace(0, 4*np.pi, N)
+y = np.sin(x)
+source = ColumnDataSource(data=dict(x=x, y=y))
 
-i = 0
 
-ds = r.data_source
+# Set up plot
+plot = figure(plot_height=400, plot_width=400, title="my sine wave",
+              tools="crosshair,pan,reset,save,wheel_zoom",
+              x_range=[0, 4*np.pi], y_range=[-2.5, 2.5])
 
-# create a callback that will add a number in a random location
-def callback():
-    global i
+plot.line('x', 'y', source=source, line_width=3, line_alpha=0.6)
 
-    # BEST PRACTICE --- update .data in one step with a new dict
-    new_data = dict()
-    new_data['x'] = ds.data['x'] + [random()*70 + 15]
-    new_data['y'] = ds.data['y'] + [random()*70 + 15]
-    new_data['text_color'] = ds.data['text_color'] + [RdYlBu3[i%3]]
-    new_data['text'] = ds.data['text'] + [str(i)]
-    ds.data = new_data
 
-    i = i + 1
+# Set up widgets
+text = TextInput(title="title", value='my sine wave')
+offset = Slider(title="offset", value=0.0, start=-5.0, end=5.0, step=0.1)
+amplitude = Slider(title="amplitude", value=1.0, start=-5.0, end=5.0, step=0.1)
+phase = Slider(title="phase", value=0.0, start=0.0, end=2*np.pi)
+freq = Slider(title="frequency", value=1.0, start=0.1, end=5.1, step=0.1)
 
-# add a button widget and configure with the call back
-button = Button(label="Press Me")
-button.on_click(callback)
 
-# put the button and plot in a layout and add to the document
-curdoc().add_root(column(button, p))
+# Set up callbacks
+def update_title(attrname, old, new):
+    plot.title.text = text.value
+
+text.on_change('value', update_title)
+
+def update_data(attrname, old, new):
+
+    # Get the current slider values
+    a = amplitude.value
+    b = offset.value
+    w = phase.value
+    k = freq.value
+
+    # Generate the new curve
+    x = np.linspace(0, 4*np.pi, N)
+    y = a*np.sin(k*x + w) + b
+
+    source.data = dict(x=x, y=y)
+
+for w in [offset, amplitude, phase, freq]:
+    w.on_change('value', update_data)
+
+
+# Set up layouts and add to document
+inputs = column(text, offset, amplitude, phase, freq)
+
+curdoc().add_root(row(inputs, plot, width=800))
+curdoc().title = "Sliders"
 ```
 
 ### 2. Set up your app's git repository.
@@ -202,30 +225,34 @@ Once you've set up a git repository, you can quickly publish an app on C/S. Firs
 
 Next, install the compute-studio-kit CLI tool to initialize your Compute Studio configuration:
 
-```
+````
+
 pip install -U cs-kit
+
 ```
 
 Now, create the configuration:
 
 ```
+
 csk init --app-type data-viz
-```
+
+````
 
 Now your git repository should look like this:
 
 ```bash
 $ tree .
 .
-├── myapp.py
+├── app.py
 └── cs-config
     └── install.sh
 
 1 directory, 2 files
 
-```
+````
 
-The `myapp.py` file contains the code from the above example, and `install.sh` is where you will add your app's installation instructions:
+The `app.py` file contains the code from the above example, and `install.sh` is where you will add your app's installation instructions:
 
 ```bash
 # bash commands for installing your package
