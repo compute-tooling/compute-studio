@@ -2,6 +2,7 @@ import argparse
 import copy
 import os
 import sys
+import threading
 import time
 from urllib.parse import urlparse
 import yaml
@@ -203,9 +204,7 @@ class Manager(BaseManager):
             [f"--build-arg {arg}={value}" for arg, value in buildargs.items()]
         )
         dockerfile = self.dockerfiles_dir / "Dockerfile.model"
-        cmd = (
-            f"docker build {buildargs_str} -t {img_name}:{self.tag} -f {dockerfile} ./"
-        )
+        cmd = f"docker build --no-cache {buildargs_str} -t {img_name}:{self.tag} -f {dockerfile} ./"
         run(cmd)
 
         assert self.cr is not None
@@ -223,7 +222,7 @@ class Manager(BaseManager):
         if app["tech"] == "python-paramtools":
             cmd = [
                 "py.test",
-                "./cs-config/cs-config/tests/test_functions.py",
+                "./cs-config/cs_config/tests/test_functions.py",
                 "-v",
                 "-s",
             ]
@@ -258,47 +257,79 @@ class Manager(BaseManager):
             ports=ports,
         )
 
-        def strip_secrets(line, secrets):
-            line = line.decode()
-            for name, value in secrets.items():
-                line = line.replace(name, "******").replace(value, "******")
-            return line.strip("\n")
+        try:
 
-        if app["tech"] in ("bokeh", "dash"):
-            attempts = 1
-            for line in container.logs(stream=True):
-                print(strip_secrets(line, secrets))
+            def strip_secrets(line, secrets):
+                line = line.decode()
+                for name, value in secrets.items():
+                    line = line.replace(name, "******").replace(value, "******")
+                return line.strip("\n")
 
-                resp = httpx.get(
-                    f"http://localhost:8010/{app['owner']}/{app['owner']}/test/"
+            def stream_logs(container):
+                for line in container.logs(stream=True):
+                    print(strip_secrets(line, secrets))
+
+            container.reload()
+            if container.status != "running":
+                print(f"Container exited with status: {container.status}")
+                for line in container.logs(stream=True):
+                    print(strip_secrets(line, secrets))
+                raise RuntimeError(f"Container exited with status: {container.status}")
+
+            if app["tech"] in ("bokeh", "dash"):
+                # Run function for showing logs in another thread so test/monitoring
+                # can run in main thread.
+                thread = threading.Thread(
+                    target=stream_logs, args=(container,), daemon=True
                 )
-                if resp.status_code == 200:
-                    print(f"Received successful response: {resp}")
-                    break
+                thread.start()
+                time.sleep(2)
+                num_attempts = 10
+                for attempt in range(1, num_attempts + 1):
+                    container.reload()
+                    if container.status != "running":
+                        raise RuntimeError(
+                            f"Container exected with status: {container.status}"
+                        )
 
-                attempts += 1
-                time.sleep(1)
+                    try:
+                        resp = httpx.get(
+                            f"http://localhost:8010/{app['owner']}/{app['owner']}/test/"
+                        )
+                        if resp.status_code == 200:
+                            print(f"Received successful response: {resp}")
+                            break
 
-                if attempts > 10:
-                    break
+                    except Exception:
+                        import traceback
 
-            container.reload()
-            if attempts < 10:
-                print(f"Successful response received after {attempts} attempts.")
-                container.kill()
-            else:
-                try:
-                    raise ValueError(f"Unable to get 200 response after {attempts}.")
-                finally:
+                        traceback.print_exc()
+
+                    time.sleep(1)
+
+                container.reload()
+
+                if attempt < num_attempts:
+                    print(f"Successful response received after {attempt} attempts.")
                     container.kill()
-        else:
-            for line in container.logs(stream=True):
-                print(strip_secrets(line, secrets))
+                else:
+                    try:
+                        raise ValueError(f"Unable to get 200 response after {attempt}.")
+                    finally:
+                        container.kill()
+            else:
+                for line in container.logs(stream=True):
+                    print(strip_secrets(line, secrets))
 
+                container.reload()
+                exit_status = container.wait()
+                if exit_status["StatusCode"] == 1:
+                    raise RuntimeError("Tests failed with exit status 1.")
+        finally:
             container.reload()
-            exit_status = container.wait()
-            if exit_status["StatusCode"] == 1:
-                raise RuntimeError("Tests failed with exit status 1.")
+            if container.status != "exited":
+                print(f"Stopping container: {container}.")
+                container.kill()
 
     def push_app_image(self, app):
         assert self.cr is not None

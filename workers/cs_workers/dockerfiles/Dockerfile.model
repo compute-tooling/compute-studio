@@ -23,8 +23,6 @@ RUN if test -f "./cs-config/setup.py"; then  pip install -e ./cs-config; fi
 
 ######################
 
-WORKDIR /home
-
 EXPOSE 8010
 ENV PORT=8010
 ENV HOST=0.0.0.0
