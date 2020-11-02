@@ -1,0 +1,664 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API Guide &#8212; Compute Studio Developer Docs</title>
+    
+  <link rel="stylesheet" href="../_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinx-book-theme.2d2078699c18a0efb88233928e1cf6ed.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+    
+  <link rel="preload" as="script" href="../_static/js/index.3da636dd464baa7582d2.js">
+
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/togglebutton.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script >var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="../_static/sphinx-book-theme.be0a4a0c39cd630af62a2fcf693f3f06.js"></script>
+    <script async="async" src="https://unpkg.com/thebelab@latest/lib/index.js"></script>
+    <script >
+        const thebe_selector = ".thebe"
+        const thebe_selector_input = "pre"
+        const thebe_selector_output = ".output"
+    </script>
+    <script async="async" src="../_static/sphinx-thebe.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Authentication" href="auth.html" />
+    <link rel="prev" title="Model Environment" href="../publish/environment.html" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+
+
+
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+<a class="navbar-brand text-wrap" href="../index.html">
+  
+  <img src="../_static/logo.png" class="logo" alt="logo">
+  
+  
+  <h1 class="site-logo" id="site-title">Compute Studio Developer Docs</h1>
+  
+</a>
+</div>
+
+<form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
+</form>
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../intro.html">
+   Developer Documentation
+  </a>
+ </li>
+</ul>
+<p class="caption">
+ <span class="caption-text">
+  Publish
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../publish/guide.html">
+   Publishing on Compute Studio
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../publish/model/guide.html">
+   Model Publishing Guide
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../publish/data-viz/guide.html">
+   Data-Viz Guide
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../publish/environment.html">
+   Model Environment
+  </a>
+ </li>
+</ul>
+<p class="caption">
+ <span class="caption-text">
+  API
+ </span>
+</p>
+<ul class="current nav sidenav_l1">
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   API Guide
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="auth.html">
+   Authentication
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="python.html">
+   Python
+  </a>
+ </li>
+</ul>
+
+</nav>
+
+ <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="row topbar fixed-top container-xl">
+    <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show">
+    </div>
+    <div class="col pl-2 topbar-main">
+        
+        <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+            data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+            aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+            title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+            <i class="fas fa-bars"></i>
+            <i class="fas fa-arrow-left"></i>
+            <i class="fas fa-arrow-up"></i>
+        </button>
+        
+        <div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="../_sources/api/guide.md"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.md</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+    
+</div>
+        <!-- Source interaction buttons -->
+
+
+        <!-- Full screen (wrap in <a> to have style consistency -->
+        <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+                data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+                title="Fullscreen mode"><i
+                    class="fas fa-expand"></i></button></a>
+
+        <!-- Launch buttons -->
+
+    </div>
+
+    <!-- Table of contents -->
+    <div class="d-none d-md-block col-md-2 bd-toc show">
+        
+        <div class="tocsection onthispage pt-5 pb-3">
+            <i class="fas fa-list"></i> Contents
+        </div>
+        <nav id="bd-toc-nav">
+            <ul class="nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#owner-title-api-v1">
+   /[owner]/[title]/api/v1/
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#create-simulation">
+     Create simulation
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#owner-title-api-v1-model-pk">
+   /[owner]/[title]/api/v1/[model_pk]
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#get-simulation">
+     Get simulation
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#owner-title-api-v1-inputs">
+   /[owner]/[title]/api/v1/inputs/
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#view-inputs">
+     View inputs:
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#update-with-meta-parameters">
+     Update with meta parameters
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+        </nav>
+        
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <div class="section" id="api-guide">
+<h1>API Guide<a class="headerlink" href="#api-guide" title="Permalink to this headline">¶</a></h1>
+<p>Compute Studio offers a REST API for creating simulations, viewing existing simulations, and viewing the input parameters for a given model. This is intended for users who would like to build applications on top of the Compute Studio interface or create simulations programmatically. An API token is required for requests that modify data. Find out how to get your token <a class="reference internal" href="auth.html"><span class="doc std std-doc">here</span></a>.</p>
+<p>More information about the data formats that are shown below can be found in the Compute Studio publishing documentation on <a class="reference internal" href="../publish/model/inputs.html"><span class="doc std std-doc">inputs</span></a> and <a class="reference internal" href="../publish/model/outputs.html"><span class="doc std std-doc">outputs</span></a>.</p>
+<p>This guide details the Compute Studio API endpoints and schema. A more practical <a class="reference internal" href="python.html"><span class="doc std std-doc">Python example</span></a> is also provided.</p>
+<div class="section" id="owner-title-api-v1">
+<h2>/[owner]/[title]/api/v1/<a class="headerlink" href="#owner-title-api-v1" title="Permalink to this headline">¶</a></h2>
+<p>Used for creating simulations.</p>
+<p>Supports POST HTTP actions.</p>
+<div class="section" id="create-simulation">
+<h3>Create simulation<a class="headerlink" href="#create-simulation" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>POST hdoupe/Matchups/api/v1/
+</pre></div>
+</div>
+<p><strong>Example:</strong></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;meta_parameters&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;use_full_data&quot;</span><span class="p">:</span> <span class="kc">true</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;adjustment&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;matchup&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&quot;pitcher&quot;</span><span class="p">:</span> <span class="s2">&quot;Max Scherzer&quot;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Response:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>HTTP/1.1 <span class="m">201</span> Created
+Allow: GET, POST, HEAD, OPTIONS
+
+<span class="o">{</span>
+    <span class="s2">&quot;api_url&quot;</span>: <span class="s2">&quot;/hdoupe/Matchups/api/v1/22&quot;</span>,
+    <span class="s2">&quot;creation_date&quot;</span>: <span class="s2">&quot;2019-05-31T10:43:03.105760-05:00&quot;</span>,
+    <span class="s2">&quot;eta&quot;</span>: <span class="m">0</span>.33,
+    <span class="s2">&quot;gui_url&quot;</span>: <span class="s2">&quot;/hdoupe/Matchups/22/&quot;</span>,
+    <span class="s2">&quot;inputs&quot;</span>: <span class="o">{</span>
+        <span class="s2">&quot;adjustment&quot;</span>: <span class="o">{</span>
+            <span class="s2">&quot;matchup&quot;</span>: <span class="o">{</span>
+                <span class="s2">&quot;pitcher&quot;</span>: <span class="s2">&quot;Max Scherzer&quot;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>,
+        <span class="s2">&quot;errors_warnings&quot;</span>: <span class="o">{</span>
+            <span class="s2">&quot;API&quot;</span>: <span class="o">{</span>
+                <span class="s2">&quot;errors&quot;</span>: <span class="o">{}</span>,
+                <span class="s2">&quot;warnings&quot;</span>: <span class="o">{}</span>
+            <span class="o">}</span>,
+            <span class="s2">&quot;GUI&quot;</span>: <span class="o">{</span>
+                <span class="s2">&quot;errors&quot;</span>: <span class="o">{}</span>,
+                <span class="s2">&quot;warnings&quot;</span>: <span class="o">{}</span>
+            <span class="o">}</span>,
+            <span class="s2">&quot;matchup&quot;</span>: <span class="o">{</span>
+                <span class="s2">&quot;errors&quot;</span>: <span class="o">{}</span>,
+                <span class="s2">&quot;warnings&quot;</span>: <span class="o">{}</span>
+            <span class="o">}</span>
+        <span class="o">}</span>,
+        <span class="s2">&quot;custom_adjustment&quot;</span>: null,
+        <span class="s2">&quot;meta_parameters&quot;</span>: <span class="o">{</span>
+            <span class="s2">&quot;use_full_data&quot;</span>: <span class="nb">true</span>
+        <span class="o">}</span>
+    <span class="o">}</span>,
+    <span class="s2">&quot;model_pk&quot;</span>: <span class="m">22</span>,
+    <span class="s2">&quot;outputs&quot;</span>: null,
+    <span class="s2">&quot;traceback&quot;</span>: null
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="owner-title-api-v1-model-pk">
+<h2>/[owner]/[title]/api/v1/[model_pk]<a class="headerlink" href="#owner-title-api-v1-model-pk" title="Permalink to this headline">¶</a></h2>
+<p>Used for getting simulations.</p>
+<p>Supports GET HTTP actions.</p>
+<div class="section" id="get-simulation">
+<h3>Get simulation<a class="headerlink" href="#get-simulation" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>GET /hdoupe/Matchups/api/v1/22
+</pre></div>
+</div>
+<p><strong>Response:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>HTTP <span class="m">200</span> OK
+Allow: GET, HEAD, OPTIONS
+Content-Type: application/json
+Vary: Accept
+
+<span class="o">{</span>
+    <span class="s2">&quot;inputs&quot;</span>: <span class="o">{</span>
+        <span class="s2">&quot;meta_parameters&quot;</span>: <span class="o">{</span>
+            <span class="s2">&quot;use_full_data&quot;</span>: <span class="nb">true</span>
+        <span class="o">}</span>,
+        <span class="s2">&quot;adjustment&quot;</span>: <span class="o">{</span>
+            <span class="s2">&quot;matchup&quot;</span>: <span class="o">{</span>
+                <span class="s2">&quot;pitcher&quot;</span>: <span class="s2">&quot;Max Scherzer&quot;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>,
+        <span class="s2">&quot;custom_adjustment&quot;</span>: null,
+        <span class="s2">&quot;errors_warnings&quot;</span>: <span class="o">{</span>
+            <span class="s2">&quot;API&quot;</span>: <span class="o">{</span>
+                <span class="s2">&quot;errors&quot;</span>: <span class="o">{}</span>,
+                <span class="s2">&quot;warnings&quot;</span>: <span class="o">{}</span>
+            <span class="o">}</span>,
+            <span class="s2">&quot;GUI&quot;</span>: <span class="o">{</span>
+                <span class="s2">&quot;errors&quot;</span>: <span class="o">{}</span>,
+                <span class="s2">&quot;warnings&quot;</span>: <span class="o">{}</span>
+            <span class="o">}</span>,
+            <span class="s2">&quot;matchup&quot;</span>: <span class="o">{</span>
+                <span class="s2">&quot;errors&quot;</span>: <span class="o">{}</span>,
+                <span class="s2">&quot;warnings&quot;</span>: <span class="o">{}</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>,
+    <span class="s2">&quot;outputs&quot;</span>: <span class="o">{</span>
+        <span class="s2">&quot;renderable&quot;</span>: <span class="o">[</span>
+            <span class="o">{</span>
+                <span class="s2">&quot;title&quot;</span>: <span class="s2">&quot;Max Scherzer v. All batters&quot;</span>,
+                <span class="s2">&quot;media_type&quot;</span>: <span class="s2">&quot;bokeh&quot;</span>,
+                <span class="s2">&quot;data&quot;</span>: <span class="o">{</span>
+                    <span class="s2">&quot;html&quot;</span>: <span class="s2">&quot;html here&quot;</span>,
+                    <span class="s2">&quot;javascript&quot;</span>: <span class="s2">&quot;javascript here&quot;</span>
+                <span class="o">}</span>
+            <span class="o">}</span>,
+            <span class="o">{</span>
+                <span class="s2">&quot;title&quot;</span>: <span class="s2">&quot;Max Scherzer v. Chipper Jones&quot;</span>,
+                <span class="s2">&quot;media_type&quot;</span>: <span class="s2">&quot;bokeh&quot;</span>,
+                <span class="s2">&quot;data&quot;</span>: <span class="o">{</span>
+                    <span class="s2">&quot;html&quot;</span>: <span class="s2">&quot;html here&quot;</span>,
+                    <span class="s2">&quot;javascript&quot;</span>: <span class="s2">&quot;javascript here&quot;</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">]</span>,
+        <span class="s2">&quot;downloadable&quot;</span>: <span class="o">[</span>
+            <span class="o">{</span>
+                <span class="s2">&quot;title&quot;</span>: <span class="s2">&quot;Max Scherzer v. All batters&quot;</span>,
+                <span class="s2">&quot;media_type&quot;</span>: <span class="s2">&quot;CSV&quot;</span>,
+                <span class="s2">&quot;data&quot;</span>: <span class="s2">&quot;csv here&quot;</span>
+            <span class="o">}</span>,
+            <span class="o">{</span>
+                <span class="s2">&quot;title&quot;</span>: <span class="s2">&quot;Max Scherzer v. Chipper Jones&quot;</span>,
+                <span class="s2">&quot;media_type&quot;</span>: <span class="s2">&quot;CSV&quot;</span>,
+                <span class="s2">&quot;data&quot;</span>: <span class="s2">&quot;csv here&quot;</span>
+            <span class="o">}</span>
+        <span class="o">]</span>
+    <span class="o">}</span>,
+    <span class="s2">&quot;traceback&quot;</span>: null,
+    <span class="s2">&quot;creation_date&quot;</span>: <span class="s2">&quot;2019-05-31T11:41:22.211492-05:00&quot;</span>,
+    <span class="s2">&quot;api_url&quot;</span>: <span class="s2">&quot;/hdoupe/Matchups/api/v1/23&quot;</span>,
+    <span class="s2">&quot;gui_url&quot;</span>: <span class="s2">&quot;/hdoupe/Matchups/23/&quot;</span>,
+    <span class="s2">&quot;eta&quot;</span>: <span class="m">0</span>.0,
+    <span class="s2">&quot;model_pk&quot;</span>: <span class="m">23</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="owner-title-api-v1-inputs">
+<h2>/[owner]/[title]/api/v1/inputs/<a class="headerlink" href="#owner-title-api-v1-inputs" title="Permalink to this headline">¶</a></h2>
+<p>Used for viewing the inputs for a given model.</p>
+<p>Supports GET and POST HTTP actions.</p>
+<div class="section" id="view-inputs">
+<h3>View inputs:<a class="headerlink" href="#view-inputs" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>GET hdoupe/Matchups/api/v1/inputs/
+</pre></div>
+</div>
+<p><strong>Response:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">HTTP</span> <span class="mi">200</span> <span class="n">OK</span>
+<span class="n">Allow</span><span class="p">:</span> <span class="n">GET</span><span class="p">,</span> <span class="n">POST</span><span class="p">,</span> <span class="n">HEAD</span><span class="p">,</span> <span class="n">OPTIONS</span>
+<span class="n">Content</span><span class="o">-</span><span class="n">Type</span><span class="p">:</span> <span class="n">application</span><span class="o">/</span><span class="n">json</span>
+<span class="n">Vary</span><span class="p">:</span> <span class="n">Accept</span>
+
+<span class="p">{</span>
+    <span class="s2">&quot;meta_parameters&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;use_full_data&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;bool&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Use Full Data&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">true</span>
+                <span class="p">}</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;validators&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;choice&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="n">true</span><span class="p">,</span>
+                        <span class="n">false</span>
+                    <span class="p">]</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Flag that determines whether Matchups uses the 10 year data set or the 2018 data set.&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;number_dims&quot;</span><span class="p">:</span> <span class="mi">0</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;model_parameters&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;matchup&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;start_date&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;date&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;section_1&quot;</span><span class="p">:</span> <span class="s2">&quot;Date&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Start Date&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;2008-01-01&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;use_full_data&quot;</span><span class="p">:</span> <span class="n">true</span>
+                    <span class="p">}</span>
+                <span class="p">],</span>
+                <span class="s2">&quot;validators&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;date_range&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="s2">&quot;end_date&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="s2">&quot;2008-01-01&quot;</span>
+                    <span class="p">}</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Date to start pulling statcast information&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;section_2&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;If using the 2018 dataset, only use dates in 2018.&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;number_dims&quot;</span><span class="p">:</span> <span class="mi">0</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;pitcher&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;section_1&quot;</span><span class="p">:</span> <span class="s2">&quot;Parameters&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Pitcher Name&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;Clayton Kershaw&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;use_full_data&quot;</span><span class="p">:</span> <span class="n">true</span>
+                    <span class="p">}</span>
+                <span class="p">],</span>
+                <span class="s2">&quot;validators&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;choice&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span>
+                            <span class="s2">&quot;A. J. Achter&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Burnett&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Cole&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Ellis&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Griffin&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Jimenez&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Minter&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Morris&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Murray&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Pierzynski&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Pollock&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Reed&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Schugel&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;AJ Ramos&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;Aaron Altherr&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;Aaron Barrett&quot;</span><span class="p">,</span>
+
+    <span class="o">...</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="update-with-meta-parameters">
+<h3>Update with meta parameters<a class="headerlink" href="#update-with-meta-parameters" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>POST /hdoupe/Matchups/api/v1/inputs/
+</pre></div>
+</div>
+<p><strong>Example:</strong></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;meta_parameters&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;use_full_data&quot;</span><span class="p">:</span> <span class="kc">true</span> <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Response:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">HTTP</span> <span class="mi">200</span> <span class="n">OK</span>
+<span class="n">Allow</span><span class="p">:</span> <span class="n">GET</span><span class="p">,</span> <span class="n">POST</span><span class="p">,</span> <span class="n">HEAD</span><span class="p">,</span> <span class="n">OPTIONS</span>
+<span class="n">Content</span><span class="o">-</span><span class="n">Type</span><span class="p">:</span> <span class="n">application</span><span class="o">/</span><span class="n">json</span>
+<span class="n">Vary</span><span class="p">:</span> <span class="n">Accept</span>
+
+<span class="p">{</span>
+    <span class="s2">&quot;meta_parameters&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;use_full_data&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;bool&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Use Full Data&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">false</span>
+                <span class="p">}</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;validators&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;choice&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="n">true</span><span class="p">,</span>
+                        <span class="n">false</span>
+                    <span class="p">]</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Flag that determines whether Matchups uses the 10 year data set or the 2018 data set.&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;number_dims&quot;</span><span class="p">:</span> <span class="mi">0</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;model_parameters&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;matchup&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;start_date&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;date&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;section_1&quot;</span><span class="p">:</span> <span class="s2">&quot;Date&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Start Date&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;2018-01-01&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;use_full_data&quot;</span><span class="p">:</span> <span class="n">false</span>
+                    <span class="p">}</span>
+                <span class="p">],</span>
+                <span class="s2">&quot;validators&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;date_range&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="s2">&quot;end_date&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="s2">&quot;2008-01-01&quot;</span>
+                    <span class="p">}</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Date to start pulling statcast information&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;section_2&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;If using the 2018 dataset, only use dates in 2018.&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;number_dims&quot;</span><span class="p">:</span> <span class="mi">0</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;pitcher&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;section_1&quot;</span><span class="p">:</span> <span class="s2">&quot;Parameters&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Pitcher Name&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;Jacob deGrom&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;use_full_data&quot;</span><span class="p">:</span> <span class="n">false</span>
+                    <span class="p">}</span>
+                <span class="p">],</span>
+                <span class="s2">&quot;validators&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;choice&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span>
+                            <span class="s2">&quot;A. J. Achter&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Burnett&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Cole&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Ellis&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Griffin&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Jimenez&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Minter&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Morris&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Murray&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;A. J. Pierzynski&quot;</span><span class="p">,</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            kernelName: "python3",
+            path: "./api"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+              </div>
+              
+        </div>
+    </div>
+    
+    
+    <div class='prev-next-bottom'>
+        
+    <a class='left-prev' id="prev-link" href="../publish/environment.html" title="previous page">Model Environment</a>
+    <a class='right-next' id="next-link" href="auth.html" title="next page">Authentication</a>
+
+    </div>
+    <footer class="footer mt-5 mt-md-0">
+    <div class="container">
+      <p>
+        
+          By Hank Doupe<br/>
+        
+            &copy; Copyright 2020.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+
+    
+  <script src="../_static/js/index.3da636dd464baa7582d2.js"></script>
+
+
+    
+  </body>
+</html>
