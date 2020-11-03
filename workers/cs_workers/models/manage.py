@@ -65,6 +65,7 @@ class Manager(BaseManager):
         use_kind=False,
         staging_tag=None,
         use_latest_tag=False,
+        cs_appbase_tag="master",
         cr="gcr.io",
         ignore_ci_errors=False,
         quiet=False,
@@ -84,6 +85,7 @@ class Manager(BaseManager):
 
         self.staging_tag = staging_tag
         self.use_latest_tag = use_latest_tag
+        self.cs_appbase_tag = cs_appbase_tag
 
         self.ignore_ci_errors = ignore_ci_errors
 
@@ -198,6 +200,7 @@ class Manager(BaseManager):
             REPO_URL=repo_url,
             REPO_NAME=repo_name,
             RAW_REPO_URL=repo_url.replace(reg_url, raw_url),
+            CS_APPBASE_TAG=self.cs_appbase_tag,
         )
 
         buildargs_str = " ".join(
@@ -547,6 +550,7 @@ def build(args: argparse.Namespace):
         tag=args.tag,
         cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
         cs_api_token=getattr(args, "cs_api_token", None),
+        cs_appbase_tag=getattr(args, "cs_appbase_tag", None),
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
@@ -649,7 +653,11 @@ def cli(subparsers: argparse._SubParsersAction):
     model_subparsers = parser.add_subparsers()
 
     build_parser = model_subparsers.add_parser("build")
+    build_parser.add_argument(
+        "--cs-appbase-tag", default=workers_config.get("CS_APPBASE_TAG", "master")
+    )
     build_parser.set_defaults(func=build)
+
     test_parser = model_subparsers.add_parser("test")
     test_parser.set_defaults(func=test)
 

@@ -1,5 +1,6 @@
 ARG TAG
-FROM computestudio/appbase:simplify-publish
+ARG CS_APPBASE_TAG="master"
+FROM computestudio/appbase:${CS_APPBASE_TAG}
 
 ARG TITLE
 ARG OWNER

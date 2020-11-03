@@ -50,6 +50,7 @@ def load_workers_config():
         "BUCKET",
         "CLUSTER_HOST",
         "VIZ_HOST",
+        "CS_APPBASE_TAG",
     ] | user_config.keys():
         if os.environ.get(var):
             config[var] = os.environ.get(var)
