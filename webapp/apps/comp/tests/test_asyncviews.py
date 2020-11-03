@@ -20,6 +20,7 @@ from webapp.apps.users.models import (
     Profile,
     EmbedApproval,
     Deployment,
+    Tag,
     create_profile_from_user,
 )
 from webapp.apps.users.tests.utils import gen_collabs, replace_owner
@@ -774,11 +775,13 @@ def test_placeholder_page(db, client):
     project = Project.objects.get(
         title__iexact=title, owner__user__username__iexact=owner
     )
-    project.status = "pending"
+    project.latest_tag = None
     project.save()
     resp = client.get(f"/{owner}/{title}/")
     assert resp.status_code == 200
-    project.status = "live"
+    project.latest_tag = Tag.objects.create(
+        project=project, image_tag="v1", cpu=project.cpu, memory=project.memory,
+    )
     project.save()
     resp = client.get(f"/{owner}/{title}/")
     assert resp.status_code == 200

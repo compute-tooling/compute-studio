@@ -30,7 +30,7 @@ from webapp.apps.billing.models import (
     SubscriptionItem,
     create_pro_billing_objects,
 )
-from webapp.apps.users.models import Profile, Project, Cluster, cryptkeeper
+from webapp.apps.users.models import Profile, Project, Cluster, Tag, cryptkeeper
 from webapp.apps.comp.model_parameters import ModelParameters
 from webapp.apps.comp.models import Inputs, Simulation
 
@@ -101,6 +101,10 @@ def django_db_setup(django_db_setup, django_db_blocker):
             project = Project.objects.create(**dict(common, **project_config))
             project.assign_role("admin", project.owner.user)
             assign_perm("write_project", project.cluster.service_account.user, project)
+            project.latest_tag = Tag.objects.create(
+                project=project, cpu=project.cpu, memory=project.memory, image_tag="v0"
+            )
+            project.save()
 
         if USE_STRIPE:
             create_pro_billing_objects()

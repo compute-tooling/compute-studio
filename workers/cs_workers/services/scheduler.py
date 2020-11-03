@@ -207,7 +207,7 @@ class DeploymentsApi(tornado.web.RequestHandler):
             return
 
         # TODO: support more techs
-        if project["tech"] in ("dash",):
+        if project["tech"] in ("dash", "bokeh"):
             viz = server.Server(
                 project=PROJECT,
                 owner=project["owner"],

@@ -20,7 +20,7 @@ spec:
                 secretKeyRef:
                   name: web-secret
                   key: POSTGRES_PASSWORD
-          image: postgres
+          image: postgres:12.4
           ports:
             - containerPort: 5432
           resources:

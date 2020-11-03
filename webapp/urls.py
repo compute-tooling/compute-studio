@@ -68,6 +68,31 @@ urlpatterns = [
         publishviews.ProjectDetailView.as_view(),
         name="app",
     ),
+    path(
+        "<str:username>/<str:title>/settings/about/",
+        publishviews.ProjectSettingsView.as_view(),
+        name="app_settings_about",
+    ),
+    path(
+        "<str:username>/<str:title>/settings/configure/",
+        publishviews.ProjectSettingsView.as_view(),
+        name="app_settings_config",
+    ),
+    path(
+        "<str:username>/<str:title>/settings/environment/",
+        publishviews.ProjectSettingsView.as_view(),
+        name="app_settings_env",
+    ),
+    path(
+        "<str:username>/<str:title>/settings/access/",
+        publishviews.ProjectSettingsView.as_view(),
+        name="app_settings_access",
+    ),
+    path(
+        "<str:username>/<str:title>/settings/",
+        publishviews.ProjectSettingsView.as_view(),
+        name="app_settings",
+    ),
     # add project URL's here
     path("<str:username>/<str:title>/", include("webapp.apps.comp.urls")),
     path("<str:username>/", pageviews.ProfileView.as_view(), name="userprofile"),

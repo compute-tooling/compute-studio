@@ -4,11 +4,15 @@ on:
   push:
     branches:
       - dev
+      - simplify-publish
     paths:
       - "webapp/**"
       - "deploy/**"
       - "web-kubernetes/**"
       - ".github/workflows/dev-webapp-deploy.yml"
+      - "templates/**"
+      - "src/**"
+      - "static/**"
 
 # Environment variables available to all jobs and steps in this workflow
 env:

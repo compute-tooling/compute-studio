@@ -29,10 +29,14 @@ class DeploymentSerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(serializers.ModelSerializer):
     owner = serializers.StringRelatedField(read_only=True)
+    description = serializers.CharField(required=False)
+    oneliner = serializers.CharField(required=False)
     cluster_type = serializers.CharField(required=False)
     sim_count = serializers.IntegerField(required=False)
     user_count = serializers.IntegerField(required=False)
     latest_tag = serializers.StringRelatedField(required=False)
+    repo_tag = serializers.CharField(required=False)
+    repo_url = serializers.CharField(required=False)
     is_public = serializers.BooleanField(required=False)
 
     # see to_representation
@@ -58,6 +62,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = (
+            "app_location",
             "title",
             "oneliner",
             "description",
@@ -112,6 +117,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = (
+            "app_location",
             "title",
             "oneliner",
             "description",

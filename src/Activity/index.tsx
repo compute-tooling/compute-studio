@@ -68,7 +68,7 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
 
   let simCountEl;
   if (model.sim_count === 0) {
-    if (!["live", "updating"].includes(model.status)) {
+    if (!["running", "updating"].includes(model.status)) {
       simCountEl = (
         <a className="btn btn-outline-success btn-sm" href={`/${model.owner}/${model.title}/new/`}>
           Create the first simulation
@@ -784,22 +784,21 @@ const simStatus = (status: MiniSimulation["status"]) => {
 
 const modelStatus = (status: Project["status"]) => {
   switch (status) {
-    case "live":
-    case "updating":
+    case "running":
       return (
-        <Tip id="live" tip="This model is live.">
+        <Tip id="live" tip="This app is live.">
           <Button className="btn-sm btn-outline-success">live</Button>
         </Tip>
       );
-    case "pending":
+    case "configuring":
       return (
-        <Tip id="staging" tip="This model is not live right now.">
+        <Tip id="staging" tip="This app is still being connected.">
           <Button className="btn-sm btn-outline-primary">staging</Button>
         </Tip>
       );
     default:
       return (
-        <Tip id="staging" tip="This model is not live right now.">
+        <Tip id="staging" tip="This app waiting to be deployed.">
           <Button className="btn-sm btn-outline-primary">staging</Button>
         </Tip>
       );

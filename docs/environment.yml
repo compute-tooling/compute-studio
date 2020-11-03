@@ -1,0 +1,9 @@
+name: cs-docs-env
+dependencies:
+  - pandas
+  - bokeh
+  - dash
+  - matplotlib
+  - pip
+  - pip:
+      - jupyter-book

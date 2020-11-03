@@ -4,7 +4,7 @@ import pytest
 import requests_mock
 import paramtools as pt
 
-from webapp.apps.users.models import Project, Profile
+from webapp.apps.users.models import Project, Profile, Tag
 
 from webapp.apps.comp.model_parameters import ModelParameters
 from webapp.apps.comp.models import ModelConfig
@@ -72,7 +72,6 @@ def mock_project(db):
     project = Project.objects.create(
         owner=profile,
         title="test",
-        status="live",
         description="",
         oneliner="oneliner",
         repo_url="https://repo.com/test",
@@ -80,6 +79,11 @@ def mock_project(db):
         listed=True,
         sponsor=profile,
     )
+    project.latest_tag = Tag.objects.create(
+        project=project, cpu=project.cpu, memory=project.memory, image_tag="v1"
+    )
+    project.save()
+
     with requests_mock.Mocker() as mock:
         mock.register_uri(
             "POST",

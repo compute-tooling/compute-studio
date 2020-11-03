@@ -54,7 +54,7 @@ export const LoginForm = ({ setAuthStatus }) => (
           })
           .catch(err => {
             if (err.response.status == 400) {
-              actions.setStatus({ errors: err.response.data });
+              actions.setStatus({ errors: err.response?.data });
             } else {
               throw err;
             }
@@ -186,28 +186,34 @@ export const AuthDialog: React.FC<{
   setShow: (show: boolean) => void;
   initialAction: "sign-in" | "sign-up";
   resetAccessStatus: () => void;
-}> = ({ show, setShow, initialAction, resetAccessStatus }) => {
+  message: string;
+}> = ({ show, setShow, initialAction, resetAccessStatus, message }) => {
   const [action, setAction] = React.useState(initialAction);
   const [authenticated, setAuthenticated] = React.useState(false);
   const getVariant = action => (action === "sign-in" ? "outline-success" : "outline-primary");
   const toggleAction = action => {
     setAction(action === "sign-in" ? "sign-up" : "sign-in");
   };
-  if (authenticated) {
-    resetAccessStatus();
-    setShow(false);
-  }
+  const setAuthStatus = newAuthStatus => {
+    if (newAuthStatus) {
+      // resetAccessStatus may be async.
+      Promise.resolve(resetAccessStatus());
+      setShow(false);
+    }
+    setAuthenticated(newAuthStatus);
+  };
+
   return (
     <Modal show={show} onHide={() => setShow(false)}>
       <Modal.Header closeButton>
-        <Modal.Title>You must be logged in to run simulations.</Modal.Title>
+        <Modal.Title>{message}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <div className="mt-2">
           {action === "sign-in" ? (
-            <LoginForm setAuthStatus={setAuthenticated} />
+            <LoginForm setAuthStatus={setAuthStatus} />
           ) : (
-            <SignupForm setAuthStatus={setAuthenticated} />
+            <SignupForm setAuthStatus={setAuthStatus} />
           )}
         </div>
         <Button className="mt-3" variant={getVariant(action)} onClick={() => toggleAction(action)}>
@@ -232,7 +238,8 @@ interface AuthButtonState {
 export const AuthButtons: React.FC<{
   accessStatus: AccessStatus;
   resetAccessStatus: () => void;
-}> = ({ accessStatus, resetAccessStatus }) => {
+  message: string;
+}> = ({ accessStatus, resetAccessStatus, message }) => {
   const [state, setState] = React.useState({
     show: false,
     initialAction: "sign-in",
@@ -266,7 +273,12 @@ export const AuthButtons: React.FC<{
     return (
       <>
         {state.show ? (
-          <AuthDialog setShow={setShow} {...state} resetAccessStatus={resetAccessStatus} />
+          <AuthDialog
+            setShow={setShow}
+            {...state}
+            resetAccessStatus={resetAccessStatus}
+            message={message}
+          />
         ) : null}
         <ul className="navbar-nav mr-auto mt-2 mt-lg-0">
           <li className="nav-item mr-2 mobile-mb-3">

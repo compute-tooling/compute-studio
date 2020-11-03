@@ -1,7 +1,14 @@
 import React = require("react");
 import { Row, Col, Button, Modal, Dropdown } from "react-bootstrap";
 import API from "./API";
-import { Simulation, RemoteOutputs, DescriptionValues, Role, AccessStatus } from "../types";
+import {
+  Simulation,
+  RemoteOutputs,
+  DescriptionValues,
+  Role,
+  AccessStatus,
+  ResourceLimitException,
+} from "../types";
 import { FormikProps, FormikHelpers } from "formik";
 import ReactLoading from "react-loading";
 import { RolePerms } from "../roles";
@@ -27,14 +34,6 @@ export interface CollaboratorValues {
       username: string;
     };
   };
-}
-
-interface ResourceLimitException {
-  resource: "collaborators";
-  test_name: "add_collaborator" | "make_private";
-  msg: string;
-  upgrade_to: "plus" | "pro";
-  collaborator?: string;
 }
 
 const AddCollaboratorException = (upgradeTo: "plus" | "pro") => {

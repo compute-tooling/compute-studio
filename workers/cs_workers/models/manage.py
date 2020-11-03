@@ -2,6 +2,9 @@ import argparse
 import copy
 import os
 import sys
+import threading
+import time
+from urllib.parse import urlparse
 import yaml
 from datetime import datetime
 from dateutil.parser import parse as dateutil_parse
@@ -62,6 +65,7 @@ class Manager(BaseManager):
         use_kind=False,
         staging_tag=None,
         use_latest_tag=False,
+        cs_appbase_tag="master",
         cr="gcr.io",
         ignore_ci_errors=False,
         quiet=False,
@@ -81,6 +85,7 @@ class Manager(BaseManager):
 
         self.staging_tag = staging_tag
         self.use_latest_tag = use_latest_tag
+        self.cs_appbase_tag = cs_appbase_tag
 
         self.ignore_ci_errors = ignore_ci_errors
 
@@ -182,6 +187,9 @@ class Manager(BaseManager):
         repo_tag = os.environ.get("REPO_TAG") or app["repo_tag"]
         repo_url = os.environ.get("REPO_URL") or app["repo_url"]
 
+        parsed_url = urlparse(repo_url)
+        repo_name = parsed_url.path.split("/")[-1]
+
         reg_url = "https://github.com"
         raw_url = "https://raw.githubusercontent.com"
 
@@ -190,16 +198,16 @@ class Manager(BaseManager):
             TITLE=app["title"],
             REPO_TAG=repo_tag,
             REPO_URL=repo_url,
+            REPO_NAME=repo_name,
             RAW_REPO_URL=repo_url.replace(reg_url, raw_url),
+            CS_APPBASE_TAG=self.cs_appbase_tag,
         )
 
         buildargs_str = " ".join(
             [f"--build-arg {arg}={value}" for arg, value in buildargs.items()]
         )
         dockerfile = self.dockerfiles_dir / "Dockerfile.model"
-        cmd = (
-            f"docker build {buildargs_str} -t {img_name}:{self.tag} -f {dockerfile} ./"
-        )
+        cmd = f"docker build --no-cache {buildargs_str} -t {img_name}:{self.tag} -f {dockerfile} ./"
         run(cmd)
 
         assert self.cr is not None
@@ -212,23 +220,119 @@ class Manager(BaseManager):
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])
         img_name = f"{safeowner}_{safetitle}_tasks"
-        cmd = ["py.test", "/home/test_functions.py", "-v", "-s"]
+
+        viz_ports = {"8010/tcp": ("127.0.0.1", "8010")}
+        if app["tech"] == "python-paramtools":
+            cmd = [
+                "py.test",
+                "./cs-config/cs_config/tests/test_functions.py",
+                "-v",
+                "-s",
+            ]
+            ports = None
+        elif app["tech"] == "dash":
+            app_module = app.get("app_location", None) or "cs_config.functions"
+            cmd = ["gunicorn", f"{app_module}:{app['callable_name']}"]
+            ports = viz_ports
+        elif app["tech"] == "bokeh":
+            cmd = [
+                "bokeh",
+                "serve",
+                app["app_location"],
+                "--address",
+                "0.0.0.0",
+                "--port",
+                "8010",
+                "--prefix",
+                f"/{app['owner']}/{app['owner']}/test/",
+            ]
+            ports = viz_ports
+        else:
+            raise ValueError(f"Unknown tech: {app['tech']}")
+
         secrets = self.config._list_secrets(app)
         client = docker.from_env()
         container = client.containers.run(
-            f"{img_name}:{self.tag}", cmd, environment=secrets, detach=True
+            f"{img_name}:{self.tag}",
+            cmd,
+            environment=secrets,
+            detach=True,
+            ports=ports,
         )
 
-        for line in container.logs(stream=True):
-            line = line.decode()
-            for name, value in secrets.items():
-                line = line.replace(name, "******").replace(value, "******")
-            print(line.strip("\n"))
+        try:
 
-        container.reload()
-        exit_status = container.wait()
-        if exit_status["StatusCode"] == 1:
-            raise RuntimeError("Tests failed with exit status 1.")
+            def strip_secrets(line, secrets):
+                line = line.decode()
+                for name, value in secrets.items():
+                    line = line.replace(name, "******").replace(value, "******")
+                return line.strip("\n")
+
+            def stream_logs(container):
+                for line in container.logs(stream=True):
+                    print(strip_secrets(line, secrets))
+
+            container.reload()
+            if container.status != "running":
+                print(f"Container exited with status: {container.status}")
+                for line in container.logs(stream=True):
+                    print(strip_secrets(line, secrets))
+                raise RuntimeError(f"Container exited with status: {container.status}")
+
+            if app["tech"] in ("bokeh", "dash"):
+                # Run function for showing logs in another thread so test/monitoring
+                # can run in main thread.
+                thread = threading.Thread(
+                    target=stream_logs, args=(container,), daemon=True
+                )
+                thread.start()
+                time.sleep(2)
+                num_attempts = 10
+                for attempt in range(1, num_attempts + 1):
+                    container.reload()
+                    if container.status != "running":
+                        raise RuntimeError(
+                            f"Container exected with status: {container.status}"
+                        )
+
+                    try:
+                        resp = httpx.get(
+                            f"http://localhost:8010/{app['owner']}/{app['owner']}/test/"
+                        )
+                        if resp.status_code == 200:
+                            print(f"Received successful response: {resp}")
+                            break
+
+                    except Exception:
+                        import traceback
+
+                        traceback.print_exc()
+
+                    time.sleep(1)
+
+                container.reload()
+
+                if attempt < num_attempts:
+                    print(f"Successful response received after {attempt} attempts.")
+                    container.kill()
+                else:
+                    try:
+                        raise ValueError(f"Unable to get 200 response after {attempt}.")
+                    finally:
+                        container.kill()
+            else:
+                for line in container.logs(stream=True):
+                    print(strip_secrets(line, secrets))
+
+                container.reload()
+                exit_status = container.wait()
+                if exit_status["StatusCode"] == 1:
+                    raise RuntimeError("Tests failed with exit status 1.")
+        finally:
+            container.reload()
+            if container.status != "exited":
+                print(f"Stopping container: {container}.")
+                container.kill()
 
     def push_app_image(self, app):
         assert self.cr is not None
@@ -446,6 +550,7 @@ def build(args: argparse.Namespace):
         tag=args.tag,
         cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
         cs_api_token=getattr(args, "cs_api_token", None),
+        cs_appbase_tag=getattr(args, "cs_appbase_tag", None),
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
@@ -548,7 +653,11 @@ def cli(subparsers: argparse._SubParsersAction):
     model_subparsers = parser.add_subparsers()
 
     build_parser = model_subparsers.add_parser("build")
+    build_parser.add_argument(
+        "--cs-appbase-tag", default=workers_config.get("CS_APPBASE_TAG", "master")
+    )
     build_parser.set_defaults(func=build)
+
     test_parser = model_subparsers.add_parser("test")
     test_parser.set_defaults(func=test)
 

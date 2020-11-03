@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.core.mail import send_mail
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.db.models import Q
 
@@ -53,6 +54,61 @@ from .utils import title_fixup
 User = get_user_model()
 
 
+def send_new_app_email(user, model, status_url):
+    try:
+        send_mail(
+            f"{user.username} created a new app on Compute Studio!",
+            (
+                f"{model.title} has been created. When you are ready, you can finish "
+                f"connecting your app at {status_url}.\n\n"
+                f"If you have any questions, pleae feel welcome to send me an email at "
+                f"hank@compute.studio."
+            ),
+            "notifications@compute.studio",
+            list({user.email, "hank@compute.studio"}),
+            fail_silently=False,
+        )
+    # Http 401 exception if mail credentials are not set up.
+    except Exception:
+        pass
+
+
+def send_updated_app_email(user, model, status_url):
+    try:
+        send_mail(
+            f"{model} has been updated",
+            (
+                f"{model.title} will be updated or you will have feedback within "
+                f"the next 24 hours. Check the status of the update at "
+                f"{status_url}."
+            ),
+            "notifications@compute.studio",
+            list({user.email, "hank@compute.studio"}),
+            fail_silently=False,
+        )
+    # Http 401 exception if mail credentials are not set up.
+    except Exception:
+        pass
+
+
+def send_app_ready_email(user, model, status_url):
+    try:
+        send_mail(
+            f"{model} is ready to be connected on Compute Studio!",
+            (
+                f"{model.title} will be live or you will have feedback within "
+                f"the next 24 hours. Check the status of the update at "
+                f"{status_url}."
+            ),
+            "notifications@compute.studio",
+            list({user.email, "hank@compute.studio"}),
+            fail_silently=False,
+        )
+    # Http 401 exception if mail credentials are not set up.
+    except Exception:
+        pass
+
+
 class GetProjectMixin:
     def get_object(self, username, title, **kwargs):
         return get_project_or_404(
@@ -78,6 +134,16 @@ class ProjectDetailView(GetProjectMixin, View):
         return render(request, self.template_name)
 
 
+class ProjectSettingsView(GetProjectMixin, View):
+    template_name = "publish/publish.html"
+
+    def get(self, request, *args, **kwargs):
+        project = self.get_object(**kwargs)
+        if not project.has_write_access(request.user):
+            raise PermissionDenied()
+        return render(request, self.template_name)
+
+
 class ProjectDetailAPIView(GetProjectMixin, APIView):
     authentication_classes = (
         SessionAuthentication,
@@ -99,6 +165,7 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
         if not project.has_write_access(request.user):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
+        previous_status = project.status
         serializer = ProjectSerializer(project, data=request.data)
         try:
             is_valid = serializer.is_valid()
@@ -107,26 +174,18 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
                 {e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST
             )
         if is_valid:
-            model = serializer.save(status="live")
+            model = serializer.save()
+            new_status = model.status
             Project.objects.sync_project_with_workers(
                 ProjectSerializer(model).data, model.cluster
             )
             status_url = request.build_absolute_uri(model.app_url)
-            try:
-                send_mail(
-                    f"{request.user.username} is updating a model on Compute Studio!",
-                    (
-                        f"{model.title} will be updated or you will have feedback within "
-                        f"the next 24 hours. Check the status of the update at "
-                        f"{status_url}."
-                    ),
-                    "notifications@compute.studio",
-                    list({request.user.email, "hank@compute.studio"}),
-                    fail_silently=False,
+            if previous_status != "staging" and new_status == "staging":
+                send_app_ready_email(
+                    request.user, model, status_url,
                 )
-            # Http 401 exception if mail credentials are not set up.
-            except Exception:
-                pass
+            elif previous_status in ("staging", "running"):
+                send_updated_app_email(request.user, model, status_url)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -170,7 +229,6 @@ class ProjectAPIView(APIView):
                 try:
                     model = serializer.save(
                         owner=request.user.profile,
-                        status="pending",
                         title=title,
                         cluster=Cluster.objects.default(),
                     )
@@ -179,25 +237,11 @@ class ProjectAPIView(APIView):
                         {e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST
                     )
                 status_url = request.build_absolute_uri(model.app_url)
+                send_new_app_email(request.user, model, status_url)
                 model.assign_role("write", self.api_user)
                 Project.objects.sync_project_with_workers(
                     ProjectSerializer(model).data, model.cluster
                 )
-                try:
-                    send_mail(
-                        f"{request.user.username} is publishing a model on Compute Studio!",
-                        (
-                            f"{model.title} will be live or you will have feedback within "
-                            f"the next 24 hours. Check the status of the submission at "
-                            f"{status_url}."
-                        ),
-                        "notifications@compute.studio",
-                        list({request.user.email, "hank@compute.studio"}),
-                        fail_silently=False,
-                    )
-                # Http 401 exception if mail credentials are not set up.
-                except Exception:
-                    pass
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
                 print("error", request, serializer.errors)

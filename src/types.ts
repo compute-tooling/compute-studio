@@ -182,7 +182,7 @@ export interface Project {
   repo_url: string;
   server_size: [string, string];
   sim_count: number;
-  status: "live" | "pending" | "updating" | "staging";
+  status: "created" | "configuring" | "installing" | "staging" | "running";
   exp_task_time: number;
   server_cost: string;
   listed: boolean;
@@ -190,6 +190,7 @@ export interface Project {
   version?: string;
   tech?: Tech;
   callable_name?: string;
+  app_location?: string;
 }
 
 export interface MiniSimulation {
@@ -262,4 +263,12 @@ export interface Simulation<T> {
   status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
   title: string;
   traceback: string;
+}
+
+export interface ResourceLimitException {
+  resource: "collaborators";
+  test_name: "add_collaborator" | "make_private";
+  msg: string;
+  upgrade_to: "plus" | "pro";
+  collaborator?: string;
 }

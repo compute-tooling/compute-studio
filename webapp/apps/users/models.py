@@ -215,6 +215,7 @@ def get_project_or_404(queryset, user=None, raise_http404=True, **kwargs):
             klass=queryset,
             any_perm=True,
         )
+
         return queryset.get(Q(is_public=True) | Q(pk__in=user_has_perms), **kwargs)
 
     except Project.DoesNotExist as dne:
@@ -298,23 +299,12 @@ class Project(models.Model):
             ("dash", "Dash"),
             ("bokeh", "Bokeh"),
         ),
-        default="python-paramtools",
         max_length=64,
+        null=True,
     )
 
     callable_name = models.CharField(null=True, max_length=128)
-
-    status = models.CharField(
-        choices=(
-            ("live", "live"),
-            ("updating", "updating"),
-            ("pending", "pending"),
-            ("staging", "staging"),
-            ("requires fixes", "requires fixes"),
-        ),
-        default="live",
-        max_length=32,
-    )
+    app_location = models.CharField(null=True, max_length=256)
 
     # ram, vcpus
     def callabledefault():
@@ -356,6 +346,21 @@ class Project(models.Model):
         except Project.DoesNotExist:
             res = None
         return res
+
+    @property
+    def status(self):
+        if self.latest_tag is not None:
+            return "running"
+        elif self.repo_url:
+            return "staging"
+        elif (
+            self.tech is not None and not self.callable_name and not self.exp_task_time
+        ):
+            return "configuring"
+        elif not self.repo_url:
+            return "installing"
+        else:
+            return "created"
 
     def exp_job_info(self, adjust=False):
         rate_per_sec = self.server_cost / 3600
@@ -440,7 +445,7 @@ class Project(models.Model):
     def version(self):
         if self.tech != "python-paramtools":
             return None
-        if self.status not in ("updating", "live"):
+        if self.status != "running":
             return None
         try:
             success, result = SyncCompute().submit_job(
