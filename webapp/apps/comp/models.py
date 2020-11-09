@@ -277,7 +277,7 @@ class SimulationManager(models.Manager):
                     model_pk=model_pk,
                     inputs=inputs,
                     status="STARTED",
-                    is_public=False,
+                    is_public=True,
                 )
                 sim.authors.set([user.profile])
                 sim.grant_admin_permissions(user)
@@ -291,6 +291,7 @@ class SimulationManager(models.Manager):
             # Case 2:
             return self.new_sim(user, project, inputs_status)
 
+    @transaction.atomic
     def fork(self, sim, user):
         if sim.inputs.status == "PENDING":
             raise ForkObjectException(
@@ -317,6 +318,7 @@ class SimulationManager(models.Manager):
             traceback=sim.inputs.traceback,
             client=sim.inputs.client,
         )
+
         sim = self.create(
             owner=user.profile,
             title=sim.title,
@@ -335,7 +337,7 @@ class SimulationManager(models.Manager):
             exp_comp_datetime=sim.exp_comp_datetime,
             model_version=sim.model_version,
             model_pk=self.next_model_pk(sim.project),
-            is_public=False,
+            is_public=sim.is_public,
             status=sim.status,
         )
         sim.authors.set([user.profile])
@@ -555,7 +557,7 @@ class Simulation(models.Model):
         user = self.owner.user
         customer = getattr(user, "customer", None)
         if customer is None:
-            if num_collaborators > 0:
+            if num_collaborators >= 0:
                 raise ResourceLimitException(
                     "collaborators",
                     test_name,
@@ -565,7 +567,7 @@ class Simulation(models.Model):
         else:
             current_plan = customer.current_plan()
 
-            if num_collaborators > 0 and current_plan["name"] == "free":
+            if num_collaborators >= 0 and current_plan["name"] == "free":
                 raise ResourceLimitException(
                     "collaborators",
                     test_name,

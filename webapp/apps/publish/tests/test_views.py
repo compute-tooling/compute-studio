@@ -319,7 +319,7 @@ class TestPublishViews:
         act = set(proj["title"] for proj in resp.data["results"])
         assert exp == act
 
-    def test_recent_models_api(self, api_client, test_models, profile):
+    def test_recent_models_api(self, api_client, test_models, plus_profile):
         # test unauth'ed get returns 403
         resp = api_client.get("/api/v1/models/recent/")
         assert resp.status_code == 403, f"Expected 403, got {resp.status_code}"
@@ -337,8 +337,8 @@ class TestPublishViews:
         assert exp == act
 
         # test auth'ed user cannot view other project's private data.
-        Simulation.objects.fork(test_models[0], profile.user)
-        api_client.force_login(profile.user)
+        Simulation.objects.fork(test_models[0], plus_profile.user)
+        api_client.force_login(plus_profile.user)
         resp = api_client.get("/api/v1/models/recent/")
         assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
 
@@ -346,7 +346,7 @@ class TestPublishViews:
             p = Project.objects.get(
                 title=project["title"], owner__user__username=project["owner"]
             )
-            if p.has_write_access(profile.user):
+            if p.has_write_access(plus_profile.user):
                 assert "sim_count" in project and "user_count" in project
             else:
                 assert "sim_count" not in project and "user_count" not in project

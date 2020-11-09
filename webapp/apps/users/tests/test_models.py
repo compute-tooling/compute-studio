@@ -101,12 +101,13 @@ class TestUserModels:
         assert not profile.can_run(sponsored.project)
 
     def test_recent_models(self, profile, test_models):
-
         assert profile.recent_models(limit=10) == [
             test_models[0].project,
             test_models[1].project,
         ]
 
+        test_models[1].is_public = True
+        test_models[1].save()
         Simulation.objects.fork(test_models[1], profile.user)
 
         assert profile.recent_models(limit=10) == [

@@ -48,7 +48,7 @@ def gen_collabs(n, plan=None):
                 metadata={},
             )
             profile.refresh_from_db()
-            mock_cp = lambda: {"name": "plus", "plan_duration": plan.lower()}
+            mock_cp = lambda: {"name": plan, "plan_duration": plan.lower()}
             profile.user.customer.current_plan = mock_cp
             yield profile
         else:

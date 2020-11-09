@@ -708,14 +708,16 @@ class TestAsyncAPI(CoreTestMixin):
 
     @pytest.mark.parametrize("test_lower", [False, True])
     def test_fork(
-        self, monkeypatch, client, api_client, profile, comp_api_user, test_lower,
+        self, monkeypatch, client, api_client, comp_api_user, test_lower,
     ):
         """
         Test creating and forking a sim.
         """
-        api_client.force_login(profile.user)
+        (sim_owner, plus_sim_collab) = gen_collabs(2, plan="plus")
+        (free_sim_collab,) = gen_collabs(1)
+        api_client.force_login(sim_owner.user)
         if not self.project.is_public:
-            self.project.assign_role("read", profile.user)
+            self.project.assign_role("read", sim_owner.user)
         rmm = RunMockModel(
             owner=self.owner,
             title=self.title,
@@ -730,38 +732,60 @@ class TestAsyncAPI(CoreTestMixin):
             test_lower=test_lower,
         )
         rmm.run()
+        assert rmm.sim.is_public is False
+        rmm.sim.owner = sim_owner
 
-        # Remove perms to test fork endpoint.
+        # Test free plan user cannot fork private simulation even if they
+        # have read access.
+        self.project.assign_role("read", free_sim_collab.user)
+        rmm.sim.assign_role("read", free_sim_collab.user)
+
+        # Temporarily remove perms to test fork endpoint.
         if not self.project.is_public:
-            self.project.assign_role(None, profile.user)
+            self.project.assign_role(None, free_sim_collab.user)
 
-        api_client.force_login(profile.user)
+        api_client.force_login(free_sim_collab.user)
         resp = api_client.post(f"/{self.project}/api/v1/{rmm.sim.model_pk}/fork/")
         if not self.project.is_public:
             assert resp.status_code == 404
-            self.project.assign_role("read", profile.user)
+            self.project.assign_role("read", free_sim_collab.user)
             resp = api_client.post(f"/{self.project}/api/v1/{rmm.sim.model_pk}/fork/")
 
-        assert resp.status_code == 201
+        assert resp.status_code == 400
 
-        u = User.objects.get(username="modeler")
-        assert profile.user != u
-        api_client.force_login(u)
+        # This should not have created a forked sim.
+        assert free_sim_collab.sims.count() == 0
+
+        # Test free plan user can fork public sims.
         rmm.sim.is_public = True
         rmm.sim.save()
         resp = api_client.post(f"/{self.project}/api/v1/{rmm.sim.model_pk}/fork/")
-        if not self.project.is_public:
-            assert resp.status_code == 404
-            self.project.assign_role("read", u)
-            resp = api_client.post(f"/{self.project}/api/v1/{rmm.sim.model_pk}/fork/")
-
         assert resp.status_code == 201
 
-        api_client.logout()
+        # Test plus plan user can fork private simulation.
+        self.project.assign_role("read", plus_sim_collab.user)
+        rmm.sim.assign_role("read", plus_sim_collab.user)
+        rmm.sim.is_public = False
+        rmm.sim.save()
+        api_client.force_login(plus_sim_collab.user)
         resp = api_client.post(f"/{self.project}/api/v1/{rmm.sim.model_pk}/fork/")
-        assert resp.status_code == 403
+        assert resp.status_code == 201
 
-        set_auth_token(api_client, profile.user)
+        # Test anon user cannot view private forked sim.
+        api_client.logout()
+        private_sim = plus_sim_collab.sims.first()
+        resp = api_client.get(f"/{self.project}/api/v1/{private_sim.model_pk}/")
+        exp_unauthed_code = 403 if self.project.is_public else 404
+        assert resp.status_code == exp_unauthed_code
+
+        # Test anon user can view forked sim only applicable if project is public.
+        if self.project.is_public:
+            public_sim = free_sim_collab.sims.first()
+            resp = api_client.get(f"/{self.project}/api/v1/{public_sim.model_pk}/")
+            assert resp.status_code == 200
+
+        # Test unable to fork sim while pending.
+        api_client.force_login(plus_sim_collab.user)
         rmm.sim.status = "PENDING"
         rmm.sim.save()
         resp = api_client.post(f"/{self.project}/api/v1/{rmm.sim.model_pk}/fork/")
@@ -817,10 +841,10 @@ def test_v0_urls(
     - private
     - title update
     """
-    modeler = sponsored_matchups.owner
+    (user,) = gen_collabs(1, plan="plus")
     if not sponsored_matchups.is_public:
-        sponsored_matchups.assign_role("read", modeler.user)
-    inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, modeler)
+        sponsored_matchups.assign_role("read", user.user)
+    inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, user)
 
     _, submit_sim = _submit_sim(inputs)
     sim = submit_sim.submit()
@@ -1483,25 +1507,29 @@ class TestCollaboration:
         }
 
 
-def test_list_sim_api(db, api_client, profile, get_inputs, meta_param_dict):
-    sims, modeler_sims, tester_sims = _shuffled_sims(
-        profile, get_inputs, meta_param_dict
-    )
+def test_list_sim_api(db, api_client, get_inputs, meta_param_dict):
+    (user,) = gen_collabs(1, plan="plus")
+    sims, modeler_sims, tester_sims = _shuffled_sims(user, get_inputs, meta_param_dict)
     # test can't access api/v1/sims if not authenticated.
     resp = api_client.get("/api/v1/sims")
     assert_status(403, resp, "unauthed_list_sims")
     resp = api_client.get("/api/v1/sims?ordering=project__title")
     assert_status(403, resp, "unauthed_list_sims")
 
-    # test can't view others private simulations
-    resp = api_client.get("/api/v1/sims/tester")
+    # test sims are public and view-able by default.
+    resp = api_client.get(f"/api/v1/sims/{user}")
     assert_status(200, resp, "unauthed_list_profile_sims")
-    assert len(resp.data["results"]) == 0
+    assert len(resp.data["results"]) == 6
+
+    # Make sims private now.
+    for sim in sims:
+        sim.is_public = False
+        sim.save()
 
     # test only public sims are shown on profile page.
     tester_sims[1].is_public = True
     tester_sims[1].save()
-    resp = api_client.get("/api/v1/sims/tester")
+    resp = api_client.get(f"/api/v1/sims/{user}")
     assert_status(200, resp, "unauthed_list_profile_sims")
     assert len(resp.data["results"]) == 1
     assert resp.data["results"][0]["model_pk"] == tester_sims[1].model_pk
@@ -1510,12 +1538,12 @@ def test_list_sim_api(db, api_client, profile, get_inputs, meta_param_dict):
     tester_sims[1].creation_date = ANON_BEFORE - datetime.timedelta(days=2)
     tester_sims[1].is_public = True
     tester_sims[1].save()
-    resp = api_client.get("/api/v1/sims/tester")
+    resp = api_client.get(f"/api/v1/sims/{user}")
     assert_status(200, resp, "unauthed_list_profile_sims")
     assert len(resp.data["results"]) == 0
 
     # Check auth'ed user can view their own sims.
-    api_client.force_login(profile.user)
+    api_client.force_login(user.user)
     resp = api_client.get("/api/v1/sims")
     assert_status(200, resp, "authed_list_sims")
     print(sims[-1].owner)

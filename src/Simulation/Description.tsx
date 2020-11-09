@@ -164,7 +164,7 @@ export default class DescriptionComponent extends React.Component<
     let initialValues: DescriptionValues = {
       title: this.props.remoteSim?.title || "Untitled Simulation",
       readme: this.props.remoteSim?.readme || defaultReadme,
-      is_public: this.props.remoteSim?.is_public || false,
+      is_public: this.props.remoteSim?.is_public || true,
       author: { add: { username: "", msg: "" }, remove: { username: "" } },
       access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } },
     };

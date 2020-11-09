@@ -103,7 +103,7 @@ class SimTabs extends React.Component<
       hasShownDirtyWarning: false,
       showDirtyWarning: false,
       notifyOnCompletion: false,
-      isPublic: false,
+      isPublic: true,
     };
 
     this.handleTabChange = this.handleTabChange.bind(this);
@@ -465,7 +465,9 @@ class SimTabs extends React.Component<
       unknownParams,
       extend,
       sects,
+      isPublic,
     } = this.state;
+    console.log("hyeo sisPublic", isPublic);
     let initialServerErrors = hasServerErrors(inputs?.detail?.errors_warnings)
       ? inputs.detail.errors_warnings
       : null;

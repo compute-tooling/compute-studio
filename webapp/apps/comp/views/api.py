@@ -319,6 +319,10 @@ class ForkDetailAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView
         except ForkObjectException as e:
             msg = str(e)
             return Response({"fork": msg}, status=status.HTTP_400_BAD_REQUEST)
+        except (ResourceLimitException, PrivateAppException) as e:
+            return Response(
+                data={e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST,
+            )
         data = MiniSimulationSerializer(sim).data
         return Response(data, status=status.HTTP_201_CREATED)
 
