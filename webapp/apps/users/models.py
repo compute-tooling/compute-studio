@@ -488,21 +488,13 @@ class Project(models.Model):
             raise ResourceLimitException(
                 "collaborators",
                 test_name,
-                "plus",
+                "pro",
                 ResourceLimitException.collaborators_msg,
             )
         else:
             current_plan = customer.current_plan()
 
             if current_plan["name"] == "free":
-                raise ResourceLimitException(
-                    "collaborators",
-                    test_name,
-                    "plus",
-                    ResourceLimitException.collaborators_msg,
-                )
-
-            if num_collaborators > 3 and current_plan["name"] == "plus":
                 raise ResourceLimitException(
                     "collaborators",
                     test_name,

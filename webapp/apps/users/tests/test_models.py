@@ -129,10 +129,10 @@ class TestProjectPermissionse:
         remove_perm("write_project", profile.user, project)
         assert not profile.user.has_perm("write_project", project)
 
-    def test_project_permissions(self, db, project, plus_profile):
+    def test_project_permissions(self, db, project, pro_profile):
         collab = next(gen_collabs(1))
         project.is_public = False
-        replace_owner(project, plus_profile)
+        replace_owner(project, pro_profile)
 
         # check permissions for owner and random profile
         assert get_perms(project.owner.user, project) == ["admin_project"]
@@ -203,7 +203,7 @@ class TestProjectPermissionse:
 
         project.is_public = True
         project.save()
-        assert project.has_read_access(plus_profile.user)
+        assert project.has_read_access(pro_profile.user)
         assert project.has_read_access(collab.user)
         assert project.has_read_access(None) is True
 
@@ -302,7 +302,7 @@ class TestCollaborators:
             project.assign_role("read", collabs[0].user)
 
         assert excinfo.value.todict() == {
-            "upgrade_to": "plus",
+            "upgrade_to": "pro",
             "resource": "collaborators",
             "test_name": "add_collaborator",
             "msg": ResourceLimitException.collaborators_msg,
@@ -327,64 +327,6 @@ class TestCollaborators:
                 and project.role(collab.user) == "read"
             )
 
-        with pytest.raises(ResourceLimitException):
-            project.make_private_test()
-
-    def test_plus_tier(self, db, project, plus_profile):
-        """
-        Test can only add three collaborators to private app but
-        public is unlimited.
-        """
-        project.is_public = False
-        replace_owner(project, plus_profile)
-
-        collabs = list(gen_collabs(4))
-
-        # Add first three collaborators.
-        project.assign_role("read", collabs[0].user)
-        project.assign_role("read", collabs[1].user)
-        project.assign_role("read", collabs[2].user)
-        for collab in collabs[:3]:
-            assert (
-                get_perms(collab.user, project) == ["read_project"]
-                and project.role(collab.user) == "read"
-            )
-
-        # Cannot add fourth collaborator when app is private.
-        with pytest.raises(ResourceLimitException) as excinfo:
-            project.assign_role("read", collabs[-1].user)
-
-        assert excinfo.value.todict() == {
-            "resource": "collaborators",
-            "test_name": "add_collaborator",
-            "upgrade_to": "pro",
-            "msg": ResourceLimitException.collaborators_msg,
-        }
-        assert (
-            get_perms(collabs[-1].user, project) == []
-            and project.role(collabs[-1].user) == None
-        )
-        # Make sure first collaborator is not affected.
-        assert (
-            get_perms(collabs[0].user, project) == ["read_project"]
-            and project.role(collabs[0].user) == "read"
-        )
-
-        # OK to make app private.
-        project.make_private_test()
-
-        # Test no limit on collaborators when app is public.
-        project.is_public = True
-        project.save()
-
-        for collab in collabs:
-            project.assign_role("read", collab.user)
-            assert (
-                get_perms(collab.user, project) == ["read_project"]
-                and project.role(collab.user) == "read"
-            )
-
-        # Making app private is not allowed.
         with pytest.raises(ResourceLimitException):
             project.make_private_test()
 

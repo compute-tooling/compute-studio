@@ -139,11 +139,9 @@ type PublishState = Readonly<{
   initialValues: ProjectValues;
 }>;
 
-const PrivateAppException: React.FC<{ upgradeTo: "plus" | "pro" }> = ({ upgradeTo }) => {
+const PrivateAppException: React.FC<{ upgradeTo: "pro" }> = ({ upgradeTo }) => {
   let plan;
-  if (upgradeTo === "plus") {
-    plan = "Compute Studio Plus";
-  } else if (upgradeTo === "pro") {
+  if (upgradeTo === "pro") {
     plan = "Compute Studio Pro";
   }
   return (

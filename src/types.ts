@@ -168,7 +168,7 @@ export interface AccessStatus {
   server_cost?: number;
   exp_cost?: number;
   exp_time?: number;
-  plan: { name: "free" | "plus" | "pro" | "team" };
+  plan: { name: "free" | "pro" };
 }
 
 export type Tech = "python-paramtools" | "dash" | "bokeh";
@@ -269,6 +269,6 @@ export interface ResourceLimitException {
   resource: "collaborators";
   test_name: "add_collaborator" | "make_private";
   msg: string;
-  upgrade_to: "plus" | "pro";
+  upgrade_to: "pro";
   collaborator?: string;
 }

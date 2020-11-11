@@ -392,12 +392,12 @@ class RunMockModel(CoreTestMixin):
 
 
 @pytest.fixture(params=[True, False])
-def sponsored_matchups(request, db, plus_profile):
+def sponsored_matchups(request, db, pro_profile):
     sponsor = Profile.objects.get(user__username="sponsor")
     matchups = Project.objects.get(title="Matchups", owner__user__username="hdoupe")
     matchups.is_public = request.param
     if not matchups.is_public:
-        replace_owner(matchups, plus_profile)
+        replace_owner(matchups, pro_profile)
     matchups.sponsor = sponsor
     matchups.save()
     return matchups
@@ -410,7 +410,7 @@ def paid_matchups(db):
     matchups = Project.objects.get(title="Matchups", owner__user__username="hdoupe")
     matchups.sponsor = None
     matchups.owner.user.customer.update_plan(
-        Plan.objects.get(nickname=f"Monthly Plus Plan")
+        Plan.objects.get(nickname=f"Monthly Pro Plan")
     )
     matchups.refresh_from_db()
     matchups.save()
@@ -659,7 +659,7 @@ class TestAsyncAPI(CoreTestMixin):
         """
         Test unable to post anon params.
         """
-        (collab,) = gen_collabs(1, plan="plus")
+        (collab,) = gen_collabs(1, plan="pro")
         kwargs = dict(
             owner=self.owner,
             title=self.title,
@@ -713,7 +713,7 @@ class TestAsyncAPI(CoreTestMixin):
         """
         Test creating and forking a sim.
         """
-        (sim_owner, plus_sim_collab) = gen_collabs(2, plan="plus")
+        (sim_owner, pro_sim_collab) = gen_collabs(2, plan="pro")
         (free_sim_collab,) = gen_collabs(1)
         api_client.force_login(sim_owner.user)
         if not self.project.is_public:
@@ -762,18 +762,18 @@ class TestAsyncAPI(CoreTestMixin):
         resp = api_client.post(f"/{self.project}/api/v1/{rmm.sim.model_pk}/fork/")
         assert resp.status_code == 201
 
-        # Test plus plan user can fork private simulation.
-        self.project.assign_role("read", plus_sim_collab.user)
-        rmm.sim.assign_role("read", plus_sim_collab.user)
+        # Test pro plan user can fork private simulation.
+        self.project.assign_role("read", pro_sim_collab.user)
+        rmm.sim.assign_role("read", pro_sim_collab.user)
         rmm.sim.is_public = False
         rmm.sim.save()
-        api_client.force_login(plus_sim_collab.user)
+        api_client.force_login(pro_sim_collab.user)
         resp = api_client.post(f"/{self.project}/api/v1/{rmm.sim.model_pk}/fork/")
         assert resp.status_code == 201
 
         # Test anon user cannot view private forked sim.
         api_client.logout()
-        private_sim = plus_sim_collab.sims.first()
+        private_sim = pro_sim_collab.sims.first()
         resp = api_client.get(f"/{self.project}/api/v1/{private_sim.model_pk}/")
         exp_unauthed_code = 403 if self.project.is_public else 404
         assert resp.status_code == exp_unauthed_code
@@ -785,7 +785,7 @@ class TestAsyncAPI(CoreTestMixin):
             assert resp.status_code == 200
 
         # Test unable to fork sim while pending.
-        api_client.force_login(plus_sim_collab.user)
+        api_client.force_login(pro_sim_collab.user)
         rmm.sim.status = "PENDING"
         rmm.sim.save()
         resp = api_client.post(f"/{self.project}/api/v1/{rmm.sim.model_pk}/fork/")
@@ -841,7 +841,7 @@ def test_v0_urls(
     - private
     - title update
     """
-    (user,) = gen_collabs(1, plan="plus")
+    (user,) = gen_collabs(1, plan="pro")
     if not sponsored_matchups.is_public:
         sponsored_matchups.assign_role("read", user.user)
     inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, user)
@@ -1032,12 +1032,12 @@ class TestCollaboration:
         api_client,
         get_inputs,
         meta_param_dict,
-        customer_plus_by_default,
+        customer_pro_by_default,
     ):
         """
         Test add authors api endpoints.
         """
-        (collab1, collab2,) = gen_collabs(2, plan="plus")
+        (collab1, collab2,) = gen_collabs(2, plan="pro")
         sponsored_matchups.assign_role("read", collab1.user)
         inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, collab1)
 
@@ -1107,7 +1107,7 @@ class TestCollaboration:
         api_client,
         get_inputs,
         meta_param_dict,
-        customer_plus_by_default,
+        customer_pro_by_default,
     ):
         """
         Test delete author from simulation.
@@ -1117,7 +1117,7 @@ class TestCollaboration:
         - 404 on dne or unassociated author.
         - author can remove themselves as author.
         """
-        (collab1, collab2,) = gen_collabs(2, plan="plus")
+        (collab1, collab2,) = gen_collabs(2, plan="pro")
         sponsored_matchups.assign_role("read", collab1.user)
         inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, collab1)
 
@@ -1303,105 +1303,6 @@ class TestCollaboration:
         resp = api_client.get(sim.get_absolute_api_url())
         assert_status(403, resp, "user no longer has read access to sim")
 
-    def test_collaborator_usage_limits_triggered(
-        self,
-        db,
-        sponsored_matchups,
-        client,
-        api_client,
-        get_inputs,
-        meta_param_dict,
-        plus_profile,
-        customer_plus_by_default,
-    ):
-        """
-        Test collaborator resource usage limits.
-        - Able to add first collaborator.
-        - Able to re-assign role of first collaborator.
-        - Adding second collaborator through role or as author triggers
-        error.
-        - Able to make user with read access an author.
-        """
-        sponsored_matchups.assign_role("read", plus_profile.user)
-        inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, plus_profile)
-
-        _, submit_sim = _submit_sim(inputs)
-        sim = submit_sim.submit()
-        sim.status = "SUCCESS"
-        sim.outputs = json.loads(read_outputs("Matchups_v1"))
-        sim.is_public = False
-        sim.save()
-
-        collabs = list(gen_collabs(2))
-
-        if not sponsored_matchups.is_public:
-            for collab in collabs:
-                sponsored_matchups.assign_role("read", collab.user)
-
-        # Grant read access to user
-        api_client.force_login(plus_profile.user)
-        resp = api_client.put(
-            f"{sim.get_absolute_api_url()}access/",
-            data=[{"username": str(collabs[0]), "role": "read"}],
-            format="json",
-        )
-        assert_status(204, resp, "user granted read access")
-
-        # Check re-assigning role has no affect
-        resp = api_client.put(
-            f"{sim.get_absolute_api_url()}access/",
-            data=[{"username": str(collabs[0]), "role": None}],
-            format="json",
-        )
-        assert_status(204, resp, "user revoked access")
-        resp = api_client.put(
-            f"{sim.get_absolute_api_url()}access/",
-            data=[{"username": str(collabs[0]), "role": "write"}],
-            format="json",
-        )
-        assert_status(204, resp, "user granted write access")
-
-        # Grant read access to another user triggers reource error.
-        resp = api_client.put(
-            f"{sim.get_absolute_api_url()}access/",
-            data=[{"username": str(collabs[1]), "role": "read"}],
-            format="json",
-        )
-        assert_status(400, resp, "resource limit triggered")
-
-        assert resp.data == {
-            "collaborators": {
-                "msg": ResourceLimitException.collaborators_msg,
-                "upgrade_to": "pro",
-                "resource": "collaborators",
-                "test_name": "add_collaborator",
-            }
-        }
-
-        # Grant read access through assigning author triggers resource error.
-        resp = api_client.put(
-            f"{sim.get_absolute_api_url()}authors/",
-            data={"authors": [{"username": str(collabs[1])}]},
-            format="json",
-        )
-        assert_status(400, resp, "resource limit triggered on author")
-        assert resp.data == {
-            "collaborators": {
-                "msg": ResourceLimitException.collaborators_msg,
-                "upgrade_to": "pro",
-                "resource": "collaborators",
-                "test_name": "add_collaborator",
-            }
-        }
-
-        # No problem adding user with read access as author
-        resp = api_client.put(
-            f"{sim.get_absolute_api_url()}authors/",
-            data={"authors": [{"username": str(collabs[0])}]},
-            format="json",
-        )
-        assert_status(200, resp, "no problem when user already has read access")
-
     def test_no_limit_collaboration(
         self,
         db,
@@ -1500,7 +1401,7 @@ class TestCollaboration:
         assert resp.data == {
             "collaborators": {
                 "msg": ResourceLimitException.collaborators_msg,
-                "upgrade_to": "plus",
+                "upgrade_to": "pro",
                 "resource": "collaborators",
                 "test_name": "make_private",
             }
@@ -1508,7 +1409,7 @@ class TestCollaboration:
 
 
 def test_list_sim_api(db, api_client, get_inputs, meta_param_dict):
-    (user,) = gen_collabs(1, plan="plus")
+    (user,) = gen_collabs(1, plan="pro")
     sims, modeler_sims, tester_sims = _shuffled_sims(user, get_inputs, meta_param_dict)
     # test can't access api/v1/sims if not authenticated.
     resp = api_client.get("/api/v1/sims")
@@ -1572,12 +1473,12 @@ def test_list_sim_api(db, api_client, get_inputs, meta_param_dict):
 
 
 @pytest.fixture(params=[True, False])
-def viz(request, db, viz_project, plus_profile, customer_pro_by_default):
+def viz(request, db, viz_project, pro_profile, customer_pro_by_default):
     sponsor = Profile.objects.get(user__username="sponsor")
     viz_project.sponsor = sponsor
     viz_project.is_public = request.param
     if not viz_project.is_public:
-        replace_owner(viz_project, plus_profile)
+        replace_owner(viz_project, pro_profile)
     viz_project.save()
     return viz_project
 

@@ -71,11 +71,11 @@ class TestBillingViews:
         client.force_login(customer.user)
         resp = client.get("/billing/upgrade/")
         assert resp.status_code == 302, f"Expected 302: got {resp.status_code}"
-        assert resp.url == "/billing/upgrade/monthly/"
+        assert resp.url == "/billing/upgrade/yearly/"
 
         resp = client.get(resp.url)
         assert resp.context["current_plan"] == customer.current_plan()
-        assert resp.context["plan_duration"] == "monthly"
+        assert resp.context["plan_duration"] == "yearly"
         assert resp.context["card_info"] == customer.card_info()
 
         resp = client.get("/billing/upgrade/monthly/")
@@ -95,34 +95,17 @@ class TestBillingViews:
         """
         Test:
         - Upgrade to pro plan.
-        - Selecting team plan sends email.
+        - Change duration on pro plan (e.g. monthly vs. yearly).
+        - Downgrade to free.
         """
         client.force_login(customer.user)
-        resp = client.get(
-            f"/billing/upgrade/{plan_duration.lower()}/?upgrade_plan=plus"
-        )
-        assert resp.status_code == 302, f"Expected 302: got {resp.status_code}"
-        next_url = resp.url
-        assert next_url == reverse(
-            "upgrade_plan_duration_done",
-            kwargs=dict(plan_duration=plan_duration.lower()),
-        )
-        resp = client.get(next_url)
-        assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
-        assert resp.context["plan_duration"] == plan_duration.lower()
-        customer = Customer.objects.get(pk=customer.pk)
-        assert (
-            resp.context["current_plan"]
-            == customer.current_plan()
-            == {"plan_duration": plan_duration.lower(), "name": "plus"}
-        )
 
         # test /billing/upgrade redirects to landing page corresponding to correct duration.
         resp = client.get("/billing/upgrade/")
         assert resp.status_code == 302, f"Expected 302: got {resp.status_code}"
         next_url = resp.url
         assert next_url == reverse(
-            "upgrade_plan_duration", kwargs=dict(plan_duration=plan_duration.lower())
+            "upgrade_plan_duration", kwargs=dict(plan_duration="yearly")
         )
 
         resp = client.get(f"/billing/upgrade/{plan_duration.lower()}/?upgrade_plan=pro")
@@ -165,30 +148,6 @@ class TestBillingViews:
         # go back to initial plan_duration
         resp = client.get(f"/billing/upgrade/{plan_duration.lower()}/?upgrade_plan=pro")
         assert resp.status_code == 302, f"Expected 302: got {resp.status_code}"
-
-        # Test get Team sends email and does not change subscription status.
-
-        called = []  # use list so that called keeps this memory ref.
-
-        def mock_email(user, called=called):
-            assert user == customer.user
-            called += [True]
-
-        monkeypatch.setattr(
-            "webapp.apps.billing.views.send_teams_interest_mail", mock_email
-        )
-
-        resp = client.get(
-            f"/billing/upgrade/{plan_duration.lower()}/?upgrade_plan=team"
-        )
-        assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
-        assert called == [True]
-        customer = Customer.objects.get(pk=customer.pk)
-        assert (
-            resp.context["current_plan"]
-            == customer.current_plan()
-            == {"plan_duration": plan_duration.lower(), "name": "pro"}
-        )
 
         # Test downgrade to free plan.
         resp = client.get(

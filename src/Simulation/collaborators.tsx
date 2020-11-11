@@ -36,11 +36,9 @@ export interface CollaboratorValues {
   };
 }
 
-const AddCollaboratorException = (upgradeTo: "plus" | "pro") => {
+const AddCollaboratorException = (upgradeTo: "pro") => {
   let plan;
-  if (upgradeTo === "plus") {
-    plan = "Compute Studio Plus";
-  } else if (upgradeTo === "pro") {
+  if (upgradeTo === "pro") {
     plan = "Compute Studio Pro";
   }
   return (
@@ -70,11 +68,9 @@ const AddCollaboratorException = (upgradeTo: "plus" | "pro") => {
   );
 };
 
-const MakePrivateException = (upgradeTo: "plus" | "pro") => {
+const MakePrivateException = (upgradeTo: "pro") => {
   let plan;
-  if (upgradeTo === "plus") {
-    plan = "Compute Studio Plus";
-  } else if (upgradeTo === "pro") {
+  if (upgradeTo === "pro") {
     plan = "Compute Studio Pro";
   }
   return (

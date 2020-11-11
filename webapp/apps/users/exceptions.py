@@ -5,7 +5,7 @@ class ResourceLimitException(CSException):
     collaborators_msg = (
         "You have reached the limit for the number of collaborators "
         "on private apps. You may make this app public "
-        "or upgrade to Compute Studio Plus or Pro to add more "
+        "or upgrade to Compute Studio pro or Pro to add more "
         "collaborators."
     )
 

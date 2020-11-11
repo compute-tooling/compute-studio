@@ -13,7 +13,6 @@ from django.urls import resolve, Resolver404
 from webapp.apps.users.models import Project
 
 from . import webhooks
-from .email import send_teams_interest_mail
 from .models import (
     Customer,
     Product,
@@ -28,10 +27,6 @@ stripe.api_key = os.environ.get("STRIPE_SECRET")
 wh_secret = os.environ.get("WEBHOOK_SECRET")
 
 white_listed_urls = (
-    # next urls for plus plan
-    "/billing/upgrade/?selected_plan=plus",
-    "/billing/upgrade/monthly/?selected_plan=plus",
-    "/billing/upgrade/yearly/?selected_plan=plus",
     # next urls for pro plan
     "/billing/upgrade/?selected_plan=pro",
     "/billing/upgrade/monthly/?selected_plan=pro",
@@ -119,41 +114,31 @@ class UpdatePaymentDone(generic.TemplateView):
 
 def parse_upgrade_params(request):
     upgrade_plan = request.GET.get("upgrade_plan", None)
-    if upgrade_plan is not None and upgrade_plan.lower() not in (
-        "free",
-        "plus",
-        "pro",
-        "team",
-    ):
+    if upgrade_plan is not None and upgrade_plan.lower() not in ("free", "pro",):
         upgrade_plan = None
 
     selected_plan = request.GET.get("selected_plan", None)
-    if selected_plan is not None and selected_plan.lower() not in (
-        "free",
-        "plus",
-        "pro",
-        "team",
-    ):
+    if selected_plan is not None and selected_plan.lower() not in ("free", "pro",):
         selected_plan = None
     return upgrade_plan, selected_plan
 
 
 class Plans(View):
     template_name = "billing/upgrade_plan.html"
-    default_duration = "monthly"
+    default_duration = "yearly"
 
     def get(self, request, *args, **kwargs):
         current_plan = {"plan_duration": None, "name": "free"}
         if getattr(request.user, "customer", None) is not None:
             current_plan = request.user.customer.current_plan()
 
+        if current_plan["name"] == "free":
+            duration = self.default_duration
+        else:
+            duration = current_plan["plan_duration"]
+
         return redirect(
-            reverse(
-                "upgrade_plan_duration",
-                kwargs=dict(
-                    plan_duration=current_plan["plan_duration"] or self.default_duration
-                ),
-            )
+            reverse("upgrade_plan_duration", kwargs=dict(plan_duration=duration))
         )
 
 
@@ -178,14 +163,6 @@ class UpgradePlan(View):
                 new_plan = product.plans.get(nickname="Free Plan")
                 result = customer.update_plan(new_plan)
 
-            elif upgrade_plan == "plus":
-                if plan_duration == "monthly":
-                    new_plan = product.plans.get(nickname="Monthly Plus Plan")
-                else:
-                    new_plan = product.plans.get(nickname="Yearly Plus Plan")
-
-                result = customer.update_plan(new_plan)
-
             elif upgrade_plan == "pro":
                 if plan_duration == "monthly":
                     new_plan = product.plans.get(nickname="Monthly Pro Plan")
@@ -193,9 +170,6 @@ class UpgradePlan(View):
                     new_plan = product.plans.get(nickname="Yearly Pro Plan")
 
                 result = customer.update_plan(new_plan)
-
-            elif upgrade_plan == "team":
-                send_teams_interest_mail(customer.user)
 
             current_plan = customer.current_plan()
 

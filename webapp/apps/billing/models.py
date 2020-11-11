@@ -121,10 +121,6 @@ class Customer(models.Model):
             )
             if si.plan.nickname == "Free Plan":
                 current_plan = {"plan_duration": None, "name": "free"}
-            elif si.plan.nickname == "Monthly Plus Plan":
-                current_plan = {"plan_duration": "monthly", "name": "plus"}
-            elif si.plan.nickname == "Yearly Plus Plan":
-                current_plan = {"plan_duration": "yearly", "name": "plus"}
             elif si.plan.nickname == "Monthly Pro Plan":
                 current_plan = {"plan_duration": "monthly", "name": "pro"}
             elif si.plan.nickname == "Yearly Pro Plan":
@@ -153,27 +149,16 @@ class Customer(models.Model):
             if current_si.plan.nickname == "Free Plan":
                 status = UpdateStatus.upgrade
 
-            elif current_si.plan.nickname.endswith("Plus Plan"):
-
-                if new_plan.nickname.endswith("Plus Plan"):
-                    status = UpdateStatus.duration_change
-                elif new_plan.nickname.endswith("Pro Plan"):
-                    status = UpdateStatus.upgrade
-                elif new_plan.nickname == "Free Plan":
-                    status = UpdateStatus.downgrade
-
             elif current_si.plan.nickname.endswith("Pro Plan"):
 
                 if new_plan.nickname.endswith("Pro Plan"):
                     status = UpdateStatus.duration_change
-                elif new_plan.nickname.endswith("Plus Plan"):
-                    status = UpdateStatus.downgrade
                 elif new_plan.nickname == "Free Plan":
                     status = UpdateStatus.downgrade
 
             else:
                 raise ValueError(
-                    "Can only handle free, plus, and pro plans at the moment: {new_plan.nickname}."
+                    "Can only handle free, and pro plans at the moment: {new_plan.nickname}."
                 )
 
             stripe.SubscriptionItem.modify(
@@ -553,39 +538,19 @@ def create_pro_billing_objects():
     else:
         product = Product.objects.get(name="Compute Studio Subscription")
 
-    if Plan.objects.filter(nickname="Free Plan").count() == 0:
+    if product.plans.filter(nickname="Free Plan").count() == 0:
         plan = Plan.create_stripe_object(
             amount=0,
             product=product,
             usage_type="licensed",
-            interval="month",
+            interval="year",
             nickname="Free Plan",
         )
         Plan.get_or_construct(plan.id, product)
 
-    if Plan.objects.filter(nickname="Monthly Plus Plan").count() == 0:
+    if product.plans.filter(nickname="Monthly Pro Plan").count() == 0:
         monthly_plan = Plan.create_stripe_object(
-            amount=15 * 100,
-            product=product,
-            usage_type="licensed",
-            interval="month",
-            nickname="Monthly Plus Plan",
-        )
-        Plan.get_or_construct(monthly_plan.id, product)
-
-    if Plan.objects.filter(nickname="Yearly Plus Plan").count() == 0:
-        yearly_plan = Plan.create_stripe_object(
-            amount=150 * 100,
-            product=product,
-            usage_type="licensed",
-            interval="year",
-            nickname="Yearly Plus Plan",
-        )
-        Plan.get_or_construct(yearly_plan.id, product)
-
-    if Plan.objects.filter(nickname="Monthly Pro Plan").count() == 0:
-        monthly_plan = Plan.create_stripe_object(
-            amount=50 * 100,
+            amount=int(12.5 * 100),
             product=product,
             usage_type="licensed",
             interval="month",
@@ -593,9 +558,9 @@ def create_pro_billing_objects():
         )
         Plan.get_or_construct(monthly_plan.id, product)
 
-    if Plan.objects.filter(nickname="Yearly Pro Plan").count() == 0:
+    if product.plans.filter(nickname="Yearly Pro Plan").count() == 0:
         yearly_plan = Plan.create_stripe_object(
-            amount=500 * 100,
+            amount=int(10 * 100),
             product=product,
             usage_type="licensed",
             interval="year",

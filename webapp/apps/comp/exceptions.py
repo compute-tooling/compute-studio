@@ -36,7 +36,7 @@ class ResourceLimitException(CSException):
     collaborators_msg = (
         "You have reached the limit for the number of collaborators "
         "on private simulations. You may make this simulation public "
-        "or upgrade to Compute Studio Plus or Pro to add more "
+        "or upgrade to Compute Studio Pro to add more "
         "collaborators."
     )
 

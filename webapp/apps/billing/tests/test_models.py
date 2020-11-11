@@ -69,8 +69,6 @@ class TestStripeModels:
         plans = set(
             [
                 Plan.objects.get(nickname="Free Plan"),
-                Plan.objects.get(nickname="Monthly Plus Plan"),
-                Plan.objects.get(nickname="Yearly Plus Plan"),
                 Plan.objects.get(nickname="Monthly Pro Plan"),
                 Plan.objects.get(nickname="Yearly Pro Plan"),
             ]
@@ -126,39 +124,6 @@ class TestStripeModels:
             "name": "pro",
         }
 
-        # test downgrade from pro to plus
-        plan = cs_product.plans.get(nickname=f"{plan_duration} Plus Plan")
-
-        result = customer.update_plan(plan)
-        assert result == UpdateStatus.downgrade
-
-        assert customer.current_plan() == {
-            "plan_duration": plan_duration.lower(),
-            "name": "plus",
-        }
-
-        # swap to other plus duration
-        plan = cs_product.plans.get(nickname=f"{other_duration} Plus Plan")
-
-        result = customer.update_plan(plan)
-        assert result == UpdateStatus.duration_change
-
-        assert customer.current_plan() == {
-            "plan_duration": other_duration.lower(),
-            "name": "plus",
-        }
-
-        # test upgrade back to pro
-        plan = cs_product.plans.get(nickname=f"{plan_duration} Pro Plan")
-
-        result = customer.update_plan(plan)
-        assert result == UpdateStatus.upgrade
-
-        assert customer.current_plan() == {
-            "plan_duration": plan_duration.lower(),
-            "name": "pro",
-        }
-
         # swap to other pro duration
         plan = cs_product.plans.get(nickname=f"{other_duration} Pro Plan")
 
@@ -178,3 +143,14 @@ class TestStripeModels:
         assert customer.current_plan(as_dict=False).plan == Plan.objects.get(
             nickname="Free Plan"
         )
+
+        # test upgrade back to pro
+        plan = cs_product.plans.get(nickname=f"{plan_duration} Pro Plan")
+
+        result = customer.update_plan(plan)
+        assert result == UpdateStatus.upgrade
+
+        assert customer.current_plan() == {
+            "plan_duration": plan_duration.lower(),
+            "name": "pro",
+        }

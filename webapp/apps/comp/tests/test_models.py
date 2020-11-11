@@ -120,7 +120,7 @@ def test_private_parent_sims(db, shuffled_sims, profile):
 
 @pytest.mark.parametrize("is_public", [True, False])
 def test_sim_fork(db, get_inputs, meta_param_dict, is_public):
-    (profile,) = gen_collabs(1, plan="plus")
+    (profile,) = gen_collabs(1, plan="pro")
     modeler = User.objects.get(username="modeler").profile
     inputs = _submit_inputs("Used-for-testing", get_inputs, meta_param_dict, modeler)
 
@@ -254,10 +254,10 @@ def test_sim_screenshot_query(db, get_inputs, meta_param_dict):
         Simulation.objects.get_object_from_screenshot("abc123", http_404_on_fail=True)
 
 
-def test_sim_permissions(db, get_inputs, meta_param_dict, plus_profile):
+def test_sim_permissions(db, get_inputs, meta_param_dict, pro_profile):
     collab = next(gen_collabs(1))
     inputs = _submit_inputs(
-        "Used-for-testing", get_inputs, meta_param_dict, plus_profile
+        "Used-for-testing", get_inputs, meta_param_dict, pro_profile
     )
 
     _, submit_sim = _submit_sim(inputs)
@@ -333,7 +333,7 @@ def test_sim_permissions(db, get_inputs, meta_param_dict, plus_profile):
 
     sim.is_public = True
     sim.save()
-    assert sim.has_read_access(plus_profile.user)
+    assert sim.has_read_access(pro_profile.user)
     assert sim.has_read_access(collab.user)
     assert sim.has_read_access(None) is True
 
@@ -353,9 +353,9 @@ def test_sim_permissions(db, get_inputs, meta_param_dict, plus_profile):
         sim.assign_role("dne", collab.user)
 
 
-def test_add_authors(db, get_inputs, meta_param_dict, plus_profile):
+def test_add_authors(db, get_inputs, meta_param_dict, pro_profile):
     inputs = _submit_inputs(
-        "Used-for-testing", get_inputs, meta_param_dict, plus_profile
+        "Used-for-testing", get_inputs, meta_param_dict, pro_profile
     )
 
     _, submit_sim = _submit_sim(inputs)
@@ -381,7 +381,7 @@ def test_add_authors(db, get_inputs, meta_param_dict, plus_profile):
     sim = Simulation.objects.get(pk=sim.pk)
     assert sim.pending_permissions.filter(id=pp.id).count() == 1
 
-    assert sim.authors.all().count() == 1 and sim.authors.get(pk=plus_profile.pk)
+    assert sim.authors.all().count() == 1 and sim.authors.get(pk=pro_profile.pk)
 
     pp.add_author()
 
@@ -435,7 +435,7 @@ class TestCollaborators:
             sim.make_private_test()
 
         assert excinfo.value.todict() == {
-            "upgrade_to": "plus",
+            "upgrade_to": "pro",
             "resource": "collaborators",
             "test_name": "make_private",
             "msg": ResourceLimitException.collaborators_msg,
@@ -452,67 +452,6 @@ class TestCollaborators:
                 and sim.role(collab.user) == "read"
             )
 
-        with pytest.raises(ResourceLimitException):
-            sim.make_private_test()
-
-    def test_plus_tier(self, db, get_inputs, meta_param_dict, plus_profile):
-        """
-        Test can only add one collaborator to private sim but
-        public is unlimited.
-        """
-        inputs = _submit_inputs(
-            "Used-for-testing", get_inputs, meta_param_dict, plus_profile
-        )
-
-        _, submit_sim = _submit_sim(inputs)
-        sim = submit_sim.submit()
-        sim.status = "SUCCESS"
-        sim.is_public = False
-        sim.save()
-
-        collabs = list(gen_collabs(3))
-
-        # add first collaborator.
-        sim.assign_role("read", collabs[0].user)
-        assert (
-            get_perms(collabs[0].user, sim) == ["read_simulation"]
-            and sim.role(collabs[0].user) == "read"
-        )
-
-        # cannot add second collaborator when sim is private.
-        with pytest.raises(ResourceLimitException) as excinfo:
-            sim.assign_role("read", collabs[1].user)
-
-        assert excinfo.value.todict() == {
-            "resource": "collaborators",
-            "test_name": "add_collaborator",
-            "upgrade_to": "pro",
-            "msg": ResourceLimitException.collaborators_msg,
-        }
-        assert (
-            get_perms(collabs[1].user, sim) == [] and sim.role(collabs[1].user) == None
-        )
-        # make sure first collaborator is not affected.
-        assert (
-            get_perms(collabs[0].user, sim) == ["read_simulation"]
-            and sim.role(collabs[0].user) == "read"
-        )
-
-        # OK to make sim private.
-        sim.make_private_test()
-
-        # test no limit on collaborators when sim is free.
-        sim.is_public = True
-        sim.save()
-
-        for collab in collabs:
-            sim.assign_role("read", collab.user)
-            assert (
-                get_perms(collab.user, sim) == ["read_simulation"]
-                and sim.role(collab.user) == "read"
-            )
-
-        # Making sim private is not allowed.
         with pytest.raises(ResourceLimitException):
             sim.make_private_test()
 
