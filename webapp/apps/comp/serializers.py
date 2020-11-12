@@ -3,7 +3,6 @@ from guardian.shortcuts import get_users_with_perms
 
 from webapp.apps.users.serializers import ProjectSerializer
 
-from .exceptions import ResourceLimitException
 from .models import Inputs, Simulation, PendingPermission, ModelConfig
 
 

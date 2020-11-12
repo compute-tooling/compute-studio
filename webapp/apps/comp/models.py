@@ -30,7 +30,8 @@ from webapp.apps.comp import utils
 from webapp.apps.comp.exceptions import (
     ForkObjectException,
     PermissionExpiredException,
-    ResourceLimitException,
+    CollaboratorLimitException,
+    PrivateSimException,
     VersionMismatchException,
     PrivateAppException,
 )
@@ -40,6 +41,8 @@ from webapp.apps.comp.exceptions import (
 utc_tz = pytz.timezone("America/Sao_Paulo")
 
 ANON_BEFORE = timezone.make_aware(datetime.datetime(2020, 1, 16, 23, 59, 59), utc_tz)
+
+FREE_PRIVATE_SIMS = 3
 
 
 class JSONField(JSONBField):
@@ -539,65 +542,60 @@ class Simulation(models.Model):
     def is_owner(self, user):
         return user == self.owner.user
 
-    def _collaborator_test(self, test_name, adding_collaborator=True):
+    def _private_app_test(self, collaborator):
+        """Test that collaborator has access to the app if it's private."""
+        if not self.project.has_read_access(collaborator):
+            raise PrivateAppException(collaborator)
+
+    def add_collaborator_test(self, collaborator=None, **kwargs):
         """
-        Related: Project._collaborator_test
+        Test if user's plan allows them to add collaborators
+        to a private simulation.
         """
         if not HAS_USAGE_RESTRICTIONS:
             return
 
-        permission_objects = get_users_with_perms(self)
-
-        # number of additional collaborators besides owner.
-        num_collaborators = permission_objects.count() - 1
-
-        if adding_collaborator:
-            num_collaborators += 1
+        if self.is_public:
+            self._private_app_test(collaborator=collaborator)
+            return
 
         user = self.owner.user
         customer = getattr(user, "customer", None)
         if customer is None:
-            if num_collaborators >= 0:
-                raise ResourceLimitException(
-                    "collaborators",
-                    test_name,
-                    "pro",
-                    ResourceLimitException.collaborators_msg,
-                )
+            plan = "free"
         else:
-            current_plan = customer.current_plan()
+            plan = customer.current_plan()["name"]
 
-            if num_collaborators >= 0 and current_plan["name"] == "free":
-                raise ResourceLimitException(
-                    "collaborators",
-                    test_name,
-                    "pro",
-                    ResourceLimitException.collaborators_msg,
-                )
+        if plan == "free":
+            raise CollaboratorLimitException()
 
-    def _private_app_test(self, collaborator):
-        if not self.project.has_read_access(collaborator):
-            raise PrivateAppException(
-                "collaborators",
-                "add_collaborator_on_private_app",
-                collaborator=collaborator,
-            )
-
-    def add_collaborator_test(self, collaborator=None, **kwargs):
-        """
-        Test if user's plan allows them to add more collaborators
-        to this simulation.
-        """
-        if not self.is_public:
-            self._collaborator_test("add_collaborator", adding_collaborator=True)
         self._private_app_test(collaborator=collaborator)
 
     def make_private_test(self, **kwargs):
         """
-        Test if user's plan allows them to make the simulation private with
-        the existing number of collaborators.
+        Test if user's plan allows them to make this sim private.
         """
-        return self._collaborator_test("make_private", adding_collaborator=False)
+        if not HAS_USAGE_RESTRICTIONS:
+            return
+
+        user = self.owner.user
+        customer = getattr(user, "customer", None)
+        if customer is None:
+            plan = "free"
+        else:
+            plan = customer.current_plan()["name"]
+
+        if plan == "free":
+            thirty_days_ago = timezone.now() - datetime.timedelta(days=30)
+            private_sims = self.owner.sims.filter(
+                is_public=False, creation_date__gte=thirty_days_ago
+            )
+            permission_objects = get_users_with_perms(self)
+            num_collaborators = permission_objects.count() - 1
+            if num_collaborators > 0:
+                raise CollaboratorLimitException()
+            if private_sims.count() >= FREE_PRIVATE_SIMS - 1:
+                raise PrivateSimException()
 
     """
     The methods below are used for checking if a user has read, write, or admin

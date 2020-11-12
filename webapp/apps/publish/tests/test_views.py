@@ -423,7 +423,7 @@ class TestPublishViews:
             resp = api_client.post("/apps/api/v1/", post_data)
         assert resp.status_code == 400
         data = resp.json()
-        assert "make_private" == data["collaborators"]["test_name"]
+        assert "make_app_private" == data["app"]["test_name"]
 
         with pytest.raises(Project.DoesNotExist):
             Project.objects.get(title="New-Model")
@@ -439,7 +439,7 @@ class TestPublishViews:
             )
         assert resp.status_code == 400
         data = resp.json()
-        assert "make_private" == data["collaborators"]["test_name"]
+        assert "make_app_private" == data["app"]["test_name"]
 
 
 class TestDeployments:

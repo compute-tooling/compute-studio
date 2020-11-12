@@ -37,8 +37,9 @@ from webapp.apps.comp.exceptions import (
     ValidationError,
     BadPostException,
     ForkObjectException,
-    ResourceLimitException,
     PrivateAppException,
+    PrivateSimException,
+    CollaboratorLimitException,
 )
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
@@ -219,7 +220,11 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
                     return Response(
                         serializer.errors, status=status.HTTP_400_BAD_REQUEST
                     )
-                except (ResourceLimitException, PrivateAppException) as e:
+                except (
+                    PrivateSimException,
+                    CollaboratorLimitException,
+                    PrivateAppException,
+                ) as e:
                     return Response(
                         {e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST
                     )
@@ -319,7 +324,11 @@ class ForkDetailAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView
         except ForkObjectException as e:
             msg = str(e)
             return Response({"fork": msg}, status=status.HTTP_400_BAD_REQUEST)
-        except (ResourceLimitException, PrivateAppException) as e:
+        except (
+            PrivateSimException,
+            CollaboratorLimitException,
+            PrivateAppException,
+        ) as e:
             return Response(
                 data={e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST,
             )
@@ -464,7 +473,11 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                     pp, created = PendingPermission.objects.get_or_create(
                         sim=self.object, profile=profile, permission_name="add_author"
                     )
-                except (ResourceLimitException, PrivateAppException) as e:
+                except (
+                    PrivateSimException,
+                    CollaboratorLimitException,
+                    PrivateAppException,
+                ) as e:
                     return Response(
                         data={e.resource: e.todict()},
                         status=status.HTTP_400_BAD_REQUEST,
@@ -481,6 +494,7 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                     )
 
                 try:
+                    print(data)
                     msg = next(
                         (
                             obj["msg"]

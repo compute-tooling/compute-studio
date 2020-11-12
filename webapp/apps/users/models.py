@@ -37,7 +37,7 @@ from webapp.settings import (
     HAS_USAGE_RESTRICTIONS,
 )
 
-from webapp.apps.users.exceptions import ResourceLimitException
+from webapp.apps.users.exceptions import PrivateAppException
 
 import cs_crypt
 import jwt
@@ -466,57 +466,42 @@ class Project(models.Model):
     def is_owner(self, user):
         return user == self.owner.user
 
-    def _collaborator_test(self, test_name, adding_collaborator=True):
+    def make_private_test(self):
         """
-        Related: Simulation._collaborator_test
+        Test if user's plan allows them to make the app private.
         """
         if not HAS_USAGE_RESTRICTIONS:
             return
 
-        permission_objects = get_users_with_perms(self)
+        user = self.owner.user
+        customer = getattr(user, "customer", None)
+        if customer is None:
+            plan = "free"
+        else:
+            plan = customer.current_plan()["name"]
 
-        # number of additional collaborators besides owner and cluster
-        # service account.
-        num_collaborators = permission_objects.count() - 2
+        if plan == "free":
+            raise PrivateAppException()
 
-        if adding_collaborator:
-            num_collaborators += 1
+    def add_collaborator_test(self):
+        """
+        Test if user's plan allows them to add a collaborator.
+        """
+        if not HAS_USAGE_RESTRICTIONS or self.is_public:
+            return
 
         user = self.owner.user
         customer = getattr(user, "customer", None)
         if customer is None:
-            raise ResourceLimitException(
-                "collaborators",
-                test_name,
-                "pro",
-                ResourceLimitException.collaborators_msg,
-            )
+            plan = "free"
         else:
-            current_plan = customer.current_plan()
+            plan = customer.current_plan()["name"]
 
-            if current_plan["name"] == "free":
-                raise ResourceLimitException(
-                    "collaborators",
-                    test_name,
-                    "pro",
-                    ResourceLimitException.collaborators_msg,
-                )
-
-    def add_collaborator_test(self):
-        """
-        Test if user's plan allows them to add more collaborators
-        to this app.
-        """
-        if self.is_public:
-            return
-        return self._collaborator_test("add_collaborator", adding_collaborator=True)
-
-    def make_private_test(self):
-        """
-        Test if user's plan allows them to make the app private with
-        the existing number of collaborators.
-        """
-        return self._collaborator_test("make_private", adding_collaborator=False)
+        if plan == "free":
+            permission_objects = get_users_with_perms(self)
+            num_collaborators = permission_objects.count() - 1
+            if num_collaborators > 0:
+                raise PrivateAppException()
 
     """
     The methods below are used for checking if a user has read, write, or admin

@@ -28,7 +28,7 @@ from rest_framework import filters
 # from webapp.settings import DEBUG
 
 from webapp.settings import USE_STRIPE
-from webapp.apps.users.exceptions import ResourceLimitException
+from webapp.apps.users.exceptions import PrivateAppException
 from webapp.apps.users.models import (
     Project,
     Cluster,
@@ -169,7 +169,7 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
         serializer = ProjectSerializer(project, data=request.data)
         try:
             is_valid = serializer.is_valid()
-        except ResourceLimitException as e:
+        except PrivateAppException as e:
             return Response(
                 {e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST
             )
@@ -232,7 +232,7 @@ class ProjectAPIView(APIView):
                         title=title,
                         cluster=Cluster.objects.default(),
                     )
-                except ResourceLimitException as e:
+                except PrivateAppException as e:
                     return Response(
                         {e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST
                     )

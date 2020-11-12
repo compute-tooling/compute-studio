@@ -12,11 +12,18 @@ from guardian.shortcuts import get_perms
 
 from webapp.apps.users.models import Project, Profile, create_profile_from_user
 from webapp.apps.users.tests.utils import gen_collabs
-from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
+from webapp.apps.comp.models import (
+    Inputs,
+    Simulation,
+    PendingPermission,
+    ANON_BEFORE,
+    FREE_PRIVATE_SIMS,
+)
 from webapp.apps.comp.exceptions import (
     ForkObjectException,
     VersionMismatchException,
-    ResourceLimitException,
+    PrivateSimException,
+    CollaboratorLimitException,
 )
 
 from .utils import (
@@ -421,24 +428,32 @@ class TestCollaborators:
         Test private sim can not have any collaborators but
         public is unlimited.
         """
-        inputs = _submit_inputs(
-            "Used-for-testing", get_inputs, meta_param_dict, free_profile
-        )
+        sims = []
+        for i in range(FREE_PRIVATE_SIMS):
+            inputs = _submit_inputs(
+                "Used-for-testing", get_inputs, meta_param_dict, free_profile
+            )
 
-        _, submit_sim = _submit_sim(inputs)
-        sim = submit_sim.submit()
-        sim.status = "SUCCESS"
-        sim.save()
+            _, submit_sim = _submit_sim(inputs)
+            sim = submit_sim.submit()
+            sim.status = "SUCCESS"
+            sim.save()
+            sims.append(sim)
+
+        for sim in sims[:-1]:
+            sim.make_private_test()
+            sim.is_public = False
+            sim.save()
 
         # Error on making sim private in free tier.
-        with pytest.raises(ResourceLimitException) as excinfo:
+        with pytest.raises(PrivateSimException) as excinfo:
             sim.make_private_test()
 
         assert excinfo.value.todict() == {
             "upgrade_to": "pro",
-            "resource": "collaborators",
-            "test_name": "make_private",
-            "msg": ResourceLimitException.collaborators_msg,
+            "resource": PrivateSimException.resource,
+            "test_name": "make_simulation_private",
+            "msg": PrivateSimException.msg,
         }
 
         # test no limit on collaborators when sim is public.
@@ -452,7 +467,7 @@ class TestCollaborators:
                 and sim.role(collab.user) == "read"
             )
 
-        with pytest.raises(ResourceLimitException):
+        with pytest.raises(CollaboratorLimitException):
             sim.make_private_test()
 
     def test_pro_tier(self, db, get_inputs, meta_param_dict, pro_profile, profile):

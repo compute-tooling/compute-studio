@@ -15,7 +15,7 @@ from webapp.apps.users.models import (
     DeploymentException,
     EmbedApproval,
 )
-from webapp.apps.users.exceptions import ResourceLimitException
+from webapp.apps.users.exceptions import PrivateAppException
 from webapp.apps.users.tests.utils import gen_collabs, replace_owner
 from webapp.apps.comp.models import Simulation, ANON_BEFORE
 
@@ -293,19 +293,20 @@ class TestCollaborators:
         public is unlimited.
         """
         project.is_public = False
+        project.save()
         replace_owner(project, free_profile)
 
         collabs = list(gen_collabs(3))
 
         # Test cannot add collaborator when app is private.
-        with pytest.raises(ResourceLimitException) as excinfo:
+        with pytest.raises(PrivateAppException) as excinfo:
             project.assign_role("read", collabs[0].user)
 
         assert excinfo.value.todict() == {
             "upgrade_to": "pro",
-            "resource": "collaborators",
-            "test_name": "add_collaborator",
-            "msg": ResourceLimitException.collaborators_msg,
+            "resource": PrivateAppException.resource,
+            "test_name": "make_app_private",
+            "msg": PrivateAppException.msg,
         }
         assert (
             get_perms(collabs[0].user, project) == []
@@ -313,7 +314,7 @@ class TestCollaborators:
         )
 
         # Unable for free users to make apps private.
-        with pytest.raises(ResourceLimitException):
+        with pytest.raises(PrivateAppException):
             project.make_private_test()
 
         # Test no limit on collaborators when app is public.
@@ -327,7 +328,7 @@ class TestCollaborators:
                 and project.role(collab.user) == "read"
             )
 
-        with pytest.raises(ResourceLimitException):
+        with pytest.raises(PrivateAppException):
             project.make_private_test()
 
     def test_pro_tier(self, db, project, pro_profile, profile):

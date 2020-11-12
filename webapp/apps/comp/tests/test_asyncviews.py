@@ -24,9 +24,18 @@ from webapp.apps.users.models import (
     create_profile_from_user,
 )
 from webapp.apps.users.tests.utils import gen_collabs, replace_owner
-from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
+from webapp.apps.comp.models import (
+    Inputs,
+    Simulation,
+    PendingPermission,
+    ANON_BEFORE,
+    FREE_PRIVATE_SIMS,
+)
 from webapp.apps.comp.ioutils import get_ioutils
-from webapp.apps.comp.exceptions import ResourceLimitException
+from webapp.apps.comp.exceptions import (
+    CollaboratorLimitException,
+    PrivateSimException,
+)
 from .compute import MockCompute
 from .utils import (
     read_outputs,
@@ -1357,7 +1366,7 @@ class TestCollaboration:
             )
             assert_status(200, resp, f"add author {str(collab)}")
 
-    def test_public_to_private_transition(
+    def test_make_sim_private_with_collabs(
         self, db, client, api_client, get_inputs, meta_param_dict,
     ):
         """
@@ -1397,15 +1406,67 @@ class TestCollaboration:
 
         resp = api_client.put(sim.get_absolute_api_url(), data={"is_public": False})
         sim.refresh_from_db()
-        assert_status(400, resp, "can't make private with >2 collabs")
+        assert_status(400, resp, "can't make private with collabs")
         assert resp.data == {
-            "collaborators": {
-                "msg": ResourceLimitException.collaborators_msg,
+            "collaborator": {
+                "msg": CollaboratorLimitException.msg,
                 "upgrade_to": "pro",
-                "resource": "collaborators",
-                "test_name": "make_private",
+                "resource": CollaboratorLimitException.resource,
+                "test_name": "add_collaborator",
             }
         }
+
+    def test_private_simulation_limit(
+        self, db, client, api_client, get_inputs, meta_param_dict,
+    ):
+        """
+        Test collaborator resource usage limits.
+        - Test creating FREE_PRIVATE_SIMS - 1 is ok
+        - Test making the FREE_PRIVATE_SIMS'th one causes an error.
+        """
+        sponsored_matchups = Project.objects.get(
+            title="Matchups", owner__user__username="hdoupe"
+        )
+        sponsored_matchups.sponsor = sponsored_matchups.owner
+        sponsored_matchups.save()
+
+        (sim_owner,) = gen_collabs(1, plan="free")
+        sponsored_matchups.assign_role("read", sim_owner.user)
+
+        sims = []
+        for i in range(FREE_PRIVATE_SIMS):
+            inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, sim_owner)
+
+            _, submit_sim = _submit_sim(inputs)
+            sim = submit_sim.submit()
+            sim.status = "SUCCESS"
+            sim.outputs = json.loads(read_outputs("Matchups_v1"))
+            sim.is_public = True
+            sim.save()
+            sims.append(sim)
+
+        for sim in sims[:-1]:
+            api_client.force_login(sim.owner.user)
+            resp = api_client.put(sim.get_absolute_api_url(), data={"is_public": False})
+            assert_status(200, resp, "ok to make sims private")
+            sim.refresh_from_db()
+            assert not sim.is_public
+
+        api_client.force_login(sims[-1].owner.user)
+        resp = api_client.put(
+            sims[-1].get_absolute_api_url(), data={"is_public": False}
+        )
+        assert_status(400, resp, "can't make private with >2 collabs")
+        assert resp.data == {
+            "simulation": {
+                "msg": PrivateSimException.msg,
+                "upgrade_to": "pro",
+                "resource": PrivateSimException.resource,
+                "test_name": "make_simulation_private",
+            }
+        }
+        sims[-1].refresh_from_db()
+        assert sims[-1].is_public
 
 
 def test_list_sim_api(db, api_client, get_inputs, meta_param_dict):
