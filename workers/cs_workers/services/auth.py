@@ -131,7 +131,7 @@ class User:
     @staticmethod
     def get(username):
         if username is None:
-            raise UserNotFound()
+            raise UserNotFound(f"Unknown user: {username}")
 
         with redis.Redis(**redis_conn) as rclient:
             values = rclient.hgetall(f"users-{username}")
@@ -161,7 +161,7 @@ class User:
 def all_users(rclient=None):
     with redis.Redis(**redis_conn) as rclient:
         for user_name in rclient.scan_iter(match="users-*"):
-            yield User.get(user_name.decode().split("-")[1])
+            yield User.get(user_name.decode().split("users-")[1])
 
 
 def authenticate_request(request):
