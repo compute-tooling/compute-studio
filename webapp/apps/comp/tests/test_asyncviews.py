@@ -236,11 +236,13 @@ class RunMockModel(CoreTestMixin):
         assert_status(401, not_authed, "put_adjustment_no_perms")
         self.api_client.logout()
 
-        set_auth_token(self.api_client, self.comp_api_user.user)
         self.mockcompute.client = self.api_client
         self.monkeypatch.setattr("webapp.apps.comp.views.api.Compute", self.mockcompute)
         put_adj_resp = self.api_client.put(
-            f"/inputs/api/", data=adj_callback_data, format="json"
+            f"/inputs/api/",
+            data=adj_callback_data,
+            format="json",
+            **self.project.cluster.headers(),
         )
         assert_status(200, put_adj_resp, "put_adjustment")
         return put_adj_resp
@@ -290,13 +292,13 @@ class RunMockModel(CoreTestMixin):
         assert_status(401, not_authed, "put_outputs_no_perms")
         self.api_client.logout()
 
-        set_auth_token(self.api_client, self.comp_api_user.user)
         resp = self.api_client.put(
             "/outputs/api/",
             data=dict(
                 json.loads(self.mockcompute.outputs), **{"task_id": self.sim.job_id}
             ),
             format="json",
+            **self.project.cluster.headers(),
         )
         if resp.status_code != 200:
             raise Exception(

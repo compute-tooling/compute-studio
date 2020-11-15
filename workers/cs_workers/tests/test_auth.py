@@ -9,19 +9,19 @@ from cs_workers.services.auth import User, redis_conn, UserNotFound, cryptkeeper
 @pytest.fixture(scope="function")
 def user():
     try:
-        _user = User.get(username="hdoupe")
+        _user = User.get(username="test")
         _user.delete()
     except UserNotFound:
         pass
 
     yield User.create(
-        username="hdoupe",
-        email="hdoupe@example.com",
+        username="test",
+        email="test@test.com",
         url="http://localhost:8000",
         approved=False,
     )
     try:
-        u = User.get(username="hdoupe")
+        u = User.get(username="test")
     except UserNotFound:
         pass
     else:
@@ -31,7 +31,7 @@ def user():
 class TestUser:
     def test_create_user(self, user):
         with redis.Redis(**redis_conn) as rclient:
-            user_vals = rclient.hgetall("users-hdoupe")
+            user_vals = rclient.hgetall("users-test")
 
         assert user_vals
         assert cryptkeeper.decrypt(user.jwt_secret)
@@ -71,15 +71,14 @@ class TestApi:
 
         resp = self.client.get(
             "/auth/",
-            headers={"Authorization": user.get_jwt_token(), "Cluster-User": "hdoupe",},
+            headers={"Authorization": user.get_jwt_token(), "Cluster-User": "test",},
         )
         assert resp.status_code == 200
         assert resp.json() == user.dump()
 
         invalid_token = jwt.encode(user.dump(), "abc123")
         resp = self.client.get(
-            "/auth/",
-            headers={"Authorization": invalid_token, "Cluster-User": "hdoupe",},
+            "/auth/", headers={"Authorization": invalid_token, "Cluster-User": "test",},
         )
         assert resp.status_code == 403
 
@@ -87,21 +86,23 @@ class TestApi:
         resp = self.client.post(
             "/auth/",
             json={
-                "username": "hdoupe",
-                "email": "test@example.com",
+                "username": "test",
+                "email": "test@test.com",
                 "url": "http://test.com",
             },
         )
-        assert resp.status_code == 200
-        user = User.get(username="hdoupe")
+        assert (
+            resp.status_code == 200
+        ), f"expected 200, got {resp.status_code} and {resp.text}"
+        user = User.get(username="test")
         data = resp.json()
         assert data == user.dump(include_jwt_secret=True)
 
         resp = self.client.post(
             "/auth/",
             json={
-                "username": "hdoupe",
-                "email": "test@example.com",
+                "username": "test",
+                "email": "test@test.com",
                 "url": "http://test.com",
             },
         )
@@ -113,7 +114,7 @@ class TestApi:
 
         resp = self.client.delete(
             "/auth/",
-            headers={"Authorization": user.get_jwt_token(), "Cluster-User": "hdoupe",},
+            headers={"Authorization": user.get_jwt_token(), "Cluster-User": "test",},
         )
         assert resp.status_code == 204
 
@@ -122,7 +123,6 @@ class TestApi:
 
         invalid_token = jwt.encode(user.dump(), "abc123")
         resp = self.client.delete(
-            "/auth/",
-            headers={"Authorization": invalid_token, "Cluster-User": "hdoupe",},
+            "/auth/", headers={"Authorization": invalid_token, "Cluster-User": "test",},
         )
         assert resp.status_code == 403

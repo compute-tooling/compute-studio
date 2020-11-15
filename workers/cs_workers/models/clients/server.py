@@ -70,16 +70,6 @@ class Server:
             kclient.V1EnvVar("OWNER", config["owner"]),
             kclient.V1EnvVar("TITLE", config["title"]),
         ]
-        envs.append(
-            kclient.V1EnvVar(
-                "CS_URL",
-                value_from=kclient.V1EnvVarSource(
-                    secret_key_ref=(
-                        kclient.V1SecretKeySelector(key="CS_URL", name="worker-secret")
-                    )
-                ),
-            )
-        )
 
         for secret in self.model_config._list_secrets(config):
             envs.append(

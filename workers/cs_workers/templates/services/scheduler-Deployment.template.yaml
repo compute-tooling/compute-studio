@@ -19,11 +19,6 @@ spec:
           ports:
             - containerPort: 8888
           env:
-            - name: CS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: worker-secret
-                  key: CS_URL
             - name: PROJECT
               valueFrom:
                 secretKeyRef:
@@ -49,7 +44,10 @@ spec:
                 secretKeyRef:
                   name: worker-secret
                   key: REDIS_DB
-            - name: REDIS_SCHEDULER_PW
+                  optional: true
+            - name: REDIS_USER
+              value: scheduler
+            - name: REDIS_PW
               valueFrom:
                 secretKeyRef:
                   name: worker-secret

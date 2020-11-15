@@ -63,6 +63,9 @@ class Manager:
         with open(Path("web-kubernetes") / "web-configmap.yaml") as f:
             self.web_configmap = yaml.safe_load(f.read())
 
+        with open(Path("web-kubernetes") / "deployment-cleanup.template.yaml") as f:
+            self.deployment_cleanup_job_template = yaml.safe_load(f.read())
+
         with open(Path("web-kubernetes") / "web-ingressroute.template.yaml") as f:
             self.web_ingressroute = yaml.safe_load(f.read())
 
@@ -98,6 +101,7 @@ class Manager:
         self.write_web(dev=dev)
         if update_db:
             self.write_db()
+        self.write_deployment_cleanup_job()
 
     def write_db(self):
         db_deployment = self.db_deployment
@@ -134,6 +138,25 @@ class Manager:
         self.write_config(web_configmap, filename="web-configmap.yaml")
         if self.host is not None:
             self.write_config(web_ir, filename="web-ingressroute.yaml")
+
+    def write_deployment_cleanup_job(self, dev=False):
+        job_obj = copy.deepcopy(self.deployment_cleanup_job_template)
+        spec = job_obj["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+        spec["containers"][0]["image"] = self.web_image
+
+        if dev:
+            warnings.warn("Deployment clean up job is being created in DEBUG mode!")
+            spec["containers"][0]["volumeMounts"] = [
+                {"name": "code-volume", "mountPath": "/code"}
+            ]
+            spec["volumes"] = [
+                {
+                    "name": "code-volume",
+                    "hostPath": {"path": "/code", "type": "Directory",},
+                }
+            ]
+
+        self.write_config(job_obj, filename="deployment-cleanup-job.yaml")
 
     def write_secret(self):
         secret_obj = copy.deepcopy(self.secret_template)

@@ -17,8 +17,8 @@ from cs_workers.utils import redis_conn_from_env
 from cs_workers.services.serializers import UserSerializer
 
 redis_conn = dict(
-    username="scheduler",
-    password=os.environ.get("REDIS_SCHEDULER_PW"),
+    username=os.environ.get("REDIS_USER"),
+    password=os.environ.get("REDIS_PW"),
     **redis_conn_from_env(),
 )
 
@@ -30,6 +30,9 @@ def get_cryptkeeper():
         try:
             return cs_crypt.CryptKeeper()
         except cs_crypt.EncryptionUnavailable:
+            import warnings
+
+            warnings.warn("Encryption unavailable.")
             return None
 
 
@@ -46,7 +49,7 @@ class UserExists(Exception):
 
 class User:
     def __init__(
-        self, username=None, email=None, url=None, jwt_secret=None, approved=None
+        self, *, username=None, email=None, url=None, jwt_secret=None, approved=None,
     ):
         self.username = username
         self.email = email
@@ -105,6 +108,15 @@ class User:
     def read_jwt_token(self, jwt_token):
         return jwt.decode(jwt_token, cryptkeeper.decrypt(self.jwt_secret))
 
+    def headers(self):
+        jwt_token = jwt.encode(
+            {"username": self.username,}, cryptkeeper.decrypt(self.jwt_secret),
+        )
+        return {
+            "Authorization": jwt_token,
+            "Cluster-User": self.username,
+        }
+
     @staticmethod
     def _load_values(values):
         result = {}
@@ -136,8 +148,20 @@ class User:
             pass
         jwt_secret = binascii.hexlify(os.urandom(32)).decode()
         encrypted = cryptkeeper.encrypt(jwt_secret)
-        user = User(username, email, url, encrypted, approved)
+        user = User(
+            username=username,
+            email=email,
+            url=url,
+            jwt_secret=encrypted,
+            approved=approved,
+        )
         return user.save()
+
+
+def all_users(rclient=None):
+    with redis.Redis(**redis_conn) as rclient:
+        for user_name in rclient.scan_iter(match="users-*"):
+            yield User.get(user_name.decode().split("-")[1])
 
 
 def authenticate_request(request):

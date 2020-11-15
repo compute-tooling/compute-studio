@@ -22,6 +22,7 @@ from rest_framework import filters
 import paramtools as pt
 import cs_storage
 
+from webapp.apps.users.auth import ClusterAuthentication
 from webapp.apps.users.models import (
     Project,
     Profile,
@@ -366,7 +367,11 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
     simulation results.
     """
 
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (
+        ClusterAuthentication,
+        # Uncomment to allow token-based authentication for this endpoint.
+        # TokenAuthentication,
+    )
 
     def put(self, request, *args, **kwargs):
         print("myoutputs api method=PUT", kwargs)
@@ -406,7 +411,11 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
 
 
 class MyInputsAPIView(APIView):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (
+        ClusterAuthentication,
+        # Uncomment to allow token-based authentication for this endpoint.
+        # TokenAuthentication,
+    )
 
     def put(self, request, *args, **kwargs):
         print("myinputs api method=PUT", kwargs)

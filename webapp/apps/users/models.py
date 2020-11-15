@@ -160,11 +160,7 @@ class Cluster(models.Model):
 
     def headers(self):
         jwt_token = jwt.encode(
-            {
-                "email": self.service_account.user.email,
-                "username": self.service_account.user.username,
-                "url": "http://localhost:8000",
-            },
+            {"username": self.service_account.user.username,},
             cryptkeeper.decrypt(self.jwt_secret),
         )
         return {

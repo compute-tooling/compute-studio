@@ -3,15 +3,24 @@ import json
 import os
 
 import httpx
+import redis
 import tornado.ioloop
 import tornado.web
 from dask.distributed import Client
 
 import cs_storage
 
+from cs_workers.services import auth
+from cs_workers.utils import redis_conn_from_env
 
-CS_URL = os.environ.get("CS_URL")
-CS_API_TOKEN = os.environ.get("CS_API_TOKEN")
+
+redis_conn = dict(
+    username=os.environ.get("REDIS_USER"),
+    password=os.environ.get("REDIS_PW"),
+    **redis_conn_from_env(),
+)
+
+
 BUCKET = os.environ.get("BUCKET")
 
 
@@ -22,16 +31,14 @@ async def write(task_id, outputs):
     return res
 
 
-async def push(task_name, result):
-    async with httpx.AsyncClient(
-        headers={"Authorization": f"Token {CS_API_TOKEN}"}
-    ) as client:
+async def push(url, auth_headers, task_name, result):
+    async with httpx.AsyncClient(headers=auth_headers) as client:
         if task_name == "sim":
-            print(f"posting data to {CS_URL}/outputs/api/")
-            return await client.put(f"{CS_URL}/outputs/api/", json=result)
+            print(f"posting data to {url}/outputs/api/")
+            return await client.put(f"{url}/outputs/api/", json=result)
         if task_name == "parse":
-            print(f"posting data to {CS_URL}/inputs/api/")
-            return await client.put(f"{CS_URL}/inputs/api/", json=result)
+            print(f"posting data to {url}/inputs/api/")
+            return await client.put(f"{url}/inputs/api/", json=result)
         else:
             raise ValueError(f"Unknown task type: {task_name}.")
 
@@ -48,14 +55,48 @@ class Write(tornado.web.RequestHandler):
 class Push(tornado.web.RequestHandler):
     async def post(self):
         print("POST -- /push/")
+        data = json.loads(self.request.body.decode("utf-8"))
+        job_id = data.get("result", {}).get("task_id", None)
+        if job_id is None:
+            print("missing job id")
+            self.set_status(400)
+            self.write(json.dumps({"error": "Missing job id."}))
+            return
+
+        with redis.Redis(**redis_conn) as rclient:
+            data = rclient.get(f"jobinfo-{job_id}")
+
+        if data is None:
+            print("Unknown job id: ", job_id)
+            self.set_status(400)
+            self.write(json.dumps({"error": "Unknown job id."}))
+            return
+
+        jobinfo = json.loads(data.decode())
+        print("got jobinfo", jobinfo)
+        cluster_user = jobinfo.get("cluster_user", None)
+        if cluster_user is None:
+            print("missing Cluster-User")
+            self.set_status(400)
+            self.write(json.dumps({"error": "Missing cluster_user."}))
+            return
+        user = auth.User.get(cluster_user)
+        if user is None:
+            print("unknown user", cluster_user)
+            self.set_status(404)
+            return
+
+        print("got user", user.username, user.url)
+
         payload = json.loads(self.request.body.decode("utf-8"))
-        resp = await push(**payload)
+        resp = await push(url=user.url, auth_headers=user.headers(), **payload)
         print("got resp-push", resp.status_code, resp.url)
         self.set_status(200)
 
 
 def get_app():
-    assert CS_URL and CS_API_TOKEN and BUCKET
+    assert auth.cryptkeeper is not None
+    assert BUCKET
     return tornado.web.Application(
         [(r"/write/", Write), (r"/push/", Push)], debug=True, autoreload=True
     )
