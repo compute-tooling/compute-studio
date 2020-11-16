@@ -28,6 +28,7 @@ from rest_framework import filters
 # from webapp.settings import DEBUG
 
 from webapp.settings import USE_STRIPE
+from webapp.apps.users.auth import ClusterAuthentication
 from webapp.apps.users.exceptions import PrivateAppException
 from webapp.apps.users.models import (
     Project,
@@ -195,6 +196,7 @@ class ProjectAPIView(APIView):
         SessionAuthentication,
         BasicAuthentication,
         TokenAuthentication,
+        ClusterAuthentication,
     )
     api_user = User.objects.get(username="comp-api-user")
 
