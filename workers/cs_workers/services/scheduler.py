@@ -251,6 +251,7 @@ def get_app():
     rclient = redis.Redis(**redis_conn)
     config = {}
     for user in all_users():
+        print(f"loading data for {user.username} at {user.url}")
         config[user.username] = ModelConfig(
             PROJECT, cs_url=user.url, cs_auth_headers=user.headers(), rclient=rclient,
         )
