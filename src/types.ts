@@ -169,6 +169,8 @@ export interface AccessStatus {
   exp_cost?: number;
   exp_time?: number;
   plan: { name: "free" | "pro" };
+  remaining_private_sims: number;
+  project: string;
 }
 
 export type Tech = "python-paramtools" | "dash" | "bokeh";

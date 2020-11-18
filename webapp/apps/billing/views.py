@@ -152,6 +152,10 @@ class UpgradePlan(View):
         customer = getattr(request.user, "customer", None)
         card_info = {"last4": None, "brand": None}
         current_plan = {"plan_duration": None, "name": "free"}
+        next_url = request.GET.get("next", None)
+        if next_url is not None:
+            request.session["post_upgrade_url"] = next_url
+
         if customer is not None:
             card_info = customer.card_info()
             product = Product.objects.get(name="Compute Studio Subscription")
@@ -173,14 +177,18 @@ class UpgradePlan(View):
 
             current_plan = customer.current_plan()
 
-            if result != UpdateStatus.nochange:
-                next_url = reverse(
+            if result != UpdateStatus.nochange and request.session.get(
+                "post_upgrade_url"
+            ):
+                return redirect(request.session.pop("post_upgrade_url"))
+            elif result != UpdateStatus.nochange:
+                done_next_url = reverse(
                     "upgrade_plan_duration_done",
                     kwargs=dict(
                         plan_duration=current_plan["plan_duration"] or plan_duration
                     ),
                 )
-                return redirect(next_url)
+                return redirect(done_next_url)
 
         return render(
             request,
@@ -190,6 +198,7 @@ class UpgradePlan(View):
                 "current_plan": current_plan,
                 "card_info": card_info,
                 "selected_plan": selected_plan,
+                "next": next_url,
             },
         )
 

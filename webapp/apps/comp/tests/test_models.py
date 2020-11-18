@@ -10,6 +10,7 @@ from django.forms.models import model_to_dict
 from django.http.response import Http404
 from guardian.shortcuts import get_perms
 
+from webapp.settings import FREE_PRIVATE_SIMS
 from webapp.apps.users.models import Project, Profile, create_profile_from_user
 from webapp.apps.users.tests.utils import gen_collabs
 from webapp.apps.comp.models import (
@@ -17,7 +18,6 @@ from webapp.apps.comp.models import (
     Simulation,
     PendingPermission,
     ANON_BEFORE,
-    FREE_PRIVATE_SIMS,
 )
 from webapp.apps.comp.exceptions import (
     ForkObjectException,

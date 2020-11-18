@@ -169,6 +169,22 @@ class TestBillingViews:
             == {"plan_duration": None, "name": "free"}
         )
 
+    def test_user_upgrade_next_url(self, client, customer, monkeypatch):
+        """
+        Test:
+        - Test redirect after upgrade.
+        """
+        client.force_login(customer.user)
+        exp_next_url = "/someone/appname/123/"
+        # test /billing/upgrade redirects to landing page corresponding to correct duration.
+        resp = client.get(f"/billing/upgrade/yearly/?next={exp_next_url}")
+        assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
+
+        resp = client.get(f"/billing/upgrade/yearly/?upgrade_plan=pro")
+        assert resp.status_code == 302, f"Expected 302: got {resp.status_code}"
+        next_url = resp.url
+        assert next_url == exp_next_url
+
     def test_list_invoices(self, db, client, customer):
         """
         Test list invoice view:

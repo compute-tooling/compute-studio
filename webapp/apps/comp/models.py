@@ -42,8 +42,6 @@ utc_tz = pytz.timezone("America/Sao_Paulo")
 
 ANON_BEFORE = timezone.make_aware(datetime.datetime(2020, 1, 16, 23, 59, 59), utc_tz)
 
-FREE_PRIVATE_SIMS = 3
-
 
 class JSONField(JSONBField):
     def db_type(self, connection):
@@ -586,15 +584,11 @@ class Simulation(models.Model):
             plan = customer.current_plan()["name"]
 
         if plan == "free":
-            thirty_days_ago = timezone.now() - datetime.timedelta(days=30)
-            private_sims = self.owner.sims.filter(
-                is_public=False, creation_date__gte=thirty_days_ago
-            )
             permission_objects = get_users_with_perms(self)
             num_collaborators = permission_objects.count() - 1
             if num_collaborators > 0:
                 raise CollaboratorLimitException()
-            if private_sims.count() >= FREE_PRIVATE_SIMS - 1:
+            if self.owner.remaining_private_sims() <= 0:
                 raise PrivateSimException()
 
     """

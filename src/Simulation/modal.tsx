@@ -88,7 +88,12 @@ const RequirePmtDialog: React.FC<{
         <Button variant="outline-secondary" onClick={() => setShow(false)}>
           Close
         </Button>
-        <Button variant="success" onClick={e => handleCloseWithRedirect(e, "/billing/update/")}>
+        <Button
+          variant="success"
+          onClick={e =>
+            handleCloseWithRedirect(e, `/billing/update/?next=${window.location.pathname}`)
+          }
+        >
           <b>Add payment method</b>
         </Button>
       </Modal.Footer>
@@ -115,12 +120,55 @@ const RunDialog: React.FC<{
   if (accessStatus.sponsor_message) {
     message = accessStatus.sponsor_message;
   }
+  const isPrivateRateLimited =
+    accessStatus.plan.name === "free" && accessStatus.remaining_private_sims <= 0;
+  let visabilitymsg;
+  if (isPublic) {
+    visabilitymsg = (
+      <div>
+        <p className="lead font-weight-bold">
+          The inputs for this simulation and your username{" "}
+          {accessStatus.username !== "anon" && (
+            <span className="font-italic">{accessStatus.username}</span>
+          )}{" "}
+          will be <span className="font-weight-bold">public and available to everyone.</span>
+        </p>
+        {isPrivateRateLimited && (
+          <p className="lead">
+            Create a{" "}
+            <a href={`/users/signup/?next=/${accessStatus.project}/new/`}>pseudonymous account</a>{" "}
+            or sign up for a{" "}
+            <a href={`/billing/upgrade/yearly/?next=${window.location.pathname}`}>C/S Pro</a>{" "}
+            account to conduct private simulations.
+          </p>
+        )}
+
+        <p className="lead">This model’s simulations are sponsored and there is no charge to you</p>
+      </div>
+    );
+  } else {
+    visabilitymsg = (
+      <div>
+        {accessStatus.plan.name === "free" && (
+          <p className="lead">
+            You have {accessStatus.remaining_private_sims} out of 3 private simulations left this
+            month.
+          </p>
+        )}
+
+        <p>
+          Only you and people that you've granted read access will have access to this simulation.
+        </p>
+      </div>
+    );
+  }
 
   let body;
   if (accessStatus.is_sponsored) {
     body = (
       <Modal.Body>
         <div dangerouslySetInnerHTML={{ __html: message }} />
+        {visabilitymsg}
       </Modal.Body>
     );
   } else {
@@ -131,6 +179,7 @@ const RunDialog: React.FC<{
           the monthly billing period.
         </p>
         <PricingInfoCollapse accessStatus={accessStatus} />
+        {visabilitymsg}
       </Modal.Body>
     );
   }
@@ -138,12 +187,14 @@ const RunDialog: React.FC<{
   return (
     <Modal show={show} onHide={() => setShow(false)}>
       <Modal.Header closeButton>
-        <Modal.Title>Are you sure that you want to run this simulation?</Modal.Title>
+        <Modal.Title>
+          Are you sure that you want to run this {isPublic ? "public" : "private"} simulation?
+        </Modal.Title>
       </Modal.Header>
       {body}
       <Modal.Footer style={{ justifyContent: "none" }}>
         <Row className="align-items-center w-100 justify-content-between">
-          <Col className=" col-auto">
+          <Col className="col-auto">
             <Row>
               <Col>
                 <CheckboxWidget
@@ -155,7 +206,23 @@ const RunDialog: React.FC<{
             </Row>
             <Row>
               <Col>
-                <CheckboxWidget setValue={setIsPublic} value={isPublic} message="Make public." />
+                <CheckboxWidget
+                  setValue={setIsPublic}
+                  value={isPublic}
+                  message={
+                    isPrivateRateLimited ? (
+                      <span>
+                        Public.{" "}
+                        <a href={`/billing/upgrade/yearly/?next=${window.location.pathname}`}>
+                          Upgrade to Pro.
+                        </a>
+                      </span>
+                    ) : (
+                      <span>Make public</span>
+                    )
+                  }
+                  disabled={isPrivateRateLimited}
+                />
               </Col>
             </Row>
           </Col>
@@ -173,8 +240,10 @@ const RunDialog: React.FC<{
                 className="ml-3"
                 variant="dark"
                 style={{ backgroundColor: "rgba(60, 62, 62, 1)", fontWeight: 600 }}
-                onClick={() => {
-                  setIsPublic(!isPublic);
+                onClick={async () => {
+                  if (accessStatus.remaining_private_sims > 0) {
+                    await setIsPublic(!isPublic);
+                  }
                 }}
               >
                 {isPublic ? <i className="fas fa-lock-open"></i> : <i className="fas fa-lock"></i>}
@@ -257,6 +326,7 @@ export const RunModal: React.FC<{
   notify: boolean;
   setIsPublic: (isPublic: boolean) => void;
   isPublic: boolean;
+  persist: () => void;
 }> = ({
   showModal,
   setShowModal,
@@ -268,6 +338,7 @@ export const RunModal: React.FC<{
   notify,
   setIsPublic,
   isPublic,
+  persist,
 }) => {
   let runbuttontext: string;
   if (!accessStatus.is_sponsored) {
@@ -281,7 +352,11 @@ export const RunModal: React.FC<{
       <div className="card card-body card-outer">
         <Button
           variant="primary"
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            // Persist values when clicking run in case the user navigates away.
+            persist();
+            setShowModal(true);
+          }}
           className="btn btn-block btn-success"
         >
           <b>{runbuttontext}</b>

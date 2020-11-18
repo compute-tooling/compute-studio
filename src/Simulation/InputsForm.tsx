@@ -42,6 +42,8 @@ interface InputsFormProps {
   resetting: boolean;
 
   formikProps: FormikProps<InitialValues>;
+
+  persist?: () => void;
 }
 
 interface InputsProps {
@@ -134,6 +136,7 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
                 setNotify={setNotifyOnCompletion}
                 setIsPublic={setIsPublic}
                 isPublic={isPublic}
+                persist={props.persist}
               />
             </li>
           </ul>

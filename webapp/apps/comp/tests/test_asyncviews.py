@@ -14,6 +14,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 from rest_framework.response import Response
 
+from webapp.settings import FREE_PRIVATE_SIMS
 from webapp.apps.billing.tests.utils import gen_blank_customer
 from webapp.apps.users.models import (
     Project,
@@ -29,7 +30,6 @@ from webapp.apps.comp.models import (
     Simulation,
     PendingPermission,
     ANON_BEFORE,
-    FREE_PRIVATE_SIMS,
 )
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.exceptions import (
@@ -1529,7 +1529,7 @@ def test_list_sim_api(db, api_client, get_inputs, meta_param_dict):
     tester_sims[1].is_public = True
     tester_sims[1].creation_date = ANON_BEFORE + datetime.timedelta(days=2)
     tester_sims[1].save()
-    resp = api_client.get("/api/v1/feed")
+    resp = api_client.get("/api/v1/log")
     assert_status(200, resp, "unauthed list sims")
     assert len(resp.data["results"]) == 1
     assert resp.data["results"][0]["model_pk"] == tester_sims[1].model_pk

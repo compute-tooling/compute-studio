@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import timedelta
 import json
 import secrets
 import uuid
@@ -35,6 +36,8 @@ from webapp.settings import (
     COMPUTE_PRICING,
     DEFAULT_CLUSTER_USER,
     HAS_USAGE_RESTRICTIONS,
+    FREE_PRIVATE_SIMS,
+    FREE_PRIVATE_SIMS_START_DATE,
 )
 
 from webapp.apps.users.exceptions import PrivateAppException
@@ -89,6 +92,17 @@ class Profile(models.Model):
     objects: models.Manager
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=False)
+
+    def remaining_private_sims(self):
+        """Calculate number of remaining private simulations for user on free tier."""
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        if thirty_days_ago < FREE_PRIVATE_SIMS_START_DATE:
+            thirty_days_ago = FREE_PRIVATE_SIMS_START_DATE
+        private_sims = self.sims.filter(
+            is_public=False, creation_date__gte=thirty_days_ago
+        )
+
+        return max(FREE_PRIVATE_SIMS - private_sims.count(), 0)
 
     def recent_models(self, limit):
         return [

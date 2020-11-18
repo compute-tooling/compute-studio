@@ -9,9 +9,10 @@ https://docs.djangoproject.com/en/2.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
-
+from datetime import datetime
 import os
 import dj_database_url
+import pytz
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -40,6 +41,12 @@ USE_STRIPE = os.environ.get("USE_STRIPE", "false").lower() == "true"
 
 DEFAULT_CLUSTER_USER = os.environ.get("DEFAULT_CLUSTER_USER")
 DEFAULT_VIZ_HOST = os.environ.get("DEFAULT_VIZ_HOST")
+
+# Number of private sims available/month on free tier.
+FREE_PRIVATE_SIMS = 3
+FREE_PRIVATE_SIMS_START_DATE = pytz.timezone("US/Eastern").localize(
+    datetime(2019, 11, 17, 0, 0, 0),
+)
 
 # Indicates that this c/s instance uses billing restrictions.
 HAS_USAGE_RESTRICTIONS = (

@@ -25,7 +25,7 @@ import {
 import DescriptionComponent from "./Description";
 import API from "./API";
 import ErrorBoundary from "../ErrorBoundary";
-import { convertToFormik, formikToJSON } from "../ParamTools";
+import { convertToFormik, formikToJSON, Persist } from "../ParamTools";
 import { Formik, Form, FormikProps, FormikHelpers } from "formik";
 import { hasServerErrors } from "../utils";
 import { UnsavedChangesModal } from "./modal";
@@ -127,7 +127,24 @@ class SimTabs extends React.Component<
     this.api
       .getInitialValues()
       .then(data => {
-        const [initialValues, sects, inputs, schema, unknownParams] = convertToFormik(data);
+        const [serverValues, sects, inputs, schema, unknownParams] = convertToFormik(data);
+        let isEmpty = true;
+        for (const msectvals of Object.values(data.detail?.adjustment || {})) {
+          if (Object.keys(msectvals).length > 0) {
+            isEmpty = false;
+          }
+        }
+        let initialValues;
+        if (isEmpty) {
+          const storage = Persist.pop(
+            `${this.props.match.params.owner}/${this.props.match.params.title}/inputs`
+          );
+          // Use values from local storage if available. Default to empty dict from server.
+          initialValues = storage || serverValues;
+        } else {
+          initialValues = serverValues;
+        }
+
         this.setState({
           inputs: inputs,
           initialValues: initialValues,
@@ -234,20 +251,19 @@ class SimTabs extends React.Component<
     }
   }
 
-  setIsPublic(is_public: boolean) {
+  async setIsPublic(is_public: boolean) {
     const { remoteSim } = this.state;
     if (remoteSim && !this.submitWillCreateNewSim()) {
       let data = new FormData();
       data.append("is_public", is_public.toString());
-      this.api.putDescription(data).then(() => {
-        this.setState(prevState => ({
-          isPublic: is_public,
-          remoteSim: {
-            ...prevState.remoteSim,
-            ...{ is_public: is_public },
-          },
-        }));
-      });
+      const resp = await this.api.putDescription(data);
+      this.setState(prevState => ({
+        isPublic: is_public,
+        remoteSim: {
+          ...prevState.remoteSim,
+          ...{ is_public: is_public },
+        },
+      }));
     } else {
       this.setState({ isPublic: is_public });
     }
@@ -563,6 +579,12 @@ class SimTabs extends React.Component<
                           sects={sects}
                           extend={extend}
                           formikProps={formikProps}
+                          persist={() =>
+                            Persist.persist(
+                              `${this.props.match.params.owner}/${this.props.match.params.title}/inputs`,
+                              formikProps.values
+                            )
+                          }
                         />
                       </Form>
                     </ErrorBoundary>

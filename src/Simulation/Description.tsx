@@ -20,6 +20,7 @@ import { AxiosError } from "axios";
 import { RolePerms } from "../roles";
 import { Tip } from "../components";
 import { CollaborationSettings, saveCollaborators } from "./collaborators";
+import ReactDOM = require("react-dom");
 
 interface DescriptionProps {
   accessStatus: AccessStatus;
@@ -153,6 +154,23 @@ const AuthorsDropDown: React.FC<{ authors: string[] }> = ({ authors }) => {
   );
 };
 
+// Utility for caching paramtools values in case the user navigates away from the page.
+export const Persist = {
+  persist: (key: string, values: DescriptionValues) => {
+    window.localStorage.setItem(key, JSON.stringify(values));
+  },
+  pop: (key): DescriptionValues | null => {
+    const data = window.localStorage.getItem(key);
+    Persist.clear(key);
+    if (data) {
+      return (JSON.parse(data) as unknown) as DescriptionValues;
+    }
+
+    return null;
+  },
+  clear: key => window.localStorage.removeItem(key),
+};
+
 export default class DescriptionComponent extends React.Component<
   DescriptionProps,
   DescriptionState
@@ -161,9 +179,10 @@ export default class DescriptionComponent extends React.Component<
 
   constructor(props) {
     super(props);
+    const storage = Persist.pop(`${this.props.api.owner}/${this.props.api.title}/description`);
     let initialValues: DescriptionValues = {
-      title: this.props.remoteSim?.title || "Untitled Simulation",
-      readme: this.props.remoteSim?.readme || defaultReadme,
+      title: this.props.remoteSim?.title || storage?.title || "Untitled Simulation",
+      readme: this.props.remoteSim?.readme || storage?.readme || defaultReadme,
       is_public: this.props.remoteSim?.is_public || true,
       author: { add: { username: "", msg: "" }, remove: { username: "" } },
       access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } },
@@ -240,11 +259,20 @@ export default class DescriptionComponent extends React.Component<
   }
 
   componentDidUpdate() {
-    if (this.state.isEditMode) {
+    // Focus title box if in edit mode and if it doesn't already have focus.
+    if (
+      this.state.isEditMode &&
+      document.activeElement !== ReactDOM.findDOMNode(this.titleInput.current)
+    ) {
       this.titleInput.current.select();
     }
     if (this.state.dirty && this.props.api.modelpk) {
       this.save(this.state.initialValues);
+    } else {
+      Persist.persist(
+        `${this.props.api}/${this.props.api.title}/description`,
+        this.state.initialValues
+      );
     }
   }
 
