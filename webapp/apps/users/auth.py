@@ -38,7 +38,9 @@ class ClusterAuthentication(authentication.BaseAuthentication):
             raise AuthenticationFailed("Invalid token")
 
         try:
-            data = jwt.decode(jwt_token, cryptkeeper.decrypt(cluster.jwt_secret))
+            data = jwt.decode(
+                jwt_token, cryptkeeper.decrypt(cluster.jwt_secret), algorithms=["HS256"]
+            )
         except (jwt.DecodeError, cryptography.exceptions.InvalidKey):
             raise AuthenticationFailed("Invalid token")
 
