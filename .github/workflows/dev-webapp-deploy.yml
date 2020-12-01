@@ -43,6 +43,16 @@ jobs:
         with:
           python-version: "3.8"
 
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12'
+      
+      - name: Install yarn 
+        run: npm install yarn 
+      
+      - name: Create app bundle
+        run: yarn install && yarn build
+      
       # Install pip and pytest
       - name: Install dependencies
         run: |
