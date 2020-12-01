@@ -181,7 +181,7 @@ export default class DescriptionComponent extends React.Component<
     super(props);
     const storage = Persist.pop(`${this.props.api.owner}/${this.props.api.title}/description`);
     let initialValues: DescriptionValues = {
-      title: this.props.remoteSim?.title || storage?.title || "Untitled Simulation",
+      title: this.props.remoteSim?.title || storage?.title || "New Simulation",
       readme: this.props.remoteSim?.readme || storage?.readme || defaultReadme,
       is_public: this.props.remoteSim?.is_public || true,
       author: { add: { username: "", msg: "" }, remove: { username: "" } },
@@ -445,7 +445,7 @@ export default class DescriptionComponent extends React.Component<
                                 ref={this.titleInput}
                                 disabled={!isEditMode}
                                 type="text"
-                                placeholder="Untitled Simulation"
+                                placeholder="New Simulation"
                                 {...field}
                                 className="form-cotnrol h3"
                                 onBlur={formikProps.handleSubmit}
@@ -475,7 +475,7 @@ export default class DescriptionComponent extends React.Component<
                                 }
                               >
                                 <h3 style={titleStyle} onClick={this.toggleEditMode}>
-                                  {field.value || "Untitled Simulation"}
+                                  {field.value || "New Simulation"}
                                 </h3>
                               </Tip>
                             </Card>

@@ -279,6 +279,7 @@ class SimulationManager(models.Manager):
                     inputs=inputs,
                     status="STARTED",
                     is_public=True,
+                    title=f"{project} #{model_pk}",
                 )
                 sim.authors.set([user.profile])
                 sim.grant_admin_permissions(user)

@@ -151,8 +151,8 @@ const RunDialog: React.FC<{
       <div>
         {accessStatus.plan.name === "free" && (
           <p className="lead">
-            You have {accessStatus.remaining_private_sims} out of 3 private simulations left this
-            month.
+            You have <strong>{accessStatus.remaining_private_sims} out of 3</strong> private
+            simulations left this month.
           </p>
         )}
 
@@ -235,20 +235,6 @@ const RunDialog: React.FC<{
             >
               <strong>Run</strong>
             </Button>
-            <Tip id="run-visibility" tip={`Make ${isPublic ? "private" : "public"}.`}>
-              <Button
-                className="ml-3"
-                variant="dark"
-                style={{ backgroundColor: "rgba(60, 62, 62, 1)", fontWeight: 600 }}
-                onClick={async () => {
-                  if (accessStatus.remaining_private_sims > 0) {
-                    await setIsPublic(!isPublic);
-                  }
-                }}
-              >
-                {isPublic ? <i className="fas fa-lock-open"></i> : <i className="fas fa-lock"></i>}
-              </Button>
-            </Tip>
           </Col>
         </Row>
       </Modal.Footer>
