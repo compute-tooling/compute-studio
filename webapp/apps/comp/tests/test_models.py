@@ -429,7 +429,7 @@ class TestCollaborators:
         public is unlimited.
         """
         sims = []
-        for i in range(FREE_PRIVATE_SIMS):
+        for i in range(FREE_PRIVATE_SIMS + 1):
             inputs = _submit_inputs(
                 "Used-for-testing", get_inputs, meta_param_dict, free_profile
             )

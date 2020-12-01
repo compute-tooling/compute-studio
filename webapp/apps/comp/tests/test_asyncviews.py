@@ -338,7 +338,7 @@ class RunMockModel(CoreTestMixin):
         assert_status(200, get_sim_resp, "set_sim_description")
         data = get_sim_resp.data
 
-        assert data["title"] == sim.title == "Untitled Simulation"
+        assert data["title"] == sim.title == f"{sim.project} #{sim.model_pk}"
         assert data["owner"] == str(sim.owner)
         assert sim.parent_sim == None
 
@@ -1436,7 +1436,7 @@ class TestCollaboration:
         sponsored_matchups.assign_role("read", sim_owner.user)
 
         sims = []
-        for i in range(FREE_PRIVATE_SIMS):
+        for _ in range(FREE_PRIVATE_SIMS + 1):
             inputs = _submit_inputs("Matchups", get_inputs, meta_param_dict, sim_owner)
 
             _, submit_sim = _submit_sim(inputs)
