@@ -76,6 +76,36 @@ class TestPublishViews:
         else:
             assert resp.status_code == 404, f"Expected 404, got {resp.status_code}"
 
+    def test_new_app_redirect(self, client, visibility_params):
+        """
+        Make sure user is redirected to home page if app is not connected yet.
+        """
+        owner, is_public = visibility_params
+        post_data = {
+            "title": "New-Model",
+            "oneliner": "oneliner",
+            "description": "**Super** new!",
+            # "repo_url": "https://github.com/compute-tooling/compute-studio",
+            # "repo_tag": "dev",
+            "cpu": 3,
+            "memory": 9,
+            "listed": True,
+            "is_public": is_public,
+        }
+
+        client.force_login(owner.user)
+
+        with mock_sync_projects():
+            resp = client.post("/apps/api/v1/", post_data)
+        assert resp.status_code == 200
+
+        app = Project.objects.get(owner=owner, title="New-Model")
+        assert app.status != "running"
+
+        resp = client.get(f"/{owner}/New-Model/new/")
+        assert resp.status_code == 302
+        assert resp.url == f"/{owner}/New-Model/"
+
     def test_get_detail_api(self, api_client, client, visibility_params):
         owner, is_public = visibility_params
         exp = {

@@ -68,14 +68,21 @@ const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) =>
 
   let simCountEl;
   if (model.sim_count === 0) {
-    if (!["running", "updating"].includes(model.status)) {
+    if (model.status === "running") {
       simCountEl = (
         <a className="btn btn-outline-success btn-sm" href={`/${model.owner}/${model.title}/new/`}>
           Create the first simulation
         </a>
       );
-    } else {
-      simCountEl = null;
+    } else if (model.has_write_access) {
+      simCountEl = (
+        <a
+          className="btn btn-outline-success btn-sm"
+          href={`/${model.owner}/${model.title}/settings/`}
+        >
+          Finish connecting this app
+        </a>
+      );
     }
   } else if (model.sim_count === undefined) {
     simCountEl = null;
@@ -447,14 +454,22 @@ const RecentModelsPanel: React.FC<{ recentModels: Array<Project> }> = ({ recentM
       >
         <Card.Body>
           <Card.Title>
-            <Tip id="new_simulation" tip="Create new simulation">
-              <h6 onClick={e => e.stopPropagation()}>
-                <a href={`/${model.owner}/${model.title}/new/`}>
-                  {`${model.owner}/${model.title}`}{" "}
-                  <i className="fas fa-plus-circle text-success"></i>
-                </a>
-              </h6>
-            </Tip>
+            {model.status === "running" ? (
+              <Tip id="new_simulation" tip="Create new simulation">
+                <h6 onClick={e => e.stopPropagation()}>
+                  <a href={`/${model.owner}/${model.title}/new/`}>
+                    {`${model.owner}/${model.title}`}{" "}
+                    <i className="fas fa-plus-circle text-success"></i>
+                  </a>
+                </h6>
+              </Tip>
+            ) : (
+              <Tip id="goto_app" tip="Go to app">
+                <h6 onClick={e => e.stopPropagation()}>
+                  <a href={`/${model.owner}/${model.title}/`}>{`${model.owner}/${model.title}`} </a>
+                </h6>
+              </Tip>
+            )}
           </Card.Title>
           <Card.Subtitle className="text-muted d-none d-sm-none d-md-block">
             {model.oneliner}

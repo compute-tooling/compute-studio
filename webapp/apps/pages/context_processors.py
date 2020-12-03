@@ -12,7 +12,8 @@ def project_list(request):
     )
     project_list = []
     for project in projects:
-        project_list.append(
-            (project.owner.user.username, project.title, project.app_url)
-        )
+        if project.status == "running" or project.has_admin_access(request.user):
+            project_list.append(
+                (project.owner.user.username, project.title, project.app_url)
+            )
     return {"project_list": project_list, "debug": DEBUG}
