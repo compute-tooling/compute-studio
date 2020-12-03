@@ -27,14 +27,6 @@ class UserCreationForm(authforms.UserCreationForm):
         create_profile_from_user(user)
         return user
 
-    def clean_email(self):
-        email = self.cleaned_data.get("email")
-        if User.objects.filter(email=email).exists():
-            raise forms.ValidationError(
-                self.error_messages["duplicate_email"], code="duplicate_email"
-            )
-        return email
-
     class Meta(authforms.UserCreationForm.Meta):
         model = User
         fields = ("username", "email")
