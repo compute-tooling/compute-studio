@@ -205,18 +205,7 @@ const RunDialog: React.FC<{
                 <CheckboxWidget
                   setValue={setIsPublic}
                   value={isPublic}
-                  message={
-                    isPrivateRateLimited ? (
-                      <span>
-                        Public.{" "}
-                        <a href={`/billing/upgrade/yearly/?next=${window.location.pathname}`}>
-                          Upgrade to Pro.
-                        </a>
-                      </span>
-                    ) : (
-                      <span>Make public</span>
-                    )
-                  }
+                  message={isPrivateRateLimited ? <span>Public.</span> : <span>Make public</span>}
                   disabled={isPrivateRateLimited}
                 />
               </Col>
