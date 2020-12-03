@@ -142,8 +142,6 @@ const RunDialog: React.FC<{
             account to conduct private simulations.
           </p>
         )}
-
-        <p className="lead">This model’s simulations are sponsored and there is no charge to you</p>
       </div>
     );
   } else {
@@ -151,8 +149,8 @@ const RunDialog: React.FC<{
       <div>
         {accessStatus.plan.name === "free" && (
           <p className="lead">
-            You have <strong>{accessStatus.remaining_private_sims} out of 3</strong> private
-            simulations left this month.
+            You have <strong>{accessStatus.remaining_private_sims}</strong> private simulations left
+            this month.
           </p>
         )}
 
@@ -187,9 +185,7 @@ const RunDialog: React.FC<{
   return (
     <Modal show={show} onHide={() => setShow(false)}>
       <Modal.Header closeButton>
-        <Modal.Title>
-          Are you sure that you want to run this {isPublic ? "public" : "private"} simulation?
-        </Modal.Title>
+        <Modal.Title>Create a new {isPublic ? "public" : "private"} simulation</Modal.Title>
       </Modal.Header>
       {body}
       <Modal.Footer style={{ justifyContent: "none" }}>
