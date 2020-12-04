@@ -6,6 +6,6 @@ data:
   DATABASE_URL: "postgresql://db:5432/postgres"
   BUCKET: cs-outputs-dev-private
   USE_STRIPE: "false"
-  DEFAULT_CLUSTER_USER: "hdoupe"
+  DEFAULT_CLUSTER_USER: "comp-api-user"
   DEFAULT_VIZ_HOST: "devviz.compute.studio"
   USE_STRIPE: "true"
