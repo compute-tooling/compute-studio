@@ -79,7 +79,7 @@ def send_updated_app_email(user, model, status_url):
         send_mail(
             f"{model} has been updated",
             (
-                f"{model.title} will be updated or you will have feedback within "
+                f"Your app, {model.title}, will be updated or you will have feedback within "
                 f"the next 24 hours. Check the status of the update at "
                 f"{status_url}."
             ),
@@ -97,7 +97,7 @@ def send_app_ready_email(user, model, status_url):
         send_mail(
             f"{model} is ready to be connected on Compute Studio!",
             (
-                f"{model.title} will be live or you will have feedback within "
+                f"Your app, {model.title}, will be live or you will have feedback within "
                 f"the next 24 hours. Check the status of the update at "
                 f"{status_url}."
             ),
