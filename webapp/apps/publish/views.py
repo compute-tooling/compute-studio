@@ -60,9 +60,9 @@ def send_new_app_email(user, model, status_url):
         send_mail(
             f"{user.username} created a new app on Compute Studio!",
             (
-                f"{model.title} has been created. When you are ready, you can finish "
+                f"Your app, {model.title}, has been created. When you are ready, you can finish "
                 f"connecting your app at {status_url}.\n\n"
-                f"If you have any questions, pleae feel welcome to send me an email at "
+                f"If you have any questions, please feel welcome to send me an email at "
                 f"hank@compute.studio."
             ),
             "notifications@compute.studio",
