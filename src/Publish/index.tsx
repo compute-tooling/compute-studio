@@ -943,8 +943,10 @@ class CreateProject extends React.Component<{}, { accessStatus?: AccessStatus }>
                   <h1 className="mb-2 pb-2 border-bottom">Create a new application</h1>
                   <small className="mb-3">
                     <i>
-                      Not sure where to get started? Check out the{" "}
-                      <a href="https://docs.compute.studio/publish/guide.html">guide</a>.
+                      Not sure where to get started?{" "}
+                      <a href="mailto:hank@compute.studio?subject=Getting%20Started&body=Hi,%20I%20am%20interested%20in%20publishing%20an%20app.%20Can%20you%20help%20me%20out?">
+                        Send us a message.
+                      </a>
                     </i>
                   </small>
                 </Card.Title>
