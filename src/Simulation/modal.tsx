@@ -4,11 +4,11 @@ import ReactLoading from "react-loading";
 import * as yup from "yup";
 
 import { AuthDialog } from "../auth";
-import { AccessStatus, InitialValues, Inputs } from "../types";
+import { AccessStatus, InitialValues, Inputs, RemoteOutputs, Simulation } from "../types";
 import { CheckboxWidget } from "./notify";
 import { isEqual } from "lodash";
 import { formikToJSON } from "../ParamTools";
-import { Tip } from "../components";
+import { Utils as SimUtils } from "./sim";
 
 export const ValidatingModal: React.FC<{ defaultShow?: boolean }> = ({ defaultShow = true }) => {
   const [show, setShow] = React.useState(defaultShow);
@@ -38,7 +38,7 @@ const PricingInfoCollapse: React.FC<{ accessStatus: AccessStatus }> = ({ accessS
         onClick={() => setCollapseOpen(!collapseOpen)}
         aria-controls="pricing-collapse-text"
         aria-expanded={collapseOpen}
-        className="mt-3 mb-3"
+        className="mt-1 mb-3"
         variant="outline-info"
       >
         Pricing
@@ -110,28 +110,58 @@ const RunDialog: React.FC<{
   notify: boolean;
   setIsPublic: (isPublic: boolean) => void;
   isPublic: boolean;
-}> = ({ accessStatus, show, setShow, handleSubmit, setNotify, notify, setIsPublic, isPublic }) => {
+  sim: Simulation<RemoteOutputs>;
+}> = ({
+  accessStatus,
+  show,
+  setShow,
+  handleSubmit,
+  setNotify,
+  notify,
+  setIsPublic,
+  isPublic,
+  sim,
+}) => {
   const handleCloseWithSubmit = () => {
     setShow(false);
     handleSubmit();
   };
 
-  let message = "This model's simulations are sponsored and thus, are free for you.";
-  if (accessStatus.sponsor_message) {
-    message = accessStatus.sponsor_message;
+  const flipPublic = (_isPublic: boolean) => setIsPublic(!_isPublic);
+
+  const createsNewSim = SimUtils.submitWillCreateNewSim(sim);
+  let remainingPrivateSims = accessStatus.remaining_private_sims;
+  if (createsNewSim && !isPublic) {
+    remainingPrivateSims = Math.max(remainingPrivateSims - 1, 0);
   }
-  const isPrivateRateLimited =
-    accessStatus.plan.name === "free" && accessStatus.remaining_private_sims <= 0;
+  const { protocol, host } = window.location;
+  const publicUrl = `${protocol}//${host}${sim.gui_url}`;
+
+  let sponsorMessage;
+  if (accessStatus.sponsor_message) {
+    sponsorMessage = accessStatus.sponsor_message;
+  }
+  const isPrivateRateLimited = accessStatus.plan.name === "free" && remainingPrivateSims <= 0;
+  if (isPrivateRateLimited) {
+    isPublic = true;
+  }
   let visabilitymsg;
   if (isPublic) {
     visabilitymsg = (
       <div>
-        <p className="lead font-weight-bold">
-          The inputs for this simulation and your username{" "}
+        <p className="lead">
+          Public Log Entry:{" "}
+          <strong className="font-weight-bold">
+            {!!sim?.title ? sim.title : `New ${accessStatus.project}`}
+          </strong>{" "}
           {accessStatus.username !== "anon" && (
-            <span className="font-italic">{accessStatus.username}</span>
-          )}{" "}
-          will be <span className="font-weight-bold">public and available to everyone.</span>
+            <span>
+              by <strong className="font-weight-bold">{accessStatus.username}</strong>
+            </span>
+          )}
+        </p>
+        <p className="lead">
+          Public url: {createsNewSim ? "Yes" : <a href={publicUrl}>{publicUrl}</a>}.
         </p>
         {isPrivateRateLimited && (
           <p className="lead">
@@ -149,8 +179,7 @@ const RunDialog: React.FC<{
       <div>
         {accessStatus.plan.name === "free" && (
           <p className="lead">
-            You have <strong>{accessStatus.remaining_private_sims}</strong> private simulations left
-            this month.
+            You have <strong>{remainingPrivateSims}</strong> private simulations left this month.
           </p>
         )}
 
@@ -160,24 +189,34 @@ const RunDialog: React.FC<{
       </div>
     );
   }
+  let makePrivate;
+  if (accessStatus.plan.name === "free") {
+    makePrivate = <span>Make private ({remainingPrivateSims} remaining this month)</span>;
+  } else {
+    makePrivate = <span>Make private</span>;
+  }
 
-  let body;
+  let pricing;
   if (accessStatus.is_sponsored) {
-    body = (
+    pricing = (
       <Modal.Body>
-        <div dangerouslySetInnerHTML={{ __html: message }} />
         {visabilitymsg}
+        <p>
+          Pricing: Sponsored by{" "}
+          {sponsorMessage ? (
+            <div dangerouslySetInnerHTML={{ __html: sponsorMessage }} />
+          ) : (
+            "Anonymous."
+          )}
+        </p>
       </Modal.Body>
     );
   } else {
-    body = (
+    pricing = (
       <Modal.Body>
-        <p>
-          This simulation will cost ${`${accessStatus.exp_cost}`}. You will be billed at the end of
-          the monthly billing period.
-        </p>
-        <PricingInfoCollapse accessStatus={accessStatus} />
         {visabilitymsg}
+        <p>Pricing: ${`${accessStatus.exp_cost}`}.</p>
+        {/* <PricingInfoCollapse accessStatus={accessStatus} /> */}
       </Modal.Body>
     );
   }
@@ -187,7 +226,7 @@ const RunDialog: React.FC<{
       <Modal.Header closeButton>
         <Modal.Title>Create a new {isPublic ? "public" : "private"} simulation</Modal.Title>
       </Modal.Header>
-      {body}
+      {pricing}
       <Modal.Footer style={{ justifyContent: "none" }}>
         <Row className="align-items-center w-100 justify-content-between">
           <Col className="col-auto">
@@ -203,9 +242,9 @@ const RunDialog: React.FC<{
             <Row>
               <Col>
                 <CheckboxWidget
-                  setValue={setIsPublic}
-                  value={isPublic}
-                  message={isPrivateRateLimited ? <span>Public.</span> : <span>Make public</span>}
+                  setValue={flipPublic}
+                  value={!isPublic}
+                  message={makePrivate}
                   disabled={isPrivateRateLimited}
                 />
               </Col>
@@ -237,6 +276,7 @@ const Dialog: React.FC<{
   notify: boolean;
   setIsPublic: (isPublic: boolean) => void;
   isPublic: boolean;
+  sim: Simulation<RemoteOutputs>;
 }> = ({
   accessStatus,
   resetAccessStatus,
@@ -247,6 +287,7 @@ const Dialog: React.FC<{
   notify,
   setIsPublic,
   isPublic,
+  sim,
 }) => {
   // pass new show and setShow so main run dialog is not closed.
   const [authShow, setAuthShow] = React.useState(true);
@@ -261,6 +302,7 @@ const Dialog: React.FC<{
         notify={notify}
         setIsPublic={setIsPublic}
         isPublic={isPublic}
+        sim={sim}
       />
     );
   } else if (accessStatus.user_status === "anon") {
@@ -298,6 +340,7 @@ export const RunModal: React.FC<{
   setIsPublic: (isPublic: boolean) => void;
   isPublic: boolean;
   persist: () => void;
+  sim: Simulation<RemoteOutputs>;
 }> = ({
   showModal,
   setShowModal,
@@ -310,6 +353,7 @@ export const RunModal: React.FC<{
   setIsPublic,
   isPublic,
   persist,
+  sim,
 }) => {
   let runbuttontext: string;
   if (!accessStatus.is_sponsored) {
@@ -343,6 +387,7 @@ export const RunModal: React.FC<{
         notify={notify}
         setIsPublic={setIsPublic}
         isPublic={isPublic}
+        sim={sim}
       />
     </>
   );

@@ -31,6 +31,7 @@ import { hasServerErrors } from "../utils";
 import { UnsavedChangesModal } from "./modal";
 import { AuthPortal, AuthButtons } from "../auth";
 import { RolePerms } from "../roles";
+import { Utils as SimUtils } from "./sim";
 
 Sentry.init({
   dsn: "https://fde6bcb39fda4af38471b16e2c1711af@sentry.io/1530834",
@@ -256,13 +257,15 @@ class SimTabs extends React.Component<
     if (remoteSim && !this.submitWillCreateNewSim()) {
       let data = new FormData();
       data.append("is_public", is_public.toString());
-      const resp = await this.api.putDescription(data);
+      await this.api.putDescription(data);
+      const accessStatus = await this.api.getAccessStatus();
       this.setState(prevState => ({
         isPublic: is_public,
         remoteSim: {
           ...prevState.remoteSim,
           ...{ is_public: is_public },
         },
+        accessStatus: accessStatus,
       }));
     } else {
       this.setState({ isPublic: is_public });
@@ -273,7 +276,7 @@ class SimTabs extends React.Component<
     // returns true if a sim exists, the user has write access,
     // and the sim has not been kicked off yet.
     let { sim } = this.state.inputs.detail;
-    return !(sim && RolePerms.hasWriteAccess(sim) && sim.status === "STARTED");
+    return SimUtils.submitWillCreateNewSim(sim);
   }
 
   handleSubmit(values, actions) {
@@ -295,6 +298,15 @@ class SimTabs extends React.Component<
     console.log("isPublic", this.state.isPublic);
     let url = `/${this.api.owner}/${this.api.title}/api/v1/`;
     let sim = this.state.inputs.detail?.sim;
+    const { accessStatus } = this.state;
+
+    // Determine if user can create private sim. If not, set is_public to true.
+    // User will be shown errors/limits to creating private sims elsewhere.
+    const canCreatePrivateSim =
+      accessStatus.plan.name === "free" && accessStatus.remaining_private_sims <= 0;
+    if (this.submitWillCreateNewSim() && canCreatePrivateSim) {
+      formdata.set("is_public", "true");
+    }
 
     // clicked new simulation button
     if (!this.submitWillCreateNewSim()) {
@@ -558,6 +570,7 @@ class SimTabs extends React.Component<
                           api={this.api}
                           readOnly={false}
                           accessStatus={accessStatus}
+                          sim={this.state.remoteSim}
                           resetAccessStatus={
                             this.api.modelpk
                               ? this.resetAccessStatus

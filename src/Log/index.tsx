@@ -215,7 +215,7 @@ const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: 
       onSubmit={(values, actions) => {
         let formdata = new FormData();
         for (const field in values) {
-          if (values[field]) formdata.append(field, values[field]);
+          if (values[field] !== undefined) formdata.append(field, values[field]);
         }
         actions.setStatus({ collaboratorLimit: null });
         saveCollaborators(simapi, values, resetRemoteSim)
