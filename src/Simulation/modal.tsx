@@ -38,10 +38,10 @@ const PricingInfoCollapse: React.FC<{ accessStatus: AccessStatus }> = ({ accessS
         onClick={() => setCollapseOpen(!collapseOpen)}
         aria-controls="pricing-collapse-text"
         aria-expanded={collapseOpen}
-        className="mt-1 mb-3"
-        variant="outline-info"
+        variant="link"
+        style={{ verticalAlign: "baseline" }}
       >
-        Pricing
+        Detail.
       </Button>
       <Collapse in={collapseOpen}>
         <div id="pricing-collapse-text">
@@ -135,7 +135,7 @@ const RunDialog: React.FC<{
     remainingPrivateSims = Math.max(remainingPrivateSims - 1, 0);
   }
   const { protocol, host } = window.location;
-  const publicUrl = `${protocol}//${host}${sim.gui_url}`;
+  const simUrl = `${protocol}//${host}${sim.gui_url}`;
 
   let sponsorMessage;
   if (accessStatus.sponsor_message) {
@@ -149,7 +149,7 @@ const RunDialog: React.FC<{
   if (isPublic) {
     visabilitymsg = (
       <div>
-        <p className="lead">
+        <p>
           Public Log Entry:{" "}
           <strong className="font-weight-bold">
             {!!sim?.title ? sim.title : `New ${accessStatus.project}`}
@@ -160,38 +160,43 @@ const RunDialog: React.FC<{
             </span>
           )}
         </p>
-        <p className="lead">
-          Public url: {createsNewSim ? "Yes" : <a href={publicUrl}>{publicUrl}</a>}.
-        </p>
-        {isPrivateRateLimited && (
-          <p className="lead">
-            Create a{" "}
-            <a href={`/users/signup/?next=/${accessStatus.project}/new/`}>pseudonymous account</a>{" "}
-            or sign up for a{" "}
-            <a href={`/billing/upgrade/yearly/?next=${window.location.pathname}`}>C/S Pro</a>{" "}
-            account to conduct private simulations.
-          </p>
-        )}
+        <p>Public url: {createsNewSim ? "Yes" : <a href={simUrl}>{simUrl}</a>}</p>
       </div>
     );
   } else {
     visabilitymsg = (
       <div>
-        {accessStatus.plan.name === "free" && (
-          <p className="lead">
-            You have <strong>{remainingPrivateSims}</strong> private simulations left this month.
+        <p>
+          Private Log Entry:{" "}
+          <strong className="font-weight-bold">
+            {!!sim?.title ? sim.title : `New ${accessStatus.project}`}
+          </strong>{" "}
+          {accessStatus.username !== "anon" && (
+            <span>
+              by <strong className="font-weight-bold">{accessStatus.username}</strong>
+            </span>
+          )}
+        </p>
+        {!createsNewSim && (
+          <p>
+            Private url: <a href={simUrl}>{simUrl}</a>
           </p>
         )}
-
-        <p>
-          Only you and people that you've granted read access will have access to this simulation.
-        </p>
+        <p>Public url: None.</p>
       </div>
     );
   }
   let makePrivate;
   if (accessStatus.plan.name === "free") {
-    makePrivate = <span>Make private ({remainingPrivateSims} remaining this month)</span>;
+    makePrivate = (
+      <span>
+        Make private ({remainingPrivateSims} remaining this month.{" "}
+        {isPrivateRateLimited && (
+          <a href={`/billing/upgrade/yearly/?next=${window.location.pathname}`}>Upgrade to Pro.</a>
+        )}
+        )
+      </span>
+    );
   } else {
     makePrivate = <span>Make private</span>;
   }
@@ -215,8 +220,10 @@ const RunDialog: React.FC<{
     pricing = (
       <Modal.Body>
         {visabilitymsg}
-        <p>Pricing: ${`${accessStatus.exp_cost}`}.</p>
-        {/* <PricingInfoCollapse accessStatus={accessStatus} /> */}
+        <p>
+          Pricing: ${`${accessStatus.exp_cost}`}.
+          <PricingInfoCollapse accessStatus={accessStatus} />
+        </p>
       </Modal.Body>
     );
   }
@@ -229,16 +236,7 @@ const RunDialog: React.FC<{
       {pricing}
       <Modal.Footer style={{ justifyContent: "none" }}>
         <Row className="align-items-center w-100 justify-content-between">
-          <Col className="col-auto">
-            <Row>
-              <Col>
-                <CheckboxWidget
-                  setValue={setNotify}
-                  value={notify}
-                  message="Email me when ready."
-                />
-              </Col>
-            </Row>
+          <Col className="col-md-auto">
             <Row>
               <Col>
                 <CheckboxWidget
@@ -249,8 +247,17 @@ const RunDialog: React.FC<{
                 />
               </Col>
             </Row>
+            <Row>
+              <Col>
+                <CheckboxWidget
+                  setValue={setNotify}
+                  value={notify}
+                  message="Email me when ready."
+                />
+              </Col>
+            </Row>
           </Col>
-          <Col className="col-auto">
+          <Col className="col--md-auto">
             <Button
               className="mr-3"
               variant="success"
