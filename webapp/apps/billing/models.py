@@ -161,11 +161,19 @@ class Customer(models.Model):
                     "Can only handle free, and pro plans at the moment: {new_plan.nickname}."
                 )
 
+            if status == UpdateStatus.downgrade:
+                cancel_at_period_end = True
+            else:
+                cancel_at_period_end = False
             stripe.SubscriptionItem.modify(
-                current_si.stripe_id, plan=new_plan.stripe_id
+                current_si.stripe_id,
+                plan=new_plan.stripe_id,
+                cancel_at_period_end=cancel_at_period_end,
             )
-            current_si.plan = new_plan
-            current_si.save()
+            # Plan will be downgraded in db later.
+            if status != UpdateStatus.downgrade:
+                current_si.plan = new_plan
+                current_si.save()
             send_subscribe_to_plan_email(self.user, new_plan)
             return status
 
@@ -264,6 +272,7 @@ class Product(models.Model):
 
 
 class Plan(models.Model):
+    objects: models.Manager
     LICENSED = "licensed"
     METERED = "metered"
     USAGE_TYPE_CHOICES = ((LICENSED, "licensed"), (METERED, "metered"))
