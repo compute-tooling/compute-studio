@@ -139,18 +139,10 @@ class TestStripeModels:
         plan = Plan.objects.get(nickname="Free Plan")
         result = customer.update_plan(plan)
         assert result == UpdateStatus.downgrade
-        assert customer.current_plan() == {"plan_duration": None, "name": "free"}
-        assert customer.current_plan(as_dict=False).plan == Plan.objects.get(
-            nickname="Free Plan"
-        )
-
-        # test upgrade back to pro
-        plan = cs_product.plans.get(nickname=f"{plan_duration} Pro Plan")
-
-        result = customer.update_plan(plan)
-        assert result == UpdateStatus.upgrade
-
         assert customer.current_plan() == {
-            "plan_duration": plan_duration.lower(),
+            "plan_duration": other_duration.lower(),
             "name": "pro",
         }
+        si = customer.current_plan(as_dict=False)
+        assert si.plan == Plan.objects.get(nickname=f"{other_duration} Pro Plan")
+        assert si.subscription.cancel_at_period_end is True

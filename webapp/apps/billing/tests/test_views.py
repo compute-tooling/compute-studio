@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import reverse
 
 from webapp.apps.users.models import create_profile_from_user
-from webapp.apps.billing.models import Customer
+from webapp.apps.billing.models import Customer, Plan
 
 User = get_user_model()
 
@@ -166,8 +166,11 @@ class TestBillingViews:
         assert (
             resp.context["current_plan"]
             == customer.current_plan()
-            == {"plan_duration": None, "name": "free"}
+            == {"plan_duration": plan_duration.lower(), "name": "pro"}
         )
+        si = customer.current_plan(as_dict=False)
+        assert si.plan == Plan.objects.get(nickname=f"{plan_duration} Pro Plan")
+        assert si.subscription.cancel_at_period_end is True
 
     def test_user_upgrade_next_url(self, client, customer, monkeypatch):
         """

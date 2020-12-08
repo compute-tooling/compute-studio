@@ -47,7 +47,9 @@ information{% endblock %} {% block content %}
           <p class="lead">Public viewing and publishing for everyone.</p>
           <ul class="my-4 pl-3">
             <li>Unlimited public publishing.</li>
-            <li>Unlimited public modeling and data snapshotting.</li>
+            <li>Unlimited public modeling with free apps.</li>
+            <li>Unlimited public collaborators and teams.</li>
+            <li>3 free private simulations per month.</li>
           </ul>
           {% if current_plan.name != 'free' %}
           <div class="text-center">
@@ -76,8 +78,10 @@ information{% endblock %} {% block content %}
           <p class="lead">Unlimited private collaboration for pros.</p>
           <ul class="my-4 pl-3">
             <li>Unlimited private publishing.</li>
-            <li>Unlimited private modeling and data snapshotting.</li>
-            <li>Unlimited private collaboration.</li>
+            <li>Unlimited private modeling.</li>
+            <li>Unlimited private collaborators and teams.</li>
+            <li class="pt-4">Support the open source development of Compute Studio!</li>
+
           </ul>
           {% if current_plan.name != 'pro' or current_plan.plan_duration != plan_duration%}
           <div class="text-center">

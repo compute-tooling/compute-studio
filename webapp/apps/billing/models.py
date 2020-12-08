@@ -7,6 +7,7 @@ from typing import Optional
 
 import stripe
 
+import pytz
 from django.db import models, IntegrityError
 from django.db.models import Q
 from django.conf import settings
@@ -15,7 +16,7 @@ from django.utils.timezone import make_aware
 
 from webapp.settings import USE_STRIPE, DEBUG
 
-from .email import send_subscribe_to_plan_email
+from .email import send_subscribe_to_plan_email, send_sub_canceled_email
 
 stripe.api_key = os.environ.get("STRIPE_SECRET")
 
@@ -24,8 +25,8 @@ def timestamp_to_datetime(timestamp):
     if timestamp is None:
         return None
     if isinstance(timestamp, int):
-        timestamp = date.fromtimestamp(timestamp)
-    return make_aware(datetime.combine(timestamp, datetime.now().time()))
+        timestamp = datetime.fromtimestamp(timestamp, tz=pytz.UTC)
+    return make_aware(datetime.combine(timestamp, datetime.utcnow().time()))
 
 
 class RequiredLocalInstances(Exception):
@@ -161,20 +162,27 @@ class Customer(models.Model):
                     "Can only handle free, and pro plans at the moment: {new_plan.nickname}."
                 )
 
+            # Only upgrade takes effect immediately in db.
+            # Downgrades will be handled via a webhook.
             if status == UpdateStatus.downgrade:
-                cancel_at_period_end = True
+                stripe_sub: stripe.Subscription = stripe.Subscription.modify(
+                    current_si.subscription.stripe_id, cancel_at_period_end=True,
+                )
+                sub = current_si.subscription
+                sub.update_from_stripe_obj(stripe_sub)
+                sub.save()
+                send_sub_canceled_email(self.user, sub.current_period_end)
             else:
-                cancel_at_period_end = False
-            stripe.SubscriptionItem.modify(
-                current_si.stripe_id,
-                plan=new_plan.stripe_id,
-                cancel_at_period_end=cancel_at_period_end,
-            )
-            # Plan will be downgraded in db later.
-            if status != UpdateStatus.downgrade:
+                stripe.SubscriptionItem.modify(
+                    current_si.stripe_id, plan=new_plan.stripe_id,
+                )
                 current_si.plan = new_plan
                 current_si.save()
-            send_subscribe_to_plan_email(self.user, new_plan)
+                stripe_sub = stripe.Subscription.retrieve(
+                    current_si.subscription.stripe_id
+                )
+                current_si.subscription.update_from_stripe_obj(stripe_sub)
+                send_subscribe_to_plan_email(self.user, new_plan)
             return status
 
         # Check nochange transitions
@@ -391,7 +399,7 @@ class Subscription(models.Model):
     canceled_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
 
-    def update_from_stripe_obj(self, stripe_obj):
+    def update_from_stripe_obj(self, stripe_obj: stripe.Subscription):
         self.current_period_start = timestamp_to_datetime(
             stripe_obj.current_period_start
         )

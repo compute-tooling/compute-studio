@@ -215,11 +215,22 @@ class UpgradePlanDone(View):
             card_info = customer.card_info()
             current_si = customer.current_plan(as_dict=False)
             current_plan = customer.current_plan(si=current_si, as_dict=True)
-            plan_name = current_si.plan.nickname
+            plan_name = "Free Plan"
+            sub = None
+
+            if current_si is not None:
+                plan_name = current_si.plan.nickname
+                sub = current_si.subscription
+
+            if sub is not None and sub.cancel_at_period_end:
+                msg = f"Your subscription will end on {sub.current_period_end.date()}."
+            else:
+                msg = f"You are now on the {plan_name}."
         else:
             card_info = {"last4": None, "brand": None}
             current_plan = {"plan_duration": None, "name": "free"}
             plan_name = "Free Plan"
+            msg = f"You are now on the {plan_name}."
 
         return render(
             request,
@@ -229,7 +240,7 @@ class UpgradePlanDone(View):
                 "current_plan": current_plan,
                 "card_info": card_info,
                 "update_completed": True,
-                "update_completed_msg": f"You are now on the {plan_name}.",
+                "update_completed_msg": msg,
             },
         )
 
