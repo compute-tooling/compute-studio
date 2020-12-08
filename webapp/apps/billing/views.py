@@ -147,6 +147,7 @@ class UpgradePlan(View):
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
+        banner_msg = None
         plan_duration = kwargs.get("plan_duration")
         upgrade_plan, selected_plan = parse_upgrade_params(request)
         customer = getattr(request.user, "customer", None)
@@ -175,7 +176,8 @@ class UpgradePlan(View):
 
                 result = customer.update_plan(new_plan)
 
-            current_plan = customer.current_plan()
+            current_si = customer.current_plan(as_dict=False)
+            current_plan = customer.current_plan(si=current_si)
 
             if result != UpdateStatus.nochange and request.session.get(
                 "post_upgrade_url"
@@ -190,6 +192,14 @@ class UpgradePlan(View):
                 )
                 return redirect(done_next_url)
 
+            if current_si is not None:
+                sub = current_si.subscription
+                if sub is not None and sub.cancel_at_period_end:
+                    banner_msg = (
+                        f"Your {current_si.plan.nickname} will be downgraded "
+                        f"to a Free account on {sub.current_period_end.date()}."
+                    )
+
         return render(
             request,
             self.template_name,
@@ -199,6 +209,7 @@ class UpgradePlan(View):
                 "card_info": card_info,
                 "selected_plan": selected_plan,
                 "next": next_url,
+                "banner_msg": banner_msg,
             },
         )
 
@@ -223,7 +234,11 @@ class UpgradePlanDone(View):
                 sub = current_si.subscription
 
             if sub is not None and sub.cancel_at_period_end:
-                msg = f"Your subscription will end on {sub.current_period_end.date()}."
+                msg = (
+                    f"Your {current_si.plan.nickname} will be downgraded "
+                    f"to a Free account on {sub.current_period_end.date()}."
+                )
+
             else:
                 msg = f"You are now on the {plan_name}."
         else:
@@ -239,8 +254,7 @@ class UpgradePlanDone(View):
                 "plan_duration": plan_duration,
                 "current_plan": current_plan,
                 "card_info": card_info,
-                "update_completed": True,
-                "update_completed_msg": msg,
+                "banner_msg": msg,
             },
         )
 

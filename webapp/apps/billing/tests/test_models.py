@@ -10,6 +10,7 @@ import stripe
 from webapp.apps.users.models import Profile, Project
 from webapp.apps.publish.tests.utils import mock_sync_projects
 from webapp.apps.billing.models import (
+    Coupon,
     Customer,
     Plan,
     Product,
@@ -75,6 +76,8 @@ class TestStripeModels:
         )
 
         assert set(pro_product.plans.all()) == plans
+
+        assert Coupon.objects.get(name="C/S Pro Coupon")
 
     def test_customer_card_info(self, db, customer):
         # As of today, 3/5/2020, stripe gives an expiration date

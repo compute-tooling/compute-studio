@@ -1,11 +1,11 @@
 {% extends 'base.html' %} {% load static %} {% block title %}Update Plan
 information{% endblock %} {% block content %}
 <div class="card card-body card-inner">
-  {% if update_completed %}
+  {% if banner_msg %}
   <div class="row w-100 justify-content-left mb-4">
     <div class="col text-center">
       <div class="alert alert-primary" role="alert">
-        <p class="lead" style="font-weight:600">{{update_completed_msg}}</p>
+        <p class="lead" style="font-weight:600">{{banner_msg}}</p>
       </div>
     </div>
   </div>
@@ -55,7 +55,7 @@ information{% endblock %} {% block content %}
           <div class="text-center">
             <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#freeModal">
               <strong>
-                Select
+                Downgrade
               </strong>
               </a>
           </div>
@@ -83,7 +83,7 @@ information{% endblock %} {% block content %}
             <li class="pt-4">Support the open source development of Compute Studio!</li>
 
           </ul>
-          {% if current_plan.name != 'pro' or current_plan.plan_duration != plan_duration%}
+          {% if current_plan.name != 'pro'%}
           <div class="text-center">
             <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#proModal">
               <strong>
@@ -123,10 +123,11 @@ information{% endblock %} {% block content %}
         </div>
         <div class="modal-body">
           <p class="lead">This plan is free.</p>
+          <p>Your Pro account will expire at the end of this billing cycle and not renew.</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <a href="/billing/upgrade/{{plan_duration}}/?upgrade_plan=free" class="btn btn-primary">Select</a>
+          <a href="/billing/upgrade/{{plan_duration}}/?upgrade_plan=free" class="btn btn-primary">Downgrade</a>
         </div>
       </div>
     </div>
