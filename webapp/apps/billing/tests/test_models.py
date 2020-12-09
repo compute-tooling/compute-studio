@@ -1,13 +1,14 @@
 import math
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.contrib.auth import get_user_model
 
 import pytest
+import pytz
 import stripe
 
-from webapp.apps.users.models import Profile, Project
+from webapp.apps.users.models import Profile, Project, create_profile_from_user
 from webapp.apps.publish.tests.utils import mock_sync_projects
 from webapp.apps.billing.models import (
     Coupon,
@@ -19,9 +20,14 @@ from webapp.apps.billing.models import (
     create_pro_billing_objects,
     UpdateStatus,
 )
+from webapp.apps.billing.utils import create_three_month_pro_subscription
 
 User = get_user_model()
 stripe.api_key = os.environ.get("STRIPE_SECRET")
+
+
+def time_is_close(a, b):
+    return (a - b).total_seconds() < 3600
 
 
 @pytest.mark.django_db
@@ -52,6 +58,44 @@ class TestStripeModels:
         prev_source = customer.default_source
         customer.update_source(tok)
         assert customer.default_source != prev_source
+
+    @pytest.mark.parametrize("has_pmt_info", [True, False])
+    def test_construct_subscription_args(self, db, has_pmt_info, customer):
+        """
+        Create a subscription with a coupon and trial that expire in 3 months:
+        1. User has payment info.
+        2. User has no payment info.
+        """
+        if not has_pmt_info:
+            user = User.objects.create_user(
+                f"test-coupon", f"test-coupon@example.com", "heyhey2222"
+            )
+            create_profile_from_user(user)
+        else:
+            user = customer.user
+
+        create_three_month_pro_subscription(user)
+
+        now = datetime.utcnow().replace(tzinfo=pytz.UTC)
+        if now.month < 9:
+            three_months = now.replace(month=now.month + 3)
+        else:
+            three_months = now.replace(year=now.year + 1, month=now.month + 3 - 12)
+
+        user.refresh_from_db()
+        customer = getattr(user, "customer", None)
+        assert customer is not None
+
+        assert customer.current_plan()["name"] == "pro"
+
+        si = customer.current_plan(as_dict=False)
+
+        assert time_is_close(si.subscription.cancel_at, three_months)
+        assert time_is_close(si.subscription.trial_end, three_months)
+
+        sub = stripe.Subscription.retrieve(si.subscription.stripe_id)
+        assert abs(sub.cancel_at - int(three_months.timestamp())) < 15
+        assert abs(sub.trial_end - int(three_months.timestamp())) < 15
 
     def test_cancel_subscriptions(self, pro_profile):
         customer = pro_profile.user.customer

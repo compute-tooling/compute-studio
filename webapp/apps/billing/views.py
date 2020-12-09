@@ -22,6 +22,7 @@ from .models import (
     timestamp_to_datetime,
 )
 
+from .utils import update_payment
 
 stripe.api_key = os.environ.get("STRIPE_SECRET")
 wh_secret = os.environ.get("WEBHOOK_SECRET")
@@ -32,14 +33,6 @@ white_listed_urls = (
     "/billing/upgrade/monthly/?selected_plan=pro",
     "/billing/upgrade/yearly/?selected_plan=pro",
 )
-
-
-def update_payment(user, stripe_token):
-    if hasattr(user, "customer"):
-        user.customer.update_source(stripe_token)
-    else:  # create customer.
-        stripe_customer = stripe.Customer.create(email=user.email, source=stripe_token)
-        Customer.construct(stripe_customer, user=user)
 
 
 class Webhook(View):

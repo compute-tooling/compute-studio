@@ -135,7 +135,7 @@ class Customer(models.Model):
         else:
             return si
 
-    def update_plan(self, new_plan: Optional["Plan"]):
+    def update_plan(self, new_plan: Optional["Plan"], **subscription_kwargs):
         current_si = self.current_plan(as_dict=False)
         current_plan = self.current_plan(si=current_si, as_dict=True)
 
@@ -178,13 +178,18 @@ class Customer(models.Model):
                 send_sub_canceled_email(self.user, sub.current_period_end)
             else:
                 stripe.SubscriptionItem.modify(
-                    current_si.stripe_id, plan=new_plan.stripe_id,
+                    current_si.stripe_id, plan=new_plan.stripe_id
                 )
                 current_si.plan = new_plan
                 current_si.save()
-                stripe_sub = stripe.Subscription.retrieve(
-                    current_si.subscription.stripe_id
-                )
+                if subscription_kwargs:
+                    stripe_sub = stripe.Subscription.modify(
+                        current_si.subscription.stripe_id, **subscription_kwargs
+                    )
+                else:
+                    stripe_sub = stripe.Subscription.retrieve(
+                        current_si.subscription.stripe_id,
+                    )
                 current_si.subscription.update_from_stripe_obj(stripe_sub)
                 send_subscribe_to_plan_email(self.user, new_plan)
             return status
@@ -196,7 +201,9 @@ class Customer(models.Model):
             return UpdateStatus.nochange
 
         # Transition from free to paid plan.
-        stripe_sub = Subscription.create_stripe_object(self, [new_plan])
+        stripe_sub = Subscription.create_stripe_object(
+            self, [new_plan], **subscription_kwargs
+        )
         sub = Subscription.construct(
             stripe_sub, self, [new_plan], subscription_type="compute-studio"
         )
@@ -247,6 +254,7 @@ class Customer(models.Model):
 
 
 class Product(models.Model):
+    objects: models.Manager
     stripe_id = models.CharField(max_length=255, unique=True)
     project = models.OneToOneField("users.Project", null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
@@ -485,8 +493,11 @@ class Subscription(models.Model):
     cancel_at_period_end = models.BooleanField(default=False, null=True)
     current_period_start = models.DateTimeField(null=True, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
+    cancel_at = models.DateTimeField(null=True, blank=True)
     canceled_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
+
+    trial_end = models.DateTimeField(null=True, blank=True)
 
     def update_from_stripe_obj(self, stripe_obj: stripe.Subscription):
         self.current_period_start = timestamp_to_datetime(
@@ -496,13 +507,26 @@ class Subscription(models.Model):
         self.cancel_at_period_end = stripe_obj.cancel_at_period_end
         self.canceled_at = timestamp_to_datetime(stripe_obj.canceled_at)
         self.ended_at = timestamp_to_datetime(stripe_obj.ended_at)
+        self.cancel_at = timestamp_to_datetime(stripe_obj.cancel_at)
+        self.trial_end = timestamp_to_datetime(stripe_obj.trial_end)
         self.save()
 
     @staticmethod
-    def create_stripe_object(customer, plans):
+    def create_stripe_object(
+        customer,
+        plans,
+        coupon: str = None,
+        cancel_at: datetime = None,
+        trial_end: datetime = None,
+    ):
+        if trial_end is not None:
+            print(trial_end, trial_end.timestamp())
         subscription = stripe.Subscription.create(
             customer=customer.stripe_id,
             items=[{"plan": plan.stripe_id} for plan in plans],
+            coupon=coupon,
+            cancel_at=int(cancel_at.timestamp()) if cancel_at is not None else None,
+            trial_end=int(trial_end.timestamp()) if trial_end is not None else None,
         )
         return subscription
 
@@ -512,20 +536,20 @@ class Subscription(models.Model):
 
     @staticmethod
     def construct(stripe_subscription, customer, plans, subscription_type="primary"):
-        current_period_start = timestamp_to_datetime(
-            stripe_subscription.current_period_start
-        )
-        current_period_end = timestamp_to_datetime(
-            stripe_subscription.current_period_end
-        )
         sub = Subscription.objects.create(
             stripe_id=stripe_subscription.id,
             customer=customer,
             livemode=stripe_subscription.livemode,
             metadata=stripe_subscription.to_dict(),
-            current_period_start=current_period_start,
-            current_period_end=current_period_end,
+            current_period_start=timestamp_to_datetime(
+                stripe_subscription.current_period_start
+            ),
+            current_period_end=timestamp_to_datetime(
+                stripe_subscription.current_period_end
+            ),
             subscription_type=subscription_type,
+            trial_end=timestamp_to_datetime(stripe_subscription.trial_end),
+            cancel_at=timestamp_to_datetime(stripe_subscription.cancel_at),
         )
         sub.plans.add(*plans)
         sub.save()
