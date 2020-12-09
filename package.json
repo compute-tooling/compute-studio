@@ -53,7 +53,7 @@
     "slate-react": "^0.57.1",
     "source-map-loader": "^0.2.4",
     "style-loader": "^0.23.1",
-    "yup": "^0.26.10"
+    "yup": "^0.29.3"
   },
   "devDependencies": {
     "prettier": "^1.19.1",
