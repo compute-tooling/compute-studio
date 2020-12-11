@@ -54,8 +54,8 @@ information{% endblock %} {% block content %}
           {% if current_plan.name != 'free' %}
           {% if cancel_at_period_end %}
           <div class="text-center">
-            <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#freeModal"
-              disabled>
+            <button type="button" class="btn btn-primary text-center" style="white-space: normal" data-toggle="modal"
+              data-target="#freeModal" disabled>
               <strong>
                 Downgrade scheduled for {{cancel_at}}
               </strong>
