@@ -122,156 +122,159 @@ const RunDialog: React.FC<{
   isPublic,
   sim,
 }) => {
-  const handleCloseWithSubmit = () => {
-    setShow(false);
-    handleSubmit();
-  };
+    const handleCloseWithSubmit = () => {
+      setShow(false);
+      handleSubmit();
+    };
 
-  const flipPublic = (_isPublic: boolean) => setIsPublic(!_isPublic);
+    const flipPublic = (_isPublic: boolean) => setIsPublic(!_isPublic);
 
-  const createsNewSim = SimUtils.submitWillCreateNewSim(sim);
-  let remainingPrivateSims = accessStatus.remaining_private_sims;
-  if (createsNewSim && !isPublic) {
-    remainingPrivateSims = Math.max(remainingPrivateSims - 1, 0);
-  }
-  const { protocol, host } = window.location;
-  const simUrl = `${protocol}//${host}${sim.gui_url}`;
+    const createsNewSim = SimUtils.submitWillCreateNewSim(sim);
+    let remainingPrivateSims = accessStatus.remaining_private_sims;
+    if (createsNewSim && !isPublic) {
+      remainingPrivateSims = Math.max(remainingPrivateSims - 1, 0);
+    }
+    const { protocol, host } = window.location;
+    const simUrl = `${protocol}//${host}${sim.gui_url}`;
 
-  let sponsorMessage;
-  if (accessStatus.sponsor_message) {
-    sponsorMessage = accessStatus.sponsor_message;
-  }
-  const isPrivateRateLimited = accessStatus.plan.name === "free" && remainingPrivateSims <= 0;
-  if (isPrivateRateLimited) {
-    isPublic = true;
-  }
-  let visabilitymsg;
-  if (isPublic) {
-    visabilitymsg = (
-      <div>
-        <p>
-          Public Log Entry:{" "}
-          <strong className="font-weight-bold">
-            {!!sim?.title ? sim.title : `New ${accessStatus.project}`}
-          </strong>{" "}
-          {accessStatus.username !== "anon" && (
-            <span>
-              by <strong className="font-weight-bold">{accessStatus.username}</strong>
-            </span>
-          )}
-        </p>
-        <p>Public url: {createsNewSim ? "Yes" : <a href={simUrl}>{simUrl}</a>}</p>
-      </div>
-    );
-  } else {
-    visabilitymsg = (
-      <div>
-        <p>
-          Private Log Entry:{" "}
-          <strong className="font-weight-bold">
-            {!!sim?.title ? sim.title : `New ${accessStatus.project}`}
-          </strong>{" "}
-          {accessStatus.username !== "anon" && (
-            <span>
-              by <strong className="font-weight-bold">{accessStatus.username}</strong>
-            </span>
-          )}
-        </p>
-        {!createsNewSim && (
+    let sponsorMessage;
+    if (accessStatus.sponsor_message) {
+      sponsorMessage = accessStatus.sponsor_message;
+    }
+    const isPrivateRateLimited = accessStatus.plan.name === "free" && remainingPrivateSims <= 0;
+    if (isPrivateRateLimited && createsNewSim) {
+      isPublic = true;
+    } else if (!createsNewSim) {
+      isPublic = sim.is_public;
+    }
+    let visabilitymsg;
+    if (isPublic) {
+      visabilitymsg = (
+        <div>
           <p>
-            Private url: <a href={simUrl}>{simUrl}</a>
+            Public Log Entry:{" "}
+            <strong className="font-weight-bold">
+              {!!sim?.title ? sim.title : `New ${accessStatus.project}`}
+            </strong>{" "}
+            {accessStatus.username !== "anon" && (
+              <span>
+                by <strong className="font-weight-bold">{accessStatus.username}</strong>
+              </span>
+            )}
           </p>
-        )}
-        <p>Public url: None.</p>
-      </div>
-    );
-  }
-  let makePrivate;
-  if (accessStatus.plan.name === "free") {
-    makePrivate = (
-      <span>
-        Make private ({remainingPrivateSims} remaining this month.{" "}
-        {isPrivateRateLimited && (
-          <a href={`/billing/upgrade/yearly/?next=${window.location.pathname}`}>Upgrade to Pro.</a>
-        )}
-        )
-      </span>
-    );
-  } else {
-    makePrivate = <span>Make private</span>;
-  }
-
-  let pricing;
-  if (accessStatus.is_sponsored) {
-    pricing = (
-      <Modal.Body>
-        {visabilitymsg}
-        <p>
-          Pricing: Sponsored by{" "}
-          {sponsorMessage ? (
-            <div dangerouslySetInnerHTML={{ __html: sponsorMessage }} />
-          ) : (
-            "Anonymous."
+          <p>Public url: {createsNewSim ? "Yes" : <a href={simUrl}>{simUrl}</a>}</p>
+        </div>
+      );
+    } else {
+      visabilitymsg = (
+        <div>
+          <p>
+            Private Log Entry:{" "}
+            <strong className="font-weight-bold">
+              {!!sim?.title ? sim.title : `New ${accessStatus.project}`}
+            </strong>{" "}
+            {accessStatus.username !== "anon" && (
+              <span>
+                by <strong className="font-weight-bold">{accessStatus.username}</strong>
+              </span>
+            )}
+          </p>
+          {!createsNewSim && (
+            <p>
+              Private url: <a href={simUrl}>{simUrl}</a>
+            </p>
           )}
-        </p>
-      </Modal.Body>
-    );
-  } else {
-    pricing = (
-      <Modal.Body>
-        {visabilitymsg}
-        <p>
-          Pricing: ${`${accessStatus.exp_cost}`}.
-          <PricingInfoCollapse accessStatus={accessStatus} />
-        </p>
-      </Modal.Body>
-    );
-  }
+          <p>Public url: None.</p>
+        </div>
+      );
+    }
+    let makePrivate;
+    if (accessStatus.plan.name === "free") {
+      makePrivate = (
+        <span>
+          Make private ({remainingPrivateSims} remaining this month.{" "}
+          {isPrivateRateLimited && (
+            <a href={`/billing/upgrade/yearly/?next=${window.location.pathname}`}>Upgrade to Pro.</a>
+          )}
+        )
+        </span>
+      );
+    } else {
+      makePrivate = <span>Make private</span>;
+    }
 
-  return (
-    <Modal show={show} onHide={() => setShow(false)}>
-      <Modal.Header closeButton>
-        <Modal.Title>Create a new {isPublic ? "public" : "private"} simulation</Modal.Title>
-      </Modal.Header>
-      {pricing}
-      <Modal.Footer style={{ justifyContent: "none" }}>
-        <Row className="align-items-center w-100 justify-content-between">
-          <Col className="col-md-auto">
-            <Row>
-              <Col>
-                <CheckboxWidget
-                  setValue={flipPublic}
-                  value={!isPublic}
-                  message={makePrivate}
-                  disabled={isPrivateRateLimited}
-                />
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <CheckboxWidget
-                  setValue={setNotify}
-                  value={notify}
-                  message="Email me when ready."
-                />
-              </Col>
-            </Row>
-          </Col>
-          <Col className="col--md-auto">
-            <Button
-              className="mr-3"
-              variant="success"
-              onClick={handleCloseWithSubmit}
-              type="submit"
-            >
-              <strong>Run</strong>
-            </Button>
-          </Col>
-        </Row>
-      </Modal.Footer>
-    </Modal>
-  );
-};
+    let pricing;
+    if (accessStatus.is_sponsored) {
+      pricing = (
+        <Modal.Body>
+          {visabilitymsg}
+          <p>
+            Pricing: Sponsored by{" "}
+            {sponsorMessage ? (
+              <div dangerouslySetInnerHTML={{ __html: sponsorMessage }} />
+            ) : (
+                "Anonymous."
+              )}
+          </p>
+        </Modal.Body>
+      );
+    } else {
+      pricing = (
+        <Modal.Body>
+          {visabilitymsg}
+          <>
+            <span>Pricing: ${`${accessStatus.exp_cost}`}.
+              <PricingInfoCollapse accessStatus={accessStatus} />
+            </span>
+          </>
+        </Modal.Body>
+      );
+    }
+
+    return (
+      <Modal show={show} onHide={() => setShow(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Create a new {isPublic ? "public" : "private"} simulation</Modal.Title>
+        </Modal.Header>
+        {pricing}
+        <Modal.Footer style={{ justifyContent: "none" }}>
+          <Row className="align-items-center w-100 justify-content-between">
+            <Col className="col-md-auto">
+              <Row>
+                <Col>
+                  <CheckboxWidget
+                    setValue={flipPublic}
+                    value={!isPublic}
+                    message={makePrivate}
+                    disabled={isPrivateRateLimited && isPublic}
+                  />
+                </Col>
+              </Row>
+              <Row>
+                <Col>
+                  <CheckboxWidget
+                    setValue={setNotify}
+                    value={notify}
+                    message="Email me when ready."
+                  />
+                </Col>
+              </Row>
+            </Col>
+            <Col className="col--md-auto">
+              <Button
+                className="mr-3"
+                variant="success"
+                onClick={handleCloseWithSubmit}
+                type="submit"
+              >
+                <strong>Run</strong>
+              </Button>
+            </Col>
+          </Row>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
 
 const Dialog: React.FC<{
   accessStatus: AccessStatus;
@@ -296,44 +299,44 @@ const Dialog: React.FC<{
   isPublic,
   sim,
 }) => {
-  // pass new show and setShow so main run dialog is not closed.
-  const [authShow, setAuthShow] = React.useState(true);
-  if (accessStatus.can_run) {
-    return (
-      <RunDialog
-        accessStatus={accessStatus}
-        show={show}
-        setShow={setShow}
-        handleSubmit={handleSubmit}
-        setNotify={setNotify}
-        notify={notify}
-        setIsPublic={setIsPublic}
-        isPublic={isPublic}
-        sim={sim}
-      />
-    );
-  } else if (accessStatus.user_status === "anon") {
-    // only consider showing AuthDialog if the run dialog is shown.
-    return (
-      <AuthDialog
-        show={show ? authShow : false}
-        setShow={setAuthShow}
-        initialAction="sign-up"
-        resetAccessStatus={resetAccessStatus}
-        message="You must be logged in to run simulations."
-      />
-    );
-  } else if (accessStatus.user_status === "profile") {
-    return (
-      <RequirePmtDialog
-        accessStatus={accessStatus}
-        show={show}
-        setShow={setShow}
-        handleSubmit={handleSubmit}
-      />
-    );
-  }
-};
+    // pass new show and setShow so main run dialog is not closed.
+    const [authShow, setAuthShow] = React.useState(true);
+    if (accessStatus.can_run) {
+      return (
+        <RunDialog
+          accessStatus={accessStatus}
+          show={show}
+          setShow={setShow}
+          handleSubmit={handleSubmit}
+          setNotify={setNotify}
+          notify={notify}
+          setIsPublic={setIsPublic}
+          isPublic={isPublic}
+          sim={sim}
+        />
+      );
+    } else if (accessStatus.user_status === "anon") {
+      // only consider showing AuthDialog if the run dialog is shown.
+      return (
+        <AuthDialog
+          show={show ? authShow : false}
+          setShow={setAuthShow}
+          initialAction="sign-up"
+          resetAccessStatus={resetAccessStatus}
+          message="You must be logged in to run simulations."
+        />
+      );
+    } else if (accessStatus.user_status === "profile") {
+      return (
+        <RequirePmtDialog
+          accessStatus={accessStatus}
+          show={show}
+          setShow={setShow}
+          handleSubmit={handleSubmit}
+        />
+      );
+    }
+  };
 
 export const RunModal: React.FC<{
   showModal: boolean;
@@ -362,43 +365,43 @@ export const RunModal: React.FC<{
   persist,
   sim,
 }) => {
-  let runbuttontext: string;
-  if (!accessStatus.is_sponsored) {
-    runbuttontext = `${action} ($${accessStatus.exp_cost})`;
-  } else {
-    runbuttontext = action;
-  }
+    let runbuttontext: string;
+    if (!accessStatus.is_sponsored) {
+      runbuttontext = `${action} ($${accessStatus.exp_cost})`;
+    } else {
+      runbuttontext = action;
+    }
 
-  return (
-    <>
-      <div className="card card-body card-outer">
-        <Button
-          variant="primary"
-          onClick={() => {
-            // Persist values when clicking run in case the user navigates away.
-            persist();
-            setShowModal(true);
-          }}
-          className="btn btn-block btn-success"
-        >
-          <b>{runbuttontext}</b>
-        </Button>
-      </div>
-      <Dialog
-        accessStatus={accessStatus}
-        resetAccessStatus={resetAccessStatus}
-        show={showModal}
-        setShow={setShowModal}
-        handleSubmit={handleSubmit}
-        setNotify={setNotify}
-        notify={notify}
-        setIsPublic={setIsPublic}
-        isPublic={isPublic}
-        sim={sim}
-      />
-    </>
-  );
-};
+    return (
+      <>
+        <div className="card card-body card-outer">
+          <Button
+            variant="primary"
+            onClick={() => {
+              // Persist values when clicking run in case the user navigates away.
+              persist();
+              setShowModal(true);
+            }}
+            className="btn btn-block btn-success"
+          >
+            <b>{runbuttontext}</b>
+          </Button>
+        </div>
+        <Dialog
+          accessStatus={accessStatus}
+          resetAccessStatus={resetAccessStatus}
+          show={showModal}
+          setShow={setShowModal}
+          handleSubmit={handleSubmit}
+          setNotify={setNotify}
+          notify={notify}
+          setIsPublic={setIsPublic}
+          isPublic={isPublic}
+          sim={sim}
+        />
+      </>
+    );
+  };
 
 export const AuthModal: React.FC<{ msg?: string }> = ({
   msg = "You must be logged in to run simulations.",

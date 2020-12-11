@@ -99,9 +99,7 @@ class Profile(models.Model):
         if thirty_days_ago < FREE_PRIVATE_SIMS_START_DATE:
             thirty_days_ago = FREE_PRIVATE_SIMS_START_DATE
         private_sims = self.sims.filter(
-            is_public=False,
-            creation_date__gte=thirty_days_ago,
-            status__in=["SUCCESS", "FAIL", "PENDING"],
+            is_public=False, creation_date__gte=thirty_days_ago,
         )
 
         return max(FREE_PRIVATE_SIMS - private_sims.count(), 0)

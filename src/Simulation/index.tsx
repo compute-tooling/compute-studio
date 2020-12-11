@@ -52,7 +52,7 @@ interface URLProps {
   };
 }
 
-interface SimAppProps extends URLProps {}
+interface SimAppProps extends URLProps { }
 
 interface SimAppState {
   // keep track of which tab is open
@@ -92,7 +92,7 @@ interface SimAppState {
 class SimTabs extends React.Component<
   SimAppProps & { tabName: "inputs" | "outputs" },
   SimAppState
-> {
+  > {
   api: API;
   constructor(props) {
     super(props);
@@ -475,6 +475,11 @@ class SimTabs extends React.Component<
             accessStatus={this.state.accessStatus}
             remoteSim={this.state.remoteSim}
             resetOutputs={this.setOutputs}
+            resetAccessStatus={async () => {
+              const accessStatus = await this.api.getAccessStatus();
+              this.setState({ accessStatus });
+              return accessStatus
+            }}
           />
           <div className="d-flex justify-content-center">
             <ReactLoading type="spokes" color="#2b2c2d" />
@@ -541,6 +546,11 @@ class SimTabs extends React.Component<
                   accessStatus={accessStatus}
                   remoteSim={remoteSim}
                   resetOutputs={this.setOutputs}
+                  resetAccessStatus={async () => {
+                    const accessStatus = await this.api.getAccessStatus();
+                    this.setState({ accessStatus });
+                    return accessStatus
+                  }}
                 />
               </ErrorBoundary>
               <Tab.Container
