@@ -1432,7 +1432,7 @@ class TestCollaboration:
         sponsored_matchups.sponsor = sponsored_matchups.owner
         sponsored_matchups.save()
 
-        (sim_owner,) = gen_collabs(1, plan="free")
+        (sim_owner,) = gen_collabs(1)
         sponsored_matchups.assign_role("read", sim_owner.user)
 
         sims = []

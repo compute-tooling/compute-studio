@@ -46,40 +46,17 @@ def customer_subscription_deleted(event):
 
 # TODO: We may need to use the customer.subscription.updated hook to handle downgrade
 # from pro to free.
-# def customer_subscription_updated(event: stripe.Event):
-#     print("processing customer.subscription.updated event...")
-#     sub = get_object_or_404(Subscription, stripe_id=event.data.object.id)
-#     customer = sub.customer
-
-#     new_plans = event.data.object.items
-
-#     assert len(new_plans) == 0, f"Got {len(new_plans)}, {event}"
-
-#     new_plan = Plan.objects.get(stripe_id=new_plans[0].id)
-
-#     if getattr(event.previous_attributes, "plan", None) is not None:
-#         previous_plan = Plan.objects.get(stripe_id=event.previous_attributes.plan.id)
-#         if new_plan.nickname == "C/S Free" and previous_plan.nickname == "C/S Pro":
-#             current_si = customer.current_plan(as_dict=False)
-#             current_si.plan = new_plan
-#             current_si.save()
-#             send_mail(
-#                 "Your C/S subscription has been cancelled",
-#                 (
-#                     "We are sorry to see you go. If you have a moment, please let us know why "
-#                     "you have cancelled your subscription and what we can do to win you back "
-#                     "in the future.\n\nBest,\nThe C/S Team"
-#                 ),
-#                 "admin@compute.studio",
-#                 [customer.user.email],
-#                 fail_silently=False,
-#             )
+def customer_subscription_updated(event: stripe.Event):
+    print("processing customer.subscription.updated event...")
+    stripe_sub: stripe.Subscription = event.data.object
+    sub: Subscription = get_object_or_404(Subscription, stripe_id=stripe_sub.id)
+    sub.update_from_stripe_obj(stripe_sub)
 
 
 webhook_map = {
     "customer.created": customer_created,
     "customer.subscription.deleted": customer_subscription_deleted,
-    # "customer.subscription.updated": customer_subscription_updated,
+    "customer.subscription.updated": customer_subscription_updated,
 }
 
 

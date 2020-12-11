@@ -136,7 +136,10 @@ class Profile(models.Model):
     def can_run(self, project):
         if not self.is_active:
             return False
-        if hasattr(self.user, "customer") and self.user.customer:
+        if (
+            hasattr(self.user, "customer")
+            and self.user.customer.card_info() is not None
+        ):
             return True
 
         return project.is_sponsored

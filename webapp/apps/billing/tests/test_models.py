@@ -60,7 +60,7 @@ class TestStripeModels:
         assert customer.default_source != prev_source
 
     @pytest.mark.parametrize("has_pmt_info", [True, False])
-    def test_construct_subscription_args(self, db, has_pmt_info, customer):
+    def test_subscription_with_trial_and_coupon(self, db, has_pmt_info, customer):
         """
         Create a subscription with a coupon and trial that expire in 3 months:
         1. User has payment info.
@@ -96,6 +96,8 @@ class TestStripeModels:
         sub = stripe.Subscription.retrieve(si.subscription.stripe_id)
         assert abs(sub.cancel_at - int(three_months.timestamp())) < 15
         assert abs(sub.trial_end - int(three_months.timestamp())) < 15
+
+        assert sub.is_trial() is True
 
     def test_cancel_subscriptions(self, pro_profile):
         customer = pro_profile.user.customer
@@ -159,6 +161,11 @@ class TestStripeModels:
             "plan_duration": plan_duration.lower(),
             "name": "pro",
         }
+
+        si = customer.current_plan(as_dict=False)
+        assert si.subscription.is_trial() is False
+        assert si.subscription.cancel_at is None
+        assert si.trial_end is None
 
         # test update_plan is idempotent
         plan = cs_product.plans.get(nickname=f"{plan_duration} Pro Plan")

@@ -30,7 +30,7 @@ def create_three_month_pro_subscription(user):
         stripe_customer = stripe.Customer.create(email=user.email)
         customer = Customer.construct(stripe_customer, user=user)
     else:
-        customer = user.customer
+        customer: Customer = user.customer
 
     cs_product = Product.objects.get(name="Compute Studio Subscription")
     plan = cs_product.plans.get(nickname=f"Monthly Pro Plan")

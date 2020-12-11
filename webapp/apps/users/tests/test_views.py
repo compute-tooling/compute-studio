@@ -31,21 +31,21 @@ class TestUsersViews:
 
         assert auth.get_user(client).is_authenticated
 
-        # test email cannot be re-used.
+        # test email can be re-used. previously this was not allowed.
         data = {
             "csrfmiddlewaretoken": ["abc123"],
-            "username": ["testlogin"],
+            "username": ["testlogin2"],
             "email": ["tester@test.com"],
             "password1": [password],
             "password2": [password],
         }
 
         resp = client.post("/users/signup/", data=data)
-        assert resp.status_code == 200
-        assert resp.context["form"].errors == {
-            "email": ["A user is already registered with this e-mail address."],
-            "username": ["A user with that username already exists."],
-        }
+        assert resp.status_code == 302
+        # assert resp.context["form"].errors == {
+        #     "email": ["A user is already registered with this e-mail address."],
+        #     "username": ["A user with that username already exists."],
+        # }
 
     def test_signup_next(self, client, password):
         data = {

@@ -52,6 +52,15 @@ information{% endblock %} {% block content %}
             <li>3 free private simulations per month.</li>
           </ul>
           {% if current_plan.name != 'free' %}
+          {% if cancel_at_period_end %}
+          <div class="text-center">
+            <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#freeModal" disabled>
+              <strong>
+                Downgrade scheduled for {{cancel_at}}
+              </strong>
+              </a>
+          </div>
+          {% else %}
           <div class="text-center">
             <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#freeModal">
               <strong>
@@ -59,6 +68,7 @@ information{% endblock %} {% block content %}
               </strong>
               </a>
           </div>
+          {% endif %}
           {% endif %}
 
         </div>

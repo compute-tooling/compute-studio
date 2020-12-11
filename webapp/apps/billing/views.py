@@ -22,16 +22,22 @@ from .models import (
     timestamp_to_datetime,
 )
 
-from .utils import update_payment
+from .utils import update_payment, has_payment_method
 
 stripe.api_key = os.environ.get("STRIPE_SECRET")
 wh_secret = os.environ.get("WEBHOOK_SECRET")
 
-white_listed_urls = (
-    # next urls for pro plan
-    "/billing/upgrade/?selected_plan=pro",
-    "/billing/upgrade/monthly/?selected_plan=pro",
-    "/billing/upgrade/yearly/?selected_plan=pro",
+white_listed_urls = set(
+    [
+        # next urls for pro plan
+        "/billing/upgrade/?selected_plan=pro",
+        "/billing/upgrade/monthly/?selected_plan=pro",
+        "/billing/upgrade/yearly/?selected_plan=pro",
+        "/billing/upgrade/monthly/aftertrial/",
+        "/billing/upgrade/yearly/aftertrial/",
+        "/billing/upgrade/monthly/aftertrial/?selected_plan=pro",
+        "/billing/upgrade/yearly/aftertrial/?selected_plan=pro",
+    ]
 )
 
 
@@ -135,6 +141,146 @@ class Plans(View):
         )
 
 
+class AutoUpgradeAfterTrial(View):
+    template_name = "billing/auto_upgrade.html"
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        banner_msg = None
+        plan_duration = kwargs["plan_duration"]
+        customer: Customer = getattr(request.user, "customer", None)
+        next_url = request.GET.get("next", None)
+        card_info = customer.card_info()
+        si = customer.current_plan(as_dict=False)
+        current_plan = customer.current_plan(si=si)
+        _, selected_plan = parse_upgrade_params(request)
+
+        sub: Subscription = si.subscription
+        if not sub.is_trial():
+            return redirect(
+                "upgrade_plan_duration",
+                kwargs=dict(plan_duration=current_plan["plan_duration"]),
+            )
+
+        trial_end = sub.trial_end.date()
+        cancel_at = sub.cancel_at
+
+        # User is still on trial but has already opted in.
+        if sub.is_trial() and cancel_at is None:
+            banner_msg = (
+                f"You will continue to be on the {si.plan.nickname} after your trial "
+                f"ends on {sub.trial_end.date()}. Thanks for opting-in and enjoy the rest of "
+                f"your trial!"
+            )
+            return render(
+                request,
+                self.template_name,
+                context={
+                    "plan_duration": plan_duration,
+                    "current_plan": current_plan,
+                    "card_info": card_info,
+                    "selected_plan": selected_plan,
+                    "next": next_url,
+                    "banner_msg": banner_msg,
+                    "trial_end": trial_end,
+                },
+            )
+
+        return render(
+            request,
+            self.template_name,
+            context={
+                "plan_duration": plan_duration,
+                "current_plan": current_plan,
+                "card_info": card_info,
+                "selected_plan": selected_plan,
+                "next": next_url,
+                "banner_msg": banner_msg,
+                "trial_end": trial_end,
+                "cancel_at": cancel_at.date() if cancel_at is not None else None,
+            },
+        )
+
+
+class AutoUpgradeAfterTrialConfirm(View):
+    template_name = "billing/upgrade_plan.html"
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        banner_msg = None
+        plan_duration = kwargs["plan_duration"]
+        customer = getattr(request.user, "customer", None)
+        next_url = request.GET.get("next", None)
+
+        # Redirect user if they do not have payment info.
+        if not has_payment_method(request.user):
+            pmt_url = reverse("update_payment")
+            pmt_url += (
+                f"?next=/billing/upgrade/{plan_duration}/aftertrial/?selected_plan=pro"
+            )
+            return redirect(pmt_url)
+
+        card_info = customer.card_info()
+
+        current_si = customer.current_plan(as_dict=False)
+        if (
+            current_si is None  # no subscription to upgrade.
+            or not current_si.subscription.is_trial()  # no trial for opt-in after ending.
+            or current_si.subscription.cancel_at is None  # already opt-ed in.
+        ):
+            return redirect(
+                reverse(
+                    "upgrade_plan_duration", kwargs=dict(plan_duration=plan_duration)
+                )
+            )
+
+        sub: Subscription = current_si.subscription
+
+        # Get plan for Pro subscription corresponding to selected duration.
+        product = Product.objects.get(name="Compute Studio Subscription")
+        if plan_duration == "monthly":
+            new_plan = product.plans.get(nickname="Monthly Pro Plan")
+        else:
+            new_plan = product.plans.get(nickname="Yearly Pro Plan")
+
+        if current_si.plan != new_plan:
+            stripe.SubscriptionItem.modify(
+                current_si.stripe_id, plan=new_plan.stripe_id
+            )
+            current_si.plan = new_plan
+            current_si.save()
+
+        stripe_sub = stripe.Subscription.modify(
+            current_si.subscription.stripe_id,
+            cancel_at=None,
+            cancel_at_period_end=False,
+        )
+
+        current_si.subscription.update_from_stripe_obj(stripe_sub)
+        current_plan = customer.current_plan(si=current_si)
+
+        banner_msg = (
+            f"You will continue to be on the {current_si.plan.nickname} after your trial "
+            f"ends on {sub.trial_end.date()}. Thanks for opting-in and enjoy the rest of "
+            f"your trial!"
+        )
+
+        return render(
+            request,
+            self.template_name,
+            context={
+                "plan_duration": plan_duration,
+                "current_plan": current_plan,
+                "card_info": card_info,
+                "selected_plan": None,
+                "next": next_url,
+                "banner_msg": banner_msg,
+                "trial_end": current_si.subscription.trial_end.date(),
+                "cancel_at": None,
+            },
+        )
+
+
 class UpgradePlan(View):
     template_name = "billing/upgrade_plan.html"
 
@@ -147,6 +293,8 @@ class UpgradePlan(View):
         card_info = {"last4": None, "brand": None}
         current_plan = {"plan_duration": None, "name": "free"}
         next_url = request.GET.get("next", None)
+        cancel_at_period_end = False
+        cancel_at = None
         if next_url is not None:
             request.session["post_upgrade_url"] = next_url
 
@@ -186,12 +334,13 @@ class UpgradePlan(View):
                 return redirect(done_next_url)
 
             if current_si is not None:
-                sub = current_si.subscription
-                if sub is not None and sub.cancel_at_period_end:
+                sub: Subscription = current_si.subscription
+                if sub is not None and sub.cancel_at is not None:
                     banner_msg = (
                         f"Your {current_si.plan.nickname} will be downgraded "
                         f"to a Free account on {sub.current_period_end.date()}."
                     )
+                    cancel_at = sub.cancel_at.date()
 
         return render(
             request,
@@ -203,6 +352,8 @@ class UpgradePlan(View):
                 "selected_plan": selected_plan,
                 "next": next_url,
                 "banner_msg": banner_msg,
+                "cancel_at_period_end": cancel_at_period_end,
+                "cancel_at": cancel_at,
             },
         )
 
@@ -214,6 +365,9 @@ class UpgradePlanDone(View):
     def get(self, request, *args, **kwargs):
         # plan_duration optionally given in url: /billing/upgrade/[plan_duration]/
         plan_duration = kwargs.get("plan_duration", "monthly")
+        cancel_at_period_end = False
+        cancel_at = None
+
         customer = getattr(request.user, "customer", None)
         if customer is not None:
             card_info = customer.card_info()
@@ -227,18 +381,24 @@ class UpgradePlanDone(View):
                 sub = current_si.subscription
 
             if sub is not None and sub.cancel_at_period_end:
-                msg = (
+                banner_msg = (
                     f"Your {current_si.plan.nickname} will be downgraded "
                     f"to a Free account on {sub.current_period_end.date()}."
                 )
+                cancel_at_period_end = True
+                if sub.cancel_at is None:
+                    sub.update_from_stripe_obj(
+                        stripe.Subscription.retrieve(sub.stripe_id)
+                    )
+                cancel_at = sub.cancel_at.date()
 
             else:
-                msg = f"You are now on the {plan_name}."
+                banner_msg = f"You are now on the {plan_name}."
         else:
             card_info = {"last4": None, "brand": None}
             current_plan = {"plan_duration": None, "name": "free"}
             plan_name = "Free Plan"
-            msg = f"You are now on the {plan_name}."
+            banner_msg = f"You are now on the {plan_name}."
 
         return render(
             request,
@@ -247,7 +407,9 @@ class UpgradePlanDone(View):
                 "plan_duration": plan_duration,
                 "current_plan": current_plan,
                 "card_info": card_info,
-                "banner_msg": msg,
+                "banner_msg": banner_msg,
+                "cancel_at_period_end": cancel_at_period_end,
+                "cancel_at": cancel_at,
             },
         )
 

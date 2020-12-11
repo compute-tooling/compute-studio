@@ -12,7 +12,7 @@ from django.db import models, IntegrityError
 from django.db.models import Q
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
-from django.utils.timezone import make_aware
+from django.utils import timezone
 
 from webapp.settings import USE_STRIPE, DEBUG
 
@@ -26,7 +26,7 @@ def timestamp_to_datetime(timestamp):
         return None
     if isinstance(timestamp, int):
         timestamp = datetime.fromtimestamp(timestamp, tz=pytz.UTC)
-    return make_aware(datetime.combine(timestamp, datetime.utcnow().time()))
+    return timezone.make_aware(datetime.combine(timestamp, datetime.utcnow().time()))
 
 
 class RequiredLocalInstances(Exception):
@@ -547,9 +547,12 @@ class Subscription(models.Model):
             current_period_end=timestamp_to_datetime(
                 stripe_subscription.current_period_end
             ),
+            cancel_at_period_end=stripe_subscription.cancel_at_period_end,
             subscription_type=subscription_type,
             trial_end=timestamp_to_datetime(stripe_subscription.trial_end),
             cancel_at=timestamp_to_datetime(stripe_subscription.cancel_at),
+            canceled_at=timestamp_to_datetime(stripe_subscription.canceled_at),
+            ended_at=timestamp_to_datetime(stripe_subscription.ended_at),
         )
         sub.plans.add(*plans)
         sub.save()
@@ -578,14 +581,20 @@ class Subscription(models.Model):
         Extend subscription a month from its end date or now
         if "now" is after the subscription ended.
         """
-        base = max(make_aware(datetime.now()), self.current_period_end)
+        base = max(timezone.make_aware(datetime.now()), self.current_period_end)
 
         self.current_period_end = base + timedelta(days=days)
 
     def cancel_subscription(self):
-        self.canceled_at = make_aware(datetime.now())
+        self.canceled_at = timezone.now()
         # allowed to use site until current period is over
         self.ended_at = self.current_period_end
+
+    def is_trial(self):
+        if self.trial_end is None:
+            return False
+        else:
+            return timezone.now() < self.trial_end
 
 
 class SubscriptionItem(models.Model):
