@@ -41,7 +41,11 @@ class ClusterAuthentication(authentication.BaseAuthentication):
             data = jwt.decode(
                 jwt_token, cryptkeeper.decrypt(cluster.jwt_secret), algorithms=["HS256"]
             )
-        except (jwt.DecodeError, cryptography.exceptions.InvalidKey):
+        except (
+            jwt.DecodeError,
+            cryptography.exceptions.InvalidKey,
+            cryptography.fernet.InvalidToken,
+        ):
             raise AuthenticationFailed("Invalid token")
 
         if str(cluster_user) != data["username"]:
