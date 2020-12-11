@@ -44,8 +44,6 @@ def customer_subscription_deleted(event):
     )
 
 
-# TODO: We may need to use the customer.subscription.updated hook to handle downgrade
-# from pro to free.
 def customer_subscription_updated(event: stripe.Event):
     print("processing customer.subscription.updated event...")
     stripe_sub: stripe.Subscription = event.data.object
