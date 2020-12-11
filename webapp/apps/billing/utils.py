@@ -26,6 +26,11 @@ def has_payment_method(user):
 
 
 def create_three_month_pro_subscription(user):
+    """
+    Gives user a free three month pro subscription that cancels
+    at the end of the trial period, unless the user opts into
+    the sub after the period ends.
+    """
     if getattr(user, "customer", None) is None:
         stripe_customer = stripe.Customer.create(email=user.email)
         customer = Customer.construct(stripe_customer, user=user)

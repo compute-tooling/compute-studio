@@ -9,6 +9,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseServerError
 from django.urls import resolve, Resolver404
+from django.utils.safestring import mark_safe
 
 from webapp.apps.users.models import Project
 
@@ -158,8 +159,10 @@ class AutoUpgradeAfterTrial(View):
         sub: Subscription = si.subscription
         if not sub.is_trial():
             return redirect(
-                "upgrade_plan_duration",
-                kwargs=dict(plan_duration=current_plan["plan_duration"]),
+                reverse(
+                    "upgrade_plan_duration",
+                    kwargs=dict(plan_duration=current_plan["plan_duration"]),
+                ),
             )
 
         trial_end = sub.trial_end.date()
@@ -338,7 +341,19 @@ class UpgradePlan(View):
 
             if current_si is not None:
                 sub: Subscription = current_si.subscription
-                if sub is not None and sub.cancel_at is not None:
+                if sub is not None and sub.cancel_at is not None and sub.is_trial():
+                    banner_msg = mark_safe(
+                        f"""
+                        <p>Your free trial ends on {sub.trial_end.date()}.</p>
+                        <p>
+                        <a class="btn btn-primary" href="/billing/upgrade/yearly/aftertrial/">
+                            <strong>Upgrade to C/S Pro after trial</strong>
+                        </a>
+                        </p>
+                        """
+                    )
+
+                elif sub is not None and sub.cancel_at is not None:
                     banner_msg = (
                         f"Your {current_si.plan.nickname} will be downgraded "
                         f"to a Free account on {sub.current_period_end.date()}."
