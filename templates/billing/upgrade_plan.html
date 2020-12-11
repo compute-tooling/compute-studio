@@ -54,7 +54,8 @@ information{% endblock %} {% block content %}
           {% if current_plan.name != 'free' %}
           {% if cancel_at_period_end %}
           <div class="text-center">
-            <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#freeModal" disabled>
+            <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#freeModal"
+              disabled>
               <strong>
                 Downgrade scheduled for {{cancel_at}}
               </strong>
@@ -111,7 +112,8 @@ information{% endblock %} {% block content %}
           {% if plan_duration == "monthly" %}
           <h2 class="text-center">$12.50</h2>
           <h4 class="text-center">Per month</h4>
-          <small class="text-center text-muted">Save $30 by getting 2 months free with <a href="/billing/upgrade/yearly/">annual pre-pay.</a></small>
+          <small class="text-center text-muted">Save $30 by getting 2 months free with <a
+              href="/billing/upgrade/yearly/">annual pre-pay.</a></small>
           {% else %}
           <h2 class="text-center">$10.00</h2>
           <h4 class="text-center">Per month</h4>
@@ -158,7 +160,7 @@ information{% endblock %} {% block content %}
           {% else %}
           <p class="lead">You will be charged $120 per year.</p>
           {% endif %}
-          {% if not user.customer %}
+          {% if not has_payment_method %}
           <p><a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=pro">Add
               payment
               method</a></p>

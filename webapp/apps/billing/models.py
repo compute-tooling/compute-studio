@@ -291,91 +291,6 @@ class Product(models.Model):
         return (product, created)
 
 
-class Coupon(models.Model):
-    objects: models.Manager
-    USD = "usd"
-    CURRENCY_CHOICES = ((USD, "usd"),)
-
-    stripe_id = models.CharField(max_length=255, unique=True)
-    amount_off = models.IntegerField(null=True, blank=True)
-    currency = models.CharField(
-        null=True, blank=True, choices=CURRENCY_CHOICES, max_length=3
-    )
-
-    duration = models.CharField(
-        choices=(
-            ("Once", "once"),
-            ("Multi-month", "multi-month"),
-            ("Forever", "forever"),
-        ),
-        max_length=16,
-    )
-    duration_in_months = models.PositiveIntegerField(null=True, blank=True)
-    name = models.TextField(max_length=5000, default="", blank=True)
-    percent_off = models.DecimalField(
-        null=True, blank=True, decimal_places=2, max_digits=5
-    )
-
-    @staticmethod
-    def create_stripe_object(
-        *,
-        name,
-        duration,
-        amount_off=None,
-        currency="usd",
-        duration_in_months=None,
-        percent_off=None,
-    ):
-        if amount_off is None and percent_off is None:
-            raise ValueError("One of amount_off or percent_off must be specified.")
-        if duration not in ("once", "repeating", "forever"):
-            raise ValueError(
-                f"Duration must be one of once, repeating, or forever. Got {duration}."
-            )
-        if duration == "repeating" and duration_in_months is None:
-            raise ValueError(
-                "Duration in months must be given if duration is repeating."
-            )
-
-        coupon = stripe.Coupon.create(
-            name=name,
-            duration=duration,
-            amount_off=amount_off,
-            currency="usd",
-            duration_in_months=duration_in_months,
-            percent_off=percent_off,
-        )
-        return coupon
-
-    @staticmethod
-    def get_stripe_object(stripe_id):
-        return stripe.Coupon.retrieve(stripe_id)
-
-    @staticmethod
-    def construct(stripe_coupon):
-        plan = Coupon.objects.create(
-            stripe_id=stripe_coupon.id,
-            name=stripe_coupon.name,
-            amount_off=stripe_coupon.amount_off,
-            currency=stripe_coupon.currency,
-            duration=stripe_coupon.duration,
-            duration_in_months=stripe_coupon.duration_in_months,
-            percent_off=stripe_coupon.percent_off,
-        )
-        return plan
-
-    @staticmethod
-    def get_or_construct(stripe_id):
-        try:
-            coupon, created = Coupon.objects.get(stripe_id=stripe_id), False
-        except Coupon.DoesNotExist:
-            stripe_coupon = Coupon.get_stripe_object(stripe_id)
-            coupon, created = Coupon.construct(stripe_coupon), True
-        except IntegrityError:
-            coupon, created = Coupon.objects.get(stripe_id), False
-        return (coupon, created)
-
-
 class Plan(models.Model):
     objects: models.Manager
     LICENSED = "licensed"
@@ -706,12 +621,3 @@ def create_pro_billing_objects():
             nickname="Yearly Pro Plan",
         )
         Plan.get_or_construct(yearly_plan.id, product)
-
-    if Coupon.objects.filter(name="C/S Pro Coupon").count() == 0:
-        coupon = Coupon.create_stripe_object(
-            name="C/S Pro Coupon",
-            duration="repeating",
-            duration_in_months=3,
-            percent_off=100,
-        )
-        Coupon.get_or_construct(coupon.id)

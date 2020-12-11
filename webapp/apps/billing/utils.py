@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 import pytz
 
-from webapp.apps.billing.models import Product, Coupon, Customer
+from webapp.apps.billing.models import Product, Customer
 
 import stripe
 
@@ -34,12 +34,11 @@ def create_three_month_pro_subscription(user):
 
     cs_product = Product.objects.get(name="Compute Studio Subscription")
     plan = cs_product.plans.get(nickname=f"Monthly Pro Plan")
-    coupon = Coupon.objects.get(name="C/S Pro Coupon")
     now = datetime.utcnow().replace(tzinfo=pytz.UTC)
     if now.month <= 9:
         three_months = now.replace(month=now.month + 3)
     else:
         three_months = now.replace(year=now.year + 1, month=now.month + 3 - 12)
     customer.update_plan(
-        plan, coupon=coupon.stripe_id, cancel_at=three_months, trial_end=three_months,
+        plan, cancel_at=three_months, trial_end=three_months,
     )

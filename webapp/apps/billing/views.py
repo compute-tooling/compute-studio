@@ -183,6 +183,7 @@ class AutoUpgradeAfterTrial(View):
                     "next": next_url,
                     "banner_msg": banner_msg,
                     "trial_end": trial_end,
+                    "has_payment_method": has_payment_method(request.user),
                 },
             )
 
@@ -198,6 +199,7 @@ class AutoUpgradeAfterTrial(View):
                 "banner_msg": banner_msg,
                 "trial_end": trial_end,
                 "cancel_at": cancel_at.date() if cancel_at is not None else None,
+                "has_payment_method": has_payment_method(request.user),
             },
         )
 
@@ -277,6 +279,7 @@ class AutoUpgradeAfterTrialConfirm(View):
                 "banner_msg": banner_msg,
                 "trial_end": current_si.subscription.trial_end.date(),
                 "cancel_at": None,
+                "has_payment_method": has_payment_method(request.user),
             },
         )
 
@@ -354,6 +357,7 @@ class UpgradePlan(View):
                 "banner_msg": banner_msg,
                 "cancel_at_period_end": cancel_at_period_end,
                 "cancel_at": cancel_at,
+                "has_payment_method": has_payment_method(request.user),
             },
         )
 
@@ -410,6 +414,7 @@ class UpgradePlanDone(View):
                 "banner_msg": banner_msg,
                 "cancel_at_period_end": cancel_at_period_end,
                 "cancel_at": cancel_at,
+                "has_payment_method": has_payment_method(request.user),
             },
         )
 
