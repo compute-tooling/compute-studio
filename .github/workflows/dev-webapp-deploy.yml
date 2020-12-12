@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - dev
-      - config-fixes
     paths:
       - "webapp/**"
       - "deploy/**"
@@ -64,7 +63,7 @@ jobs:
       # Setup gcloud CLI
       - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
         with:
-          service_account_email: ${{ secrets.DEV_GKE_EMAIL }}
+          service_account_email: ${{ GKE_EMAIL }}
           service_account_key: ${{ secrets.DEV_GOOGLE_APPLICATION_CREDENTIALS }}
           export_default_credentials: true
 
