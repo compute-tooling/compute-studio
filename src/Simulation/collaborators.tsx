@@ -36,38 +36,6 @@ export interface CollaboratorValues {
   };
 }
 
-const AddCollaboratorException = (upgradeTo: "pro") => {
-  let plan;
-  if (upgradeTo === "pro") {
-    plan = "Compute Studio Pro";
-  }
-  return (
-    <div className="alert alert-primary alert-dismissible fade show" role="alert">
-      You have reached the limit for the number of collaborators on private simulations. You may
-      make this simulation public or upgrade to{" "}
-      <a href="/billing/upgrade/">
-        <strong>{plan}</strong>
-      </a>{" "}
-      to add more collaborators.
-      <Row className="w-100 justify-content-center">
-        <Col className="col-auto">
-          <Button
-            variant="primary"
-            style={{ fontWeight: 600 }}
-            className="w-100 mt-3"
-            href="/billing/upgrade/"
-          >
-            Upgrade to {plan}
-          </Button>
-        </Col>
-      </Row>
-      <button type="button" className="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-    </div>
-  );
-};
-
 const MakePrivateException = (upgradeTo: "pro") => {
   let plan;
   if (upgradeTo === "pro") {
@@ -355,8 +323,6 @@ export const CollaborationModal: React.FC<{
     let collabMsg: ResourceLimitException = formikProps.status?.collaboratorLimit;
     if (collabMsg.test_name === "make_simulation_private") {
       collabExceptionMsg = MakePrivateException(collabMsg.upgrade_to);
-    } else if (collabMsg.test_name === "add_collaborator") {
-      collabExceptionMsg = AddCollaboratorException(collabMsg.upgrade_to);
     } else if (collabMsg.test_name === "add_collaborator_on_private_app") {
       collabExceptionMsg = PrivateAppException(collabMsg.collaborator);
     }
@@ -563,21 +529,7 @@ export const CollaborationModal: React.FC<{
                 defaultInviteAuthor={true}
               />
             ) : null}
-            {RolePerms.hasAdminAccess(remoteSim) && plan === "free" && !remoteSim.is_public ? (
-              <Row className="w-100 mt-4 justify-content-center">
-                <Col className="col-auto">
-                  <Button
-                    variant="success"
-                    style={{ fontWeight: 600 }}
-                    className="mb-4 w-100 mt-1"
-                    href="/billing/upgrade/"
-                  >
-                    Upgrade to add private collaborators
-                  </Button>
-                </Col>
-              </Row>
-            ) : null}
-            {RolePerms.hasAdminAccess(remoteSim) && (plan !== "free" || remoteSim.is_public) ? (
+            {RolePerms.hasAdminAccess(remoteSim) ? (
               <>
                 <Row className="w-100 mt-4">
                   <Col>

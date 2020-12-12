@@ -30,7 +30,6 @@ from webapp.apps.comp import utils
 from webapp.apps.comp.exceptions import (
     ForkObjectException,
     PermissionExpiredException,
-    CollaboratorLimitException,
     PrivateSimException,
     VersionMismatchException,
     PrivateAppException,
@@ -321,7 +320,7 @@ class SimulationManager(models.Manager):
             client=sim.inputs.client,
         )
 
-        sim = self.create(
+        sim: Simulation = self.create(
             owner=user.profile,
             title=sim.title,
             readme=sim.readme,
@@ -342,6 +341,8 @@ class SimulationManager(models.Manager):
             is_public=sim.is_public,
             status=sim.status,
         )
+        if not sim.is_public:
+            sim.make_private_test()
         sim.authors.set([user.profile])
         sim.grant_admin_permissions(user)
         return sim
@@ -554,20 +555,6 @@ class Simulation(models.Model):
         if not HAS_USAGE_RESTRICTIONS:
             return
 
-        if self.is_public:
-            self._private_app_test(collaborator=collaborator)
-            return
-
-        user = self.owner.user
-        customer = getattr(user, "customer", None)
-        if customer is None:
-            plan = "free"
-        else:
-            plan = customer.current_plan()["name"]
-
-        if plan == "free":
-            raise CollaboratorLimitException()
-
         self._private_app_test(collaborator=collaborator)
 
     def make_private_test(self, **kwargs):
@@ -577,6 +564,10 @@ class Simulation(models.Model):
         if not HAS_USAGE_RESTRICTIONS:
             return
 
+        # Sim is already private.
+        if not self.is_public:
+            return
+
         user = self.owner.user
         customer = getattr(user, "customer", None)
         if customer is None:
@@ -585,10 +576,6 @@ class Simulation(models.Model):
             plan = customer.current_plan()["name"]
 
         if plan == "free":
-            permission_objects = get_users_with_perms(self)
-            num_collaborators = permission_objects.count() - 1
-            if num_collaborators > 0:
-                raise CollaboratorLimitException()
             remaining = self.owner.remaining_private_sims(project=self.project)
             if remaining.get(str(self.project).lower(), FREE_PRIVATE_SIMS) <= 0:
                 raise PrivateSimException()

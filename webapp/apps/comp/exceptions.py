@@ -32,27 +32,6 @@ class PermissionExpiredException(CSError):
     pass
 
 
-class CollaboratorLimitException(CSException):
-    msg = (
-        "You must upgrade to add collaborators on private simulations. "
-        "You may upgrade to Compute Studio Pro to add collaborators on "
-        "private simulations."
-    )
-    resource = "collaborator"
-
-    def __init__(self, *args):
-        msg = args[0] if args else self.msg
-        super().__init__(msg)
-
-    def todict(self):
-        return dict(
-            resource=self.resource,
-            test_name="add_collaborator",
-            upgrade_to="pro",
-            msg=str(self),
-        )
-
-
 class PrivateSimException(CSException):
     msg = (
         "You have reached the limit for the number of private simulations "

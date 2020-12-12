@@ -113,7 +113,7 @@ class AccessStatusAPI(GetProjectMixin, APIView):
         else:
             if plan["name"] == "free" and user.is_authenticated:
                 remaining_private_sims = user.profile.remaining_private_sims()
-            print(plan, "remaining_private_sims", remaining_private_sims)
+
             return Response(
                 {
                     "user_status": user_status,

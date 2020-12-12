@@ -32,10 +32,7 @@ from webapp.apps.comp.models import (
     ANON_BEFORE,
 )
 from webapp.apps.comp.ioutils import get_ioutils
-from webapp.apps.comp.exceptions import (
-    CollaboratorLimitException,
-    PrivateSimException,
-)
+from webapp.apps.comp.exceptions import PrivateSimException
 from .compute import MockCompute
 from .utils import (
     read_outputs,
@@ -762,10 +759,20 @@ class TestAsyncAPI(CoreTestMixin):
             self.project.assign_role("read", free_sim_collab.user)
             resp = api_client.post(f"/{self.project}/api/v1/{rmm.sim.model_pk}/fork/")
 
-        assert resp.status_code == 400
+        assert resp.status_code == 201, f"Got {resp.status_code}"
 
-        # This should not have created a forked sim.
-        assert free_sim_collab.sims.count() == 0
+        # This created a forked sim.
+        assert free_sim_collab.sims.count() == 1
+        sim: Simulation = free_sim_collab.sims.first()
+        assert sim.parent_sim == rmm.sim
+
+        # Create two more private sims (subtract initial private sim and the one that will cause 400)
+        for _ in range(FREE_PRIVATE_SIMS - 2):
+            resp = api_client.post(f"/{self.project}/api/v1/{rmm.sim.model_pk}/fork/")
+            assert resp.status_code == 201, f"Got code: {resp.status_code}"
+        # Pushes user over free tier limit.
+        resp = api_client.post(f"/{self.project}/api/v1/{rmm.sim.model_pk}/fork/")
+        assert resp.status_code == 400, f"Got code: {resp.status_code}"
 
         # Test free plan user can fork public sims.
         rmm.sim.is_public = True
@@ -792,6 +799,8 @@ class TestAsyncAPI(CoreTestMixin):
         # Test anon user can view forked sim only applicable if project is public.
         if self.project.is_public:
             public_sim = free_sim_collab.sims.first()
+            public_sim.is_public = True
+            public_sim.save()
             resp = api_client.get(f"/{self.project}/api/v1/{public_sim.model_pk}/")
             assert resp.status_code == 200
 
@@ -1314,7 +1323,7 @@ class TestCollaboration:
         resp = api_client.get(sim.get_absolute_api_url())
         assert_status(403, resp, "user no longer has read access to sim")
 
-    def test_no_limit_collaboration(
+    def test_collaboration(
         self,
         db,
         monkeypatch,
@@ -1408,15 +1417,7 @@ class TestCollaboration:
 
         resp = api_client.put(sim.get_absolute_api_url(), data={"is_public": False})
         sim.refresh_from_db()
-        assert_status(400, resp, "can't make private with collabs")
-        assert resp.data == {
-            "collaborator": {
-                "msg": CollaboratorLimitException.msg,
-                "upgrade_to": "pro",
-                "resource": CollaboratorLimitException.resource,
-                "test_name": "add_collaborator",
-            }
-        }
+        assert_status(200, resp, "make private with collabs")
 
     def test_private_simulation_limit(
         self, db, client, api_client, get_inputs, meta_param_dict,
@@ -1458,7 +1459,7 @@ class TestCollaboration:
         resp = api_client.put(
             sims[-1].get_absolute_api_url(), data={"is_public": False}
         )
-        assert_status(400, resp, "can't make private with >2 collabs")
+        assert_status(400, resp, "can't make FREE_PRIVATE_SIMS'th private")
         assert resp.data == {
             "simulation": {
                 "msg": PrivateSimException.msg,

@@ -127,6 +127,7 @@ class Profile(models.Model):
             for project in self.sims.values("project")
             .annotate(recent_date=Max("creation_date"))
             .order_by("-recent_date")[:limit]
+            if project["project"] is not None
         ]
 
     def costs_breakdown(self, projects=None):

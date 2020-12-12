@@ -90,6 +90,7 @@ class TestUserModels:
                 default_source="123",
                 metadata={},
             )
+            customer.card_info = lambda: {"last4": 1234}
 
         profile.user.customer = customer  # dummy to fool method.
         assert profile.can_run(reg.project)

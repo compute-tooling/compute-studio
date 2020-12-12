@@ -23,7 +23,6 @@ from webapp.apps.comp.exceptions import (
     ForkObjectException,
     VersionMismatchException,
     PrivateSimException,
-    CollaboratorLimitException,
 )
 
 from .utils import (
@@ -423,60 +422,21 @@ class TestCollaborators:
     Related: webapp/apps/users/tests/test_models.py::TestCollaborators
     """
 
-    def test_free_tier(self, db, get_inputs, meta_param_dict, free_profile):
-        """
-        Test private sim can not have any collaborators but
-        public is unlimited.
-        """
-        sims = []
-        for i in range(FREE_PRIVATE_SIMS + 1):
-            inputs = _submit_inputs(
-                "Used-for-testing", get_inputs, meta_param_dict, free_profile
-            )
-
-            _, submit_sim = _submit_sim(inputs)
-            sim = submit_sim.submit()
-            sim.status = "SUCCESS"
-            sim.save()
-            sims.append(sim)
-
-        for sim in sims[:-1]:
-            sim.make_private_test()
-            sim.is_public = False
-            sim.save()
-
-        # Error on making sim private in free tier.
-        with pytest.raises(PrivateSimException) as excinfo:
-            sim.make_private_test()
-
-        assert excinfo.value.todict() == {
-            "upgrade_to": "pro",
-            "resource": PrivateSimException.resource,
-            "test_name": "make_simulation_private",
-            "msg": PrivateSimException.msg,
-        }
-
-        # test no limit on collaborators when sim is public.
-        sim.is_public = True
-        sim.save()
-
-        for collab in gen_collabs(3):
-            sim.assign_role("read", collab.user)
-            assert (
-                get_perms(collab.user, sim) == ["read_simulation"]
-                and sim.role(collab.user) == "read"
-            )
-
-        with pytest.raises(CollaboratorLimitException):
-            sim.make_private_test()
-
-    def test_pro_tier(self, db, get_inputs, meta_param_dict, pro_profile, profile):
+    @pytest.mark.parametrize("tier", ["free", "pro"])
+    def test_pro_tier(
+        self, db, tier, get_inputs, meta_param_dict, pro_profile, free_profile
+    ):
         """
         Test able to add more than one collaborator with a private
         and public sim.
         """
+        if tier == "free":
+            profile = free_profile
+        else:
+            profile = pro_profile
+
         inputs = _submit_inputs(
-            "Used-for-testing", get_inputs, meta_param_dict, pro_profile
+            "Used-for-testing", get_inputs, meta_param_dict, profile
         )
 
         _, submit_sim = _submit_sim(inputs)
