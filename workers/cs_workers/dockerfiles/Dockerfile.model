@@ -1,4 +1,3 @@
-ARG TAG
 ARG CS_APPBASE_TAG="master"
 FROM computestudio/appbase:${CS_APPBASE_TAG}
 
