@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - dev
-      - public-private
+      - config-fixes
     paths:
       - "webapp/**"
       - "deploy/**"
