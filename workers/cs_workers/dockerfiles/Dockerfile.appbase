@@ -9,11 +9,12 @@ RUN conda update conda
 RUN conda install "python>=3.7" pip tornado dask lz4 && pip install boto3 gunicorn
 ARG BRANCH="dev"
 RUN echo ${BRANCH}
-RUN pip install "git+https://github.com/compute-tooling/compute-studio.git@${BRANCH}#egg=cs-workers&subdirectory=workers" \
+RUN pip install \
     cs-kit \ 
     pytest \
-    "git+https://github.com/compute-tooling/compute-studio.git@${BRANCH}#egg=cs-workers&subdirectory=deploy"
+    "git+https://github.com/compute-tooling/compute-studio.git@${BRANCH}#egg=cs-secrets&subdirectory=secrets" \
+    "git+https://github.com/compute-tooling/compute-studio.git@${BRANCH}#egg=cs-deploy&subdirectory=deploy" \
+    "git+https://github.com/compute-tooling/compute-studio.git@${BRANCH}#egg=cs-workers&subdirectory=workers"
 
 
 WORKDIR /home
-
