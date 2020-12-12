@@ -344,7 +344,7 @@ class UpgradePlan(View):
                 if sub is not None and sub.cancel_at is not None and sub.is_trial():
                     banner_msg = mark_safe(
                         f"""
-                        <p>Your free trial ends on {sub.trial_end.date()}.</p>
+                        <p>Your free C/S Pro trial ends on {sub.trial_end.date()}.</p>
                         <p>
                         <a class="btn btn-primary" href="/billing/upgrade/yearly/aftertrial/">
                             <strong>Upgrade to C/S Pro after trial</strong>

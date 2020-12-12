@@ -604,7 +604,7 @@ def create_pro_billing_objects():
 
     if product.plans.filter(nickname="Monthly Pro Plan").count() == 0:
         monthly_plan = Plan.create_stripe_object(
-            amount=int(12.5 * 100),
+            amount=int(9 * 100),
             product=product,
             usage_type="licensed",
             interval="month",
@@ -614,7 +614,7 @@ def create_pro_billing_objects():
 
     if product.plans.filter(nickname="Yearly Pro Plan").count() == 0:
         yearly_plan = Plan.create_stripe_object(
-            amount=int(120 * 100),
+            amount=int(99 * 100),
             product=product,
             usage_type="licensed",
             interval="year",
