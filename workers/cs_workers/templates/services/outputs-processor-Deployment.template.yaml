@@ -12,6 +12,7 @@ spec:
       labels:
         app: outputs-processor
     spec:
+      serviceAccountName: outputs-processor
       containers:
         - name: outputs-processor
           image:

@@ -3,7 +3,6 @@ djangorestframework
 msgpack
 requests>=2.20
 requests_mock
-dj_database_url
 dataclasses
 whitenoise
 gunicorn

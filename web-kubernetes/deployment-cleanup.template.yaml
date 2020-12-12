@@ -9,16 +9,35 @@ spec:
     spec:
       template:
         spec:
+          serviceAccountName: web
           containers:
             - name: web-deployment-cleanup
               image: # Uses web image and is filled in with script.
               command: ["python", "manage.py", "rm_stale_deployments", "--stale-after", "1800"]
               env:
-                - name: DATABASE_URL
+                - name: DB_HOST
                   valueFrom:
-                    configMapKeyRef:
-                      name: web-configmap
-                      key: DATABASE_URL
+                    secretKeyRef:
+                      name: web-db-secret
+                      key: host
+
+                - name: DB_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: web-db-secret
+                      key: username
+                
+                - name: DB_PASS
+                  valueFrom:
+                    secretKeyRef:
+                      name: web-db-secret
+                      key: password
+                
+                - name: DB_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: web-db-secret
+                      key: database
 
                 - name: DEBUG
                   valueFrom:
@@ -57,12 +76,6 @@ spec:
                     secretKeyRef:
                       name: web-secret
                       key: WEB_CS_CRYPT_KEY
-
-                - name: POSTGRES_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: web-secret
-                      key: POSTGRES_PASSWORD
 
                 - name: USE_STRIPE
                   valueFrom:

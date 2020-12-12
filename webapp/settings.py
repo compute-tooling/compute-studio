@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 from datetime import datetime
 import os
-import dj_database_url
 import pytz
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -135,7 +134,7 @@ TEMPLATES = [
 
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
-WSGI_APPLICATION = "webapp.wsgi.application"
+WSGI_APPLICATION = "web`app.wsgi.application"
 
 
 # Database
@@ -143,13 +142,19 @@ WSGI_APPLICATION = "webapp.wsgi.application"
 
 
 def default_db_url():
-    db_config = dj_database_url.config()
-    if os.environ.get("POSTGRES_PASSWORD"):
-        return dict(
-            db_config, USER="postgres", PASSWORD=os.environ.get("POSTGRES_PASSWORD")
-        )
-    else:
-        return db_config
+    DB_HOST = os.environ.get("DB_HOST", "127.0.0.1")
+    DB_USER = os.environ.get("DB_USER", "postgres")
+    DB_PASS = os.environ.get("DB_PASS", "")
+    DB_NAME = os.environ.get("DB_NAME", "")
+
+    return {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": DB_NAME,
+        "USER": DB_USER,
+        "PASSWORD": DB_PASS,
+        "HOST": DB_HOST,
+        "PORT": "5432",
+    }
 
 
 DATABASES = {

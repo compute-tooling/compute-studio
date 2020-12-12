@@ -12,19 +12,46 @@ spec:
       labels:
         app: web
     spec:
+      serviceAccountName: web
       containers:
         - name: web
           image: web:latest
           ports:
             - containerPort: 8000
+          resources:
+            requests:
+              memory: 2G
+              cpu: "2"
+            limits:
+              memory: 2G
+              cpu: "2"
           env:
             - name: PORT
               value: "8000"
-            - name: DATABASE_URL
+
+            - name: DB_HOST
               valueFrom:
-                configMapKeyRef:
-                  name: web-configmap
-                  key: DATABASE_URL
+                secretKeyRef:
+                  name: web-db-secret
+                  key: host
+
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: web-db-secret
+                  key: username
+            
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: web-db-secret
+                  key: password
+            
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: web-db-secret
+                  key: database
 
             - name: DEBUG
               valueFrom:
@@ -69,12 +96,6 @@ spec:
                 secretKeyRef:
                   name: web-secret
                   key: WEB_CS_CRYPT_KEY
-
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: web-secret
-                  key: POSTGRES_PASSWORD
 
             - name: USE_STRIPE
               valueFrom:

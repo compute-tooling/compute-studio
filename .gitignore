@@ -43,6 +43,7 @@ secret.yaml
 *outputs-processor-deployment.yaml
 
 *google-creds.json
-*cs-config.yaml
+*cs-config.*.yaml
 redis-data
 db-data
+

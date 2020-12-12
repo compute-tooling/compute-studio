@@ -111,6 +111,11 @@ class Manager:
             "r",
         ) as f:
             self.outputs_processor_template = yaml.safe_load(f.read())
+        with open(
+            self.templates_dir / "services" / "outputs-processor-ServiceAccount.yaml",
+            "r",
+        ) as f:
+            self.outputs_processor_serviceaccount = yaml.safe_load(f.read())
 
         with open(
             self.templates_dir / "services" / "redis-master-Deployment.template.yaml",
@@ -226,6 +231,10 @@ class Manager:
             "image"
         ] = f"gcr.io/{self.project}/outputs_processor:{self.tag}"
 
+        self.write_config(
+            "outputs-processor-ServiceAccount.yaml",
+            self.outputs_processor_serviceaccount,
+        )
         self.write_config("outputs-processor-Deployment.yaml", deployment)
 
         return deployment
@@ -246,10 +255,13 @@ class Manager:
                     }
                 )
 
-        if workers_config.get("redisVolume"):
-            deployment["spec"]["template"]["spec"]["volumes"] = workers_config[
-                "redisVolume"
-            ]["volumes"]
+        if workers_config.get("redis"):
+            redis_config = workers_config["redis"]
+            assert (
+                redis_config.get("provider") == "volume"
+            ), f"Got: {redis_config.get('provider', None)}"
+            args = redis_config["args"][0]
+            deployment["spec"]["template"]["spec"]["volumes"] = args["volumes"]
         self.write_config("redis-master-Deployment.yaml", deployment)
 
     def write_secret(self):
