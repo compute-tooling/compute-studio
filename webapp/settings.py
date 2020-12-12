@@ -143,9 +143,9 @@ WSGI_APPLICATION = "web`app.wsgi.application"
 
 def default_db_url():
     DB_HOST = os.environ.get("DB_HOST", "127.0.0.1")
-    DB_USER = os.environ["DB_USER"]
-    DB_PASS = os.environ["DB_PASS"]
-    DB_NAME = os.environ["DB_NAME"]
+    DB_USER = os.environ.get("DB_USER", "postgres")
+    DB_PASS = os.environ.get("DB_PASS", "")
+    DB_NAME = os.environ.get("DB_NAME", "")
 
     return {
         "ENGINE": "django.db.backends.postgresql",
