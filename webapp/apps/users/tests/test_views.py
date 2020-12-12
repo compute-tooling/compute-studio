@@ -194,7 +194,7 @@ class TestUsersViews:
             "api_url": "/users/status/",
             "username": None,
             "plan": {"name": "free", "plan_duration": None},
-            "remaining_private_sims": 3,
+            "remaining_private_sims": {},
         }
 
         resp = api_client.get(
@@ -212,7 +212,7 @@ class TestUsersViews:
             "api_url": f"/users/status/{project.owner.user.username}/{project.title}/",
             "username": None,
             "plan": {"name": "free", "plan_duration": None},
-            "remaining_private_sims": 3,
+            "remaining_private_sims": {},
             "project": str(project),
         }
 
@@ -231,7 +231,7 @@ class TestUsersViews:
             "api_url": f"/users/status/{sponsored_project.owner.user.username}/{sponsored_project.title}/",
             "username": None,
             "plan": {"name": "free", "plan_duration": None},
-            "remaining_private_sims": 3,
+            "remaining_private_sims": {},
             "project": str(sponsored_project),
         }
 
@@ -242,5 +242,5 @@ class TestUsersViews:
             "api_url": "/users/status/",
             "username": profile.user.username,
             "plan": {"name": "free", "plan_duration": None},
-            "remaining_private_sims": 3,
+            "remaining_private_sims": {},
         }

@@ -24,7 +24,7 @@ from guardian.shortcuts import assign_perm, remove_perm, get_perms, get_users_wi
 
 import cs_storage
 
-from webapp.settings import HAS_USAGE_RESTRICTIONS, USE_STRIPE
+from webapp.settings import HAS_USAGE_RESTRICTIONS, USE_STRIPE, FREE_PRIVATE_SIMS
 
 from webapp.apps.comp import utils
 from webapp.apps.comp.exceptions import (
@@ -590,7 +590,7 @@ class Simulation(models.Model):
             if num_collaborators > 0:
                 raise CollaboratorLimitException()
             remaining = self.owner.remaining_private_sims(project=self.project)
-            if remaining[str(self.project).lower()] <= 0:
+            if remaining.get(str(self.project).lower(), FREE_PRIVATE_SIMS) <= 0:
                 raise PrivateSimException()
 
     """
