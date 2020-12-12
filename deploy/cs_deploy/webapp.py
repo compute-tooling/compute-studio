@@ -20,7 +20,6 @@ secret_vars = [
     "WEBHOOK_SECRET",
     "WEB_CS_CRYPT_KEY",
     "MAILGUN_API_KEY",
-    "POSTGRES_PASSWORD",
     "DJANGO_SECRET_KEY",
 ]
 
@@ -63,6 +62,9 @@ class Manager:
         with open(Path("web-kubernetes") / "web-configmap.yaml") as f:
             self.web_configmap = yaml.safe_load(f.read())
 
+        with open(Path("web-kubernetes") / "web-serviceaccount.yaml") as f:
+            self.web_serviceaccount = yaml.safe_load(f.read())
+
         with open(Path("web-kubernetes") / "deployment-cleanup.template.yaml") as f:
             self.deployment_cleanup_job_template = yaml.safe_load(f.read())
 
@@ -104,9 +106,28 @@ class Manager:
         self.write_deployment_cleanup_job()
 
     def write_db(self):
+        """
+        Write database deployment.
+
+        Currently only supports deploying as vanilla postgres mounted on a volume:
+
+        - local volume:
+            db:
+              provider: volume
+              args:
+                - volumes:
+                  - name: db-volume
+                    hostPath:
+                      path: /db-data
+                      type: Directory
+        """
         db_deployment = self.db_deployment
-        volumes = db_deployment["spec"]["template"]["spec"]["volumes"]
-        volumes[:] = webapp_config["dbVolume"]["volumes"]
+        db_config = webapp_config["db"]
+        assert (
+            db_config.get("provider") == "volume"
+        ), f"Got: {db_config.get('provider', None)}"
+        args = db_config["args"][0]
+        db_deployment["spec"]["template"]["spec"]["volumes"] = args["volumes"]
         self.write_config(self.db_deployment, filename="db-deployment.yaml")
         self.write_config(self.db_service, filename="db-service.yaml")
 
@@ -115,6 +136,16 @@ class Manager:
         web_configmap = copy.deepcopy(self.web_configmap)
         spec = web_obj["spec"]["template"]["spec"]
         spec["containers"][0]["image"] = self.web_image
+
+        for var in [
+            "BUCKET",
+            "DATABASE_URL",
+            "DEFAULT_CLUSTER_USER",
+            "DEFAULT_VIZ_HOST",
+            "USE_STRIPE",
+        ]:
+            if webapp_config.get(var, None):
+                web_configmap["data"][var] = webapp_config[var]
 
         if dev:
             warnings.warn("Web deployment is being created in DEBUG mode!")
@@ -135,6 +166,10 @@ class Manager:
             web_ir[0]["spec"]["routes"][0]["match"] = f"Host(`{self.host}`)"
             web_ir[1]["spec"]["routes"][0]["match"] = f"Host(`{self.host}`)"
 
+        if webapp_config.get("db", {}).get("provider", "") == "gcp-sql-proxy":
+            spec["containers"].append(webapp_config["db"]["args"][0])
+
+        self.write_config(self.web_serviceaccount, filename="web-serviceaccount.yaml")
         self.write_config(web_obj, filename="web-deployment.yaml")
         self.write_config(self.web_service, filename="web-service.yaml")
         self.write_config(web_configmap, filename="web-configmap.yaml")
@@ -157,6 +192,8 @@ class Manager:
                     "hostPath": {"path": "/code", "type": "Directory",},
                 }
             ]
+        if webapp_config.get("db", {}).get("provider", "") == "gcp-sql-proxy":
+            spec["containers"].append(webapp_config["db"]["args"][0])
 
         self.write_config(job_obj, filename="deployment-cleanup-job.yaml")
 

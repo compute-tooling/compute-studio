@@ -3,9 +3,8 @@ kind: ConfigMap
 metadata:
   name: web-configmap
 data:
-  DATABASE_URL: "postgresql://db:5432/postgres"
-  BUCKET: cs-outputs-dev-private
-  USE_STRIPE: "false"
-  DEFAULT_CLUSTER_USER: "comp-api-user"
-  DEFAULT_VIZ_HOST: "devviz.compute.studio"
+  DATABASE_URL: ""
+  BUCKET: ""
+  DEFAULT_CLUSTER_USER: ""
+  DEFAULT_VIZ_HOST: ""
   USE_STRIPE: "true"
