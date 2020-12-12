@@ -164,12 +164,12 @@ const ModelFeed: React.FC<{ models: Array<Project> }> = ({ models }) => {
   );
 };
 
-const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: AccessStatus, resetAccessStatus: () => void }> = ({
-  initMiniSim,
-  index,
-  accessStatus,
-  resetAccessStatus,
-}) => {
+const Sim: React.FC<{
+  initMiniSim: MiniSimulation;
+  index: number;
+  accessStatus: AccessStatus;
+  resetAccessStatus: () => void;
+}> = ({ initMiniSim, index, accessStatus, resetAccessStatus }) => {
   const [miniSim, setMiniSim] = React.useState(initMiniSim);
   const [remoteSim, setRemoteSim] = React.useState(null as Simulation<RemoteOutputs> | null);
   const [editTitle, setEditTitle] = React.useState(false);
@@ -344,8 +344,8 @@ const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: 
                         {miniSim.is_public ? (
                           <i className="fas fa-lock-open"></i>
                         ) : (
-                            <i className="fas fa-lock"></i>
-                          )}
+                          <i className="fas fa-lock"></i>
+                        )}
                       </Tip>
                     </Col>
                     {RolePerms.hasAdminAccess(miniSim) ? (
@@ -409,6 +409,7 @@ const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: 
               accessStatus={accessStatus}
               show={showCollabModal}
               setShow={setShowCollabModal}
+              project={`${remoteSim.project.owner}/${remoteSim.project.title}`}
             />
           ) : null}
         </>
@@ -417,11 +418,11 @@ const Sim: React.FC<{ initMiniSim: MiniSimulation; index: number; accessStatus: 
   );
 };
 
-const SimFeed: React.FC<{ sims: Array<MiniSimulation>; accessStatus: AccessStatus; resetAccessStatus: () => void }> = ({
-  sims,
-  accessStatus,
-  resetAccessStatus,
-}) => {
+const SimFeed: React.FC<{
+  sims: Array<MiniSimulation>;
+  accessStatus: AccessStatus;
+  resetAccessStatus: () => void;
+}> = ({ sims, accessStatus, resetAccessStatus }) => {
   if (sims.length > 0) {
     return (
       <div className="container-fluid px-0">
@@ -473,12 +474,12 @@ const RecentModelsPanel: React.FC<{ recentModels: Array<Project> }> = ({ recentM
                 </h6>
               </Tip>
             ) : (
-                <Tip id="goto_app" tip="Go to app">
-                  <h6 onClick={e => e.stopPropagation()}>
-                    <a href={`/${model.owner}/${model.title}/`}>{`${model.owner}/${model.title}`} </a>
-                  </h6>
-                </Tip>
-              )}
+              <Tip id="goto_app" tip="Go to app">
+                <h6 onClick={e => e.stopPropagation()}>
+                  <a href={`/${model.owner}/${model.title}/`}>{`${model.owner}/${model.title}`} </a>
+                </h6>
+              </Tip>
+            )}
           </Card.Title>
           <Card.Subtitle className="text-muted d-none d-sm-none d-md-block">
             {model.oneliner}
@@ -493,59 +494,59 @@ const LoadSimulationsButton: React.FC<{ loading: boolean; loadNextSimulations: (
   loading,
   loadNextSimulations,
 }) => (
-    <Row className="text-center">
-      <Col>
-        <Button variant="outline-primary" onClick={loadNextSimulations}>
-          <div className="mb-0" style={{ display: "flex", justifyContent: "center" }}>
-            {loading ? (
-              <ReactLoading type="spokes" color="#2b2c2d" height={"20%"} width={"20%"} />
-            ) : (
-                "Load more"
-              )}
-          </div>
-        </Button>
-      </Col>
-    </Row>
-  );
+  <Row className="text-center">
+    <Col>
+      <Button variant="outline-primary" onClick={loadNextSimulations}>
+        <div className="mb-0" style={{ display: "flex", justifyContent: "center" }}>
+          {loading ? (
+            <ReactLoading type="spokes" color="#2b2c2d" height={"20%"} width={"20%"} />
+          ) : (
+            "Load more"
+          )}
+        </div>
+      </Button>
+    </Col>
+  </Row>
+);
 
 const OrderingDropDown: React.FC<{ ordering: Array<string>; updateOrder: (string) => void }> = ({
   ordering,
   updateOrder,
 }) => (
-    <Dropdown drop="left">
-      <Dropdown.Toggle
-        variant="link"
-        style={{ border: 0 }}
-        id="dropdown-sort"
-        className="color-inherit p-0"
+  <Dropdown drop="left">
+    <Dropdown.Toggle
+      variant="link"
+      style={{ border: 0 }}
+      id="dropdown-sort"
+      className="color-inherit p-0"
+    >
+      <i style={{ fontSize: "1.5rem" }} className="fas fa-sort"></i>
+    </Dropdown.Toggle>
+    <Dropdown.Menu>
+      <Dropdown.Item
+        key={0}
+        active={ordering.includes("creation_date")}
+        onClick={() => updateOrder("creation_date")}
       >
-        <i style={{ fontSize: "1.5rem" }} className="fas fa-sort"></i>
-      </Dropdown.Toggle>
-      <Dropdown.Menu>
-        <Dropdown.Item
-          key={0}
-          active={ordering.includes("creation_date")}
-          onClick={() => updateOrder("creation_date")}
-        >
-          Creation Date
+        Creation Date
       </Dropdown.Item>
-        <Dropdown.Item
-          key={1}
-          active={ordering.includes("project__owner")}
-          onClick={() => updateOrder("project__owner")}
-        >
-          Model Owner
+      <Dropdown.Item
+        key={1}
+        active={ordering.includes("project__owner")}
+        onClick={() => updateOrder("project__owner")}
+      >
+        Model Owner
       </Dropdown.Item>
-        <Dropdown.Item
-          key={2}
-          active={ordering.includes("project__title")}
-          onClick={() => updateOrder("project__title")}
-        >
-          Model Title
+      <Dropdown.Item
+        key={2}
+        active={ordering.includes("project__title")}
+        onClick={() => updateOrder("project__title")}
+      >
+        Model Title
       </Dropdown.Item>
-      </Dropdown.Menu>
-    </Dropdown>
-  );
+    </Dropdown.Menu>
+  </Dropdown>
+);
 
 class Log extends React.Component<LogProps, LogState> {
   api: API;
@@ -572,7 +573,7 @@ class Log extends React.Component<LogProps, LogState> {
   }
 
   componentDidMount() {
-    this.setAccessStatus()
+    this.setAccessStatus();
     if (this.props.pageName === "home" || this.props.pageName === "profile") {
       this.api.initSimulations().then(simFeed => {
         this.setState({ simFeed: simFeed });
@@ -656,15 +657,17 @@ class Log extends React.Component<LogProps, LogState> {
       <>
         <Tab.Content>
           <Tab.Pane eventKey="sims">
-            <SimFeed sims={sims} accessStatus={this.state.accessStatus} resetAccessStatus={this.setAccessStatus} />
-            {
-              this.state.simFeed?.next ? (
-                <LoadSimulationsButton
-                  loading={this.state.loading}
-                  loadNextSimulations={this.loadNext}
-                />
-              ) : null
-            }
+            <SimFeed
+              sims={sims}
+              accessStatus={this.state.accessStatus}
+              resetAccessStatus={this.setAccessStatus}
+            />
+            {this.state.simFeed?.next ? (
+              <LoadSimulationsButton
+                loading={this.state.loading}
+                loadNextSimulations={this.loadNext}
+              />
+            ) : null}
           </Tab.Pane>
         </Tab.Content>
         <Tab.Content>
@@ -687,8 +690,9 @@ class Log extends React.Component<LogProps, LogState> {
       >
         <Row className="w-100 px-0 m-0 justify-content-between mb-3 d-flex flex-md-row">
           <Col
-            className={`col-md-auto ${this.props.pageName !== "home" ? "" : " offset-md-3"
-              } align-self-center`}
+            className={`col-md-auto ${
+              this.props.pageName !== "home" ? "" : " offset-md-3"
+            } align-self-center`}
           >
             <Nav variant="pills" className="d-flex d-sm-block">
               <Row className="flex-1">
@@ -731,10 +735,10 @@ class Log extends React.Component<LogProps, LogState> {
             <Col className="col-md-9 px-0">{feed}</Col>
           </Row>
         ) : (
-            <Row className="w-100 m-0">
-              <Col className="p-0">{feed}</Col>
-            </Row>
-          )}
+          <Row className="w-100 m-0">
+            <Col className="p-0">{feed}</Col>
+          </Row>
+        )}
       </Tab.Container>
     );
   }

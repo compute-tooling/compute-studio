@@ -75,10 +75,12 @@ const MakePrivateException = (upgradeTo: "pro") => {
   }
   return (
     <div className="alert alert-primary alert-dismissible fade show" role="alert">
-      You have reached the limit for the number of private simulations for this month.
-      You can upgrade to <a href="/billing/upgrade/">
+      You have reached the limit for the number of private simulations for this month. You can
+      upgrade to{" "}
+      <a href="/billing/upgrade/">
         <strong>{plan}</strong>
-      </a> to have an unlimited number of private simulations.
+      </a>{" "}
+      to have an unlimited number of private simulations.
       <Row className="w-100 justify-content-center">
         <Col className="col-auto">
           <Button
@@ -267,7 +269,8 @@ export const CollaborationSettings: React.FC<{
   remoteSim?: Simulation<RemoteOutputs>;
   formikProps: FormikProps<{ title: string; is_public: boolean } & CollaboratorValues>;
   accessStatus: AccessStatus;
-}> = ({ api, user, remoteSim, formikProps, accessStatus }) => {
+  project: string;
+}> = ({ api, user, remoteSim, formikProps, accessStatus, project }) => {
   const [show, setShow] = React.useState(false);
   const is_public =
     remoteSim?.is_public !== undefined ? remoteSim.is_public : formikProps.values.is_public;
@@ -292,6 +295,7 @@ export const CollaborationSettings: React.FC<{
         accessStatus={accessStatus}
         show={show}
         setShow={setShow}
+        project={project}
       />
     </>
   );
@@ -305,7 +309,8 @@ export const CollaborationModal: React.FC<{
   accessStatus: AccessStatus;
   show?: boolean;
   setShow: (show: boolean) => void;
-}> = ({ api, user, remoteSim, formikProps, accessStatus, show, setShow }) => {
+  project: string;
+}> = ({ api, user, remoteSim, formikProps, accessStatus, show, setShow, project }) => {
   const [accessQuery, setAccessQuery] = React.useState<Array<{ username: string }>>([]);
   const [viewAccessQuery, setViewAccessQuery] = React.useState(false);
   const [accessSelected, setAccessSelected] = React.useState(false);
@@ -357,14 +362,20 @@ export const CollaborationModal: React.FC<{
     }
   }
 
+  let remainingPrivateSims = 3;
+  const projectLower = project.toLowerCase();
+  if (projectLower in accessStatus.remaining_private_sims) {
+    remainingPrivateSims = accessStatus.remaining_private_sims[projectLower];
+  }
+
   let visibiltyButtonMsg;
   if (!is_public) {
-    visibiltyButtonMsg = <span>Make public</span>
+    visibiltyButtonMsg = <span>Make public</span>;
   } else if (plan === "free") {
     visibiltyButtonMsg = (
       <span>
-        Make private ({accessStatus.remaining_private_sims} remaining this month.{" "}
-        {accessStatus.remaining_private_sims <= 0 && (
+        Make private ({remainingPrivateSims} remaining this month.{" "}
+        {remainingPrivateSims <= 0 && (
           <a href={`/billing/upgrade/yearly/?next=${window.location.pathname}`}>Upgrade to Pro.</a>
         )}
         )
@@ -394,11 +405,11 @@ export const CollaborationModal: React.FC<{
                   This simulation is <strong>public</strong> and can be viewed by anyone.
                 </p>
               ) : (
-                  <p>
-                    This simulation is <strong>private</strong> and can only be viewed by users who
+                <p>
+                  This simulation is <strong>private</strong> and can only be viewed by users who
                   have been granted access to it.
-                  </p>
-                )}
+                </p>
+              )}
               <Row className="w-100 justify-content-center">
                 <Col className="col-auto">
                   <Button
@@ -450,8 +461,8 @@ export const CollaborationModal: React.FC<{
                           {accessobj.is_owner ? (
                             <span>Owner</span>
                           ) : (
-                              <span>{prettyRole(accessobj.role)}</span>
-                            )}
+                            <span>{prettyRole(accessobj.role)}</span>
+                          )}
                         </Col>
                         <Col className="col-md-4 align-self-center">
                           {!!author ? (
@@ -461,28 +472,28 @@ export const CollaborationModal: React.FC<{
                                 <span className="text-muted">Author &#183; pending</span>
                               </span>
                             ) : (
-                                <span className="text-success">
-                                  <i className="fas fa-user-friends mr-1"></i>Author
-                                </span>
-                              )
+                              <span className="text-success">
+                                <i className="fas fa-user-friends mr-1"></i>Author
+                              </span>
+                            )
                           ) : (
-                              <a
-                                href="#"
-                                className="btn btn-outline-secondary lh-1"
-                                onClick={e => {
-                                  e.preventDefault();
-                                  console.log("author set", accessobj.username);
-                                  setSelectedUser(accessobj.username);
-                                  setTimeout(() => {
-                                    setAuthorSelected(true);
-                                    setAccessSelected(false);
-                                    setAccessQuery([]);
-                                  });
-                                }}
-                              >
-                                Invite to coauthor
-                              </a>
-                            )}
+                            <a
+                              href="#"
+                              className="btn btn-outline-secondary lh-1"
+                              onClick={e => {
+                                e.preventDefault();
+                                console.log("author set", accessobj.username);
+                                setSelectedUser(accessobj.username);
+                                setTimeout(() => {
+                                  setAuthorSelected(true);
+                                  setAccessSelected(false);
+                                  setAccessQuery([]);
+                                });
+                              }}
+                            >
+                              Invite to coauthor
+                            </a>
+                          )}
                         </Col>
                         <Col className="col-md-1 align-self-center">
                           {/* owner cannot lose access, and authors must be removed as authors

@@ -9,7 +9,7 @@ import requests
 
 from django.db import models, transaction
 from django.db.models.functions import TruncMonth
-from django.db.models import F, Case, When, Sum, Max, Q
+from django.db.models import F, Case, When, Sum, Max, Q, Count
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.core.mail import EmailMessage, send_mail
@@ -90,19 +90,36 @@ class User(AbstractUser):
 
 class Profile(models.Model):
     objects: models.Manager
+    sims: models.QuerySet
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=False)
 
-    def remaining_private_sims(self):
+    def remaining_private_sims(self, project=None):
         """Calculate number of remaining private simulations for user on free tier."""
         thirty_days_ago = timezone.now() - timedelta(days=30)
         if thirty_days_ago < FREE_PRIVATE_SIMS_START_DATE:
             thirty_days_ago = FREE_PRIVATE_SIMS_START_DATE
-        private_sims = self.sims.filter(
-            is_public=False, creation_date__gte=thirty_days_ago,
-        )
 
-        return max(FREE_PRIVATE_SIMS - private_sims.count(), 0)
+        def remaining(c):
+            return max(FREE_PRIVATE_SIMS - c, 0)
+
+        kwargs = dict(
+            sims__owner=self,
+            sims__is_public=False,
+            sims__creation_date__gte=thirty_days_ago,
+        )
+        if project is not None:
+            kwargs["sims__project"] = project
+
+        private_count = Count("sims", filter=Q(**kwargs))
+        res = Project.objects.annotate(private_count=private_count).filter(
+            private_count__gt=0
+        )
+        private_sims = {
+            str(project).lower(): remaining(project.private_count) for project in res
+        }
+
+        return private_sims
 
     def recent_models(self, limit):
         return [

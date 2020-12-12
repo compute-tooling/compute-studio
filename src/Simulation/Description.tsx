@@ -175,7 +175,7 @@ export const Persist = {
 export default class DescriptionComponent extends React.Component<
   DescriptionProps,
   DescriptionState
-  > {
+> {
   titleInput: React.RefObject<HTMLInputElement>;
 
   constructor(props) {
@@ -237,7 +237,8 @@ export default class DescriptionComponent extends React.Component<
       this.state.initialValues !== nextState.initialValues ||
       this.props.api.modelpk !== nextProps.api.modelpk ||
       this.props.accessStatus.username !== nextProps.accessStatus.username ||
-      this.props.accessStatus.remaining_private_sims !== nextProps.accessStatus.remaining_private_sims ||
+      this.props.accessStatus.remaining_private_sims !==
+        nextProps.accessStatus.remaining_private_sims ||
       this.props.remoteSim?.model_pk !== nextProps.remoteSim?.model_pk ||
       this.props.remoteSim?.pending_permissions !== nextProps.remoteSim?.pending_permissions ||
       this.props.remoteSim?.authors !== nextProps.remoteSim?.authors ||
@@ -334,8 +335,8 @@ export default class DescriptionComponent extends React.Component<
       formdata.append("model_pk", this.props.api.modelpk.toString());
       formdata.append("readme", JSON.stringify(values.readme));
       try {
-        await saveCollaborators(this.props.api, values, this.props.resetOutputs)
-        const data = await this.props.api.putDescription(formdata)
+        await saveCollaborators(this.props.api, values, this.props.resetOutputs);
+        const data = await this.props.api.putDescription(formdata);
 
         if (!!this.props.remoteSim && data.is_public !== this.props.remoteSim?.is_public) {
           this.props.resetOutputs();
@@ -355,26 +356,6 @@ export default class DescriptionComponent extends React.Component<
             },
           },
         });
-      }
-      catch (error) {
-        if (!actions) throw error;
-        if (error.response.status == 400 && error.response.data.collaborators) {
-          window.scroll(0, 0);
-          actions.setStatus({
-            collaboratorLimit: error.response.data.collaborators,
-          });
-        } else if (error.response.status == 400 && error.response.data.simulation) {
-          window.scroll(0, 0);
-          actions.setStatus({
-            collaboratorLimit: error.response.data.simulation,
-          });
-        }
-        setSubmitting(false);
-      }
-      finally { setSubmitting(false) };
-    } else {
-      try {
-        saveCollaborators(this.props.api, values, this.props.resetOutputs)
       } catch (error) {
         if (!actions) throw error;
         if (error.response.status == 400 && error.response.data.collaborators) {
@@ -389,8 +370,29 @@ export default class DescriptionComponent extends React.Component<
           });
         }
         setSubmitting(false);
+      } finally {
+        setSubmitting(false);
       }
-      finally { setSubmitting(false) }
+    } else {
+      try {
+        saveCollaborators(this.props.api, values, this.props.resetOutputs);
+      } catch (error) {
+        if (!actions) throw error;
+        if (error.response.status == 400 && error.response.data.collaborators) {
+          window.scroll(0, 0);
+          actions.setStatus({
+            collaboratorLimit: error.response.data.collaborators,
+          });
+        } else if (error.response.status == 400 && error.response.data.simulation) {
+          window.scroll(0, 0);
+          actions.setStatus({
+            collaboratorLimit: error.response.data.simulation,
+          });
+        }
+        setSubmitting(false);
+      } finally {
+        setSubmitting(false);
+      }
     }
   }
 
@@ -560,6 +562,7 @@ export default class DescriptionComponent extends React.Component<
                         remoteSim={this.props.remoteSim}
                         formikProps={formikProps}
                         accessStatus={this.props.accessStatus}
+                        project={`${this.props.api.owner}/${this.props.api.title}`}
                       />
                     </Col>
                   ) : null}

@@ -589,7 +589,8 @@ class Simulation(models.Model):
             num_collaborators = permission_objects.count() - 1
             if num_collaborators > 0:
                 raise CollaboratorLimitException()
-            if self.owner.remaining_private_sims() <= 0:
+            remaining = self.owner.remaining_private_sims(project=self.project)
+            if remaining[str(self.project).lower()] <= 0:
                 raise PrivateSimException()
 
     """

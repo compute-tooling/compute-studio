@@ -52,7 +52,7 @@ interface URLProps {
   };
 }
 
-interface SimAppProps extends URLProps { }
+interface SimAppProps extends URLProps {}
 
 interface SimAppState {
   // keep track of which tab is open
@@ -92,7 +92,7 @@ interface SimAppState {
 class SimTabs extends React.Component<
   SimAppProps & { tabName: "inputs" | "outputs" },
   SimAppState
-  > {
+> {
   api: API;
   constructor(props) {
     super(props);
@@ -302,8 +302,9 @@ class SimTabs extends React.Component<
 
     // Determine if user can create private sim. If not, set is_public to true.
     // User will be shown errors/limits to creating private sims elsewhere.
-    const canCreatePrivateSim =
-      accessStatus.plan.name === "free" && accessStatus.remaining_private_sims <= 0;
+    const remainingPrivateSims =
+      accessStatus.remaining_private_sims[accessStatus.project.toLowerCase()];
+    const canCreatePrivateSim = accessStatus.plan.name === "free" && remainingPrivateSims <= 0;
     if (this.submitWillCreateNewSim() && canCreatePrivateSim) {
       formdata.set("is_public", "true");
     }
@@ -478,7 +479,7 @@ class SimTabs extends React.Component<
             resetAccessStatus={async () => {
               const accessStatus = await this.api.getAccessStatus();
               this.setState({ accessStatus });
-              return accessStatus
+              return accessStatus;
             }}
           />
           <div className="d-flex justify-content-center">
@@ -549,7 +550,7 @@ class SimTabs extends React.Component<
                   resetAccessStatus={async () => {
                     const accessStatus = await this.api.getAccessStatus();
                     this.setState({ accessStatus });
-                    return accessStatus
+                    return accessStatus;
                   }}
                 />
               </ErrorBoundary>
