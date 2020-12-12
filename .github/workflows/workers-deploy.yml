@@ -49,7 +49,7 @@ jobs:
       # Setup gcloud CLI
       - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
         with:
-          service_account_email: ${{ GKE_EMAIL }}
+          service_account_email: $GKE_EMAIL
           service_account_key: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
           export_default_credentials: true
 
