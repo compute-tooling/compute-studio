@@ -22,6 +22,7 @@ from rest_framework import filters
 import paramtools as pt
 import cs_storage
 
+from webapp.apps.users.auth import ClusterAuthentication
 from webapp.apps.users.models import (
     Project,
     Profile,
@@ -37,8 +38,8 @@ from webapp.apps.comp.exceptions import (
     ValidationError,
     BadPostException,
     ForkObjectException,
-    ResourceLimitException,
     PrivateAppException,
+    PrivateSimException,
 )
 from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
@@ -219,7 +220,7 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
                     return Response(
                         serializer.errors, status=status.HTTP_400_BAD_REQUEST
                     )
-                except (ResourceLimitException, PrivateAppException) as e:
+                except (PrivateSimException, PrivateAppException,) as e:
                     return Response(
                         {e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST
                     )
@@ -319,6 +320,10 @@ class ForkDetailAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView
         except ForkObjectException as e:
             msg = str(e)
             return Response({"fork": msg}, status=status.HTTP_400_BAD_REQUEST)
+        except (PrivateSimException, PrivateAppException,) as e:
+            return Response(
+                data={e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST,
+            )
         data = MiniSimulationSerializer(sim).data
         return Response(data, status=status.HTTP_201_CREATED)
 
@@ -353,7 +358,11 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
     simulation results.
     """
 
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (
+        ClusterAuthentication,
+        # Uncomment to allow token-based authentication for this endpoint.
+        # TokenAuthentication,
+    )
 
     def put(self, request, *args, **kwargs):
         print("myoutputs api method=PUT", kwargs)
@@ -393,7 +402,11 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
 
 
 class MyInputsAPIView(APIView):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (
+        ClusterAuthentication,
+        # Uncomment to allow token-based authentication for this endpoint.
+        # TokenAuthentication,
+    )
 
     def put(self, request, *args, **kwargs):
         print("myinputs api method=PUT", kwargs)
@@ -460,7 +473,7 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                     pp, created = PendingPermission.objects.get_or_create(
                         sim=self.object, profile=profile, permission_name="add_author"
                     )
-                except (ResourceLimitException, PrivateAppException) as e:
+                except (PrivateSimException, PrivateAppException,) as e:
                     return Response(
                         data={e.resource: e.todict()},
                         status=status.HTTP_400_BAD_REQUEST,
@@ -477,6 +490,7 @@ class AuthorsAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, APIView):
                     )
 
                 try:
+                    print(data)
                     msg = next(
                         (
                             obj["msg"]

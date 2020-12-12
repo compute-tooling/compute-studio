@@ -12,7 +12,15 @@ import {
   ErrorCard,
 } from "./components";
 import { ValidatingModal, RunModal, AuthModal, PreviewModal } from "./modal";
-import { AccessStatus, Sects, InitialValues, Inputs, InputsDetail, Simulation } from "../types";
+import {
+  AccessStatus,
+  Sects,
+  InitialValues,
+  Inputs,
+  InputsDetail,
+  Simulation,
+  RemoteOutputs,
+} from "../types";
 import API from "./API";
 
 // need to require schema in model_parameters!
@@ -29,6 +37,7 @@ interface InputsFormProps {
   api: API;
   readOnly: boolean;
   accessStatus: AccessStatus;
+  sim: Simulation<RemoteOutputs>;
   resetAccessStatus: () => void;
   setNotifyOnCompletion: (notify: boolean) => void;
   notifyOnCompletion: boolean;
@@ -42,6 +51,8 @@ interface InputsFormProps {
   resetting: boolean;
 
   formikProps: FormikProps<InitialValues>;
+
+  persist?: () => void;
 }
 
 interface InputsProps {
@@ -73,9 +84,11 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
     schema,
     sects,
     extend,
+    persist,
     unknownParams,
     readOnly,
     simStatus,
+    sim,
   } = props;
   let { meta_parameters, model_parameters, label_to_extend } = inputs;
 
@@ -134,6 +147,8 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
                 setNotify={setNotifyOnCompletion}
                 setIsPublic={setIsPublic}
                 isPublic={isPublic}
+                persist={persist}
+                sim={sim}
               />
             </li>
           </ul>

@@ -1,4 +1,5 @@
 import argparse
+from datetime import datetime
 import json
 import os
 import uuid
@@ -13,14 +14,13 @@ from cs_workers.utils import hash_projects, redis_conn_from_env
 from cs_workers.models.clients import job, api_task, server
 from cs_workers.config import ModelConfig
 from cs_workers.services.serializers import Payload, Deployment
-from cs_workers.services.auth import AuthApi, authenticate_request
+from cs_workers.services.auth import AuthApi, authenticate_request, all_users
 
-CS_URL = os.environ.get("CS_URL")
 PROJECT = os.environ.get("PROJECT")
 
 redis_conn = dict(
-    username="scheduler",
-    password=os.environ.get("REDIS_SCHEDULER_PW"),
+    username=os.environ.get("REDIS_USER"),
+    password=os.environ.get("REDIS_PW"),
     **redis_conn_from_env(),
 )
 
@@ -33,6 +33,17 @@ class Scheduler(tornado.web.RequestHandler):
         self.config = config
         self.rclient = rclient
 
+    def save_job_info(self, job_id):
+        self.rclient.set(
+            f"jobinfo-{job_id}",
+            json.dumps(
+                {
+                    "cluster_user": self.user.username,
+                    "created_at": str(datetime.utcnow()),
+                }
+            ),
+        )
+
     async def prepare(self):
         self.user = authenticate_request(self.request)
         if self.user is None or not getattr(self.user, "approved", False):
@@ -44,7 +55,7 @@ class Scheduler(tornado.web.RequestHandler):
             return
         payload = Payload().loads(self.request.body.decode("utf-8"))
 
-        if f"{owner}/{title}" not in self.config.projects():
+        if f"{owner}/{title}" not in self.config[self.user.username].projects():
             self.set_status(404)
 
         task_id = payload.get("task_id")
@@ -56,20 +67,20 @@ class Scheduler(tornado.web.RequestHandler):
 
         if task_name in ("version", "defaults"):
             client = api_task.APITask(
-                owner, title, task_id=task_id, task_name=task_name, **task_kwargs
+                owner, title, task_id=task_id, task_name=task_name, **task_kwargs,
             )
             resp = await client.create(asynchronous=False)
-            print(resp.text)
             assert resp.status_code == 200, f"Got code: {resp.status_code}"
             data = resp.json()
         elif task_name in ("parse",):
             client = api_task.APITask(
-                owner, title, task_id=task_id, task_name=task_name, **task_kwargs
+                owner, title, task_id=task_id, task_name=task_name, **task_kwargs,
             )
             resp = await client.create(asynchronous=True)
             assert resp.status_code == 200, f"Got code: {resp.status_code}"
 
             data = resp.json()
+            self.save_job_info(data["task_id"])
         elif task_name == "sim":
             tag = payload["tag"]
             client = job.Job(
@@ -77,13 +88,14 @@ class Scheduler(tornado.web.RequestHandler):
                 owner,
                 title,
                 tag=tag,
-                model_config=self.config,
+                model_config=self.config[self.user.username],
                 job_id=task_id,
                 job_kwargs=payload["task_kwargs"],
                 rclient=self.rclient,
             )
             client.create()
             data = {"task_id": client.job_id}
+            self.save_job_info(client.job_id)
         else:
             self.set_status(404)
             return
@@ -105,7 +117,7 @@ class SyncProjects(tornado.web.RequestHandler):
         print("POST -- /sync/")
         data = json.loads(self.request.body.decode("utf-8"))
         projects = hash_projects(data)
-        self.config.set_projects(projects=projects)
+        self.config[self.user.username].set_projects(projects=projects)
         self.set_status(200)
 
 
@@ -122,7 +134,7 @@ class DeploymentsDetailApi(tornado.web.RequestHandler):
     def get(self, owner, title, deployment_name):
         print("GET --", f"/deployments/{owner}/{title}/{deployment_name}/")
         try:
-            project = self.config.get_project(owner, title)
+            project = self.config[self.user.username].get_project(owner, title)
         except KeyError:
             self.set_status(404)
             return
@@ -134,7 +146,7 @@ class DeploymentsDetailApi(tornado.web.RequestHandler):
                 owner=project["owner"],
                 title=project["title"],
                 tag=None,
-                model_config=self.config,
+                model_config=self.config[self.user.username],
                 callable_name=project["callable_name"],
                 deployment_name=deployment_name,
                 incluster=incluster,
@@ -150,7 +162,7 @@ class DeploymentsDetailApi(tornado.web.RequestHandler):
     def delete(self, owner, title, deployment_name):
         print("DELETE --", f"/deployments/{owner}/{title}/{deployment_name}/")
         try:
-            project = self.config.get_project(owner, title)
+            project = self.config[self.user.username].get_project(owner, title)
         except KeyError:
             self.set_status(404)
             return
@@ -162,7 +174,7 @@ class DeploymentsDetailApi(tornado.web.RequestHandler):
                 owner=project["owner"],
                 title=project["title"],
                 tag=None,
-                model_config=self.config,
+                model_config=self.config[self.user.username],
                 callable_name=project["callable_name"],
                 deployment_name=deployment_name,
                 incluster=incluster,
@@ -189,7 +201,7 @@ class DeploymentsApi(tornado.web.RequestHandler):
     def post(self, owner, title):
         print("POST --", f"/deployments/{owner}/{title}/")
         try:
-            project = self.config.get_project(owner, title)
+            project = self.config[self.user.username].get_project(owner, title)
         except KeyError:
             self.set_status(404)
             return
@@ -213,7 +225,7 @@ class DeploymentsApi(tornado.web.RequestHandler):
                 owner=project["owner"],
                 title=project["title"],
                 tag=data["tag"],
-                model_config=self.config,
+                model_config=self.config[self.user.username],
                 callable_name=project["callable_name"],
                 deployment_name=data["deployment_name"],
                 incluster=incluster,
@@ -236,13 +248,16 @@ class DeploymentsApi(tornado.web.RequestHandler):
 
 
 def get_app():
-    assert PROJECT and CS_URL
     rclient = redis.Redis(**redis_conn)
-    config = ModelConfig(
-        PROJECT, cs_url=CS_URL, cs_api_token=os.environ["CS_API_TOKEN"], rclient=rclient
-    )
-    config.set_projects()
-    assert rclient.get("projects") is not None
+    config = {}
+    for user in all_users():
+        print(f"loading data for {user.username} at {user.url}")
+        config[user.username] = ModelConfig(
+            PROJECT, cs_url=user.url, cs_auth_headers=user.headers(), rclient=rclient,
+        )
+        config[user.username].set_projects()
+    print("config?:", config)
+    assert rclient.hgetall("projects") is not None
     return tornado.web.Application(
         [
             (r"/sync/", SyncProjects, dict(config=config, rclient=rclient),),

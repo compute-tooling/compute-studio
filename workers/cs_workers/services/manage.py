@@ -75,8 +75,6 @@ class Manager:
         bucket=None,
         kubernetes_target="kubernetes/",
         use_kind=False,
-        cs_url=None,
-        cs_api_token=None,
         cluster_host=None,
         viz_host=None,
     ):
@@ -84,8 +82,6 @@ class Manager:
         self.project = project
         self.bucket = bucket
         self.use_kind = use_kind
-        self.cs_url = cs_url
-        self._cs_api_token = cs_api_token
         self.cluster_host = cluster_host
         self.viz_host = viz_host
 
@@ -124,11 +120,6 @@ class Manager:
 
         with open(self.templates_dir / "secret.template.yaml", "r") as f:
             self.secret_template = yaml.safe_load(f.read())
-
-        with open(
-            self.templates_dir / "services" / "deployment-cleanup.template.yaml", "r"
-        ) as f:
-            self.deployment_cleanup_template = yaml.safe_load(f.read())
 
         self._redis_secrets = None
         self._secrets = None
@@ -199,7 +190,6 @@ class Manager:
         self.write_secret()
         if update_redis:
             self.write_redis_deployment()
-        self.write_deployment_cleanup_job()
 
     def write_scheduler_deployment(self):
         """
@@ -211,12 +201,6 @@ class Manager:
         ] = f"gcr.io/{self.project}/scheduler:{self.tag}"
         deployment["spec"]["template"]["spec"]["containers"][0]["env"] += [
             {"name": "VIZ_HOST", "value": self.viz_host},
-            {
-                "name": "CS_API_TOKEN",
-                "valueFrom": {
-                    "secretKeyRef": {"key": "CS_API_TOKEN", "name": "worker-secret"}
-                },
-            },
         ]
         self.write_config("scheduler-Deployment.yaml", deployment)
 
@@ -270,12 +254,8 @@ class Manager:
 
     def write_secret(self):
         assert self.bucket
-        assert self.cs_url
-        assert self.cs_api_token
         assert self.project
         secrets = copy.deepcopy(self.secret_template)
-        secrets["stringData"]["CS_URL"] = self.cs_url
-        secrets["stringData"]["CS_API_TOKEN"] = self.cs_api_token
         secrets["stringData"]["BUCKET"] = self.bucket
         secrets["stringData"]["PROJECT"] = self.project
         secrets["stringData"]["CS_CRYPT_KEY"] = self.secrets.get("CS_CRYPT_KEY")
@@ -299,14 +279,6 @@ class Manager:
 
         self.write_config("cloudflare_token_secret.yaml", secret)
 
-    def write_deployment_cleanup_job(self):
-        template = copy.deepcopy(self.deployment_cleanup_template)
-        template["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0][
-            "image"
-        ] = f"gcr.io/{self.project}/scheduler:{self.tag}"
-
-        self.write_config("deployment-cleanup.yaml", template)
-
     def write_config(self, filename, config):
         if self.kubernetes_target == "-":
             sys.stdout.write(yaml.dump(config))
@@ -327,7 +299,10 @@ class Manager:
         from google.api_core import exceptions
 
         redis_secrets = dict(
-            REDIS_ADMIN_PW="", REDIS_EXECUTOR_PW="", REDIS_SCHEDULER_PW=""
+            REDIS_ADMIN_PW="",
+            REDIS_EXECUTOR_PW="",
+            REDIS_SCHEDULER_PW="",
+            REDIS_OUTPUTS_PW="",
         )
         for sec in redis_secrets:
             try:
@@ -340,12 +315,6 @@ class Manager:
                     value = ""
             redis_secrets[sec] = value
         return redis_secrets
-
-    @property
-    def cs_api_token(self):
-        if self._cs_api_token is None:
-            self._cs_api_token = self.secrets._get_secret("CS_API_TOKEN")
-        return self._cs_api_token
 
     @property
     def secrets(self):
@@ -361,8 +330,6 @@ def manager_from_args(args: argparse.Namespace):
         bucket=args.bucket,
         kubernetes_target=getattr(args, "out", None),
         use_kind=getattr(args, "use_kind", None),
-        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
-        cs_api_token=getattr(args, "cs_api_token", None),
         cluster_host=getattr(args, "cluster_host", None),
         viz_host=getattr(args, "viz_host", None),
     )

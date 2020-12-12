@@ -1,7 +1,15 @@
 {% extends 'base.html' %} {% load static %} {% block content %}
 
 <div class="card card-body card-outer">
-  {% csrf_token %}
+  {% if banner_msg %}
+  <div class="row w-100 justify-content-left mb-4">
+    <div class="col text-center">
+      <div class="alert alert-primary" role="alert">
+        <p class="lead" style="font-weight: 600">{{banner_msg}}</p>
+      </div>
+    </div>
+  </div>
+  {% endif %} {% csrf_token %}
   <div class="row justify-content-between px-5">
     <div class="col-md-3 mb-2">
       <div class="row">
@@ -27,9 +35,7 @@
         </div>
       </div>
     </div>
-    <div class="col-md-9">
-      {% block settings %}{% endblock %}
-    </div>
+    <div class="col-md-9">{% block settings %}{% endblock %}</div>
   </div>
 
   {% endblock %}

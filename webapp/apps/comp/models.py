@@ -24,13 +24,13 @@ from guardian.shortcuts import assign_perm, remove_perm, get_perms, get_users_wi
 
 import cs_storage
 
-from webapp.settings import HAS_USAGE_RESTRICTIONS, USE_STRIPE
+from webapp.settings import HAS_USAGE_RESTRICTIONS, USE_STRIPE, FREE_PRIVATE_SIMS
 
 from webapp.apps.comp import utils
 from webapp.apps.comp.exceptions import (
     ForkObjectException,
     PermissionExpiredException,
-    ResourceLimitException,
+    PrivateSimException,
     VersionMismatchException,
     PrivateAppException,
 )
@@ -277,7 +277,8 @@ class SimulationManager(models.Manager):
                     model_pk=model_pk,
                     inputs=inputs,
                     status="STARTED",
-                    is_public=False,
+                    is_public=True,
+                    title=f"{project} #{model_pk}",
                 )
                 sim.authors.set([user.profile])
                 sim.grant_admin_permissions(user)
@@ -291,6 +292,7 @@ class SimulationManager(models.Manager):
             # Case 2:
             return self.new_sim(user, project, inputs_status)
 
+    @transaction.atomic
     def fork(self, sim, user):
         if sim.inputs.status == "PENDING":
             raise ForkObjectException(
@@ -317,7 +319,8 @@ class SimulationManager(models.Manager):
             traceback=sim.inputs.traceback,
             client=sim.inputs.client,
         )
-        sim = self.create(
+
+        sim: Simulation = self.create(
             owner=user.profile,
             title=sim.title,
             readme=sim.readme,
@@ -335,9 +338,11 @@ class SimulationManager(models.Manager):
             exp_comp_datetime=sim.exp_comp_datetime,
             model_version=sim.model_version,
             model_pk=self.next_model_pk(sim.project),
-            is_public=False,
+            is_public=sim.is_public,
             status=sim.status,
         )
+        if not sim.is_public:
+            sim.make_private_test()
         sim.authors.set([user.profile])
         sim.grant_admin_permissions(user)
         return sim
@@ -537,73 +542,43 @@ class Simulation(models.Model):
     def is_owner(self, user):
         return user == self.owner.user
 
-    def _collaborator_test(self, test_name, adding_collaborator=True):
+    def _private_app_test(self, collaborator):
+        """Test that collaborator has access to the app if it's private."""
+        if not self.project.has_read_access(collaborator):
+            raise PrivateAppException(collaborator)
+
+    def add_collaborator_test(self, collaborator=None, **kwargs):
         """
-        Related: Project._collaborator_test
+        Test if user's plan allows them to add collaborators
+        to a private simulation.
         """
         if not HAS_USAGE_RESTRICTIONS:
             return
 
-        permission_objects = get_users_with_perms(self)
-
-        # number of additional collaborators besides owner.
-        num_collaborators = permission_objects.count() - 1
-
-        if adding_collaborator:
-            num_collaborators += 1
-
-        user = self.owner.user
-        customer = getattr(user, "customer", None)
-        if customer is None:
-            if num_collaborators > 0:
-                raise ResourceLimitException(
-                    "collaborators",
-                    test_name,
-                    "plus",
-                    ResourceLimitException.collaborators_msg,
-                )
-        else:
-            current_plan = customer.current_plan()
-
-            if num_collaborators > 0 and current_plan["name"] == "free":
-                raise ResourceLimitException(
-                    "collaborators",
-                    test_name,
-                    "plus",
-                    ResourceLimitException.collaborators_msg,
-                )
-
-            if num_collaborators > 1 and current_plan["name"] == "plus":
-                raise ResourceLimitException(
-                    "collaborators",
-                    test_name,
-                    "pro",
-                    ResourceLimitException.collaborators_msg,
-                )
-
-    def _private_app_test(self, collaborator):
-        if not self.project.has_read_access(collaborator):
-            raise PrivateAppException(
-                "collaborators",
-                "add_collaborator_on_private_app",
-                collaborator=collaborator,
-            )
-
-    def add_collaborator_test(self, collaborator=None, **kwargs):
-        """
-        Test if user's plan allows them to add more collaborators
-        to this simulation.
-        """
-        if not self.is_public:
-            self._collaborator_test("add_collaborator", adding_collaborator=True)
         self._private_app_test(collaborator=collaborator)
 
     def make_private_test(self, **kwargs):
         """
-        Test if user's plan allows them to make the simulation private with
-        the existing number of collaborators.
+        Test if user's plan allows them to make this sim private.
         """
-        return self._collaborator_test("make_private", adding_collaborator=False)
+        if not HAS_USAGE_RESTRICTIONS:
+            return
+
+        # Sim is already private.
+        if not self.is_public:
+            return
+
+        user = self.owner.user
+        customer = getattr(user, "customer", None)
+        if customer is None:
+            plan = "free"
+        else:
+            plan = customer.current_plan()["name"]
+
+        if plan == "free":
+            remaining = self.owner.remaining_private_sims(project=self.project)
+            if remaining.get(str(self.project).lower(), FREE_PRIVATE_SIMS) <= 0:
+                raise PrivateSimException()
 
     """
     The methods below are used for checking if a user has read, write, or admin

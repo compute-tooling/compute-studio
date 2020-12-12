@@ -1,11 +1,11 @@
 {% extends 'base.html' %} {% load static %} {% block title %}Update Plan
 information{% endblock %} {% block content %}
 <div class="card card-body card-inner">
-  {% if update_completed %}
+  {% if banner_msg %}
   <div class="row w-100 justify-content-left mb-4">
     <div class="col text-center">
       <div class="alert alert-primary" role="alert">
-        <p class="lead" style="font-weight:600">{{update_completed_msg}}</p>
+        <p class="lead" style="font-weight:600">{{banner_msg}}</p>
       </div>
     </div>
   </div>
@@ -36,139 +36,89 @@ information{% endblock %} {% block content %}
       </div>
     </div>
   </div>
-  <div class="card-deck pl-0">
-    <div class="card card-outer {% if current_plan.name == 'Free' %}selected-plan{% endif %}">
-      <div class="card-body">
-        <h2 class="card-title" style="font-weight:500">
-          Free {% if current_plan.name == 'free' %}<a href="#" class="btn btn-link float-right my-0">
-            <i class="fas fa-check-circle"></i> </a>{% endif %}
-        </h2>
-        <p class="lead">Public viewing and publishing for everyone.</p>
-        <ul class="my-4 pl-3">
-          <li>Unlimited public publishing.</li>
-          <li>Unlimited public modeling and data snapshotting.</li>
-        </ul>
-        {% if current_plan.name != 'free' %}
-        <div class="text-center">
-          <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#freeModal">
-            <strong>
-              Select
-            </strong>
-            </a>
-        </div>
-        {% endif %}
+  <div class="container justify-content-center">
+    <div class="card-deck px-0">
+      <div class="card card-outer {% if current_plan.name == 'Free' %}selected-plan{% endif %}">
+        <div class="card-body">
+          <h2 class="card-title" style="font-weight:500">
+            Free {% if current_plan.name == 'free' %}<a href="#" class="btn btn-link float-right my-0">
+              <i class="fas fa-check-circle"></i> </a>{% endif %}
+          </h2>
+          <p class="lead">Public viewing and publishing for everyone.</p>
+          <ul class="my-4 pl-3">
+            <li>Unlimited public publishing.</li>
+            <li>Unlimited public modeling with free apps.</li>
+            <li>Unlimited public collaborators and teams.</li>
+            <li>3 free private simulations per month.</li>
+          </ul>
+          {% if current_plan.name != 'free' %}
+          {% if cancel_at_period_end %}
+          <div class="text-center">
+            <button type="button" class="btn btn-primary text-center" style="white-space: normal" data-toggle="modal"
+              data-target="#freeModal" disabled>
+              <strong>
+                Downgrade scheduled for {{cancel_at}}
+              </strong>
+              </a>
+          </div>
+          {% else %}
+          <div class="text-center">
+            <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#freeModal">
+              <strong>
+                Downgrade
+              </strong>
+              </a>
+          </div>
+          {% endif %}
+          {% endif %}
 
+        </div>
+        <div class="card-footer border-top-0 background-color-inherit">
+          <h2 class="text-center">$0</h2>
+          <h4 class="text-center">Per month</h4>
+          <small class="text-center text-muted">Additional fees may apply for using paid apps.</small>
+        </div>
       </div>
-      <div class="card-footer border-top-0 background-color-inherit">
-        <h2 class="text-center">$0</h2>
-        <h4 class="text-center">Per month</h4>
-        <small class="text-center text-muted">Additional fees may apply for using paid apps.</small>
-      </div>
-    </div>
 
-    <div class="card card-outer">
-      <div class="card-body">
-        <h2 class="card-title" style="font-weight:500">Plus
-          {% if current_plan.name == 'plus' and current_plan.plan_duration == plan_duration %}<a href="#"
-            class="btn btn-link float-right my-0">
-            <i class="fas fa-check-circle"></i> </a>{% endif %}</h2>
-        <p class="lead">Share your private work with someone you trust.</p>
-        <ul class="my-4 pl-3">
-          <li>Add a private collaborator to your simulations, models, and data shapshots.</li>
-        </ul>
-        {% if current_plan.name != 'plus' or current_plan.plan_duration != plan_duration %}
-        <div class="text-center">
-          <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#plusModal">
-            <strong>
-              {% if current_plan.name == "free" %}
-              Upgrade
-              {% else %}
-              Select
-              {% endif %}
-            </strong>
-            </a>
-        </div>
-        {% endif %}
-      </div>
-      <div class="card-footer border-top-0 background-color-inherit">
-        {% if plan_duration == "monthly" %}
-        <h2 class="text-center">$15</h2>
-        <h4 class="text-center">Per month</h4>
-        <small class="text-center text-muted">Save $30 by getting 2 months free with annual pre-pay.</small>
-        {% else %}
-        <h2 class="text-center">$12.50</h2>
-        <h4 class="text-center">Per month</h4>
-        <small class="text-center text-muted"><i>Billed at $150 / year</i></small>
-        {% endif %}
-      </div>
-    </div>
+      <div class="card card-outer">
+        <div class="card-body">
+          <h2 class="card-title" style="font-weight:500">Pro
+            {% if current_plan.name == 'pro' and current_plan.plan_duration == plan_duration %}<a href="#"
+              class="btn btn-link float-right my-0">
+              <i class="fas fa-check-circle"></i> </a>{% endif %}</h2>
+          <p class="lead">Unlimited private collaboration for pros.</p>
+          <ul class="my-4 pl-3">
+            <li>Unlimited private publishing.</li>
+            <li>Unlimited private modeling.</li>
+            <li>Unlimited private collaborators and teams.</li>
+            <li class="pt-4">Support the open source development of Compute Studio!</li>
 
-    <div class="card card-outer">
-      <div class="card-body">
-        <h2 class="card-title" style="font-weight:500">Pro
-          {% if current_plan.name == 'pro' and current_plan.plan_duration == plan_duration %}<a href="#"
-            class="btn btn-link float-right my-0">
-            <i class="fas fa-check-circle"></i> </a>{% endif %}</h2>
-        <p class="lead">Unlimited private collaboration for pros.</p>
-        <ul class="my-4 pl-3">
-          <li>Unlimited private collaboration.</li>
-        </ul>
-        {% if current_plan.name != 'pro' or current_plan.plan_duration != plan_duration%}
-        <div class="text-center">
-          <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#proModal">
-            <strong>
-              {% if current_plan.name == "free" or current_plan.name == "plus" %}
-              Upgrade
-              {% else %}
-              Select
-              {% endif %}
-            </strong>
-            </a>
+          </ul>
+          {% if current_plan.name != 'pro'%}
+          <div class="text-center">
+            <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#proModal">
+              <strong>
+                {% if current_plan.name == "free" or current_plan.name == "plus" %}
+                Upgrade
+                {% else %}
+                Select
+                {% endif %}
+              </strong>
+              </a>
+          </div>
+          {% endif %}
         </div>
-        {% endif %}
-      </div>
-      <div class="card-footer border-top-0 background-color-inherit">
-        {% if plan_duration == "monthly" %}
-        <h2 class="text-center">$50</h2>
-        <h4 class="text-center">Per month</h4>
-        <small class="text-center text-muted">Save $100 by getting 2 months free with annual pre-pay.</small>
-        {% else %}
-        <h2 class="text-center">$41.67</h2>
-        <h4 class="text-center">Per month</h4>
-        <small class="text-center text-muted"><i>Billed at $500 / year</i></small>
-        {% endif %}
-      </div>
-    </div>
-    <div class="card card-outer">
-      <div class="card-body">
-        <h2 class="card-title" style="font-weight:500">Team</h2>
-        <p class="lead">Essential management for teams and agencies.</p>
-        <ul class="my-4 pl-3">
-          <li>
-            Team access controls.
-          </li>
-          <li>
-            Team budget controls.
-          </li>
-        </ul>
-        {% if current_plan.name != 'team' %}
-        <div class="text-center">
-          <a id="contact-sales" class="btn btn-primary text-center" style="color:white">
-            <strong>Contact Sales</strong>
-          </a>
+        <div class="card-footer border-top-0 background-color-inherit">
+          {% if plan_duration == "monthly" %}
+          <h2 class="text-center">$9</h2>
+          <h4 class="text-center">Per month</h4>
+          <small class="text-center text-muted">Save $9 by getting 1 month free with <a
+              href="/billing/upgrade/yearly/">annual pre-pay.</a></small>
+          {% else %}
+          <h2 class="text-center">$99</h2>
+          <h4 class="text-center">Per year</h4>
+          {% endif %}
         </div>
-        {% endif %}
-      </div>
-      <div class="card-footer border-top-0 background-color-inherit">
-        {% if plan_duration == "monthly" %}
-        <h2 class="text-center">$100</h2>
-        <h4 class="text-center">Per month per user</h4>
-        <small class="text-center text-muted">Save $200 by getting 2 months free with annual pre-pay.</small>
-        {% else %}
-        <h2 class="text-center">$83.34</h2>
-        <h4 class="text-center">Per month per user</h4>
-        <small class="text-center text-muted"><i>Billed at $1000 / year</i></small>
-        {% endif %}
       </div>
     </div>
   </div>
@@ -184,10 +134,11 @@ information{% endblock %} {% block content %}
         </div>
         <div class="modal-body">
           <p class="lead">This plan is free.</p>
+          <p>Your Pro account will expire at the end of this billing cycle and not renew.</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <a href="/billing/upgrade/{{plan_duration}}/?upgrade_plan=free" class="btn btn-primary">Select</a>
+          <a href="/billing/upgrade/{{plan_duration}}/?upgrade_plan=free" class="btn btn-primary">Downgrade</a>
         </div>
       </div>
     </div>
@@ -204,11 +155,11 @@ information{% endblock %} {% block content %}
         </div>
         <div class="modal-body">
           {% if plan_duration == "monthly" %}
-          <p class="lead">You will be charged $50 per month.</p>
+          <p class="lead">You will be charged $9 per month.</p>
           {% else %}
-          <p class="lead">You will be charged $500 per year.</p>
+          <p class="lead">You will be charged $99 per year.</p>
           {% endif %}
-          {% if not user.customer %}
+          {% if not has_payment_method %}
           <p><a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=pro">Add
               payment
               method</a></p>
@@ -234,67 +185,13 @@ information{% endblock %} {% block content %}
       </div>
     </div>
   </div>
-  <div class="modal fade" id="plusModal" tabindex="-1" role="dialog" aria-labelledby="plusModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="plusModalLabel">Upgrade to Plus</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          {% if plan_duration == "monthly" %}
-          <p class="lead">You will be charged $15 per month.</p>
-          {% else %}
-          <p class="lead">You will be charged $150 per year.</p>
-          {% endif %}
-          {% if not user.customer %}
-          <p><a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=plus">Add
-              payment
-              method</a></p>
-          {% else %}
-          <p>Payment method:</p>
-          <p><i class="far fa-credit-card mr-1"></i><strong>{{card_info.brand}}</strong> ending **** **** ****
-            {{card_info.last4}}</p>
-          <p>Expires: {{card_info.exp_month}}/{{card_info.exp_year}}</p>
-          <p><a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=plus">Update
-              payment method</a></p>
-          {% endif %}
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          {% if not user.customer %}
-          <a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=plus"
-            class="btn btn-primary">Add payment method</a>
-          {% else %}
-          <a href="/billing/upgrade/{{plan_duration}}/?upgrade_plan=plus" class="btn btn-primary">Buy
-            now</a>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 {% endblock %}
 
 {% block bottom_scripts %}
 <script>
-  var contactButton = document.getElementById("contact-sales");
-  contactButton.addEventListener("click", function (event) {
-    event.preventDefault();
-    contactButton.innerHTML = "<strong>Thanks! We'll be in touch</strong>";
-    fetch("/billing/upgrade?upgrade_plan=team").then(function (resp) { });
-  });
 
   var searchParams = (new URL(document.location)).searchParams;
-
-  if (searchParams.get("selected_plan") === "plus") {
-    $(document).ready(function () {
-      $("#plusModal").modal("show");
-    });
-  }
 
   if (searchParams.get("selected_plan") === "pro") {
     $(document).ready(function () {

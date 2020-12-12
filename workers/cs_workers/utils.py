@@ -60,10 +60,18 @@ def redis_conn_from_env():
     return kwargs
 
 
-def get_projects(cs_url, api_token):
-    resp = httpx.get(
-        f"{cs_url}/apps/api/v1/", headers={"Authorization": f"Token {api_token}"}
-    )
+def get_projects(cs_url, api_token=None, auth_headers=None):
+    if api_token is not None:
+        print("Using api token")
+        headers = {"Authorization": f"Token {api_token}"}
+    elif auth_headers is not None:
+        print("Using auth headers")
+        headers = auth_headers
+    else:
+        print("Not using auth")
+        headers = {}
+    print(f"getting data at {cs_url}")
+    resp = httpx.get(f"{cs_url}/apps/api/v1/", headers=headers)
     assert resp.status_code == 200, f"Got code {resp.status_code}"
     return hash_projects(resp.json())
 

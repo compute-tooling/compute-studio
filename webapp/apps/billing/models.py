@@ -7,15 +7,16 @@ from typing import Optional
 
 import stripe
 
+import pytz
 from django.db import models, IntegrityError
 from django.db.models import Q
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
-from django.utils.timezone import make_aware
+from django.utils import timezone
 
 from webapp.settings import USE_STRIPE, DEBUG
 
-from .email import send_subscribe_to_plan_email
+from .email import send_subscribe_to_plan_email, send_sub_canceled_email
 
 stripe.api_key = os.environ.get("STRIPE_SECRET")
 
@@ -24,8 +25,8 @@ def timestamp_to_datetime(timestamp):
     if timestamp is None:
         return None
     if isinstance(timestamp, int):
-        timestamp = date.fromtimestamp(timestamp)
-    return make_aware(datetime.combine(timestamp, datetime.now().time()))
+        timestamp = datetime.fromtimestamp(timestamp, tz=pytz.UTC)
+    return timezone.make_aware(datetime.combine(timestamp, datetime.utcnow().time()))
 
 
 class RequiredLocalInstances(Exception):
@@ -121,10 +122,6 @@ class Customer(models.Model):
             )
             if si.plan.nickname == "Free Plan":
                 current_plan = {"plan_duration": None, "name": "free"}
-            elif si.plan.nickname == "Monthly Plus Plan":
-                current_plan = {"plan_duration": "monthly", "name": "plus"}
-            elif si.plan.nickname == "Yearly Plus Plan":
-                current_plan = {"plan_duration": "yearly", "name": "plus"}
             elif si.plan.nickname == "Monthly Pro Plan":
                 current_plan = {"plan_duration": "monthly", "name": "pro"}
             elif si.plan.nickname == "Yearly Pro Plan":
@@ -138,7 +135,7 @@ class Customer(models.Model):
         else:
             return si
 
-    def update_plan(self, new_plan: Optional["Plan"]):
+    def update_plan(self, new_plan: Optional["Plan"], **subscription_kwargs):
         current_si = self.current_plan(as_dict=False)
         current_plan = self.current_plan(si=current_si, as_dict=True)
 
@@ -153,35 +150,48 @@ class Customer(models.Model):
             if current_si.plan.nickname == "Free Plan":
                 status = UpdateStatus.upgrade
 
-            elif current_si.plan.nickname.endswith("Plus Plan"):
-
-                if new_plan.nickname.endswith("Plus Plan"):
-                    status = UpdateStatus.duration_change
-                elif new_plan.nickname.endswith("Pro Plan"):
-                    status = UpdateStatus.upgrade
-                elif new_plan.nickname == "Free Plan":
-                    status = UpdateStatus.downgrade
-
             elif current_si.plan.nickname.endswith("Pro Plan"):
 
                 if new_plan.nickname.endswith("Pro Plan"):
                     status = UpdateStatus.duration_change
-                elif new_plan.nickname.endswith("Plus Plan"):
-                    status = UpdateStatus.downgrade
                 elif new_plan.nickname == "Free Plan":
                     status = UpdateStatus.downgrade
 
             else:
                 raise ValueError(
-                    "Can only handle free, plus, and pro plans at the moment: {new_plan.nickname}."
+                    "Can only handle free, and pro plans at the moment: {new_plan.nickname}."
                 )
 
-            stripe.SubscriptionItem.modify(
-                current_si.stripe_id, plan=new_plan.stripe_id
-            )
-            current_si.plan = new_plan
-            current_si.save()
-            send_subscribe_to_plan_email(self.user, new_plan)
+            # Only upgrade takes effect immediately in db.
+            # Downgrades will be handled via a webhook.
+            if status == UpdateStatus.downgrade:
+                stripe_sub: stripe.Subscription = stripe.Subscription.modify(
+                    current_si.subscription.stripe_id, cancel_at_period_end=True,
+                )
+                sub = current_si.subscription
+                # Don't trigger downgrade notification if plan already set to
+                # end at the end of the billing period.
+                if sub.cancel_at_period_end:
+                    return UpdateStatus.nochange
+                sub.update_from_stripe_obj(stripe_sub)
+                sub.save()
+                send_sub_canceled_email(self.user, sub.current_period_end)
+            else:
+                stripe.SubscriptionItem.modify(
+                    current_si.stripe_id, plan=new_plan.stripe_id
+                )
+                current_si.plan = new_plan
+                current_si.save()
+                if subscription_kwargs:
+                    stripe_sub = stripe.Subscription.modify(
+                        current_si.subscription.stripe_id, **subscription_kwargs
+                    )
+                else:
+                    stripe_sub = stripe.Subscription.retrieve(
+                        current_si.subscription.stripe_id,
+                    )
+                current_si.subscription.update_from_stripe_obj(stripe_sub)
+                send_subscribe_to_plan_email(self.user, new_plan)
             return status
 
         # Check nochange transitions
@@ -191,7 +201,9 @@ class Customer(models.Model):
             return UpdateStatus.nochange
 
         # Transition from free to paid plan.
-        stripe_sub = Subscription.create_stripe_object(self, [new_plan])
+        stripe_sub = Subscription.create_stripe_object(
+            self, [new_plan], **subscription_kwargs
+        )
         sub = Subscription.construct(
             stripe_sub, self, [new_plan], subscription_type="compute-studio"
         )
@@ -242,6 +254,7 @@ class Customer(models.Model):
 
 
 class Product(models.Model):
+    objects: models.Manager
     stripe_id = models.CharField(max_length=255, unique=True)
     project = models.OneToOneField("users.Project", null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
@@ -279,6 +292,7 @@ class Product(models.Model):
 
 
 class Plan(models.Model):
+    objects: models.Manager
     LICENSED = "licensed"
     METERED = "metered"
     USAGE_TYPE_CHOICES = ((LICENSED, "licensed"), (METERED, "metered"))
@@ -394,10 +408,13 @@ class Subscription(models.Model):
     cancel_at_period_end = models.BooleanField(default=False, null=True)
     current_period_start = models.DateTimeField(null=True, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
+    cancel_at = models.DateTimeField(null=True, blank=True)
     canceled_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
 
-    def update_from_stripe_obj(self, stripe_obj):
+    trial_end = models.DateTimeField(null=True, blank=True)
+
+    def update_from_stripe_obj(self, stripe_obj: stripe.Subscription):
         self.current_period_start = timestamp_to_datetime(
             stripe_obj.current_period_start
         )
@@ -405,13 +422,26 @@ class Subscription(models.Model):
         self.cancel_at_period_end = stripe_obj.cancel_at_period_end
         self.canceled_at = timestamp_to_datetime(stripe_obj.canceled_at)
         self.ended_at = timestamp_to_datetime(stripe_obj.ended_at)
+        self.cancel_at = timestamp_to_datetime(stripe_obj.cancel_at)
+        self.trial_end = timestamp_to_datetime(stripe_obj.trial_end)
         self.save()
 
     @staticmethod
-    def create_stripe_object(customer, plans):
+    def create_stripe_object(
+        customer,
+        plans,
+        coupon: str = None,
+        cancel_at: datetime = None,
+        trial_end: datetime = None,
+    ):
+        if trial_end is not None:
+            print(trial_end, trial_end.timestamp())
         subscription = stripe.Subscription.create(
             customer=customer.stripe_id,
             items=[{"plan": plan.stripe_id} for plan in plans],
+            coupon=coupon,
+            cancel_at=int(cancel_at.timestamp()) if cancel_at is not None else None,
+            trial_end=int(trial_end.timestamp()) if trial_end is not None else None,
         )
         return subscription
 
@@ -421,20 +451,23 @@ class Subscription(models.Model):
 
     @staticmethod
     def construct(stripe_subscription, customer, plans, subscription_type="primary"):
-        current_period_start = timestamp_to_datetime(
-            stripe_subscription.current_period_start
-        )
-        current_period_end = timestamp_to_datetime(
-            stripe_subscription.current_period_end
-        )
         sub = Subscription.objects.create(
             stripe_id=stripe_subscription.id,
             customer=customer,
             livemode=stripe_subscription.livemode,
             metadata=stripe_subscription.to_dict(),
-            current_period_start=current_period_start,
-            current_period_end=current_period_end,
+            current_period_start=timestamp_to_datetime(
+                stripe_subscription.current_period_start
+            ),
+            current_period_end=timestamp_to_datetime(
+                stripe_subscription.current_period_end
+            ),
+            cancel_at_period_end=stripe_subscription.cancel_at_period_end,
             subscription_type=subscription_type,
+            trial_end=timestamp_to_datetime(stripe_subscription.trial_end),
+            cancel_at=timestamp_to_datetime(stripe_subscription.cancel_at),
+            canceled_at=timestamp_to_datetime(stripe_subscription.canceled_at),
+            ended_at=timestamp_to_datetime(stripe_subscription.ended_at),
         )
         sub.plans.add(*plans)
         sub.save()
@@ -463,14 +496,20 @@ class Subscription(models.Model):
         Extend subscription a month from its end date or now
         if "now" is after the subscription ended.
         """
-        base = max(make_aware(datetime.now()), self.current_period_end)
+        base = max(timezone.make_aware(datetime.now()), self.current_period_end)
 
         self.current_period_end = base + timedelta(days=days)
 
     def cancel_subscription(self):
-        self.canceled_at = make_aware(datetime.now())
+        self.canceled_at = timezone.now()
         # allowed to use site until current period is over
         self.ended_at = self.current_period_end
+
+    def is_trial(self):
+        if self.trial_end is None:
+            return False
+        else:
+            return timezone.now() < self.trial_end
 
 
 class SubscriptionItem(models.Model):
@@ -553,39 +592,19 @@ def create_pro_billing_objects():
     else:
         product = Product.objects.get(name="Compute Studio Subscription")
 
-    if Plan.objects.filter(nickname="Free Plan").count() == 0:
+    if product.plans.filter(nickname="Free Plan").count() == 0:
         plan = Plan.create_stripe_object(
             amount=0,
             product=product,
             usage_type="licensed",
-            interval="month",
+            interval="year",
             nickname="Free Plan",
         )
         Plan.get_or_construct(plan.id, product)
 
-    if Plan.objects.filter(nickname="Monthly Plus Plan").count() == 0:
+    if product.plans.filter(nickname="Monthly Pro Plan").count() == 0:
         monthly_plan = Plan.create_stripe_object(
-            amount=15 * 100,
-            product=product,
-            usage_type="licensed",
-            interval="month",
-            nickname="Monthly Plus Plan",
-        )
-        Plan.get_or_construct(monthly_plan.id, product)
-
-    if Plan.objects.filter(nickname="Yearly Plus Plan").count() == 0:
-        yearly_plan = Plan.create_stripe_object(
-            amount=150 * 100,
-            product=product,
-            usage_type="licensed",
-            interval="year",
-            nickname="Yearly Plus Plan",
-        )
-        Plan.get_or_construct(yearly_plan.id, product)
-
-    if Plan.objects.filter(nickname="Monthly Pro Plan").count() == 0:
-        monthly_plan = Plan.create_stripe_object(
-            amount=50 * 100,
+            amount=int(9 * 100),
             product=product,
             usage_type="licensed",
             interval="month",
@@ -593,9 +612,9 @@ def create_pro_billing_objects():
         )
         Plan.get_or_construct(monthly_plan.id, product)
 
-    if Plan.objects.filter(nickname="Yearly Pro Plan").count() == 0:
+    if product.plans.filter(nickname="Yearly Pro Plan").count() == 0:
         yearly_plan = Plan.create_stripe_object(
-            amount=500 * 100,
+            amount=int(99 * 100),
             product=product,
             usage_type="licensed",
             interval="year",

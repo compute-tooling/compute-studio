@@ -20,12 +20,14 @@ import { AxiosError } from "axios";
 import { RolePerms } from "../roles";
 import { Tip } from "../components";
 import { CollaborationSettings, saveCollaborators } from "./collaborators";
+import ReactDOM = require("react-dom");
 
 interface DescriptionProps {
   accessStatus: AccessStatus;
   api: API;
   remoteSim: Simulation<RemoteOutputs>;
   resetOutputs: () => void;
+  resetAccessStatus: () => Promise<AccessStatus>;
 }
 
 let Schema = yup.object().shape({
@@ -153,6 +155,23 @@ const AuthorsDropDown: React.FC<{ authors: string[] }> = ({ authors }) => {
   );
 };
 
+// Utility for caching paramtools values in case the user navigates away from the page.
+export const Persist = {
+  persist: (key: string, values: DescriptionValues) => {
+    window.localStorage.setItem(key, JSON.stringify(values));
+  },
+  pop: (key): DescriptionValues | null => {
+    const data = window.localStorage.getItem(key);
+    Persist.clear(key);
+    if (data) {
+      return (JSON.parse(data) as unknown) as DescriptionValues;
+    }
+
+    return null;
+  },
+  clear: key => window.localStorage.removeItem(key),
+};
+
 export default class DescriptionComponent extends React.Component<
   DescriptionProps,
   DescriptionState
@@ -161,10 +180,11 @@ export default class DescriptionComponent extends React.Component<
 
   constructor(props) {
     super(props);
+    const storage = Persist.pop(`${this.props.api.owner}/${this.props.api.title}/description`);
     let initialValues: DescriptionValues = {
-      title: this.props.remoteSim?.title || "Untitled Simulation",
-      readme: this.props.remoteSim?.readme || defaultReadme,
-      is_public: this.props.remoteSim?.is_public || false,
+      title: this.props.remoteSim?.title || storage?.title || "New Simulation",
+      readme: this.props.remoteSim?.readme || storage?.readme || defaultReadme,
+      is_public: this.props.remoteSim?.is_public || true,
       author: { add: { username: "", msg: "" }, remove: { username: "" } },
       access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } },
     };
@@ -217,6 +237,8 @@ export default class DescriptionComponent extends React.Component<
       this.state.initialValues !== nextState.initialValues ||
       this.props.api.modelpk !== nextProps.api.modelpk ||
       this.props.accessStatus.username !== nextProps.accessStatus.username ||
+      this.props.accessStatus.remaining_private_sims !==
+        nextProps.accessStatus.remaining_private_sims ||
       this.props.remoteSim?.model_pk !== nextProps.remoteSim?.model_pk ||
       this.props.remoteSim?.pending_permissions !== nextProps.remoteSim?.pending_permissions ||
       this.props.remoteSim?.authors !== nextProps.remoteSim?.authors ||
@@ -240,11 +262,20 @@ export default class DescriptionComponent extends React.Component<
   }
 
   componentDidUpdate() {
-    if (this.state.isEditMode) {
+    // Focus title box if in edit mode and if it doesn't already have focus.
+    if (
+      this.state.isEditMode &&
+      document.activeElement !== ReactDOM.findDOMNode(this.titleInput.current)
+    ) {
       this.titleInput.current.select();
     }
     if (this.state.dirty && this.props.api.modelpk) {
       this.save(this.state.initialValues);
+    } else {
+      Persist.persist(
+        `${this.props.api}/${this.props.api.title}/description`,
+        this.state.initialValues
+      );
     }
   }
 
@@ -282,7 +313,7 @@ export default class DescriptionComponent extends React.Component<
     }
   }
 
-  save(values: DescriptionValues, actions?: FormikHelpers<DescriptionValues>) {
+  async save(values: DescriptionValues, actions?: FormikHelpers<DescriptionValues>) {
     const resetStatus = () => {
       if (!!actions) {
         actions.setStatus({ collaboratorLimit: null });
@@ -303,64 +334,65 @@ export default class DescriptionComponent extends React.Component<
       }
       formdata.append("model_pk", this.props.api.modelpk.toString());
       formdata.append("readme", JSON.stringify(values.readme));
-      saveCollaborators(this.props.api, values, this.props.resetOutputs)
-        .then(() =>
-          this.props.api
-            .putDescription(formdata)
-            .then(data => {
-              if (!!this.props.remoteSim && data.is_public !== this.props.remoteSim?.is_public) {
-                this.props.resetOutputs();
-              }
-              this.setState({
-                isEditMode: false,
-                dirty: false,
-                initialValues: {
-                  ...values,
-                  ...{
-                    // is public is stored on the server side, except when the
-                    // remoteSim has not been defined...i.e. new sim.
-                    is_public: !!this.props.remoteSim
-                      ? this.props.remoteSim?.is_public
-                      : values.is_public,
-                  },
-                },
-              });
-            })
-            .catch(error => {
-              if (!actions) throw error;
-              if (error.response.status == 400 && error.response.data.collaborators) {
-                window.scroll(0, 0);
-                actions.setStatus({
-                  collaboratorLimit: error.response.data.collaborators,
-                });
-              }
-              setSubmitting(false);
-            })
-        )
-        .catch(error => {
-          if (!actions) throw error;
-          if (error.response.status == 400 && error.response.data.collaborators) {
-            window.scroll(0, 0);
-            actions.setStatus({
-              collaboratorLimit: error.response.data.collaborators,
-            });
-          }
-          setSubmitting(false);
-        })
-        .finally(() => setSubmitting(false));
+      try {
+        await saveCollaborators(this.props.api, values, this.props.resetOutputs);
+        const data = await this.props.api.putDescription(formdata);
+
+        if (!!this.props.remoteSim && data.is_public !== this.props.remoteSim?.is_public) {
+          this.props.resetOutputs();
+        }
+        await this.props.resetAccessStatus();
+        this.setState({
+          isEditMode: false,
+          dirty: false,
+          initialValues: {
+            ...values,
+            ...{
+              // is public is stored on the server side, except when the
+              // remoteSim has not been defined...i.e. new sim.
+              is_public: !!this.props.remoteSim
+                ? this.props.remoteSim?.is_public
+                : values.is_public,
+            },
+          },
+        });
+      } catch (error) {
+        if (!actions) throw error;
+        if (error.response.status == 400 && error.response.data.collaborators) {
+          window.scroll(0, 0);
+          actions.setStatus({
+            collaboratorLimit: error.response.data.collaborators,
+          });
+        } else if (error.response.status == 400 && error.response.data.simulation) {
+          window.scroll(0, 0);
+          actions.setStatus({
+            collaboratorLimit: error.response.data.simulation,
+          });
+        }
+        setSubmitting(false);
+      } finally {
+        setSubmitting(false);
+      }
     } else {
-      saveCollaborators(this.props.api, values, this.props.resetOutputs)
-        .catch(error => {
-          if (!actions) throw error;
-          if (error.response.status == 400 && error.response.data.collaborators) {
-            window.scroll(0, 0);
-            actions.setStatus({
-              collaboratorLimit: error.response.data.collaborators,
-            });
-          }
-          setSubmitting(false);
-        })
-        .finally(() => setSubmitting(false));
+      try {
+        saveCollaborators(this.props.api, values, this.props.resetOutputs);
+      } catch (error) {
+        if (!actions) throw error;
+        if (error.response.status == 400 && error.response.data.collaborators) {
+          window.scroll(0, 0);
+          actions.setStatus({
+            collaboratorLimit: error.response.data.collaborators,
+          });
+        } else if (error.response.status == 400 && error.response.data.simulation) {
+          window.scroll(0, 0);
+          actions.setStatus({
+            collaboratorLimit: error.response.data.simulation,
+          });
+        }
+        setSubmitting(false);
+      } finally {
+        setSubmitting(false);
+      }
     }
   }
 
@@ -383,7 +415,7 @@ export default class DescriptionComponent extends React.Component<
     return (
       <Formik
         initialValues={this.state.initialValues}
-        onSubmit={(values: DescriptionValues, actions: FormikHelpers<DescriptionValues>) => {
+        onSubmit={async (values: DescriptionValues, actions: FormikHelpers<DescriptionValues>) => {
           if (!api.modelpk) {
             this.setState(prevState => ({
               initialValues: {
@@ -394,7 +426,7 @@ export default class DescriptionComponent extends React.Component<
               isEditMode: false,
             }));
           } else {
-            this.save(values, actions);
+            await this.save(values, actions);
           }
         }}
         validationSchema={Schema}
@@ -417,7 +449,7 @@ export default class DescriptionComponent extends React.Component<
                                 ref={this.titleInput}
                                 disabled={!isEditMode}
                                 type="text"
-                                placeholder="Untitled Simulation"
+                                placeholder="New Simulation"
                                 {...field}
                                 className="form-cotnrol h3"
                                 onBlur={formikProps.handleSubmit}
@@ -447,7 +479,7 @@ export default class DescriptionComponent extends React.Component<
                                 }
                               >
                                 <h3 style={titleStyle} onClick={this.toggleEditMode}>
-                                  {field.value || "Untitled Simulation"}
+                                  {field.value || "New Simulation"}
                                 </h3>
                               </Tip>
                             </Card>
@@ -529,7 +561,8 @@ export default class DescriptionComponent extends React.Component<
                         user={this.user()}
                         remoteSim={this.props.remoteSim}
                         formikProps={formikProps}
-                        plan={this.plan()}
+                        accessStatus={this.props.accessStatus}
+                        project={`${this.props.api.owner}/${this.props.api.title}`}
                       />
                     </Col>
                   ) : null}

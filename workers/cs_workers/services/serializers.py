@@ -23,3 +23,4 @@ class UserSerializer(ma.Schema):
     url = ma.fields.URL(require_tld=False)  # For kubernetes service urls.
     hashed_token = ma.fields.Str(required=False)
     approved = ma.fields.Bool(default=False)
+    api_token = ma.fields.Str(required=False)

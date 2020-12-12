@@ -44,9 +44,17 @@ def customer_subscription_deleted(event):
     )
 
 
+def customer_subscription_updated(event: stripe.Event):
+    print("processing customer.subscription.updated event...")
+    stripe_sub: stripe.Subscription = event.data.object
+    sub: Subscription = get_object_or_404(Subscription, stripe_id=stripe_sub.id)
+    sub.update_from_stripe_obj(stripe_sub)
+
+
 webhook_map = {
     "customer.created": customer_created,
     "customer.subscription.deleted": customer_subscription_deleted,
+    "customer.subscription.updated": customer_subscription_updated,
 }
 
 

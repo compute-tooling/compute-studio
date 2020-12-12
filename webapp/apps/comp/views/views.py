@@ -83,6 +83,8 @@ class NewSimView(InputsMixin, View):
             owner__user__username__iexact=kwargs["username"],
             title__iexact=kwargs["title"],
         )
+        if project.status != "running":
+            return redirect(project.app_url)
         context = self.project_context(request, project)
         context["show_readme"] = False
         context["tech"] = project.tech

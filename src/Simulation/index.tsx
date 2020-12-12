@@ -25,12 +25,13 @@ import {
 import DescriptionComponent from "./Description";
 import API from "./API";
 import ErrorBoundary from "../ErrorBoundary";
-import { convertToFormik, formikToJSON } from "../ParamTools";
+import { convertToFormik, formikToJSON, Persist } from "../ParamTools";
 import { Formik, Form, FormikProps, FormikHelpers } from "formik";
 import { hasServerErrors } from "../utils";
 import { UnsavedChangesModal } from "./modal";
 import { AuthPortal, AuthButtons } from "../auth";
 import { RolePerms } from "../roles";
+import { Utils as SimUtils } from "./sim";
 
 Sentry.init({
   dsn: "https://fde6bcb39fda4af38471b16e2c1711af@sentry.io/1530834",
@@ -103,7 +104,7 @@ class SimTabs extends React.Component<
       hasShownDirtyWarning: false,
       showDirtyWarning: false,
       notifyOnCompletion: false,
-      isPublic: false,
+      isPublic: true,
     };
 
     this.handleTabChange = this.handleTabChange.bind(this);
@@ -127,7 +128,24 @@ class SimTabs extends React.Component<
     this.api
       .getInitialValues()
       .then(data => {
-        const [initialValues, sects, inputs, schema, unknownParams] = convertToFormik(data);
+        const [serverValues, sects, inputs, schema, unknownParams] = convertToFormik(data);
+        let isEmpty = true;
+        for (const msectvals of Object.values(data.detail?.adjustment || {})) {
+          if (Object.keys(msectvals).length > 0) {
+            isEmpty = false;
+          }
+        }
+        let initialValues;
+        if (isEmpty) {
+          const storage = Persist.pop(
+            `${this.props.match.params.owner}/${this.props.match.params.title}/inputs`
+          );
+          // Use values from local storage if available. Default to empty dict from server.
+          initialValues = storage || serverValues;
+        } else {
+          initialValues = serverValues;
+        }
+
         this.setState({
           inputs: inputs,
           initialValues: initialValues,
@@ -234,20 +252,21 @@ class SimTabs extends React.Component<
     }
   }
 
-  setIsPublic(is_public: boolean) {
+  async setIsPublic(is_public: boolean) {
     const { remoteSim } = this.state;
     if (remoteSim && !this.submitWillCreateNewSim()) {
       let data = new FormData();
       data.append("is_public", is_public.toString());
-      this.api.putDescription(data).then(() => {
-        this.setState(prevState => ({
-          isPublic: is_public,
-          remoteSim: {
-            ...prevState.remoteSim,
-            ...{ is_public: is_public },
-          },
-        }));
-      });
+      await this.api.putDescription(data);
+      const accessStatus = await this.api.getAccessStatus();
+      this.setState(prevState => ({
+        isPublic: is_public,
+        remoteSim: {
+          ...prevState.remoteSim,
+          ...{ is_public: is_public },
+        },
+        accessStatus: accessStatus,
+      }));
     } else {
       this.setState({ isPublic: is_public });
     }
@@ -257,7 +276,7 @@ class SimTabs extends React.Component<
     // returns true if a sim exists, the user has write access,
     // and the sim has not been kicked off yet.
     let { sim } = this.state.inputs.detail;
-    return !(sim && RolePerms.hasWriteAccess(sim) && sim.status === "STARTED");
+    return SimUtils.submitWillCreateNewSim(sim);
   }
 
   handleSubmit(values, actions) {
@@ -279,6 +298,16 @@ class SimTabs extends React.Component<
     console.log("isPublic", this.state.isPublic);
     let url = `/${this.api.owner}/${this.api.title}/api/v1/`;
     let sim = this.state.inputs.detail?.sim;
+    const { accessStatus } = this.state;
+
+    // Determine if user can create private sim. If not, set is_public to true.
+    // User will be shown errors/limits to creating private sims elsewhere.
+    const remainingPrivateSims =
+      accessStatus.remaining_private_sims[accessStatus.project.toLowerCase()];
+    const canCreatePrivateSim = accessStatus.plan.name === "free" && remainingPrivateSims <= 0;
+    if (this.submitWillCreateNewSim() && canCreatePrivateSim) {
+      formdata.set("is_public", "true");
+    }
 
     // clicked new simulation button
     if (!this.submitWillCreateNewSim()) {
@@ -447,6 +476,11 @@ class SimTabs extends React.Component<
             accessStatus={this.state.accessStatus}
             remoteSim={this.state.remoteSim}
             resetOutputs={this.setOutputs}
+            resetAccessStatus={async () => {
+              const accessStatus = await this.api.getAccessStatus();
+              this.setState({ accessStatus });
+              return accessStatus;
+            }}
           />
           <div className="d-flex justify-content-center">
             <ReactLoading type="spokes" color="#2b2c2d" />
@@ -465,7 +499,9 @@ class SimTabs extends React.Component<
       unknownParams,
       extend,
       sects,
+      isPublic,
     } = this.state;
+    console.log("hyeo sisPublic", isPublic);
     let initialServerErrors = hasServerErrors(inputs?.detail?.errors_warnings)
       ? inputs.detail.errors_warnings
       : null;
@@ -511,6 +547,11 @@ class SimTabs extends React.Component<
                   accessStatus={accessStatus}
                   remoteSim={remoteSim}
                   resetOutputs={this.setOutputs}
+                  resetAccessStatus={async () => {
+                    const accessStatus = await this.api.getAccessStatus();
+                    this.setState({ accessStatus });
+                    return accessStatus;
+                  }}
                 />
               </ErrorBoundary>
               <Tab.Container
@@ -540,6 +581,7 @@ class SimTabs extends React.Component<
                           api={this.api}
                           readOnly={false}
                           accessStatus={accessStatus}
+                          sim={this.state.remoteSim}
                           resetAccessStatus={
                             this.api.modelpk
                               ? this.resetAccessStatus
@@ -561,6 +603,12 @@ class SimTabs extends React.Component<
                           sects={sects}
                           extend={extend}
                           formikProps={formikProps}
+                          persist={() =>
+                            Persist.persist(
+                              `${this.props.match.params.owner}/${this.props.match.params.title}/inputs`,
+                              formikProps.values
+                            )
+                          }
                         />
                       </Form>
                     </ErrorBoundary>

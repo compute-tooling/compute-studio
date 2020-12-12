@@ -15,12 +15,12 @@ from webapp.apps.users.tests.utils import gen_collabs, replace_owner
 
 
 @pytest.fixture(params=[True, False])
-def visibility_params(request, db, plus_profile, project, viz_project):
+def visibility_params(request, db, pro_profile, project, viz_project):
     is_public = request.param
     if is_public:
         owner = Profile.objects.get(user__username="modeler")
     else:
-        owner = plus_profile
+        owner = pro_profile
         replace_owner(project, owner)
         replace_owner(viz_project, owner)
 
@@ -28,7 +28,7 @@ def visibility_params(request, db, plus_profile, project, viz_project):
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("customer_plus_by_default")
+@pytest.mark.usefixtures("customer_pro_by_default")
 class TestPublishViews:
     def test_get(self, client):
         resp = client.get("/publish/")
@@ -75,6 +75,36 @@ class TestPublishViews:
             assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
         else:
             assert resp.status_code == 404, f"Expected 404, got {resp.status_code}"
+
+    def test_new_app_redirect(self, client, visibility_params):
+        """
+        Make sure user is redirected to home page if app is not connected yet.
+        """
+        owner, is_public = visibility_params
+        post_data = {
+            "title": "New-Model",
+            "oneliner": "oneliner",
+            "description": "**Super** new!",
+            # "repo_url": "https://github.com/compute-tooling/compute-studio",
+            # "repo_tag": "dev",
+            "cpu": 3,
+            "memory": 9,
+            "listed": True,
+            "is_public": is_public,
+        }
+
+        client.force_login(owner.user)
+
+        with mock_sync_projects():
+            resp = client.post("/apps/api/v1/", post_data)
+        assert resp.status_code == 200
+
+        app = Project.objects.get(owner=owner, title="New-Model")
+        assert app.status != "running"
+
+        resp = client.get(f"/{owner}/New-Model/new/")
+        assert resp.status_code == 302
+        assert resp.url == f"/{owner}/New-Model/"
 
     def test_get_detail_api(self, api_client, client, visibility_params):
         owner, is_public = visibility_params
@@ -218,11 +248,11 @@ class TestPublishViews:
         act = set(proj["title"] for proj in resp.data)
         assert exp == act
 
-    def test_get_private_projects(self, api_client, plus_profile):
+    def test_get_private_projects(self, api_client, pro_profile):
         project = Project.objects.get(title="Used-for-testing")
         project.is_public = False
-        project.owner = plus_profile
-        replace_owner(project, plus_profile)
+        project.owner = pro_profile
+        replace_owner(project, pro_profile)
         project.save()
 
         # Test private app not included in unauthenticated get
@@ -319,7 +349,7 @@ class TestPublishViews:
         act = set(proj["title"] for proj in resp.data["results"])
         assert exp == act
 
-    def test_recent_models_api(self, api_client, test_models, profile):
+    def test_recent_models_api(self, api_client, test_models, pro_profile):
         # test unauth'ed get returns 403
         resp = api_client.get("/api/v1/models/recent/")
         assert resp.status_code == 403, f"Expected 403, got {resp.status_code}"
@@ -337,8 +367,8 @@ class TestPublishViews:
         assert exp == act
 
         # test auth'ed user cannot view other project's private data.
-        Simulation.objects.fork(test_models[0], profile.user)
-        api_client.force_login(profile.user)
+        Simulation.objects.fork(test_models[0], pro_profile.user)
+        api_client.force_login(pro_profile.user)
         resp = api_client.get("/api/v1/models/recent/")
         assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
 
@@ -346,7 +376,7 @@ class TestPublishViews:
             p = Project.objects.get(
                 title=project["title"], owner__user__username=project["owner"]
             )
-            if p.has_write_access(profile.user):
+            if p.has_write_access(pro_profile.user):
                 assert "sim_count" in project and "user_count" in project
             else:
                 assert "sim_count" not in project and "user_count" not in project
@@ -423,7 +453,7 @@ class TestPublishViews:
             resp = api_client.post("/apps/api/v1/", post_data)
         assert resp.status_code == 400
         data = resp.json()
-        assert "make_private" == data["collaborators"]["test_name"]
+        assert "make_app_private" == data["app"]["test_name"]
 
         with pytest.raises(Project.DoesNotExist):
             Project.objects.get(title="New-Model")
@@ -439,7 +469,7 @@ class TestPublishViews:
             )
         assert resp.status_code == 400
         data = resp.json()
-        assert "make_private" == data["collaborators"]["test_name"]
+        assert "make_app_private" == data["app"]["test_name"]
 
 
 class TestDeployments:

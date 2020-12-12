@@ -60,7 +60,6 @@ class Job:
             kclient.V1EnvVar("EXP_TASK_TIME", str(config["exp_task_time"])),
         ]
         for sec in [
-            "CS_URL",
             "BUCKET",
             "REDIS_HOST",
             "REDIS_PORT",

@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import timedelta
 import json
 import secrets
 import uuid
@@ -8,7 +9,7 @@ import requests
 
 from django.db import models, transaction
 from django.db.models.functions import TruncMonth
-from django.db.models import F, Case, When, Sum, Max, Q
+from django.db.models import F, Case, When, Sum, Max, Q, Count
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.core.mail import EmailMessage, send_mail
@@ -35,9 +36,11 @@ from webapp.settings import (
     COMPUTE_PRICING,
     DEFAULT_CLUSTER_USER,
     HAS_USAGE_RESTRICTIONS,
+    FREE_PRIVATE_SIMS,
+    FREE_PRIVATE_SIMS_START_DATE,
 )
 
-from webapp.apps.users.exceptions import ResourceLimitException
+from webapp.apps.users.exceptions import PrivateAppException
 
 import cs_crypt
 import jwt
@@ -87,8 +90,36 @@ class User(AbstractUser):
 
 class Profile(models.Model):
     objects: models.Manager
+    sims: models.QuerySet
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=False)
+
+    def remaining_private_sims(self, project=None):
+        """Calculate number of remaining private simulations for user on free tier."""
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        if thirty_days_ago < FREE_PRIVATE_SIMS_START_DATE:
+            thirty_days_ago = FREE_PRIVATE_SIMS_START_DATE
+
+        def remaining(c):
+            return max(FREE_PRIVATE_SIMS - c, 0)
+
+        kwargs = dict(
+            sims__owner=self,
+            sims__is_public=False,
+            sims__creation_date__gte=thirty_days_ago,
+        )
+        if project is not None:
+            kwargs["sims__project"] = project
+
+        private_count = Count("sims", filter=Q(**kwargs))
+        res = Project.objects.annotate(private_count=private_count).filter(
+            private_count__gt=0
+        )
+        private_sims = {
+            str(project).lower(): remaining(project.private_count) for project in res
+        }
+
+        return private_sims
 
     def recent_models(self, limit):
         return [
@@ -96,6 +127,7 @@ class Profile(models.Model):
             for project in self.sims.values("project")
             .annotate(recent_date=Max("creation_date"))
             .order_by("-recent_date")[:limit]
+            if project["project"] is not None
         ]
 
     def costs_breakdown(self, projects=None):
@@ -120,7 +152,10 @@ class Profile(models.Model):
     def can_run(self, project):
         if not self.is_active:
             return False
-        if hasattr(self.user, "customer") and self.user.customer:
+        if (
+            hasattr(self.user, "customer")
+            and self.user.customer.card_info() is not None
+        ):
             return True
 
         return project.is_sponsored
@@ -160,11 +195,7 @@ class Cluster(models.Model):
 
     def headers(self):
         jwt_token = jwt.encode(
-            {
-                "email": self.service_account.user.email,
-                "username": self.service_account.user.username,
-                "url": "http://localhost:8000",
-            },
+            {"username": self.service_account.user.username,},
             cryptkeeper.decrypt(self.jwt_secret),
         )
         return {
@@ -466,65 +497,42 @@ class Project(models.Model):
     def is_owner(self, user):
         return user == self.owner.user
 
-    def _collaborator_test(self, test_name, adding_collaborator=True):
+    def make_private_test(self):
         """
-        Related: Simulation._collaborator_test
+        Test if user's plan allows them to make the app private.
         """
         if not HAS_USAGE_RESTRICTIONS:
             return
 
-        permission_objects = get_users_with_perms(self)
+        user = self.owner.user
+        customer = getattr(user, "customer", None)
+        if customer is None:
+            plan = "free"
+        else:
+            plan = customer.current_plan()["name"]
 
-        # number of additional collaborators besides owner and cluster
-        # service account.
-        num_collaborators = permission_objects.count() - 2
+        if plan == "free":
+            raise PrivateAppException()
 
-        if adding_collaborator:
-            num_collaborators += 1
+    def add_collaborator_test(self):
+        """
+        Test if user's plan allows them to add a collaborator.
+        """
+        if not HAS_USAGE_RESTRICTIONS or self.is_public:
+            return
 
         user = self.owner.user
         customer = getattr(user, "customer", None)
         if customer is None:
-            raise ResourceLimitException(
-                "collaborators",
-                test_name,
-                "plus",
-                ResourceLimitException.collaborators_msg,
-            )
+            plan = "free"
         else:
-            current_plan = customer.current_plan()
+            plan = customer.current_plan()["name"]
 
-            if current_plan["name"] == "free":
-                raise ResourceLimitException(
-                    "collaborators",
-                    test_name,
-                    "plus",
-                    ResourceLimitException.collaborators_msg,
-                )
-
-            if num_collaborators > 3 and current_plan["name"] == "plus":
-                raise ResourceLimitException(
-                    "collaborators",
-                    test_name,
-                    "pro",
-                    ResourceLimitException.collaborators_msg,
-                )
-
-    def add_collaborator_test(self):
-        """
-        Test if user's plan allows them to add more collaborators
-        to this app.
-        """
-        if self.is_public:
-            return
-        return self._collaborator_test("add_collaborator", adding_collaborator=True)
-
-    def make_private_test(self):
-        """
-        Test if user's plan allows them to make the app private with
-        the existing number of collaborators.
-        """
-        return self._collaborator_test("make_private", adding_collaborator=False)
+        if plan == "free":
+            permission_objects = get_users_with_perms(self)
+            num_collaborators = permission_objects.count() - 1
+            if num_collaborators > 0:
+                raise PrivateAppException()
 
     """
     The methods below are used for checking if a user has read, write, or admin

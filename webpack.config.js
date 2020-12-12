@@ -8,86 +8,86 @@ module.exports = [
     entry: "./src/Publish/index.tsx",
     output: {
       filename: "publish.js",
-      path: path.resolve(__dirname, "static/js")
+      path: path.resolve(__dirname, "static/js"),
     },
     module: {
       rules: [
         {
           test: /\.tsx?$/,
-          loader: "ts-loader"
+          loader: "ts-loader",
         },
         {
           test: /\.css$/i,
-          use: ["style-loader", "css-loader"]
+          use: ["style-loader", "css-loader"],
         },
         {
           enforce: "pre",
           test: /\.js$/,
-          loader: "source-map-loader"
-        }
-      ]
+          loader: "source-map-loader",
+        },
+      ],
     },
     // plugins: [new BundleAnalyzerPlugin({ analyzerPort: 8001 })],
     resolve: {
-      extensions: [".ts", ".tsx", ".js"]
-    }
+      extensions: [".ts", ".tsx", ".js"],
+    },
   },
   {
     devtool: "source-map",
     entry: "./src/Simulation/index.tsx",
     output: {
       filename: "sim.js",
-      path: path.resolve(__dirname, "static/js")
+      path: path.resolve(__dirname, "static/js"),
     },
     module: {
       rules: [
         {
           test: /\.tsx?$/,
-          loader: "ts-loader"
+          loader: "ts-loader",
         },
         {
           test: /\.css$/i,
-          use: ["style-loader", "css-loader"]
+          use: ["style-loader", "css-loader"],
         },
         {
           enforce: "pre",
           test: /\.js$/,
-          loader: "source-map-loader"
-        }
-      ]
+          loader: "source-map-loader",
+        },
+      ],
     },
     // plugins: [new BundleAnalyzerPlugin({ analyzerPort: 8002 })],
     resolve: {
-      extensions: [".ts", ".tsx", ".js"]
-    }
+      extensions: [".ts", ".tsx", ".js"],
+    },
   },
   {
     devtool: "source-map",
-    entry: "./src/Activity/index.tsx",
+    entry: "./src/Log/index.tsx",
     output: {
-      filename: "activity.js",
-      path: path.resolve(__dirname, "static/js")
+      filename: "log.js",
+      path: path.resolve(__dirname, "static/js"),
     },
     module: {
       rules: [
         {
           test: /\.tsx?$/,
-          loader: "ts-loader"
+          loader: "ts-loader",
         },
         {
           test: /\.css$/i,
-          use: ["style-loader", "css-loader"]
+          use: ["style-loader", "css-loader"],
         },
         {
           enforce: "pre",
           test: /\.js$/,
-          loader: "source-map-loader"
-        }
-      ]
+          loader: "source-map-loader",
+        },
+      ],
     },
     // plugins: [new BundleAnalyzerPlugin({ analyzerPort: 8002 })],
     resolve: {
-      extensions: [".ts", ".tsx", ".js"]
-    }
-  }
+      extensions: [".ts", ".tsx", ".js"],
+    },
+  },
 ];

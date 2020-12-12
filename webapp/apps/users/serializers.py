@@ -55,7 +55,12 @@ class ProjectSerializer(serializers.ModelSerializer):
         return rep
 
     def validate_is_public(self, value):
-        if getattr(self, "instance", None) is not None and value is False:
+        if (
+            getattr(self, "instance", None) is not None
+            and self.instance.is_public
+            and value is False
+        ):
+            print("test here?", value, self.instance.is_public)
             self.instance.make_private_test()
         return value
 

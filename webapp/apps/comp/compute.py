@@ -52,7 +52,7 @@ class Compute(object):
                     data = response.json()
                     job_id = data["task_id"]
                 else:
-                    print("FAILED: ", url)
+                    print("FAILED: ", url, response.status_code)
                     attempts += 1
             except Timeout:
                 print("Couldn't submit to: ", url)

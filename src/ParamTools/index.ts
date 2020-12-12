@@ -469,3 +469,21 @@ export function formikToJSON(
 
   return [meta_parameters, adjustment];
 }
+
+// Utility for caching paramtools values in case the user navigates away from the page.
+export const Persist = {
+  persist: (key: string, values: InitialValues) => {
+    console.log("persisting", values);
+    window.localStorage.setItem(key, JSON.stringify(values));
+  },
+  pop: (key): InitialValues | null => {
+    const data = window.localStorage.getItem(key);
+    Persist.clear(key);
+    if (data) {
+      return (JSON.parse(data) as unknown) as InitialValues;
+    }
+
+    return null;
+  },
+  clear: key => window.localStorage.removeItem(key),
+};

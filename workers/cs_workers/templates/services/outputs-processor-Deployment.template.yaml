@@ -23,15 +23,33 @@ spec:
                 secretKeyRef:
                   name: worker-secret
                   key: BUCKET
-            - name: CS_URL
+            - name: REDIS_HOST
               valueFrom:
                 secretKeyRef:
                   name: worker-secret
-                  key: CS_URL
-            - name: CS_API_TOKEN
+                  key: REDIS_HOST
+            - name: REDIS_PORT
               valueFrom:
                 secretKeyRef:
                   name: worker-secret
-                  key: CS_API_TOKEN
+                  key: REDIS_PORT
+            - name: REDIS_DB
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: REDIS_DB
+                  optional: true
+            - name: REDIS_USER
+              value: outputs
+            - name: REDIS_PW
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: REDIS_OUTPUTS_PW
+            - name: CS_CRYPT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: worker-secret
+                  key: CS_CRYPT_KEY
       nodeSelector:
         component: api

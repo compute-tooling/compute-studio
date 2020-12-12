@@ -63,8 +63,11 @@ class Manager:
         with open(Path("web-kubernetes") / "web-configmap.yaml") as f:
             self.web_configmap = yaml.safe_load(f.read())
 
+        with open(Path("web-kubernetes") / "deployment-cleanup.template.yaml") as f:
+            self.deployment_cleanup_job_template = yaml.safe_load(f.read())
+
         with open(Path("web-kubernetes") / "web-ingressroute.template.yaml") as f:
-            self.web_ingressroute = yaml.safe_load(f.read())
+            self.web_ingressroute = list(yaml.safe_load_all(f.read()))
 
         with open(Path("web-kubernetes") / "db-deployment.yaml") as f:
             self.db_deployment = yaml.safe_load(f.read())
@@ -98,6 +101,7 @@ class Manager:
         self.write_web(dev=dev)
         if update_db:
             self.write_db()
+        self.write_deployment_cleanup_job()
 
     def write_db(self):
         db_deployment = self.db_deployment
@@ -127,13 +131,34 @@ class Manager:
             web_configmap["data"]["LOCAL"] = "true"
         if self.host is not None:
             web_ir = copy.deepcopy(self.web_ingressroute)
-            web_ir["spec"]["routes"][0]["match"] = f"Host(`{self.host}`)"
+            # Set host on https and http ingressroutes.
+            web_ir[0]["spec"]["routes"][0]["match"] = f"Host(`{self.host}`)"
+            web_ir[1]["spec"]["routes"][0]["match"] = f"Host(`{self.host}`)"
 
         self.write_config(web_obj, filename="web-deployment.yaml")
         self.write_config(self.web_service, filename="web-service.yaml")
         self.write_config(web_configmap, filename="web-configmap.yaml")
         if self.host is not None:
-            self.write_config(web_ir, filename="web-ingressroute.yaml")
+            self.write_config_all(web_ir, filename="web-ingressroute.yaml")
+
+    def write_deployment_cleanup_job(self, dev=False):
+        job_obj = copy.deepcopy(self.deployment_cleanup_job_template)
+        spec = job_obj["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+        spec["containers"][0]["image"] = self.web_image
+
+        if dev:
+            warnings.warn("Deployment clean up job is being created in DEBUG mode!")
+            spec["containers"][0]["volumeMounts"] = [
+                {"name": "code-volume", "mountPath": "/code"}
+            ]
+            spec["volumes"] = [
+                {
+                    "name": "code-volume",
+                    "hostPath": {"path": "/code", "type": "Directory",},
+                }
+            ]
+
+        self.write_config(job_obj, filename="deployment-cleanup-job.yaml")
 
     def write_secret(self):
         secret_obj = copy.deepcopy(self.secret_template)
@@ -155,7 +180,16 @@ class Manager:
             sys.stdout.write("\n")
         else:
             with open(f"{self.kubernetes_target}/{filename}", "w") as f:
-                f.write(yaml.dump(config))
+                f.write(yaml.safe_dump(config))
+
+    def write_config_all(self, configs, filename=None):
+        if self.kubernetes_target == "-":
+            sys.stdout.write(yaml.safe_dump_all(configs))
+            sys.stdout.write("---")
+            sys.stdout.write("\n")
+        else:
+            with open(f"{self.kubernetes_target}/{filename}", "w") as f:
+                f.write(yaml.safe_dump_all(configs))
 
 
 def manager_from_args(args: argparse.Namespace):

@@ -1,0 +1,149 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Update Plan
+information{% endblock %} {% block content %}
+<div class="container-fluid card card-body card-inner">
+  {% if banner_msg %}
+  <div class="row w-100 justify-content-left mb-4">
+    <div class="col text-center">
+      <div class="alert alert-primary" role="alert">
+        <p class="lead" style="font-weight:600">{{banner_msg}}</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="row w-100 justify-content-between mb-4">
+    <div class="col col-auto">
+      <a class="btn btn-link" href="{% url 'user_settings' %}"><i class="fas fa-arrow-left"></i> Settings</a>
+    </div>
+
+    <div class="col col-auto">
+      <div class="row">
+        {% if plan_duration == "monthly" %}
+        <div class="col m-0 pr-0">
+          <a class="btn btn-primary border-right-0 rounded-right-0"
+            href="/billing/upgrade/monthly/aftertrial/">Monthly</a>
+        </div>
+        <div class="col m-0 pl-0">
+          <a class="btn btn-outline-primary border-left-0 rounded-left-0"
+            href="/billing/upgrade/yearly/aftertrial/">Yearly</a>
+        </div>
+        {% else %}
+        <div class="col m-0 pr-0">
+          <a class="btn btn-outline-primary border-right-0 rounded-right-0"
+            href="/billing/upgrade/monthly/aftertrial/">Monthly</a>
+        </div>
+        <div class="col m-0 pl-0">
+          <a class="btn btn-primary border-left-0 rounded-left-0" href="/billing/upgrade/yearly/aftertrial/">Yearly</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid w-100 justify-content-center mb-4" style="max-width: 600px;">
+    <div class="card card-outer">
+      <div class="card-body">
+        <h2 class="card-title" style="font-weight:500">Pro
+          {% if current_plan.name == 'pro' and current_plan.plan_duration == plan_duration %}<a href="#"
+            class="btn btn-link float-right my-0">
+            <i class="fas fa-check-circle"></i> </a>{% endif %}</h2>
+        <p class="lead">Unlimited private collaboration for pros.</p>
+        <ul class="my-4 pl-3">
+          <li>Unlimited private publishing.</li>
+          <li>Unlimited private modeling.</li>
+          <li>Unlimited private collaborators and teams.</li>
+          <li class="pt-4">Support the open source development of Compute Studio!</li>
+
+        </ul>
+        {% if cancel_at %}
+        <div class="text-center">
+          <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#proModal">
+            <strong>
+              Upgrade After Trial
+            </strong>
+            </a>
+        </div>
+        {% else %}
+        <div class="text-center">
+          <button type="button" class="btn btn-primary text-center" style="white-space: normal" data-toggle="modal"
+            data-target="#freeModal" disabled>
+            <strong>
+              You will continue to be on Pro after your trial ends on {{trial_end}}
+            </strong>
+            </a>
+        </div>
+        {% endif %}
+
+      </div>
+      <div class="card-footer border-top-0 background-color-inherit">
+        {% if plan_duration == "monthly" %}
+        <h2 class="text-center">$9</h2>
+        <h4 class="text-center">Per month</h4>
+        <small class="text-center text-muted">Save $9 by getting 1 month free with <a
+            href="/billing/upgrade/yearly/aftertrial/">annual pre-pay.</a></small>
+        {% else %}
+        <h2 class="text-center">$99</h2>
+        <h4 class="text-center">Per year</h4>
+        {% endif %}
+    </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="proModal" tabindex="-1" role="dialog" aria-labelledby="proModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="proModalLabel">Upgrade to Pro</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          {% if plan_duration == "monthly" %}
+          <p class="lead">You will be charged $9 per month once your trial ends on {{trial_end}}.</p>
+          {% else %}
+          <p class="lead">You will be charged $99 per year once your trial ends on {{trial_end}}.</p>
+          {% endif %}
+          {% if not has_payment_method %}
+          <p><a
+              href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/aftertrial/?selected_plan=pro">Add
+              payment
+              method</a></p>
+          {% else %}
+          <p>Payment method:</p>
+          <p><i class="far fa-credit-card mr-1"></i><strong>{{card_info.brand}}</strong> ending **** **** ****
+            {{card_info.last4}}</p>
+          <p>Expires: {{card_info.exp_month}}/{{card_info.exp_year}}</p>
+          <p><a
+              href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/aftertrial/?selected_plan=pro">Update
+              payment method</a></p>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          {% if not user.customer and not user.customer.card_info %}
+          <a href="{% url 'update_payment' %}?next=/billing/{{plan_duration}}/aftertrial/?selected_plan=pro"
+            class="btn btn-primary">Add payment method</a>
+          {% else %}
+          <a href="/billing/upgrade/{{plan_duration}}/aftertrial/confirm/" class="btn btn-primary">Confirm</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block bottom_scripts %}
+<script>
+
+  var searchParams = (new URL(document.location)).searchParams;
+
+  if (searchParams.get("selected_plan") === "pro") {
+    $(document).ready(function () {
+      $("#proModal").modal("show");
+    });
+  }
+
+</script>
+{% endblock %}

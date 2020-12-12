@@ -27,3 +27,8 @@ RUN if test -f "./cs-config/setup.py"; then  pip install -e ./cs-config; fi
 EXPOSE 8010
 ENV PORT=8010
 ENV HOST=0.0.0.0
+
+# TODO: Update base image prior to release with these commands.
+ARG BRANCH="dev"
+RUN pip install "git+https://github.com/compute-tooling/compute-studio.git@${BRANCH}#egg=cs-secrets&subdirectory=secrets"
+RUN pip install "git+https://github.com/compute-tooling/compute-studio.git@${BRANCH}#egg=cs-deploy&subdirectory=deploy"
