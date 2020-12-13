@@ -14,15 +14,16 @@ stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 
 def customer_created(event):
-    print("processing customer.created event...")
-    customer = Customer.objects.get(stripe_id=event.data["object"]["id"])
-    send_mail(
-        "Payment method updated",
-        "Your payment method was set successfully! Please write back if you have any questions.",
-        "notifications@compute.studio",
-        [customer.user.email],
-        fail_silently=False,
-    )
+    #     print("processing customer.created event...")
+    #     customer = Customer.objects.get(stripe_id=event.data["object"]["id"])
+    #     send_mail(
+    #         "Payment method updated",
+    #         "Your payment method was set successfully! Please write back if you have any questions.",
+    #         "notifications@compute.studio",
+    #         [customer.user.email],
+    #         fail_silently=False,
+    #     )
+    pass
 
 
 def customer_subscription_deleted(event):
