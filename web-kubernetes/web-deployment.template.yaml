@@ -123,5 +123,12 @@ spec:
                   name: web-secret
                   key: MAILGUN_API_KEY
                   optional: true
+
+            - name: SENTRY_API_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: SENTRY_API_DSN
+                  optional: true
       nodeSelector:
         component: web

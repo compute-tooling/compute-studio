@@ -21,6 +21,7 @@ secret_vars = [
     "WEB_CS_CRYPT_KEY",
     "MAILGUN_API_KEY",
     "DJANGO_SECRET_KEY",
+    "SENTRY_API_DSN",
 ]
 
 
