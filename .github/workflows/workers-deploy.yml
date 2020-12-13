@@ -7,7 +7,7 @@ on:
     paths:
       - "workers/**"
       - "deploy/**"
-      - ".github/workflows/dev-workers-deploy.yml"
+      - ".github/workflows/workers-deploy.yml"
 
 # Environment variables available to all jobs and steps in this workflow
 env:
