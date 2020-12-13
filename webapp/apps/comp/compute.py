@@ -6,7 +6,7 @@ import requests_mock
 
 requests_mock.Mocker.TEST_PREFIX = "test"
 
-TIMEOUT_IN_SECONDS = 2
+TIMEOUT_IN_SECONDS = 3.5
 MAX_ATTEMPTS_SUBMIT_JOB = 4
 
 
