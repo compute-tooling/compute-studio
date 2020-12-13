@@ -134,7 +134,7 @@ TEMPLATES = [
 
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
-WSGI_APPLICATION = "web`app.wsgi.application"
+WSGI_APPLICATION = "webapp.wsgi.application"
 
 
 # Database

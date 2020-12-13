@@ -5,6 +5,7 @@ metadata:
 spec:
   schedule: "*/15 * * * *"
   successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
       template:
@@ -14,7 +15,18 @@ spec:
             - name: web-deployment-cleanup
               image: # Uses web image and is filled in with script.
               command: ["python", "manage.py", "rm_stale_deployments", "--stale-after", "1800"]
+              resources:
+                requests:
+                  memory: 0.5G
+                  cpu: "0.5"
+                limits:
+                  memory: 0.5G
+                  cpu: "0.5"
+
               env:
+                - name: PORT
+                  value: "8000"
+
                 - name: DB_HOST
                   valueFrom:
                     secretKeyRef:
@@ -53,6 +65,12 @@ spec:
                       key: LOCAL
                       optional: true
 
+                - name: BUCKET
+                  valueFrom:
+                    configMapKeyRef:
+                      name: web-configmap
+                      key: BUCKET
+
                 - name: DEFAULT_CLUSTER_USER
                   valueFrom:
                     configMapKeyRef:
@@ -88,6 +106,20 @@ spec:
                     secretKeyRef:
                       name: web-secret
                       key: STRIPE_SECRET
+                      optional: true
+
+                - name: WEBHOOK_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: web-secret
+                      key: WEBHOOK_SECRET
+                      optional: true
+
+                - name: MAILGUN_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: web-secret
+                      key: MAILGUN_API_KEY
                       optional: true
 
           nodeSelector:

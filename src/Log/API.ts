@@ -31,7 +31,7 @@ export default class API {
     previous: string;
     results: Array<MiniSimulation>;
   }> {
-    return axios.get("/api/v1/feed").then(resp => resp.data);
+    return axios.get("/api/v1/log").then(resp => resp.data);
   }
 
   next(
@@ -64,7 +64,7 @@ export default class API {
     }
   }
 
-  updateFeedOrder(
+  updateLogOrder(
     ordering: ("project__owner" | "project__title" | "creation_date")[]
   ): Promise<{
     count: number;

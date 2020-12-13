@@ -319,8 +319,7 @@ class SimulationManager(models.Manager):
             traceback=sim.inputs.traceback,
             client=sim.inputs.client,
         )
-
-        sim: Simulation = self.create(
+        forked: Simulation = self.create(
             owner=user.profile,
             title=sim.title,
             readme=sim.readme,
@@ -341,11 +340,15 @@ class SimulationManager(models.Manager):
             is_public=sim.is_public,
             status=sim.status,
         )
-        if not sim.is_public:
-            sim.make_private_test()
-        sim.authors.set([user.profile])
-        sim.grant_admin_permissions(user)
-        return sim
+        if forked.title == f"{sim.project} #{sim.model_pk}":
+            forked.title = f"{forked.project} #{forked.model_pk}"
+            forked.save()
+
+        if not forked.is_public:
+            forked.make_private_test()
+        forked.authors.set([user.profile])
+        forked.grant_admin_permissions(user)
+        return forked
 
     def public_sims(self):
         return self.filter(creation_date__gt=ANON_BEFORE, is_public=True)
