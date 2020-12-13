@@ -35,7 +35,7 @@ interface URLProps {
 }
 
 interface LogProps extends URLProps {
-  pageName: "home" | "feed" | "profile";
+  pageName: "home" | "log" | "profile";
 }
 
 interface LogState {
@@ -578,12 +578,12 @@ class Log extends React.Component<LogProps, LogState> {
       this.api.initSimulations().then(simFeed => {
         this.setState({ simFeed: simFeed });
       });
-    } else if (this.props.pageName === "feed") {
+    } else if (this.props.pageName === "log") {
       this.api.initFeed().then(simFeed => {
         this.setState({ simFeed: simFeed });
       });
     }
-    if (this.props.pageName === "feed") {
+    if (this.props.pageName === "log") {
       this.setState({
         modelFeed: {
           count: 0,
@@ -635,8 +635,8 @@ class Log extends React.Component<LogProps, LogState> {
       this.api.updateSimsOrder(toggleOrder(this.state.ordering)).then(simFeed => {
         this.setState({ simFeed: simFeed, loading: false });
       });
-    } else if (this.props.pageName === "feed") {
-      this.api.updateFeedOrder(toggleOrder(this.state.ordering)).then(simFeed => {
+    } else if (this.props.pageName === "log") {
+      this.api.updateLogOrder(toggleOrder(this.state.ordering)).then(simFeed => {
         this.setState({ simFeed: simFeed, loading: false });
       });
     }
@@ -677,6 +677,21 @@ class Log extends React.Component<LogProps, LogState> {
         </Tab.Content>
       </>
     );
+
+    if (this.props.pageName === "log") {
+      console.log("returning feed", this.state.simFeed);
+      return (
+        <Row className="w-100 m-0">
+          <Col className="p-0">
+            <SimFeed
+              sims={sims}
+              accessStatus={this.state.accessStatus}
+              resetAccessStatus={this.setAccessStatus}
+            />
+          </Col>
+        </Row>
+      );
+    }
 
     return (
       <Tab.Container
@@ -758,10 +773,10 @@ ReactDOM.render(
       />
       <Route
         exact
-        path="/feed/"
+        path="/log/"
         render={routeProps => (
           <ErrorBoundary>
-            <Log pageName="feed" {...routeProps} />
+            <Log pageName="log" {...routeProps} />
           </ErrorBoundary>
         )}
       />

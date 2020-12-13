@@ -674,6 +674,7 @@ class PublicSimsAPIView(SimsAPIView):
         return self.queryset.filter(
             creation_date__gte=ANON_BEFORE,
             project__pk__in=projects_with_access(self.request.user),
+            status__in=["SUCCESS", "FAIL", "PENDING"],
         )
 
 

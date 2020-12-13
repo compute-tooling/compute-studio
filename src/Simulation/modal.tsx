@@ -156,7 +156,7 @@ const RunDialog: React.FC<{
     visabilitymsg = (
       <div>
         <p>
-          Public Log Entry:{" "}
+          Public <a href="/log/">log</a> entry:{" "}
           <strong className="font-weight-bold">
             {!!sim?.title ? sim.title : `New ${accessStatus.project}`}
           </strong>{" "}
@@ -172,7 +172,9 @@ const RunDialog: React.FC<{
   } else {
     visabilitymsg = (
       <div>
-        <p>Publioc Log Entry: None</p>
+        <p>
+          Public <a href="/log/">log</a> entry: None
+        </p>
         <p>Public url: None</p>
         {!createsNewSim && (
           <p>
