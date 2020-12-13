@@ -99,11 +99,7 @@ class SubmitInputs:
         # case where parent sim exists and has not yet been assigned
         if not self.sim.parent_sim and parent_sim:
             self.sim.parent_sim = parent_sim
-            default_title = (
-                f"{self.project.owner}/{self.project.title} #{parent_sim.model_pk}"
-            )
-            if parent_sim.title != default_title:
-                self.sim.title = parent_sim.title
+            self.sim.title = parent_sim.title
             self.sim.readme = parent_sim.readme
             if notify_on_completion is not None:
                 self.sim.notify_on_completion = notify_on_completion

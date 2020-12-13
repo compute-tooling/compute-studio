@@ -45,36 +45,62 @@ export default class API {
     return axios.get(nextUrl).then(resp => resp.data);
   }
 
-  updateSimsOrder(
-    ordering: ("project__owner" | "project__title" | "creation_date")[]
-  ): Promise<{
+  buildQuery(params: {
+    ordering?: ("project__owner" | "project__title" | "creation_date")[];
+    title?: string;
+    title__notlike?: string;
+  }): { [q: string]: any } {
+    const query: { [q: string]: any } = {};
+    if (params.ordering && params.ordering.length > 0) {
+      query.ordering = params.ordering.join(",");
+    }
+    if (params.title) {
+      query.title = params.title;
+    }
+    if (params.title__notlike) {
+      query.title__notlike = params.title__notlike;
+    }
+    return query;
+  }
+
+  querySims(params: {
+    ordering?: ("project__owner" | "project__title" | "creation_date")[];
+    title?: string;
+    title__notlike?: string;
+  }): Promise<{
     count: number;
     next: string;
     previous: string;
     results: Array<MiniSimulation>;
   }> {
+    const query = this.buildQuery(params);
     if (this.username) {
       return axios
-        .get(`/api/v1/sims/${this.username}`, { params: { ordering: ordering.join(",") } })
+        .get(`/api/v1/sims/${this.username}`, {
+          params: query,
+        })
         .then(resp => resp.data);
     } else {
       return axios
-        .get("/api/v1/sims", { params: { ordering: ordering.join(",") } })
+        .get("/api/v1/sims", {
+          params: query,
+        })
         .then(resp => resp.data);
     }
   }
 
-  updateLogOrder(
-    ordering: ("project__owner" | "project__title" | "creation_date")[]
-  ): Promise<{
+  updateLogOrder(params: {
+    ordering?: ("project__owner" | "project__title" | "creation_date")[];
+    title?: string;
+    title__notlike?: string;
+  }): Promise<{
     count: number;
     next: string;
     previous: string;
     results: Array<MiniSimulation>;
   }> {
-    return axios
-      .get(`/api/v1/feed`, { params: { ordering: ordering.join(",") } })
-      .then(resp => resp.data);
+    const query = this.buildQuery(params);
+    return axios.get(`/api/v1/feed`, { params: query }).then(resp => resp.data);
   }
 
   getModels(): Promise<{ count: number; next: string; previous: string; results: Array<Project> }> {

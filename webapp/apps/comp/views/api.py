@@ -645,7 +645,23 @@ class SimulationAccessAPIView(RequiresLoginPermissions, GetOutputsObjectMixin, A
             return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class SimsAPIView(generics.ListAPIView):
+class FilterTitle:
+    """
+    FilterTitle is a mixin for filtering simulations by title.
+    """
+
+    def filter_queryset(self, queryset):
+        query_params = self.request.query_params
+        if query_params.get("title", None):
+            queryset = queryset.filter(title__icontains=query_params.get("title"))
+        if query_params.get("title__notlike", None):
+            queryset = queryset.filter(
+                ~Q(title__icontains=query_params.get("title__notlike"))
+            )
+        return super().filter_queryset(queryset)
+
+
+class SimsAPIView(FilterTitle, generics.ListAPIView):
     permission_classes = (StrictRequiresActive,)
     authentication_classes = (
         SessionAuthentication,

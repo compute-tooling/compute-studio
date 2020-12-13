@@ -52,7 +52,11 @@ interface LogState {
     results: Array<Project>;
   };
   loading: boolean;
-  ordering?: Array<"project__owner" | "project__title" | "creation_date">;
+  params: {
+    ordering?: Array<"project__owner" | "project__title" | "creation_date">;
+    title?: string;
+    title__notlike?: string;
+  };
   recentModels?: Array<Project>;
   homeTab: "sims" | "models";
   accessStatus: AccessStatus;
@@ -509,10 +513,10 @@ const LoadSimulationsButton: React.FC<{ loading: boolean; loadNextSimulations: (
   </Row>
 );
 
-const OrderingDropDown: React.FC<{ ordering: Array<string>; updateOrder: (string) => void }> = ({
-  ordering,
-  updateOrder,
-}) => (
+const QueryDropDown: React.FC<{
+  params: LogState["params"];
+  query: (params: LogState["params"]) => void;
+}> = ({ params, query }) => (
   <Dropdown drop="left">
     <Dropdown.Toggle
       variant="link"
@@ -525,22 +529,34 @@ const OrderingDropDown: React.FC<{ ordering: Array<string>; updateOrder: (string
     <Dropdown.Menu>
       <Dropdown.Item
         key={0}
-        active={ordering.includes("creation_date")}
-        onClick={() => updateOrder("creation_date")}
+        active={params.title__notlike === "Untitled Simulation"}
+        onClick={() =>
+          query({
+            title__notlike:
+              params.title__notlike === "Untitled Simulation" ? null : "Untitled Simulation",
+          })
+        }
+      >
+        Exclude Untitled
+      </Dropdown.Item>
+      <Dropdown.Item
+        key={1}
+        active={params.ordering?.includes("creation_date")}
+        onClick={() => query({ ordering: ["creation_date"] })}
       >
         Creation Date
       </Dropdown.Item>
       <Dropdown.Item
-        key={1}
-        active={ordering.includes("project__owner")}
-        onClick={() => updateOrder("project__owner")}
+        key={2}
+        active={params.ordering?.includes("project__owner")}
+        onClick={() => query({ ordering: ["project__owner"] })}
       >
         Model Owner
       </Dropdown.Item>
       <Dropdown.Item
-        key={2}
-        active={ordering.includes("project__title")}
-        onClick={() => updateOrder("project__title")}
+        key={3}
+        active={params.ordering?.includes("project__title")}
+        onClick={() => query({ ordering: ["project__title"] })}
       >
         Model Title
       </Dropdown.Item>
@@ -556,13 +572,13 @@ class Log extends React.Component<LogProps, LogState> {
     this.api = new API(username);
     this.state = {
       loading: false,
-      ordering: [],
+      params: { ordering: [], title: null, title__notlike: null },
       homeTab: "sims",
       accessStatus: null,
     };
 
     this.loadNext = this.loadNext.bind(this);
-    this.updateOrder = this.updateOrder.bind(this);
+    this.query = this.query.bind(this);
     this.setAccessStatus = this.setAccessStatus.bind(this);
   }
 
@@ -619,27 +635,51 @@ class Log extends React.Component<LogProps, LogState> {
     });
   }
 
-  updateOrder(order: "project__owner" | "project__title" | "creation_date") {
+  async query(params: LogState["params"]) {
+    const order = !!params.ordering ? params.ordering[0] : null;
+
     const toggleOrder = prevOrdering => {
+      if (!order) return prevOrdering;
       if (prevOrdering.includes(order)) {
         return prevOrdering.filter(prevOrder => prevOrder !== order);
       } else {
         return [order, ...prevOrdering];
       }
     };
-    this.setState(prevState => ({
-      ordering: toggleOrder(prevState.ordering),
-      loading: true,
-    }));
-    if (this.props.pageName === "home" || this.props.pageName === "profile") {
-      this.api.updateSimsOrder(toggleOrder(this.state.ordering)).then(simFeed => {
-        this.setState({ simFeed: simFeed, loading: false });
-      });
-    } else if (this.props.pageName === "log") {
-      this.api.updateLogOrder(toggleOrder(this.state.ordering)).then(simFeed => {
-        this.setState({ simFeed: simFeed, loading: false });
-      });
-    }
+
+    const buildParams = (prevState: LogState): LogState["params"] => {
+      const res: LogState["params"] = {};
+      res.ordering = toggleOrder(prevState.params.ordering);
+      if ("title" in params) {
+        res.title = params.title;
+      } else {
+        res.title__notlike = prevState.params.title__notlike;
+      }
+      if ("title__notlike" in params) {
+        res.title__notlike = params.title__notlike;
+      } else {
+        res.title__notlike = prevState.params.title__notlike;
+      }
+      return res;
+    };
+
+    this.setState(
+      prevState => ({
+        loading: true,
+        params: buildParams(prevState),
+      }),
+      () => {
+        if (this.props.pageName === "home" || this.props.pageName === "profile") {
+          this.api.querySims(this.state.params).then(simFeed => {
+            this.setState({ simFeed: simFeed, loading: false });
+          });
+        } else if (this.props.pageName === "log") {
+          this.api.updateLogOrder(this.state.params).then(simFeed => {
+            this.setState({ simFeed: simFeed, loading: false });
+          });
+        }
+      }
+    );
   }
 
   render() {
@@ -679,17 +719,29 @@ class Log extends React.Component<LogProps, LogState> {
     );
 
     if (this.props.pageName === "log") {
-      console.log("returning feed", this.state.simFeed);
       return (
-        <Row className="w-100 m-0">
-          <Col className="p-0">
-            <SimFeed
-              sims={sims}
-              accessStatus={this.state.accessStatus}
-              resetAccessStatus={this.setAccessStatus}
-            />
-          </Col>
-        </Row>
+        <>
+          <Row className="w-100 mx-0 my-2" style={{ justifyContent: "right" }}>
+            <Col className="col-1 align-self-center">
+              <QueryDropDown params={this.state.params} query={this.query} />
+            </Col>
+          </Row>
+          <Row className="w-100 m-0">
+            <Col className="p-0">
+              <SimFeed
+                sims={sims}
+                accessStatus={this.state.accessStatus}
+                resetAccessStatus={this.setAccessStatus}
+              />
+              {this.state.simFeed?.next ? (
+                <LoadSimulationsButton
+                  loading={this.state.loading}
+                  loadNextSimulations={this.loadNext}
+                />
+              ) : null}
+            </Col>
+          </Row>
+        </>
       );
     }
 
@@ -738,7 +790,7 @@ class Log extends React.Component<LogProps, LogState> {
           </Col>
           {this.state.homeTab === "sims" ? (
             <Col className="col-1 align-self-center">
-              <OrderingDropDown ordering={this.state.ordering} updateOrder={this.updateOrder} />
+              <QueryDropDown params={this.state.params} query={this.query} />
             </Col>
           ) : null}
         </Row>

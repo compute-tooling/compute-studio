@@ -278,7 +278,7 @@ class SimulationManager(models.Manager):
                     inputs=inputs,
                     status="STARTED",
                     is_public=True,
-                    title=f"{project} #{model_pk}",
+                    title="Untitled Simulation",
                 )
                 sim.authors.set([user.profile])
                 sim.grant_admin_permissions(user)
@@ -340,12 +340,10 @@ class SimulationManager(models.Manager):
             is_public=sim.is_public,
             status=sim.status,
         )
-        if forked.title == f"{sim.project} #{sim.model_pk}":
-            forked.title = f"{forked.project} #{forked.model_pk}"
-            forked.save()
-
         if not forked.is_public:
+            forked.is_public = True
             forked.make_private_test()
+            forked.is_public = False
         forked.authors.set([user.profile])
         forked.grant_admin_permissions(user)
         return forked
