@@ -9,11 +9,9 @@ import sys
 import time
 from pathlib import Path
 
-from kubernetes import client as kclient, config as kconfig
-
-from cs_workers.services.secrets import ServicesSecrets, cli as secrets_cli
+from cs_deploy.config import workers_config
+from cs_workers.services.secrets import ServicesSecrets
 from cs_workers.services import scheduler
-
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
 BASE_PATH = CURR_PATH / ".."
@@ -77,8 +75,6 @@ class Manager:
         bucket=None,
         kubernetes_target="kubernetes/",
         use_kind=False,
-        cs_url=None,
-        cs_api_token=None,
         cluster_host=None,
         viz_host=None,
     ):
@@ -86,12 +82,8 @@ class Manager:
         self.project = project
         self.bucket = bucket
         self.use_kind = use_kind
-        self.cs_url = cs_url
-        self._cs_api_token = cs_api_token
         self.cluster_host = cluster_host
         self.viz_host = viz_host
-
-        kconfig.load_kube_config()
 
         if kubernetes_target is None:
             self.kubernetes_target = Manager.kubernetes_target
@@ -119,6 +111,11 @@ class Manager:
             "r",
         ) as f:
             self.outputs_processor_template = yaml.safe_load(f.read())
+        with open(
+            self.templates_dir / "services" / "outputs-processor-ServiceAccount.yaml",
+            "r",
+        ) as f:
+            self.outputs_processor_serviceaccount = yaml.safe_load(f.read())
 
         with open(
             self.templates_dir / "services" / "redis-master-Deployment.template.yaml",
@@ -128,11 +125,6 @@ class Manager:
 
         with open(self.templates_dir / "secret.template.yaml", "r") as f:
             self.secret_template = yaml.safe_load(f.read())
-
-        with open(
-            self.templates_dir / "services" / "deployment-cleanup.template.yaml", "r"
-        ) as f:
-            self.deployment_cleanup_template = yaml.safe_load(f.read())
 
         self._redis_secrets = None
         self._secrets = None
@@ -198,13 +190,11 @@ class Manager:
         self.write_scheduler_deployment()
         if update_dns:
             self.write_scheduler_ingressroute()
+            self.write_cloudflare_api_token()
         self.write_outputs_processor_deployment()
         self.write_secret()
         if update_redis:
             self.write_redis_deployment()
-        self.write_deployment_cleanup_job()
-
-        self.write_cloudflare_api_token()
 
     def write_scheduler_deployment(self):
         """
@@ -214,9 +204,9 @@ class Manager:
         deployment["spec"]["template"]["spec"]["containers"][0][
             "image"
         ] = f"gcr.io/{self.project}/scheduler:{self.tag}"
-        deployment["spec"]["template"]["spec"]["containers"][0]["env"].append(
-            {"name": "VIZ_HOST", "value": self.viz_host}
-        )
+        deployment["spec"]["template"]["spec"]["containers"][0]["env"] += [
+            {"name": "VIZ_HOST", "value": self.viz_host},
+        ]
         self.write_config("scheduler-Deployment.yaml", deployment)
 
         return deployment
@@ -241,6 +231,10 @@ class Manager:
             "image"
         ] = f"gcr.io/{self.project}/outputs_processor:{self.tag}"
 
+        self.write_config(
+            "outputs-processor-ServiceAccount.yaml",
+            self.outputs_processor_serviceaccount,
+        )
         self.write_config("outputs-processor-Deployment.yaml", deployment)
 
         return deployment
@@ -260,19 +254,23 @@ class Manager:
                         },
                     }
                 )
+
+        if workers_config.get("redis"):
+            redis_config = workers_config["redis"]
+            assert (
+                redis_config.get("provider") == "volume"
+            ), f"Got: {redis_config.get('provider', None)}"
+            args = redis_config["args"][0]
+            deployment["spec"]["template"]["spec"]["volumes"] = args["volumes"]
         self.write_config("redis-master-Deployment.yaml", deployment)
 
     def write_secret(self):
         assert self.bucket
-        assert self.cs_url
-        assert self.cs_api_token
         assert self.project
         secrets = copy.deepcopy(self.secret_template)
-        secrets["stringData"]["CS_URL"] = self.cs_url
-        secrets["stringData"]["CS_API_TOKEN"] = self.cs_api_token
         secrets["stringData"]["BUCKET"] = self.bucket
         secrets["stringData"]["PROJECT"] = self.project
-        secrets["stringData"]["CS_CRYPT_KEY"] = self.secrets.get_secret("CS_CRYPT_KEY")
+        secrets["stringData"]["CS_CRYPT_KEY"] = self.secrets.get("CS_CRYPT_KEY")
         redis_secrets = self.redis_secrets()
         for name, sec in redis_secrets.items():
             if sec is not None:
@@ -281,7 +279,7 @@ class Manager:
         self.write_config("secret.yaml", secrets)
 
     def write_cloudflare_api_token(self):
-        api_token = self.secrets.get_secret("CLOUDFLARE_API_TOKEN")
+        api_token = self.secrets.get("CLOUDFLARE_API_TOKEN")
 
         secret = {
             "apiVersion": "v1",
@@ -292,14 +290,6 @@ class Manager:
         }
 
         self.write_config("cloudflare_token_secret.yaml", secret)
-
-    def write_deployment_cleanup_job(self):
-        template = copy.deepcopy(self.deployment_cleanup_template)
-        template["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0][
-            "image"
-        ] = f"gcr.io/{self.project}/scheduler:{self.tag}"
-
-        self.write_config("deployment-cleanup.yaml", template)
 
     def write_config(self, filename, config):
         if self.kubernetes_target == "-":
@@ -321,25 +311,22 @@ class Manager:
         from google.api_core import exceptions
 
         redis_secrets = dict(
-            REDIS_ADMIN_PW="", REDIS_EXECUTOR_PW="", REDIS_SCHEDULER_PW=""
+            REDIS_ADMIN_PW="",
+            REDIS_EXECUTOR_PW="",
+            REDIS_SCHEDULER_PW="",
+            REDIS_OUTPUTS_PW="",
         )
         for sec in redis_secrets:
             try:
-                value = self.secrets.get_secret(sec)
+                value = self.secrets.get(sec)
             except exceptions.NotFound:
                 try:
                     value = redis_acl_genpass()
-                    self.secrets.set_secret(sec, value)
+                    self.secrets.set(sec, value)
                 except Exception:
                     value = ""
             redis_secrets[sec] = value
         return redis_secrets
-
-    @property
-    def cs_api_token(self):
-        if self._cs_api_token is None:
-            self._cs_api_token = self.secrets._get_secret("CS_API_TOKEN")
-        return self._cs_api_token
 
     @property
     def secrets(self):
@@ -355,8 +342,6 @@ def manager_from_args(args: argparse.Namespace):
         bucket=args.bucket,
         kubernetes_target=getattr(args, "out", None),
         use_kind=getattr(args, "use_kind", None),
-        cs_url=getattr(args, "cs_url", None),
-        cs_api_token=getattr(args, "cs_api_token", None),
         cluster_host=getattr(args, "cluster_host", None),
         viz_host=getattr(args, "viz_host", None),
     )
@@ -388,8 +373,6 @@ def serve(args: argparse.Namespace):
 def cli(subparsers: argparse._SubParsersAction, config=None, **kwargs):
     parser = subparsers.add_parser("services", aliases=["svc"])
     svc_subparsers = parser.add_subparsers()
-
-    secrets_cli(svc_subparsers)
 
     build_parser = svc_subparsers.add_parser("build")
     build_parser.set_defaults(func=build)

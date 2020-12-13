@@ -8,7 +8,7 @@ import {
   AccessStatus,
   InputsDetail,
   MiniSimulation,
-  Role
+  Role,
 } from "../types";
 
 export default class API {
@@ -63,7 +63,7 @@ export default class API {
         .then(detailResp => {
           return axios
             .post(`/${this.owner}/${this.title}/api/v1/inputs/`, {
-              meta_parameters: detailResp.data.meta_parameters
+              meta_parameters: detailResp.data.meta_parameters,
             })
             .then(inputsResp => {
               data = inputsResp.data;
@@ -87,7 +87,7 @@ export default class API {
   }
 
   postAdjustment(url: string, data: FormData): Promise<InputsDetail> {
-    return axios.post(url, data).then(function(response) {
+    return axios.post(url, data).then(function (response) {
       return response.data;
     });
   }

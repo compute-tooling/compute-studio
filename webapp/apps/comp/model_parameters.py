@@ -62,7 +62,7 @@ class ModelParameters:
         try:
             config = ModelConfig.objects.get(
                 project=self.project,
-                model_version=self.project.version,
+                model_version=str(self.project.latest_tag),
                 meta_parameters_values=meta_parameters_values,
             )
         except ModelConfig.DoesNotExist:
@@ -84,7 +84,7 @@ class ModelParameters:
 
             config = ModelConfig.objects.create(
                 project=self.project,
-                model_version=self.project.version,
+                model_version=str(self.project.latest_tag),
                 meta_parameters_values=save_vals,
                 meta_parameters=result["meta_parameters"],
                 model_parameters=result["model_parameters"],

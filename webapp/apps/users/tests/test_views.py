@@ -15,34 +15,50 @@ class TestUsersViews:
         data = {
             "csrfmiddlewaretoken": ["abc123"],
             "username": ["testlogin"],
-            "email": ["tester@testing.ai"],
+            "email": ["tester@test.com"],
             "password1": [password],
             "password2": [password],
         }
 
         resp = client.post("/users/signup/", data=data)
         assert resp.status_code == 302
+        assert resp.url == "/"
 
         user = User.objects.get(username="testlogin")
         assert user
         assert user.profile
         assert user.profile.is_active
 
-        # test email cannot be re-used.
+        assert auth.get_user(client).is_authenticated
+
+        # test email can be re-used. previously this was not allowed.
         data = {
             "csrfmiddlewaretoken": ["abc123"],
-            "username": ["testlogin"],
-            "email": ["tester@testing.ai"],
+            "username": ["testlogin2"],
+            "email": ["tester@test.com"],
             "password1": [password],
             "password2": [password],
         }
 
         resp = client.post("/users/signup/", data=data)
-        assert resp.status_code == 200
-        assert resp.context["form"].errors == {
-            "email": ["A user is already registered with this e-mail address."],
-            "username": ["A user with that username already exists."],
+        assert resp.status_code == 302
+        # assert resp.context["form"].errors == {
+        #     "email": ["A user is already registered with this e-mail address."],
+        #     "username": ["A user with that username already exists."],
+        # }
+
+    def test_signup_next(self, client, password):
+        data = {
+            "csrfmiddlewaretoken": ["abc123"],
+            "username": ["testlogin"],
+            "email": ["tester@test.com"],
+            "password1": [password],
+            "password2": [password],
         }
+
+        resp = client.post("/users/signup/?next=/modeler/test/new/", data=data)
+        assert resp.status_code == 302
+        assert resp.url == "/modeler/test/new/"
 
     def test_didnt_break_pw_confirm_validation(self, client, password):
         # Make sure validation wasn't broken from modifying the django
@@ -50,7 +66,7 @@ class TestUsersViews:
         data = {
             "csrfmiddlewaretoken": ["abc123"],
             "username": ["testlogin"],
-            "email": ["tester@testing.ai"],
+            "email": ["tester@test.com"],
             "password1": [password],
             "password2": [password + "heyo"],
         }
@@ -70,6 +86,7 @@ class TestUsersViews:
         }
         resp = api_client.post("/rest-auth/registration/", data)
         assert resp.status_code == 201
+        assert auth.get_user(api_client).is_authenticated
 
         user = User.objects.get(username="random123")
         assert user.profile
@@ -177,6 +194,7 @@ class TestUsersViews:
             "api_url": "/users/status/",
             "username": None,
             "plan": {"name": "free", "plan_duration": None},
+            "remaining_private_sims": {},
         }
 
         resp = api_client.get(
@@ -194,6 +212,8 @@ class TestUsersViews:
             "api_url": f"/users/status/{project.owner.user.username}/{project.title}/",
             "username": None,
             "plan": {"name": "free", "plan_duration": None},
+            "remaining_private_sims": {},
+            "project": str(project),
         }
 
         resp = api_client.get(
@@ -211,6 +231,8 @@ class TestUsersViews:
             "api_url": f"/users/status/{sponsored_project.owner.user.username}/{sponsored_project.title}/",
             "username": None,
             "plan": {"name": "free", "plan_duration": None},
+            "remaining_private_sims": {},
+            "project": str(sponsored_project),
         }
 
         assert api_client.login(username=profile.user.username, password=password)
@@ -220,4 +242,5 @@ class TestUsersViews:
             "api_url": "/users/status/",
             "username": profile.user.username,
             "plan": {"name": "free", "plan_duration": None},
+            "remaining_private_sims": {},
         }

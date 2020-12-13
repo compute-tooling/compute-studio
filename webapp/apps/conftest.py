@@ -3,6 +3,7 @@ import os
 import json
 import datetime
 import functools
+import re
 
 import requests
 import requests_mock
@@ -18,7 +19,9 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 from guardian.shortcuts import assign_perm
 
-from webapp.settings import USE_STRIPE, DEFAULT_CLUSTER_USER
+import webapp.settings
+import webapp.apps.users.models
+from webapp.settings import USE_STRIPE
 from webapp.apps.billing.models import (
     Customer,
     Product,
@@ -27,7 +30,7 @@ from webapp.apps.billing.models import (
     SubscriptionItem,
     create_pro_billing_objects,
 )
-from webapp.apps.users.models import Profile, Project, Cluster, cryptkeeper
+from webapp.apps.users.models import Profile, Project, Cluster, Tag, cryptkeeper
 from webapp.apps.comp.model_parameters import ModelParameters
 from webapp.apps.comp.models import Inputs, Simulation
 
@@ -61,15 +64,16 @@ def django_db_setup(django_db_setup, django_db_blocker):
             password="heyhey2222",
         )
 
+        webapp.settings.DEFAULT_CLUSTER_USER = "comp-api-user"
+        webapp.apps.users.models.DEFAULT_CLUSTER_USER = "comp-api-user"
         for u in [modeler, sponsor, hdoupe, comp_api_user]:
             Token.objects.create(user=u)
             Profile.objects.create(user=u, is_active=True)
 
         comp_api_user.refresh_from_db()
 
-        service_account = User.objects.get(username=DEFAULT_CLUSTER_USER)
         cluster = Cluster.objects.create(
-            service_account=service_account.profile,
+            service_account=comp_api_user.profile,
             url="http://scheduler",
             jwt_secret=cryptkeeper.encrypt(binascii.hexlify(os.urandom(32)).decode()),
         )
@@ -95,7 +99,12 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
         for project_config in projects:
             project = Project.objects.create(**dict(common, **project_config))
-            assign_perm("write_project", comp_api_user, project)
+            project.assign_role("admin", project.owner.user)
+            assign_perm("write_project", project.cluster.service_account.user, project)
+            project.latest_tag = Tag.objects.create(
+                project=project, cpu=project.cpu, memory=project.memory, image_tag="v0"
+            )
+            project.save()
 
         if USE_STRIPE:
             create_pro_billing_objects()
@@ -204,19 +213,6 @@ def free_profile(db, profile, profile_w_mockcustomer):
 
 
 @pytest.fixture
-def plus_profile(db, profile, profile_w_mockcustomer):
-    if getattr(profile.user, "customer", None):
-        product = Product.objects.get(name="Compute Studio Subscription")
-        plan = product.plans.get(nickname="Monthly Plus Plan")
-        profile.user.customer.update_plan(plan)
-        return profile
-    else:
-        mock_cp = lambda: {"name": "plus", "plan_duration": "monthly"}
-        profile_w_mockcustomer.user.customer.current_plan = mock_cp
-        return profile_w_mockcustomer
-
-
-@pytest.fixture
 def pro_profile(db, profile, profile_w_mockcustomer):
     if getattr(profile.user, "customer", None):
         product = Product.objects.get(name="Compute Studio Subscription")
@@ -227,21 +223,6 @@ def pro_profile(db, profile, profile_w_mockcustomer):
         mock_cp = lambda: {"name": "pro", "plan_duration": "monthly"}
         profile_w_mockcustomer.user.customer.current_plan = mock_cp
         return profile_w_mockcustomer
-
-
-@pytest.fixture
-def customer_plus_by_default(monkeypatch):
-    # This test is only valid if the C/S instance is using the Stripe/Customer
-    # framework
-    try:
-        from webapp.apps.billing.models import Customer
-    except ImportError:
-        from webapp.settings import HAS_USAGE_RESTRICTIONS
-
-        assert HAS_USAGE_RESTRICTIONS
-        return
-
-    monkeypatch.setattr(Customer, "plan_in_nostripe_mode", "plus")
 
 
 @pytest.fixture
@@ -303,6 +284,11 @@ def subscription(db, customer, licensed_plan, metered_plan):
 @pytest.fixture
 def project(db):
     return Project.objects.get(title="Used-for-testing")
+
+
+@pytest.fixture
+def viz_project(db):
+    return Project.objects.get(title="Test-Viz")
 
 
 @pytest.fixture
@@ -397,10 +383,45 @@ def get_inputs(comp_inputs_json):
 
 
 @pytest.fixture
-def worker_url():
-    return f"http://{os.environ['WORKERS']}/"
+def comp_api_user(db):
+    return Profile.objects.get(user__username="comp-api-user")
+
+
+####### Mock requests to kubernetes cluster ##########
 
 
 @pytest.fixture
-def comp_api_user(db):
-    return Profile.objects.get(user__username="comp-api-user")
+def mock_post_to_cluster():
+    matcher = re.compile(Cluster.objects.default().url)
+    with requests_mock.Mocker(real_http=True) as mock:
+        mock.register_uri("POST", matcher, json={})
+        mock.register_uri("GET", matcher, json={})
+        yield
+
+
+@pytest.fixture
+def mock_deployments_requests_to_cluster():
+    matcher = re.compile(f"{Cluster.objects.default().url}/deployments*")
+    print(matcher)
+    print(f"{Cluster.objects.default().url}/deployments*")
+    with requests_mock.Mocker(real_http=True) as mock:
+        mock.register_uri(
+            "POST",
+            matcher,
+            json={
+                "deployment": {"ready": True},
+                "ingressroute": {"ready": True},
+                "svc": {"ready": True},
+            },
+        )
+        mock.register_uri(
+            "GET",
+            matcher,
+            json={
+                "deployment": {"ready": True},
+                "ingressroute": {"ready": True},
+                "svc": {"ready": True},
+            },
+        )
+        mock.register_uri("DELETE", matcher, json={})
+        yield

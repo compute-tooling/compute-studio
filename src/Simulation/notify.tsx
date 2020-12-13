@@ -1,10 +1,11 @@
 import * as React from "react";
 
 export const CheckboxWidget: React.FC<{
-  message: string;
+  message: string | JSX.Element;
   value: boolean;
   setValue: (value: boolean) => void;
-}> = ({ message, value, setValue }) => {
+  disabled?: boolean;
+}> = ({ message, value, setValue, disabled }) => {
   return (
     // alignment on run model dialog window.
     <p className="mt-2 mb-1">
@@ -15,6 +16,7 @@ export const CheckboxWidget: React.FC<{
         checked={value}
         onChange={() => setValue(!value)}
         style={{ display: "inline" }}
+        disabled={disabled}
       />
       {message}
     </p>

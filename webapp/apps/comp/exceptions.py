@@ -1,12 +1,6 @@
 import json
 
-
-class CSException(Exception):
-    pass
-
-
-class CSError(CSException):
-    pass
+from webapp.apps.exceptions import CSException, CSError
 
 
 class AppError(CSError):
@@ -38,24 +32,43 @@ class PermissionExpiredException(CSError):
     pass
 
 
-class ResourceLimitException(CSException):
-    collaborators_msg = (
-        "You have reached the limit for the number of collaborators "
-        "on private simulations. You may make this simulation public "
-        "or upgrade to Compute Studio Plus or Pro to add more "
-        "collaborators."
+class PrivateSimException(CSException):
+    msg = (
+        "You have reached the limit for the number of private simulations "
+        "for this month. You can upgrade to Compute Studio Pro to have an "
+        "unlimited number of private simulations."
     )
+    resource = "simulation"
 
-    def __init__(self, resource, test_name, upgrade_to, *args, **kwargs):
-        self.resource = resource
-        self.upgrade_to = upgrade_to
-        self.test_name = test_name
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args):
+        msg = args[0] if args else self.msg
+        super().__init__(msg)
 
     def todict(self):
         return dict(
             resource=self.resource,
-            test_name=self.test_name,
-            upgrade_to=self.upgrade_to,
+            test_name="make_simulation_private",
+            upgrade_to="pro",
+            msg=str(self),
+        )
+
+
+class PrivateAppException(CSException):
+    msg = (
+        "This user does not have access to this app. You must grant access"
+        "for them to use the app before you can add them as a collaborator."
+    )
+    resource = "collaborator"
+
+    def __init__(self, collaborator, *args, **kwargs):
+        self.collaborator = collaborator
+        msg = args[0] if args else self.msg
+        super().__init__(msg)
+
+    def todict(self):
+        return dict(
+            resource=self.resource,
+            test_name="add_collaborator_on_private_app",
+            collaborator=getattr(self.collaborator, "username", str(self.collaborator)),
             msg=str(self),
         )

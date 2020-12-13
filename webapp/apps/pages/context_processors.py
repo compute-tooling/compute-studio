@@ -1,14 +1,19 @@
-from webapp.apps.users.models import Project
+from webapp.apps.users.models import Project, projects_with_access
 from webapp.settings import DEBUG
 
 
 def project_list(request):
-    projects = Project.objects.filter(listed=True).order_by(
+    if request is not None:
+        user = request.user
+    else:
+        user = None
+    projects = projects_with_access(user, Project.objects.filter(listed=True)).order_by(
         "owner__user__username", "title"
     )
     project_list = []
     for project in projects:
-        project_list.append(
-            (project.owner.user.username, project.title, project.app_url)
-        )
+        if project.status == "running" or project.has_admin_access(request.user):
+            project_list.append(
+                (project.owner.user.username, project.title, project.app_url)
+            )
     return {"project_list": project_list, "debug": DEBUG}

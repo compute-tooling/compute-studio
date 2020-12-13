@@ -9,10 +9,18 @@ import {
   MajorSection,
   LoadingElement,
   SectionHeaderList,
-  ErrorCard
+  ErrorCard,
 } from "./components";
 import { ValidatingModal, RunModal, AuthModal, PreviewModal } from "./modal";
-import { AccessStatus, Sects, InitialValues, Inputs, InputsDetail, Simulation } from "../types";
+import {
+  AccessStatus,
+  Sects,
+  InitialValues,
+  Inputs,
+  InputsDetail,
+  Simulation,
+  RemoteOutputs,
+} from "../types";
 import API from "./API";
 
 // need to require schema in model_parameters!
@@ -22,13 +30,14 @@ export const tbLabelSchema = yup.object().shape({
   idedtype: yup.string(),
   EIC: yup.string(),
   data_source: yup.string(),
-  use_full_sample: yup.bool()
+  use_full_sample: yup.bool(),
 });
 
 interface InputsFormProps {
   api: API;
   readOnly: boolean;
   accessStatus: AccessStatus;
+  sim: Simulation<RemoteOutputs>;
   resetAccessStatus: () => void;
   setNotifyOnCompletion: (notify: boolean) => void;
   notifyOnCompletion: boolean;
@@ -42,6 +51,8 @@ interface InputsFormProps {
   resetting: boolean;
 
   formikProps: FormikProps<InitialValues>;
+
+  persist?: () => void;
 }
 
 interface InputsProps {
@@ -73,15 +84,17 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
     schema,
     sects,
     extend,
+    persist,
     unknownParams,
     readOnly,
-    simStatus
+    simStatus,
+    sim,
   } = props;
   let { meta_parameters, model_parameters, label_to_extend } = inputs;
 
   let hasUnknownParams = unknownParams.length > 0;
   let unknownParamsErrors: { [sect: string]: { errors: any } } = {
-    "Unknown Parameters": { errors: {} }
+    "Unknown Parameters": { errors: {} },
   };
   if (hasUnknownParams) {
     for (const param of unknownParams) {
@@ -111,7 +124,7 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
                 values={values}
                 schema={yup.object().shape({
                   adjustment: schema.adjustment,
-                  meta_parameters: schema.meta_parameters
+                  meta_parameters: schema.meta_parameters,
                 })}
                 tbLabelSchema={tbLabelSchema}
                 model_parameters={model_parameters}
@@ -134,6 +147,8 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
                 setNotify={setNotifyOnCompletion}
                 setIsPublic={setIsPublic}
                 isPublic={isPublic}
+                persist={persist}
+                sim={sim}
               />
             </li>
           </ul>

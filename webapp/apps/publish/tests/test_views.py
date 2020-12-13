@@ -7,19 +7,37 @@ from django.contrib.auth import get_user_model, get_user
 from guardian.shortcuts import assign_perm, remove_perm
 
 from webapp.apps.comp.models import Simulation
-from webapp.apps.users.models import Project, Profile, EmbedApproval, Tag
-from webapp.apps.users.serializers import ProjectSerializer
+from webapp.apps.users.models import Project, Profile, Deployment, EmbedApproval, Tag
+from webapp.apps.users.serializers import ProjectSerializer, DeploymentSerializer
 
 from .utils import mock_sync_projects, mock_get_version
+from webapp.apps.users.tests.utils import gen_collabs, replace_owner
+
+
+@pytest.fixture(params=[True, False])
+def visibility_params(request, db, pro_profile, project, viz_project):
+    is_public = request.param
+    if is_public:
+        owner = Profile.objects.get(user__username="modeler")
+    else:
+        owner = pro_profile
+        replace_owner(project, owner)
+        replace_owner(viz_project, owner)
+
+    return owner, is_public
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures("customer_pro_by_default")
 class TestPublishViews:
     def test_get(self, client):
         resp = client.get("/publish/")
         assert resp.status_code == 200
+        resp = client.get("/new/")
+        assert resp.status_code == 200
 
-    def test_post(self, client):
+    def test_post(self, client, visibility_params):
+        owner, is_public = visibility_params
         post_data = {
             "title": "New-Model",
             "oneliner": "oneliner",
@@ -29,26 +47,67 @@ class TestPublishViews:
             "cpu": 3,
             "memory": 9,
             "listed": True,
+            "is_public": is_public,
         }
         with mock_sync_projects():
             resp = client.post("/apps/api/v1/", post_data)
         assert resp.status_code == 401
 
-        client.login(username="modeler", password="modeler2222")
+        client.force_login(owner.user)
+
         with mock_sync_projects():
             resp = client.post("/apps/api/v1/", post_data)
         assert resp.status_code == 200
 
-        project = Project.objects.get(
-            title="New-Model", owner__user__username="modeler"
-        )
+        project = Project.objects.get(title="New-Model", owner=owner)
         assert project
         assert project.server_cost
 
         api_user = Profile.objects.get(user__username="comp-api-user")
         assert project.has_write_access(api_user.user)
+        assert project.role(api_user.user) == "write"
+        assert project.role(project.cluster.service_account.user) == "write"
+        assert project.role(project.owner.user) == "admin"
 
-    def test_get_detail_api(self, api_client, client, test_models):
+        client.logout()
+        resp = client.get(f"/{owner}/New-Model/")
+        if is_public:
+            assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
+        else:
+            assert resp.status_code == 404, f"Expected 404, got {resp.status_code}"
+
+    def test_new_app_redirect(self, client, visibility_params):
+        """
+        Make sure user is redirected to home page if app is not connected yet.
+        """
+        owner, is_public = visibility_params
+        post_data = {
+            "title": "New-Model",
+            "oneliner": "oneliner",
+            "description": "**Super** new!",
+            # "repo_url": "https://github.com/compute-tooling/compute-studio",
+            # "repo_tag": "dev",
+            "cpu": 3,
+            "memory": 9,
+            "listed": True,
+            "is_public": is_public,
+        }
+
+        client.force_login(owner.user)
+
+        with mock_sync_projects():
+            resp = client.post("/apps/api/v1/", post_data)
+        assert resp.status_code == 200
+
+        app = Project.objects.get(owner=owner, title="New-Model")
+        assert app.status != "running"
+
+        resp = client.get(f"/{owner}/New-Model/new/")
+        assert resp.status_code == 302
+        assert resp.url == f"/{owner}/New-Model/"
+
+    def test_get_detail_api(self, api_client, client, visibility_params):
+        owner, is_public = visibility_params
         exp = {
             "title": "Detail-Test",
             "oneliner": "oneliner",
@@ -59,30 +118,35 @@ class TestPublishViews:
             "memory": 6,
             "exp_task_time": 20,
             "listed": True,
-            "status": "live",
             "tech": "python-paramtools",
             "callable_name": None,
+            "is_public": is_public,
         }
-        owner = Profile.objects.get(user__username="modeler")
         project = Project.objects.create(**dict(exp, **{"owner": owner}))
-        resp = client.get("/apps/api/v1/modeler/Detail-Test/detail/")
-        assert resp.status_code == 200
-        data = resp.json()
-        data.pop("owner")
-        data.pop("cluster_type")
-        serializer = ProjectSerializer(project, data=data)
-        assert serializer.is_valid(), serializer.errors
-        assert serializer.validated_data == exp
-        assert serializer.data["has_write_access"] == False
+        project.assign_role("admin", owner.user)
+        project.owner = owner  # Necessary for mock customer attribute on owner.
+        for url in [
+            f"/apps/api/v1/{owner}/Detail-Test/",
+            f"/apps/api/v1/{str(owner).upper()}/detail-test/",
+        ]:
+            api_client.logout()
+            resp = api_client.get(url)
+            if is_public:
+                assert (
+                    resp.status_code == 200
+                ), f"Expected 200, got {resp.status_code} {resp.url}"
+            else:
+                assert (
+                    resp.status_code == 404
+                ), f"Expected 404, got {resp.status_code} {resp.url}"
+                api_client.force_login(owner.user)
+                resp = api_client.get(url)
+                assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
 
-        resp = client.get("/apps/api/v1/moDeler/detail-test/detail/")
-        assert resp.status_code == 200
-
-        api_client.force_login(owner.user)
-        resp = api_client.get("/apps/api/v1/moDeler/detail-test/detail/")
-        assert resp.data["has_write_access"] == True
-
-    def test_put_detail_api(self, client, test_models, profile, password):
+    def test_put_detail_api(
+        self, client, api_client, test_models, password, visibility_params,
+    ):
+        owner, is_public = visibility_params
         put_data = {
             "title": "Used-for-testing",
             "oneliner": "oneliner",
@@ -92,10 +156,15 @@ class TestPublishViews:
             "cpu": 2,
             "memory": 6,
             "lastet_tag": "v2",
+            "is_public": is_public,
         }
+        project = Project.objects.get(owner=owner, title="Used-for-testing")
+        project.is_public = is_public
+        project.save()
+
         # not logged in --> not authorized
-        resp = client.put(
-            "/apps/api/v1/modeler/Used-for-testing/detail/",
+        resp = api_client.put(
+            f"/apps/api/v1/{owner}/Used-for-testing/",
             data=put_data,
             content_type="application/json",
         )
@@ -104,76 +173,118 @@ class TestPublishViews:
         # not the owner --> not authorized
         client.login(username="sponsor", password="sponsor2222")
         resp = client.put(
-            "/apps/api/v1/Modeler/Used-FOR-testing/detail/",
+            f"/apps/api/v1/{owner}/Used-FOR-testing/",
             data=put_data,
             content_type="application/json",
         )
-        assert resp.status_code == 401
+        exp_notauthed_code = 403 if is_public else 404
+        assert resp.status_code == exp_notauthed_code
 
         # logged in and owner --> do update
-        client.login(username="modeler", password="modeler2222")
+        client.force_login(owner.user)
         with mock_sync_projects():
             resp = client.put(
-                "/apps/api/v1/modeler/Used-for-testing/detail/",
+                f"/apps/api/v1/{owner}/Used-for-testing/",
                 data=put_data,
                 content_type="application/json",
             )
         assert resp.status_code == 200
-        project = Project.objects.get(
-            title="Used-for-testing", owner__user__username="modeler"
-        )
+        project = Project.objects.get(title="Used-for-testing", owner=owner)
         assert project.description == put_data["description"]
-        assert project.status == "live"
-
-        # Description can't be empty.
-        resp = client.put(
-            "/apps/api/v1/modeler/Used-for-testing/detail/",
-            data=dict(put_data, **{"description": None}),
-            content_type="application/json",
-        )
-        assert resp.status_code == 400
+        assert project.status == "running"
 
         # test add write_project permission allows update
         put_data["description"] = "hello world!!"
-        client.login(username=profile.user.username, password=password)
-        resp = client.put(
-            "/apps/api/v1/modeler/Used-for-testing/detail/",
-            data=put_data,
-            content_type="application/json",
-        )
-        # make sure "tester" doesn't have access already.
-        assert resp.status_code == 401
-
-        project = Project.objects.get(
-            title="Used-for-testing", owner__user__username="modeler"
-        )
-        assign_perm("write_project", profile.user, project)
+        (collab,) = gen_collabs(1)
+        client.force_login(collab.user)
         with mock_sync_projects():
             resp = client.put(
-                "/apps/api/v1/modeler/Used-for-testing/detail/",
+                f"/apps/api/v1/{owner}/Used-for-testing/",
+                data=put_data,
+                content_type="application/json",
+            )
+        # make sure "tester" doesn't have access already.
+        assert resp.status_code == exp_notauthed_code
+
+        project = Project.objects.get(title="Used-for-testing", owner=owner)
+        project.assign_role("write", collab.user)
+        with mock_sync_projects():
+            resp = client.put(
+                f"/apps/api/v1/{owner}/Used-for-testing/",
                 data=put_data,
                 content_type="application/json",
             )
         assert resp.status_code == 200
-        project = Project.objects.get(
-            title="Used-for-testing", owner__user__username="modeler"
-        )
+        project = Project.objects.get(title="Used-for-testing", owner=owner)
         assert project.description == put_data["description"]
 
-    def test_get_detail_page(self, client, test_models):
-        resp = client.get("/modeler/Used-for-testing/detail/")
-        assert resp.status_code == 200
+    def test_get_detail_page(self, client, visibility_params):
+        owner, is_public = visibility_params
+        project = Project.objects.get(owner=owner, title="Used-for-testing")
+        project.is_public = is_public
+        project.save()
+        for url in [
+            f"/{owner}/Used-for-testing/",
+            f"/{str(owner).upper()}/used-for-testing/",
+        ]:
+            client.logout()
+            resp = client.get(url)
+            if is_public:
+                assert (
+                    resp.status_code == 200
+                ), f"Expected 200, got {resp.status_code} {resp.url}"
+            else:
+                assert (
+                    resp.status_code == 404
+                ), f"Expected 404, got {resp.status_code} {resp.url}"
+                client.force_login(project.owner.user)
+                resp = client.get(url)
+                assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
 
-        resp = client.get("/Modeler/used-for-testing/detail/")
+    def test_get_projects(self, api_client):
+        resp = api_client.get("/apps/api/v1/")
         assert resp.status_code == 200
-
-    def test_get_projects(self, client, test_models):
-        resp = client.get("/apps/api/v1/")
-        assert resp.status_code == 200
-
         exp = set(proj.title for proj in Project.objects.all())
         act = set(proj["title"] for proj in resp.data)
+        assert exp == act
 
+    def test_get_private_projects(self, api_client, pro_profile):
+        project = Project.objects.get(title="Used-for-testing")
+        project.is_public = False
+        project.owner = pro_profile
+        replace_owner(project, pro_profile)
+        project.save()
+
+        # Test private app not included in unauthenticated get
+        resp = api_client.get("/apps/api/v1/")
+        assert resp.status_code == 200
+        exp = set(proj.title for proj in Project.objects.filter(is_public=True).all())
+        act = set(proj["title"] for proj in resp.data)
+        assert exp == act
+
+        # Test private app not included if user doesn't have write access
+        collab = next(gen_collabs(1))
+        api_client.force_login(collab.user)
+        resp = api_client.get("/apps/api/v1/")
+        assert resp.status_code == 200
+        exp = set(proj.title for proj in Project.objects.filter(is_public=True).all())
+        act = set(proj["title"] for proj in resp.data)
+        assert exp == act
+
+        # Test private app included if user has read access
+        api_client.force_login(project.owner.user)
+        resp = api_client.get("/apps/api/v1/")
+        assert resp.status_code == 200
+        exp = set(proj.title for proj in Project.objects.all())
+        act = set(proj["title"] for proj in resp.data)
+        assert exp == act
+
+        api_client.force_login(collab.user)
+        project.assign_role("read", collab.user)
+        resp = api_client.get("/apps/api/v1/")
+        assert resp.status_code == 200
+        exp = set(proj.title for proj in Project.objects.all())
+        act = set(proj["title"] for proj in resp.data)
         assert exp == act
 
     def test_models_api(self, api_client, test_models):
@@ -202,6 +313,27 @@ class TestPublishViews:
             for project in resp.data["results"]
         )
 
+        # test unauth'ed get on profile endpoint only returns public
+        # projects and sets sim_count and user_count to None.
+        project.listed = True
+        project.is_public = False
+        project.save()
+
+        modeler = test_models[0].project.owner
+
+        with mock_get_version():
+            resp = api_client.get("/api/v1/models/modeler")
+        assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
+        exp = set(
+            proj.title for proj in Project.objects.filter(owner=modeler, is_public=True)
+        )
+        act = set(proj["title"] for proj in resp.data["results"])
+        assert exp == act
+        assert all(
+            "user_count" not in project and "sim_count" not in project
+            for project in resp.data["results"]
+        )
+
         project = Project.objects.get(title="Used-for-testing")
         project.listed = False
         project.save()
@@ -217,7 +349,7 @@ class TestPublishViews:
         act = set(proj["title"] for proj in resp.data["results"])
         assert exp == act
 
-    def test_recent_models_api(self, api_client, test_models, profile):
+    def test_recent_models_api(self, api_client, test_models, pro_profile):
         # test unauth'ed get returns 403
         resp = api_client.get("/api/v1/models/recent/")
         assert resp.status_code == 403, f"Expected 403, got {resp.status_code}"
@@ -235,8 +367,8 @@ class TestPublishViews:
         assert exp == act
 
         # test auth'ed user cannot view other project's private data.
-        Simulation.objects.fork(test_models[0], profile.user)
-        api_client.force_login(profile.user)
+        Simulation.objects.fork(test_models[0], pro_profile.user)
+        api_client.force_login(pro_profile.user)
         resp = api_client.get("/api/v1/models/recent/")
         assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
 
@@ -244,16 +376,19 @@ class TestPublishViews:
             p = Project.objects.get(
                 title=project["title"], owner__user__username=project["owner"]
             )
-            if p.has_write_access(profile.user):
+            if p.has_write_access(pro_profile.user):
                 assert "sim_count" in project and "user_count" in project
             else:
                 assert "sim_count" not in project and "user_count" not in project
 
-    def test_deployments_api(self, api_client, test_models):
+    def test_tags_api(self, api_client, test_models, visibility_params):
+        owner, is_public = visibility_params
         prof = Profile.objects.get(user__username="comp-api-user")
         api_client.force_login(prof.user)
 
         project = test_models[0].project
+        project.is_public = is_public
+        project.save()
         assert project.has_write_access(prof.user)
 
         resp = api_client.post(
@@ -299,10 +434,83 @@ class TestPublishViews:
         assert project.staging_tag is None
         assert project.latest_tag == Tag.objects.get(project=project, image_tag="v6")
 
+    def test_private_app_restrictions(self, api_client):
+        post_data = {
+            "title": "New-Model",
+            "oneliner": "oneliner",
+            "description": "**Super** new!",
+            "repo_url": "https://github.com/compute-tooling/compute-studio",
+            "repo_tag": "dev",
+            "cpu": 3,
+            "memory": 9,
+            "listed": True,
+            "is_public": False,
+        }
+
+        (free_user,) = gen_collabs(1)
+        api_client.force_login(free_user.user)
+        with mock_sync_projects():
+            resp = api_client.post("/apps/api/v1/", post_data)
+        assert resp.status_code == 400
+        data = resp.json()
+        assert "make_app_private" == data["app"]["test_name"]
+
+        with pytest.raises(Project.DoesNotExist):
+            Project.objects.get(title="New-Model")
+
+        post_data["is_public"] = True
+        with mock_sync_projects():
+            resp = api_client.post("/apps/api/v1/", post_data)
+        assert resp.status_code == 200
+
+        with mock_sync_projects():
+            resp = api_client.put(
+                f"/apps/api/v1/{free_user}/New-Model/", {"is_public": False},
+            )
+        assert resp.status_code == 400
+        data = resp.json()
+        assert "make_app_private" == data["app"]["test_name"]
+
+
+class TestDeployments:
+    def test_list_deployments(
+        self, db, client, api_client, viz_project, mock_deployments_requests_to_cluster
+    ):
+        viz_project.sponsor = viz_project.owner
+        viz_project.save()
+
+        resp = client.get(f"/{viz_project}/viz/")
+        assert resp.status_code == 200
+
+        resp = api_client.get(f"/apps/api/v1/deployments/")
+        assert resp.status_code == 403
+
+        (collab,) = gen_collabs(1)
+        api_client.force_login(collab.user)
+        resp = api_client.get(f"/apps/api/v1/deployments/")
+        assert resp.status_code == 200
+        assert resp.json()["results"] == []
+
+        api_client.force_login(viz_project.cluster.service_account.user)
+        resp = api_client.get(f"/apps/api/v1/deployments/")
+        assert resp.status_code == 200
+        assert (
+            resp.json()["results"]
+            == DeploymentSerializer(
+                Deployment.objects.filter(project=viz_project), many=True
+            ).data
+        )
+
 
 @pytest.mark.django_db
 class TestEmbedApprovalAPI:
-    def test_create_embed_approval(self, api_client, project, free_profile):
+    def test_create_embed_approval(self, api_client, project, visibility_params):
+        owner, is_public = visibility_params
+        project.is_public = is_public
+        project.save()
+
+        free_profile = Profile.objects.get(user__username="hdoupe")
+
         base = f"/apps/api/v1/{project.owner}/{project.title}/embedapprovals/"
         resp = api_client.post(
             base, data={"name": "deny", "url": "example.com"}, format="json"
@@ -317,18 +525,44 @@ class TestEmbedApprovalAPI:
         )
         assert resp.status_code == 404
 
-        resp = api_client.post(
-            base, data={"name": "test", "url": "example.com"}, format="json"
-        )
-        assert resp.status_code == 400
+        if is_public:
+            resp = api_client.post(
+                base, data={"name": "test", "url": "example.com"}, format="json"
+            )
+            assert resp.status_code == 400
+        else:
+            resp = api_client.post(
+                base, data={"name": "test", "url": "example.com"}, format="json"
+            )
+            assert resp.status_code == 404
+            project.assign_role("read", free_profile.user)
+            resp = api_client.post(
+                base, data={"name": "test", "url": "example.com"}, format="json"
+            )
+            assert resp.status_code == 400
+
         assert "ParamTools" in resp.json()["tech"]
 
         project.tech = "dash"
         project.save()
-        resp = api_client.post(
-            base, data={"name": "test", "url": "example.com"}, format="json"
-        )
-        assert resp.status_code == 200, resp.json()
+
+        if is_public:
+            resp = api_client.post(
+                base, data={"name": "test", "url": "example.com"}, format="json"
+            )
+            assert resp.status_code == 200
+        else:
+            project.assign_role(None, free_profile.user)
+            resp = api_client.post(
+                base, data={"name": "test", "url": "example.com"}, format="json"
+            )
+            assert resp.status_code == 404
+            project.assign_role("read", free_profile.user)
+            resp = api_client.post(
+                base, data={"name": "test", "url": "example.com"}, format="json"
+            )
+            assert resp.status_code == 200
+
         assert EmbedApproval.objects.get(
             project=project, owner=free_profile, name="test"
         )

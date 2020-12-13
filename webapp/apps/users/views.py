@@ -6,7 +6,8 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, login
+from django.utils.safestring import mark_safe
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -29,8 +30,19 @@ def user_signed_up_callback(request, user, **kwargs):
 
 class SignUp(generic.CreateView):
     form_class = UserCreationForm
-    success_url = reverse_lazy("login")
+    success_url = reverse_lazy("home")
     template_name = "registration/signup.html"
+
+    def get_success_url(self):
+        if self.request.GET.get("next"):
+            return self.request.GET.get("next")
+
+        return super().get_success_url()
+
+    def form_valid(self, form):
+        res = super().form_valid(form)
+        login(self.request, self.object, "django.contrib.auth.backends.ModelBackend")
+        return res
 
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
@@ -46,8 +58,25 @@ class UserSettings(View):
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
+        banner_msg = None
+        if getattr(request.user, "customer", None) is not None:
+            current_si = request.user.customer.current_plan(as_dict=False)
+            if current_si is not None and current_si.subscription.is_trial():
+                banner_msg = mark_safe(
+                    f"""
+                        <p>Your free C/S Pro trial ends on {current_si.subscription.trial_end.date()}.</p>
+                        <p>
+                        <a class="btn btn-primary" href="/billing/upgrade/yearly/aftertrial/">
+                            <strong>Upgrade to C/S Pro after trial</strong>
+                        </a>
+                        </p>
+                        """
+                )
+
         return render(
-            request, self.template_name, context={"username": request.user.username}
+            request,
+            self.template_name,
+            context={"username": request.user.username, "banner_msg": banner_msg},
         )
 
 

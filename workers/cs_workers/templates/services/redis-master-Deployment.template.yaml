@@ -36,13 +36,13 @@ spec:
               cpu: 100m
               memory: 100Mi
           volumeMounts:
-          - mountPath: /data
-            name: redis-volume
+            - mountPath: /data
+              name: redis-volume
       volumes:
-      - name: redis-volume
-        # This GCE PD must already exist.
-        gcePersistentDisk:
-          pdName: redis-disk
-          fsType: ext4
+        - name: redis-volume
+          # This GCE PD must already exist.
+          gcePersistentDisk:
+            pdName: redis-disk
+            fsType: ext4
       nodeSelector:
         component: api

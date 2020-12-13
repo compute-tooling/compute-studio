@@ -29,14 +29,20 @@ class DeploymentSerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(serializers.ModelSerializer):
     owner = serializers.StringRelatedField(read_only=True)
+    description = serializers.CharField(required=False)
+    oneliner = serializers.CharField(required=False)
     cluster_type = serializers.CharField(required=False)
     sim_count = serializers.IntegerField(required=False)
     user_count = serializers.IntegerField(required=False)
     latest_tag = serializers.StringRelatedField(required=False)
+    repo_tag = serializers.CharField(required=False)
+    repo_url = serializers.CharField(required=False)
+    is_public = serializers.BooleanField(required=False)
+
     # see to_representation
     # has_write_access = serializers.BooleanField(source="has_write_access")
 
-    def to_representation(self, obj):
+    def to_representation(self, obj: Project):
         rep = super().to_representation(obj)
         if self.context.get("request"):
             user = self.context["request"].user
@@ -48,9 +54,20 @@ class ProjectSerializer(serializers.ModelSerializer):
             rep.pop("user_count")
         return rep
 
+    def validate_is_public(self, value):
+        if (
+            getattr(self, "instance", None) is not None
+            and self.instance.is_public
+            and value is False
+        ):
+            print("test here?", value, self.instance.is_public)
+            self.instance.make_private_test()
+        return value
+
     class Meta:
         model = Project
         fields = (
+            "app_location",
             "title",
             "oneliner",
             "description",
@@ -69,6 +86,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "user_count",
             "callable_name",
             "tech",
+            "is_public",
         )
         read_only = (
             "sim_count",
@@ -84,6 +102,8 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
     version = serializers.CharField(required=False)
     user_count = serializers.IntegerField(required=False)
     latest_tag = serializers.StringRelatedField(required=False)
+    is_public = serializers.BooleanField(required=False)
+
     # see to_representation
     # has_write_access = serializers.BooleanField(source="has_write_access")
 
@@ -102,6 +122,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = (
+            "app_location",
             "title",
             "oneliner",
             "description",
@@ -121,6 +142,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
             "version",
             "callable_name",
             "tech",
+            "is_public",
         )
         read_only = ("sim_count", "status", "user_count", "version", "latest_tag")
 

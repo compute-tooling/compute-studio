@@ -16,8 +16,7 @@ class MockCompute(Compute):
     outputs = None
     client = None
     sim = None
-    user = "comp-api-user"
-    password = "heyhey2222"
+    cluster = None
 
     def __init__(self, num_times_to_wait=0):
         self.count = 0

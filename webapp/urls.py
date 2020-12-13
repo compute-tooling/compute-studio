@@ -45,8 +45,10 @@ urlpatterns = [
     url(r"^rest-auth/", include("rest_auth.urls")),
     url(r"^rest-auth/registration/", include("rest_auth.registration.urls")),
     path("api/v1/sims", compviews.UserSimsAPIView.as_view(), name="sim_api"),
-    path("feed/", pageviews.FeedView.as_view(), name="feed"),
+    path("feed/", pageviews.LogView.as_view(), name="feed"),
+    path("log/", pageviews.LogView.as_view(), name="log"),
     path("api/v1/feed", compviews.PublicSimsAPIView.as_view(), name="feed_api"),
+    path("api/v1/log", compviews.PublicSimsAPIView.as_view(), name="log_api"),
     path(
         "api/v1/sims/<str:username>",
         compviews.ProfileSimsAPIView.as_view(),
@@ -64,14 +66,34 @@ urlpatterns = [
         name="recent_models_api",
     ),
     path(
-        "<str:username>/<str:title>/detail/",
-        publishviews.ProjectDetailView.as_view(),
-        name="project_detail",
-    ),
-    path(
         "<str:username>/<str:title>/",
         publishviews.ProjectDetailView.as_view(),
         name="app",
+    ),
+    path(
+        "<str:username>/<str:title>/settings/about/",
+        publishviews.ProjectSettingsView.as_view(),
+        name="app_settings_about",
+    ),
+    path(
+        "<str:username>/<str:title>/settings/configure/",
+        publishviews.ProjectSettingsView.as_view(),
+        name="app_settings_config",
+    ),
+    path(
+        "<str:username>/<str:title>/settings/environment/",
+        publishviews.ProjectSettingsView.as_view(),
+        name="app_settings_env",
+    ),
+    path(
+        "<str:username>/<str:title>/settings/access/",
+        publishviews.ProjectSettingsView.as_view(),
+        name="app_settings_access",
+    ),
+    path(
+        "<str:username>/<str:title>/settings/",
+        publishviews.ProjectSettingsView.as_view(),
+        name="app_settings",
     ),
     # add project URL's here
     path("<str:username>/<str:title>/", include("webapp.apps.comp.urls")),

@@ -16,9 +16,15 @@ RUN pip install google-cloud-secret-manager "cs-crypt>=0.0.2" pyjwt
 RUN conda install dask distributed tornado
 
 RUN mkdir /home/cs_workers
-COPY cs_workers /home/cs_workers
-COPY setup.py /home
+COPY workers/cs_workers /home/cs_workers
+COPY workers/setup.py /home
 RUN cd /home/ && pip install -e .
+
+COPY secrets /home/secrets
+RUN pip install -e ./secrets
+
+COPY deploy /home/deploy
+RUN pip install -e ./deploy
 
 WORKDIR /home
 

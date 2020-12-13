@@ -69,6 +69,7 @@ class AccessStatusAPI(GetProjectMixin, APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
         plan = {"name": "free", "plan_duration": None}
+        remaining_private_sims = {}
         if user.is_authenticated and user.profile:
             user_status = user.profile.status
             username = user.username
@@ -80,6 +81,10 @@ class AccessStatusAPI(GetProjectMixin, APIView):
 
         if kwargs:
             project = self.get_object(**kwargs)
+            if plan["name"] == "free" and user.is_authenticated:
+                remaining_private_sims = user.profile.remaining_private_sims(
+                    project=project
+                )
             exp_cost, exp_time = project.exp_job_info(adjust=True)
             if user.is_authenticated and user.profile:
                 can_run = user.profile.can_run(project)
@@ -101,14 +106,20 @@ class AccessStatusAPI(GetProjectMixin, APIView):
                     "api_url": reverse("access_project", kwargs=kwargs),
                     "username": username,
                     "plan": plan,
+                    "remaining_private_sims": remaining_private_sims,
+                    "project": str(project),
                 }
             )
         else:
+            if plan["name"] == "free" and user.is_authenticated:
+                remaining_private_sims = user.profile.remaining_private_sims()
+
             return Response(
                 {
                     "user_status": user_status,
                     "api_url": reverse("access_status"),
                     "username": username,
                     "plan": plan,
+                    "remaining_private_sims": remaining_private_sims,
                 }
             )

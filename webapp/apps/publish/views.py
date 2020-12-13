@@ -8,7 +8,9 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.core.mail import send_mail
-
+from django.core.exceptions import PermissionDenied
+from django.http import Http404
+from django.db.models import Q
 
 from rest_framework.views import APIView
 from rest_framework import generics
@@ -19,15 +21,15 @@ from rest_framework.authentication import (
     SessionAuthentication,
     TokenAuthentication,
 )
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied as APIPermissionDenied
 from rest_framework import filters
 
-
-from guardian.shortcuts import assign_perm
 
 # from webapp.settings import DEBUG
 
 from webapp.settings import USE_STRIPE
+from webapp.apps.users.auth import ClusterAuthentication
+from webapp.apps.users.exceptions import PrivateAppException
 from webapp.apps.users.models import (
     Project,
     Cluster,
@@ -35,6 +37,8 @@ from webapp.apps.users.models import (
     EmbedApproval,
     Tag,
     is_profile_active,
+    get_project_or_404,
+    projects_with_access,
 )
 from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 
@@ -51,10 +55,68 @@ from .utils import title_fixup
 User = get_user_model()
 
 
+def send_new_app_email(user, model, status_url):
+    try:
+        send_mail(
+            f"{user.username} created a new app on Compute Studio!",
+            (
+                f"Your app, {model.title}, has been created. When you are ready, you can finish "
+                f"connecting your app at {status_url}.\n\n"
+                f"If you have any questions, please feel welcome to send me an email at "
+                f"hank@compute.studio."
+            ),
+            "notifications@compute.studio",
+            list({user.email, "hank@compute.studio"}),
+            fail_silently=False,
+        )
+    # Http 401 exception if mail credentials are not set up.
+    except Exception:
+        pass
+
+
+def send_updated_app_email(user, model, status_url):
+    try:
+        send_mail(
+            f"{model} has been updated",
+            (
+                f"Your app, {model.title}, will be updated or you will have feedback within "
+                f"the next 24 hours. Check the status of the update at "
+                f"{status_url}."
+            ),
+            "notifications@compute.studio",
+            list({user.email, "hank@compute.studio"}),
+            fail_silently=False,
+        )
+    # Http 401 exception if mail credentials are not set up.
+    except Exception:
+        pass
+
+
+def send_app_ready_email(user, model, status_url):
+    try:
+        send_mail(
+            f"{model} is ready to be connected on Compute Studio!",
+            (
+                f"Your app, {model.title}, will be live or you will have feedback within "
+                f"the next 24 hours. Check the status of the update at "
+                f"{status_url}."
+            ),
+            "notifications@compute.studio",
+            list({user.email, "hank@compute.studio"}),
+            fail_silently=False,
+        )
+    # Http 401 exception if mail credentials are not set up.
+    except Exception:
+        pass
+
+
 class GetProjectMixin:
     def get_object(self, username, title, **kwargs):
-        return get_object_or_404(
-            Project, title__iexact=title, owner__user__username__iexact=username
+        return get_project_or_404(
+            Project.objects.all(),
+            user=self.request.user,
+            title__iexact=title,
+            owner__user__username__iexact=username,
         )
 
 
@@ -73,6 +135,16 @@ class ProjectDetailView(GetProjectMixin, View):
         return render(request, self.template_name)
 
 
+class ProjectSettingsView(GetProjectMixin, View):
+    template_name = "publish/publish.html"
+
+    def get(self, request, *args, **kwargs):
+        project = self.get_object(**kwargs)
+        if not project.has_write_access(request.user):
+            raise PermissionDenied()
+        return render(request, self.template_name)
+
+
 class ProjectDetailAPIView(GetProjectMixin, APIView):
     authentication_classes = (
         SessionAuthentication,
@@ -87,42 +159,52 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
         return Response(data)
 
     def put(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            project = self.get_object(**kwargs)
-            if project.has_write_access(request.user):
-                serializer = ProjectSerializer(project, data=request.data)
-                if serializer.is_valid():
-                    model = serializer.save(status="live")
-                    Project.objects.sync_project_with_workers(
-                        ProjectSerializer(model).data, model.cluster
-                    )
-                    status_url = request.build_absolute_uri(model.app_url)
-                    try:
-                        send_mail(
-                            f"{request.user.username} is updating a model on Compute Studio!",
-                            (
-                                f"{model.title} will be updated or you will have feedback within "
-                                f"the next 24 hours. Check the status of the update at "
-                                f"{status_url}."
-                            ),
-                            "notifications@compute.studio",
-                            list({request.user.email, "hank@compute.studio"}),
-                            fail_silently=False,
-                        )
-                    # Http 401 exception if mail credentials are not set up.
-                    except Exception:
-                        pass
-                    return Response(serializer.data)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response(status=status.HTTP_401_UNAUTHORIZED)
+        if not request.user.is_authenticated:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        project = self.get_object(**kwargs)
+        if not project.has_write_access(request.user):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        previous_status = project.status
+        serializer = ProjectSerializer(project, data=request.data)
+        try:
+            is_valid = serializer.is_valid()
+        except PrivateAppException as e:
+            return Response(
+                {e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST
+            )
+        if is_valid:
+            model = serializer.save()
+            new_status = model.status
+            Project.objects.sync_project_with_workers(
+                ProjectSerializer(model).data, model.cluster
+            )
+            status_url = request.build_absolute_uri(model.app_url)
+            if previous_status != "staging" and new_status == "staging":
+                send_app_ready_email(
+                    request.user, model, status_url,
+                )
+            elif previous_status in ("staging", "running"):
+                send_updated_app_email(request.user, model, status_url)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ProjectAPIView(GetProjectMixin, APIView):
-    queryset = Project.objects.all()
+class ProjectAPIView(APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+        ClusterAuthentication,
+    )
+    api_user = User.objects.get(username="comp-api-user")
 
     def get(self, request, *args, **kwargs):
         ser = ProjectSerializer(
-            self.queryset.all(), many=True, context={"request": request}
+            projects_with_access(self.request.user),
+            many=True,
+            context={"request": request},
         )
         return Response(ser.data, status=status.HTTP_200_OK)
 
@@ -146,33 +228,22 @@ class ProjectAPIView(GetProjectMixin, APIView):
                         {"project_exists": f"{username}/{title} already exists."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-                model = serializer.save(
-                    owner=request.user.profile,
-                    status="pending",
-                    title=title,
-                    cluster=Cluster.objects.default(),
-                )
+                try:
+                    model = serializer.save(
+                        owner=request.user.profile,
+                        title=title,
+                        cluster=Cluster.objects.default(),
+                    )
+                except PrivateAppException as e:
+                    return Response(
+                        {e.resource: e.todict()}, status=status.HTTP_400_BAD_REQUEST
+                    )
                 status_url = request.build_absolute_uri(model.app_url)
-                api_user = User.objects.get(username="comp-api-user")
-                assign_perm("write_project", api_user, model)
+                send_new_app_email(request.user, model, status_url)
+                model.assign_role("write", self.api_user)
                 Project.objects.sync_project_with_workers(
                     ProjectSerializer(model).data, model.cluster
                 )
-                try:
-                    send_mail(
-                        f"{request.user.username} is publishing a model on Compute Studio!",
-                        (
-                            f"{model.title} will be live or you will have feedback within "
-                            f"the next 24 hours. Check the status of the submission at "
-                            f"{status_url}."
-                        ),
-                        "notifications@compute.studio",
-                        list({request.user.email, "hank@compute.studio"}),
-                        fail_silently=False,
-                    )
-                # Http 401 exception if mail credentials are not set up.
-                except Exception:
-                    pass
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
                 print("error", request, serializer.errors)
@@ -192,7 +263,7 @@ class TagsAPIView(GetProjectMixin, APIView):
     def get(self, request, *args, **kwargs):
         project = self.get_object(**kwargs)
         if not project.has_write_access(request.user):
-            raise PermissionDenied()
+            raise APIPermissionDenied()
         return Response(
             {
                 "staging_tag": TagSerializer(instance=project.staging_tag).data,
@@ -204,13 +275,12 @@ class TagsAPIView(GetProjectMixin, APIView):
     def post(self, request, *args, **kwargs):
         project = self.get_object(**kwargs)
         if not project.has_write_access(request.user):
-            raise PermissionDenied()
+            raise APIPermissionDenied()
         serializer = TagUpdateSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         data = serializer.validated_data
-        print("data", data)
         if data.get("staging_tag") is not None:
             tag, _ = Tag.objects.get_or_create(
                 project=project,
@@ -282,7 +352,11 @@ class ProfileModelsAPIView(generics.ListAPIView):
     def get_queryset(self):
         username = self.request.parser_context["kwargs"].get("username", None)
         user = get_object_or_404(get_user_model(), username__iexact=username)
-        return self.queryset.filter(owner__user=user, listed=True)
+        return self.queryset.filter(
+            owner__user=user,
+            listed=True,
+            pk__in=projects_with_access(self.request.user),
+        )
 
 
 class EmbedApprovalView(GetProjectMixin, APIView):
@@ -329,7 +403,7 @@ class EmbedApprovalView(GetProjectMixin, APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class EmbedApprovalDetailView(APIView):
+class EmbedApprovalDetailView(GetProjectMixin, APIView):
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
@@ -338,11 +412,8 @@ class EmbedApprovalDetailView(APIView):
     permission_classes = (StrictRequiresActive,)
 
     def get(self, request, *args, **kwargs):
-        ea = EmbedApproval.objects.get(
-            project__owner__user__username__iexact=kwargs["username"],
-            project__title__iexact=kwargs["title"],
-            name__iexact=kwargs["ea_name"],
-        )
+        project = self.get_object(**kwargs)
+        ea = EmbedApproval.objects.get(project=project, name__iexact=kwargs["ea_name"],)
 
         # Throw 404 if user does not have access.
         if ea.owner != request.user.profile:
@@ -351,11 +422,8 @@ class EmbedApprovalDetailView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, *args, **kwargs):
-        ea = EmbedApproval.objects.get(
-            project__owner__user__username__iexact=kwargs["username"],
-            project__title__iexact=kwargs["title"],
-            name__iexact=kwargs["ea_name"],
-        )
+        project = self.get_object(**kwargs)
+        ea = EmbedApproval.objects.get(project=project, name__iexact=kwargs["ea_name"],)
 
         # Throw 404 if user does not have access.
         if ea.owner != request.user.profile:
@@ -385,11 +453,8 @@ class EmbedApprovalDetailView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, *args, **kwargs):
-        ea = EmbedApproval.objects.get(
-            project__owner__user__username__iexact=kwargs["username"],
-            project__title__iexact=kwargs["title"],
-            name__iexact=kwargs["ea_name"],
-        )
+        project = self.get_object(**kwargs)
+        ea = EmbedApproval.objects.get(project=project, name__iexact=kwargs["ea_name"],)
 
         # Throw 404 if user does not have access.
         if ea.owner != request.user.profile:
@@ -415,12 +480,12 @@ class DeploymentsView(generics.ListAPIView):
     serializer_class = DeploymentSerializer
 
     def get_queryset(self):
-        if not self.request.user.username == "comp-api-user":
-            raise PermissionDenied()
-        return self.queryset
+        return self.queryset.filter(
+            project__cluster__service_account__user=self.request.user
+        )
 
 
-class DeploymentsDetailView(APIView):
+class DeploymentsDetailView(GetProjectMixin, APIView):
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
@@ -430,6 +495,8 @@ class DeploymentsDetailView(APIView):
     permission_classes = (RequiresActive,)
 
     def get(self, request, *args, **kwargs):
+        project = self.get_object(**kwargs)
+
         status_query = request.query_params.get("status", None)
         ping = request.query_params.get("ping", None)
         if status_query is None:
@@ -440,8 +507,7 @@ class DeploymentsDetailView(APIView):
         deployment = get_object_or_404(
             Deployment,
             name__iexact=kwargs["dep_name"],
-            project__owner__user__username__iexact=kwargs["username"],
-            project__title__iexact=kwargs["title"],
+            project=project,
             deleted_at__isnull=True,
             **status_kwarg,
         )
@@ -456,22 +522,20 @@ class DeploymentsDetailView(APIView):
         )
 
     def delete(self, request, *args, **kwargs):
-        if not (
-            request.user.is_authenticated and request.user.username == "comp-api-user"
-        ):
-            raise PermissionDenied()
+        project = self.get_object(**kwargs)
+
+        if not project.has_write_access(request.user):
+            raise APIPermissionDenied()
+
         deployment = get_object_or_404(
             Deployment,
             name__iexact=kwargs["dep_name"],
-            project__owner__user__username__iexact=kwargs["username"],
-            project__title__iexact=kwargs["title"],
+            project=project,
             deleted_at__isnull=True,
             status__in=["creating", "running"],
         )
 
         deployment.delete_deployment()
-
-        # self.charge_deployment(deployment, use_stripe=USE_STRIPE)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -487,7 +551,11 @@ class DeploymentsIdView(APIView):
 
     def get(self, request, *args, **kwargs):
         ping = request.query_params.get("ping", None)
-        deployment = get_object_or_404(Deployment, id=kwargs["id"])
+        deployment = get_object_or_404(
+            Deployment.objects.prefetch_related("project"), pk=kwargs["id"]
+        )
+        if not deployment.project.has_read_access(request.user):
+            raise Http404()
 
         if ping is None:
             deployment.load()

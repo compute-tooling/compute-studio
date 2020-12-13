@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-configmap
+data:
+  DATABASE_URL: ""
+  BUCKET: ""
+  DEFAULT_CLUSTER_USER: ""
+  DEFAULT_VIZ_HOST: ""
+  USE_STRIPE: "true"

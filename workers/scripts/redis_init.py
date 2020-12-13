@@ -55,8 +55,28 @@ def main():
         enabled=True,
         nopass=nopass,
         passwords=f"+{sched_pw}" if not nopass else None,
-        commands=["-@all", "+set", "+get", "+del", "+@hash", "+acl|whoami"],
-        keys=["job-*", "projects", "users*"],
+        commands=[
+            "-@all",
+            "+set",
+            "+get",
+            "+del",
+            "+@hash",
+            "+acl|whoami",
+            "+scan",
+            "+select",
+        ],
+        keys=["job-*", "jobinfo-*", "projects", "users*"],
+    )
+
+    outputs_pw = os.environ.get("REDIS_OUTPUTS_PW")
+    nopass = outputs_pw in (None, "")
+    admin_client.acl_setuser(
+        "outputs",
+        enabled=True,
+        nopass=nopass,
+        passwords=f"+{outputs_pw}" if not nopass else None,
+        commands=["-@all", "+get", "+del", "+@hash", "+acl|whoami",],
+        keys=["job-*", "jobinfo-*", "users*"],
     )
 
     exec_pw = os.environ.get("REDIS_EXECUTOR_PW")

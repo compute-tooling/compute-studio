@@ -1,0 +1,95 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: web-deployment-cleanup
+spec:
+  schedule: "*/15 * * * *"
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: web
+          containers:
+            - name: web-deployment-cleanup
+              image: # Uses web image and is filled in with script.
+              command: ["python", "manage.py", "rm_stale_deployments", "--stale-after", "1800"]
+              env:
+                - name: DB_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: web-db-secret
+                      key: host
+
+                - name: DB_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: web-db-secret
+                      key: username
+                
+                - name: DB_PASS
+                  valueFrom:
+                    secretKeyRef:
+                      name: web-db-secret
+                      key: password
+                
+                - name: DB_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: web-db-secret
+                      key: database
+
+                - name: DEBUG
+                  valueFrom:
+                    configMapKeyRef:
+                      name: web-configmap
+                      key: DEBUG
+                      optional: true
+
+                - name: LOCAL
+                  valueFrom:
+                    configMapKeyRef:
+                      name: web-configmap
+                      key: LOCAL
+                      optional: true
+
+                - name: DEFAULT_CLUSTER_USER
+                  valueFrom:
+                    configMapKeyRef:
+                      name: web-configmap
+                      key: DEFAULT_CLUSTER_USER
+
+                - name: DEFAULT_VIZ_HOST
+                  valueFrom:
+                    configMapKeyRef:
+                      name: web-configmap
+                      key: DEFAULT_VIZ_HOST
+
+                - name: DJANGO_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: web-secret
+                      key: DJANGO_SECRET_KEY
+
+                - name: CS_CRYPT_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: web-secret
+                      key: WEB_CS_CRYPT_KEY
+
+                - name: USE_STRIPE
+                  valueFrom:
+                    configMapKeyRef:
+                      name: web-configmap
+                      key: USE_STRIPE
+
+                - name: STRIPE_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: web-secret
+                      key: STRIPE_SECRET
+                      optional: true
+
+          nodeSelector:
+            component: web
+          restartPolicy: Never

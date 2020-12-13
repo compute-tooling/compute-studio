@@ -1,7 +1,14 @@
 import React = require("react");
 import { Row, Col, Button, Modal, Dropdown } from "react-bootstrap";
 import API from "./API";
-import { Simulation, RemoteOutputs, DescriptionValues, Role, AccessStatus } from "../types";
+import {
+  Simulation,
+  RemoteOutputs,
+  DescriptionValues,
+  Role,
+  AccessStatus,
+  ResourceLimitException,
+} from "../types";
 import { FormikProps, FormikHelpers } from "formik";
 import ReactLoading from "react-loading";
 import { RolePerms } from "../roles";
@@ -29,28 +36,19 @@ export interface CollaboratorValues {
   };
 }
 
-interface ResourceLimitException {
-  resource: "collaborators";
-  test_name: "add_collaborator" | "make_private";
-  msg: string;
-  upgrade_to: "plus" | "pro";
-}
-
-const AddCollaboratorException = (upgradeTo: "plus" | "pro") => {
+const MakePrivateException = (upgradeTo: "pro") => {
   let plan;
-  if (upgradeTo === "plus") {
-    plan = "Compute Studio Plus";
-  } else if (upgradeTo === "pro") {
+  if (upgradeTo === "pro") {
     plan = "Compute Studio Pro";
   }
   return (
     <div className="alert alert-primary alert-dismissible fade show" role="alert">
-      You have reached the limit for the number of collaborators on private simulations. You may
-      make this simulation public or upgrade to{" "}
+      You have reached the limit for the number of private simulations for this month. You can
+      upgrade to{" "}
       <a href="/billing/upgrade/">
         <strong>{plan}</strong>
       </a>{" "}
-      to add more collaborators.
+      to have an unlimited number of private simulations.
       <Row className="w-100 justify-content-center">
         <Col className="col-auto">
           <Button
@@ -70,33 +68,11 @@ const AddCollaboratorException = (upgradeTo: "plus" | "pro") => {
   );
 };
 
-const MakePrivateException = (upgradeTo: "plus" | "pro") => {
-  let plan;
-  if (upgradeTo === "plus") {
-    plan = "Compute Studio Plus";
-  } else if (upgradeTo === "pro") {
-    plan = "Compute Studio Pro";
-  }
+const PrivateAppException = (collaborator?: string) => {
   return (
     <div className="alert alert-primary alert-dismissible fade show" role="alert">
-      You have exceeded the limit for collaborators on a private simulation. You may keep this
-      simulation public, as is, or upgrade to{" "}
-      <a href="/billing/upgrade/">
-        <strong>{plan}</strong>
-      </a>{" "}
-      to make it private.
-      <Row className="w-100 justify-content-center">
-        <Col className="col-auto">
-          <Button
-            variant="primary"
-            style={{ fontWeight: 600 }}
-            className="w-100 mt-3"
-            href="/billing/upgrade/"
-          >
-            Upgrade to {plan}
-          </Button>
-        </Col>
-      </Row>
+      {collaborator || "This user"} must be granted access to this app before they can become a
+      collaborator.
       <button type="button" className="close" data-dismiss="alert" aria-label="Close">
         <span aria-hidden="true">&times;</span>
       </button>
@@ -167,11 +143,11 @@ const ConfirmSelected: React.FC<{
                   ...formikProps.values,
                   author: {
                     add: { username: selectedUser, msg: msg },
-                    remove: { username: "" }
+                    remove: { username: "" },
                   },
                   access: {
-                    read: { grant: { username: "", msg: "" }, remove: { username: "" } }
-                  }
+                    read: { grant: { username: "", msg: "" }, remove: { username: "" } },
+                  },
                 });
               } else {
                 setValues({
@@ -180,9 +156,9 @@ const ConfirmSelected: React.FC<{
                   access: {
                     read: {
                       grant: { username: selectedUser, msg: msg },
-                      remove: { username: "" }
-                    }
-                  }
+                      remove: { username: "" },
+                    },
+                  },
                 });
               }
 
@@ -192,7 +168,7 @@ const ConfirmSelected: React.FC<{
                 setValues({
                   ...values,
                   author: { add: { username: "", msg: "" }, remove: { username: "" } },
-                  access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } }
+                  access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } },
                 })
               );
 
@@ -210,7 +186,7 @@ const ConfirmSelected: React.FC<{
               setValues({
                 ...values,
                 author: { add: { username: "", msg: "" }, remove: { username: "" } },
-                access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } }
+                access: { read: { grant: { username: "", msg: "" }, remove: { username: "" } } },
               });
               setMsg("");
               resetState();
@@ -260,8 +236,9 @@ export const CollaborationSettings: React.FC<{
   user: string;
   remoteSim?: Simulation<RemoteOutputs>;
   formikProps: FormikProps<{ title: string; is_public: boolean } & CollaboratorValues>;
-  plan: AccessStatus["plan"]["name"];
-}> = ({ api, user, remoteSim, formikProps, plan }) => {
+  accessStatus: AccessStatus;
+  project: string;
+}> = ({ api, user, remoteSim, formikProps, accessStatus, project }) => {
   const [show, setShow] = React.useState(false);
   const is_public =
     remoteSim?.is_public !== undefined ? remoteSim.is_public : formikProps.values.is_public;
@@ -283,9 +260,10 @@ export const CollaborationSettings: React.FC<{
         user={user}
         remoteSim={remoteSim}
         formikProps={formikProps}
-        plan={plan}
+        accessStatus={accessStatus}
         show={show}
         setShow={setShow}
+        project={project}
       />
     </>
   );
@@ -296,10 +274,11 @@ export const CollaborationModal: React.FC<{
   user: string;
   remoteSim?: Simulation<RemoteOutputs>;
   formikProps: FormikProps<{ title: string; is_public: boolean } & CollaboratorValues>;
-  plan: AccessStatus["plan"]["name"];
+  accessStatus: AccessStatus;
   show?: boolean;
   setShow: (show: boolean) => void;
-}> = ({ api, user, remoteSim, formikProps, plan, show, setShow }) => {
+  project: string;
+}> = ({ api, user, remoteSim, formikProps, accessStatus, show, setShow, project }) => {
   const [accessQuery, setAccessQuery] = React.useState<Array<{ username: string }>>([]);
   const [viewAccessQuery, setViewAccessQuery] = React.useState(false);
   const [accessSelected, setAccessSelected] = React.useState(false);
@@ -307,6 +286,8 @@ export const CollaborationModal: React.FC<{
   const [authorSelected, setAuthorSelected] = React.useState(false);
 
   const [selectedUser, setSelectedUser] = React.useState("");
+
+  const plan = accessStatus.plan.name;
 
   let authors: Array<{
     username: string;
@@ -340,11 +321,34 @@ export const CollaborationModal: React.FC<{
   let collabExceptionMsg;
   if (!!formikProps.status?.collaboratorLimit) {
     let collabMsg: ResourceLimitException = formikProps.status?.collaboratorLimit;
-    if (collabMsg.test_name === "make_private") {
+    if (collabMsg.test_name === "make_simulation_private") {
       collabExceptionMsg = MakePrivateException(collabMsg.upgrade_to);
-    } else if (collabMsg.test_name === "add_collaborator") {
-      collabExceptionMsg = AddCollaboratorException(collabMsg.upgrade_to);
+    } else if (collabMsg.test_name === "add_collaborator_on_private_app") {
+      collabExceptionMsg = PrivateAppException(collabMsg.collaborator);
     }
+  }
+
+  let remainingPrivateSims = 3;
+  const projectLower = project.toLowerCase();
+  if (projectLower in accessStatus.remaining_private_sims) {
+    remainingPrivateSims = accessStatus.remaining_private_sims[projectLower];
+  }
+
+  let visibiltyButtonMsg;
+  if (!is_public) {
+    visibiltyButtonMsg = <span>Make public</span>;
+  } else if (plan === "free") {
+    visibiltyButtonMsg = (
+      <span>
+        Make private ({remainingPrivateSims} remaining this month.{" "}
+        {remainingPrivateSims <= 0 && (
+          <a href={`/billing/upgrade/yearly/?next=${window.location.pathname}`}>Upgrade to Pro.</a>
+        )}
+        )
+      </span>
+    );
+  } else {
+    visibiltyButtonMsg = <span>Make private</span>;
   }
 
   return (
@@ -386,7 +390,7 @@ export const CollaborationModal: React.FC<{
                       setTimeout(handleSubmit, 0);
                     }}
                   >
-                    Make this simulation {is_public ? "private" : "public"}
+                    {visibiltyButtonMsg}
                   </Button>
                 </Col>
               </Row>
@@ -525,21 +529,7 @@ export const CollaborationModal: React.FC<{
                 defaultInviteAuthor={true}
               />
             ) : null}
-            {RolePerms.hasAdminAccess(remoteSim) && plan === "free" && !remoteSim.is_public ? (
-              <Row className="w-100 mt-4 justify-content-center">
-                <Col className="col-auto">
-                  <Button
-                    variant="success"
-                    style={{ fontWeight: 600 }}
-                    className="mb-4 w-100 mt-1"
-                    href="/billing/upgrade/"
-                  >
-                    Upgrade to add private collaborators
-                  </Button>
-                </Col>
-              </Row>
-            ) : null}
-            {RolePerms.hasAdminAccess(remoteSim) && (plan !== "free" || remoteSim.is_public) ? (
+            {RolePerms.hasAdminAccess(remoteSim) ? (
               <>
                 <Row className="w-100 mt-4">
                   <Col>
@@ -606,7 +596,7 @@ export const CollaborationModal: React.FC<{
   );
 };
 
-export const saveCollaborators = (
+export const saveCollaborators = async (
   api: API,
   values: CollaboratorValues,
   handleSuccess: () => void
@@ -633,8 +623,8 @@ export const saveCollaborators = (
           {
             username: values.access.read.grant.username,
             role: "read" as Role,
-            msg: values.access.read.grant.msg
-          }
+            msg: values.access.read.grant.msg,
+          },
         ])
         .then(() => {
           handleSuccess();

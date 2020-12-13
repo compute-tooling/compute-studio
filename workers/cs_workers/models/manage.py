@@ -2,6 +2,9 @@ import argparse
 import copy
 import os
 import sys
+import threading
+import time
+from urllib.parse import urlparse
 import yaml
 from datetime import datetime
 from dateutil.parser import parse as dateutil_parse
@@ -10,6 +13,7 @@ from pathlib import Path
 import docker
 import httpx
 
+from cs_deploy.config import workers_config
 from cs_workers.utils import run, clean, parse_owner_title
 
 from cs_workers.services.secrets import ServicesSecrets  # TODO
@@ -30,7 +34,7 @@ class BaseManager:
     def cs_api_token(self):
         if self._cs_api_token is None:
             svc_secrets = ServicesSecrets(self.project)
-            self._cs_api_token = svc_secrets.get_secret("CS_API_TOKEN")
+            self._cs_api_token = svc_secrets.get("CS_API_TOKEN")
         return self._cs_api_token
 
 
@@ -61,12 +65,20 @@ class Manager(BaseManager):
         use_kind=False,
         staging_tag=None,
         use_latest_tag=False,
+        cs_appbase_tag="master",
         cr="gcr.io",
         ignore_ci_errors=False,
         quiet=False,
     ):
-        self.config = ModelConfig(project, cs_url, base_branch, quiet)
         super().__init__(project, cs_url, cs_api_token)
+        self.config = ModelConfig(
+            project,
+            cs_url,
+            cs_api_token=self.cs_api_token,
+            base_branch=base_branch,
+            quiet=quiet,
+        )
+
         self.tag = tag
         self.models = models.split(",") if models else None
         self.base_branch = base_branch
@@ -77,6 +89,7 @@ class Manager(BaseManager):
 
         self.staging_tag = staging_tag
         self.use_latest_tag = use_latest_tag
+        self.cs_appbase_tag = cs_appbase_tag
 
         self.ignore_ci_errors = ignore_ci_errors
 
@@ -178,6 +191,9 @@ class Manager(BaseManager):
         repo_tag = os.environ.get("REPO_TAG") or app["repo_tag"]
         repo_url = os.environ.get("REPO_URL") or app["repo_url"]
 
+        parsed_url = urlparse(repo_url)
+        repo_name = parsed_url.path.split("/")[-1]
+
         reg_url = "https://github.com"
         raw_url = "https://raw.githubusercontent.com"
 
@@ -186,16 +202,16 @@ class Manager(BaseManager):
             TITLE=app["title"],
             REPO_TAG=repo_tag,
             REPO_URL=repo_url,
+            REPO_NAME=repo_name,
             RAW_REPO_URL=repo_url.replace(reg_url, raw_url),
+            CS_APPBASE_TAG=self.cs_appbase_tag,
         )
 
         buildargs_str = " ".join(
             [f"--build-arg {arg}={value}" for arg, value in buildargs.items()]
         )
         dockerfile = self.dockerfiles_dir / "Dockerfile.model"
-        cmd = (
-            f"docker build {buildargs_str} -t {img_name}:{self.tag} -f {dockerfile} ./"
-        )
+        cmd = f"docker build --no-cache {buildargs_str} -t {img_name}:{self.tag} -f {dockerfile} ./"
         run(cmd)
 
         assert self.cr is not None
@@ -208,23 +224,119 @@ class Manager(BaseManager):
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])
         img_name = f"{safeowner}_{safetitle}_tasks"
-        cmd = ["py.test", "/home/test_functions.py", "-v", "-s"]
+
+        viz_ports = {"8010/tcp": ("127.0.0.1", "8010")}
+        if app["tech"] == "python-paramtools":
+            cmd = [
+                "py.test",
+                "./cs-config/cs_config/tests/test_functions.py",
+                "-v",
+                "-s",
+            ]
+            ports = None
+        elif app["tech"] == "dash":
+            app_module = app.get("app_location", None) or "cs_config.functions"
+            cmd = ["gunicorn", f"{app_module}:{app['callable_name']}"]
+            ports = viz_ports
+        elif app["tech"] == "bokeh":
+            cmd = [
+                "bokeh",
+                "serve",
+                app["app_location"],
+                "--address",
+                "0.0.0.0",
+                "--port",
+                "8010",
+                "--prefix",
+                f"/{app['owner']}/{app['owner']}/test/",
+            ]
+            ports = viz_ports
+        else:
+            raise ValueError(f"Unknown tech: {app['tech']}")
+
         secrets = self.config._list_secrets(app)
         client = docker.from_env()
         container = client.containers.run(
-            f"{img_name}:{self.tag}", cmd, environment=secrets, detach=True
+            f"{img_name}:{self.tag}",
+            cmd,
+            environment=secrets,
+            detach=True,
+            ports=ports,
         )
 
-        for line in container.logs(stream=True):
-            line = line.decode()
-            for name, value in secrets.items():
-                line = line.replace(name, "******").replace(value, "******")
-            print(line.strip("\n"))
+        try:
 
-        container.reload()
-        exit_status = container.wait()
-        if exit_status["StatusCode"] == 1:
-            raise RuntimeError("Tests failed with exit status 1.")
+            def strip_secrets(line, secrets):
+                line = line.decode()
+                for name, value in secrets.items():
+                    line = line.replace(name, "******").replace(value, "******")
+                return line.strip("\n")
+
+            def stream_logs(container):
+                for line in container.logs(stream=True):
+                    print(strip_secrets(line, secrets))
+
+            container.reload()
+            if container.status != "running":
+                print(f"Container exited with status: {container.status}")
+                for line in container.logs(stream=True):
+                    print(strip_secrets(line, secrets))
+                raise RuntimeError(f"Container exited with status: {container.status}")
+
+            if app["tech"] in ("bokeh", "dash"):
+                # Run function for showing logs in another thread so test/monitoring
+                # can run in main thread.
+                thread = threading.Thread(
+                    target=stream_logs, args=(container,), daemon=True
+                )
+                thread.start()
+                time.sleep(2)
+                num_attempts = 10
+                for attempt in range(1, num_attempts + 1):
+                    container.reload()
+                    if container.status != "running":
+                        raise RuntimeError(
+                            f"Container exected with status: {container.status}"
+                        )
+
+                    try:
+                        resp = httpx.get(
+                            f"http://localhost:8010/{app['owner']}/{app['owner']}/test/"
+                        )
+                        if resp.status_code == 200:
+                            print(f"Received successful response: {resp}")
+                            break
+
+                    except Exception:
+                        import traceback
+
+                        traceback.print_exc()
+
+                    time.sleep(1)
+
+                container.reload()
+
+                if attempt < num_attempts:
+                    print(f"Successful response received after {attempt} attempts.")
+                    container.kill()
+                else:
+                    try:
+                        raise ValueError(f"Unable to get 200 response after {attempt}.")
+                    finally:
+                        container.kill()
+            else:
+                for line in container.logs(stream=True):
+                    print(strip_secrets(line, secrets))
+
+                container.reload()
+                exit_status = container.wait()
+                if exit_status["StatusCode"] == 1:
+                    raise RuntimeError("Tests failed with exit status 1.")
+        finally:
+            container.reload()
+            if container.status != "exited":
+                print(f"Stopping container: {container}.")
+                container.kill()
 
     def push_app_image(self, app):
         assert self.cr is not None
@@ -384,63 +496,13 @@ class Manager(BaseManager):
         return resp.json()["latest_tag"]
 
 
-class DeploymentManager(BaseManager):
-    def __init__(self, project, cs_url, cs_api_token=None, stale_after=3600):
-        super().__init__(project, cs_url, cs_api_token)
-        self.stale_after = stale_after
-        self.client = httpx.Client(
-            headers={"Authorization": f"Token {self.cs_api_token}"},
-        )
-
-    def get_deployments(self):
-        resp = self.client.get(f"{self.cs_url}/apps/api/v1/deployments/")
-        assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
-        page = resp.json()
-        results = page["results"]
-        next_url = page["next"]
-        while next_url is not None:
-            resp = self.client.get(next_url)
-            assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
-            page = resp.json()
-
-            results += page["results"]
-            next_url = page["next"]
-
-        return results
-
-    def delete(self, project, name, dry_run=False):
-        if dry_run:
-            return
-        resp = self.client.delete(
-            f"{self.cs_url}/apps/api/v1/{project}/deployments/{name}/"
-        )
-        assert resp.status_code == 204, f"Got {resp.status_code} {resp.text}"
-
-    def rm_stale(self, dry_run=False):
-        for deployment in self.get_deployments():
-            project = deployment["project"]
-            name = deployment["name"]
-            last_load_at = dateutil_parse(deployment["last_load_at"])
-            last_ping_at = dateutil_parse(deployment["last_ping_at"])
-            now = datetime.utcnow()
-
-            load_secs_stale = (now - last_load_at.replace(tzinfo=None)).seconds
-            ping_secs_stale = (now - last_ping_at.replace(tzinfo=None)).seconds
-
-            secs_stale = min(load_secs_stale, ping_secs_stale)
-            if secs_stale > self.stale_after:
-                print(
-                    f"Deleting {project} {name} since last use was {secs_stale} "
-                    f"(> {self.stale_after}) seconds ago."
-                )
-                self.delete(project, name, dry_run=dry_run)
-
-
 def build(args: argparse.Namespace):
     manager = Manager(
         project=args.project,
         tag=args.tag,
-        cs_url=args.cs_url,
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
+        cs_api_token=getattr(args, "cs_api_token", None),
+        cs_appbase_tag=getattr(args, "cs_appbase_tag", None),
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
@@ -453,7 +515,8 @@ def test(args: argparse.Namespace):
     manager = Manager(
         project=args.project,
         tag=args.tag,
-        cs_url=args.cs_url,
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
+        cs_api_token=getattr(args, "cs_api_token", None),
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
@@ -466,12 +529,12 @@ def push(args: argparse.Namespace):
     manager = Manager(
         project=args.project,
         tag=args.tag,
-        cs_url=args.cs_url,
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
+        cs_api_token=getattr(args, "cs_api_token", None),
         models=args.names,
         base_branch=args.base_branch,
         use_kind=args.use_kind,
         cr=args.cr,
-        cs_api_token=getattr(args, "cs_api_token", None),
         ignore_ci_errors=args.ignore_ci_errors,
         use_latest_tag=args.use_latest_tag,
     )
@@ -482,12 +545,12 @@ def config(args: argparse.Namespace):
     manager = Manager(
         project=args.project,
         tag=args.tag,
-        cs_url=args.cs_url,
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
+        cs_api_token=getattr(args, "cs_api_token", None),
         models=args.names,
         base_branch=args.base_branch,
         kubernetes_target=args.out,
         cr=args.cr,
-        cs_api_token=getattr(args, "cs_api_token", None),
         ignore_ci_errors=args.ignore_ci_errors,
         use_latest_tag=args.use_latest_tag,
     )
@@ -498,11 +561,11 @@ def promote(args: argparse.Namespace):
     manager = Manager(
         project=args.project,
         tag=args.tag,
-        cs_url=args.cs_url,
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
+        cs_api_token=getattr(args, "cs_api_token", None),
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
-        cs_api_token=getattr(args, "cs_api_token", None),
     )
     manager.promote()
 
@@ -511,24 +574,14 @@ def stage(args: argparse.Namespace):
     manager = Manager(
         project=args.project,
         tag=args.tag,
-        cs_url=args.cs_url,
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
+        cs_api_token=getattr(args, "cs_api_token", None),
         models=args.names,
         base_branch=args.base_branch,
         cr=args.cr,
-        cs_api_token=getattr(args, "cs_api_token", None),
         staging_tag=getattr(args, "staging_tag", None),
     )
     manager.stage()
-
-
-def rm_stale_deployments(args: argparse.Namespace):
-    manager = DeploymentManager(
-        project=args.project,
-        cs_url=args.cs_url,
-        cs_api_token=args.cs_api_token,
-        stale_after=args.stale_after,
-    )
-    manager.rm_stale(dry_run=args.dry_run)
 
 
 def cli(subparsers: argparse._SubParsersAction):
@@ -542,7 +595,11 @@ def cli(subparsers: argparse._SubParsersAction):
     model_subparsers = parser.add_subparsers()
 
     build_parser = model_subparsers.add_parser("build")
+    build_parser.add_argument(
+        "--cs-appbase-tag", default=workers_config.get("CS_APPBASE_TAG", "master")
+    )
     build_parser.set_defaults(func=build)
+
     test_parser = model_subparsers.add_parser("test")
     test_parser.set_defaults(func=test)
 
@@ -562,13 +619,6 @@ def cli(subparsers: argparse._SubParsersAction):
 
     promote_parser = model_subparsers.add_parser("promote")
     promote_parser.set_defaults(func=promote)
-
-    stale_deps_parser = model_subparsers.add_parser("rm-stale-deployments")
-    stale_deps_parser.add_argument("--dry-run", action="store_true")
-    stale_deps_parser.add_argument(
-        "--stale-after", type=int, required=False, default=3600
-    )
-    stale_deps_parser.set_defaults(func=rm_stale_deployments)
 
     secrets.cli(model_subparsers)
 

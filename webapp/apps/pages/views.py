@@ -34,7 +34,7 @@ class ProfileView(View):
         )
 
 
-class FeedView(View):
+class LogView(View):
     profile_template = "profile/home_base.html"
     projects = Project.objects.all()
 

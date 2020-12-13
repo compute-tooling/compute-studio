@@ -1,13 +1,14 @@
 import math
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.contrib.auth import get_user_model
 
 import pytest
+import pytz
 import stripe
 
-from webapp.apps.users.models import Profile, Project
+from webapp.apps.users.models import Profile, Project, create_profile_from_user
 from webapp.apps.publish.tests.utils import mock_sync_projects
 from webapp.apps.billing.models import (
     Customer,
@@ -18,9 +19,14 @@ from webapp.apps.billing.models import (
     create_pro_billing_objects,
     UpdateStatus,
 )
+from webapp.apps.billing.utils import create_three_month_pro_subscription
 
 User = get_user_model()
 stripe.api_key = os.environ.get("STRIPE_SECRET")
+
+
+def time_is_close(a, b):
+    return (a - b).total_seconds() < 3600
 
 
 @pytest.mark.django_db
@@ -52,6 +58,46 @@ class TestStripeModels:
         customer.update_source(tok)
         assert customer.default_source != prev_source
 
+    @pytest.mark.parametrize("has_pmt_info", [True, False])
+    def test_subscription_with_trial_and_coupon(self, db, has_pmt_info, customer):
+        """
+        Create a subscription with a coupon and trial that expire in 3 months:
+        1. User has payment info.
+        2. User has no payment info.
+        """
+        if not has_pmt_info:
+            user = User.objects.create_user(
+                f"test-coupon", f"test-coupon@example.com", "heyhey2222"
+            )
+            create_profile_from_user(user)
+        else:
+            user = customer.user
+
+        create_three_month_pro_subscription(user)
+
+        now = datetime.utcnow().replace(tzinfo=pytz.UTC)
+        if now.month < 9:
+            three_months = now.replace(month=now.month + 3)
+        else:
+            three_months = now.replace(year=now.year + 1, month=now.month + 3 - 12)
+
+        user.refresh_from_db()
+        customer = getattr(user, "customer", None)
+        assert customer is not None
+
+        assert customer.current_plan()["name"] == "pro"
+
+        si = customer.current_plan(as_dict=False)
+
+        assert time_is_close(si.subscription.cancel_at, three_months)
+        assert time_is_close(si.subscription.trial_end, three_months)
+
+        sub = stripe.Subscription.retrieve(si.subscription.stripe_id)
+        assert abs(sub.cancel_at - int(three_months.timestamp())) < 15
+        assert abs(sub.trial_end - int(three_months.timestamp())) < 15
+
+        assert si.subscription.is_trial() is True
+
     def test_cancel_subscriptions(self, pro_profile):
         customer = pro_profile.user.customer
         for sub in customer.subscriptions.all():
@@ -69,8 +115,6 @@ class TestStripeModels:
         plans = set(
             [
                 Plan.objects.get(nickname="Free Plan"),
-                Plan.objects.get(nickname="Monthly Plus Plan"),
-                Plan.objects.get(nickname="Yearly Plus Plan"),
                 Plan.objects.get(nickname="Monthly Pro Plan"),
                 Plan.objects.get(nickname="Yearly Pro Plan"),
             ]
@@ -115,44 +159,16 @@ class TestStripeModels:
             "name": "pro",
         }
 
+        si = customer.current_plan(as_dict=False)
+        assert si.subscription.is_trial() is False
+        assert si.subscription.cancel_at is None
+        assert si.subscription.trial_end is None
+
         # test update_plan is idempotent
         plan = cs_product.plans.get(nickname=f"{plan_duration} Pro Plan")
 
         result = customer.update_plan(plan)
         assert result == UpdateStatus.nochange
-
-        assert customer.current_plan() == {
-            "plan_duration": plan_duration.lower(),
-            "name": "pro",
-        }
-
-        # test downgrade from pro to plus
-        plan = cs_product.plans.get(nickname=f"{plan_duration} Plus Plan")
-
-        result = customer.update_plan(plan)
-        assert result == UpdateStatus.downgrade
-
-        assert customer.current_plan() == {
-            "plan_duration": plan_duration.lower(),
-            "name": "plus",
-        }
-
-        # swap to other plus duration
-        plan = cs_product.plans.get(nickname=f"{other_duration} Plus Plan")
-
-        result = customer.update_plan(plan)
-        assert result == UpdateStatus.duration_change
-
-        assert customer.current_plan() == {
-            "plan_duration": other_duration.lower(),
-            "name": "plus",
-        }
-
-        # test upgrade back to pro
-        plan = cs_product.plans.get(nickname=f"{plan_duration} Pro Plan")
-
-        result = customer.update_plan(plan)
-        assert result == UpdateStatus.upgrade
 
         assert customer.current_plan() == {
             "plan_duration": plan_duration.lower(),
@@ -174,7 +190,10 @@ class TestStripeModels:
         plan = Plan.objects.get(nickname="Free Plan")
         result = customer.update_plan(plan)
         assert result == UpdateStatus.downgrade
-        assert customer.current_plan() == {"plan_duration": None, "name": "free"}
-        assert customer.current_plan(as_dict=False).plan == Plan.objects.get(
-            nickname="Free Plan"
-        )
+        assert customer.current_plan() == {
+            "plan_duration": other_duration.lower(),
+            "name": "pro",
+        }
+        si = customer.current_plan(as_dict=False)
+        assert si.plan == Plan.objects.get(nickname=f"{other_duration} Pro Plan")
+        assert si.subscription.cancel_at_period_end is True

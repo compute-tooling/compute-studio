@@ -69,7 +69,6 @@ def _submit_sim(submit_inputs):
 
 def _shuffled_sims(profile, get_inputs, meta_param_dict):
     modeler = User.objects.get(username="modeler").profile
-    # inputs = _submit_inputs("Used-for-testing", get_inputs, meta_param_dict, modeler)
 
     sims = []
     modeler_sims = []
@@ -86,9 +85,9 @@ def _shuffled_sims(profile, get_inputs, meta_param_dict):
         _, submit_sim = _submit_sim(inputs)
         sim = submit_sim.submit()
         sims.append(sim)
-        if i != number_sims - 1 and sim.owner == modeler:
+        if sim.owner == modeler:
             modeler_sims.append(sim)
-        elif i != number_sims - 1 and sim.owner == profile:
+        elif sim.owner == profile:
             tester_sims.append(sim)
     return sims, modeler_sims, tester_sims
 
@@ -99,12 +98,3 @@ class Customer:
 
     def current_plan(self):
         return self._current_plan
-
-
-def gen_collabs(n):
-    for i in range(n):
-        u = User.objects.create_user(
-            f"collab-{i}", f"collab{i}@example.com", "heyhey2222"
-        )
-        create_profile_from_user(u)
-        yield Profile.objects.get(user__username=f"collab-{i}")

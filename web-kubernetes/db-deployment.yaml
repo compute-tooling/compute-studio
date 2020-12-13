@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: db
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: POSTGRES_PASSWORD
+          image: postgres:12.4
+          ports:
+            - containerPort: 5432
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data/
+              name: db-volume
+              subPath: postgres
+      volumes:
+        - name: db-volume
+          # This GCE PD must already exist.
+          # gcePersistentDisk:
+          #   pdName: db-disk
+          #   fsType: ext4
+          hostPath:
+            path: /db-data
+            type: Directory
+      nodeSelector:
+        component: web

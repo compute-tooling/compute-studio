@@ -7,6 +7,7 @@ import uuid
 import yaml
 from pathlib import Path
 
+import httpx
 from git import Repo, InvalidGitRepositoryError
 
 
@@ -25,18 +26,50 @@ BASE_PATH = CURR_PATH / ".." / ".."
 
 class ModelConfig:
     def __init__(
-        self, project, cs_url, base_branch="origin/master", quiet=False, rclient=None,
+        self,
+        project,
+        cs_url,
+        *,
+        cs_api_token=None,
+        cs_auth_headers=None,
+        base_branch="origin/master",
+        quiet=False,
+        rclient=None,
     ):
         self.cs_url = cs_url
+        self.cs_api_token = cs_api_token
+        self.cs_auth_headers = cs_auth_headers
         self.project = project
         self.base_branch = base_branch
         self.quiet = quiet
         self.rclient = rclient
         self._projects = None
+        self._cluster_user = None
+
+    @property
+    def cluster_user(self):
+        if self._cluster_user is not None:
+            return self._cluster_user
+        if self.cs_api_token is not None:
+            resp = httpx.get(
+                f"{self.cs_url}/users/status/",
+                headers={"Authorization": f"Token {self.cs_api_token}"},
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            self._cluster_user = data["username"]
+        elif self.cs_auth_headers is not None:
+            self._cluster_user = self.cs_auth_headers["Cluster-User"]
+        else:
+            # No use caching anon--this could be helpful if creds are updated
+            # after creating the class.
+            return "anon"
+
+        return self._cluster_user
 
     def projects(self, models=None):
         if self.rclient is not None:
-            projects = self.rclient.get("projects")
+            projects = self.rclient.hget("projects", self.cluster_user)
             if projects is None:
                 self.set_projects(models=models)
                 return self._projects
@@ -51,7 +84,9 @@ class ModelConfig:
 
     def set_projects(self, models=None, projects=None):
         if projects is None:
-            projects = get_projects(self.cs_url)
+            projects = get_projects(
+                self.cs_url, self.cs_api_token, self.cs_auth_headers
+            )
         if models is not None:
             selected = {}
             for model in models:
@@ -61,14 +96,14 @@ class ModelConfig:
         self.format_resources(projects)
 
         if self.rclient is not None:
-            blob = self.rclient.get("projects")
+            blob = self.rclient.hget("projects", self.cluster_user)
             if blob is not None:
                 projects = {
                     **json.loads(blob.decode()),
                     **projects,
                 }
-            self.rclient.set(
-                "projects", json.dumps(projects),
+            self.rclient.hset(
+                "projects", self.cluster_user, json.dumps(projects),
             )
         self._projects = projects
 
@@ -99,4 +134,4 @@ class ModelConfig:
 
     def _list_secrets(self, app):
         secret = ModelSecrets(app["owner"], app["title"], project=self.project)
-        return secret.list_secrets()
+        return secret.list()

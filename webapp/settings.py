@@ -9,9 +9,9 @@ https://docs.djangoproject.com/en/2.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
-
+from datetime import datetime
 import os
-import dj_database_url
+import pytz
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -40,6 +40,12 @@ USE_STRIPE = os.environ.get("USE_STRIPE", "false").lower() == "true"
 
 DEFAULT_CLUSTER_USER = os.environ.get("DEFAULT_CLUSTER_USER")
 DEFAULT_VIZ_HOST = os.environ.get("DEFAULT_VIZ_HOST")
+
+# Number of private sims available/month on free tier.
+FREE_PRIVATE_SIMS = 3
+FREE_PRIVATE_SIMS_START_DATE = pytz.timezone("US/Eastern").localize(
+    datetime(2019, 11, 17, 0, 0, 0),
+)
 
 # Indicates that this c/s instance uses billing restrictions.
 HAS_USAGE_RESTRICTIONS = (
@@ -128,15 +134,33 @@ TEMPLATES = [
 
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
-WSGI_APPLICATION = "webapp.wsgi.application"
+WSGI_APPLICATION = "web`app.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
+
+
+def default_db_url():
+    DB_HOST = os.environ.get("DB_HOST", "127.0.0.1")
+    DB_USER = os.environ.get("DB_USER", "postgres")
+    DB_PASS = os.environ.get("DB_PASS", "")
+    DB_NAME = os.environ.get("DB_NAME", "")
+
+    return {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": DB_NAME,
+        "USER": DB_USER,
+        "PASSWORD": DB_PASS,
+        "HOST": DB_HOST,
+        "PORT": "5432",
+    }
+
+
 DATABASES = {
-    "default": dj_database_url.config(),
+    "default": default_db_url(),
     # override database name for tests.
-    "TEST": dict(dj_database_url.config(), **{"NAME": "testdb"}),
+    "TEST": dict(default_db_url(), **{"NAME": "testdb",}),
 }
 
 AUTHENTICATION_BACKENDS = (
@@ -157,6 +181,8 @@ AUTH_USER_MODEL = "users.User"
 # diable django-allauth email verification for now.
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
 ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+ACCOUNT_UNIQUE_EMAIL = False
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
