@@ -335,7 +335,7 @@ class RunMockModel(CoreTestMixin):
         assert_status(200, get_sim_resp, "set_sim_description")
         data = get_sim_resp.data
 
-        assert data["title"] == sim.title == f"{sim.project} #{sim.model_pk}"
+        assert data["title"] == sim.title
         assert data["owner"] == str(sim.owner)
         assert sim.parent_sim == None
 
