@@ -44,7 +44,7 @@ DEFAULT_VIZ_HOST = os.environ.get("DEFAULT_VIZ_HOST")
 # Number of private sims available/month on free tier.
 FREE_PRIVATE_SIMS = 3
 FREE_PRIVATE_SIMS_START_DATE = pytz.timezone("US/Eastern").localize(
-    datetime(2019, 11, 17, 0, 0, 0),
+    datetime(2020, 12, 13, 0, 0, 0),
 )
 
 # Indicates that this c/s instance uses billing restrictions.
