@@ -15,6 +15,14 @@ spec:
             - name: web-deployment-cleanup
               image: # Uses web image and is filled in with script.
               command: ["python", "manage.py", "rm_stale_deployments", "--stale-after", "1800"]
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  trap "touch /tmp/pod/main-terminated" EXIT
+                  python manage.py rm_stale_deployments --stale-after 1800
+              volumeMounts:
+                - mountPath: /tmp/pod
+                  name: tmp-pod
               resources:
                 requests:
                   memory: 0.5G
@@ -38,13 +46,13 @@ spec:
                     secretKeyRef:
                       name: web-db-secret
                       key: username
-                
+
                 - name: DB_PASS
                   valueFrom:
                     secretKeyRef:
                       name: web-db-secret
                       key: password
-                
+
                 - name: DB_NAME
                   valueFrom:
                     secretKeyRef:
@@ -132,3 +140,9 @@ spec:
           nodeSelector:
             component: web
           restartPolicy: Never
+          volumes:
+            - name: cloudsql
+              emptyDir: {}
+            - name: tmp-pod
+              emptyDir: {}
+      backoffLimit: 1
