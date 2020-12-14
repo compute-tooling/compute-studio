@@ -123,7 +123,11 @@ class Manager:
                       type: Directory
         """
         db_deployment = self.db_deployment
-        db_config = webapp_config["db"]
+        db_config = {}
+        for var in ["db", "web-db"]:
+            db_config = webapp_config.get(var, {})
+            if db_config:
+                break
         assert (
             db_config.get("provider") == "volume"
         ), f"Got: {db_config.get('provider', None)}"
@@ -167,8 +171,20 @@ class Manager:
             web_ir[0]["spec"]["routes"][0]["match"] = f"Host(`{self.host}`)"
             web_ir[1]["spec"]["routes"][0]["match"] = f"Host(`{self.host}`)"
 
-        if webapp_config.get("db", {}).get("provider", "") == "gcp-sql-proxy":
-            spec["containers"].append(webapp_config["db"]["args"][0])
+        db_config = {}
+        for var in ["db", "web-db"]:
+            db_config = webapp_config.get(var, {})
+            if db_config:
+                break
+
+        if db_config.get("provider", "") == "gcp-sql-proxy":
+            spec["containers"].append(db_config["args"][0])
+
+        if webapp_config.get("resources"):
+            spec["containers"][0]["resources"] = webapp_config["resources"]
+
+        if webapp_config.get("replicas"):
+            web_obj["spec"]["replicas"] = webapp_config["replicas"]
 
         self.write_config(self.web_serviceaccount, filename="web-serviceaccount.yaml")
         self.write_config(web_obj, filename="web-deployment.yaml")
@@ -193,8 +209,14 @@ class Manager:
                     "hostPath": {"path": "/code", "type": "Directory",},
                 }
             ]
-        if webapp_config.get("db", {}).get("provider", "") == "gcp-sql-proxy":
-            spec["containers"].append(webapp_config["db"]["args"][0])
+        db_config = {}
+        for var in ["db", "cronjob-db", "web-db"]:
+            db_config = webapp_config.get(var, {})
+            if db_config:
+                break
+
+        if db_config.get("provider", "") == "gcp-sql-proxy":
+            spec["containers"].append(db_config["args"][0])
 
         self.write_config(job_obj, filename="deployment-cleanup-job.yaml")
 
@@ -213,21 +235,21 @@ class Manager:
 
     def write_config(self, config, filename=None):
         if self.kubernetes_target == "-":
-            sys.stdout.write(yaml.dump(config))
+            sys.stdout.write(yaml.dump(config, width=1000))
             sys.stdout.write("---")
             sys.stdout.write("\n")
         else:
             with open(f"{self.kubernetes_target}/{filename}", "w") as f:
-                f.write(yaml.safe_dump(config))
+                f.write(yaml.safe_dump(config, width=1000))
 
     def write_config_all(self, configs, filename=None):
         if self.kubernetes_target == "-":
-            sys.stdout.write(yaml.safe_dump_all(configs))
+            sys.stdout.write(yaml.safe_dump_all(configs, width=1000))
             sys.stdout.write("---")
             sys.stdout.write("\n")
         else:
             with open(f"{self.kubernetes_target}/{filename}", "w") as f:
-                f.write(yaml.safe_dump_all(configs))
+                f.write(yaml.safe_dump_all(configs, width=1000))
 
 
 def manager_from_args(args: argparse.Namespace):

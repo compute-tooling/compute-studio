@@ -74,5 +74,5 @@ jobs:
       - name: Deploy
         run: |
           gcloud container clusters get-credentials $GKE_CLUSTER --zone $GKE_ZONE --project $GKE_PROJECT
-          cs workers svc config -o - --update-dns --update-redis | kubectl apply -f -
+          cs workers svc config -o - --update-dns | kubectl apply -f -
           kubectl get pods -o wide
