@@ -23,7 +23,7 @@ from rest_framework.authentication import (
 )
 from rest_framework.exceptions import PermissionDenied as APIPermissionDenied
 from rest_framework import filters
-
+from rest_framework.pagination import PageNumberPagination
 
 # from webapp.settings import DEBUG
 
@@ -191,7 +191,12 @@ class ProjectDetailAPIView(GetProjectMixin, APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ProjectAPIView(APIView):
+class ProjectResultsPagination(PageNumberPagination):
+    page_size = 10
+    max_page_size = 10
+
+
+class ProjectAPIView(generics.ListAPIView):
     authentication_classes = (
         SessionAuthentication,
         BasicAuthentication,
@@ -200,13 +205,11 @@ class ProjectAPIView(APIView):
     )
     api_user = User.objects.get(username="comp-api-user")
 
-    def get(self, request, *args, **kwargs):
-        ser = ProjectSerializer(
-            projects_with_access(self.request.user),
-            many=True,
-            context={"request": request},
-        )
-        return Response(ser.data, status=status.HTTP_200_OK)
+    serializer_class = ProjectSerializer
+    pagination_class = ProjectResultsPagination
+
+    def get_queryset(self):
+        return projects_with_access(self.request.user)
 
     def post(self, request, *args, **kwargs):
         if request.user.is_authenticated:
