@@ -14,11 +14,10 @@ spec:
           containers:
             - name: web-deployment-cleanup
               image: # Uses web image and is filled in with script.
-              command: ["python", "manage.py", "rm_stale_deployments", "--stale-after", "1800"]
-              command: ["/bin/sh", "-c"]
+              command: ["/bin/bash", "-c"]
               args:
                 - |
-                  trap "touch /tmp/pod/main-terminated" EXIT
+                  trap "touch /tmp/pod/main-terminated" EXIT;
                   python manage.py rm_stale_deployments --stale-after 1800
               volumeMounts:
                 - mountPath: /tmp/pod
@@ -141,8 +140,6 @@ spec:
             component: web
           restartPolicy: Never
           volumes:
-            - name: cloudsql
-              emptyDir: {}
-            - name: tmp-pod
-              emptyDir: {}
+          - emptyDir: {}
+            name: tmp-pod
       backoffLimit: 1
