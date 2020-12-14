@@ -245,7 +245,7 @@ class TestPublishViews:
         resp = api_client.get("/apps/api/v1/")
         assert resp.status_code == 200
         exp = set(proj.title for proj in Project.objects.all())
-        act = set(proj["title"] for proj in resp.data)
+        act = set(proj["title"] for proj in resp.data["results"])
         assert exp == act
 
     def test_get_private_projects(self, api_client, pro_profile):
@@ -259,7 +259,7 @@ class TestPublishViews:
         resp = api_client.get("/apps/api/v1/")
         assert resp.status_code == 200
         exp = set(proj.title for proj in Project.objects.filter(is_public=True).all())
-        act = set(proj["title"] for proj in resp.data)
+        act = set(proj["title"] for proj in resp.data["results"])
         assert exp == act
 
         # Test private app not included if user doesn't have write access
@@ -268,7 +268,7 @@ class TestPublishViews:
         resp = api_client.get("/apps/api/v1/")
         assert resp.status_code == 200
         exp = set(proj.title for proj in Project.objects.filter(is_public=True).all())
-        act = set(proj["title"] for proj in resp.data)
+        act = set(proj["title"] for proj in resp.data["results"])
         assert exp == act
 
         # Test private app included if user has read access
@@ -276,7 +276,7 @@ class TestPublishViews:
         resp = api_client.get("/apps/api/v1/")
         assert resp.status_code == 200
         exp = set(proj.title for proj in Project.objects.all())
-        act = set(proj["title"] for proj in resp.data)
+        act = set(proj["title"] for proj in resp.data["results"])
         assert exp == act
 
         api_client.force_login(collab.user)
@@ -284,7 +284,7 @@ class TestPublishViews:
         resp = api_client.get("/apps/api/v1/")
         assert resp.status_code == 200
         exp = set(proj.title for proj in Project.objects.all())
-        act = set(proj["title"] for proj in resp.data)
+        act = set(proj["title"] for proj in resp.data["results"])
         assert exp == act
 
     def test_models_api(self, api_client, test_models):

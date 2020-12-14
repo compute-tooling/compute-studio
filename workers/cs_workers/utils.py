@@ -71,9 +71,27 @@ def get_projects(cs_url, api_token=None, auth_headers=None):
         print("Not using auth")
         headers = {}
     print(f"getting data at {cs_url}")
-    resp = httpx.get(f"{cs_url}/apps/api/v1/", headers=headers)
-    assert resp.status_code == 200, f"Got code {resp.status_code}"
-    return hash_projects(resp.json())
+
+    client = httpx.Client(headers=headers, timeout=5)
+    resp = client.get(f"{cs_url}/apps/api/v1/")
+    assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
+    page = resp.json()
+
+    # BC: Not using pagination yet.
+    if isinstance(page, list):
+        return hash_projects(page)
+
+    results = page["results"]
+    next_url = page["next"]
+    while next_url is not None:
+        resp = client.get(next_url)
+        assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
+        page = resp.json()
+
+        results += page["results"]
+        next_url = page["next"]
+
+    return hash_projects(results)
 
 
 def hash_projects(payload):
