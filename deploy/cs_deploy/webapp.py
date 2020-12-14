@@ -235,21 +235,21 @@ class Manager:
 
     def write_config(self, config, filename=None):
         if self.kubernetes_target == "-":
-            sys.stdout.write(yaml.dump(config))
+            sys.stdout.write(yaml.dump(config, width=1000))
             sys.stdout.write("---")
             sys.stdout.write("\n")
         else:
             with open(f"{self.kubernetes_target}/{filename}", "w") as f:
-                f.write(yaml.safe_dump(config))
+                f.write(yaml.safe_dump(config, width=1000))
 
     def write_config_all(self, configs, filename=None):
         if self.kubernetes_target == "-":
-            sys.stdout.write(yaml.safe_dump_all(configs))
+            sys.stdout.write(yaml.safe_dump_all(configs, width=1000))
             sys.stdout.write("---")
             sys.stdout.write("\n")
         else:
             with open(f"{self.kubernetes_target}/{filename}", "w") as f:
-                f.write(yaml.safe_dump_all(configs))
+                f.write(yaml.safe_dump_all(configs, width=1000))
 
 
 def manager_from_args(args: argparse.Namespace):
