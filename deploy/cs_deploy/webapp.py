@@ -180,6 +180,12 @@ class Manager:
         if db_config.get("provider", "") == "gcp-sql-proxy":
             spec["containers"].append(db_config["args"][0])
 
+        if webapp_config.get("resources"):
+            spec["containers"][0]["resources"] = webapp_config["resources"]
+
+        if webapp_config.get("replicas"):
+            web_obj["spec"]["replicas"] = webapp_config["replicas"]
+
         self.write_config(self.web_serviceaccount, filename="web-serviceaccount.yaml")
         self.write_config(web_obj, filename="web-deployment.yaml")
         self.write_config(self.web_service, filename="web-service.yaml")

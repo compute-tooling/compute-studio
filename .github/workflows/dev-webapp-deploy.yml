@@ -45,13 +45,13 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '12'
-      
-      - name: Install yarn 
-        run: npm install yarn 
-      
+
+      - name: Install yarn
+        run: npm install yarn
+
       - name: Create app bundle
         run: yarn install && yarn build
-      
+
       # Install pip and pytest
       - name: Install dependencies
         run: |
@@ -88,5 +88,5 @@ jobs:
       - name: Deploy
         run: |
           gcloud container clusters get-credentials $GKE_CLUSTER --zone $GKE_ZONE --project $GKE_PROJECT
-          cs webapp config -o - --update-db | kubectl apply -f -
+          cs webapp config -o - | kubectl apply -f -
           kubectl get pods -o wide
