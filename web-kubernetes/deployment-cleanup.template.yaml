@@ -15,9 +15,13 @@ spec:
             - name: web-deployment-cleanup
               image: # Uses web image and is filled in with script.
               command: ["/bin/bash", "-c"]
+              # Creates a main-terminated file on exit.
+              # Sleeps 10 seconds to make sure that the proxy started.
+              # Runs the manage.py command.
               args:
                 - |
                   trap "touch /tmp/pod/main-terminated" EXIT;
+                  sleep 10;
                   python manage.py rm_stale_deployments --stale-after 1800
               volumeMounts:
                 - mountPath: /tmp/pod
