@@ -188,6 +188,23 @@ class TestBillingViews:
         assert next_url == exp_next_url
 
     @pytest.mark.parametrize("plan_duration", ["Monthly", "Yearly"])
+    def test_auto_upgrade_after_trial_no_customer(self, client, plan_duration, profile):
+        """
+        Test auto upgrade after trial page with no customer.
+        """
+        user = User.objects.create_user(
+            f"test-no-cust", f"test-no-cust@example.com", "heyhey2222"
+        )
+        create_profile_from_user(user)
+
+        resp = client.get(f"/billing/upgrade/{plan_duration.lower()}/aftertrial/")
+        assert resp.status_code == 302
+
+        client.force_login(user)
+        resp = client.get(f"/billing/upgrade/{plan_duration.lower()}/aftertrial/")
+        assert resp.status_code == 200
+
+    @pytest.mark.parametrize("plan_duration", ["Monthly", "Yearly"])
     def test_auto_upgrade_after_trial_no_pmt_info(self, client, plan_duration):
         """
         Test opt-in for subscription after trial for user without payment info.
