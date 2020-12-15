@@ -202,7 +202,8 @@ class TestBillingViews:
 
         client.force_login(user)
         resp = client.get(f"/billing/upgrade/{plan_duration.lower()}/aftertrial/")
-        assert resp.status_code == 200
+        assert resp.status_code == 302
+        assert resp.url == f"/billing/upgrade/monthly/"
 
     @pytest.mark.parametrize("plan_duration", ["Monthly", "Yearly"])
     def test_auto_upgrade_after_trial_no_pmt_info(self, client, plan_duration):
