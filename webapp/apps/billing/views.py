@@ -150,12 +150,29 @@ class AutoUpgradeAfterTrial(View):
         banner_msg = None
         plan_duration = kwargs["plan_duration"]
         customer: Customer = getattr(request.user, "customer", None)
+        url_duration, selected_plan = parse_upgrade_params(request)
         next_url = request.GET.get("next", None)
+
+        if customer is None:
+            return redirect(
+                reverse(
+                    "upgrade_plan_duration",
+                    kwargs=dict(plan_duration=url_duration or "monthly"),
+                ),
+            )
+
         card_info = customer.card_info()
         si = customer.current_plan(as_dict=False)
-        current_plan = customer.current_plan(si=si)
-        _, selected_plan = parse_upgrade_params(request)
 
+        if si is None:
+            return redirect(
+                reverse(
+                    "upgrade_plan_duration",
+                    kwargs=dict(plan_duration=url_duration or "monthly"),
+                ),
+            )
+
+        current_plan = customer.current_plan(si=si)
         sub: Subscription = si.subscription
         if not sub.is_trial():
             return redirect(

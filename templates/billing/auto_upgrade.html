@@ -55,7 +55,7 @@ information{% endblock %} {% block content %}
           <li class="pt-4">Support the open source development of Compute Studio!</li>
 
         </ul>
-        {% if cancel_at %}
+        {% if cancel_at or not has_payment_info %}
         <div class="text-center">
           <button type="button" class="btn btn-primary text-center" data-toggle="modal" data-target="#proModal">
             <strong>
