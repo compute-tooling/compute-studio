@@ -66,7 +66,7 @@ class UserSettings(View):
                     f"""
                         <p>Your free C/S Pro trial ends on {current_si.subscription.trial_end.date()}.</p>
                         <p>
-                        <a class="btn btn-primary" href="/billing/upgrade/yearly/aftertrial/">
+                        <a class="btn btn-primary" href="/billing/upgrade/monthly/aftertrial/">
                             <strong>Upgrade to C/S Pro after trial</strong>
                         </a>
                         </p>
