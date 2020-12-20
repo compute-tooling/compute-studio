@@ -501,7 +501,7 @@ class SimTabs extends React.Component<
       sects,
       isPublic,
     } = this.state;
-    console.log("hyeo sisPublic", isPublic);
+
     let initialServerErrors = hasServerErrors(inputs?.detail?.errors_warnings)
       ? inputs.detail.errors_warnings
       : null;
