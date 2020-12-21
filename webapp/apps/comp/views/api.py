@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.http import Http404
+from django.utils.safestring import mark_safe
 
 from rest_framework.authentication import (
     BasicAuthentication,
@@ -352,6 +353,24 @@ class NewSimulationAPIView(RequiresLoginPermissions, APIView):
         return Response(data, status=status.HTTP_201_CREATED)
 
 
+def fail(project, model_pk, traceback, url):
+    try:
+        send_mail(
+            subject=f"Compute Studio Error",
+            message=f"An error has occurred at {project} #{model_pk}: \n\n {url} \n\n{traceback}",
+            html_message=mark_safe(
+                f"<p>An error has occurred at {project} "
+                f"<a href='{url}'>#{model_pk}</a>:</p>"
+                f"<pre style='margin-top:10px'><code>{traceback}</code></pre>."
+            ),
+            from_email="notifications@compute.studio",
+            recipient_list=["hank@compute.studio"],
+            fail_silently=True,
+        )
+    except Exception as e:
+        print(e)
+
+
 class OutputsAPIView(RecordOutputsMixin, APIView):
     """
     API endpoint used by the workers to update the Simulation object with the
@@ -396,6 +415,19 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
 
                         traceback.print_exc()
                         pass
+                if sim.status == "FAIL":
+                    if self.request.is_secure():
+                        protocol = "https"
+                    else:
+                        protocol = "http"  # local dev.
+                    base_url = f"{protocol}://{self.request.get_host()}"
+                    url = base_url + sim.get_absolute_url()
+                    fail(
+                        project=sim.project,
+                        model_pk=sim.model_pk,
+                        traceback=sim.traceback,
+                        url=url,
+                    )
             return Response(status=status.HTTP_200_OK)
         else:
             return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -418,7 +450,7 @@ class MyInputsAPIView(APIView):
             )
             if not inputs.project.has_write_access(request.user):
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
-            if inputs.status in ("PENDING", "INVALID"):
+            if inputs.status in ("PENDING", "INVALID", "FAIL"):
                 # successful run
                 if data["status"] == "SUCCESS":
                     inputs.errors_warnings = data["errors_warnings"]
@@ -433,6 +465,19 @@ class MyInputsAPIView(APIView):
                     inputs.status = "FAIL"
                     inputs.traceback = data["traceback"]
                     inputs.save()
+
+                    if self.request.is_secure():
+                        protocol = "https"
+                    else:
+                        protocol = "http"  # local dev.
+                    base_url = f"{protocol}://{self.request.get_host()}"
+                    url = base_url + inputs.get_absolute_url()
+                    fail(
+                        project=inputs.project,
+                        model_pk=inputs.sim.model_pk,
+                        traceback=inputs.traceback,
+                        url=url,
+                    )
             return Response(status=status.HTTP_200_OK)
         else:
             print("inputs put error", ser.errors)
