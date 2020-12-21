@@ -22,6 +22,7 @@ import {
   RemoteOutputs,
 } from "../types";
 import API from "./API";
+import { Card } from "react-bootstrap";
 
 // need to require schema in model_parameters!
 export const tbLabelSchema = yup.object().shape({
@@ -185,6 +186,24 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
             />
           ) : (
             <div />
+          )}
+
+          {inputs?.detail?.status === "FAIL" && (
+            <Card className="card-outer p-2">
+              <Card.Body className="alert alert-danger">
+                <p>
+                  <a href={`/${accessStatus.project}/`}>{accessStatus.project}</a> was unable to
+                  validate your inputs. The maintainers of {accessStatus.project} have been notified
+                  and are working to fix the problem.
+                </p>
+                <details>
+                  <summary>Detail</summary>
+                  <pre>
+                    <code>{inputs?.detail?.traceback}</code>
+                  </pre>
+                </details>
+              </Card.Body>
+            </Card>
           )}
 
           {Object.entries(sects).map((msect_item, ix) => {

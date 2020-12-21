@@ -222,7 +222,7 @@ export interface InputsDetail {
   meta_parameters: { [paramName: string]: Array<ValueObject> | ValueObject["value"] };
   parent_model_pk: number;
   sim: MiniSimulation;
-  status: "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
+  status: "INVALID" | "FAIL" | "WORKER_FAILURE" | "PENDING" | "SUCCESS" | "STARTED";
   role?: Role;
   traceback: string;
 }
