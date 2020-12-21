@@ -27,10 +27,5 @@ spec:
           env:
             - name: OUTPUTS_VERSION
               value: v1
-            - name: CS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: worker-secret
-                  key: CS_URL
       nodeSelector:
         component: model

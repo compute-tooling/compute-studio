@@ -270,7 +270,9 @@ class Manager:
         secrets = copy.deepcopy(self.secret_template)
         secrets["stringData"]["BUCKET"] = self.bucket
         secrets["stringData"]["PROJECT"] = self.project
-        secrets["stringData"]["CS_CRYPT_KEY"] = self.secrets.get("CS_CRYPT_KEY")
+        secrets["stringData"]["CS_CRYPT_KEY"] = workers_config.get(
+            "CS_CRYPT_KEY"
+        ) or self.secrets.get("CS_CRYPT_KEY")
         redis_secrets = self.redis_secrets()
         for name, sec in redis_secrets.items():
             if sec is not None:

@@ -60,17 +60,28 @@ def redis_conn_from_env():
     return kwargs
 
 
-def get_projects(cs_url, api_token=None, auth_headers=None):
+def get_projects(cs_url, api_token=None, auth_headers=None, max_retries=5):
+    tries = 0
+    while True:
+        try:
+            return _get_projects(cs_url, api_token=api_token, auth_headers=auth_headers)
+        except Exception as e:
+            if tries < max_retries:
+                print("Got exception", e)
+                print("Sleeping for", 2 ** tries, "seconds")
+                time.sleep(2 ** tries)
+                tries += 1
+            else:
+                raise e
+
+
+def _get_projects(cs_url, api_token=None, auth_headers=None):
     if api_token is not None:
-        print("Using api token")
         headers = {"Authorization": f"Token {api_token}"}
     elif auth_headers is not None:
-        print("Using auth headers")
         headers = auth_headers
     else:
-        print("Not using auth")
         headers = {}
-    print(f"getting data at {cs_url}")
 
     client = httpx.Client(headers=headers, timeout=5)
     resp = client.get(f"{cs_url}/apps/api/v1/")
