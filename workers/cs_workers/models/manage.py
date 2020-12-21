@@ -493,7 +493,7 @@ class Manager(BaseManager):
         assert (
             resp.status_code == 200
         ), f"Got: {resp.url} {resp.status_code} {resp.text}"
-        return resp.json()["latest_tag"]
+        return resp.json()["latest_tag"]["image_tag"]
 
 
 def build(args: argparse.Namespace):
