@@ -100,7 +100,7 @@ export default class API {
     results: Array<MiniSimulation>;
   }> {
     const query = this.buildQuery(params);
-    return axios.get(`/api/v1/feed`, { params: query }).then(resp => resp.data);
+    return axios.get(`/api/v1/log`, { params: query }).then(resp => resp.data);
   }
 
   getModels(): Promise<{ count: number; next: string; previous: string; results: Array<Project> }> {

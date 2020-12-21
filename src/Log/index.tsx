@@ -38,13 +38,22 @@ interface LogProps extends URLProps {
   pageName: "home" | "log" | "profile";
 }
 
+interface Log {
+  count: number;
+  next?: string;
+  previous: string;
+  results: Array<MiniSimulation>;
+}
+
+interface LogFilterParams {
+  ordering?: Array<"project__owner" | "project__title" | "creation_date">;
+  title?: string;
+  title__notlike?: string;
+}
+
 interface LogState {
-  simFeed?: {
-    count: number;
-    next?: string;
-    previous: string;
-    results: Array<MiniSimulation>;
-  };
+  myLog?: Log;
+  publicLog?: Log;
   modelFeed?: {
     count: number;
     next?: string;
@@ -52,13 +61,10 @@ interface LogState {
     results: Array<Project>;
   };
   loading: boolean;
-  params: {
-    ordering?: Array<"project__owner" | "project__title" | "creation_date">;
-    title?: string;
-    title__notlike?: string;
-  };
+  myParams: LogFilterParams;
+  publicParams: LogFilterParams;
   recentModels?: Array<Project>;
-  homeTab: "sims" | "models";
+  homeTab: "log" | "sims" | "models";
   accessStatus: AccessStatus;
 }
 
@@ -514,8 +520,8 @@ const LoadSimulationsButton: React.FC<{ loading: boolean; loadNextSimulations: (
 );
 
 const QueryDropDown: React.FC<{
-  params: LogState["params"];
-  query: (params: LogState["params"]) => void;
+  params: LogFilterParams;
+  query: (params: LogFilterParams) => void;
 }> = ({ params, query }) => (
   <Dropdown drop="left">
     <Dropdown.Toggle
@@ -572,7 +578,8 @@ class Log extends React.Component<LogProps, LogState> {
     this.api = new API(username);
     this.state = {
       loading: false,
-      params: { ordering: [], title: null, title__notlike: null },
+      publicParams: { ordering: [], title: null, title__notlike: null },
+      myParams: { ordering: [], title: null, title__notlike: null },
       homeTab: "sims",
       accessStatus: null,
     };
@@ -718,6 +725,46 @@ class Log extends React.Component<LogProps, LogState> {
       </>
     );
 
+    const nav = (
+      <Nav variant="pills" className="d-flex d-sm-block">
+        <Row className="flex-1">
+          <Col className="p-0 align-self-center">
+            <Nav.Item className="left-nav-item text-center sub-nav-item flex-2">
+              <Nav.Link
+                className="border"
+                eventKey="log"
+                style={{ fontSize: "15px", fontWeight: 600 }}
+              >
+                Public Log
+              </Nav.Link>
+            </Nav.Item>
+          </Col>
+          <Col className="p-0 align-self-center">
+            <Nav.Item className="text-center sub-nav-item flex-2 rounded-0">
+              <Nav.Link
+                className="border"
+                eventKey="sims"
+                style={{ fontSize: "15px", fontWeight: 600 }}
+              >
+                My Simulations
+              </Nav.Link>
+            </Nav.Item>
+          </Col>
+          <Col className="p-0 align-self-center">
+            <Nav.Item className="right-nav-item text-center sub-nav-item flex-1">
+              <Nav.Link
+                className="border"
+                eventKey="models"
+                style={{ fontSize: "15px", fontWeight: 600 }}
+              >
+                My Models
+              </Nav.Link>
+            </Nav.Item>
+          </Col>
+        </Row>
+      </Nav>
+    );
+
     if (this.props.pageName === "log") {
       return (
         <>
@@ -751,7 +798,7 @@ class Log extends React.Component<LogProps, LogState> {
         defaultActiveKey={this.state.homeTab}
         transition={false}
         activeKey={this.state.homeTab}
-        onSelect={(homeTab: "sims" | "models") => {
+        onSelect={(homeTab: "log" | "sims" | "models") => {
           if (homeTab) this.setState({ homeTab: homeTab });
         }}
       >
@@ -761,36 +808,11 @@ class Log extends React.Component<LogProps, LogState> {
               this.props.pageName !== "home" ? "" : " offset-md-3"
             } align-self-center`}
           >
-            <Nav variant="pills" className="d-flex d-sm-block">
-              <Row className="flex-1">
-                <Col className="p-0 align-self-center">
-                  <Nav.Item className="left-nav-item text-center sub-nav-item flex-2">
-                    <Nav.Link
-                      className="border"
-                      eventKey="sims"
-                      style={{ fontSize: "15px", fontWeight: 600 }}
-                    >
-                      Simulations
-                    </Nav.Link>
-                  </Nav.Item>
-                </Col>
-                <Col className="p-0 align-self-center">
-                  <Nav.Item className="right-nav-item text-center sub-nav-item flex-1">
-                    <Nav.Link
-                      className="border"
-                      eventKey="models"
-                      style={{ fontSize: "15px", fontWeight: 600 }}
-                    >
-                      Models
-                    </Nav.Link>
-                  </Nav.Item>
-                </Col>
-              </Row>
-            </Nav>
+            {nav}
           </Col>
           {this.state.homeTab === "sims" ? (
             <Col className="col-1 align-self-center">
-              <QueryDropDown params={this.state.params} query={this.query} />
+              <QueryDropDown params={this.state.myParams} query={this.query} />
             </Col>
           ) : null}
         </Row>
