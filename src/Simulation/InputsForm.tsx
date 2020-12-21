@@ -195,13 +195,13 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
                   <a href={`/${accessStatus.project}/`}>{accessStatus.project}</a> was unable to
                   validate your inputs. The maintainers of {accessStatus.project} have been notified
                   and are working to fix the problem.
-                  <details>
-                    <summary>Detail</summary>
-                    <pre>
-                      <code>{inputs?.detail?.traceback}</code>
-                    </pre>
-                  </details>
                 </p>
+                <details>
+                  <summary>Detail</summary>
+                  <pre>
+                    <code>{inputs?.detail?.traceback}</code>
+                  </pre>
+                </details>
               </Card.Body>
             </Card>
           )}
