@@ -189,7 +189,7 @@ const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
           )}
 
           {inputs?.detail?.status === "FAIL" && (
-            <Card className="card-outer">
+            <Card className="card-outer p-2">
               <Card.Body className="alert alert-danger">
                 <p>
                   <a href={`/${accessStatus.project}/`}>{accessStatus.project}</a> was unable to

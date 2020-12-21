@@ -375,7 +375,7 @@ class SimTabs extends React.Component<
             actions.setSubmitting(false);
 
             history.pushState(null, null, data.sim.gui_url);
-          } else if (response.data.status === "INVALID") {
+          } else if (data.status === "INVALID" || data.status === "FAIL") {
             this.api.getAccessStatus().then(accessStatus => {
               this.setState(prevState => ({
                 inputs: { ...prevState.inputs, ...{ detail: data } },
@@ -383,10 +383,15 @@ class SimTabs extends React.Component<
                 accessStatus: accessStatus,
               }));
             });
+            let serverErrors;
+            if (data.status === "INVALID") {
+              serverErrors = data.errors_warnings;
+            }
             actions.setStatus({
               status: data.status,
-              serverErrors: data.errors_warnings,
+              serverErrors: serverErrors,
             });
+
             actions.setSubmitting(false);
             window.scroll(0, 0);
           } else {
