@@ -106,7 +106,9 @@ class User:
         return jwt.encode(self.dump(), cryptkeeper.decrypt(self.jwt_secret))
 
     def read_jwt_token(self, jwt_token):
-        return jwt.decode(jwt_token, cryptkeeper.decrypt(self.jwt_secret))
+        return jwt.decode(
+            jwt_token, cryptkeeper.decrypt(self.jwt_secret), algorithms=["HS256"]
+        )
 
     def headers(self):
         jwt_token = jwt.encode(
