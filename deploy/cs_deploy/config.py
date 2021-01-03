@@ -51,7 +51,6 @@ def load_workers_config():
         "CLUSTER_HOST",
         "VIZ_HOST",
         "CS_APPBASE_TAG",
-        "CS_CRYPT_KEY",
     ] | user_config.keys():
         if os.environ.get(var):
             config[var] = os.environ.get(var)

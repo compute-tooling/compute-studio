@@ -228,7 +228,7 @@ class Manager:
             if (val := os.environ.get(var)) is not None:
                 warnings.warn(f"Getting value for {var} from environment.")
                 secret_obj["stringData"][var] = val
-            elif (val := secrets.get_or_none(var)) is not None:
+            if (val := secrets.get_or_none(var)) is not None:
                 secret_obj["stringData"][var] = val
 
         self.write_config(secret_obj, filename="websecret.yaml")
