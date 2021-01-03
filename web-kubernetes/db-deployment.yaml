@@ -18,8 +18,8 @@ spec:
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: web-secret
-                  key: POSTGRES_PASSWORD
+                  name: web-db-secret
+                  key: password
           image: postgres:12.4
           ports:
             - containerPort: 5432

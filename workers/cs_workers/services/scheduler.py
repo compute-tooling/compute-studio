@@ -252,10 +252,21 @@ def get_app():
     config = {}
     for user in all_users():
         print(f"loading data for {user.username} at {user.url}")
-        config[user.username] = ModelConfig(
-            PROJECT, cs_url=user.url, cs_auth_headers=user.headers(), rclient=rclient,
-        )
-        config[user.username].set_projects()
+        try:
+            user_config = ModelConfig(
+                PROJECT,
+                cs_url=user.url,
+                cs_auth_headers=user.headers(),
+                rclient=rclient,
+            )
+            user_config.set_projects()
+            config[user.username] = user_config
+        # Likely to be a network / connection error.
+        except Exception:
+            import traceback
+
+            traceback.print_exc()
+
     print("config?:", config)
     assert rclient.hgetall("projects") is not None
     return tornado.web.Application(
