@@ -158,18 +158,33 @@ const AuthorsDropDown: React.FC<{ authors: string[] }> = ({ authors }) => {
 // Utility for caching paramtools values in case the user navigates away from the page.
 export const Persist = {
   persist: (key: string, values: DescriptionValues) => {
-    window.localStorage.setItem(key, JSON.stringify(values));
+    try {
+      window.localStorage.setItem(key, JSON.stringify(values));
+    } catch (e) {
+      console.log(e);
+    }
   },
   pop: (key): DescriptionValues | null => {
-    const data = window.localStorage.getItem(key);
-    Persist.clear(key);
-    if (data) {
-      return (JSON.parse(data) as unknown) as DescriptionValues;
+    try {
+      const data = window.localStorage.getItem(key);
+      Persist.clear(key);
+      if (data) {
+        return (JSON.parse(data) as unknown) as DescriptionValues;
+      }
+    } catch (e) {
+      console.log(e);
+      return;
     }
 
     return null;
   },
-  clear: key => window.localStorage.removeItem(key),
+  clear: key => {
+    try {
+      window.localStorage.removeItem(key);
+    } catch (e) {
+      console.log(e);
+    }
+  },
 };
 
 export default class DescriptionComponent extends React.Component<
