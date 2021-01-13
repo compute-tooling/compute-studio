@@ -474,16 +474,30 @@ export function formikToJSON(
 export const Persist = {
   persist: (key: string, values: InitialValues) => {
     console.log("persisting", values);
-    window.localStorage.setItem(key, JSON.stringify(values));
+    try {
+      window.localStorage.setItem(key, JSON.stringify(values));
+    } catch (e) {
+      console.log(e);
+    }
   },
   pop: (key): InitialValues | null => {
-    const data = window.localStorage.getItem(key);
-    Persist.clear(key);
-    if (data) {
-      return (JSON.parse(data) as unknown) as InitialValues;
+    try {
+      const data = window.localStorage.getItem(key);
+      Persist.clear(key);
+      if (data) {
+        return (JSON.parse(data) as unknown) as InitialValues;
+      }
+    } catch (e) {
+      console.log(e);
     }
 
     return null;
   },
-  clear: key => window.localStorage.removeItem(key),
+  clear: key => {
+    try {
+      window.localStorage.removeItem(key);
+    } catch (e) {
+      console.log(e);
+    }
+  },
 };
