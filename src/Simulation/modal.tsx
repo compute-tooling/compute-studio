@@ -245,7 +245,7 @@ const RunDialog: React.FC<{
         {visabilitymsg}
         <>
           <span>
-            Pricing: ${`${accessStatus.exp_cost}`}.
+            Pricing: ${`${accessStatus.exp_cost}`}
             <PricingInfoCollapse accessStatus={accessStatus} />
           </span>
         </>
