@@ -68,7 +68,12 @@ class AccessStatusAPI(GetProjectMixin, APIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        plan = {"name": "free", "plan_duration": None}
+        plan = {
+            "name": "free",
+            "plan_duration": None,
+            "cancel_at": None,
+            "trial_end": None,
+        }
         remaining_private_sims = {}
         if user.is_authenticated and user.profile:
             user_status = user.profile.status
