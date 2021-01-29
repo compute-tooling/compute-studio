@@ -168,7 +168,7 @@ export interface AccessStatus {
   server_cost?: number;
   exp_cost?: number;
   exp_time?: number;
-  plan: { name: "free" | "pro" };
+  plan: { name: "free" | "pro"; cancel_at?: Date | null; trial_end?: Date | null };
   remaining_private_sims: { [project: string]: number };
   project: string;
 }

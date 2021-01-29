@@ -121,7 +121,12 @@ class TestBillingViews:
         assert (
             resp.context["current_plan"]
             == customer.current_plan()
-            == {"plan_duration": plan_duration.lower(), "name": "pro"}
+            == {
+                "plan_duration": plan_duration.lower(),
+                "name": "pro",
+                "trial_end": None,
+                "cancel_at": None,
+            }
         )
 
         # test swap duration
@@ -141,7 +146,12 @@ class TestBillingViews:
         assert (
             resp.context["current_plan"]
             == customer.current_plan()
-            == {"plan_duration": other_duration.lower(), "name": "pro"}
+            == {
+                "plan_duration": other_duration.lower(),
+                "name": "pro",
+                "trial_end": None,
+                "cancel_at": None,
+            }
         )
 
         # go back to initial plan_duration
@@ -162,12 +172,17 @@ class TestBillingViews:
         assert resp.status_code == 200, f"Expected 200: got {resp.status_code}"
         assert resp.context["plan_duration"] == plan_duration.lower()
         customer = Customer.objects.get(pk=customer.pk)
+        si = customer.current_plan(as_dict=False)
         assert (
             resp.context["current_plan"]
             == customer.current_plan()
-            == {"plan_duration": plan_duration.lower(), "name": "pro"}
+            == {
+                "plan_duration": plan_duration.lower(),
+                "name": "pro",
+                "trial_end": None,
+                "cancel_at": si.subscription.cancel_at.date(),
+            }
         )
-        si = customer.current_plan(as_dict=False)
         assert si.plan == Plan.objects.get(nickname=f"{plan_duration} Pro Plan")
         assert si.subscription.cancel_at_period_end is True
 
@@ -232,7 +247,12 @@ class TestBillingViews:
         si = user.customer.current_plan(as_dict=False)
         exp = {
             "plan_duration": plan_duration.lower(),
-            "current_plan": {"plan_duration": "monthly", "name": "pro"},
+            "current_plan": {
+                "plan_duration": "monthly",
+                "name": "pro",
+                "cancel_at": si.subscription.cancel_at.date(),
+                "trial_end": si.subscription.trial_end.date(),
+            },
             "card_info": None,
             "selected_plan": None,
             "next": None,
@@ -294,7 +314,12 @@ class TestBillingViews:
         si = customer.current_plan(as_dict=False)
         exp = {
             "plan_duration": plan_duration,
-            "current_plan": {"plan_duration": "monthly", "name": "pro"},
+            "current_plan": {
+                "plan_duration": "monthly",
+                "name": "pro",
+                "cancel_at": si.subscription.cancel_at.date(),
+                "trial_end": si.subscription.trial_end.date(),
+            },
             "card_info": customer.card_info(),
             "selected_plan": None,
             "next": None,
@@ -318,11 +343,18 @@ class TestBillingViews:
         assert customer.current_plan() == {
             "plan_duration": plan_duration.lower(),
             "name": "pro",
+            "cancel_at": None,
+            "trial_end": si.subscription.trial_end.date(),
         }
 
         exp = {
             "plan_duration": plan_duration.lower(),
-            "current_plan": {"plan_duration": plan_duration.lower(), "name": "pro"},
+            "current_plan": {
+                "plan_duration": plan_duration.lower(),
+                "name": "pro",
+                "cancel_at": None,
+                "trial_end": si.subscription.trial_end.date(),
+            },
             "card_info": customer.card_info(),
             "selected_plan": None,
             "next": None,

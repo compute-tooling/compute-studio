@@ -145,7 +145,8 @@ const RunDialog: React.FC<{
   if (accessStatus.sponsor_message) {
     sponsorMessage = accessStatus.sponsor_message;
   }
-  const isPrivateRateLimited = accessStatus.plan.name === "free" && remainingPrivateSims <= 0;
+  const { plan } = accessStatus;
+  const isPrivateRateLimited = plan.name === "free" && remainingPrivateSims <= 0;
   if (isPrivateRateLimited && createsNewSim) {
     isPublic = true;
   } else if (!createsNewSim) {
@@ -185,7 +186,7 @@ const RunDialog: React.FC<{
     );
   }
   let makePrivate;
-  if (accessStatus.plan.name === "free") {
+  if (plan.name === "free") {
     makePrivate = (
       <span>
         Make private ({remainingPrivateSims} remaining this month
@@ -202,6 +203,27 @@ const RunDialog: React.FC<{
     makePrivate = <span>Make private</span>;
   }
 
+  let optInMsg;
+  if (!isPublic && plan.name !== "free" && plan.cancel_at && plan.trial_end) {
+    optInMsg = (
+      <Row className="px-2 pt-2">
+        <Col className="text-center">
+          <div className="alert alert-primary" role="alert">
+            <p>Your free C/S Pro trial ends on {plan.trial_end}.</p>
+            <p>
+              <Button
+                variant="primary"
+                href={`/billing/upgrade/monthly/aftertrial/?next=${window.location.pathname}`}
+              >
+                <strong>Upgrade to C/S Pro after trial</strong>
+              </Button>
+            </p>
+          </div>
+        </Col>
+      </Row>
+    );
+  }
+
   let pricing;
   if (accessStatus.is_sponsored) {
     pricing = (
@@ -212,7 +234,7 @@ const RunDialog: React.FC<{
           {sponsorMessage ? (
             <div dangerouslySetInnerHTML={{ __html: sponsorMessage }} />
           ) : (
-            "anonymous"
+            "an anonymous user."
           )}
         </p>
       </Modal.Body>
@@ -223,7 +245,7 @@ const RunDialog: React.FC<{
         {visabilitymsg}
         <>
           <span>
-            Pricing: ${`${accessStatus.exp_cost}`}.
+            Pricing: ${`${accessStatus.exp_cost}`}
             <PricingInfoCollapse accessStatus={accessStatus} />
           </span>
         </>
@@ -236,6 +258,7 @@ const RunDialog: React.FC<{
       <Modal.Header closeButton>
         <Modal.Title>Create a new {isPublic ? "public" : "private"} simulation</Modal.Title>
       </Modal.Header>
+      {optInMsg}
       {pricing}
       <Modal.Footer style={{ justifyContent: "none" }}>
         <Row className="align-items-center w-100 justify-content-between">

@@ -127,6 +127,16 @@ class Customer(models.Model):
             elif si.plan.nickname == "Yearly Pro Plan":
                 current_plan = {"plan_duration": "yearly", "name": "pro"}
 
+            trial_end_date = None
+            cancel_at = None
+            sub = si.subscription
+            if sub.trial_end is not None:
+                trial_end_date = sub.trial_end.date()
+            if sub.cancel_at is not None:
+                cancel_at = sub.cancel_at.date()
+            current_plan["trial_end"] = trial_end_date
+            current_plan["cancel_at"] = cancel_at
+
         except SubscriptionItem.DoesNotExist:
             pass
 

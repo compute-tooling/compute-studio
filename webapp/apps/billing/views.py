@@ -152,6 +152,8 @@ class AutoUpgradeAfterTrial(View):
         customer: Customer = getattr(request.user, "customer", None)
         url_duration, selected_plan = parse_upgrade_params(request)
         next_url = request.GET.get("next", None)
+        if next_url is not None:
+            request.session["post_upgrade_url"] = next_url
 
         if customer is None:
             return redirect(
@@ -280,6 +282,9 @@ class AutoUpgradeAfterTrialConfirm(View):
 
         current_si.subscription.update_from_stripe_obj(stripe_sub)
         current_plan = customer.current_plan(si=current_si)
+
+        if request.session.get("post_upgrade_url"):
+            return redirect(request.session.pop("post_upgrade_url"))
 
         banner_msg = (
             f"You will continue to be on the {current_si.plan.nickname} after your trial "
