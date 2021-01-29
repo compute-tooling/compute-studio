@@ -61,7 +61,11 @@ class UserSettings(View):
         banner_msg = None
         if getattr(request.user, "customer", None) is not None:
             current_si = request.user.customer.current_plan(as_dict=False)
-            if current_si is not None and current_si.subscription.is_trial():
+            if (
+                current_si is not None
+                and current_si.subscription.is_trial()
+                and current_si.subscription.cancel_at is not None
+            ):
                 banner_msg = mark_safe(
                     f"""
                         <p>Your free C/S Pro trial ends on {current_si.subscription.trial_end.date()}.</p>

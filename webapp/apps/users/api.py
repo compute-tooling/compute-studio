@@ -75,6 +75,7 @@ class AccessStatusAPI(GetProjectMixin, APIView):
             username = user.username
             if getattr(user, "customer", None) is not None:
                 plan = user.customer.current_plan()
+
         else:
             user_status = "anon"
             username = None

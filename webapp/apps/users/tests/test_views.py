@@ -193,7 +193,12 @@ class TestUsersViews:
             "user_status": "anon",
             "api_url": "/users/status/",
             "username": None,
-            "plan": {"name": "free", "plan_duration": None},
+            "plan": {
+                "name": "free",
+                "plan_duration": None,
+                "trial_end": None,
+                "cancel_at": None,
+            },
             "remaining_private_sims": {},
         }
 
