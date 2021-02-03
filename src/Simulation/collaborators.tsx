@@ -287,7 +287,7 @@ export const CollaborationModal: React.FC<{
 
   const [selectedUser, setSelectedUser] = React.useState("");
 
-  const plan = accessStatus.plan.name;
+  const plan = accessStatus.plan?.name || "free";
 
   let authors: Array<{
     username: string;
