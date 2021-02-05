@@ -6,7 +6,7 @@ API endpoints that create simulations require the user to include their API Toke
 ### [compute-studio-kit][1]
 
 ```bash
-$ pip install compdevkit
+$ pip install cs-kit
 $ csk-token --username myuser --password mypass
 Token: your-token-here
 ```
@@ -36,6 +36,6 @@ Out[3]: {'token': 'Your token here'}
 ```
 
 
-[1]: https://github.com/compute-tooling/compute-studio-kit#comp-studio-kit
+[1]: https://github.com/compute-tooling/compute-studio-kit#compute-studio-kit
 [2]: https://httpie.org/
 [3]: https://2.python-requests.org/en/master/
