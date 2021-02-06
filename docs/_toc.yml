@@ -17,3 +17,4 @@
     - file: api/guide
     - file: api/auth
     - file: api/python
+    - file: api/python_api
