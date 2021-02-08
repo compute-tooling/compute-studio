@@ -1,12 +1,7 @@
 .. _cs_kit:
 
-Compute Studio Python Client API
+Python Client
 =================================================
-
-**Python Client API**
-
-cs_kit.api
-------------------------------------------
 
 .. currentmodule:: cs_kit.api
 
