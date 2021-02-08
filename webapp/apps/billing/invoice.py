@@ -123,11 +123,15 @@ def create_invoice_items(customer, aggregated_metrics, description, period):
 def invoice_customer(customer, start, end, send_invoice=True):
     profile = customer.user.profile
     owner_sims = process_simulations(
-        profile.sims.filter(sponsor__isnull=True, creation_date__date__gte=start.date())
+        profile.sims.filter(
+            sponsor__isnull=True,
+            creation_date__date__gte=start.date(),
+            creation_date__date__lte=end.date(),
+        )
     )
     sponsor_sims = process_simulations(
         customer.user.profile.sponsored_sims.filter(
-            creation_date__date__gte=start.date()
+            creation_date__date__gte=start.date(), creation_date__date__lte=end.date()
         )
     )
 
