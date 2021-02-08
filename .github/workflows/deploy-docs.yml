@@ -19,7 +19,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: cs-docs-env
-          environment-file: environment.yml
+          environment-file: docs/environment.yml
           python-version: 3.8
           auto-activate-base: false
 
