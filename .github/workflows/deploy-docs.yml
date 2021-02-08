@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - master
-      - update-docs
 
 jobs:
   build-and-deploy:
