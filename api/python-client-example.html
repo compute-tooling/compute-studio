@@ -1,0 +1,890 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Python Client Example &#8212; Compute Studio Developer Docs</title>
+    
+  <link rel="stylesheet" href="../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinx-book-theme.40e2e510f6b7d1648584402491bb10fe.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+    
+  <link rel="preload" as="script" href="../_static/js/index.d3f166471bb80abb5163.js">
+
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/togglebutton.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script >var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="../_static/sphinx-book-theme.d31b09fe5c1d09cb49b26a786de4a05d.js"></script>
+    <script async="async" src="https://unpkg.com/thebelab@latest/lib/index.js"></script>
+    <script >
+        const thebe_selector = ".thebe"
+        const thebe_selector_input = "pre"
+        const thebe_selector_output = ".output"
+    </script>
+    <script async="async" src="../_static/sphinx-thebe.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Python Client" href="python-api.html" />
+    <link rel="prev" title="Authentication" href="auth.html" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+
+
+
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+<a class="navbar-brand text-wrap" href="../index.html">
+  
+  <img src="../_static/logo.png" class="logo" alt="logo">
+  
+  
+  <h1 class="site-logo" id="site-title">Compute Studio Developer Docs</h1>
+  
+</a>
+</div><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../intro.html">
+   Developer Documentation
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent">
+ <span class="caption-text">
+  Publish
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../publish/guide.html">
+   Publishing on Compute Studio
+  </a>
+ </li>
+ <li class="toctree-l1 collapsible-parent">
+  <a class="reference internal" href="../publish/model/guide.html">
+   Model Guide
+  </a>
+  <ul class="collapse-ul">
+   <li class="toctree-l2">
+    <a class="reference internal" href="../publish/model/inputs.html">
+     Inputs
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../publish/model/outputs.html">
+     Outputs
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../publish/model/functions.html">
+     Python functions
+    </a>
+   </li>
+  </ul>
+  <i class="fas fa-chevron-down">
+  </i>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../publish/data-viz/guide.html">
+   Data-Viz Guide
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../publish/environment.html">
+   Model Environment
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent">
+ <span class="caption-text">
+  API
+ </span>
+</p>
+<ul class="current nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="guide.html">
+   API Guide
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="auth.html">
+   Authentication
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Python Client Example
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="python-api.html">
+   Python Client
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="rest.html">
+   REST API
+  </a>
+ </li>
+</ul>
+
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="row topbar fixed-top container-xl">
+    <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show">
+    </div>
+    <div class="col pl-2 topbar-main">
+        
+        <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+            data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+            aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+            title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+            <i class="fas fa-bars"></i>
+            <i class="fas fa-arrow-left"></i>
+            <i class="fas fa-arrow-up"></i>
+        </button>
+        
+        
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="../_sources/api/python-client-example.ipynb"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.ipynb</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+        <!-- Source interaction buttons -->
+
+
+        <!-- Full screen (wrap in <a> to have style consistency -->
+        <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+                data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+                title="Fullscreen mode"><i
+                    class="fas fa-expand"></i></button></a>
+
+        <!-- Launch buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Launch interactive content"><i class="fas fa-rocket"></i></button>
+    <div class="dropdown-buttons">
+        
+        <a class="binder-button" href="https://mybinder.org/v2/gh/compute-tooling/compute-studio/master?urlpath=tree/docs/api/python-client-example.ipynb"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Launch Binder" data-toggle="tooltip"
+                data-placement="left"><img class="binder-button-logo"
+                    src="../_static/images/logo_binder.svg"
+                    alt="Interact on binder">Binder</button></a>
+        
+        
+        
+        
+    </div>
+</div>
+
+    </div>
+
+    <!-- Table of contents -->
+    <div class="d-none d-md-block col-md-2 bd-toc show">
+        
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <div class="section" id="python-client-example">
+<h1>Python Client Example<a class="headerlink" href="#python-client-example" title="Permalink to this headline">¶</a></h1>
+<p>Initialize our Compute Studio API client with the Tax-Brain webapp. Before doing this, make sure to set up your <a class="reference external" href="https://docs.compute.studio/api/auth.html">authentication credentials</a>.</p>
+<p>You can learn more about the specific methods used in this notebook in the <a class="reference internal" href="python-api.html"><span class="doc std std-doc">Python API documentation</span></a>.</p>
+<p>Save your token at <code class="docutils literal notranslate"><span class="pre">~/.cs_api_token</span></code> OR pass it directly to the C/S client:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cs</span> <span class="o">=</span> <span class="n">cs_kit</span><span class="o">.</span><span class="n">ComputeStudio</span><span class="p">(</span><span class="s2">&quot;hdoupe&quot;</span><span class="p">,</span> <span class="s2">&quot;Matchups&quot;</span><span class="p">,</span> <span class="n">api_token</span><span class="o">=</span><span class="s2">&quot;your token&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">cs_kit</span>
+<span class="n">matchups</span> <span class="o">=</span> <span class="n">cs_kit</span><span class="o">.</span><span class="n">ComputeStudio</span><span class="p">(</span><span class="s2">&quot;hdoupe&quot;</span><span class="p">,</span> <span class="s2">&quot;Matchups&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Checkout the inputs documentation for Matchups using the <code class="docutils literal notranslate"><span class="pre">inputs</span></code> method:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">inputs</span> <span class="o">=</span> <span class="n">matchups</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<span class="n">inputs</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>{&#39;model_parameters&#39;: {&#39;matchup&#39;: {&#39;schema&#39;: {&#39;labels&#39;: {&#39;use_full_sample&#39;: {&#39;number_dims&#39;: 0,
+      &#39;validators&#39;: {&#39;choice&#39;: {&#39;choices&#39;: [True, False]}},
+      &#39;type&#39;: &#39;bool&#39;}},
+    &#39;additional_members&#39;: {&#39;section_1&#39;: {&#39;number_dims&#39;: 0, &#39;type&#39;: &#39;str&#39;},
+     &#39;section_2&#39;: {&#39;number_dims&#39;: 0, &#39;type&#39;: &#39;str&#39;}},
+    &#39;operators&#39;: {&#39;array_first&#39;: False,
+     &#39;label_to_extend&#39;: None,
+     &#39;uses_extend_func&#39;: False}},
+   &#39;start_date&#39;: {&#39;title&#39;: &#39;Start Date&#39;,
+    &#39;description&#39;: &#39;Date to start pulling statcast information&#39;,
+    &#39;notes&#39;: &#39;If using the 2020 dataset, only use dates in 2020.&#39;,
+    &#39;type&#39;: &#39;date&#39;,
+    &#39;number_dims&#39;: 0,
+    &#39;value&#39;: [{&#39;use_full_sample&#39;: True, &#39;value&#39;: &#39;2009-01-01&#39;}],
+    &#39;validators&#39;: {&#39;date_range&#39;: {&#39;max&#39;: &#39;end_date&#39;, &#39;min&#39;: &#39;2009-01-01&#39;}},
+    &#39;section_1&#39;: &#39;Date&#39;,
+    &#39;section_2&#39;: &#39;&#39;},
+   &#39;end_date&#39;: {&#39;title&#39;: &#39;End Date&#39;,
+    &#39;description&#39;: &#39;Date to quit pulling statcast information&#39;,
+    &#39;notes&#39;: &#39;If using the 2020 dataset, only use dates in 2020.&#39;,
+    &#39;type&#39;: &#39;date&#39;,
+    &#39;number_dims&#39;: 0,
+    &#39;value&#39;: [{&#39;use_full_sample&#39;: True, &#39;value&#39;: &#39;2020-11-10&#39;}],
+    &#39;validators&#39;: {&#39;date_range&#39;: {&#39;max&#39;: &#39;2020-11-10&#39;, &#39;min&#39;: &#39;2009-01-01&#39;}},
+    &#39;section_1&#39;: &#39;Date&#39;,
+    &#39;section_2&#39;: &#39;&#39;},
+   &#39;pitcher&#39;: {&#39;title&#39;: &#39;Pitcher Name&#39;,
+    &#39;description&#39;: &#39;Name of pitcher to pull data on&#39;,
+    &#39;notes&#39;: &#39;Make sure the name of the pitcher is correct. A good place to reference this is baseball-reference.com&#39;,
+    &#39;type&#39;: &#39;str&#39;,
+    &#39;number_dims&#39;: 0,
+    &#39;value&#39;: [{&#39;use_full_sample&#39;: True, &#39;value&#39;: &#39;Max Scherzer&#39;}],
+    &#39;validators&#39;: {},
+    &#39;section_1&#39;: &#39;Parameters&#39;,
+    &#39;section_2&#39;: &#39;Pitcher&#39;},
+   &#39;batter&#39;: {&#39;title&#39;: &#39;Batter Name&#39;,
+    &#39;description&#39;: &#39;Name of batter for pitching matchup analysis&#39;,
+    &#39;notes&#39;: &#39;Make sure the name of the batter is correct. A good place to reference this is baseball-reference.com&#39;,
+    &#39;type&#39;: &#39;str&#39;,
+    &#39;number_dims&#39;: 1,
+    &#39;value&#39;: [{&#39;use_full_sample&#39;: True, &#39;value&#39;: [&#39;Freddie Freeman&#39;]}],
+    &#39;validators&#39;: {},
+    &#39;section_1&#39;: &#39;Parameters&#39;,
+    &#39;section_2&#39;: &#39;Batter&#39;}}},
+ &#39;meta_parameters&#39;: {&#39;schema&#39;: {&#39;labels&#39;: {},
+   &#39;additional_members&#39;: {},
+   &#39;operators&#39;: {&#39;uses_extend_func&#39;: False,
+    &#39;array_first&#39;: True,
+    &#39;label_to_extend&#39;: None}},
+  &#39;use_full_sample&#39;: {&#39;title&#39;: &#39;Use Full Data&#39;,
+   &#39;description&#39;: &#39;Flag that determines whether Matchups uses the 10 year data set or the 2020 data set.&#39;,
+   &#39;type&#39;: &#39;bool&#39;,
+   &#39;number_dims&#39;: 0,
+   &#39;value&#39;: [{&#39;value&#39;: True}],
+   &#39;validators&#39;: {&#39;choice&#39;: {&#39;choices&#39;: [True, False]}}}}}
+</pre></div>
+</div>
+</div>
+</div>
+<p>Create a new “simulation” to look at what pitches Walker Buehler, a pitcher for the Los Angeles Dodgers, threw to Freddie Freeman and Ronald Acuna, my favorite players on the Atlanta Braves, in the 2020 NLCS.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">response</span> <span class="o">=</span> <span class="n">matchups</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">adjustment</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;matchup&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;pitcher&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;Walker Buehler&quot;</span><span class="p">}],</span>
+            <span class="s2">&quot;batter&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Freddie Freeman&quot;</span><span class="p">,</span> <span class="s2">&quot;Ronald Acuna&quot;</span><span class="p">]}],</span>
+            <span class="s2">&quot;start_date&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-12&quot;</span><span class="p">}],</span>
+            <span class="s2">&quot;end_date&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-18&quot;</span><span class="p">}]</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">response</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>{&#39;api_url&#39;: &#39;/hdoupe/Matchups/api/v1/94/&#39;,
+ &#39;authors&#39;: [&#39;hdoupe&#39;],
+ &#39;creation_date&#39;: &#39;2021-02-08T15:01:37.569658Z&#39;,
+ &#39;eta&#39;: 24.951767,
+ &#39;exp_comp_datetime&#39;: &#39;2021-02-08T15:02:02.569658Z&#39;,
+ &#39;gui_url&#39;: &#39;/hdoupe/Matchups/94/&#39;,
+ &#39;is_public&#39;: True,
+ &#39;model_pk&#39;: 94,
+ &#39;model_version&#39;: None,
+ &#39;notify_on_completion&#39;: False,
+ &#39;original_eta&#39;: 25.0,
+ &#39;outputs&#39;: None,
+ &#39;owner&#39;: &#39;hdoupe&#39;,
+ &#39;outputs_version&#39;: None,
+ &#39;project&#39;: {&#39;app_location&#39;: None,
+  &#39;title&#39;: &#39;Matchups&#39;,
+  &#39;oneliner&#39;: &#39;Analyze pitcher-batter matchups over the last 10 years&#39;,
+  &#39;description&#39;: &quot;[Matchups](https://github.com/hdoupe/Matchups) provides pitch data on pitcher and batter matchups.. Select a date range using the format YYYY-MM-DD. Keep in mind that Matchups only provides data on matchups going back to 2008. Two datasets are offered to run this model: one that only has the most recent season, 2018, and one that contains data on every single pitch going back to 2008. Next, select your favorite pitcher and some batters who he&#39;s faced in the past. Click submit to start analyzing the selected matchups!&quot;,
+  &#39;repo_url&#39;: &#39;https://github.com/hdoupe/Matchups&#39;,
+  &#39;repo_tag&#39;: &#39;master&#39;,
+  &#39;latest_tag&#39;: &#39;f0af41930298fa9950cef51b736b704b40bd31e8&#39;,
+  &#39;exp_task_time&#39;: 25,
+  &#39;server_cost&#39;: 0.06116,
+  &#39;cpu&#39;: &#39;2.0&#39;,
+  &#39;memory&#39;: &#39;6.0&#39;,
+  &#39;listed&#39;: True,
+  &#39;owner&#39;: &#39;hdoupe&#39;,
+  &#39;cluster_type&#39;: &#39;single-core&#39;,
+  &#39;sim_count&#39;: 94,
+  &#39;status&#39;: &#39;running&#39;,
+  &#39;user_count&#39;: 11,
+  &#39;callable_name&#39;: None,
+  &#39;tech&#39;: &#39;python-paramtools&#39;,
+  &#39;is_public&#39;: True,
+  &#39;has_write_access&#39;: True},
+ &#39;readme&#39;: None,
+ &#39;run_time&#39;: 0,
+ &#39;status&#39;: &#39;PENDING&#39;,
+ &#39;title&#39;: &#39;Untitled Simulation&#39;,
+ &#39;traceback&#39;: None,
+ &#39;parent_sims&#39;: [],
+ &#39;role&#39;: &#39;admin&#39;,
+ &#39;pending_permissions&#39;: [],
+ &#39;access&#39;: [{&#39;is_owner&#39;: True, &#39;role&#39;: &#39;admin&#39;, &#39;username&#39;: &#39;hdoupe&#39;}]}
+</pre></div>
+</div>
+</div>
+</div>
+<p>The new simulation is now available at the following URL:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sa">f</span><span class="s2">&quot;https://compute.studio</span><span class="si">{</span><span class="n">response</span><span class="p">[</span><span class="s1">&#39;gui_url&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&#39;https://compute.studio/hdoupe/Matchups/94/&#39;
+</pre></div>
+</div>
+</div>
+</div>
+<p>Use the API to update the simulation title and get a notification once the simulation is complete:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">matchups</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+    <span class="n">model_pk</span><span class="o">=</span><span class="n">response</span><span class="p">[</span><span class="s2">&quot;model_pk&quot;</span><span class="p">],</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Walker Beuhler vs My Favorite Braves Players in 2020 NLCS&quot;</span><span class="p">,</span>
+    <span class="n">notify_on_completion</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">is_public</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>{&#39;api_url&#39;: &#39;/hdoupe/Matchups/api/v1/94/&#39;,
+ &#39;authors&#39;: [&#39;hdoupe&#39;],
+ &#39;creation_date&#39;: &#39;2021-02-08T15:01:37.569658Z&#39;,
+ &#39;gui_url&#39;: &#39;/hdoupe/Matchups/94/&#39;,
+ &#39;is_public&#39;: True,
+ &#39;model_pk&#39;: 94,
+ &#39;model_version&#39;: None,
+ &#39;notify_on_completion&#39;: True,
+ &#39;owner&#39;: &#39;hdoupe&#39;,
+ &#39;project&#39;: &#39;hdoupe/Matchups&#39;,
+ &#39;readme&#39;: None,
+ &#39;status&#39;: &#39;PENDING&#39;,
+ &#39;title&#39;: &#39;Walker Beuhler vs My Favorite Braves Players in 2020 NLCS&#39;,
+ &#39;role&#39;: &#39;admin&#39;}
+</pre></div>
+</div>
+</div>
+</div>
+<p>Download the results as a pandas dataframe and analyze them locally:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">matchups</span><span class="o">.</span><span class="n">results</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s2">&quot;model_pk&quot;</span><span class="p">],</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+<span class="n">results</span><span class="p">[</span><span class="s2">&quot;Walker Buehler v. Freddie Freeman&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Unnamed: 0</th>
+      <th>release_speed</th>
+      <th>launch_speed</th>
+      <th>woba_value</th>
+      <th>balls</th>
+      <th>strikes</th>
+      <th>outs_when_up</th>
+      <th>at_bat_number</th>
+      <th>plate_x</th>
+      <th>plate_z</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>count</th>
+      <td>22.000000</td>
+      <td>22.00000</td>
+      <td>5.000000</td>
+      <td>6.000000</td>
+      <td>22.000000</td>
+      <td>22.000000</td>
+      <td>22.000000</td>
+      <td>22.000000</td>
+      <td>22.000000</td>
+      <td>22.000000</td>
+    </tr>
+    <tr>
+      <th>mean</th>
+      <td>4134.954545</td>
+      <td>93.95000</td>
+      <td>94.740000</td>
+      <td>0.600000</td>
+      <td>0.772727</td>
+      <td>0.954545</td>
+      <td>1.045455</td>
+      <td>16.818182</td>
+      <td>0.274545</td>
+      <td>2.088636</td>
+    </tr>
+    <tr>
+      <th>std</th>
+      <td>1735.733288</td>
+      <td>4.81137</td>
+      <td>18.349469</td>
+      <td>0.792465</td>
+      <td>0.922307</td>
+      <td>0.785419</td>
+      <td>0.213201</td>
+      <td>12.674069</td>
+      <td>1.060803</td>
+      <td>1.349029</td>
+    </tr>
+    <tr>
+      <th>min</th>
+      <td>2191.000000</td>
+      <td>82.10000</td>
+      <td>63.500000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>1.000000</td>
+      <td>2.000000</td>
+      <td>-2.500000</td>
+      <td>-1.330000</td>
+    </tr>
+    <tr>
+      <th>25%</th>
+      <td>2275.000000</td>
+      <td>91.77500</td>
+      <td>96.800000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>1.000000</td>
+      <td>2.000000</td>
+      <td>-0.187500</td>
+      <td>1.622500</td>
+    </tr>
+    <tr>
+      <th>50%</th>
+      <td>5595.500000</td>
+      <td>95.80000</td>
+      <td>99.100000</td>
+      <td>0.350000</td>
+      <td>0.500000</td>
+      <td>1.000000</td>
+      <td>1.000000</td>
+      <td>21.000000</td>
+      <td>0.340000</td>
+      <td>2.025000</td>
+    </tr>
+    <tr>
+      <th>75%</th>
+      <td>5665.750000</td>
+      <td>97.30000</td>
+      <td>102.700000</td>
+      <td>0.850000</td>
+      <td>1.000000</td>
+      <td>1.750000</td>
+      <td>1.000000</td>
+      <td>23.000000</td>
+      <td>0.727500</td>
+      <td>2.655000</td>
+    </tr>
+    <tr>
+      <th>max</th>
+      <td>5754.000000</td>
+      <td>99.00000</td>
+      <td>111.600000</td>
+      <td>2.000000</td>
+      <td>3.000000</td>
+      <td>2.000000</td>
+      <td>2.000000</td>
+      <td>41.000000</td>
+      <td>2.100000</td>
+      <td>5.880000</td>
+    </tr>
+  </tbody>
+</table>
+</div></div></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;Walker Buehler v. Ronald Acuna&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Unnamed: 0</th>
+      <th>release_speed</th>
+      <th>launch_speed</th>
+      <th>woba_value</th>
+      <th>balls</th>
+      <th>strikes</th>
+      <th>outs_when_up</th>
+      <th>at_bat_number</th>
+      <th>plate_x</th>
+      <th>plate_z</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>count</th>
+      <td>19.000000</td>
+      <td>19.000000</td>
+      <td>5.000000</td>
+      <td>6.0</td>
+      <td>19.000000</td>
+      <td>19.000000</td>
+      <td>19.000000</td>
+      <td>19.000000</td>
+      <td>19.000000</td>
+      <td>19.000000</td>
+    </tr>
+    <tr>
+      <th>mean</th>
+      <td>4396.210526</td>
+      <td>93.405263</td>
+      <td>90.660000</td>
+      <td>0.0</td>
+      <td>0.578947</td>
+      <td>0.947368</td>
+      <td>0.105263</td>
+      <td>24.157895</td>
+      <td>0.017895</td>
+      <td>2.390526</td>
+    </tr>
+    <tr>
+      <th>std</th>
+      <td>1676.366062</td>
+      <td>4.815654</td>
+      <td>7.960088</td>
+      <td>0.0</td>
+      <td>0.837708</td>
+      <td>0.848115</td>
+      <td>0.315302</td>
+      <td>12.729071</td>
+      <td>0.712753</td>
+      <td>0.896763</td>
+    </tr>
+    <tr>
+      <th>min</th>
+      <td>2192.000000</td>
+      <td>80.900000</td>
+      <td>80.100000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>1.000000</td>
+      <td>-0.710000</td>
+      <td>0.960000</td>
+    </tr>
+    <tr>
+      <th>25%</th>
+      <td>2295.500000</td>
+      <td>89.050000</td>
+      <td>86.900000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>20.000000</td>
+      <td>-0.495000</td>
+      <td>1.800000</td>
+    </tr>
+    <tr>
+      <th>50%</th>
+      <td>5599.000000</td>
+      <td>95.700000</td>
+      <td>89.900000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>1.000000</td>
+      <td>0.000000</td>
+      <td>22.000000</td>
+      <td>-0.370000</td>
+      <td>2.340000</td>
+    </tr>
+    <tr>
+      <th>75%</th>
+      <td>5668.500000</td>
+      <td>96.450000</td>
+      <td>95.600000</td>
+      <td>0.0</td>
+      <td>1.000000</td>
+      <td>2.000000</td>
+      <td>0.000000</td>
+      <td>35.000000</td>
+      <td>0.470000</td>
+      <td>2.665000</td>
+    </tr>
+    <tr>
+      <th>max</th>
+      <td>5755.000000</td>
+      <td>98.000000</td>
+      <td>100.800000</td>
+      <td>0.0</td>
+      <td>3.000000</td>
+      <td>2.000000</td>
+      <td>1.000000</td>
+      <td>40.000000</td>
+      <td>1.460000</td>
+      <td>5.020000</td>
+    </tr>
+  </tbody>
+</table>
+</div></div></div>
+</div>
+<p>Get simulation details:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">matchups</span><span class="o">.</span><span class="n">detail</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s2">&quot;model_pk&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>{&#39;api_url&#39;: &#39;/hdoupe/Matchups/api/v1/94/&#39;,
+ &#39;authors&#39;: [&#39;hdoupe&#39;],
+ &#39;creation_date&#39;: &#39;2021-02-08T15:01:37.569658Z&#39;,
+ &#39;eta&#39;: 0.0,
+ &#39;exp_comp_datetime&#39;: &#39;2021-02-08T15:02:02.569658Z&#39;,
+ &#39;gui_url&#39;: &#39;/hdoupe/Matchups/94/&#39;,
+ &#39;is_public&#39;: True,
+ &#39;model_pk&#39;: 94,
+ &#39;model_version&#39;: &#39;2021&#39;,
+ &#39;notify_on_completion&#39;: True,
+ &#39;original_eta&#39;: 25.0,
+ &#39;outputs&#39;: {&#39;outputs&#39;: {&#39;renderable&#39;: {&#39;outputs&#39;: [{&#39;id&#39;: &#39;fe088e7c-3ca1-481e-b962-0175010fb3bf&#39;,
+      &#39;title&#39;: &#39;Walker Buehler v. All batters&#39;,
+      &#39;filename&#39;: &#39;Walker Buehler v. All batters.json&#39;,
+      &#39;media_type&#39;: &#39;bokeh&#39;,
+      &#39;screenshot&#39;: &#39;https://compute.studio/storage/screenshots/fe088e7c-3ca1-481e-b962-0175010fb3bf.png&#39;},
+     {&#39;id&#39;: &#39;3a3f47b6-18ac-40e9-80a3-8dd5027b2a7a&#39;,
+      &#39;title&#39;: &#39;Walker Buehler v. Freddie Freeman&#39;,
+      &#39;filename&#39;: &#39;Walker Buehler v. Freddie Freeman.json&#39;,
+      &#39;media_type&#39;: &#39;bokeh&#39;,
+      &#39;screenshot&#39;: &#39;https://compute.studio/storage/screenshots/3a3f47b6-18ac-40e9-80a3-8dd5027b2a7a.png&#39;},
+     {&#39;id&#39;: &#39;5cf9599b-30a6-4685-a0c4-6f51e182eee3&#39;,
+      &#39;title&#39;: &#39;Walker Buehler v. Ronald Acuna&#39;,
+      &#39;filename&#39;: &#39;Walker Buehler v. Ronald Acuna.json&#39;,
+      &#39;media_type&#39;: &#39;bokeh&#39;,
+      &#39;screenshot&#39;: &#39;https://compute.studio/storage/screenshots/5cf9599b-30a6-4685-a0c4-6f51e182eee3.png&#39;}],
+    &#39;ziplocation&#39;: &#39;0a10c8de-2b55-456c-80bf-bc42e86f1ef4_renderable.zip&#39;},
+   &#39;downloadable&#39;: {&#39;outputs&#39;: [{&#39;id&#39;: &#39;87b40820-4e08-4392-89e3-61693044733c&#39;,
+      &#39;title&#39;: &#39;Walker Buehler v. All batters&#39;,
+      &#39;filename&#39;: &#39;Walker Buehler v. All batters.csv&#39;,
+      &#39;media_type&#39;: &#39;CSV&#39;},
+     {&#39;id&#39;: &#39;65d56ff8-c33c-4730-97b1-b63fa8b38949&#39;,
+      &#39;title&#39;: &#39;Walker Buehler v. Freddie Freeman&#39;,
+      &#39;filename&#39;: &#39;Walker Buehler v. Freddie Freeman.csv&#39;,
+      &#39;media_type&#39;: &#39;CSV&#39;},
+     {&#39;id&#39;: &#39;5a7c118d-6174-4df3-8690-b0697399a327&#39;,
+      &#39;title&#39;: &#39;Walker Buehler v. Ronald Acuna&#39;,
+      &#39;filename&#39;: &#39;Walker Buehler v. Ronald Acuna.csv&#39;,
+      &#39;media_type&#39;: &#39;CSV&#39;}],
+    &#39;ziplocation&#39;: &#39;0a10c8de-2b55-456c-80bf-bc42e86f1ef4_downloadable.zip&#39;}},
+  &#39;version&#39;: &#39;v1&#39;},
+ &#39;owner&#39;: &#39;hdoupe&#39;,
+ &#39;outputs_version&#39;: &#39;v1&#39;,
+ &#39;project&#39;: {&#39;app_location&#39;: None,
+  &#39;title&#39;: &#39;Matchups&#39;,
+  &#39;oneliner&#39;: &#39;Analyze pitcher-batter matchups over the last 10 years&#39;,
+  &#39;description&#39;: &quot;[Matchups](https://github.com/hdoupe/Matchups) provides pitch data on pitcher and batter matchups.. Select a date range using the format YYYY-MM-DD. Keep in mind that Matchups only provides data on matchups going back to 2008. Two datasets are offered to run this model: one that only has the most recent season, 2018, and one that contains data on every single pitch going back to 2008. Next, select your favorite pitcher and some batters who he&#39;s faced in the past. Click submit to start analyzing the selected matchups!&quot;,
+  &#39;repo_url&#39;: &#39;https://github.com/hdoupe/Matchups&#39;,
+  &#39;repo_tag&#39;: &#39;master&#39;,
+  &#39;latest_tag&#39;: &#39;f0af41930298fa9950cef51b736b704b40bd31e8&#39;,
+  &#39;exp_task_time&#39;: 25,
+  &#39;server_cost&#39;: 0.06116,
+  &#39;cpu&#39;: &#39;2.0&#39;,
+  &#39;memory&#39;: &#39;6.0&#39;,
+  &#39;listed&#39;: True,
+  &#39;owner&#39;: &#39;hdoupe&#39;,
+  &#39;cluster_type&#39;: &#39;single-core&#39;,
+  &#39;sim_count&#39;: 94,
+  &#39;status&#39;: &#39;running&#39;,
+  &#39;user_count&#39;: 11,
+  &#39;callable_name&#39;: None,
+  &#39;tech&#39;: &#39;python-paramtools&#39;,
+  &#39;is_public&#39;: True,
+  &#39;has_write_access&#39;: True},
+ &#39;readme&#39;: None,
+ &#39;run_time&#39;: 29,
+ &#39;status&#39;: &#39;SUCCESS&#39;,
+ &#39;title&#39;: &#39;Walker Beuhler vs My Favorite Braves Players in 2020 NLCS&#39;,
+ &#39;traceback&#39;: None,
+ &#39;parent_sims&#39;: [],
+ &#39;role&#39;: &#39;admin&#39;,
+ &#39;pending_permissions&#39;: [],
+ &#39;access&#39;: [{&#39;is_owner&#39;: True, &#39;role&#39;: &#39;admin&#39;, &#39;username&#39;: &#39;hdoupe&#39;}]}
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            kernelName: "python3",
+            path: "./api"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+              </div>
+              
+        </div>
+    </div>
+    
+    
+    <div class='prev-next-bottom'>
+        
+    <a class='left-prev' id="prev-link" href="auth.html" title="previous page">Authentication</a>
+    <a class='right-next' id="next-link" href="python-api.html" title="next page">Python Client</a>
+
+    </div>
+    <footer class="footer mt-5 mt-md-0">
+    <div class="container">
+      <p>
+        
+          By Hank Doupe<br/>
+        
+            &copy; Copyright 2020.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+
+    
+  <script src="../_static/js/index.d3f166471bb80abb5163.js"></script>
+
+
+    
+  </body>
+</html>

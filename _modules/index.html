@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>API Guide &#8212; Compute Studio Developer Docs</title>
+    <title>Overview: module code &#8212; Compute Studio Developer Docs</title>
     
   <link rel="stylesheet" href="../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -54,8 +54,6 @@
     <script async="async" src="../_static/sphinx-thebe.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Authentication" href="auth.html" />
-    <link rel="prev" title="Model Environment" href="../publish/environment.html" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
@@ -143,29 +141,29 @@
   API
  </span>
 </p>
-<ul class="current nav sidenav_l1">
- <li class="toctree-l1 current active">
-  <a class="current reference internal" href="#">
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../api/guide.html">
    API Guide
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="auth.html">
+  <a class="reference internal" href="../api/auth.html">
    Authentication
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="python-client-example.html">
+  <a class="reference internal" href="../api/python-client-example.html">
    Python Client Example
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="python-api.html">
+  <a class="reference internal" href="../api/python-api.html">
    Python Client
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="rest.html">
+  <a class="reference internal" href="../api/rest.html">
    REST API
   </a>
  </li>
@@ -201,23 +199,6 @@
         </button>
         
         
-<div class="dropdown-buttons-trigger">
-    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
-            class="fas fa-download"></i></button>
-
-    <div class="dropdown-buttons">
-        <!-- ipynb file if we had a myst markdown file -->
-        
-        <!-- Download raw file -->
-        <a class="dropdown-buttons" href="../_sources/api/guide.md"><button type="button"
-                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
-                data-placement="left">.md</button></a>
-        <!-- Download PDF via print -->
-        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
-            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
-    </div>
-</div>
-
         <!-- Source interaction buttons -->
 
 
@@ -241,42 +222,9 @@
         
               <div>
                 
-  <div class="section" id="api-guide">
-<h1>API Guide<a class="headerlink" href="#api-guide" title="Permalink to this headline">¶</a></h1>
-<p>Compute Studio offers a REST API to do things like:</p>
-<ul class="simple">
-<li><p>Create new simulations</p></li>
-<li><p>View data for existing simulations</p></li>
-<li><p>View a model’s inputs documentation</p></li>
+  <h1>All modules for which code is available</h1>
+<ul><li><a href="cs_kit/api.html">cs_kit.api</a></li>
 </ul>
-<p>The REST API is intended for users who would like to build applications on top of the Compute Studio interface or create simulations programmatically.</p>
-<p>The Compute Studio <a class="reference internal" href="python-api.html"><span class="doc std std-doc">Python client</span></a> takes care of low-level details like like managing API Tokens and using the correct HTTP verbs. Checkout the more practical example <a class="reference internal" href="python-client-example.html"><span class="doc std std-doc">here</span></a>.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>An API token is required for requests that modify data. Find out how to get your token <a class="reference internal" href="auth.html"><span class="doc std std-doc">here</span></a>.</p>
-</div>
-<p>More information about the data formats used by the API can be found in the Compute Studio publishing documentation on <a class="reference internal" href="../publish/model/inputs.html"><span class="doc std std-doc">inputs</span></a> and <a class="reference internal" href="../publish/model/outputs.html"><span class="doc std std-doc">outputs</span></a>.</p>
-</div>
-
-    <script type="text/x-thebe-config">
-    {
-        requestKernel: true,
-        binderOptions: {
-            repo: "binder-examples/jupyter-stacks-datascience",
-            ref: "master",
-        },
-        codeMirrorConfig: {
-            theme: "abcdef",
-            mode: "python"
-        },
-        kernelOptions: {
-            kernelName: "python3",
-            path: "./api"
-        },
-        predefinedOutput: true
-    }
-    </script>
-    <script>kernelName = 'python3'</script>
 
               </div>
               
@@ -286,8 +234,6 @@
     
     <div class='prev-next-bottom'>
         
-    <a class='left-prev' id="prev-link" href="../publish/environment.html" title="previous page">Model Environment</a>
-    <a class='right-next' id="next-link" href="auth.html" title="next page">Authentication</a>
 
     </div>
     <footer class="footer mt-5 mt-md-0">
