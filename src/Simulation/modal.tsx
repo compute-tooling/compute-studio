@@ -92,7 +92,10 @@ const RequirePmtDialog: React.FC<{
         <Button
           variant="success"
           onClick={e =>
-            handleCloseWithRedirect(e, `/billing/update/?next=${window.location.pathname}`)
+            handleCloseWithRedirect(
+              e,
+              `/billing/update/?next=${window.location.pathname}?showRunModal=true`
+            )
           }
         >
           <b>Add payment method</b>
@@ -193,7 +196,9 @@ const RunDialog: React.FC<{
         {isPrivateRateLimited && (
           <span>
             .{" "}
-            <a href={`/billing/upgrade/yearly/?next=${window.location.pathname}`}>Upgrade to Pro</a>
+            <a href={`/billing/upgrade/yearly/?next=${window.location.pathname}?showRunModal=true`}>
+              Upgrade to Pro
+            </a>
           </span>
         )}
         )
@@ -213,7 +218,7 @@ const RunDialog: React.FC<{
             <p>
               <Button
                 variant="primary"
-                href={`/billing/upgrade/monthly/aftertrial/?next=${window.location.pathname}`}
+                href={`/billing/upgrade/monthly/aftertrial/?next=${window.location.pathname}?showRunModal=true`}
               >
                 <strong>Upgrade to C/S Pro after trial</strong>
               </Button>
