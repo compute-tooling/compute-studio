@@ -60,6 +60,9 @@ interface SimAppState {
   hasShownDirtyWarning: boolean;
   showDirtyWarning: boolean;
 
+  // show run modal on page load.
+  showRunModal: boolean;
+
   // necessary for user id and write access
   accessStatus?: AccessStatus;
 
@@ -98,13 +101,15 @@ class SimTabs extends React.Component<
     super(props);
     const { owner, title, modelpk } = this.props.match.params;
     this.api = new API(owner, title, modelpk);
-
+    const search = props.location.search;
+    const showRunModal = new URLSearchParams(search).get("showRunModal") === "true";
     this.state = {
       key: props.tabName,
       hasShownDirtyWarning: false,
       showDirtyWarning: false,
       notifyOnCompletion: false,
       isPublic: true,
+      showRunModal: showRunModal,
     };
 
     this.handleTabChange = this.handleTabChange.bind(this);
@@ -414,7 +419,7 @@ class SimTabs extends React.Component<
       api.getRemoteOutputs().then(initRem => {
         this.setState({ remoteSim: initRem });
         if (initRem.status === "PENDING") {
-          return this.pollOutputs(5000);
+          return this.pollOutputs(3000);
         } else {
           api.getOutputs().then(initSim => {
             this.setState({ sim: initSim, notifyOnCompletion: false });
@@ -440,6 +445,9 @@ class SimTabs extends React.Component<
           api.getOutputs().then(sim => {
             this.setState({ sim, notifyOnCompletion: false });
           });
+        }
+        if (remoteSim.status === "PENDING") {
+          return this.pollOutputs();
         }
       })
       // This may happen when a users access status changes after
@@ -504,7 +512,7 @@ class SimTabs extends React.Component<
       unknownParams,
       extend,
       sects,
-      isPublic,
+      showRunModal,
     } = this.state;
 
     let initialServerErrors = hasServerErrors(inputs?.detail?.errors_warnings)
@@ -595,6 +603,7 @@ class SimTabs extends React.Component<
                           setNotifyOnCompletion={(notify: boolean) =>
                             this.setNotifyOnCompletion(notify, "inputs")
                           }
+                          showRunModal={showRunModal}
                           notifyOnCompletion={this.state.notifyOnCompletion}
                           setIsPublic={this.setIsPublic}
                           isPublic={this.state.isPublic}
