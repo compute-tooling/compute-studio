@@ -15,7 +15,6 @@ import {
   AccessStatus,
   Inputs,
   InitialValues,
-  Schema,
   Simulation,
   RemoteOutputs,
   Outputs,
@@ -60,6 +59,12 @@ interface SimAppState {
   hasShownDirtyWarning: boolean;
   showDirtyWarning: boolean;
 
+  // show run modal on page load.
+  showRunModal: boolean;
+
+  // show collaborator modal on page load.
+  showCollabModal: boolean;
+
   // necessary for user id and write access
   accessStatus?: AccessStatus;
 
@@ -98,13 +103,17 @@ class SimTabs extends React.Component<
     super(props);
     const { owner, title, modelpk } = this.props.match.params;
     this.api = new API(owner, title, modelpk);
-
+    const search = props.location.search;
+    const showRunModal = new URLSearchParams(search).get("showRunModal") === "true";
+    const showCollabModal = new URLSearchParams(search).get("showCollabModal") !== null;
     this.state = {
       key: props.tabName,
       hasShownDirtyWarning: false,
       showDirtyWarning: false,
       notifyOnCompletion: false,
       isPublic: true,
+      showRunModal: showRunModal,
+      showCollabModal: showCollabModal,
     };
 
     this.handleTabChange = this.handleTabChange.bind(this);
@@ -295,7 +304,6 @@ class SimTabs extends React.Component<
     formdata.append("client", "web-beta");
     formdata.append("notify_on_completion", this.state.notifyOnCompletion.toString());
     formdata.append("is_public", this.state.isPublic.toString());
-    console.log("isPublic", this.state.isPublic);
     let url = `/${this.api.owner}/${this.api.title}/api/v1/`;
     let sim = this.state.inputs.detail?.sim;
     const { accessStatus } = this.state;
@@ -414,7 +422,7 @@ class SimTabs extends React.Component<
       api.getRemoteOutputs().then(initRem => {
         this.setState({ remoteSim: initRem });
         if (initRem.status === "PENDING") {
-          return this.pollOutputs(5000);
+          return this.pollOutputs(3000);
         } else {
           api.getOutputs().then(initSim => {
             this.setState({ sim: initSim, notifyOnCompletion: false });
@@ -440,6 +448,9 @@ class SimTabs extends React.Component<
           api.getOutputs().then(sim => {
             this.setState({ sim, notifyOnCompletion: false });
           });
+        }
+        if (remoteSim.status === "PENDING") {
+          return this.pollOutputs();
         }
       })
       // This may happen when a users access status changes after
@@ -486,6 +497,7 @@ class SimTabs extends React.Component<
               this.setState({ accessStatus });
               return accessStatus;
             }}
+            showCollabModal={this.state.showCollabModal}
           />
           <div className="d-flex justify-content-center">
             <ReactLoading type="spokes" color="#2b2c2d" />
@@ -504,7 +516,7 @@ class SimTabs extends React.Component<
       unknownParams,
       extend,
       sects,
-      isPublic,
+      showRunModal,
     } = this.state;
 
     let initialServerErrors = hasServerErrors(inputs?.detail?.errors_warnings)
@@ -557,6 +569,7 @@ class SimTabs extends React.Component<
                     this.setState({ accessStatus });
                     return accessStatus;
                   }}
+                  showCollabModal={this.state.showCollabModal}
                 />
               </ErrorBoundary>
               <Tab.Container
@@ -595,6 +608,7 @@ class SimTabs extends React.Component<
                           setNotifyOnCompletion={(notify: boolean) =>
                             this.setNotifyOnCompletion(notify, "inputs")
                           }
+                          showRunModal={showRunModal}
                           notifyOnCompletion={this.state.notifyOnCompletion}
                           setIsPublic={this.setIsPublic}
                           isPublic={this.state.isPublic}

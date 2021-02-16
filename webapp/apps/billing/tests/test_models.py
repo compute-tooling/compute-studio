@@ -85,7 +85,8 @@ class TestStripeModels:
         customer = getattr(user, "customer", None)
         assert customer is not None
 
-        assert customer.current_plan()["name"] == "pro"
+        current_plan = customer.current_plan()
+        assert current_plan["name"] == "pro"
 
         si = customer.current_plan(as_dict=False)
 
@@ -95,6 +96,8 @@ class TestStripeModels:
         sub = stripe.Subscription.retrieve(si.subscription.stripe_id)
         assert abs(sub.cancel_at - int(three_months.timestamp())) < 15
         assert abs(sub.trial_end - int(three_months.timestamp())) < 15
+        assert current_plan["cancel_at"] == si.subscription.cancel_at.date()
+        assert current_plan["trial_end"] == si.subscription.trial_end.date()
 
         assert si.subscription.is_trial() is True
 
@@ -140,7 +143,12 @@ class TestStripeModels:
     def test_customer_subscription_upgrades(
         self, db, customer, monkeypatch, plan_duration, other_duration
     ):
-        assert customer.current_plan() == {"plan_duration": None, "name": "free"}
+        assert customer.current_plan() == {
+            "plan_duration": None,
+            "name": "free",
+            "trial_end": None,
+            "cancel_at": None,
+        }
         assert customer.current_plan(as_dict=False).plan == Plan.objects.get(
             nickname="Free Plan"
         )
@@ -157,6 +165,8 @@ class TestStripeModels:
         assert customer.current_plan() == {
             "plan_duration": plan_duration.lower(),
             "name": "pro",
+            "trial_end": None,
+            "cancel_at": None,
         }
 
         si = customer.current_plan(as_dict=False)
@@ -173,6 +183,8 @@ class TestStripeModels:
         assert customer.current_plan() == {
             "plan_duration": plan_duration.lower(),
             "name": "pro",
+            "trial_end": None,
+            "cancel_at": None,
         }
 
         # swap to other pro duration
@@ -184,15 +196,20 @@ class TestStripeModels:
         assert customer.current_plan() == {
             "plan_duration": other_duration.lower(),
             "name": "pro",
+            "trial_end": None,
+            "cancel_at": None,
         }
 
         # test downgrade to free
         plan = Plan.objects.get(nickname="Free Plan")
         result = customer.update_plan(plan)
         assert result == UpdateStatus.downgrade
+        si = customer.current_plan(as_dict=False)
         assert customer.current_plan() == {
             "plan_duration": other_duration.lower(),
             "name": "pro",
+            "trial_end": None,
+            "cancel_at": si.subscription.cancel_at.date(),
         }
         si = customer.current_plan(as_dict=False)
         assert si.plan == Plan.objects.get(nickname=f"{other_duration} Pro Plan")

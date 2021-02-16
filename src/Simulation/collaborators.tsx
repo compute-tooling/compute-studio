@@ -238,8 +238,9 @@ export const CollaborationSettings: React.FC<{
   formikProps: FormikProps<{ title: string; is_public: boolean } & CollaboratorValues>;
   accessStatus: AccessStatus;
   project: string;
-}> = ({ api, user, remoteSim, formikProps, accessStatus, project }) => {
-  const [show, setShow] = React.useState(false);
+  initShow: boolean;
+}> = ({ api, user, remoteSim, formikProps, accessStatus, project, initShow }) => {
+  const [show, setShow] = React.useState(initShow);
   const is_public =
     remoteSim?.is_public !== undefined ? remoteSim.is_public : formikProps.values.is_public;
   return (
@@ -287,7 +288,7 @@ export const CollaborationModal: React.FC<{
 
   const [selectedUser, setSelectedUser] = React.useState("");
 
-  const plan = accessStatus.plan?.name || "free";
+  const { plan } = accessStatus;
 
   let authors: Array<{
     username: string;
@@ -328,6 +329,31 @@ export const CollaborationModal: React.FC<{
     }
   }
 
+  let optInMsg;
+  if (!is_public && plan?.name !== "free" && plan?.cancel_at && plan?.trial_end) {
+    const { pathname } = window.location;
+    // This modal is shown on the home page and the simulation page.
+    const showCollabModal = `${api.owner}/${api.title}/${api.modelpk}`;
+    const nextUrl = `${pathname}?showCollabModal=${showCollabModal}`;
+    optInMsg = (
+      <Row className="px-2 pt-2">
+        <Col className="text-center">
+          <div className="alert alert-primary" role="alert">
+            <p>Your free C/S Pro trial ends on {plan.trial_end}.</p>
+            <p>
+              <Button
+                variant="primary"
+                href={`/billing/upgrade/monthly/aftertrial/?next=${nextUrl}`}
+              >
+                <strong>Upgrade to C/S Pro after trial</strong>
+              </Button>
+            </p>
+          </div>
+        </Col>
+      </Row>
+    );
+  }
+
   let remainingPrivateSims = 3;
   const projectLower = project.toLowerCase();
   if (projectLower in accessStatus.remaining_private_sims) {
@@ -337,7 +363,7 @@ export const CollaborationModal: React.FC<{
   let visibiltyButtonMsg;
   if (!is_public) {
     visibiltyButtonMsg = <span>Make public</span>;
-  } else if (plan === "free") {
+  } else if (plan.name === "free") {
     visibiltyButtonMsg = (
       <span>
         Make private ({remainingPrivateSims} remaining this month.{" "}
@@ -360,6 +386,11 @@ export const CollaborationModal: React.FC<{
         {!!collabExceptionMsg ? (
           <Row className="w-100">
             <Col>{collabExceptionMsg}</Col>
+          </Row>
+        ) : null}
+        {!!optInMsg ? (
+          <Row className="w-100">
+            <Col>{optInMsg}</Col>
           </Row>
         ) : null}
         {RolePerms.hasAdminAccess(remoteSim) || !remoteSim ? (
@@ -448,7 +479,6 @@ export const CollaborationModal: React.FC<{
                               className="btn btn-outline-secondary lh-1"
                               onClick={e => {
                                 e.preventDefault();
-                                console.log("author set", accessobj.username);
                                 setSelectedUser(accessobj.username);
                                 setTimeout(() => {
                                   setAuthorSelected(true);
@@ -562,7 +592,6 @@ export const CollaborationModal: React.FC<{
                       onSelectUser={selected => {
                         if (remoteSim.access.find(a => a.username === selected.username)) return;
                         setSelectedUser(selected.username);
-                        console.log("access set", selected.username);
                         setTimeout(() => {
                           setAccessSelected(true);
                           setAuthorSelected(false);

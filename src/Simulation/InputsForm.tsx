@@ -47,6 +47,7 @@ interface InputsFormProps {
   inputs: Inputs;
   defaultURL: string;
   simStatus: Simulation<any>["status"];
+  showRunModal: boolean;
 
   resetInitialValues: (metaParameters: InputsDetail["meta_parameters"]) => void;
   resetting: boolean;
@@ -69,7 +70,7 @@ interface InputsProps {
 }
 
 const InputsForm: React.FC<InputsFormProps & InputsProps> = props => {
-  const [showModal, setShowModal] = React.useState(false);
+  const [showModal, setShowModal] = React.useState(props.showRunModal);
 
   if (!props.inputs || props.resetting) {
     return <LoadingElement />;
