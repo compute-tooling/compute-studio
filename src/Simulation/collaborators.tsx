@@ -287,7 +287,7 @@ export const CollaborationModal: React.FC<{
 
   const [selectedUser, setSelectedUser] = React.useState("");
 
-  const plan = accessStatus.plan.name;
+  const { plan } = accessStatus;
 
   let authors: Array<{
     username: string;
@@ -328,6 +328,27 @@ export const CollaborationModal: React.FC<{
     }
   }
 
+  let optInMsg;
+  if (!is_public && plan.name !== "free" && plan.cancel_at && plan.trial_end) {
+    optInMsg = (
+      <Row className="px-2 pt-2">
+        <Col className="text-center">
+          <div className="alert alert-primary" role="alert">
+            <p>Your free C/S Pro trial ends on {plan.trial_end}.</p>
+            <p>
+              <Button
+                variant="primary"
+                href={`/billing/upgrade/monthly/aftertrial/?next=${window.location.pathname}?showRunModal=true`}
+              >
+                <strong>Upgrade to C/S Pro after trial</strong>
+              </Button>
+            </p>
+          </div>
+        </Col>
+      </Row>
+    );
+  }
+
   let remainingPrivateSims = 3;
   const projectLower = project.toLowerCase();
   if (projectLower in accessStatus.remaining_private_sims) {
@@ -337,7 +358,7 @@ export const CollaborationModal: React.FC<{
   let visibiltyButtonMsg;
   if (!is_public) {
     visibiltyButtonMsg = <span>Make public</span>;
-  } else if (plan === "free") {
+  } else if (plan.name === "free") {
     visibiltyButtonMsg = (
       <span>
         Make private ({remainingPrivateSims} remaining this month.{" "}
@@ -360,6 +381,11 @@ export const CollaborationModal: React.FC<{
         {!!collabExceptionMsg ? (
           <Row className="w-100">
             <Col>{collabExceptionMsg}</Col>
+          </Row>
+        ) : null}
+        {!!optInMsg ? (
+          <Row className="w-100">
+            <Col>{optInMsg}</Col>
           </Row>
         ) : null}
         {RolePerms.hasAdminAccess(remoteSim) || !remoteSim ? (
