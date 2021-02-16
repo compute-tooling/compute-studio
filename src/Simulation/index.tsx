@@ -15,7 +15,6 @@ import {
   AccessStatus,
   Inputs,
   InitialValues,
-  Schema,
   Simulation,
   RemoteOutputs,
   Outputs,
@@ -63,6 +62,9 @@ interface SimAppState {
   // show run modal on page load.
   showRunModal: boolean;
 
+  // show collaborator modal on page load.
+  showCollabModal: boolean;
+
   // necessary for user id and write access
   accessStatus?: AccessStatus;
 
@@ -103,6 +105,7 @@ class SimTabs extends React.Component<
     this.api = new API(owner, title, modelpk);
     const search = props.location.search;
     const showRunModal = new URLSearchParams(search).get("showRunModal") === "true";
+    const showCollabModal = new URLSearchParams(search).get("showCollabModal") !== null;
     this.state = {
       key: props.tabName,
       hasShownDirtyWarning: false,
@@ -110,6 +113,7 @@ class SimTabs extends React.Component<
       notifyOnCompletion: false,
       isPublic: true,
       showRunModal: showRunModal,
+      showCollabModal: showCollabModal,
     };
 
     this.handleTabChange = this.handleTabChange.bind(this);
@@ -300,7 +304,6 @@ class SimTabs extends React.Component<
     formdata.append("client", "web-beta");
     formdata.append("notify_on_completion", this.state.notifyOnCompletion.toString());
     formdata.append("is_public", this.state.isPublic.toString());
-    console.log("isPublic", this.state.isPublic);
     let url = `/${this.api.owner}/${this.api.title}/api/v1/`;
     let sim = this.state.inputs.detail?.sim;
     const { accessStatus } = this.state;
@@ -494,6 +497,7 @@ class SimTabs extends React.Component<
               this.setState({ accessStatus });
               return accessStatus;
             }}
+            showCollabModal={this.state.showCollabModal}
           />
           <div className="d-flex justify-content-center">
             <ReactLoading type="spokes" color="#2b2c2d" />
@@ -565,6 +569,7 @@ class SimTabs extends React.Component<
                     this.setState({ accessStatus });
                     return accessStatus;
                   }}
+                  showCollabModal={this.state.showCollabModal}
                 />
               </ErrorBoundary>
               <Tab.Container

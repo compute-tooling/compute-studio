@@ -28,6 +28,7 @@ interface DescriptionProps {
   remoteSim: Simulation<RemoteOutputs>;
   resetOutputs: () => void;
   resetAccessStatus: () => Promise<AccessStatus>;
+  showCollabModal: boolean;
 }
 
 let Schema = yup.object().shape({
@@ -262,7 +263,6 @@ export default class DescriptionComponent extends React.Component<
   }
 
   pendingPermission() {
-    console.log(this.props.remoteSim?.pending_permissions);
     if (!this.props.remoteSim?.pending_permissions) {
       return undefined;
     }
@@ -426,7 +426,6 @@ export default class DescriptionComponent extends React.Component<
 
     const titleStyle = { display: "inline-block", padding: "5px", margin: 0 };
     const pendingPermission = this.pendingPermission();
-    console.log("pending", pendingPermission);
     return (
       <Formik
         initialValues={this.state.initialValues}
@@ -578,6 +577,7 @@ export default class DescriptionComponent extends React.Component<
                         formikProps={formikProps}
                         accessStatus={this.props.accessStatus}
                         project={`${this.props.api.owner}/${this.props.api.title}`}
+                        initShow={this.props.showCollabModal}
                       />
                     </Col>
                   ) : null}

@@ -60,6 +60,7 @@ interface LogState {
   recentModels?: Array<Project>;
   homeTab: "sims" | "models";
   accessStatus: AccessStatus;
+  showCollabModal: { owner: string; title: string; modelpk: number } | null;
 }
 
 const Model: React.FC<{ model: Project; index: number }> = ({ model, index }) => {
@@ -173,18 +174,24 @@ const Sim: React.FC<{
   index: number;
   accessStatus: AccessStatus;
   resetAccessStatus: () => void;
-}> = ({ initMiniSim, index, accessStatus, resetAccessStatus }) => {
+  initShowCollabModal: boolean;
+}> = ({ initMiniSim, index, accessStatus, resetAccessStatus, initShowCollabModal }) => {
   const [miniSim, setMiniSim] = React.useState(initMiniSim);
   const [remoteSim, setRemoteSim] = React.useState(null as Simulation<RemoteOutputs> | null);
   const [editTitle, setEditTitle] = React.useState(false);
-  const [showCollabModal, setShowCollabModal] = React.useState(false);
+  const [showCollabModal, setShowCollabModal] = React.useState(initShowCollabModal);
   const [owner, title] = miniSim.project.split("/");
   const simapi = new SimAPI(owner, title, miniSim.model_pk.toString());
+
   const resetRemoteSim = () => {
     return simapi.getRemoteOutputs().then(remoteSim => {
       setRemoteSim(remoteSim);
     });
   };
+
+  React.useEffect(() => {
+    if (showCollabModal) resetRemoteSim();
+  }, []);
 
   const handleShowCollabModal = (show: boolean) => {
     if (show && !!remoteSim) {
@@ -208,6 +215,7 @@ const Sim: React.FC<{
   } else {
     margin = "my-2";
   }
+
   return (
     <Formik
       initialValues={{
@@ -426,7 +434,8 @@ const SimFeed: React.FC<{
   sims: Array<MiniSimulation>;
   accessStatus: AccessStatus;
   resetAccessStatus: () => void;
-}> = ({ sims, accessStatus, resetAccessStatus }) => {
+  showCollabModal: { owner: string; title: string; modelpk: number } | null;
+}> = ({ sims, accessStatus, resetAccessStatus, showCollabModal }) => {
   if (sims.length > 0) {
     return (
       <div className="container-fluid px-0">
@@ -437,6 +446,12 @@ const SimFeed: React.FC<{
             index={ix}
             accessStatus={accessStatus}
             resetAccessStatus={resetAccessStatus}
+            initShowCollabModal={
+              showCollabModal === null
+                ? false
+                : sim.project === `${showCollabModal.owner}/${showCollabModal.title}` &&
+                  sim.model_pk === showCollabModal.modelpk
+            }
           />
         ))}
       </div>
@@ -564,19 +579,41 @@ const QueryDropDown: React.FC<{
   </Dropdown>
 );
 
+// Parse show collab URL search parameter into a model, title, and model pk.
+// This will be used to determine which (if any) modal should be shown when
+// the page loads.
+const parseShowCollab = (
+  showCollabModal: string | null
+): { title: string; owner: string; modelpk: number } | null => {
+  if (!showCollabModal) return null;
+  const pieces = showCollabModal.split("/").filter(value => value.length);
+  if (pieces.length != 3) {
+    return null;
+  }
+  const [owner, title, modelpkStr] = pieces;
+  const modelpk = parseInt(modelpkStr);
+  if (isNaN(modelpk)) {
+    return null;
+  }
+
+  return { owner, title, modelpk };
+};
+
 class Log extends React.Component<LogProps, LogState> {
   api: API;
   constructor(props) {
     super(props);
     const { username } = this.props.match.params;
     this.api = new API(username);
+    const search = props.location.search;
+    const showCollabModal = new URLSearchParams(search).get("showCollabModal");
     this.state = {
       loading: false,
       params: { ordering: [], title: null, title__notlike: null },
       homeTab: "sims",
       accessStatus: null,
+      showCollabModal: parseShowCollab(showCollabModal),
     };
-
     this.loadNext = this.loadNext.bind(this);
     this.query = this.query.bind(this);
     this.setAccessStatus = this.setAccessStatus.bind(this);
@@ -683,7 +720,7 @@ class Log extends React.Component<LogProps, LogState> {
   }
 
   render() {
-    const { simFeed, modelFeed, recentModels } = this.state;
+    const { simFeed, modelFeed, recentModels, showCollabModal } = this.state;
     if (!simFeed || !modelFeed) {
       return (
         <div className="d-flex justify-content-center">
@@ -701,6 +738,7 @@ class Log extends React.Component<LogProps, LogState> {
               sims={sims}
               accessStatus={this.state.accessStatus}
               resetAccessStatus={this.setAccessStatus}
+              showCollabModal={showCollabModal}
             />
             {this.state.simFeed?.next ? (
               <LoadSimulationsButton
@@ -732,6 +770,7 @@ class Log extends React.Component<LogProps, LogState> {
                 sims={sims}
                 accessStatus={this.state.accessStatus}
                 resetAccessStatus={this.setAccessStatus}
+                showCollabModal={showCollabModal}
               />
               {this.state.simFeed?.next ? (
                 <LoadSimulationsButton
