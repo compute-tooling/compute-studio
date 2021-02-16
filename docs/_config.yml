@@ -6,3 +6,10 @@ logo: "logo.png"
 repository:
   url: https://github.com/compute-tooling/compute-studio
   path_to_book: "docs"
+
+sphinx:
+  extra_extensions: ["sphinx.ext.autodoc", "sphinx.ext.viewcode", "sphinx.ext.napoleon"]
+
+execute:
+  # Notebooks use the CS API and should be updated manually.
+  execute_notebooks: 'off'

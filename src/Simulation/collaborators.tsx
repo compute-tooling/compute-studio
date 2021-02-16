@@ -330,7 +330,7 @@ export const CollaborationModal: React.FC<{
   }
 
   let optInMsg;
-  if (!is_public && plan.name !== "free" && plan.cancel_at && plan.trial_end) {
+  if (!is_public && plan?.name !== "free" && plan?.cancel_at && plan?.trial_end) {
     const { pathname } = window.location;
     // This modal is shown on the home page and the simulation page.
     const showCollabModal = `${api.owner}/${api.title}/${api.modelpk}`;
