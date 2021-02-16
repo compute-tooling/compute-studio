@@ -238,8 +238,9 @@ export const CollaborationSettings: React.FC<{
   formikProps: FormikProps<{ title: string; is_public: boolean } & CollaboratorValues>;
   accessStatus: AccessStatus;
   project: string;
-}> = ({ api, user, remoteSim, formikProps, accessStatus, project }) => {
-  const [show, setShow] = React.useState(false);
+  initShow: boolean;
+}> = ({ api, user, remoteSim, formikProps, accessStatus, project, initShow }) => {
+  const [show, setShow] = React.useState(initShow);
   const is_public =
     remoteSim?.is_public !== undefined ? remoteSim.is_public : formikProps.values.is_public;
   return (
@@ -332,8 +333,8 @@ export const CollaborationModal: React.FC<{
   if (!is_public && plan.name !== "free" && plan.cancel_at && plan.trial_end) {
     const { pathname } = window.location;
     // This modal is shown on the home page and the simulation page.
-    const nextUrl =
-      pathname === "/" || pathname.startsWith("/log") ? pathname : `${pathname}?showRunModal=true`;
+    const showCollabModal = `${api.owner}/${api.title}/${api.modelpk}`;
+    const nextUrl = `${pathname}?showCollabModal=${showCollabModal}`;
     optInMsg = (
       <Row className="px-2 pt-2">
         <Col className="text-center">
@@ -478,7 +479,6 @@ export const CollaborationModal: React.FC<{
                               className="btn btn-outline-secondary lh-1"
                               onClick={e => {
                                 e.preventDefault();
-                                console.log("author set", accessobj.username);
                                 setSelectedUser(accessobj.username);
                                 setTimeout(() => {
                                   setAuthorSelected(true);
@@ -592,7 +592,6 @@ export const CollaborationModal: React.FC<{
                       onSelectUser={selected => {
                         if (remoteSim.access.find(a => a.username === selected.username)) return;
                         setSelectedUser(selected.username);
-                        console.log("access set", selected.username);
                         setTimeout(() => {
                           setAccessSelected(true);
                           setAuthorSelected(false);
