@@ -330,6 +330,10 @@ export const CollaborationModal: React.FC<{
 
   let optInMsg;
   if (!is_public && plan.name !== "free" && plan.cancel_at && plan.trial_end) {
+    const { pathname } = window.location;
+    // This modal is shown on the home page and the simulation page.
+    const nextUrl =
+      pathname === "/" || pathname.startsWith("/log") ? pathname : `${pathname}?showRunModal=true`;
     optInMsg = (
       <Row className="px-2 pt-2">
         <Col className="text-center">
@@ -338,7 +342,7 @@ export const CollaborationModal: React.FC<{
             <p>
               <Button
                 variant="primary"
-                href={`/billing/upgrade/monthly/aftertrial/?next=${window.location.pathname}?showRunModal=true`}
+                href={`/billing/upgrade/monthly/aftertrial/?next=${nextUrl}`}
               >
                 <strong>Upgrade to C/S Pro after trial</strong>
               </Button>
