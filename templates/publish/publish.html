@@ -1,4 +1,18 @@
-{% extends 'base.html' %} {% load static %} {% block scripts %} {% endblock %}
+{% extends 'base.html' %}
+
+{% block social %}
+{% if object %}
+<title>{{object.title}}</title>
+<meta property="og:type" content="website" />
+<meta property="og:title" content="{{object.title}} by {{object.owner}}" />
+{% if object.social_image_link %}
+<meta property="og:image" content="{{object.social_image_link}}" />
+<link rel="icon" href="{{object.social_image_link}}" type="image/x-icon" />
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% load static %} {% block scripts %} {% endblock %}
 {% block content %}
 <div id="publish-container"></div>
 <script src="{% static 'js/publish.js' %}"></script>

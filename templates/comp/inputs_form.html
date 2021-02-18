@@ -1,4 +1,17 @@
-{% extends 'base.html' %} {% load static %}
+{% extends 'base.html' %}
+
+{% block social %}
+{% if sim  %}
+<meta property="og:type" content="website" />
+<meta property="og:title" content="{{sim.title}} by {{sim.owner}}" />
+<meta property="og:url" content="{{sim.url}}" />
+{% if sim.pic %}
+<meta property="og:image" content="{{sim.pic}}" />
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% load static %}
 {% block content %} {% csrf_token %}
 <div class="container-fluid">
   <div id="inputs-container"></div>

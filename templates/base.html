@@ -51,13 +51,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <meta property="og:site_name" content="Compute Studio" />
-    {% if sim %}
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="{{sim.title}} by {{sim.owner}}" />
-    <meta property="og:url" content="{{sim.url}}" />
-    {% if sim.pic %}
-    <meta property="og:image" content="{{sim.pic}}" />
-    {% endif %} {% endif %} {% block style %} {% endblock %} {% block scripts %} {% endblock %}
+
+    {% block social %}{% endblock %} {% block style %} {% endblock %} {% block scripts %} {%endblock %}
   </head>
 
   <body class="main-content d-flex flex-column h-100">
