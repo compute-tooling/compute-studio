@@ -3,8 +3,14 @@
 {% load static %}
 
 <head>
-  <title>Compute Studio</title>
-  <link rel="icon" href="{% static 'imgs/cslashs.png' %}" type="image/x-icon" />
+  <title>{{object.title}}</title>
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="{{object.title}} by {{object.owner}}" />
+  {% if object.social_image_link %}
+  <meta property="og:image" content="{{object.social_image_link}}" />
+  <link rel="icon" href="{{object.social_image_link}}" type="image/x-icon" />
+  {% endif %}
+
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
     integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous" />
 

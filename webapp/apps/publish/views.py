@@ -131,18 +131,18 @@ class ProjectDetailView(GetProjectMixin, View):
     template_name = "publish/publish.html"
 
     def get(self, request, *args, **kwargs):
-        self.get_object(**kwargs)
-        return render(request, self.template_name)
+        self.object = self.get_object(**kwargs)
+        return render(request, self.template_name, context={"object": self.object})
 
 
 class ProjectSettingsView(GetProjectMixin, View):
     template_name = "publish/publish.html"
 
     def get(self, request, *args, **kwargs):
-        project = self.get_object(**kwargs)
-        if not project.has_write_access(request.user):
+        self.object = self.get_object(**kwargs)
+        if not self.object.has_write_access(request.user):
             raise PermissionDenied()
-        return render(request, self.template_name)
+        return render(request, self.template_name, context={"object": self.object})
 
 
 class ProjectDetailAPIView(GetProjectMixin, APIView):

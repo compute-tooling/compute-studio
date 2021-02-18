@@ -308,6 +308,7 @@ class Project(models.Model):
     title = models.CharField(max_length=255)
     oneliner = models.CharField(max_length=10000)
     description = models.CharField(max_length=10000)
+    social_image_link = models.URLField(null=True)
     repo_url = models.URLField()
     repo_tag = models.CharField(default="master", max_length=32)
     owner = models.ForeignKey(

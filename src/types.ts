@@ -193,6 +193,7 @@ export interface Project {
   tech?: Tech;
   callable_name?: string;
   app_location?: string;
+  social_image_link?: string;
 }
 
 export interface MiniSimulation {
