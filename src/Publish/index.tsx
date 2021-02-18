@@ -71,6 +71,7 @@ var Schema = yup.object().shape({
   tech: yup.string().required(requiredMessage),
   callable_name: yup.string(),
   is_public: yup.boolean(),
+  social_image_link: yup.string().url(),
 });
 
 export const Message = ({ msg }) => (
@@ -106,6 +107,7 @@ interface ProjectValues {
   tech: Tech | null;
   callable_name: string;
   is_public: boolean;
+  social_image_link: string;
 }
 
 const initialValues: ProjectValues = {
@@ -121,6 +123,7 @@ const initialValues: ProjectValues = {
   tech: null,
   callable_name: "",
   is_public: true,
+  social_image_link: null,
 };
 
 type ProjectSettingsSection = "about" | "configure" | "environment" | "access";
@@ -555,6 +558,32 @@ const AboutAppFields: React.FC<{
         </Field>
       </div>
       {showReadme && <ReadmeField />}
+
+      {showReadme && (
+        <div className="mt-4 mb-2">
+          <label>
+            <strong>Social Image URL</strong>
+            <span className="ml-2">
+              <Tip
+                id="social-image-info"
+                tip="This will be used when sharing your app on social media."
+              >
+                <i className="fas fa-info-circle"></i>
+              </Tip>
+            </span>
+          </label>
+          <Field name="social_image_link">
+            {({ field, meta }) => (
+              <Row className="w-100">
+                <Col>
+                  <input type="url" className="w-100" {...field} />
+                  {meta.touched && meta.error && <div className="text-danger">{meta.error}</div>}
+                </Col>
+              </Row>
+            )}
+          </Field>
+        </div>
+      )}
     </>
   );
 };
