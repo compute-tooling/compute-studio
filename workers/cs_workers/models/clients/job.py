@@ -7,6 +7,7 @@ import yaml
 from kubernetes import client as kclient, config as kconfig
 
 from cs_workers.utils import clean, redis_conn_from_env
+from cs_workers.models.secrets import ModelSecrets
 
 redis_conn = dict(
     username="scheduler",
@@ -55,8 +56,8 @@ class Job:
         safeowner = clean(owner)
         safetitle = clean(title)
         envs = [
-            kclient.V1EnvVar("OWNER", config["owner"]),
-            kclient.V1EnvVar("TITLE", config["title"]),
+            kclient.V1EnvVar("OWNER", owner),
+            kclient.V1EnvVar("TITLE", title),
             kclient.V1EnvVar("EXP_TASK_TIME", str(config["exp_task_time"])),
         ]
         for sec in [
@@ -76,7 +77,9 @@ class Job:
                 )
             )
 
-        for secret in self.model_config._list_secrets(config):
+        for secret in ModelSecrets(
+            owner=owner, title=title, project=self.project
+        ).list():
             envs.append(
                 kclient.V1EnvVar(
                     name=secret,
@@ -97,7 +100,7 @@ class Job:
         else:
             job_id = str(job_id)
 
-        config = self.model_config.projects()[f"{owner}/{title}"]
+        config = self.model_config
 
         safeowner = clean(owner)
         safetitle = clean(title)
