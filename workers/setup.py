@@ -25,8 +25,6 @@ setuptools.setup(
         "pyyaml",
         "google-cloud-secret-manager",
         "httpx",
-        "dask",
-        "distributed",
         "tornado",
         "cs-storage>=1.11.0",
         "docker",
