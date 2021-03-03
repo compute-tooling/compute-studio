@@ -12,8 +12,7 @@ EXPOSE 80
 EXPOSE 8888
 
 RUN pip install -r requirements.txt
-RUN pip install google-cloud-secret-manager "cs-crypt>=0.0.2" pyjwt
-RUN conda install dask distributed tornado
+RUN conda install tornado
 
 RUN mkdir /home/cs_workers
 COPY workers/cs_workers /home/cs_workers

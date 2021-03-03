@@ -1,16 +1,14 @@
 ARG TAG
 FROM continuumio/miniconda3
 
-USER root
 RUN  apt-get update && apt install libgl1-mesa-glx --yes
 
 RUN conda config --append channels conda-forge
-RUN conda update conda
-RUN conda install "python>=3.7" pip tornado dask lz4 && pip install boto3 gunicorn
+RUN conda install "python>=3.7" pip tornado && pip install boto3 gunicorn
 ARG BRANCH="dev"
 RUN echo ${BRANCH}
 RUN pip install \
-    cs-kit \ 
+    "cs-kit>=1.16.2" \
     pytest \
     "git+https://github.com/compute-tooling/compute-studio.git@${BRANCH}#egg=cs-secrets&subdirectory=secrets" \
     "git+https://github.com/compute-tooling/compute-studio.git@${BRANCH}#egg=cs-deploy&subdirectory=deploy" \

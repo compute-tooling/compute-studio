@@ -6,7 +6,11 @@ import httpx
 import redis
 import tornado.ioloop
 import tornado.web
-from dask.distributed import Client
+
+try:
+    from dask.distributed import Client
+except ImportError:
+    Client = None
 
 import cs_storage
 
@@ -95,6 +99,7 @@ class Push(tornado.web.RequestHandler):
 
 
 def get_app():
+    assert Client is not None, "Unable to import dask client"
     assert auth.cryptkeeper is not None
     assert BUCKET
     return tornado.web.Application(
