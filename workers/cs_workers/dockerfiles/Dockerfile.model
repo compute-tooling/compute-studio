@@ -16,10 +16,12 @@ ARG TIME_STAMP=0
 RUN git clone -b ${REPO_TAG} ${REPO_URL}
 WORKDIR ${REPO_NAME}
 
+
+RUN csk build-env
+
 RUN if test -f "./cs-config/install.sh"; then  cat ./cs-config/install.sh; fi
 RUN if test -f "./cs-config/install.sh"; then  bash ./cs-config/install.sh; fi
 
-RUN csk build-env
 RUN if test -f "./cs-config/setup.py"; then  pip install -e ./cs-config; fi
 
 

@@ -3,11 +3,12 @@ FROM continuumio/miniconda3
 
 RUN  apt-get update && apt install libgl1-mesa-glx --yes
 
-RUN conda config --append channels conda-forge
-RUN conda install "python>=3.7" pip tornado && pip install boto3 gunicorn
 ARG BRANCH="dev"
 RUN echo ${BRANCH}
-RUN pip install \
+
+RUN conda config --append channels conda-forge && \
+    conda install "python>=3.7" pip tornado && \
+    pip install gunicorn \
     "cs-kit>=1.16.2" \
     pytest \
     "git+https://github.com/compute-tooling/compute-studio.git@${BRANCH}#egg=cs-secrets&subdirectory=secrets" \
