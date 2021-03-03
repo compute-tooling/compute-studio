@@ -13,11 +13,15 @@ ARG REPO_TAG=master
 # Bump to trigger build
 ARG TIME_STAMP=0
 
-RUN git clone -b ${REPO_TAG} ${REPO_URL} 
+RUN git clone -b ${REPO_TAG} ${REPO_URL}
 WORKDIR ${REPO_NAME}
 
-RUN cat ./cs-config/install.sh
-RUN bash ./cs-config/install.sh
+
+RUN csk build-env
+
+RUN if test -f "./cs-config/install.sh"; then  cat ./cs-config/install.sh; fi
+RUN if test -f "./cs-config/install.sh"; then  bash ./cs-config/install.sh; fi
+
 RUN if test -f "./cs-config/setup.py"; then  pip install -e ./cs-config; fi
 
 

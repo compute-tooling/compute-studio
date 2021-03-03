@@ -11,11 +11,10 @@ RUN apt-get update && \
     libnss3
 
 
-RUN pip install -r requirements.txt
-RUN pip install httpx pyppeteer2
-RUN conda install -c conda-forge jinja2 bokeh tornado dask && pyppeteer-install
-
-RUN pip install "cs-crypt>=0.0.2" pyjwt
+RUN pip install -r requirements.txt && \
+    pip install pyppeteer2 && \
+    conda install -c conda-forge jinja2 bokeh tornado dask && \
+    pyppeteer-install
 
 RUN mkdir /home/cs_workers
 COPY workers/cs_workers /home/cs_workers

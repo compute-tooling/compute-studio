@@ -3,7 +3,7 @@ FROM distributed
 
 ENV HOST 0.0.0.0
 ENV PORT 8888
-ENV DEBUG true
+ENV DEBUG false
 
 ENV IS_SCHEDULER True
 
@@ -11,9 +11,8 @@ ENV IS_SCHEDULER True
 EXPOSE 80
 EXPOSE 8888
 
-RUN pip install -r requirements.txt
-RUN pip install google-cloud-secret-manager "cs-crypt>=0.0.2" pyjwt
-RUN conda install dask distributed tornado
+RUN pip install -r requirements.txt && \
+    conda install tornado
 
 RUN mkdir /home/cs_workers
 COPY workers/cs_workers /home/cs_workers
