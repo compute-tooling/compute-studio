@@ -609,10 +609,10 @@ const AutoUpgradeBanner: React.FC<{ accessStatus: AccessStatus }> = ({ accessSta
         <Col className="text-center">
           <div className="alert alert-primary alert-dismissible show" role="alert">
             <Button
-              variant="primary"
+              variant="link"
               href={`/billing/upgrade/monthly/aftertrial/?next=${pathname}`}
             >
-              <strong>Upgrade to C/S Pro after trial ends on {plan.trial_end}</strong>
+              <u><strong>Upgrade to C/S Pro after trial ends on {plan.trial_end}</strong></u>
             </Button>
             <button type="button" className="close" data-dismiss="alert" aria-label="Close">
               <span aria-hidden="true">&times;</span>
