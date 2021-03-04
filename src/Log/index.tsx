@@ -356,8 +356,8 @@ const Sim: React.FC<{
                         {miniSim.is_public ? (
                           <i className="fas fa-lock-open"></i>
                         ) : (
-                          <i className="fas fa-lock"></i>
-                        )}
+                            <i className="fas fa-lock"></i>
+                          )}
                       </Tip>
                     </Col>
                     {RolePerms.hasAdminAccess(miniSim) ? (
@@ -450,7 +450,7 @@ const SimFeed: React.FC<{
               showCollabModal === null
                 ? false
                 : sim.project === `${showCollabModal.owner}/${showCollabModal.title}` &&
-                  sim.model_pk === showCollabModal.modelpk
+                sim.model_pk === showCollabModal.modelpk
             }
           />
         ))}
@@ -493,12 +493,12 @@ const RecentModelsPanel: React.FC<{ recentModels: Array<Project> }> = ({ recentM
                 </h6>
               </Tip>
             ) : (
-              <Tip id="goto_app" tip="Go to app">
-                <h6 onClick={e => e.stopPropagation()}>
-                  <a href={`/${model.owner}/${model.title}/`}>{`${model.owner}/${model.title}`} </a>
-                </h6>
-              </Tip>
-            )}
+                <Tip id="goto_app" tip="Go to app">
+                  <h6 onClick={e => e.stopPropagation()}>
+                    <a href={`/${model.owner}/${model.title}/`}>{`${model.owner}/${model.title}`} </a>
+                  </h6>
+                </Tip>
+              )}
           </Card.Title>
           <Card.Subtitle className="text-muted d-none d-sm-none d-md-block">
             {model.oneliner}
@@ -520,8 +520,8 @@ const LoadSimulationsButton: React.FC<{ loading: boolean; loadNextSimulations: (
           {loading ? (
             <ReactLoading type="spokes" color="#2b2c2d" height={"20%"} width={"20%"} />
           ) : (
-            "Load more"
-          )}
+              "Load more"
+            )}
         </div>
       </Button>
     </Col>
@@ -598,6 +598,32 @@ const parseShowCollab = (
 
   return { owner, title, modelpk };
 };
+
+const AutoUpgradeBanner: React.FC<{ accessStatus: AccessStatus }> = ({ accessStatus }) => {
+  const { plan } = accessStatus;
+  const { pathname } = window.location;
+
+  if (plan?.name !== "free" && plan?.cancel_at && plan?.trial_end) {
+    return (
+      <Row>
+        <Col className="text-center">
+          <div className="alert alert-primary alert-dismissible show" role="alert">
+            <Button
+              variant="primary"
+              href={`/billing/upgrade/monthly/aftertrial/?next=${pathname}`}
+            >
+              <strong>Upgrade to C/S Pro after trial ends on {plan.trial_end}</strong>
+            </Button>
+            <button type="button" className="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        </Col>
+      </Row>
+    )
+  }
+  return null;
+}
 
 class Log extends React.Component<LogProps, LogState> {
   api: API;
@@ -759,6 +785,7 @@ class Log extends React.Component<LogProps, LogState> {
     if (this.props.pageName === "log") {
       return (
         <>
+          <AutoUpgradeBanner accessStatus={this.state.accessStatus} />
           <Row className="w-100 mx-0 my-2" style={{ justifyContent: "right" }}>
             <Col className="col-1 align-self-center">
               <QueryDropDown params={this.state.params} query={this.query} />
@@ -785,67 +812,69 @@ class Log extends React.Component<LogProps, LogState> {
     }
 
     return (
-      <Tab.Container
-        id="home-tabs"
-        defaultActiveKey={this.state.homeTab}
-        transition={false}
-        activeKey={this.state.homeTab}
-        onSelect={(homeTab: "sims" | "models") => {
-          if (homeTab) this.setState({ homeTab: homeTab });
-        }}
-      >
-        <Row className="w-100 px-0 m-0 justify-content-between mb-3 d-flex flex-md-row">
-          <Col
-            className={`col-md-auto ${
-              this.props.pageName !== "home" ? "" : " offset-md-3"
-            } align-self-center`}
-          >
-            <Nav variant="pills" className="d-flex d-sm-block">
-              <Row className="flex-1">
-                <Col className="p-0 align-self-center">
-                  <Nav.Item className="left-nav-item text-center sub-nav-item flex-2">
-                    <Nav.Link
-                      className="border"
-                      eventKey="sims"
-                      style={{ fontSize: "15px", fontWeight: 600 }}
-                    >
-                      Simulations
+      <>
+        <AutoUpgradeBanner accessStatus={this.state.accessStatus} />
+        <Tab.Container
+          id="home-tabs"
+          defaultActiveKey={this.state.homeTab}
+          transition={false}
+          activeKey={this.state.homeTab}
+          onSelect={(homeTab: "sims" | "models") => {
+            if (homeTab) this.setState({ homeTab: homeTab });
+          }}
+        >
+          <Row className="w-100 px-0 m-0 justify-content-between mb-3 d-flex flex-md-row">
+            <Col
+              className={`col-md-auto ${this.props.pageName !== "home" ? "" : " offset-md-3"
+                } align-self-center`}
+            >
+              <Nav variant="pills" className="d-flex d-sm-block">
+                <Row className="flex-1">
+                  <Col className="p-0 align-self-center">
+                    <Nav.Item className="left-nav-item text-center sub-nav-item flex-2">
+                      <Nav.Link
+                        className="border"
+                        eventKey="sims"
+                        style={{ fontSize: "15px", fontWeight: 600 }}
+                      >
+                        Simulations
                     </Nav.Link>
-                  </Nav.Item>
-                </Col>
-                <Col className="p-0 align-self-center">
-                  <Nav.Item className="right-nav-item text-center sub-nav-item flex-1">
-                    <Nav.Link
-                      className="border"
-                      eventKey="models"
-                      style={{ fontSize: "15px", fontWeight: 600 }}
-                    >
-                      Models
+                    </Nav.Item>
+                  </Col>
+                  <Col className="p-0 align-self-center">
+                    <Nav.Item className="right-nav-item text-center sub-nav-item flex-1">
+                      <Nav.Link
+                        className="border"
+                        eventKey="models"
+                        style={{ fontSize: "15px", fontWeight: 600 }}
+                      >
+                        Models
                     </Nav.Link>
-                  </Nav.Item>
-                </Col>
+                    </Nav.Item>
+                  </Col>
+                </Row>
+              </Nav>
+            </Col>
+            {this.state.homeTab === "sims" ? (
+              <Col className="col-1 align-self-center">
+                <QueryDropDown params={this.state.params} query={this.query} />
+              </Col>
+            ) : null}
+          </Row>
+          {this.props.pageName === "home" ? (
+            <Row className="w-100 m-0">
+              <Col className="col-md-3 pl-0 mobile-pr-0 mb-3">
+                {recentModels ? <RecentModelsPanel recentModels={recentModels} /> : null}
+              </Col>
+              <Col className="col-md-9 px-0">{feed}</Col>
+            </Row>
+          ) : (
+              <Row className="w-100 m-0">
+                <Col className="p-0">{feed}</Col>
               </Row>
-            </Nav>
-          </Col>
-          {this.state.homeTab === "sims" ? (
-            <Col className="col-1 align-self-center">
-              <QueryDropDown params={this.state.params} query={this.query} />
-            </Col>
-          ) : null}
-        </Row>
-        {this.props.pageName === "home" ? (
-          <Row className="w-100 m-0">
-            <Col className="col-md-3 pl-0 mobile-pr-0 mb-3">
-              {recentModels ? <RecentModelsPanel recentModels={recentModels} /> : null}
-            </Col>
-            <Col className="col-md-9 px-0">{feed}</Col>
-          </Row>
-        ) : (
-          <Row className="w-100 m-0">
-            <Col className="p-0">{feed}</Col>
-          </Row>
-        )}
-      </Tab.Container>
+            )}
+        </Tab.Container>
+      </>
     );
   }
 }
