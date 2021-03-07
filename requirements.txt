@@ -20,5 +20,6 @@ hashids
 django-rest-auth
 django-allauth
 cs-storage>=1.11.0
-cs-crypt>=0.0.1
+cs-crypt>=0.0.2
 pyjwt
+django-oauth-toolkit
