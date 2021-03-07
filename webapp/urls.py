@@ -65,6 +65,7 @@ urlpatterns = [
         publishviews.RecentModelsAPIView.as_view(),
         name="recent_models_api",
     ),
+    path("o/", include("oauth2_provider.urls", namespace="oauth2_provider")),
     path(
         "<str:username>/<str:title>/",
         publishviews.ProjectDetailView.as_view(),

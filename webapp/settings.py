@@ -94,11 +94,17 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "anymail",
     # 'allauth.socialaccount.providers.github', # new
+    "oauth2_provider",
 ]
 
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 25,
+}
+
+OAUTH2_PROVIDER = {
+    # this is the list of available scopes
+    "SCOPES": {"read": "Read simulations", "write": "Create simulations",}
 }
 
 MIDDLEWARE = [
