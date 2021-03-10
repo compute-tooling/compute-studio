@@ -31,18 +31,23 @@ def customer_subscription_deleted(event):
     sub = get_object_or_404(Subscription, stripe_id=event.data.object.id)
     customer = sub.customer
     sub.delete()
-    print("successfully deleted subscription")
-    send_mail(
-        "Your C/S subscription has been cancelled",
-        (
-            "We are sorry to see you go. If you have a moment, please let us know why "
-            "you have cancelled your subscription and what we can do to win you back "
-            "in the future.\n\nBest,\nThe C/S Team"
-        ),
-        "admin@compute.studio",
-        [customer.user.email],
-        fail_silently=False,
+    print(
+        "successfully deleted subscription",
+        customer.stripe_id,
+        customer.user.email,
+        event.data.object.id,
     )
+    # send_mail(
+    #     "Your C/S subscription has been cancelled",
+    #     (
+    #         "We are sorry to see you go. If you have a moment, please let us know why "
+    #         "you have cancelled your subscription and what we can do to win you back "
+    #         "in the future.\n\nBest,\nThe C/S Team"
+    #     ),
+    #     "admin@compute.studio",
+    #     [customer.user.email],
+    #     fail_silently=False,
+    # )
 
 
 def customer_subscription_updated(event: stripe.Event):
