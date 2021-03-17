@@ -38,7 +38,7 @@ You can reach Compute Studio developers to discuss how to get started by opening
 
 This is the easiest way to get up and running with a local compute studio webserver. It requires an existing database (e.g. the test database for dev.compute.studio). With this setup, you can still view the home dashboard and run simulations and apps.
 
-### Get the code, install Docker and friends, and install node.
+### Get the code, install Docker and friends, and install node
 1. Download the code: `git clone git@github.com:compute-tooling/compute-studio.git`
 2. Fetch branches: `git fetch origin`
 3. Checkout the `dev` branch: `git checkout dev`
@@ -54,11 +54,11 @@ This is the easiest way to get up and running with a local compute studio webser
 7. Save your google cloud credentials in a file named `google-creds.json`.
 8. Start the webserver: `docker-compose up`
 
-### Install JavaScript dependencies and run the JavaScript build server:
+### Install JavaScript dependencies and run the JavaScript build server
 9. In another terminal window, install JavaScript dependencies: `yarn install`
 10. Then, run the dev server: `yarn start`
 
-### Checkout the devlopment server at http://localhost:8000 !!!
+#### Checkout the devlopment server at http://localhost:8000 !!!
 
 ## Local Development (the hard way)
 
