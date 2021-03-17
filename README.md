@@ -43,8 +43,8 @@ This is the easiest way to get up and running with a local compute studio webser
 2. Fetch branches: `git fetch origin`
 3. Checkout the `dev` branch: `git checkout dev`
 4. Install Docker and Docker Compose:
-  - https://docs.docker.com/get-docker/
-  - https://docs.docker.com/compose/install/
+    - https://docs.docker.com/get-docker/
+    - https://docs.docker.com/compose/install/
 5. Install node and yarn:
     - https://nodejs.org
     - `npm install yarn`
