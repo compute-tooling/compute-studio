@@ -210,7 +210,7 @@ rm /dump.sql
 You may need to reset the Postgres user password. This can be done from the psql repl via:
 
 ```sql
-alter user postgres with passwrod 'pg-password-here';
+alter user postgres with password 'pg-password-here';
 ```
 
 You may need to restart the web and db pods to get things synced back up:
