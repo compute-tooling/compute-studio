@@ -28,7 +28,7 @@ You can reach Compute Studio developers to discuss how to get started by opening
 1. Download the code: `git clone git@github.com:compute-tooling/compute-studio.git`
 1. Fetch branches: `git fetch origin`
 1. Checkout the `dev` branch: `git checkout dev`
-1. Checkout the feature branch from this `dev` branch: `git checkout my-new-feature`
+1. Checkout the feature branch from this `dev` branch: `git checkout -b my-new-feature`
 1. Make some changes and commit them to `my-new-feature`. When you're ready, open a pull request on the `dev` branch.
 1. Merge PR to `dev` branch for testing on https://dev.compute.studio
 1. Repeat process until feature / bug fix is ready.
