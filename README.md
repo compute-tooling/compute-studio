@@ -40,23 +40,23 @@ This is the easiest way to get up and running with a local compute studio webser
 
 ### Get the code, install Docker and friends, and install node.
 1. Download the code: `git clone git@github.com:compute-tooling/compute-studio.git`
-1. Fetch branches: `git fetch origin`
-1. Checkout the `dev` branch: `git checkout dev`
-1. Install Docker and Docker Compose:
+2. Fetch branches: `git fetch origin`
+3. Checkout the `dev` branch: `git checkout dev`
+4. Install Docker and Docker Compose:
   - https://docs.docker.com/get-docker/
   - https://docs.docker.com/compose/install/
-1. Install node and yarn:
-  - https://nodejs.org
-  - `npm install yarn`
+5. Install node and yarn:
+    - https://nodejs.org
+    - `npm install yarn`
 
 ### Set up credentials for database access and run
-1. Copy `.env.example` to `.env` and fill in the variables.
-1. Save your google cloud credentials in a file named `google-creds.json`.
-1. Start the webserver: `docker-compose up`
+6. Copy `.env.example` to `.env` and fill in the variables.
+7. Save your google cloud credentials in a file named `google-creds.json`.
+8. Start the webserver: `docker-compose up`
 
 ### Install JavaScript dependencies and run the JavaScript build server:
-1. In another terminal window, install JavaScript dependencies: `yarn install`
-1. Then, run the dev server: `yarn start`
+9. In another terminal window, install JavaScript dependencies: `yarn install`
+10. Then, run the dev server: `yarn start`
 
 ### Checkout the devlopment server at http://localhost:8000 !!!
 
