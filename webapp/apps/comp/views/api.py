@@ -20,6 +20,8 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import IntegerField
 from rest_framework import filters
 
+from oauth2_provider.contrib.rest_framework import OAuth2Authentication
+
 import paramtools as pt
 import cs_storage
 
@@ -107,6 +109,7 @@ class DetailMyInputsAPIView(APIView):
         SessionAuthentication,
         BasicAuthentication,
         TokenAuthentication,
+        OAuth2Authentication,
     )
 
     queryset = Inputs.objects.all()
@@ -165,6 +168,7 @@ class BaseCreateAPIView(APIView):
         SessionAuthentication,
         BasicAuthentication,
         TokenAuthentication,
+        OAuth2Authentication,
     )
     queryset = Project.objects.all()
 
@@ -202,6 +206,7 @@ class BaseDetailAPIView(GetOutputsObjectMixin, APIView):
         SessionAuthentication,
         BasicAuthentication,
         TokenAuthentication,
+        OAuth2Authentication,
     )
 
     def put(self, request, *args, **kwargs):
@@ -335,6 +340,7 @@ class NewSimulationAPIView(RequiresLoginPermissions, APIView):
         SessionAuthentication,
         BasicAuthentication,
         TokenAuthentication,
+        OAuth2Authentication,
     )
 
     def post(self, request, *args, **kwargs):
@@ -712,6 +718,7 @@ class SimsAPIView(FilterTitle, generics.ListAPIView):
         SessionAuthentication,
         BasicAuthentication,
         TokenAuthentication,
+        OAuth2Authentication,
     )
 
     filter_backends = [filters.OrderingFilter]

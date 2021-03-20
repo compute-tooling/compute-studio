@@ -6,3 +6,6 @@ boto3
 kubernetes
 cs-storage>=1.11.0
 pyyaml
+google-cloud-secret-manager
+cs-crypt>=0.0.2
+pyjwt

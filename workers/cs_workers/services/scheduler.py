@@ -292,8 +292,6 @@ def get_app():
             ),
             (r"/auth/", AuthApi, dict()),
         ],
-        debug=True,
-        autoreload=True,
     )
 
 

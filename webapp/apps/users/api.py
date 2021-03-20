@@ -10,6 +10,11 @@ from rest_framework.authentication import (
     TokenAuthentication,
 )
 
+from oauth2_provider.contrib.rest_framework import (
+    OAuth2Authentication,
+    TokenHasReadWriteScope,
+)
+
 from webapp.apps.publish.views import GetProjectMixin
 from .permissions import StrictRequiresActive
 
@@ -58,6 +63,28 @@ class UsersAPIView(APIView):
         )[:10]
         results = UserSerializer(suggested, many=True)
         return Response(results.data, status=status.HTTP_200_OK)
+
+
+class MeAPI(GetProjectMixin, APIView):
+    authentication_classes = (
+        SessionAuthentication,
+        TokenAuthentication,
+        OAuth2Authentication,
+    )
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        user_resp = {}
+        if user.is_authenticated and user.profile:
+            user_resp = {"username": user.username, "status": user.profile.status}
+        else:
+            user_resp = {"username": None, "status": "anon"}
+        if kwargs:
+            project = self.get_object(**kwargs)
+            user_resp.update(
+                {"project": str(project), "project_role": project.role(user)}
+            )
+        return Response(user_resp)
 
 
 class AccessStatusAPI(GetProjectMixin, APIView):

@@ -185,7 +185,7 @@ class Customer(models.Model):
                     return UpdateStatus.nochange
                 sub.update_from_stripe_obj(stripe_sub)
                 sub.save()
-                send_sub_canceled_email(self.user, sub.current_period_end)
+                # send_sub_canceled_email(self.user, sub.current_period_end)
             else:
                 stripe.SubscriptionItem.modify(
                     current_si.stripe_id, plan=new_plan.stripe_id
