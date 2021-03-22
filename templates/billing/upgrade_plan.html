@@ -174,7 +174,7 @@ information{% endblock %} {% block content %}
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          {% if not user.customer %}
+          {% if not has_payment_method %}
           <a href="{% url 'update_payment' %}?next=/billing/upgrade/{{plan_duration}}/?selected_plan=pro"
             class="btn btn-primary">Add payment method</a>
           {% else %}
