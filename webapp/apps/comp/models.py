@@ -77,6 +77,19 @@ class ModelConfig(models.Model):
     meta_parameters = JSONField(default=dict)
     model_parameters = JSONField(default=dict)
 
+    job_id = models.UUIDField(blank=True, default=None, null=True)
+    status = models.CharField(
+        choices=(
+            ("STARTED", "Started"),
+            ("PENDING", "Pending"),
+            ("SUCCESS", "Success"),
+            ("INVALID", "Invalid"),
+            ("FAIL", "Fail"),
+            ("WORKER_FAILURE", "Worker Failure"),
+        ),
+        max_length=20,
+    )
+
     objects = ModelConfigManager()
 
     class Meta:

@@ -22,12 +22,6 @@ spec:
         - env: []
           command: ["redis-server", "--appendonly", "yes"]
           image: # redis-python
-          lifecycle:
-            postStart:
-              exec:
-                command:
-                  - python3
-                  - /home/redis_init.py
           name: master
           ports:
             - containerPort: 6379

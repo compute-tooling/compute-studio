@@ -154,6 +154,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
 class TagUpdateSerializer(serializers.Serializer):
     latest_tag = serializers.CharField(allow_null=True, required=False)
     staging_tag = serializers.CharField(allow_null=True, required=False)
+    version = serializers.CharField(allow_null=True, required=False)
 
     def validate(self, attrs):
         if attrs.get("latest_tag") is None and attrs.get("staging_tag") is None:
@@ -165,6 +166,7 @@ class TagUpdateSerializer(serializers.Serializer):
 
 class TagSerializer(serializers.ModelSerializer):
     project = serializers.StringRelatedField()
+    version = serializers.CharField(allow_null=True, required=False)
 
     class Meta:
         model = Tag
@@ -174,6 +176,7 @@ class TagSerializer(serializers.ModelSerializer):
             "memory",
             "cpu",
             "created_at",
+            "version",
         )
 
         read_only = (

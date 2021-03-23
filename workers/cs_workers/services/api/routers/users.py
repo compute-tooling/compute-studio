@@ -1,5 +1,7 @@
+import base64
 from typing import Any
 
+import httpx
 from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic.networks import EmailStr, AnyHttpUrl  # pylint: disable=no-name-in-module
@@ -28,6 +30,8 @@ def create_user(
     email: EmailStr = Body(...),
     url: AnyHttpUrl = Body(...),
     username: str = Body(None),
+    client_id: str = Body(...),
+    client_secret: str = Body(...),
 ) -> models.User:
     """
     Create new user.
@@ -46,11 +50,22 @@ def create_user(
         username=user_in.username,
         url=user_in.url,
         hashed_password=security.get_password_hash(user_in.password),
+        client_id=client_id,
+        client_secret=client_secret,
     )
     db.add(user_db)
     db.commit()
     db.refresh(user_db)
     return user_db
+
+
+@router.get("/ping/", status_code=200)
+async def ping(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_user),
+):
+    await security.ensure_cs_access_token(db, current_user)
 
 
 @router.post("/approve/", response_model=schemas.User)

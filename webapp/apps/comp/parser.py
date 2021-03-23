@@ -55,7 +55,10 @@ class BaseParser:
             "errors_warnings": errors_warnings,
         }
         job_id = self.compute.submit_job(
-            project=self.project, task_name=actions.PARSE, task_kwargs=data
+            project=self.project,
+            task_name=actions.PARSE,
+            task_kwargs=data,
+            path_prefix="/api/v1/jobs" if self.project.cluster.version == "v1" else "",
         )
         return job_id
 

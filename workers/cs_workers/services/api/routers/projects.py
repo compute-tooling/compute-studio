@@ -5,10 +5,10 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas, dependencies as deps
 
-router = APIRouter()
+router = APIRouter(prefix="/projects", tags=["projects"])
 
 
-@router.post("/projects/sync/", response_model=List[schemas.Project], status_code=200)
+@router.post("/sync/", response_model=List[schemas.Project], status_code=200)
 def sync_projects(
     projects: List[schemas.ProjectSync] = Body(...),
     db: Session = Depends(deps.get_db),
@@ -33,9 +33,8 @@ def sync_projects(
     return orm_projects
 
 
-@router.get("/projects/", response_model=List[schemas.Project], status_code=200)
+@router.get("/", response_model=List[schemas.Project], status_code=200)
 def get_projects(
-    projects=List[schemas.Project],
     db: Session = Depends(deps.get_db),
     user: schemas.User = Depends(deps.get_current_active_user),
 ):

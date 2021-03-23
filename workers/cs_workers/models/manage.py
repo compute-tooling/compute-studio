@@ -24,6 +24,13 @@ CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
 BASE_PATH = CURR_PATH / ".."
 
 
+def strip_secrets(line, secrets):
+    line = line.decode()
+    for name, value in secrets.items():
+        line = line.replace(name, "******").replace(value, "******")
+    return line.strip("\n")
+
+
 class BaseManager:
     def __init__(self, project, cs_url, cs_api_token):
         self.project = project
@@ -152,9 +159,12 @@ class Manager(BaseManager):
     def promote(self):
         self.apply_method_to_apps(method=self.promote_app)
 
+    def version(self):
+        self.apply_method_to_apps(method=self.get_version)
+
     def write_app_config(self):
         self.apply_method_to_apps(method=self.write_secrets)
-        self.apply_method_to_apps(method=self._write_api_task)
+        # self.apply_method_to_apps(method=self._write_api_task)
 
     def apply_method_to_apps(self, method):
         """
@@ -266,12 +276,6 @@ class Manager(BaseManager):
 
         try:
 
-            def strip_secrets(line, secrets):
-                line = line.decode()
-                for name, value in secrets.items():
-                    line = line.replace(name, "******").replace(value, "******")
-                return line.strip("\n")
-
             def stream_logs(container):
                 for line in container.logs(stream=True):
                     print(strip_secrets(line, secrets))
@@ -357,10 +361,41 @@ class Manager(BaseManager):
 
         run(f"{cmd_prefix} {self.cr}/{self.project}/{img_name}:{tag}")
 
+    def get_version(self, app, print_stdout=True):
+        safeowner = clean(app["owner"])
+        safetitle = clean(app["title"])
+        img_name = f"{safeowner}_{safetitle}_tasks"
+
+        app_version = None
+        if app["tech"] == "python-paramtools":
+            secrets = self.config._list_secrets(app)
+            client = docker.from_env()
+            container = client.containers.run(
+                f"{img_name}:{self.tag}",
+                [
+                    "python",
+                    "-c",
+                    "from cs_config import functions; print(functions.get_version())",
+                ],
+                environment=secrets,
+                detach=True,
+                ports=None,
+            )
+            logs = []
+            for line in container.logs(stream=True):
+                logs.append(strip_secrets(line, secrets))
+            app_version = logs[0] if logs else None
+
+        if app_version and print_stdout:
+            sys.stdout.write(app_version)
+
+        return app_version
+
     def stage_app(self, app):
+        app_version = self.get_version(app, print_stdout=False)
         resp = httpx.post(
             f"{self.config.cs_url}/apps/api/v1/{app['owner']}/{app['title']}/tags/",
-            json={"staging_tag": self.staging_tag},
+            json={"staging_tag": self.staging_tag, "version": app_version},
             headers={"Authorization": f"Token {self.cs_api_token}"},
         )
         assert (
@@ -378,9 +413,16 @@ class Manager(BaseManager):
             resp.status_code == 200
         ), f"Got: {resp.url} {resp.status_code} {resp.text}"
         staging_tag = resp.json()["staging_tag"]["image_tag"]
+        app_version = resp.json()["staging_tag"]["version"]
+        if app_version is None:
+            app_version = self.get_version(app, print_stdout=False)
         resp = httpx.post(
             f"{self.config.cs_url}/apps/api/v1/{app['owner']}/{app['title']}/tags/",
-            json={"latest_tag": staging_tag or self.tag, "staging_tag": None},
+            json={
+                "latest_tag": staging_tag or self.tag,
+                "staging_tag": None,
+                "version": app_version,
+            },
             headers={"Authorization": f"Token {self.cs_api_token}"},
         )
         assert (
@@ -584,6 +626,20 @@ def stage(args: argparse.Namespace):
     manager.stage()
 
 
+def version(args: argparse.Namespace):
+    manager = Manager(
+        project=args.project,
+        tag=args.tag,
+        cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
+        cs_api_token=getattr(args, "cs_api_token", None),
+        models=args.names,
+        base_branch=args.base_branch,
+        cr=args.cr,
+        staging_tag=getattr(args, "staging_tag", None),
+    )
+    manager.version()
+
+
 def cli(subparsers: argparse._SubParsersAction):
     parser = subparsers.add_parser(
         "models", description="Deploy and manage models on C/S compute cluster."
@@ -619,6 +675,9 @@ def cli(subparsers: argparse._SubParsersAction):
 
     promote_parser = model_subparsers.add_parser("promote")
     promote_parser.set_defaults(func=promote)
+
+    version_parser = model_subparsers.add_parser("version")
+    version_parser.set_defaults(func=version)
 
     secrets.cli(model_subparsers)
 

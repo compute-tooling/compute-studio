@@ -11,7 +11,8 @@ from pathlib import Path
 
 from cs_deploy.config import workers_config
 from cs_workers.services.secrets import ServicesSecrets
-from cs_workers.services import scheduler
+
+# from cs_workers.services import scheduler
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
 BASE_PATH = CURR_PATH / ".."
@@ -369,7 +370,8 @@ def port_forward(args: argparse.Namespace):
 
 
 def serve(args: argparse.Namespace):
-    scheduler.run()
+    # scheduler.run()
+    pass
 
 
 def cli(subparsers: argparse._SubParsersAction, config=None, **kwargs):

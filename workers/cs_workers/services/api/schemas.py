@@ -1,14 +1,23 @@
 from datetime import datetime
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Optional, Any
 from enum import Enum
+import uuid
 
-from pydantic import BaseModel  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Json  # pylint: disable=no-name-in-module
 from pydantic.networks import EmailStr, AnyHttpUrl  # pylint: disable=no-name-in-module
 
 
 class JobBase(BaseModel):
-    owner_id: int
+    user_id: int
     created_at: datetime
+    name: str
+    created_at: datetime
+    finished_at: Optional[datetime]
+    status: str
+    inputs: Optional[Dict]
+    outputs: Optional[Dict]
+    traceback: Optional[str]
+    tag: str
 
 
 class JobCreate(JobBase):
@@ -16,10 +25,27 @@ class JobCreate(JobBase):
 
 
 class Job(JobBase):
-    id: int
+    id: uuid.UUID
 
     class Config:
         orm_mode = True
+
+
+class TaskComplete(BaseModel):
+    model_version: Optional[str]
+    outputs: Optional[Dict]
+    traceback: Optional[str]
+    version: Optional[str]
+    meta: Dict  # Dict[str, str]
+    status: str
+    task_name: str
+
+
+class Task(BaseModel):
+    task_id: Optional[str]
+    task_name: str
+    task_kwargs: Dict  # Dict[str, str]
+    tag: str
 
 
 # Shared properties
@@ -71,17 +97,24 @@ class TokenPayload(BaseModel):
     sub: Optional[int] = None
 
 
+class CSOauthResponse(BaseModel):
+    access_token: str
+    expires_in: int
+    token_type: str
+    scope: str
+
+
 class ProjectSync(BaseModel):
     owner: str
     title: str
     tech: str
-    callable_name: str
+    callable_name: Optional[str]
     exp_task_time: int
-    cpu: int
-    memory: int
+    cpu: float
+    memory: float
 
 
-class Project(BaseModel):
+class Project(ProjectSync):
     id: int
 
     class Config:

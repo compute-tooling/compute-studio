@@ -1,7 +1,10 @@
+from typing import Union
+
+
 import paramtools as pt
 
 from webapp.apps.comp.models import ModelConfig
-from webapp.apps.comp.compute import SyncCompute, JobFailError
+from webapp.apps.comp.compute import Compute, SyncCompute, JobFailError
 from webapp.apps.comp import actions
 from webapp.apps.comp.exceptions import AppError
 
@@ -16,14 +19,25 @@ def pt_factory(classname, defaults):
     return type(classname, (pt.Parameters,), {"defaults": defaults})
 
 
+class NotReady(Exception):
+    pass
+
+
 class ModelParameters:
     """
     Handles logic for getting cached model parameters and updating the cache.
     """
 
-    def __init__(self, project: "Project", compute: SyncCompute = None):
+    def __init__(self, project: "Project", compute: Union[SyncCompute, Compute] = None):
         self.project = project
-        self.compute = compute or SyncCompute()
+        print(self.project)
+        if compute is not None:
+            self.comptue = compute
+        elif self.project.cluster.version == "v0":
+            self.compute = compute or SyncCompute()
+        else:
+            self.compute = compute or Compute()
+
         self.config = None
 
     def defaults(self, init_meta_parameters=None):
@@ -53,6 +67,15 @@ class ModelParameters:
         # return model_parameters_parser
         return res["model_parameters"]
 
+    def cleanup_meta_parameters(self, meta_parameters_values, meta_parameters):
+        # clean up meta parameters before saving them.
+        if not meta_parameters_values:
+            return {}
+
+        mp = pt_factory("MP", meta_parameters)()
+        mp.adjust(meta_parameters_values)
+        return mp.specification(meta_data=False, serializable=True)
+
     def get_inputs(self, meta_parameters_values=None):
         """
         Get cached version of inputs or retrieve new version.
@@ -65,22 +88,37 @@ class ModelParameters:
                 model_version=str(self.project.latest_tag),
                 meta_parameters_values=meta_parameters_values,
             )
+            print("STATUS", config.status)
+            if config.status != "SUCCESS":
+                print("raise yo")
+                raise NotReady()
         except ModelConfig.DoesNotExist:
-            success, result = self.compute.submit_job(
+            response = self.compute.submit_job(
                 project=self.project,
                 task_name=actions.INPUTS,
                 task_kwargs={"meta_param_dict": meta_parameters_values or {}},
+                path_prefix="/api/v1/jobs"
+                if self.project.cluster.version == "v1"
+                else "",
             )
+            if self.project.cluster.version == "v1":
+                config = ModelConfig.objects.create(
+                    project=self.project,
+                    model_version=str(self.project.latest_tag),
+                    meta_parameters_values=meta_parameters_values,
+                    inputs_version="v1",
+                    job_id=response,
+                    status="PENDING",
+                )
+                raise NotReady()
+
+            success, result = response
             if not success:
                 raise AppError(meta_parameters_values, result["traceback"])
 
-            # clean up meta parameters before saving them.
-            if meta_parameters_values:
-                mp = pt_factory("MP", result["meta_parameters"])()
-                mp.adjust(meta_parameters_values)
-                save_vals = mp.specification(meta_data=False, serializable=True)
-            else:
-                save_vals = {}
+            save_vals = self.cleanup_meta_parameters(
+                meta_parameters_values, result["meta_parameters"]
+            )
 
             config = ModelConfig.objects.create(
                 project=self.project,

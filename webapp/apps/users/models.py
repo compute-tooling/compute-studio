@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import timedelta
+from datetime import timedelta, datetime
 import json
 import secrets
 import uuid
@@ -182,28 +182,69 @@ class ClusterManager(models.Manager):
         return self.get(service_account__user__username=DEFAULT_CLUSTER_USER)
 
 
+class ClusterLoginException(Exception):
+    pass
+
+
 class Cluster(models.Model):
     url = models.URLField(max_length=64)
-    jwt_secret = models.CharField(max_length=512, null=True)
     service_account = models.OneToOneField(
         Profile, null=True, on_delete=models.SET_NULL
     )
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True)
 
+    # v0
+    jwt_secret = models.CharField(max_length=512, null=True)
+
+    # v1
+    cluster_password = models.CharField(max_length=512, null=True)
+    access_token = models.CharField(max_length=512, null=True)
+    access_token_expires_at = models.DateTimeField(null=True)
+
+    version = models.CharField(null=False, max_length=32)
+
     objects = ClusterManager()
 
-    def headers(self):
-        jwt_token = jwt.encode(
-            {"username": self.service_account.user.username,},
-            cryptkeeper.decrypt(self.jwt_secret),
+    def ensure_access_token(self):
+        missing_token = self.access_token is None
+        is_expired = (
+            self.access_token_expires_at is not None
+            and self.access_token_expires_at < (timezone.now() - timedelta(seconds=60))
         )
-        return {
-            "Authorization": jwt_token,
-            "Cluster-User": self.service_account.user.username,
-        }
+
+        if missing_token or is_expired:
+            resp = requests.post(
+                f"{self.url}/api/v1/login/access-token",
+                data={
+                    "username": str(self.service_account),
+                    "password": self.cluster_password,
+                },
+            )
+            if resp.status_code != 200:
+                raise ClusterLoginException()
+            data = resp.json()
+            self.access_token = data["access_token"]
+            self.access_token_expires_at = datetime.fromisoformat(data["expires_at"])
+            self.save()
+            self.refresh_from_db()
+
+    def headers(self):
+        if self.version == "v0":
+            jwt_token = jwt.encode(
+                {"username": self.service_account.user.username,},
+                cryptkeeper.decrypt(self.jwt_secret),
+            )
+            return {
+                "Authorization": jwt_token,
+                "Cluster-User": self.service_account.user.username,
+            }
+        elif self.version == "v1":
+            self.ensure_access_token()
+            return {"Authorization": f"Bearer {self.access_token}"}
 
     def create_user_in_cluster(self, cs_url):
+        # only works for v0.
         resp = requests.post(
             f"{self.url}/auth/",
             json={
@@ -479,21 +520,10 @@ class Project(models.Model):
             return None
         if self.status != "running":
             return None
-        try:
-            success, result = SyncCompute().submit_job(
-                project=self, task_name=actions.VERSION, task_kwargs=dict()
-            )
-            if success:
-                return result["version"]
-            else:
-                print(f"error retrieving version for {self}", result)
-                return None
-        except Exception as e:
-            print(f"error retrieving version for {self}", e)
-            import traceback
-
-            traceback.print_exc()
-            return None
+        if self.latest_tag:
+            return self.latest_tag.version
+        if self.staging_tag:
+            return self.staging_tag.version
 
     def is_owner(self, user):
         return user == self.owner.user
@@ -639,6 +669,7 @@ class Tag(models.Model):
     cpu = models.DecimalField(max_digits=5, decimal_places=1, null=True, default=2)
     memory = models.DecimalField(max_digits=5, decimal_places=1, null=True, default=6)
     created_at = models.DateTimeField(auto_now_add=True)
+    version = models.CharField(max_length=255, null=True)
 
     def __str__(self):
         return str(self.image_tag)

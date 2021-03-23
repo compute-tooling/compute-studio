@@ -44,14 +44,21 @@ from webapp.apps.comp.exceptions import (
     PrivateAppException,
     PrivateSimException,
 )
-from webapp.apps.comp.ioutils import get_ioutils
-from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
+from webapp.apps.comp.ioutils import get_ioutils, NotReady
+from webapp.apps.comp.models import (
+    Inputs,
+    Simulation,
+    PendingPermission,
+    ModelConfig,
+    ANON_BEFORE,
+)
 from webapp.apps.comp.parser import APIParser
 from webapp.apps.comp.serializers import (
     SimulationSerializer,
     MiniSimulationSerializer,
     InputsSerializer,
     OutputsSerializer,
+    ModelConfigSerializer,
     AddAuthorsSerializer,
     SimAccessSerializer,
     PendingPermissionSerializer,
@@ -80,10 +87,14 @@ class InputsAPIView(APIView):
         ioutils = get_ioutils(project)
         try:
             defaults = ioutils.model_parameters.defaults(meta_parameters)
+        except NotReady:
+            print("NOT READY")
+            return Response(status=202)
         except pt.ValidationError as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
         if "year" in defaults["meta_parameters"]:
             defaults.update({"extend": True})
+        print("got defaults", defaults)
         return Response(defaults)
 
     def get(self, request, *args, **kwargs):
@@ -385,6 +396,7 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
 
     authentication_classes = (
         ClusterAuthentication,
+        OAuth2Authentication,
         # Uncomment to allow token-based authentication for this endpoint.
         # TokenAuthentication,
     )
@@ -397,8 +409,8 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
             sim = get_object_or_404(
                 Simulation.objects.prefetch_related("project"), job_id=data["job_id"]
             )
-            if not sim.project.has_write_access(request.user):
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+            # if not sim.project.has_write_access(request.user):
+            #     return Response(status=status.HTTP_401_UNAUTHORIZED)
             if sim.status == "PENDING":
                 self.record_outputs(sim, data)
                 if sim.notify_on_completion:
@@ -442,6 +454,7 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
 class MyInputsAPIView(APIView):
     authentication_classes = (
         ClusterAuthentication,
+        OAuth2Authentication,
         # Uncomment to allow token-based authentication for this endpoint.
         # TokenAuthentication,
     )
@@ -454,8 +467,8 @@ class MyInputsAPIView(APIView):
             inputs = get_object_or_404(
                 Inputs.objects.prefetch_related("project"), job_id=data["job_id"]
             )
-            if not inputs.project.has_write_access(request.user):
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+            # if not inputs.project.has_write_access(request.user):
+            #     return Response(status=status.HTTP_401_UNAUTHORIZED)
             if inputs.status in ("PENDING", "INVALID", "FAIL"):
                 # successful run
                 if data["status"] == "SUCCESS":
@@ -487,6 +500,37 @@ class MyInputsAPIView(APIView):
             return Response(status=status.HTTP_200_OK)
         else:
             print("inputs put error", ser.errors)
+            return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ModelConfigAPIView(APIView):
+    authentication_classes = (
+        ClusterAuthentication,
+        OAuth2Authentication,
+        # Uncomment to allow token-based authentication for this endpoint.
+        # TokenAuthentication,
+    )
+
+    def put(self, request, *args, **kwargs):
+        print("myinputs api method=PUT", kwargs)
+        ser = ModelConfigSerializer(data=request.data)
+        if ser.is_valid():
+            data = ser.validated_data
+            model_config = get_object_or_404(
+                ModelConfig.objects.prefetch_related("project"), job_id=data["job_id"]
+            )
+            if model_config.status in ("PENDING", "INVALID", "FAIL"):
+                ioutils = get_ioutils(model_config.project)
+                model_config.meta_parameters_values = ioutils.model_parameters.cleanup_meta_parameters(
+                    model_config.meta_parameters_values, data["meta_parameters"]
+                )
+                model_config.meta_parameters = data["meta_parameters"]
+                model_config.model_parameters = data["model_parameters"]
+                model_config.status = data["status"]
+                model_config.save()
+            return Response(status=status.HTTP_200_OK)
+        else:
+            print("model config put error", ser.errors)
             return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

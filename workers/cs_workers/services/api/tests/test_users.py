@@ -10,6 +10,8 @@ class TestUsers:
                 "username": "new_user",
                 "password": "hello world",
                 "url": "https://example.com",
+                "client_id": "abc123",
+                "client_secret": "abc123",
             },
         )
         assert resp.status_code == 201, resp.text

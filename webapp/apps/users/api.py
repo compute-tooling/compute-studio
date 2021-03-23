@@ -10,10 +10,7 @@ from rest_framework.authentication import (
     TokenAuthentication,
 )
 
-from oauth2_provider.contrib.rest_framework import (
-    OAuth2Authentication,
-    TokenHasReadWriteScope,
-)
+from oauth2_provider.contrib.rest_framework import OAuth2Authentication
 
 from webapp.apps.publish.views import GetProjectMixin
 from .permissions import StrictRequiresActive

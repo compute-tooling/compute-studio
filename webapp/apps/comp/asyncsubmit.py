@@ -128,7 +128,11 @@ class SubmitSim:
         project = self.sim.project
         tag = str(project.latest_tag)
         self.submitted_id = self.compute.submit_job(
-            project=inputs.project, task_name=actions.SIM, task_kwargs=data, tag=tag,
+            project=inputs.project,
+            task_name=actions.SIM,
+            task_kwargs=data,
+            tag=tag,
+            path_prefix="/api/v1/jobs" if project.cluster.version == "v1" else "",
         )
         print(f"job id: {self.submitted_id}")
 

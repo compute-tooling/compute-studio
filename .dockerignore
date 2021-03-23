@@ -19,3 +19,5 @@ coverage.xml
 .git
 redis-data
 db-data
+cluster-db-data
+./workers/cluster-db-data

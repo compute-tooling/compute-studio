@@ -288,6 +288,7 @@ class TagsAPIView(GetProjectMixin, APIView):
             tag, _ = Tag.objects.get_or_create(
                 project=project,
                 image_tag=data.get("staging_tag"),
+                version=data.get("version"),
                 defaults=dict(cpu=project.cpu, memory=project.memory),
             )
             project.staging_tag = tag
@@ -298,6 +299,7 @@ class TagsAPIView(GetProjectMixin, APIView):
             tag, _ = Tag.objects.get_or_create(
                 project=project,
                 image_tag=data.get("latest_tag"),
+                version=data.get("version"),
                 defaults=dict(cpu=project.cpu, memory=project.memory),
             )
             project.latest_tag = tag

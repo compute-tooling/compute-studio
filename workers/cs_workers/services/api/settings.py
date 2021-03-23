@@ -12,7 +12,11 @@ class Settings(BaseSettings):
     SERVER_NAME: Optional[str]
     SERVER_HOST: Optional[AnyHttpUrl]
 
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = [
+        "http://10.0.0.137:5000",
+        "http://localhost:5000",
+        "https://hdoupe.ngrok.io",
+    ]
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
@@ -55,6 +59,8 @@ class Settings(BaseSettings):
 
     FIRST_SUPERUSER: Optional[EmailStr]
     FIRST_SUPERUSER_PASSWORD: Optional[str]
+
+    JOB_NAMESPACE: str = "worker-api"
 
     class Config:
         case_sensitive = True

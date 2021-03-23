@@ -20,6 +20,7 @@ from .api import (
     OutputsAPIView,
     DetailMyInputsAPIView,
     MyInputsAPIView,
+    ModelConfigAPIView,
     NewSimulationAPIView,
     AuthorsAPIView,
     AuthorsDeleteAPIView,

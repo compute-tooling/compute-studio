@@ -18,7 +18,6 @@ reusable_oauth2 = OAuth2PasswordBearer(
 
 def get_db() -> Generator:
     try:
-        print("NOOOOOOOOOOO")
         db = SessionLocal()
         yield db
     finally:
@@ -28,6 +27,7 @@ def get_db() -> Generator:
 def get_current_user(
     db: Session = Depends(get_db), token: str = Depends(reusable_oauth2)
 ) -> models.User:
+    print("get_current_user")
     try:
         payload = jwt.decode(
             token, settings.API_SECRET_KEY, algorithms=[security.ALGORITHM]
@@ -47,6 +47,7 @@ def get_current_user(
 def get_current_active_user(
     current_user: models.User = Depends(get_current_user),
 ) -> models.User:
+    print("get_current_active_user")
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user

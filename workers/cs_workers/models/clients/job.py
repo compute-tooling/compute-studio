@@ -24,33 +24,31 @@ class Job:
         title,
         tag,
         model_config,
-        job_id=None,
-        job_kwargs=None,
+        job_id,
+        callback_url,
+        route_name="sim",
         cr="gcr.io",
         incluster=True,
-        rclient=None,
         quiet=True,
+        namespace="default",
     ):
         self.project = project
         self.owner = owner
         self.title = title
         self.tag = tag
         self.model_config = model_config
+        print(self.model_config)
         self.cr = cr
         self.quiet = quiet
+        self.namespace = namespace
 
         self.incluster = incluster
-        if rclient is None:
-            self.rclient = redis.Redis(**redis_conn)
-        else:
-            self.rclient = rclient
         if self.incluster:
             kconfig.load_incluster_config()
         else:
             kconfig.load_kube_config()
         self.api_client = kclient.BatchV1Api()
-        self.job = self.configure(owner, title, tag, job_id)
-        self.save_job_kwargs(self.job_id, job_kwargs)
+        self.job = self.configure(owner, title, tag, job_id, callback_url, route_name)
 
     def env(self, owner, title, config):
         safeowner = clean(owner)
@@ -60,22 +58,22 @@ class Job:
             kclient.V1EnvVar("TITLE", title),
             kclient.V1EnvVar("EXP_TASK_TIME", str(config["exp_task_time"])),
         ]
-        for sec in [
-            "BUCKET",
-            "REDIS_HOST",
-            "REDIS_PORT",
-            "REDIS_EXECUTOR_PW",
-        ]:
-            envs.append(
-                kclient.V1EnvVar(
-                    sec,
-                    value_from=kclient.V1EnvVarSource(
-                        secret_key_ref=(
-                            kclient.V1SecretKeySelector(key=sec, name="worker-secret")
-                        )
-                    ),
-                )
-            )
+        # for sec in [
+        #     "BUCKET",
+        #     "REDIS_HOST",
+        #     "REDIS_PORT",
+        #     "REDIS_EXECUTOR_PW",
+        # ]:
+        #     envs.append(
+        #         kclient.V1EnvVar(
+        #             sec,
+        #             value_from=kclient.V1EnvVarSource(
+        #                 secret_key_ref=(
+        #                     kclient.V1SecretKeySelector(key=sec, name="worker-secret")
+        #                 )
+        #             ),
+        #         )
+        #     )
 
         for secret in ModelSecrets(
             owner=owner, title=title, project=self.project
@@ -94,11 +92,8 @@ class Job:
             )
         return envs
 
-    def configure(self, owner, title, tag, job_id=None):
-        if job_id is None:
-            job_id = str(uuid.uuid4())
-        else:
-            job_id = str(job_id)
+    def configure(self, owner, title, tag, job_id, callback_url, route_name):
+        job_id = str(job_id)
 
         config = self.model_config
 
@@ -108,7 +103,14 @@ class Job:
         container = kclient.V1Container(
             name=job_id,
             image=f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{tag}",
-            command=["csw", "job", "--job-id", job_id, "--route-name", "sim"],
+            command=[
+                "csw",
+                "job",
+                "--callback-url",
+                callback_url,
+                "--route-name",
+                route_name,
+            ],
             env=self.env(owner, title, config),
             resources=kclient.V1ResourceRequirements(**config["resources"]),
         )
@@ -140,18 +142,15 @@ class Job:
 
         return job
 
-    def save_job_kwargs(self, job_id, job_kwargs):
-        if not job_id.startswith("job-"):
-            job_id = f"job-{job_id}"
-        self.rclient.set(job_id, json.dumps(job_kwargs))
-
     def create(self):
-        return self.api_client.create_namespaced_job(body=self.job, namespace="default")
+        return self.api_client.create_namespaced_job(
+            body=self.job, namespace=self.namespace
+        )
 
     def delete(self):
         return self.api_client.delete_namespaced_job(
             name=self.job.metadata.name,
-            namespace="default",
+            namespace=self.namespace,
             body=kclient.V1DeleteOptions(),
         )
 

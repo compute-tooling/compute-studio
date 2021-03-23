@@ -81,6 +81,32 @@ def db(request) -> Generator:
     return session
 
 
+# # sa 1.4???
+# # https://github.com/jeancochrane/pytest-flask-sqlalchemy/blob/c109469f83450b8c5ff5de962faa1105064f5619/pytest_flask_sqlalchemy/fixtures.py#L25-L84
+# @pytest.fixture(scope="function")
+# def db(request) -> Generator:
+#     engine = create_engine(SQLALCHEMY_DATABASE_URI, pool_pre_ping=True)
+#     connection = engine.connect()
+#     transaction = connection.begin()
+
+#     Base = declarative_base()
+
+#     Base.metadata.create_all(bind=connection)
+
+#     TestingSessionLocal = sessionmaker(
+#         autocommit=False, autoflush=False, bind=connection
+#     )
+#     session = TestingSessionLocal()
+#     try:
+#         session.begin()
+
+#         app.dependency_overrides[get_db] = lambda: session
+#         yield session
+#     finally:
+#         session.rollback()
+#         transaction.rollback()
+
+
 @pytest.fixture(scope="function")
 def client() -> Generator:
     with TestClient(app) as c:
@@ -94,6 +120,8 @@ def new_user(db):
         email="test@test.com",
         url="http://localhost:8000",
         hashed_password=security.get_password_hash("heyhey2222"),
+        client_id="abc123",
+        client_secret="abc123",
     )
     db.add(user_)
     db.commit()
