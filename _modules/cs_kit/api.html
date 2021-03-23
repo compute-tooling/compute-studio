@@ -229,9 +229,14 @@
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 <span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 
 <span class="kn">import</span> <span class="nn">requests</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">ie</span><span class="p">:</span>
+    <span class="n">pd</span> <span class="o">=</span> <span class="kc">None</span>
 
 <span class="kn">from</span> <span class="nn">cs_kit.exceptions</span> <span class="kn">import</span> <span class="n">APIException</span>
 
@@ -420,7 +425,10 @@
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detail</span><span class="p">(</span><span class="n">model_pk</span><span class="p">,</span> <span class="n">include_outputs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
         <span class="n">res</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;outputs&quot;</span><span class="p">][</span><span class="s2">&quot;downloadable&quot;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="n">output</span><span class="p">[</span><span class="s2">&quot;media_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;CSV&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">output</span><span class="p">[</span><span class="s2">&quot;media_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;CSV&quot;</span> <span class="ow">and</span> <span class="n">pd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">&quot;Install pandas to return CSV output as a pandas DataFrame.&quot;</span>
+                <span class="p">)</span>
                 <span class="n">res</span><span class="p">[</span><span class="n">output</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">StringIO</span><span class="p">(</span><span class="n">output</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">res</span><span class="p">[</span><span class="n">output</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>
@@ -477,7 +485,9 @@
                 <span class="n">sim_kwargs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
 
         <span class="n">resp</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_url</span><span class="si">}{</span><span class="n">model_pk</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">sim_kwargs</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">auth_header</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_url</span><span class="si">}{</span><span class="n">model_pk</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">,</span>
+            <span class="n">json</span><span class="o">=</span><span class="n">sim_kwargs</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">auth_header</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">resp</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
@@ -500,7 +510,6 @@
                 <span class="sa">f</span><span class="s2">&quot;this class, as an environment variable at CS_API_TOKEN, &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;or read from </span><span class="si">{</span><span class="n">token_file_path</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span></div></div>
-
 </pre></div>
 
               </div>
