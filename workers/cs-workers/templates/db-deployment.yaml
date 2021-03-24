@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workers-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: workers-db
+  template:
+    metadata:
+      labels:
+        app: workers-db
+    spec:
+      containers:
+        - name: workers-db
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: workers-db-secret
+                  key: USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workers-db-secret
+                  key: PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: workers-db-secret
+                  key: NAME
+          image: postgres:12.4
+          ports:
+            - containerPort: 5432
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          volumeMounts:
+            {{- range $name, $value := .Values.db.volumeMounts }}
+            - name: {{ $value.name }}
+              mountPath: {{ quote $value.mountPath }}
+              subPath: {{ quote $value.subPath }}
+            {{- end }}
+      volumes: 
+        {{- range $name, $value := .Values.db.volumes }}
+        - name: {{ $value.name }}
+          hostPath:
+            path: {{ $value.hostPath.path }}
+            type: {{ $value.hostPath.type }}
+        {{- end}}
+      nodeSelector:
+        component: web

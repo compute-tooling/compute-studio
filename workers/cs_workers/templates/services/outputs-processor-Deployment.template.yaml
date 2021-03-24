@@ -20,37 +20,12 @@ spec:
             - containerPort: 8888
           env:
             - name: BUCKET
-              valueFrom:
-                secretKeyRef:
-                  name: worker-secret
-                  key: BUCKET
+              value: {{ .Values.bucket }}
+            - name: PROJECT
+              value: {{ .Values.project }}
             - name: REDIS_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: worker-secret
-                  key: REDIS_HOST
+              value: {{ .Values.redis.host }}
             - name: REDIS_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: worker-secret
-                  key: REDIS_PORT
-            - name: REDIS_DB
-              valueFrom:
-                secretKeyRef:
-                  name: worker-secret
-                  key: REDIS_DB
-                  optional: true
-            - name: REDIS_USER
-              value: outputs
-            - name: REDIS_PW
-              valueFrom:
-                secretKeyRef:
-                  name: worker-secret
-                  key: REDIS_OUTPUTS_PW
-            - name: CS_CRYPT_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: worker-secret
-                  key: CS_CRYPT_KEY
+              value: {{ .Values.redis.port }}
       nodeSelector:
         component: api

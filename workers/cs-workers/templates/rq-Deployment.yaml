@@ -1,31 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: outputs-processor
+  name: rq-worker-outputs
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: outputs-processor
+      app: rq-worker-outputs
   template:
     metadata:
       labels:
-        app: outputs-processor
+        app: rq-worker-outputs
     spec:
-      serviceAccountName: outputs-processor
+      serviceAccountName: rq-worker
       containers:
-        - name: outputs-processor
+        - name: rq-worker-outputs
+          command: ["rq", "worker", "--with-scheduler", "--url", "$(REDIS_URL)"]
           image: "{{ .Values.registry }}/{{ .Values.project }}/outputs_processor:{{ .Values.tag }}"
-          ports:
-            - containerPort: 5000
           env:
             - name: BUCKET
               value: {{ .Values.bucket }}
             - name: PROJECT
               value: {{ .Values.project }}
-            - name: REDIS_HOST
-              value: {{ .Values.redis.host }}
-            - name: REDIS_PORT
-              value: "{{ .Values.redis.port }}"
+            - name: REDIS_URL
+              value: "redis://{{ .Values.redis.host }}:{{ .Values.redis.port }}"
       nodeSelector:
         component: api

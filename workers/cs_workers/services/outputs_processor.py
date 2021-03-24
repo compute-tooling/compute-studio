@@ -20,7 +20,11 @@ import cs_storage
 
 app = FastAPI()
 
-queue = Queue(connection=redis.Redis())
+queue = Queue(
+    connection=redis.Redis(
+        host=os.environ.get("REDIS_HOST"), port=os.environ.get("REDIS_PORT")
+    )
+)
 
 
 BUCKET = os.environ.get("BUCKET")

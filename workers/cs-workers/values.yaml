@@ -3,9 +3,46 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
+bucket: cs-outputs-dev-private
+viz_host: devviz.compute.studio
+# image:
+project: project
+registry: gcr.io
+# Overrides the image tag whose default is the chart appVersion.
+tag: tag
 
-image:
-  repository: nginx
-  pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+api_secret_key: abc123
+
+redis:
+  host: "redis-master"
+  port: "6379"
+  volumes:
+    - name: redis-volume-v1
+      hostPath:
+        path: /redis-queue-data
+        type: Directory
+  volumeMounts:
+    - mountPath: /data
+      name: redis-volume-v1
+
+db:
+  name: cluster_db
+  user: postgres
+  password: password
+  host: workers-db
+  volumes:
+    - name: workers-db-volume
+      hostPath:
+        path: /workers-db-data
+        type: DirectoryOrCreate
+
+  volumeMounts:
+    - mountPath: /var/lib/postgresql/data/
+      name: workers-db-volume
+      subPath: postgres
+# credsVolumes:
+#   env_var: GOOGLE_APPLICATION_CREDENTIALS
+#   path: /google-creds.json
+#   volumes:
+#     - name: google-creds-volume
+#       hostPath

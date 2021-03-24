@@ -1,56 +1,53 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: scheduler
+  name: workers-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: scheduler
+      app: workers-api
   template:
     metadata:
       labels:
-        app: scheduler
+        app: workers-api
     spec:
-      serviceAccountName: scheduler
+      serviceAccountName: workers-api
       containers:
-        - name: scheduler
-          image:
+        - name: workers-api
+          image: "{{ .Values.registry }}/{{ .Values.project }}/workers_api:{{ .Values.tag }}"
           ports:
-            - containerPort: 8888
+            - containerPort: 5000
           env:
-            - name: PROJECT
+            - name: BUCKET
+              value: "{{ .Values.bucket }}"
+            - name: VIZ_HOST
+              value: "{{ .Values.viz_host }}"
+            - name: API_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: worker-secret
-                  key: PROJECT
-            - name: CS_CRYPT_KEY
+                  name: workers-api-secret
+                  key: API_SECRET_KEY
+            - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: worker-secret
-                  key: CS_CRYPT_KEY
-            - name: REDIS_HOST
+                  name: workers-db-secret
+                  key: USER
+            - name: DB_PASS
               valueFrom:
                 secretKeyRef:
-                  name: worker-secret
-                  key: REDIS_HOST
-            - name: REDIS_PORT
+                  name: workers-db-secret
+                  key: PASSWORD
+            - name: DB_NAME
               valueFrom:
                 secretKeyRef:
-                  name: worker-secret
-                  key: REDIS_PORT
-            - name: REDIS_DB
+                  name: workers-db-secret
+                  key: NAME
+            - name: DB_HOST
               valueFrom:
                 secretKeyRef:
-                  name: worker-secret
-                  key: REDIS_DB
-                  optional: true
-            - name: REDIS_USER
-              value: scheduler
-            - name: REDIS_PW
-              valueFrom:
-                secretKeyRef:
-                  name: worker-secret
-                  key: REDIS_SCHEDULER_PW
+                  name: workers-db-secret
+                  key: HOST
+
       nodeSelector:
         component: api

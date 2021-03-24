@@ -11,7 +11,6 @@ from cs_workers.models.clients import job
 from .. import models, schemas, dependencies as deps, security
 
 incluster = os.environ.get("KUBERNETES_SERVICE_HOST", False) is not False
-assert not incluster
 
 PROJECT = os.environ.get("PROJECT")
 

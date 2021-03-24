@@ -50,7 +50,7 @@ class Manager:
     Deploy and manage Compute Studio compute cluster:
         - build, tag, and push the docker images for the flask app and
         compute.studio modeling apps.
-        - write k8s config files for the scheduler deployment and the
+        - write k8s config files for the workers_api deployment and the
         compute.studio modeling app deployments.
         - apply k8s config files to an existing compute cluster.
 
@@ -94,36 +94,6 @@ class Manager:
         self.templates_dir = BASE_PATH / Path("templates")
         self.dockerfiles_dir = BASE_PATH / Path("dockerfiles")
 
-        with open(
-            self.templates_dir / "services" / "scheduler-Deployment.template.yaml", "r"
-        ) as f:
-            self.scheduler_template = yaml.safe_load(f.read())
-
-        with open(
-            self.templates_dir / "services" / "scheduler-ingressroute.template.yaml",
-            "r",
-        ) as f:
-            self.scheduler_ir_template = yaml.safe_load(f.read())
-
-        with open(
-            self.templates_dir
-            / "services"
-            / "outputs-processor-Deployment.template.yaml",
-            "r",
-        ) as f:
-            self.outputs_processor_template = yaml.safe_load(f.read())
-        with open(
-            self.templates_dir / "services" / "outputs-processor-ServiceAccount.yaml",
-            "r",
-        ) as f:
-            self.outputs_processor_serviceaccount = yaml.safe_load(f.read())
-
-        with open(
-            self.templates_dir / "services" / "redis-master-Deployment.template.yaml",
-            "r",
-        ) as f:
-            self.redis_master_template = yaml.safe_load(f.read())
-
         with open(self.templates_dir / "secret.template.yaml", "r") as f:
             self.secret_template = yaml.safe_load(f.read())
 
@@ -132,33 +102,26 @@ class Manager:
 
     def build(self):
         """
-        Build, tag, and push base images for the scheduler app.
+        Build, tag, and push base images for the workers_api app.
 
         Note: distributed and celerybase are tagged as "latest." All other apps
         pull from either distributed:latest or celerybase:latest.
         """
         distributed = self.dockerfiles_dir / "Dockerfile"
-        redis = self.dockerfiles_dir / "Dockerfile.redis"
         outputs_processor = self.dockerfiles_dir / "Dockerfile.outputs_processor"
-        scheduler = self.dockerfiles_dir / "Dockerfile.scheduler"
+        workers_api = self.dockerfiles_dir / "Dockerfile.workers_api"
 
         run(f"docker build -t distributed:latest -f {distributed} ./")
-        run(f"docker build -t redis-python:{self.tag} -f {redis} ./")
         run(f"docker build -t outputs_processor:{self.tag} -f {outputs_processor} ./")
-        run(f"docker build -t scheduler:{self.tag} -f {scheduler} ./")
+        run(f"docker build -t workers_api:{self.tag} -f {workers_api} ./")
 
     def push(self):
         run(f"docker tag distributed {self.cr}/{self.project}/distributed:latest")
         run(
-            f"docker tag redis-python:{self.tag} {self.cr}/{self.project}/redis-python:{self.tag}"
-        )
-
-        run(
             f"docker tag outputs_processor:{self.tag} {self.cr}/{self.project}/outputs_processor:{self.tag}"
         )
-
         run(
-            f"docker tag scheduler:{self.tag} {self.cr}/{self.project}/scheduler:{self.tag}"
+            f"docker tag workers_api:{self.tag} {self.cr}/{self.project}/workers_api:{self.tag}"
         )
 
         if self.use_kind:
@@ -167,119 +130,12 @@ class Manager:
             cmd_prefix = "docker push"
 
         run(f"{cmd_prefix} {self.cr}/{self.project}/distributed:latest")
-        run(f"{cmd_prefix} {self.cr}/{self.project}/redis-python:{self.tag}")
         run(f"{cmd_prefix} {self.cr}/{self.project}/outputs_processor:{self.tag}")
-        run(f"{cmd_prefix} {self.cr}/{self.project}/scheduler:{self.tag}")
+        run(f"{cmd_prefix} {self.cr}/{self.project}/workers_api:{self.tag}")
 
     def config(self, update_redis=False, update_dns=False):
-        config_filenames = [
-            "scheduler-Service.yaml",
-            "scheduler-RBAC.yaml",
-            "outputs-processor-Service.yaml",
-            "job-cleanup-Job.yaml",
-            "job-cleanup-RBAC.yaml",
-        ]
-        if update_redis:
-            config_filenames.append("redis-master-Service.yaml")
-        for filename in config_filenames:
-            with open(self.templates_dir / "services" / f"{filename}", "r") as f:
-                configs = yaml.safe_load_all(f.read())
-            for config in configs:
-                name = config["metadata"]["name"]
-                kind = config["kind"]
-                self.write_config(f"{name}-{kind}.yaml", config)
-        self.write_scheduler_deployment()
         if update_dns:
-            self.write_scheduler_ingressroute()
             self.write_cloudflare_api_token()
-        self.write_outputs_processor_deployment()
-        self.write_secret()
-        if update_redis:
-            self.write_redis_deployment()
-
-    def write_scheduler_deployment(self):
-        """
-        Write scheduler deployment file. Only step is filling in the image uri.
-        """
-        deployment = copy.deepcopy(self.scheduler_template)
-        deployment["spec"]["template"]["spec"]["containers"][0][
-            "image"
-        ] = f"gcr.io/{self.project}/scheduler:{self.tag}"
-        deployment["spec"]["template"]["spec"]["containers"][0]["env"] += [
-            {"name": "VIZ_HOST", "value": self.viz_host},
-        ]
-        self.write_config("scheduler-Deployment.yaml", deployment)
-
-        return deployment
-
-    def write_scheduler_ingressroute(self):
-        """
-        Write scheduler ingressroute file. Only step is filling in the cluster host.
-        """
-        ir = copy.deepcopy(self.scheduler_ir_template)
-        ir["spec"]["routes"][0]["match"] = f"Host(`{self.cluster_host}`)"
-        self.write_config("scheduler-ingressroute.yaml", ir)
-
-        return ir
-
-    def write_outputs_processor_deployment(self):
-        """
-        Write outputs processor deployment file. Only step is filling
-        in the image uri.
-        """
-        deployment = copy.deepcopy(self.outputs_processor_template)
-        deployment["spec"]["template"]["spec"]["containers"][0][
-            "image"
-        ] = f"gcr.io/{self.project}/outputs_processor:{self.tag}"
-
-        self.write_config(
-            "outputs-processor-ServiceAccount.yaml",
-            self.outputs_processor_serviceaccount,
-        )
-        self.write_config("outputs-processor-Deployment.yaml", deployment)
-
-        return deployment
-
-    def write_redis_deployment(self):
-        deployment = copy.deepcopy(self.redis_master_template)
-        container = deployment["spec"]["template"]["spec"]["containers"][0]
-        container["image"] = f"gcr.io/{self.project}/redis-python:{self.tag}"
-        redis_secrets = self.redis_secrets()
-        for name, sec in redis_secrets.items():
-            if sec is not None:
-                container["env"].append(
-                    {
-                        "name": name,
-                        "valueFrom": {
-                            "secretKeyRef": {"key": name, "name": "worker-secret"}
-                        },
-                    }
-                )
-
-        if workers_config.get("redis"):
-            redis_config = workers_config["redis"]
-            assert (
-                redis_config.get("provider") == "volume"
-            ), f"Got: {redis_config.get('provider', None)}"
-            args = redis_config["args"][0]
-            deployment["spec"]["template"]["spec"]["volumes"] = args["volumes"]
-        self.write_config("redis-master-Deployment.yaml", deployment)
-
-    def write_secret(self):
-        assert self.bucket
-        assert self.project
-        secrets = copy.deepcopy(self.secret_template)
-        secrets["stringData"]["BUCKET"] = self.bucket
-        secrets["stringData"]["PROJECT"] = self.project
-        secrets["stringData"]["CS_CRYPT_KEY"] = workers_config.get(
-            "CS_CRYPT_KEY"
-        ) or self.secrets.get("CS_CRYPT_KEY")
-        redis_secrets = self.redis_secrets()
-        for name, sec in redis_secrets.items():
-            if sec is not None:
-                secrets["stringData"][name] = sec
-
-        self.write_config("secret.yaml", secrets)
 
     def write_cloudflare_api_token(self):
         api_token = self.secrets.get("CLOUDFLARE_API_TOKEN")
@@ -302,34 +158,6 @@ class Manager:
         else:
             with open(f"{self.kubernetes_target}/{filename}", "w") as f:
                 f.write(yaml.dump(config))
-
-    def redis_secrets(self):
-        """
-        Return redis ACL user passwords. If they are not in the secret manager,
-        try to generate them using a local instance of redis. If this fails,
-        they are set to an empty string.
-        """
-        if self._redis_secrets is not None:
-            return self._redis_secrets
-        from google.api_core import exceptions
-
-        redis_secrets = dict(
-            REDIS_ADMIN_PW="",
-            REDIS_EXECUTOR_PW="",
-            REDIS_SCHEDULER_PW="",
-            REDIS_OUTPUTS_PW="",
-        )
-        for sec in redis_secrets:
-            try:
-                value = self.secrets.get(sec)
-            except exceptions.NotFound:
-                try:
-                    value = redis_acl_genpass()
-                    self.secrets.set(sec, value)
-                except Exception:
-                    value = ""
-            redis_secrets[sec] = value
-        return redis_secrets
 
     @property
     def secrets(self):
@@ -366,11 +194,11 @@ def config_(args: argparse.Namespace):
 
 
 def port_forward(args: argparse.Namespace):
-    run("kubectl port-forward svc/scheduler 8888:80")
+    run("kubectl port-forward svc/workers_api 8888:80")
 
 
 def serve(args: argparse.Namespace):
-    # scheduler.run()
+    # workers_api.run()
     pass
 
 
