@@ -54,7 +54,7 @@
     <script async="async" src="../../_static/sphinx-thebe.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Model Environment" href="../environment.html" />
+    <link rel="next" title="Project Environment" href="../environment.html" />
     <link rel="prev" title="Python functions" href="../model/functions.html" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -134,7 +134,7 @@
  </li>
  <li class="toctree-l1">
   <a class="reference internal" href="../environment.html">
-   Model Environment
+   Project Environment
   </a>
  </li>
 </ul>
@@ -395,31 +395,19 @@
 </div>
 <div class="section" id="set-up-your-app-s-git-repository">
 <h3>2. Set up your app’s git repository.<a class="headerlink" href="#set-up-your-app-s-git-repository" title="Permalink to this headline">¶</a></h3>
-<p>Once you’ve set up a git repository, you can quickly publish an app on C/S. First, create a new file named <code class="docutils literal notranslate"><span class="pre">app.py</span></code> and add the above code to it.</p>
-<p>Next, install the compute-studio-kit CLI tool to initialize your Compute Studio configuration:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">U</span> <span class="n">cs</span><span class="o">-</span><span class="n">kit</span>
+<p>Once you’ve set up a git repository, you can quickly publish an app on C/S. First, create a new file named <code class="docutils literal notranslate"><span class="pre">app.py</span></code> and add the above code to it. Next, create a <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> file and add dash to it.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># requirements.txt</span>
+<span class="n">dash</span>
 </pre></div>
 </div>
-<p>Now, create the configuration:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">csk</span> <span class="n">init</span> <span class="o">--</span><span class="n">app</span><span class="o">-</span><span class="nb">type</span> <span class="n">data</span><span class="o">-</span><span class="n">viz</span>
-</pre></div>
-</div>
-<p>Now your git repository should look like this:</p>
+<p>C/S also supports more advanced <a class="reference internal" href="../environment.html"><span class="doc std std-doc">enivronment specifications</span></a>.</p>
+<p>Now your app should look like this:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ tree .
 .
 ├── app.py
-└── cs-config
-    └── install.sh
-
-<span class="m">1</span> directory, <span class="m">2</span> files
+└── requirements.txt
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">app.py</span></code> file contains the code from the above example, and <code class="docutils literal notranslate"><span class="pre">install.sh</span></code> is where you will add your app’s installation instructions:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># bash commands for installing your package</span>
-pip install -U dash
-</pre></div>
-</div>
-<p>Check out the <a class="reference internal" href="../environment.html"><span class="doc std std-doc">environment docs</span></a> to learn more about the <code class="docutils literal notranslate"><span class="pre">install.sh</span></code> script.</p>
 </div>
 <div class="section" id="publish-your-app-on-c-s">
 <h3>3. Publish your app on C/S.<a class="headerlink" href="#publish-your-app-on-c-s" title="Permalink to this headline">¶</a></h3>
@@ -508,34 +496,17 @@ pip install -U dash
 </div>
 <div class="section" id="id2">
 <h3>2. Set up your app’s git repository.<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
-<p>Once you’ve set up a git repository, you can quickly publish an app on C/S. First, create a new file named <code class="docutils literal notranslate"><span class="pre">app.py</span></code> and add the above code to it.</p>
-<p>Next, install the compute-studio-kit CLI tool to initialize your Compute Studio configuration:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
-pip install -U cs-kit
-
-```
-
-Now, create the configuration:
-
-```
-
-csk init --app-type data-viz
-
+<p>Once you’ve set up a git repository, you can quickly publish an app on C/S. First, create a new file named <code class="docutils literal notranslate"><span class="pre">app.py</span></code> and add the above code to it. Next, create a <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> file and add bokeh to it.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># requirements.txt</span>
+<span class="n">bokeh</span>
 </pre></div>
 </div>
-<p>Now your git repository should look like this:</p>
+<p>C/S also supports more advanced <a class="reference internal" href="../environment.html"><span class="doc std std-doc">enivronment specifications</span></a>.</p>
+<p>Now your app should look like this:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ tree .
 .
 ├── app.py
-└── cs-config
-    └── install.sh
-
-<span class="m">1</span> directory, <span class="m">2</span> files
-</pre></div>
-</div>
-<p>The <code class="docutils literal notranslate"><span class="pre">app.py</span></code> file contains the code from the above example, and <code class="docutils literal notranslate"><span class="pre">install.sh</span></code> is where you will add your app’s installation instructions:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># bash commands for installing your package</span>
-pip install -U bokeh
+└── requirements.txt
 </pre></div>
 </div>
 </div>
@@ -575,7 +546,7 @@ pip install -U bokeh
         <div class='prev-next-bottom'>
             
     <a class='left-prev' id="prev-link" href="../model/functions.html" title="previous page">Python functions</a>
-    <a class='right-next' id="next-link" href="../environment.html" title="next page">Model Environment</a>
+    <a class='right-next' id="next-link" href="../environment.html" title="next page">Project Environment</a>
 
         </div>
         

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Model Environment &#8212; Compute Studio Developer Docs</title>
+    <title>Project Environment &#8212; Compute Studio Developer Docs</title>
     
   <link rel="stylesheet" href="../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -134,7 +134,7 @@
  </li>
  <li class="toctree-l1 current active">
   <a class="current reference internal" href="#">
-   Model Environment
+   Project Environment
   </a>
  </li>
 </ul>
@@ -234,6 +234,42 @@
         <!-- Table of contents -->
         <div class="d-none d-md-block col-md-2 bd-toc show">
             
+        <div class="tocsection onthispage pt-5 pb-3">
+            <i class="fas fa-list"></i>
+            Contents
+        </div>
+        <nav id="bd-toc-nav">
+            <ul class="nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#connect-your-code">
+   1. Connect your code
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#build-your-project-environment-using-community-established-practices">
+   2. Build your project environment using community established practices
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#optional-provide-custom-instructions-with-a-cs-config-install-sh-file">
+   3. (optional) Provide custom instructions with a
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     cs-config/install.sh
+    </span>
+   </code>
+   file
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#optional-specify-how-much-compute-your-project-needs">
+   4. (optional) Specify how much compute your project needs
+  </a>
+ </li>
+</ul>
+
+        </nav>
+        
         </div>
     </div>
 </div>
@@ -242,13 +278,65 @@
         
               <div>
                 
-  <div class="section" id="model-environment">
-<h1>Model Environment<a class="headerlink" href="#model-environment" title="Permalink to this headline">¶</a></h1>
-<p>Compute Studio runs each project in its own <a class="reference external" href="https://www.docker.com/">Docker</a> container. <a class="reference external" href="https://hub.docker.com/r/continuumio/miniconda3">Miniconda3</a> is used as the base image, making it easy to install any package available through the <a class="reference external" href="https://docs.conda.io/en/latest/">Conda package manager</a>. An <code class="docutils literal notranslate"><span class="pre">install.sh</span></code> script is created for you by the <a class="reference external" href="https://github.com/compute-tooling/compute-studio-kit/#set-up-the-cs-config-directory"><code class="docutils literal notranslate"><span class="pre">csk</span> <span class="pre">init</span></code></a> command. Compute Studio will use this script to install your package. The installation instructions for a <a class="reference external" href="/publish/data-viz/guide.html#dash">Dash app</a> are simple:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># bash commands for installing your package</span>
+  <div class="section" id="project-environment">
+<h1>Project Environment<a class="headerlink" href="#project-environment" title="Permalink to this headline">¶</a></h1>
+<p>This guide will walk you through how to build your project’s environment on Compute Studio. If you have any questions about these steps or your project requires any extra accomodation, please <a class="reference external" href="mailto:hank&#37;&#52;&#48;compute&#46;studio">send Hank an email</a>.</p>
+<div class="section" id="connect-your-code">
+<h2>1. Connect your code<a class="headerlink" href="#connect-your-code" title="Permalink to this headline">¶</a></h2>
+<p>Enter your code repository URL and branch that you’d like to deploy.</p>
+<p>The example below tells C/S to download the code from a Github repository named <a class="reference external" href="https://github.com/hdoupe/cs-dash-demo">hdoupe/cs-dash-demo</a> and checkout a branch named <code class="docutils literal notranslate"><span class="pre">main</span></code>. Since this is a GitHub repository, you can set the branch name to be a non-default branch like <code class="docutils literal notranslate"><span class="pre">dev</span></code> or another release tag like <code class="docutils literal notranslate"><span class="pre">1.0.0</span></code>.</p>
+<p>TODO add screenshot</p>
+</div>
+<div class="section" id="build-your-project-environment-using-community-established-practices">
+<h2>2. Build your project environment using community established practices<a class="headerlink" href="#build-your-project-environment-using-community-established-practices" title="Permalink to this headline">¶</a></h2>
+<p>C/S will use existing dependency files like <code class="docutils literal notranslate"><span class="pre">environment.yaml</span></code> or <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> to install your project’s dependencies.</p>
+<p>Here’s an example <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> file for the <a class="reference external" href="https://compute.studio/hdoupe/dash-demo">hdoupe/dash-demo</a> project:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># requirements.txt</span>
 
-pip install -U dash
+<span class="n">dash</span>
 </pre></div>
+</div>
+<p>Here’s an example <code class="docutils literal notranslate"><span class="pre">environment.yaml</span></code> file that’s used by the <a class="reference external" href="https://compute.studio/hdoupe/matchups">hdoupe/matchups</a> project:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># environment.yml</span>
+
+<span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">matchups-dev</span>
+<span class="nt">channels</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">conda-forge</span>
+<span class="nt">dependencies</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">paramtools</span>
+  <span class="p p-Indicator">-</span> <span class="s">&quot;python-dateutil&gt;=2.8.0&quot;</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">bokeh</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">numpy</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">pandas</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">pyarrow</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">fastparquet</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">python-snappy</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">pip</span>
+  <span class="p p-Indicator">-</span> <span class="nt">pip</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">cs-kit</span>
+      <span class="p p-Indicator">-</span> <span class="s">&quot;-e</span><span class="nv"> </span><span class="s">.&quot;</span> <span class="c1"># create a local installation of matchups</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="optional-provide-custom-instructions-with-a-cs-config-install-sh-file">
+<h2>3. (optional) Provide custom instructions with a <code class="docutils literal notranslate"><span class="pre">cs-config/install.sh</span></code> file<a class="headerlink" href="#optional-provide-custom-instructions-with-a-cs-config-install-sh-file" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">cs-config/install.sh</span></code> file is helpful if your project requires custom logic for setting up its environment. This file is run after C/S has checked for and processed any standard dependency files. Here are a couple situations where a <code class="docutils literal notranslate"><span class="pre">cs-config/install.sh</span></code> script may be helpful:</p>
+<ul class="simple">
+<li><p>Installing dependecies that are only required when running on C/S and aren’t necessary for local development or usage.</p></li>
+<li><p>Using a package manager that C/S does not <em>yet</em> support like <code class="docutils literal notranslate"><span class="pre">apt</span></code>, R’s package manager, or Julia’s package manager.</p></li>
+</ul>
+<p>For example, <a class="reference external" href="https://compute.studio/PSLmodels/Tax-Brain">PSLmodels/Tax-Brain</a> requires some linux packages for rendering latex and uses a <code class="docutils literal notranslate"><span class="pre">cs-config/install.sh</span></code> script like this one:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># cs-config/install.sh</span>
+
+apt-get install texlive-plain-generic texlive -y
+</pre></div>
+</div>
+</div>
+<div class="section" id="optional-specify-how-much-compute-your-project-needs">
+<h2>4. (optional) Specify how much compute your project needs<a class="headerlink" href="#optional-specify-how-much-compute-your-project-needs" title="Permalink to this headline">¶</a></h2>
+<p>C/S allocates up to 7 CPU’s and 24 GB of memory to run your project. You can set this from the environment section under the “Advanced Configuration” heading:</p>
+<p>TODO add image</p>
+<p>If you need more compute resources, please <a class="reference external" href="mailto:hank&#37;&#52;&#48;compute&#46;studio">send Hank an email</a> and he will work with you to accomodate your project’s needs.</p>
 </div>
 </div>
 

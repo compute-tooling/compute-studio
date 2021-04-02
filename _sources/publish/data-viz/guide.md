@@ -95,41 +95,23 @@ if __name__ == '__main__':
 
 ### 2. Set up your app's git repository.
 
-Once you've set up a git repository, you can quickly publish an app on C/S. First, create a new file named `app.py` and add the above code to it.
-
-Next, install the compute-studio-kit CLI tool to initialize your Compute Studio configuration:
+Once you've set up a git repository, you can quickly publish an app on C/S. First, create a new file named `app.py` and add the above code to it. Next, create a `requirements.txt` file and add dash to it.
 
 ```
-pip install -U cs-kit
+# requirements.txt
+dash
 ```
 
-Now, create the configuration:
+C/S also supports more advanced [enivronment specifications](/publish/environment).
 
-```
-csk init --app-type data-viz
-```
-
-Now your git repository should look like this:
+Now your app should look like this:
 
 ```bash
 $ tree .
 .
 ├── app.py
-└── cs-config
-    └── install.sh
-
-1 directory, 2 files
-
+└── requirements.txt
 ```
-
-The `app.py` file contains the code from the above example, and `install.sh` is where you will add your app's installation instructions:
-
-```bash
-# bash commands for installing your package
-pip install -U dash
-```
-
-Check out the [environment docs](/publish/environment/) to learn more about the `install.sh` script.
 
 ### 3. Publish your app on C/S.
 
@@ -221,42 +203,22 @@ curdoc().title = "Sliders"
 
 ### 2. Set up your app's git repository.
 
-Once you've set up a git repository, you can quickly publish an app on C/S. First, create a new file named `app.py` and add the above code to it.
-
-Next, install the compute-studio-kit CLI tool to initialize your Compute Studio configuration:
-
-````
-
-pip install -U cs-kit
+Once you've set up a git repository, you can quickly publish an app on C/S. First, create a new file named `app.py` and add the above code to it. Next, create a `requirements.txt` file and add bokeh to it.
 
 ```
-
-Now, create the configuration:
-
+# requirements.txt
+bokeh
 ```
 
-csk init --app-type data-viz
+C/S also supports more advanced [enivronment specifications](/publish/environment).
 
-````
-
-Now your git repository should look like this:
+Now your app should look like this:
 
 ```bash
 $ tree .
 .
 ├── app.py
-└── cs-config
-    └── install.sh
-
-1 directory, 2 files
-
-```
-
-The `app.py` file contains the code from the above example, and `install.sh` is where you will add your app's installation instructions:
-
-```bash
-# bash commands for installing your package
-pip install -U bokeh
+└── requirements.txt
 ```
 
 ### 3. Publish your app on C/S.
