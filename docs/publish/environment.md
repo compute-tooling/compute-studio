@@ -8,7 +8,7 @@ Enter your code repository URL and branch that you'd like to deploy.
 
 The example below tells C/S to download the code from a Github repository named [hdoupe/cs-dash-demo](https://github.com/hdoupe/cs-dash-demo) and checkout a branch named `main`. Since this is a GitHub repository, you can set the branch name to be a non-default branch like `dev` or another release tag like `1.0.0`.
 
-TODO add screenshot
+![Screenshot from 2021-04-02 10-36-05](https://user-images.githubusercontent.com/9206065/113430779-ba0af080-93a8-11eb-8574-af6d8630607b.png)
 
 ## 2. Build your project environment using community established practices
 
@@ -64,6 +64,6 @@ apt-get install texlive-plain-generic texlive -y
 
 C/S allocates up to 7 CPU's and 24 GB of memory to run your project. You can set this from the environment section under the "Advanced Configuration" heading:
 
-TODO add image
+![Screenshot from 2021-04-02 11-24-39](https://user-images.githubusercontent.com/9206065/113430795-c3945880-93a8-11eb-8b00-4d0ee226f0c6.png)
 
 If you need more compute resources, please [send Hank an email](mailto:hank@compute.studio) and he will work with you to accomodate your project's needs.
