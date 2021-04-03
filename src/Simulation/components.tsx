@@ -229,7 +229,7 @@ const ParamComponent: React.FC<{
           let fieldName = `adjustment.${msect}.${param}.${labels}`;
           let placeholder = valForForm(form_field[1]);
           let isTouched = false;
-          if (labels in values) {
+          if (!!values && labels in values) {
             isTouched = Array.isArray(values[labels])
               ? values[labels].length > 0 &&
                 !(values[labels].length === 1 && values[labels][0] === "")
