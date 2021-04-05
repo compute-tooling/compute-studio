@@ -209,10 +209,10 @@ class Cluster(models.Model):
     def ensure_access_token(self):
         missing_token = self.access_token is None
         is_expired = (
-            self.access_token_expires_at is not None
-            and self.access_token_expires_at < (timezone.now() - timedelta(seconds=60))
+            self.access_token_expires_at is None
+            or self.access_token_expires_at < (timezone.now() - timedelta(seconds=60))
         )
-
+        print(missing_token, is_expired)
         if missing_token or is_expired:
             resp = requests.post(
                 f"{self.url}/api/v1/login/access-token",
@@ -222,7 +222,9 @@ class Cluster(models.Model):
                 },
             )
             if resp.status_code != 200:
-                raise ClusterLoginException()
+                raise ClusterLoginException(
+                    f"Expected 200, got {resp.status_code}: {resp.text}"
+                )
             data = resp.json()
             self.access_token = data["access_token"]
             self.access_token_expires_at = datetime.fromisoformat(data["expires_at"])

@@ -13,7 +13,7 @@ class OutputsSerializer(serializers.Serializer):
 
     job_id = serializers.UUIDField()
     status = serializers.ChoiceField(choices=(("SUCCESS", "Success"), ("FAIL", "Fail")))
-    traceback = serializers.CharField(required=False)
+    traceback = serializers.CharField(required=False, allow_null=True)
     model_version = serializers.CharField(required=False)
     meta = serializers.JSONField()
     outputs = serializers.JSONField(required=False)

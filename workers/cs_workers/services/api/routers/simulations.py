@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Body, HTTPException
 from sqlalchemy.orm import Session
 
 from cs_workers.models.clients import job
-from .. import models, schemas, dependencies as deps, security
+from .. import models, schemas, dependencies as deps, security, settings
 
 incluster = os.environ.get("KUBERNETES_SERVICE_HOST", False) is not False
 
@@ -49,7 +49,6 @@ async def finish_job(
     db: Session = Depends(deps.get_db),
 ):
     print("got data for ", job_id)
-    print(task.dict())
     instance = db.query(models.Job).filter(models.Job.id == job_id).one_or_none()
     if instance is None:
         raise HTTPException(status_code=404, detail="Job not found.")
@@ -69,7 +68,7 @@ async def finish_job(
     await security.ensure_cs_access_token(db, user)
     async with httpx.AsyncClient() as client:
         resp = await client.post(
-            f"http://localhost:5001/{job_id}/",
+            f"http://outputs-processor/{job_id}/",
             json={
                 "url": user.url,
                 "headers": {"Authorization": f"Bearer {user.access_token}"},
@@ -154,10 +153,10 @@ def create_job(
         tag=tag,
         model_config=project_data,
         job_id=instance.id,
-        callback_url=f"https://hdoupe.ngrok.io/api/v1/jobs/callback/{instance.id}/",
+        callback_url=f"http://api.workers.svc.cluster.local/api/v1/jobs/callback/{instance.id}/",
         route_name=task_name,
         incluster=incluster,
-        namespace="worker-api",
+        namespace=settings.settings.PROJECT_NAMESPACE,
     )
 
     client.create()

@@ -4,6 +4,7 @@ metadata:
   labels:
     app: workers-db
   name: workers-db
+  namespace: {{ .Values.workers_namespace }}
 spec:
   ports:
     - port: 5432

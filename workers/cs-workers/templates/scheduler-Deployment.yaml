@@ -1,33 +1,40 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: workers-api
+  name: api
+  namespace: {{ .Values.workers_namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: workers-api
+      app: api
   template:
     metadata:
       labels:
-        app: workers-api
+        app: api
     spec:
-      serviceAccountName: workers-api
+      serviceAccountName: api
       containers:
-        - name: workers-api
+        - name: api
           image: "{{ .Values.registry }}/{{ .Values.project }}/workers_api:{{ .Values.tag }}"
           ports:
             - containerPort: 5000
           env:
             - name: BUCKET
               value: "{{ .Values.bucket }}"
+            - name: PROJECT
+              value: "{{ .Values.project }}"
             - name: VIZ_HOST
               value: "{{ .Values.viz_host }}"
             - name: API_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: workers-api-secret
+                  name: api-secret
                   key: API_SECRET_KEY
+            - name: BACKEND_CORS_ORIGINS
+              value: '{{ .Values.api.allow_origins | toJson }}'
+            - name: PROJECT_NAMESPACE
+              value: '{{ .Values.project_namespace }}'
             - name: DB_USER
               valueFrom:
                 secretKeyRef:

@@ -4,6 +4,7 @@ metadata:
   labels:
     app: redis
   name: redis-master
+  namespace: {{ .Values.workers_namespace }}
 spec:
   replicas: 1
   selector:

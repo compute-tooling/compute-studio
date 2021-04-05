@@ -6,6 +6,7 @@ metadata:
     role: master
     tier: backend
   name: redis-master
+  namespace: {{ .Values.workers_namespace }}
 spec:
   ports:
   - port: 6379

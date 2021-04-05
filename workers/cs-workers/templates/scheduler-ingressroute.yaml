@@ -2,8 +2,8 @@
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: scheduler-tls
-  namespace: default
+  name: api-tls
+  namespace: {{ .Values.workers_namespace }}
 spec:
   entryPoints:
     - websecure
@@ -11,7 +11,7 @@ spec:
     - match:
       kind: Rule
       services:
-        - name: scheduler
+        - name: api
           port: 80
   tls:
     certResolver: myresolver

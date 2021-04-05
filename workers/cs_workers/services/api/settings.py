@@ -1,7 +1,10 @@
 import os
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import AnyHttpUrl, BaseSettings, EmailStr, HttpUrl, PostgresDsn, validator
+
+NAMESPACE_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 
 
 class Settings(BaseSettings):
@@ -25,6 +28,18 @@ class Settings(BaseSettings):
         elif isinstance(v, (list, str)):
             return v
         raise ValueError(v)
+
+    PROJECT_NAMESPACE: str
+
+    @validator("PROJECT_NAMESPACE", pre=True)
+    def get_project_namespace(cls, v: Optional[str]) -> str:
+        if v:
+            return v
+        elif Path(NAMESPACE_PATH).exists():
+            with open(NAMESPACE_PATH) as f:
+                return f.read().strip()
+        else:
+            return "default"
 
     PROJECT_NAME: str = "C/S Cluster Api"
     SENTRY_DSN: Optional[HttpUrl] = None

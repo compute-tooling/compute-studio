@@ -43,27 +43,38 @@ def write(task_id, outputs):
 
 
 def push(job_id: str, result: Result):
+    resp = None
     if result.task.task_name == "sim":
         print(f"posting data to {result.url}/outputs/api/")
         result.task.outputs = write(job_id, result.task.outputs)
-        return httpx.put(
+        resp = httpx.put(
             f"{result.url}/outputs/api/",
             json=dict(job_id=job_id, **result.task.dict()),
             headers=result.headers,
         )
     elif result.task.task_name == "parse":
         print(f"posting data to {result.url}/inputs/api/")
-        return httpx.put(
+        resp = httpx.put(
             f"{result.url}/inputs/api/",
             json=dict(job_id=job_id, **result.task.dict()),
             headers=result.headers,
         )
     elif result.task.task_name == "defaults":
         print(f"posting data to {result.url}/model-config/api/")
-        return httpx.put(
+        resp = httpx.put(
             f"{result.url}/model-config/api/",
             json=dict(job_id=job_id, **result.task.dict()),
             headers=result.headers,
+        )
+
+    if resp is not None and resp.status_code == 400:
+        print(resp.text)
+        resp.raise_for_status()
+    elif resp is not None:
+        resp.raise_for_status()
+    else:
+        raise ValueError(
+            f"resp is None for: {job_id} with name {result.task.task_name}"
         )
 
 

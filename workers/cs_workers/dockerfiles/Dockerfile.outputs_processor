@@ -31,4 +31,4 @@ WORKDIR /home/cs_workers
 
 ENV PYTHONUNBUFFERED 1
 
-CMD ["uvicorn", "services.outputs_processor:app", "--port", "5000", "--reload"]
+CMD ["uvicorn", "services.outputs_processor:app", "--host", "0.0.0.0", "--port", "5000", "--reload"]

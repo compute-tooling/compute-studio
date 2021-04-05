@@ -7,7 +7,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: job-remove
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.project_namespace }}
 rules:
   - apiGroups: ["batch", "extensions"]
     resources: ["jobs"]
@@ -17,11 +17,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: job-remove
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.project_namespace }}
 subjects:
   - kind: ServiceAccount
     name: job-cleanup
-    namespace: {{ .Release.Namespace }}
+    namespace: {{ .Values.project_namespace }}
 roleRef:
   kind: Role
   name: job-remove

@@ -31,4 +31,4 @@ ENV PYTHONUNBUFFERED 1
 
 WORKDIR /home/cs_workers/services/
 
-CMD ["uvicorn", "api.main:app", "--port", "5000", "--reload"]
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "5000", "--reload"]

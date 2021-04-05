@@ -448,6 +448,7 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
                     )
             return Response(status=status.HTTP_200_OK)
         else:
+            print(f"Data from compute cluster is invalid: {ser.errors}")
             return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
