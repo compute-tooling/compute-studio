@@ -6,6 +6,7 @@ on:
       - master
     paths:
       - "webapp/**"
+      - "Dockerfile"
       - "deploy/**"
       - "web-kubernetes/**"
       - ".github/workflows/webapp-deploy.yml"
