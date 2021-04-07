@@ -6,7 +6,7 @@ import paramtools as pt
 from webapp.apps.comp.models import ModelConfig
 from webapp.apps.comp.compute import Compute, SyncCompute, JobFailError
 from webapp.apps.comp import actions
-from webapp.apps.comp.exceptions import AppError
+from webapp.apps.comp.exceptions import AppError, NotReady
 
 
 import os
@@ -17,10 +17,6 @@ INPUTS = os.path.join(os.path.abspath(os.path.dirname(__file__)), "inputs.json")
 
 def pt_factory(classname, defaults):
     return type(classname, (pt.Parameters,), {"defaults": defaults})
-
-
-class NotReady(Exception):
-    pass
 
 
 class ModelParameters:
@@ -52,9 +48,11 @@ class ModelParameters:
             "meta_parameters": meta_parameters,
         }
 
-    def meta_parameters_parser(self):
+    def meta_parameters_parser(self) -> pt.Parameters:
         res = self.get_inputs()
-        return pt_factory("MetaParametersParser", res["meta_parameters"])()
+        params = pt_factory("MetaParametersParser", res["meta_parameters"])()
+        # params._defer_validation = True
+        return params
 
     def model_parameters_parser(self, meta_parameters_values=None):
         res = self.get_inputs(meta_parameters_values)
@@ -83,15 +81,15 @@ class ModelParameters:
         meta_parameters_values = meta_parameters_values or {}
 
         try:
-            config = ModelConfig.objects.get(
+            self.config = ModelConfig.objects.get(
                 project=self.project,
                 model_version=str(self.project.latest_tag),
                 meta_parameters_values=meta_parameters_values,
             )
-            print("STATUS", config.status)
-            if config.status != "SUCCESS":
+            print("STATUS", self.config.status)
+            if self.config.status != "SUCCESS":
                 print("raise yo")
-                raise NotReady()
+                raise NotReady(self.config)
         except ModelConfig.DoesNotExist:
             response = self.compute.submit_job(
                 project=self.project,
@@ -102,7 +100,7 @@ class ModelParameters:
                 else "",
             )
             if self.project.cluster.version == "v1":
-                config = ModelConfig.objects.create(
+                self.config = ModelConfig.objects.create(
                     project=self.project,
                     model_version=str(self.project.latest_tag),
                     meta_parameters_values=meta_parameters_values,
@@ -110,7 +108,7 @@ class ModelParameters:
                     job_id=response,
                     status="PENDING",
                 )
-                raise NotReady()
+                raise NotReady(self.config)
 
             success, result = response
             if not success:
@@ -120,7 +118,7 @@ class ModelParameters:
                 meta_parameters_values, result["meta_parameters"]
             )
 
-            config = ModelConfig.objects.create(
+            self.config = ModelConfig.objects.create(
                 project=self.project,
                 model_version=str(self.project.latest_tag),
                 meta_parameters_values=save_vals,
@@ -129,8 +127,7 @@ class ModelParameters:
                 inputs_version="v1",
             )
 
-        self.config = config
         return {
-            "meta_parameters": config.meta_parameters,
-            "model_parameters": config.model_parameters,
+            "meta_parameters": self.config.meta_parameters,
+            "model_parameters": self.config.model_parameters,
         }

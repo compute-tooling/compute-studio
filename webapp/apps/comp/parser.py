@@ -3,7 +3,7 @@ import time
 
 from webapp.apps.comp import actions
 from webapp.apps.comp.compute import Compute
-from webapp.apps.comp.exceptions import AppError
+from webapp.apps.comp.exceptions import AppError, NotReady
 from webapp.apps.comp.models import Inputs
 
 ParamData = namedtuple("ParamData", ["name", "data"])
@@ -23,11 +23,18 @@ class BaseParser:
         self.valid_meta_params = valid_meta_params
         for param, value in valid_meta_params.items():
             setattr(self, param, value)
-        defaults = model_parameters.defaults(self.valid_meta_params)
-        self.grouped_defaults = defaults["model_parameters"]
-        self.flat_defaults = {
-            k: v for _, sect in self.grouped_defaults.items() for k, v in sect.items()
-        }
+        try:
+            defaults = model_parameters.defaults(self.valid_meta_params)
+        except NotReady:
+            self.grouped_defaults = {}
+            self.flat_defaults = {}
+        else:
+            self.grouped_defaults = defaults["model_parameters"]
+            self.flat_defaults = {
+                k: v
+                for _, sect in self.grouped_defaults.items()
+                for k, v in sect.items()
+            }
 
     @staticmethod
     def append_errors_warnings(errors_warnings, append_func, defaults=None):
@@ -41,11 +48,11 @@ class BaseParser:
                 append_func(param, msg, defaults)
 
     def parse_parameters(self):
+        sects = set(self.grouped_defaults.keys()) | set(self.clean_inputs.keys())
         errors_warnings = {
-            sect: {"errors": {}, "warnings": {}}
-            for sect in list(self.grouped_defaults) + ["GUI", "API"]
+            sect: {"errors": {}, "warnings": {}} for sect in sects | {"GUI", "API"}
         }
-        adjustment = {sect: {} for sect in self.grouped_defaults}
+        adjustment = defaultdict(dict)
         return errors_warnings, adjustment
 
     def post(self, errors_warnings, params):
@@ -70,13 +77,8 @@ class Parser:
 class APIParser(BaseParser):
     def parse_parameters(self):
         errors_warnings, adjustment = super().parse_parameters()
-        extra_keys = set(self.clean_inputs.keys() - self.grouped_defaults.keys())
-        if extra_keys:
-            errors_warnings["API"]["errors"] = {
-                "extra_keys": [f"Has extra sections: {' ,'.join(extra_keys)}"]
-            }
-
-        for sect in adjustment:
+        sects = set(self.grouped_defaults.keys()) | set(self.clean_inputs.keys())
+        for sect in sects:
             adjustment[sect].update(self.clean_inputs.get(sect, {}))
 
         # kick off async parsing

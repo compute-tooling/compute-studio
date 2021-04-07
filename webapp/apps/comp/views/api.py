@@ -43,8 +43,9 @@ from webapp.apps.comp.exceptions import (
     ForkObjectException,
     PrivateAppException,
     PrivateSimException,
+    NotReady,
 )
-from webapp.apps.comp.ioutils import get_ioutils, NotReady
+from webapp.apps.comp.ioutils import get_ioutils
 from webapp.apps.comp.models import (
     Inputs,
     Simulation,
@@ -94,7 +95,7 @@ class InputsAPIView(APIView):
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
         if "year" in defaults["meta_parameters"]:
             defaults.update({"extend": True})
-        print("got defaults", defaults)
+
         return Response(defaults)
 
     def get(self, request, *args, **kwargs):

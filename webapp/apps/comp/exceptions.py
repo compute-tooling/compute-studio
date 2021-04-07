@@ -72,3 +72,8 @@ class PrivateAppException(CSException):
             collaborator=getattr(self.collaborator, "username", str(self.collaborator)),
             msg=str(self),
         )
+
+
+class NotReady(CSException):
+    def __init__(self, instance, *args, **kwargs):
+        self.instance = instance

@@ -1,5 +1,5 @@
 from typing import NamedTuple, Type
-from webapp.apps.comp.model_parameters import ModelParameters, NotReady
+from webapp.apps.comp.model_parameters import ModelParameters
 from webapp.apps.comp.parser import Parser
 
 
