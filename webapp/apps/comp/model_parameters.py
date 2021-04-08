@@ -125,6 +125,7 @@ class ModelParameters:
                 meta_parameters=result["meta_parameters"],
                 model_parameters=result["model_parameters"],
                 inputs_version="v1",
+                status="SUCCESS",
             )
 
         return {

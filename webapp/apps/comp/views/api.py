@@ -25,7 +25,7 @@ from oauth2_provider.contrib.rest_framework import OAuth2Authentication
 import paramtools as pt
 import cs_storage
 
-from webapp.apps.users.auth import ClusterAuthentication
+from webapp.apps.users.auth import ClusterAuthentication, ClientOAuth2Authentication
 from webapp.apps.users.models import (
     Project,
     Profile,
@@ -397,21 +397,22 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
 
     authentication_classes = (
         ClusterAuthentication,
-        OAuth2Authentication,
+        ClientOAuth2Authentication,
         # Uncomment to allow token-based authentication for this endpoint.
         # TokenAuthentication,
     )
 
     def put(self, request, *args, **kwargs):
-        print("myoutputs api method=PUT", kwargs)
+        print("myoutputs api method=PUT", request.user, kwargs)
+        print("authenticator", request.user, request.successful_authenticator)
         ser = OutputsSerializer(data=request.data)
         if ser.is_valid():
             data = ser.validated_data
             sim = get_object_or_404(
                 Simulation.objects.prefetch_related("project"), job_id=data["job_id"]
             )
-            # if not sim.project.has_write_access(request.user):
-            #     return Response(status=status.HTTP_401_UNAUTHORIZED)
+            if not sim.project.has_write_access(request.user):
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
             if sim.status == "PENDING":
                 self.record_outputs(sim, data)
                 if sim.notify_on_completion:
@@ -456,21 +457,22 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
 class MyInputsAPIView(APIView):
     authentication_classes = (
         ClusterAuthentication,
-        OAuth2Authentication,
+        ClientOAuth2Authentication,
         # Uncomment to allow token-based authentication for this endpoint.
         # TokenAuthentication,
     )
 
     def put(self, request, *args, **kwargs):
         print("myinputs api method=PUT", kwargs)
+        print("authenticator", request.user, request.successful_authenticator)
         ser = InputsSerializer(data=request.data)
         if ser.is_valid():
             data = ser.validated_data
             inputs = get_object_or_404(
                 Inputs.objects.prefetch_related("project"), job_id=data["job_id"]
             )
-            # if not inputs.project.has_write_access(request.user):
-            #     return Response(status=status.HTTP_401_UNAUTHORIZED)
+            if not inputs.project.has_write_access(request.user):
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
             if inputs.status in ("PENDING", "INVALID", "FAIL"):
                 # successful run
                 if data["status"] == "SUCCESS":
@@ -508,13 +510,15 @@ class MyInputsAPIView(APIView):
 class ModelConfigAPIView(APIView):
     authentication_classes = (
         ClusterAuthentication,
-        OAuth2Authentication,
+        ClientOAuth2Authentication,
         # Uncomment to allow token-based authentication for this endpoint.
         # TokenAuthentication,
     )
 
     def put(self, request, *args, **kwargs):
         print("myinputs api method=PUT", kwargs)
+        print("authenticator", request.user, request.successful_authenticator)
+
         ser = ModelConfigSerializer(data=request.data)
         if ser.is_valid():
             data = ser.validated_data

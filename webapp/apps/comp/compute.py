@@ -104,10 +104,8 @@ class SyncCompute(Compute):
             success = True
         else:
             success = data["status"] == "SUCCESS"
-        if success:
-            return success, data
-        else:
-            return success, data
+
+        return success, data
 
 
 class SyncProjects(SyncCompute):
