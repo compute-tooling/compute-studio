@@ -61,7 +61,7 @@ jobs:
       - name: Set cs-config.yaml and values.yaml files.
         run: |
           echo $CS_CONFIG | base64 --decode > cs-config.yaml
-          echo $DEV_WORKERS_VALUES | base64 --decode > ./workers/values.yaml
+          echo $DEV_WORKERS_VALUES | base64 --decode > ./workers/values.deploy.yaml
 
       - name: Build Docker Images
         run: |
@@ -82,4 +82,4 @@ jobs:
             --set api.secret_key=$(cs secrets get WORKERS_API_SECRET_KEY) \
             --set db.password=$(cs secrets get WORKERS_DB_PASSWORD)  \
             --namespace workers \
-            -f values.yaml | kubectl apply -f -
+            -f values.deploy.yaml | kubectl apply -f -
