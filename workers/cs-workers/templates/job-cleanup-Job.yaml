@@ -14,5 +14,5 @@ spec:
           containers:
             - name: kubectl-container
               image: bitnami/kubectl:latest
-              command: ["sh", "-c", "kubectl delete jobs --field-selector status.successful=1"]
+              command: ["sh", "-c", "kubectl delete jobs --namespace {{ .Values.project_namespace }} --field-selector status.successful=1"]
           restartPolicy: Never
