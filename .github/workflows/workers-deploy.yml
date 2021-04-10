@@ -1,9 +1,9 @@
-name: Dev Workers Deploy
+name: Deprecated Workers Deploy
 
 on:
   push:
     branches:
-      - master
+      - deprecated-workers
     paths:
       - "workers/**"
       - "deploy/**"
