@@ -3,7 +3,7 @@ name: Deprecated Dev Workers Deploy
 on:
   push:
     branches:
-      - deprecate-workers-deploy
+      - deprecate-workers-dev
     paths:
       - "workers/**"
       - "deploy/**"
