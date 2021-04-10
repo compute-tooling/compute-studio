@@ -1,29 +1,29 @@
-name: Deprecated Dev Workers Deploy
+name: Deprecated Workers Deploy
 
 on:
   push:
     branches:
-      - deprecate-workers-dev
+      - deprecate-workers
     paths:
       - "workers/**"
       - "deploy/**"
-      - ".github/workflows/dev-workers-deploy.yml"
+      - ".github/workflows/deprecated-workers-deploy.yml"
 
 # Environment variables available to all jobs and steps in this workflow
 env:
   GITHUB_SHA: ${{ github.sha }}
 
-  GKE_PROJECT: ${{ secrets.DEV_GKE_PROJECT }}
-  GKE_EMAIL: ${{ secrets.DEV_GKE_EMAIL }}
-  GKE_ZONE: us-central1-c
+  GKE_PROJECT: ${{ secrets.GKE_PROJECT }}
+  GKE_EMAIL: ${{ secrets.GKE_EMAIL }}
+  GKE_ZONE: us-east1-b
   GKE_CLUSTER: cluster-1
   REGISTRY_HOSTNAME: gcr.io
 
-  PROJECT: ${{ secrets.DEV_GKE_PROJECT }}
-  HOST: dev.compute.studio
+  PROJECT: ${{ secrets.GKE_PROJECT }}
+  HOST: compute.studio
   TAG: ${{ github.sha }}
 
-  CS_CONFIG: ${{ secrets.DEV_CS_CONFIG }}
+  CS_CONFIG: ${{ secrets.CS_CONFIG }}
 
 jobs:
   setup-build-publish-deploy:
@@ -50,7 +50,7 @@ jobs:
       - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
         with:
           service_account_email: $GKE_EMAIL
-          service_account_key: ${{ secrets.DEV_GOOGLE_APPLICATION_CREDENTIALS }}
+          service_account_key: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
           export_default_credentials: true
 
       # Configure docker to use the gcloud command-line tool as a credential helper
