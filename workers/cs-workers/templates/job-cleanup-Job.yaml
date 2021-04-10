@@ -2,7 +2,7 @@ apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
   name: job-cleanup
-  namespace: {{ .Values.project_namespace }}
+  namespace: {{ .Values.workers_namespace }}
 spec:
   schedule: "*/30 * * * *"
   successfulJobsHistoryLimit: 0

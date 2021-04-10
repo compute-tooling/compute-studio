@@ -28,5 +28,12 @@ spec:
               value: {{ .Values.redis.host }}
             - name: REDIS_PORT
               value: "{{ .Values.redis.port }}"
+          resources:
+            requests:
+              cpu: 1
+              memory: 1G
+            limits:
+              cpu: 1
+              memory: 2G
       nodeSelector:
         component: api

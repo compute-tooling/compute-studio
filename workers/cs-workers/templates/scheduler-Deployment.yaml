@@ -13,7 +13,7 @@ spec:
       labels:
         app: api
     spec:
-      serviceAccountName: api
+      serviceAccountName: workers-api
       containers:
         - name: api
           image: "{{ .Values.registry }}/{{ .Values.project }}/workers_api:{{ .Values.tag }}"
@@ -55,6 +55,22 @@ spec:
                 secretKeyRef:
                   name: workers-db-secret
                   key: HOST
+          resources:
+            requests:
+              cpu: 1
+              memory: 1G
+            limits:
+              cpu: 1
+              memory: 2G
 
+        {{ if .Values.db.use_gcp_cloud_proxy }}
+        - name: cloud-sql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.17
+          command:
+            - "/cloud_sql_proxy"
+            - "-instances={{ .Values.db.gcp_sql_instance_name }}=tcp:5432"
+          securityContext:
+            runAsNonRoot: true
+        {{ end }}
       nodeSelector:
         component: api

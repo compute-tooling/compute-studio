@@ -38,9 +38,16 @@ spec:
       volumes: 
         {{- range $name, $value := .Values.redis.volumes }}
         - name: {{ $value.name }}
+          {{ if $value.hostPath }}
           hostPath:
             path: {{ $value.hostPath.path }}
             type: {{ $value.hostPath.type }}
+          {{ end }}
+          {{ if $value.gcePersistentDisk }}
+          gcePersistentDisk:
+            pdName: {{ $value.gcePersistentDisk.pdName }}
+            fsType: {{ $value.gcePersistentDisk.fsType }}
+          {{ end }}
         {{- end}}
       nodeSelector:
         component: api

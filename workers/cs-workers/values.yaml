@@ -37,6 +37,11 @@ db:
   user: postgres
   password: password
   host: workers-db
+
+  # deploy_db: true
+  # use_gcp_cloud_proxy: false
+  # gcp_sql_instance_name: null
+
   volumes:
     - name: workers-db-volume
       hostPath:
