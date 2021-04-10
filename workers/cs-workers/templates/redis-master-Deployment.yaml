@@ -22,7 +22,7 @@ spec:
       containers:
         - env: []
           command: ["redis-server", "--appendonly", "yes"]
-          image: redis
+          image: redis:6.2.1
           name: master
           ports:
             - containerPort: 6379
