@@ -4,10 +4,11 @@ on:
   push:
     branches:
       - dev
+      - ci-api
     paths:
       - "workers/**"
       - "deploy/**"
-      - ".github/workflows/dev-workers-deploy.yml"
+      - ".github/workflows/deprecated-dev-workers-deploy.yml"
 
 # Environment variables available to all jobs and steps in this workflow
 env:
@@ -20,7 +21,6 @@ env:
   REGISTRY_HOSTNAME: gcr.io
 
   PROJECT: ${{ secrets.DEV_GKE_PROJECT }}
-  HOST: dev.compute.studio
   TAG: ${{ github.sha }}
 
   CS_CONFIG: ${{ secrets.DEV_CS_CONFIG }}
@@ -58,9 +58,10 @@ jobs:
           # Set up docker to authenticate
           gcloud auth configure-docker
 
-      - name: Set cs-config.yaml file.
+      - name: Set cs-config.yaml and values.yaml files.
         run: |
           echo $CS_CONFIG | base64 --decode > cs-config.yaml
+          echo $DEV_WORKERS_VALUES | base64 --decode > ./workers/values.yaml
 
       - name: Build Docker Images
         run: |
@@ -74,5 +75,11 @@ jobs:
       - name: Deploy
         run: |
           gcloud container clusters get-credentials $GKE_CLUSTER --zone $GKE_ZONE --project $GKE_PROJECT
-          cs workers svc config -o - --update-dns | kubectl apply -f -
-          kubectl get pods -o wide
+          cd workers
+          helm template cs-workers \
+            --set project=$PROJECT \
+            --set tag=$TAG \
+            --set api.secret_key=$(cs secrets get WORKERS_API_SECRET_KEY) \
+            --set db.password=$(cs secrets get WORKERS_DB_PASSWORD)  \
+            --namespace workers \
+            -f values.yaml | kubectl apply -f -
