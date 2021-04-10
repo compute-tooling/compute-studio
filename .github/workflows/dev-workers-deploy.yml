@@ -8,7 +8,7 @@ on:
     paths:
       - "workers/**"
       - "deploy/**"
-      - ".github/workflows/deprecated-dev-workers-deploy.yml"
+      - ".github/workflows/dev-workers-deploy.yml"
 
 # Environment variables available to all jobs and steps in this workflow
 env:
