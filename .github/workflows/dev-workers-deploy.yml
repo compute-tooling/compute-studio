@@ -24,6 +24,7 @@ env:
   TAG: ${{ github.sha }}
 
   CS_CONFIG: ${{ secrets.DEV_CS_CONFIG }}
+  DEV_WORKERS_VALUES: ${{ secrets.DEV_WORKERS_VALUES }}
 
 jobs:
   setup-build-publish-deploy:
