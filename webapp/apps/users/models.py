@@ -202,6 +202,9 @@ class Cluster(models.Model):
     access_token = models.CharField(max_length=512, null=True)
     access_token_expires_at = models.DateTimeField(null=True)
 
+    # Make viz host configurable to work with multiple clusters at once.
+    viz_host = models.CharField(max_length=128, null=True)
+
     version = models.CharField(null=False, max_length=32)
 
     objects = ClusterManager()
@@ -261,6 +264,13 @@ class Cluster(models.Model):
             return self
 
         raise Exception(f"{resp.status_code} {resp.text}")
+
+    @property
+    def path_prefix(self):
+        if self.version == "v0":
+            return ""
+        else:
+            return "/api/v1"
 
 
 class ProjectPermissions:
@@ -794,10 +804,11 @@ class Deployment(models.Model):
             self.tag = self.project.latest_tag
             self.save()
 
+        cluster: Cluster = self.project.cluster
         resp = requests.post(
-            f"{self.project.cluster.url}/deployments/{self.project}/",
+            f"{cluster.url}{cluster.path_prefix}/deployments/{self.project}/",
             json={"deployment_name": self.public_name, "tag": str(self.tag)},
-            headers=self.project.cluster.headers(),
+            headers=cluster.headers(),
         )
 
         if resp.status_code == 200:
@@ -810,17 +821,19 @@ class Deployment(models.Model):
         raise Exception(f"{resp.status_code} {resp.text}")
 
     def get_deployment(self):
+        cluster: Cluster = self.project.cluster
         resp = requests.get(
-            f"{self.project.cluster.url}/deployments/{self.project}/{self.public_name}/",
-            headers=self.project.cluster.headers(),
+            f"{cluster.url}{cluster.path_prefix}/deployments/{self.project}/{self.public_name}/",
+            headers=cluster.headers(),
         )
         assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
         return resp.json()
 
     def delete_deployment(self):
+        cluster: Cluster = self.project.cluster
         resp = requests.delete(
-            f"{self.project.cluster.url}/deployments/{self.project}/{self.public_name}/",
-            headers=self.project.cluster.headers(),
+            f"{cluster.url}{cluster.path_prefix}/deployments/{self.project}/{self.public_name}/",
+            headers=cluster.headers(),
         )
         assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
         self.deleted_at = timezone.now()

@@ -120,3 +120,29 @@ class Project(ProjectSync):
     class Config:
         orm_mode = True
         extra = "ignore"
+
+
+class DeploymentCreate(BaseModel):
+    tag: str
+    deployment_name: str
+
+
+class ReadyStats(BaseModel):
+    created_at: datetime
+    ready: bool
+
+
+class DeploymentReadyStats(BaseModel):
+    deployment: ReadyStats
+    svc: ReadyStats
+    ingressroute: ReadyStats
+
+
+class Deleted(BaseModel):
+    deleted: bool
+
+
+class DeploymentDelete(BaseModel):
+    deployment: Deleted
+    svc: Deleted
+    ingressroute: Deleted

@@ -184,7 +184,7 @@ class VizView(InputsMixin, View):
         context["tech"] = project.tech
         context["object"] = project
         context["deployment"] = deployment
-        context["viz_host"] = DEFAULT_VIZ_HOST
+        context["viz_host"] = project.cluster.viz_host or DEFAULT_VIZ_HOST
         context["protocol"] = "https"
         return render(request, self.template_name, context)
 
@@ -212,7 +212,7 @@ class EmbedView(InputsMixin, View):
             "object": project,
             "deployment": deployment,
             "protocol": "https",
-            "viz_host": DEFAULT_VIZ_HOST,
+            "viz_host": project.cluster.viz_host or DEFAULT_VIZ_HOST,
         }
         response = render(request, self.template_name, context)
 

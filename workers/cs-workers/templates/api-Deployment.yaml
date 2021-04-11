@@ -24,6 +24,10 @@ spec:
               value: "{{ .Values.bucket }}"
             - name: PROJECT
               value: "{{ .Values.project }}"
+            {{ if .Values.workers_host }}
+            - name: HOST
+              value: "{{ .Values.workers_host }}"
+            {{ end }}
             - name: VIZ_HOST
               value: "{{ .Values.viz_host }}"
             - name: API_SECRET_KEY

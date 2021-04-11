@@ -4,6 +4,7 @@
 
 replicaCount: 1
 bucket: cs-outputs-dev-private
+
 viz_host: devviz.compute.studio
 # image:
 project: project

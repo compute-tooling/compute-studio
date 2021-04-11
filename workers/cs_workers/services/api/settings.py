@@ -21,6 +21,9 @@ class Settings(BaseSettings):
         "https://hdoupe.ngrok.io",
     ]
 
+    HOST: Optional[str]
+    VIZ_HOST: str
+
     @validator("BACKEND_CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
         if isinstance(v, str) and not v.startswith("["):
@@ -32,6 +35,12 @@ class Settings(BaseSettings):
     PROJECT_NAMESPACE: str
 
     @validator("PROJECT_NAMESPACE", pre=True)
+    def get_project_namespace(cls, v: Optional[str]) -> str:
+        return v or "default"
+
+    NAMESPACE: str
+
+    @validator("NAMESPACE", pre=True)
     def get_project_namespace(cls, v: Optional[str]) -> str:
         if v:
             return v

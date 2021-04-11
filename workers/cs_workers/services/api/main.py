@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from .settings import settings
-from .routers import users, login, projects, simulations
+from .routers import users, login, projects, simulations, deployments
 
 app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_PREFIX_STR}/openapi.json",
@@ -22,3 +22,4 @@ app.include_router(login.router, prefix=settings.API_PREFIX_STR)
 app.include_router(users.router, prefix=settings.API_PREFIX_STR)
 app.include_router(projects.router, prefix=settings.API_PREFIX_STR)
 app.include_router(simulations.router, prefix=settings.API_PREFIX_STR)
+app.include_router(deployments.router, prefix=settings.API_PREFIX_STR)

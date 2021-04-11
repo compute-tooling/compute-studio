@@ -146,6 +146,13 @@ def create_job(
             "limits": {"memory": f"{math.ceil(mem * 1.2)}G", "cpu": cpu,},
         }
 
+    if settings.settings.HOST:
+        url = f"https://{settings.settings.HOST}"
+    else:
+        url = f"http://api.{settings.settings.NAMESPACE}.svc.cluster.local"
+
+    url += settings.settings.API_PREFIX_STR
+
     client = job.Job(
         PROJECT,
         owner,
@@ -153,7 +160,7 @@ def create_job(
         tag=tag,
         model_config=project_data,
         job_id=instance.id,
-        callback_url=f"http://api.workers.svc.cluster.local/api/v1/jobs/callback/{instance.id}/",
+        callback_url=f"{url}/jobs/callback/{instance.id}/",
         route_name=task_name,
         incluster=incluster,
         namespace=settings.settings.PROJECT_NAMESPACE,
