@@ -38,10 +38,10 @@ class Settings(BaseSettings):
     def get_project_namespace(cls, v: Optional[str]) -> str:
         return v or "default"
 
-    NAMESPACE: str
+    NAMESPACE: Optional[str]
 
     @validator("NAMESPACE", pre=True)
-    def get_project_namespace(cls, v: Optional[str]) -> str:
+    def get_namespace(cls, v: Optional[str]) -> str:
         if v:
             return v
         elif Path(NAMESPACE_PATH).exists():
