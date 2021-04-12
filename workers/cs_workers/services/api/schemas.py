@@ -109,6 +109,7 @@ class ProjectSync(BaseModel):
     title: str
     tech: str
     callable_name: Optional[str]
+    app_location: Optional[str]
     exp_task_time: int
     cpu: float
     memory: float
