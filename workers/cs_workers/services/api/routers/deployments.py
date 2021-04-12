@@ -64,7 +64,7 @@ def create_deployment(
 
 
 @router.get(
-    "/{owner}/{title}/{deployment_name}",
+    "/{owner}/{title}/{deployment_name}/",
     response_model=schemas.DeploymentReadyStats,
     status_code=201,
 )
@@ -109,7 +109,7 @@ def get_deployment(
 
 
 @router.delete(
-    "/{owner}/{title}/{deployment_name}",
+    "/{owner}/{title}/{deployment_name}/",
     response_model=schemas.DeploymentReadyStats,
     status_code=201,
 )
