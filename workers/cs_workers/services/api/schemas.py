@@ -128,7 +128,7 @@ class DeploymentCreate(BaseModel):
 
 
 class ReadyStats(BaseModel):
-    created_at: datetime
+    created_at: Optional[datetime]
     ready: bool
 
 
