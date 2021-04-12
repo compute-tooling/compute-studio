@@ -62,7 +62,7 @@ def create_deployment(
 
     viz.configure()
     viz.create()
-    ready_stats = schemas.DeploymentReadyStats(viz.ready_stats())
+    ready_stats = schemas.DeploymentReadyStats(**viz.ready_stats())
     return ready_stats
 
 
@@ -110,13 +110,13 @@ def get_deployment(
         namespace=settings.settings.PROJECT_NAMESPACE,
     )
 
-    ready_stats = schemas.DeploymentReadyStats(viz.ready_stats())
+    ready_stats = schemas.DeploymentReadyStats(**viz.ready_stats())
     return ready_stats
 
 
 @router.delete(
     "/{owner}/{title}/{deployment_name}/",
-    response_model=schemas.DeploymentReadyStats,
+    response_model=schemas.DeploymentDelete,
     status_code=201,
 )
 def delete_deployment(
@@ -158,5 +158,5 @@ def delete_deployment(
         namespace=settings.settings.PROJECT_NAMESPACE,
     )
 
-    ready_stats = schemas.DeploymentReadyStats(viz.ready_stats())
-    return ready_stats
+    delete = schemas.DeploymentDelete(**viz.delete())
+    return delete
