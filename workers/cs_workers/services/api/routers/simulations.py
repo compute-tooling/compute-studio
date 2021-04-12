@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Body, HTTPException
 from sqlalchemy.orm import Session
 
 from cs_workers.models.clients import job
-from .. import models, schemas, dependencies as deps, security, settings
+from .. import utils, models, schemas, dependencies as deps, security, settings
 
 incluster = os.environ.get("KUBERNETES_SERVICE_HOST", False) is not False
 
@@ -138,13 +138,7 @@ def create_job(
     db.refresh(instance)
 
     project_data = schemas.Project.from_orm(project).dict()
-    mem = float(project_data.pop("memory"))
-    cpu = float(project_data.pop("cpu"))
-    if cpu and mem:
-        project_data["resources"] = {
-            "requests": {"memory": f"{mem}G", "cpu": cpu},
-            "limits": {"memory": f"{math.ceil(mem * 1.2)}G", "cpu": cpu,},
-        }
+    utils.set_resource_requirements(project_data)
 
     if settings.settings.HOST:
         url = f"https://{settings.settings.HOST}"

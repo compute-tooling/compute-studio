@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Body, HTTPException
 from sqlalchemy.orm import Session
 
 from cs_workers.models.clients import server
-from .. import models, schemas, dependencies as deps, security, settings
+from .. import utils, models, schemas, dependencies as deps, security, settings
 
 incluster = os.environ.get("KUBERNETES_SERVICE_HOST", False) is not False
 
@@ -38,15 +38,18 @@ def create_deployment(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found.")
 
-    if project["tech"] not in ("dash", "bokeh"):
+    if project.tech not in ("dash", "bokeh"):
         return HTTPException(status_code=400, detail=f"Unsuported tech: {project.tech}")
+
+    project_data = schemas.Project.from_orm(project).dict()
+    utils.set_resource_requirements(project_data)
 
     viz = server.Server(
         project=PROJECT,
         owner=project.owner,
         title=project.title,
         tag=data.tag,
-        model_config=project,
+        model_config=project_data,
         callable_name=project.callable_name,
         deployment_name=data.deployment_name,
         incluster=incluster,
@@ -88,15 +91,18 @@ def get_deployment(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found.")
 
-    if project["tech"] not in ("dash", "bokeh"):
+    if project.tech not in ("dash", "bokeh"):
         return HTTPException(status_code=400, detail=f"Unsuported tech: {project.tech}")
+
+    project_data = schemas.Project.from_orm(project).dict()
+    utils.set_resource_requirements(project_data)
 
     viz = server.Server(
         project=PROJECT,
         owner=project.owner,
         title=project.title,
         tag=None,
-        model_config=project,
+        model_config=project_data,
         callable_name=project.callable_name,
         deployment_name=deployment_name,
         incluster=incluster,
@@ -133,15 +139,18 @@ def delete_deployment(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found.")
 
-    if project["tech"] not in ("dash", "bokeh"):
+    if project.tech not in ("dash", "bokeh"):
         return HTTPException(status_code=400, detail=f"Unsuported tech: {project.tech}")
+
+    project_data = schemas.Project.from_orm(project).dict()
+    utils.set_resource_requirements(project_data)
 
     viz = server.Server(
         project=PROJECT,
         owner=project.owner,
         title=project.title,
         tag=None,
-        model_config=project,
+        model_config=project_data,
         callable_name=project.callable_name,
         deployment_name=deployment_name,
         incluster=incluster,

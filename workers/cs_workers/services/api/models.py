@@ -60,6 +60,7 @@ class Project(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     owner = Column(String, nullable=False, index=True)
     title = Column(String, nullable=False, index=True)
+    app_location = Column(String, nullable=True)
     tech = Column(String, nullable=False)
     callable_name = Column(String)
     exp_task_time = Column(String, nullable=False)
