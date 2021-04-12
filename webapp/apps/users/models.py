@@ -811,7 +811,7 @@ class Deployment(models.Model):
             headers=cluster.headers(),
         )
 
-        if resp.status_code == 200:
+        if resp.status_code in (200, 201):
             return resp.json()
         elif resp.status_code == 400:
             data = resp.json()
