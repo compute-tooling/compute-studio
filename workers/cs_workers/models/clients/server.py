@@ -273,14 +273,19 @@ class Server:
         deployment_resp = self.deployment_api_client.create_namespaced_deployment(
             namespace=self.namespace, body=self.deployment
         )
+        print("dep resp")
+        print(deployment_resp)
 
         service_resp = self.service_api_client.create_namespaced_service(
             namespace=self.namespace, body=self.service
         )
-
+        print("svc resp")
+        print(service_resp)
         ingressroute_resp = self.ir_api_client.create_namespaced_ingressroute(
             namespace=self.namespace, body=self.ingressroute
         )
+        print("ir resp")
+        print(ingressroute_resp)
 
         return deployment_resp, service_resp, ingressroute_resp
 
