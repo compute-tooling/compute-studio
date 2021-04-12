@@ -25,8 +25,15 @@ def sync_projects(
             )
             .one_or_none()
         )
+        project_data = project.dict()
         if orm_project is None:
-            orm_project = models.Project(**project.dict(), user_id=user.id)
+            print("creating object from data", project_data)
+            orm_project = models.Project(**project_data, user_id=user.id)
+        else:
+            print("updating object from data", project_data)
+            for attr, val in project.dict().items():
+                print("setting", attr, val)
+                setattr(orm_project, attr, val)
         orm_projects.append(orm_project)
     db.add_all(orm_projects)
     db.commit()
