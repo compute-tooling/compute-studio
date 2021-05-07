@@ -366,6 +366,8 @@ class Project(models.Model):
         "Tag", null=True, on_delete=models.SET_NULL, related_name="staging"
     )
 
+    embed_background_color = models.CharField(default="white", max_length=128)
+
     objects = ProjectManager()
 
     def __str__(self):
