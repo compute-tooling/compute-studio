@@ -46,7 +46,9 @@ class Async(tornado.web.RequestHandler):
         if task_id is None:
             task_id = str(uuid.uuid4())
         task_kwargs = payload.get("task_kwargs")
-        async_task = async_task_wrapper(task_id, task_name, handler, task_kwargs)
+        async_task = async_task_wrapper(
+            task_id, task_name, handler, timeout=None, task_kwargs=task_kwargs
+        )
         asyncio.create_task(async_task)
         self.set_status(200)
         self.write({"status": "PENDING", "task_id": task_id})
