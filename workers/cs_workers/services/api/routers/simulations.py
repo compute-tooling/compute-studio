@@ -140,8 +140,8 @@ def create_job(
     project_data = schemas.Project.from_orm(project).dict()
     utils.set_resource_requirements(project_data)
 
-    if settings.settings.HOST:
-        url = f"https://{settings.settings.HOST}"
+    if settings.settings.WORKERS_API_HOST:
+        url = f"https://{settings.settings.WORKERS_API_HOST}"
     else:
         url = f"http://api.{settings.settings.NAMESPACE}.svc.cluster.local"
 

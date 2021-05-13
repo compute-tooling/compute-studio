@@ -21,7 +21,7 @@ class Settings(BaseSettings):
         "https://hdoupe.ngrok.io",
     ]
 
-    HOST: Optional[str]
+    WORKERS_API_HOST: Optional[str]
     VIZ_HOST: str
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)

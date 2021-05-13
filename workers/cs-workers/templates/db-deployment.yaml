@@ -1,4 +1,4 @@
-{{ if .Values.db.delploy_db }}
+{{ if .Values.db.deploy_db }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

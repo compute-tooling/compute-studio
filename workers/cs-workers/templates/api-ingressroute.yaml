@@ -1,14 +1,14 @@
-{{ if .Values.workers_host }}
+{{ if .Values.workers_api_host }}
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: api-tls
-  namespace: {{ .Values.workers_namespace }}
+  namespace: {{ .Values.workers_api_namespace }}
 spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`{{ .Values.workers_host }}`)
+    - match: Host(`{{ .Values.workers_api_host }}`)
       kind: Rule
       services:
         - name: api
@@ -25,7 +25,7 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: Host(`{{ .Values.workers_host }}`)
+    - match: Host(`{{ .Values.workers_api_host }}`)
       kind: Rule
       services:
         - name: api

@@ -24,9 +24,9 @@ spec:
               value: "{{ .Values.bucket }}"
             - name: PROJECT
               value: "{{ .Values.project }}"
-            {{ if .Values.workers_host }}
-            - name: HOST
-              value: "{{ .Values.workers_host }}"
+            {{ if .Values.workers_api_host }}
+            - name: WORKERS_API_HOST
+              value: "{{ .Values.workers_api_host }}"
             {{ end }}
             - name: VIZ_HOST
               value: "{{ .Values.viz_host }}"
