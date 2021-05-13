@@ -1,4 +1,5 @@
 from typing import Union
+from django.db.models.base import Model
 
 
 import paramtools as pt
@@ -6,7 +7,7 @@ import paramtools as pt
 from webapp.apps.comp.models import ModelConfig
 from webapp.apps.comp.compute import Compute, SyncCompute, JobFailError
 from webapp.apps.comp import actions
-from webapp.apps.comp.exceptions import AppError, NotReady
+from webapp.apps.comp.exceptions import AppError, NotReady, Stale
 
 
 import os
@@ -79,7 +80,7 @@ class ModelParameters:
         Get cached version of inputs or retrieve new version.
         """
         meta_parameters_values = meta_parameters_values or {}
-
+        self.config = None
         try:
             self.config = ModelConfig.objects.get(
                 project=self.project,
@@ -87,10 +88,12 @@ class ModelParameters:
                 meta_parameters_values=meta_parameters_values,
             )
             print("STATUS", self.config.status)
-            if self.config.status != "SUCCESS":
+            if self.config.status != "SUCCESS" and not self.config.is_stale():
                 print("raise yo")
                 raise NotReady(self.config)
-        except ModelConfig.DoesNotExist:
+            elif self.config.status != "SUCCESS" and self.config.is_stale():
+                raise Stale(self.config)
+        except (ModelConfig.DoesNotExist, Stale) as e:
             response = self.compute.submit_job(
                 project=self.project,
                 task_name=actions.INPUTS,
@@ -99,7 +102,9 @@ class ModelParameters:
                 if self.project.cluster.version == "v1"
                 else "",
             )
-            if self.project.cluster.version == "v1":
+            if self.project.cluster.version == "v1" and isinstance(
+                e, ModelConfig.DoesNotExist
+            ):
                 self.config = ModelConfig.objects.create(
                     project=self.project,
                     model_version=str(self.project.latest_tag),
@@ -108,6 +113,12 @@ class ModelParameters:
                     job_id=response,
                     status="PENDING",
                 )
+                raise NotReady(self.config)
+            elif self.project.cluster.version == "v1" and isinstance(e, Stale):
+                self.config.model_version = str(self.project.latest_tag)
+                self.config.job_id = response
+                self.config.status = "PENDING"
+                self.config.save()
                 raise NotReady(self.config)
 
             success, result = response

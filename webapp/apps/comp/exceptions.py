@@ -77,3 +77,10 @@ class PrivateAppException(CSException):
 class NotReady(CSException):
     def __init__(self, instance, *args, **kwargs):
         self.instance = instance
+        super().__init__(*args, **kwargs)
+
+
+class Stale(CSException):
+    def __init__(self, instance, *args, **kwargs):
+        self.instance = instance
+        super().__init__(*args, **kwargs)
