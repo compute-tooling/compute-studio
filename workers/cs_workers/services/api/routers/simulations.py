@@ -1,7 +1,5 @@
 from datetime import datetime
-import math
 import os
-import uuid
 
 import httpx
 from fastapi import APIRouter, Depends, Body, HTTPException
@@ -19,7 +17,9 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 
 @router.get("/callback/{job_id}/", status_code=201, response_model=schemas.Job)
-def job_callback(job_id: str, db: Session = Depends(deps.get_db)):
+def job_callback(
+    job_id: str, db: Session = Depends(deps.get_db),
+):
     instance: models.Job = db.query(models.Job).filter(
         models.Job.id == job_id
     ).one_or_none()
@@ -79,19 +79,6 @@ async def finish_job(
         resp.raise_for_status()
 
     return instance
-
-
-# @router.get("/{job_id}/", status_code=201, response_model=schemas.Job)
-# def get_job(
-#     job_id: str,
-#     db: Session = Depends(deps.get_db),
-#     user: schemas.User = Depends(deps.get_current_active_user),
-# ):
-#     instance = db.query(models.Job).filter(models.Job.id == job_id).one_or_none()
-#     if instance is None:
-#         raise HTTPException(status_code=404, detail="Job not found.")
-
-#     return instance
 
 
 @router.post("/{owner}/{title}/", response_model=schemas.Job, status_code=201)
