@@ -65,12 +65,20 @@ export default class API {
     }
   }
 
-  resetInitialValues(metaParameters: { [metaParam: string]: any }): Promise<Inputs> {
-    return axios
-      .post(`/${this.owner}/${this.title}/api/v1/inputs/`, metaParameters)
-      .then(response => {
-        return response.data;
+  async resetInitialValues(metaParameters: { [metaParam: string]: any }): Promise<Inputs> {
+    let resp;
+    if (!!metaParameters) {
+      resp = await axios.post(`/${this.owner}/${this.title}/api/v1/inputs/`, metaParameters);
+    } else {
+      resp = await axios.get(`/${this.owner}/${this.title}/api/v1/inputs/`);
+    }
+    if (resp.status === 202) {
+      return new Promise(resolve => {
+        setTimeout(async () => resolve(await this.getInputs(metaParameters)), 2000);
       });
+    } else {
+      return resp.data;
+    }
   }
 
   getAccessStatus(): Promise<AccessStatus> {

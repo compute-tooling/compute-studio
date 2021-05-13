@@ -174,35 +174,32 @@ class SimTabs extends React.Component<
     });
   }
 
-  resetInitialValues(metaParameters: InputsDetail["meta_parameters"]) {
+  async resetInitialValues(metaParameters: InputsDetail["meta_parameters"]) {
     this.setState({ resetting: true });
-    this.api
-      .resetInitialValues({
-        meta_parameters: tbLabelSchema.cast(metaParameters),
-      })
-      .then(data => {
-        const [
-          initialValues,
-          sects,
-          { meta_parameters, model_parameters },
-          schema,
-          unknownParams,
-        ] = convertToFormik(data);
-        this.setState(prevState => ({
-          inputs: {
-            ...prevState.inputs,
-            ...{
-              meta_parameters: meta_parameters,
-              model_parameters: model_parameters,
-            },
-          },
-          initialValues: initialValues,
-          sects: sects,
-          schema: schema,
-          unknownParams: unknownParams,
-          resetting: false,
-        }));
-      });
+    const data = await this.api.resetInitialValues({
+      meta_parameters: tbLabelSchema.cast(metaParameters),
+    });
+    const [
+      initialValues,
+      sects,
+      { meta_parameters, model_parameters },
+      schema,
+      unknownParams,
+    ] = convertToFormik(data);
+    this.setState(prevState => ({
+      inputs: {
+        ...prevState.inputs,
+        ...{
+          meta_parameters: meta_parameters,
+          model_parameters: model_parameters,
+        },
+      },
+      initialValues: initialValues,
+      sects: sects,
+      schema: schema,
+      unknownParams: unknownParams,
+      resetting: false,
+    }));
   }
 
   resetAccessStatus() {
