@@ -1,14 +1,44 @@
+import os
 import time
 import traceback
 
 import httpx
-import cs_storage
 
 
 try:
     from cs_config import functions
 except ImportError as ie:
     pass
+
+
+async def get_task_kwargs(callback_url, retries=5):
+    """
+    Retrieve task kwargs from callback_url.
+
+    Returns
+    -------
+        resp: httpx.Response
+    """
+    job_token = os.environ.get("JOB_TOKEN", None)
+    if job_token is not None:
+        headers = {"Authorization": f"Token {job_token}"}
+    else:
+        headers = None
+
+    for retry in range(0, retries + 1):
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(callback_url, headers=headers)
+            resp.raise_for_status()
+            return resp
+        except Exception as e:
+            print(f"Exception when retrieving value from callback url: {callback_url}")
+            print(f"Exception: {e}")
+            if retry >= retries:
+                raise e
+            wait_time = 2 ** retry
+            print(f"Trying again in {wait_time} seconds.")
+            time.sleep(wait_time)
 
 
 async def task_wrapper(callback_url, task_name, func, task_kwargs=None):
@@ -21,9 +51,7 @@ async def task_wrapper(callback_url, task_name, func, task_kwargs=None):
     try:
         if task_kwargs is None:
             print("getting task_kwargs")
-            async with httpx.AsyncClient() as client:
-                resp = await client.get(callback_url)
-            resp.raise_for_status()
+            resp = await get_task_kwargs(callback_url)
             task_kwargs = resp.json()["inputs"]
         print("got task_kwargs", task_kwargs)
         outputs = func(**(task_kwargs or {}))
