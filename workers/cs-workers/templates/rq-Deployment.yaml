@@ -16,15 +16,23 @@ spec:
       serviceAccountName: rq-worker
       containers:
         - name: rq-worker-outputs
-          command: ["rq", "worker", "--with-scheduler", "--url", "$(REDIS_URL)"]
+          command:
+            ["rq", "worker", "--with-scheduler", "-c", "cs_workers.services.rq_settings"]
           image: "{{ .Values.registry }}/{{ .Values.project }}/outputs_processor:{{ .Values.tag }}"
           env:
             - name: BUCKET
               value: {{ .Values.bucket }}
             - name: PROJECT
               value: {{ .Values.project }}
-            - name: REDIS_URL
-              value: "redis://{{ .Values.redis.host }}:{{ .Values.redis.port }}"
+            - name: REDIS_HOST
+              value: {{ .Values.redis.host }}
+            - name: REDIS_PORT
+              value: "{{ .Values.redis.port }}"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workers-redis-secret
+                  key: PASSWORD
           resources:
             requests:
               cpu: 1

@@ -24,6 +24,7 @@ api:
 redis:
   host: "redis-master"
   port: "6379"
+  password: ""
   volumes:
     - name: redis-volume-v1
       hostPath:

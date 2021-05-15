@@ -82,5 +82,6 @@ jobs:
             --set tag=$TAG \
             --set api.secret_key=$(cs secrets get WORKERS_API_SECRET_KEY) \
             --set db.password=$(cs secrets get WORKERS_DB_PASSWORD)  \
+            --set redis.password=$(cs secrets get WORKERS_REDIS_PASSWORD) \
             --namespace workers \
             -f values.deploy.yaml | kubectl apply -f -

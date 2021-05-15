@@ -22,7 +22,9 @@ app = FastAPI()
 
 queue = Queue(
     connection=redis.Redis(
-        host=os.environ.get("REDIS_HOST"), port=os.environ.get("REDIS_PORT")
+        host=os.environ.get("REDIS_HOST"),
+        port=os.environ.get("REDIS_PORT"),
+        password=os.environ.get("REDIS_PASSWORD"),
     )
 )
 
