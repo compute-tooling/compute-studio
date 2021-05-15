@@ -215,7 +215,7 @@ class Cluster(models.Model):
             self.access_token_expires_at is None
             or self.access_token_expires_at < (timezone.now() - timedelta(seconds=60))
         )
-        print(missing_token, is_expired)
+        print("token is missing", missing_token, "token is expired", is_expired)
         if missing_token or is_expired:
             resp = requests.post(
                 f"{self.url}/api/v1/login/access-token",
