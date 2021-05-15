@@ -108,6 +108,7 @@ interface ProjectValues {
   callable_name: string;
   is_public: boolean;
   social_image_link: string;
+  embed_background_color: string;
 }
 
 const initialValues: ProjectValues = {
@@ -124,6 +125,7 @@ const initialValues: ProjectValues = {
   callable_name: "",
   is_public: true,
   social_image_link: null,
+  embed_background_color: "white",
 };
 
 type ProjectSettingsSection = "about" | "configure" | "environment" | "access";
@@ -298,6 +300,20 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
             className="w-50"
           />
           <ErrorMessage name="app_location" render={msg => <Message msg={msg} />} />
+        </div>
+      </div>
+      <div className="mt-1 mb-1">
+        <label>
+          <b>Embed Background Color</b>
+        </label>
+        <div>
+          <Field
+            required={false}
+            name="embed_background_color"
+            placeholder="white"
+            className="w-50"
+          />
+          <ErrorMessage name="embed_background_color" render={msg => <Message msg={msg} />} />
         </div>
       </div>
     </div>
