@@ -4,6 +4,9 @@ import jwt
 
 from rest_framework import authentication
 from rest_framework.exceptions import AuthenticationFailed
+from oauth2_provider.contrib.rest_framework import (
+    OAuth2Authentication as BaseOAuth2Authentication,
+)
 
 
 from webapp.apps.users.models import (
@@ -52,3 +55,33 @@ class ClusterAuthentication(authentication.BaseAuthentication):
             raise AuthenticationFailed("No such user")
 
         return (cluster.service_account.user, None)
+
+
+class ClientOAuth2Authentication(BaseOAuth2Authentication):
+    """
+    Authenticator that forces request.user to be present even if the
+    oauth2_provider package doesn't want it to be.
+
+    Works around the change introduced in:
+    https://github.com/evonove/django-oauth-toolkit/commit/628f9e6ba98007d2940bb1a4c28136c03d81c245
+
+    Reference:
+    https://github.com/evonove/django-oauth-toolkit/issues/38
+
+    """
+
+    def authenticate(self, request):
+        super_result = super().authenticate(request)
+
+        if super_result:
+            # The request was found to be authentic.
+            user, token = super_result
+            if (
+                user is None
+                and token.application.authorization_grant_type == "client-credentials"
+            ):
+                user = token.application.user
+            result = user, token
+        else:
+            result = super_result
+        return result

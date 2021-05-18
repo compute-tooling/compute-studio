@@ -9,3 +9,6 @@ pyyaml
 google-cloud-secret-manager
 cs-crypt>=0.0.2
 pyjwt
+uvicorn[standard]
+fastapi
+pydantic[email,dotenv]

@@ -28,10 +28,14 @@ class Compute(object):
         response = requests.post(url, json=data, timeout=timeout, headers=headers)
         return response
 
-    def submit_job(self, project, task_name, task_kwargs, tag=None):
-        print("submitting", task_name)
+    def submit_job(self, project, task_name, task_kwargs, path_prefix="", tag=None):
+        print(
+            "submitting", task_name,
+        )
         cluster = project.cluster
-        url = f"{cluster.url}/{project.owner}/{project.title}/"
+        tag = tag or str(project.latest_tag)
+        url = f"{cluster.url}{path_prefix}/{project.owner}/{project.title}/"
+        print(url)
         return self.submit(
             tasks=dict(task_name=task_name, tag=tag, task_kwargs=task_kwargs),
             url=url,
@@ -43,16 +47,17 @@ class Compute(object):
         attempts = 0
         while not submitted:
             try:
+                print(tasks)
                 response = self.remote_submit_job(
                     url, data=tasks, timeout=TIMEOUT_IN_SECONDS, headers=headers
                 )
-                if response.status_code == 200:
+                if response.status_code in (200, 201):
                     print("submitted: ", url)
                     submitted = True
                     data = response.json()
-                    job_id = data["task_id"]
+                    job_id = data.get("task_id") or data.get("id")
                 else:
-                    print("FAILED: ", url, response.status_code)
+                    print("FAILED: ", url, response.status_code, response.json())
                     attempts += 1
             except Timeout:
                 print("Couldn't submit to: ", url)
@@ -83,7 +88,7 @@ class SyncCompute(Compute):
                         return
                     data = response.json()
                 else:
-                    print("FAILED: ", url, response.status_code)
+                    print("FAILED: ", url, response.status_code, response.text)
                     attempts += 1
             except Timeout:
                 print("Couldn't submit to: ", url)
@@ -95,15 +100,19 @@ class SyncCompute(Compute):
                 print("Exceeded max attempts. Bailing out.")
                 raise WorkersUnreachableError()
 
-        success = data["status"] == "SUCCESS"
-        if success:
-            return success, data
+        if isinstance(data, list):
+            success = True
         else:
-            return success, data
+            success = data["status"] == "SUCCESS"
+
+        return success, data
 
 
 class SyncProjects(SyncCompute):
     def submit_job(self, project, cluster):
-        url = f"{cluster.url}/sync/"
+        if cluster.version == "v0":
+            url = f"{cluster.url}/sync/"
+        else:
+            url = f"{cluster.url}/api/v1/projects/sync/"
         headers = cluster.headers()
         return self.submit(tasks=[project], url=url, headers=headers)

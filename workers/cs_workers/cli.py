@@ -8,11 +8,13 @@ import yaml
 
 from cs_deploy.config import workers_config as config
 import cs_workers.services.manage
-import cs_workers.services.scheduler
+
+# import cs_workers.services.scheduler
 import cs_workers.services.outputs_processor
 import cs_workers.models.manage
 import cs_workers.models.executors.job
-import cs_workers.models.executors.api_task
+
+# import cs_workers.models.executors.api_task
 import cs_workers.models.executors.server
 
 
@@ -31,11 +33,11 @@ def cli(subparsers: argparse._SubParsersAction = None):
     sub_parsers = parser.add_subparsers()
 
     cs_workers.services.manage.cli(sub_parsers, config=config)
-    cs_workers.services.scheduler.cli(sub_parsers)
-    cs_workers.services.outputs_processor.cli(sub_parsers)
+    # cs_workers.services.scheduler.cli(sub_parsers)
+    # cs_workers.services.outputs_processor.cli(sub_parsers)
     cs_workers.models.manage.cli(sub_parsers)
     cs_workers.models.executors.job.cli(sub_parsers)
-    cs_workers.models.executors.api_task.cli(sub_parsers)
+    # cs_workers.models.executors.api_task.cli(sub_parsers)
     cs_workers.models.executors.server.cli(sub_parsers)
 
     if subparsers is None:

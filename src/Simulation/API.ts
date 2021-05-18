@@ -43,43 +43,42 @@ export default class API {
     });
   }
 
-  getInputsDetail(): Promise<InputsDetail> {
+  async getInputsDetail(): Promise<InputsDetail> {
     if (!this.modelpk) return;
-    return axios
-      .get(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/edit/`)
-      .then(resp => resp.data);
+    const resp = await axios.get(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/edit/`);
+    return resp.data;
   }
 
-  getInitialValues(): Promise<Inputs> {
-    let data: Inputs;
-    if (!this.modelpk) {
-      return axios.get(`/${this.owner}/${this.title}/api/v1/inputs/`).then(inputsResp => {
-        data = inputsResp.data;
-        return data;
+  async getInputs(meta_parameters?: InputsDetail["meta_parameters"]): Promise<Inputs> {
+    let resp;
+    if (!!meta_parameters) {
+      resp = await axios.post(`/${this.owner}/${this.title}/api/v1/inputs/`, meta_parameters);
+    } else {
+      resp = await axios.get(`/${this.owner}/${this.title}/api/v1/inputs/`);
+    }
+    if (resp.status === 202) {
+      return new Promise(resolve => {
+        setTimeout(async () => resolve(await this.getInputs(meta_parameters)), 2000);
       });
     } else {
-      return axios
-        .get(`/${this.owner}/${this.title}/api/v1/${this.modelpk}/edit/`)
-        .then(detailResp => {
-          return axios
-            .post(`/${this.owner}/${this.title}/api/v1/inputs/`, {
-              meta_parameters: detailResp.data.meta_parameters,
-            })
-            .then(inputsResp => {
-              data = inputsResp.data;
-              data["detail"] = detailResp.data;
-              return data;
-            });
-        });
+      return resp.data;
     }
   }
 
-  resetInitialValues(metaParameters: { [metaParam: string]: any }): Promise<Inputs> {
-    return axios
-      .post(`/${this.owner}/${this.title}/api/v1/inputs/`, metaParameters)
-      .then(response => {
-        return response.data;
+  async resetInitialValues(metaParameters: { [metaParam: string]: any }): Promise<Inputs> {
+    let resp;
+    if (!!metaParameters) {
+      resp = await axios.post(`/${this.owner}/${this.title}/api/v1/inputs/`, metaParameters);
+    } else {
+      resp = await axios.get(`/${this.owner}/${this.title}/api/v1/inputs/`);
+    }
+    if (resp.status === 202) {
+      return new Promise(resolve => {
+        setTimeout(async () => resolve(await this.getInputs(metaParameters)), 2000);
       });
+    } else {
+      return resp.data;
+    }
   }
 
   getAccessStatus(): Promise<AccessStatus> {

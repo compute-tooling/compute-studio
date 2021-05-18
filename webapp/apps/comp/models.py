@@ -77,6 +77,19 @@ class ModelConfig(models.Model):
     meta_parameters = JSONField(default=dict)
     model_parameters = JSONField(default=dict)
 
+    job_id = models.UUIDField(blank=True, default=None, null=True)
+    status = models.CharField(
+        choices=(
+            ("STARTED", "Started"),
+            ("PENDING", "Pending"),
+            ("SUCCESS", "Success"),
+            ("INVALID", "Invalid"),
+            ("FAIL", "Fail"),
+            ("WORKER_FAILURE", "Worker Failure"),
+        ),
+        max_length=20,
+    )
+
     objects = ModelConfigManager()
 
     class Meta:
@@ -86,6 +99,12 @@ class ModelConfig(models.Model):
                 name="unique_model_config",
             )
         ]
+
+    def is_stale(self, timeout=10):
+        return (
+            self.status != "SUCCESS"
+            and (timezone.now() - self.creation_date).total_seconds() > timeout
+        )
 
 
 class Inputs(models.Model):

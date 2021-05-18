@@ -193,14 +193,16 @@ class RunMockModel(CoreTestMixin):
         adj_resp_data: dict,
         adj: dict,
     ) -> Response:
-        mock.register_uri(
-            "POST",
-            f"{self.project.cluster.url}/{self.project}/",
-            json=lambda request, context: {
+        def mock_json(request, context):
+            return {
                 "defaults": defaults_resp_data,
                 "parse": adj_resp_data,
                 "version": {"status": "SUCCESS", "version": "v1"},
-            }[request.json()["task_name"]],
+                "sim": {"task_id": str(uuid.uuid4())},
+            }[request.json()["task_name"]]
+
+        mock.register_uri(
+            "POST", f"{self.project.cluster.url}/{self.project}/", json=mock_json,
         )
         init_resp = self.api_client.post(
             f"/{self.project}/api/v1/", data=adj, format="json"

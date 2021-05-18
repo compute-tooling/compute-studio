@@ -1,3 +1,4 @@
+import pytest
 from webapp.apps.users.models import Project
 from webapp.apps.comp.model_parameters import ModelParameters
 from webapp.apps.comp.ioutils import get_ioutils
@@ -35,6 +36,10 @@ def test_api_parser(db, get_inputs, valid_meta_params):
     assert errors_warnings["GUI"] == exp_errors_warnings
 
 
+# Opting out of this validation for now. It may not be good to have in the long
+# run but in the short term, requiring the model parameters to be loaded from the db
+# before running a sim is a bottleneck.
+@pytest.mark.xfail
 def test_api_parser_extra_section(db, get_inputs, valid_meta_params):
     class MockMp(ModelParameters):
         def get_inputs(self, meta_parameters=None):

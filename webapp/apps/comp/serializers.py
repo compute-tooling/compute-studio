@@ -13,7 +13,7 @@ class OutputsSerializer(serializers.Serializer):
 
     job_id = serializers.UUIDField()
     status = serializers.ChoiceField(choices=(("SUCCESS", "Success"), ("FAIL", "Fail")))
-    traceback = serializers.CharField(required=False)
+    traceback = serializers.CharField(required=False, allow_null=True)
     model_version = serializers.CharField(required=False)
     meta = serializers.JSONField()
     outputs = serializers.JSONField(required=False)
@@ -107,12 +107,30 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
         )
 
 
+class ModelConfigAsyncSerializer(serializers.Serializer):
+    job_id = serializers.UUIDField(required=False)
+    status = serializers.ChoiceField(
+        choices=(("SUCCESS", "Success"), ("FAIL", "Fail")), required=False
+    )
+    outputs = serializers.JSONField(required=False)
+
+    def to_internal_value(self, data):
+        if "outputs" in data:
+            data.update(**data.pop("outputs"))
+        if "task_id" in data:
+            data["job_id"] = data.pop("task_id")
+        print(data.keys())
+        return super().to_internal_value(data)
+
+
 class ModelConfigSerializer(serializers.ModelSerializer):
     project = serializers.StringRelatedField()
 
     class Meta:
         model = ModelConfig
         fields = (
+            "job_id",
+            "status",
             "project",
             "model_version",
             "meta_parameters_values",
@@ -129,6 +147,14 @@ class ModelConfigSerializer(serializers.ModelSerializer):
             "model_parameters",
             "creation_date",
         )
+
+    def to_internal_value(self, data):
+        if "outputs" in data:
+            data.update(**data.pop("outputs"))
+        if "task_id" in data:
+            data["job_id"] = data.pop("task_id")
+        print(data.keys())
+        return super().to_internal_value(data)
 
 
 class InputsSerializer(serializers.ModelSerializer):

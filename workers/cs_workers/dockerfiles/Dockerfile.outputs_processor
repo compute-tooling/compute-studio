@@ -12,8 +12,8 @@ RUN apt-get update && \
 
 
 RUN pip install -r requirements.txt && \
-    pip install pyppeteer2 && \
-    conda install -c conda-forge jinja2 bokeh tornado dask && \
+    pip install pyppeteer2 rq && \
+    conda install -c conda-forge jinja2 bokeh && \
     pyppeteer-install
 
 RUN mkdir /home/cs_workers
@@ -27,8 +27,8 @@ RUN pip install -e ./secrets
 COPY deploy /home/deploy
 RUN pip install -e ./deploy
 
-WORKDIR /home
+WORKDIR /home/cs_workers
 
 ENV PYTHONUNBUFFERED 1
 
-CMD ["csw", "outputs", "--start"]
+CMD ["uvicorn", "services.outputs_processor:app", "--host", "0.0.0.0", "--port", "5000", "--reload"]

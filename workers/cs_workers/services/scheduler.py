@@ -55,8 +55,11 @@ class Scheduler(tornado.web.RequestHandler):
             return
         payload = Payload().loads(self.request.body.decode("utf-8"))
 
-        if f"{owner}/{title}" not in self.config[self.user.username].projects():
+        try:
+            project = self.config[self.user.username].get_project(owner, title)
+        except KeyError:
             self.set_status(404)
+            return
 
         task_id = payload.get("task_id")
         if task_id is None:
@@ -88,7 +91,7 @@ class Scheduler(tornado.web.RequestHandler):
                 owner,
                 title,
                 tag=tag,
-                model_config=self.config[self.user.username],
+                model_config=project,
                 job_id=task_id,
                 job_kwargs=payload["task_kwargs"],
                 rclient=self.rclient,
@@ -146,7 +149,7 @@ class DeploymentsDetailApi(tornado.web.RequestHandler):
                 owner=project["owner"],
                 title=project["title"],
                 tag=None,
-                model_config=self.config[self.user.username],
+                model_config=project,
                 callable_name=project["callable_name"],
                 deployment_name=deployment_name,
                 incluster=incluster,
@@ -174,7 +177,7 @@ class DeploymentsDetailApi(tornado.web.RequestHandler):
                 owner=project["owner"],
                 title=project["title"],
                 tag=None,
-                model_config=self.config[self.user.username],
+                model_config=project,
                 callable_name=project["callable_name"],
                 deployment_name=deployment_name,
                 incluster=incluster,
@@ -225,7 +228,7 @@ class DeploymentsApi(tornado.web.RequestHandler):
                 owner=project["owner"],
                 title=project["title"],
                 tag=data["tag"],
-                model_config=self.config[self.user.username],
+                model_config=project,
                 callable_name=project["callable_name"],
                 deployment_name=data["deployment_name"],
                 incluster=incluster,
