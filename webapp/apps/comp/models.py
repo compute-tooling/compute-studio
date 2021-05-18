@@ -100,7 +100,7 @@ class ModelConfig(models.Model):
             )
         ]
 
-    def is_stale(self, timeout=10):
+    def is_stale(self, timeout=180):
         return (
             self.status != "SUCCESS"
             and (timezone.now() - self.creation_date).total_seconds() > timeout
