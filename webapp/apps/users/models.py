@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import timedelta
+from datetime import timedelta, datetime
 import json
 import secrets
 import uuid
@@ -182,28 +182,74 @@ class ClusterManager(models.Manager):
         return self.get(service_account__user__username=DEFAULT_CLUSTER_USER)
 
 
+class ClusterLoginException(Exception):
+    pass
+
+
 class Cluster(models.Model):
     url = models.URLField(max_length=64)
-    jwt_secret = models.CharField(max_length=512, null=True)
     service_account = models.OneToOneField(
         Profile, null=True, on_delete=models.SET_NULL
     )
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True)
 
+    # v0
+    jwt_secret = models.CharField(max_length=512, null=True)
+
+    # v1
+    cluster_password = models.CharField(max_length=512, null=True)
+    access_token = models.CharField(max_length=512, null=True)
+    access_token_expires_at = models.DateTimeField(null=True)
+
+    # Make viz host configurable to work with multiple clusters at once.
+    viz_host = models.CharField(max_length=128, null=True)
+
+    version = models.CharField(null=False, max_length=32)
+
     objects = ClusterManager()
 
-    def headers(self):
-        jwt_token = jwt.encode(
-            {"username": self.service_account.user.username,},
-            cryptkeeper.decrypt(self.jwt_secret),
+    def ensure_access_token(self):
+        missing_token = self.access_token is None
+        is_expired = (
+            self.access_token_expires_at is None
+            or self.access_token_expires_at < (timezone.now() - timedelta(seconds=60))
         )
-        return {
-            "Authorization": jwt_token,
-            "Cluster-User": self.service_account.user.username,
-        }
+        print("token is missing", missing_token, "token is expired", is_expired)
+        if missing_token or is_expired:
+            resp = requests.post(
+                f"{self.url}/api/v1/login/access-token",
+                data={
+                    "username": str(self.service_account),
+                    "password": self.cluster_password,
+                },
+            )
+            if resp.status_code != 200:
+                raise ClusterLoginException(
+                    f"Expected 200, got {resp.status_code}: {resp.text}"
+                )
+            data = resp.json()
+            self.access_token = data["access_token"]
+            self.access_token_expires_at = datetime.fromisoformat(data["expires_at"])
+            self.save()
+            self.refresh_from_db()
+
+    def headers(self):
+        if self.version == "v0":
+            jwt_token = jwt.encode(
+                {"username": self.service_account.user.username,},
+                cryptkeeper.decrypt(self.jwt_secret),
+            )
+            return {
+                "Authorization": jwt_token,
+                "Cluster-User": self.service_account.user.username,
+            }
+        elif self.version == "v1":
+            self.ensure_access_token()
+            return {"Authorization": f"Bearer {self.access_token}"}
 
     def create_user_in_cluster(self, cs_url):
+        # only works for v0.
         resp = requests.post(
             f"{self.url}/auth/",
             json={
@@ -218,6 +264,13 @@ class Cluster(models.Model):
             return self
 
         raise Exception(f"{resp.status_code} {resp.text}")
+
+    @property
+    def path_prefix(self):
+        if self.version == "v0":
+            return ""
+        else:
+            return "/api/v1"
 
 
 class ProjectPermissions:
@@ -366,6 +419,8 @@ class Project(models.Model):
         "Tag", null=True, on_delete=models.SET_NULL, related_name="staging"
     )
 
+    embed_background_color = models.CharField(default="white", max_length=128)
+
     objects = ProjectManager()
 
     def __str__(self):
@@ -479,21 +534,10 @@ class Project(models.Model):
             return None
         if self.status != "running":
             return None
-        try:
-            success, result = SyncCompute().submit_job(
-                project=self, task_name=actions.VERSION, task_kwargs=dict()
-            )
-            if success:
-                return result["version"]
-            else:
-                print(f"error retrieving version for {self}", result)
-                return None
-        except Exception as e:
-            print(f"error retrieving version for {self}", e)
-            import traceback
-
-            traceback.print_exc()
-            return None
+        if self.latest_tag:
+            return self.latest_tag.version
+        if self.staging_tag:
+            return self.staging_tag.version
 
     def is_owner(self, user):
         return user == self.owner.user
@@ -639,6 +683,7 @@ class Tag(models.Model):
     cpu = models.DecimalField(max_digits=5, decimal_places=1, null=True, default=2)
     memory = models.DecimalField(max_digits=5, decimal_places=1, null=True, default=6)
     created_at = models.DateTimeField(auto_now_add=True)
+    version = models.CharField(max_length=255, null=True)
 
     def __str__(self):
         return str(self.image_tag)
@@ -761,13 +806,14 @@ class Deployment(models.Model):
             self.tag = self.project.latest_tag
             self.save()
 
+        cluster: Cluster = self.project.cluster
         resp = requests.post(
-            f"{self.project.cluster.url}/deployments/{self.project}/",
+            f"{cluster.url}{cluster.path_prefix}/deployments/{self.project}/",
             json={"deployment_name": self.public_name, "tag": str(self.tag)},
-            headers=self.project.cluster.headers(),
+            headers=cluster.headers(),
         )
 
-        if resp.status_code == 200:
+        if resp.status_code in (200, 201):
             return resp.json()
         elif resp.status_code == 400:
             data = resp.json()
@@ -777,17 +823,19 @@ class Deployment(models.Model):
         raise Exception(f"{resp.status_code} {resp.text}")
 
     def get_deployment(self):
+        cluster: Cluster = self.project.cluster
         resp = requests.get(
-            f"{self.project.cluster.url}/deployments/{self.project}/{self.public_name}/",
-            headers=self.project.cluster.headers(),
+            f"{cluster.url}{cluster.path_prefix}/deployments/{self.project}/{self.public_name}/",
+            headers=cluster.headers(),
         )
         assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
         return resp.json()
 
     def delete_deployment(self):
+        cluster: Cluster = self.project.cluster
         resp = requests.delete(
-            f"{self.project.cluster.url}/deployments/{self.project}/{self.public_name}/",
-            headers=self.project.cluster.headers(),
+            f"{cluster.url}{cluster.path_prefix}/deployments/{self.project}/{self.public_name}/",
+            headers=cluster.headers(),
         )
         assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
         self.deleted_at = timezone.now()

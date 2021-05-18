@@ -9,6 +9,7 @@ from kubernetes import client as kclient, config as kconfig
 from cs_workers.utils import clean, redis_conn_from_env
 from cs_workers.config import ModelConfig
 from cs_workers.ingressroute import IngressRouteApi, ingressroute_template
+from cs_workers.models.secrets import ModelSecrets
 
 PORT = 8010
 
@@ -71,7 +72,9 @@ class Server:
             kclient.V1EnvVar("TITLE", config["title"]),
         ]
 
-        for secret in self.model_config._list_secrets(config):
+        for secret in ModelSecrets(
+            owner=owner, title=title, project=self.project
+        ).list():
             envs.append(
                 kclient.V1EnvVar(
                     name=secret,
@@ -94,7 +97,7 @@ class Server:
         return envs
 
     def configure(self):
-        config = self.model_config.projects()[f"{self.owner}/{self.title}"]
+        config = self.model_config
         safeowner = clean(self.owner)
         safetitle = clean(self.title)
         app_name = f"{safeowner}-{safetitle}"
@@ -270,14 +273,19 @@ class Server:
         deployment_resp = self.deployment_api_client.create_namespaced_deployment(
             namespace=self.namespace, body=self.deployment
         )
+        print("dep resp")
+        print(deployment_resp)
 
         service_resp = self.service_api_client.create_namespaced_service(
             namespace=self.namespace, body=self.service
         )
-
+        print("svc resp")
+        print(service_resp)
         ingressroute_resp = self.ir_api_client.create_namespaced_ingressroute(
             namespace=self.namespace, body=self.ingressroute
         )
+        print("ir resp")
+        print(ingressroute_resp)
 
         return deployment_resp, service_resp, ingressroute_resp
 
@@ -321,21 +329,3 @@ class Server:
         safeowner = clean(self.owner)
         safetitle = clean(self.title)
         return f"{safeowner}-{safetitle}-{self.deployment_name}"
-
-
-if __name__ == "__main__":
-    server = Server(
-        project="cs-workers-dev",
-        owner="hdoupe",
-        title="ccc-widget",
-        tag="fix-iframe-link3",
-        deployment_name="hankdoupe",
-        model_config=ModelConfig("cs-workers-dev", "https://dev.compute.studio"),
-        callable_name="dash",
-        incluster=False,
-        quiet=True,
-    )
-    server
-    server.configure()
-    server.create()
-    # server.delete()

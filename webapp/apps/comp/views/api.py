@@ -25,7 +25,7 @@ from oauth2_provider.contrib.rest_framework import OAuth2Authentication
 import paramtools as pt
 import cs_storage
 
-from webapp.apps.users.auth import ClusterAuthentication
+from webapp.apps.users.auth import ClusterAuthentication, ClientOAuth2Authentication
 from webapp.apps.users.models import (
     Project,
     Profile,
@@ -43,15 +43,23 @@ from webapp.apps.comp.exceptions import (
     ForkObjectException,
     PrivateAppException,
     PrivateSimException,
+    NotReady,
 )
 from webapp.apps.comp.ioutils import get_ioutils
-from webapp.apps.comp.models import Inputs, Simulation, PendingPermission, ANON_BEFORE
+from webapp.apps.comp.models import (
+    Inputs,
+    Simulation,
+    PendingPermission,
+    ModelConfig,
+    ANON_BEFORE,
+)
 from webapp.apps.comp.parser import APIParser
 from webapp.apps.comp.serializers import (
     SimulationSerializer,
     MiniSimulationSerializer,
     InputsSerializer,
     OutputsSerializer,
+    ModelConfigSerializer,
     AddAuthorsSerializer,
     SimAccessSerializer,
     PendingPermissionSerializer,
@@ -80,10 +88,14 @@ class InputsAPIView(APIView):
         ioutils = get_ioutils(project)
         try:
             defaults = ioutils.model_parameters.defaults(meta_parameters)
+        except NotReady:
+            print("NOT READY")
+            return Response(status=202)
         except pt.ValidationError as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
         if "year" in defaults["meta_parameters"]:
             defaults.update({"extend": True})
+
         return Response(defaults)
 
     def get(self, request, *args, **kwargs):
@@ -385,12 +397,14 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
 
     authentication_classes = (
         ClusterAuthentication,
+        ClientOAuth2Authentication,
         # Uncomment to allow token-based authentication for this endpoint.
         # TokenAuthentication,
     )
 
     def put(self, request, *args, **kwargs):
-        print("myoutputs api method=PUT", kwargs)
+        print("myoutputs api method=PUT", request.user, kwargs)
+        print("authenticator", request.user, request.successful_authenticator)
         ser = OutputsSerializer(data=request.data)
         if ser.is_valid():
             data = ser.validated_data
@@ -436,18 +450,21 @@ class OutputsAPIView(RecordOutputsMixin, APIView):
                     )
             return Response(status=status.HTTP_200_OK)
         else:
+            print(f"Data from compute cluster is invalid: {ser.errors}")
             return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class MyInputsAPIView(APIView):
     authentication_classes = (
         ClusterAuthentication,
+        ClientOAuth2Authentication,
         # Uncomment to allow token-based authentication for this endpoint.
         # TokenAuthentication,
     )
 
     def put(self, request, *args, **kwargs):
         print("myinputs api method=PUT", kwargs)
+        print("authenticator", request.user, request.successful_authenticator)
         ser = InputsSerializer(data=request.data)
         if ser.is_valid():
             data = ser.validated_data
@@ -487,6 +504,39 @@ class MyInputsAPIView(APIView):
             return Response(status=status.HTTP_200_OK)
         else:
             print("inputs put error", ser.errors)
+            return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ModelConfigAPIView(APIView):
+    authentication_classes = (
+        ClusterAuthentication,
+        ClientOAuth2Authentication,
+        # Uncomment to allow token-based authentication for this endpoint.
+        # TokenAuthentication,
+    )
+
+    def put(self, request, *args, **kwargs):
+        print("myinputs api method=PUT", kwargs)
+        print("authenticator", request.user, request.successful_authenticator)
+
+        ser = ModelConfigSerializer(data=request.data)
+        if ser.is_valid():
+            data = ser.validated_data
+            model_config = get_object_or_404(
+                ModelConfig.objects.prefetch_related("project"), job_id=data["job_id"]
+            )
+            if model_config.status in ("PENDING", "INVALID", "FAIL"):
+                ioutils = get_ioutils(model_config.project)
+                model_config.meta_parameters_values = ioutils.model_parameters.cleanup_meta_parameters(
+                    model_config.meta_parameters_values, data["meta_parameters"]
+                )
+                model_config.meta_parameters = data["meta_parameters"]
+                model_config.model_parameters = data["model_parameters"]
+                model_config.status = data["status"]
+                model_config.save()
+            return Response(status=status.HTTP_200_OK)
+        else:
+            print("model config put error", ser.errors)
             return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

@@ -8,8 +8,10 @@ class IOClasses(NamedTuple):
     Parser: Type[Parser]
 
 
-def get_ioutils(project, **kwargs):
+def get_ioutils(project, compute=None, **kwargs):
     return IOClasses(
-        model_parameters=kwargs.get("ModelParameters", ModelParameters)(project),
+        model_parameters=kwargs.get("ModelParameters", ModelParameters)(
+            project, compute=compute
+        ),
         Parser=kwargs.get("Parser", Parser),
     )

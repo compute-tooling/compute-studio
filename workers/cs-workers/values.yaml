@@ -1,0 +1,62 @@
+# Default values for cs-workers.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+bucket: cs-outputs-dev-private
+
+viz_host: devviz.compute.studio
+# image:
+project: project
+registry: gcr.io
+# Overrides the image tag whose default is the chart appVersion.
+tag: tag
+
+workers_namespace: workers
+project_namespace: projects
+
+api:
+  secret_key: abc123
+  allow_origins:
+    - "http://10.0.0.137:5000"
+    - "http://localhost:5000"
+    - "http://api.workers.svc.cluster.local"
+redis:
+  host: "redis-master"
+  port: "6379"
+  password: ""
+  volumes:
+    - name: redis-volume-v1
+      hostPath:
+        path: /redis-queue-data
+        type: Directory
+  volumeMounts:
+    - mountPath: /data
+      name: redis-volume-v1
+
+db:
+  name: cluster_db
+  user: postgres
+  password: password
+  host: workers-db
+
+  deploy_db: true
+  # use_gcp_cloud_proxy: false
+  # gcp_sql_instance_name: null
+
+  volumes:
+    - name: workers-db-volume
+      hostPath:
+        path: /workers-db-data
+        type: DirectoryOrCreate
+
+  volumeMounts:
+    - mountPath: /var/lib/postgresql/data/
+      name: workers-db-volume
+      subPath: postgres
+# credsVolumes:
+#   env_var: GOOGLE_APPLICATION_CREDENTIALS
+#   path: /google-creds.json
+#   volumes:
+#     - name: google-creds-volume
+#       hostPath

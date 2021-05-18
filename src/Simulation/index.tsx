@@ -128,79 +128,78 @@ class SimTabs extends React.Component<
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.api.getAccessStatus().then(data => {
       this.setState({
         accessStatus: data,
       });
     });
-    this.api
-      .getInitialValues()
-      .then(data => {
-        const [serverValues, sects, inputs, schema, unknownParams] = convertToFormik(data);
-        let isEmpty = true;
-        for (const msectvals of Object.values(data.detail?.adjustment || {})) {
-          if (Object.keys(msectvals).length > 0) {
-            isEmpty = false;
-          }
-        }
-        let initialValues;
-        if (isEmpty) {
-          const storage = Persist.pop(
-            `${this.props.match.params.owner}/${this.props.match.params.title}/inputs`
-          );
-          // Use values from local storage if available. Default to empty dict from server.
-          initialValues = storage || serverValues;
-        } else {
-          initialValues = serverValues;
-        }
-
-        this.setState({
-          inputs: inputs,
-          initialValues: initialValues,
-          sects: sects,
-          schema: schema,
-          unknownParams: unknownParams,
-          extend: "extend" in data ? data.extend : false,
-        });
-      })
-      .catch(error => {
-        this.setState({ error });
-      });
     if (this.api.modelpk) {
       this.setOutputs();
     }
+    let data: Inputs;
+    if (this.api.modelpk) {
+      const detail = await this.api.getInputsDetail();
+      data = await this.api.getInputs(detail.meta_parameters);
+      data.detail = detail;
+    } else {
+      data = await this.api.getInputs();
+    }
+
+    const [serverValues, sects, inputs, schema, unknownParams] = convertToFormik(data);
+    let isEmpty = true;
+    for (const msectvals of Object.values(data.detail?.adjustment || {})) {
+      if (Object.keys(msectvals).length > 0) {
+        isEmpty = false;
+      }
+    }
+    let initialValues;
+    if (isEmpty) {
+      const storage = Persist.pop(
+        `${this.props.match.params.owner}/${this.props.match.params.title}/inputs`
+      );
+      // Use values from local storage if available. Default to empty dict from server.
+      initialValues = storage || serverValues;
+    } else {
+      initialValues = serverValues;
+    }
+
+    this.setState({
+      inputs: inputs,
+      initialValues: initialValues,
+      sects: sects,
+      schema: schema,
+      unknownParams: unknownParams,
+      extend: "extend" in inputs ? inputs.extend : false,
+    });
   }
 
-  resetInitialValues(metaParameters: InputsDetail["meta_parameters"]) {
+  async resetInitialValues(metaParameters: InputsDetail["meta_parameters"]) {
     this.setState({ resetting: true });
-    this.api
-      .resetInitialValues({
-        meta_parameters: tbLabelSchema.cast(metaParameters),
-      })
-      .then(data => {
-        const [
-          initialValues,
-          sects,
-          { meta_parameters, model_parameters },
-          schema,
-          unknownParams,
-        ] = convertToFormik(data);
-        this.setState(prevState => ({
-          inputs: {
-            ...prevState.inputs,
-            ...{
-              meta_parameters: meta_parameters,
-              model_parameters: model_parameters,
-            },
-          },
-          initialValues: initialValues,
-          sects: sects,
-          schema: schema,
-          unknownParams: unknownParams,
-          resetting: false,
-        }));
-      });
+    const data = await this.api.resetInitialValues({
+      meta_parameters: tbLabelSchema.cast(metaParameters),
+    });
+    const [
+      initialValues,
+      sects,
+      { meta_parameters, model_parameters },
+      schema,
+      unknownParams,
+    ] = convertToFormik(data);
+    this.setState(prevState => ({
+      inputs: {
+        ...prevState.inputs,
+        ...{
+          meta_parameters: meta_parameters,
+          model_parameters: model_parameters,
+        },
+      },
+      initialValues: initialValues,
+      sects: sects,
+      schema: schema,
+      unknownParams: unknownParams,
+      resetting: false,
+    }));
   }
 
   resetAccessStatus() {

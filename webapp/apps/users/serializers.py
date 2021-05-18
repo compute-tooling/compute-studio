@@ -39,6 +39,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     repo_url = serializers.CharField(required=False)
     is_public = serializers.BooleanField(required=False)
     social_image_link = serializers.URLField(required=False)
+    embed_background_color = serializers.CharField(required=False)
 
     # see to_representation
     # has_write_access = serializers.BooleanField(source="has_write_access")
@@ -89,6 +90,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "tech",
             "is_public",
             "social_image_link",
+            "embed_background_color",
         )
         read_only = (
             "sim_count",
@@ -106,6 +108,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
     latest_tag = serializers.StringRelatedField(required=False)
     is_public = serializers.BooleanField(required=False)
     social_image_link = serializers.URLField(required=False)
+    embed_background_color = serializers.CharField(required=False)
 
     # see to_representation
     # has_write_access = serializers.BooleanField(source="has_write_access")
@@ -147,6 +150,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
             "tech",
             "is_public",
             "social_image_link",
+            "embed_background_color",
         )
         read_only = ("sim_count", "status", "user_count", "version", "latest_tag")
 
@@ -154,6 +158,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
 class TagUpdateSerializer(serializers.Serializer):
     latest_tag = serializers.CharField(allow_null=True, required=False)
     staging_tag = serializers.CharField(allow_null=True, required=False)
+    version = serializers.CharField(allow_null=True, required=False)
 
     def validate(self, attrs):
         if attrs.get("latest_tag") is None and attrs.get("staging_tag") is None:
@@ -165,6 +170,7 @@ class TagUpdateSerializer(serializers.Serializer):
 
 class TagSerializer(serializers.ModelSerializer):
     project = serializers.StringRelatedField()
+    version = serializers.CharField(allow_null=True, required=False)
 
     class Meta:
         model = Tag
@@ -174,6 +180,7 @@ class TagSerializer(serializers.ModelSerializer):
             "memory",
             "cpu",
             "created_at",
+            "version",
         )
 
         read_only = (

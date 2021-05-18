@@ -1,0 +1,35 @@
+{{ if .Values.workers_api_host }}
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: api-tls
+  namespace: {{ .Values.workers_api_namespace }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ .Values.workers_api_host }}`)
+      kind: Rule
+      services:
+        - name: api
+          port: 80
+  tls:
+    certResolver: myresolver
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: api
+  namespace: {{ .Values.workers_namespace }}
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`{{ .Values.workers_api_host }}`)
+      kind: Rule
+      services:
+        - name: api
+          port: 80
+  tls:
+    certResolver: myresolver
+{{ end }}

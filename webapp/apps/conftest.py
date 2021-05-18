@@ -76,6 +76,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
             service_account=comp_api_user.profile,
             url="http://scheduler",
             jwt_secret=cryptkeeper.encrypt(binascii.hexlify(os.urandom(32)).decode()),
+            version="v0",
         )
 
         common = {

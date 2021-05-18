@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: redis
+  name: redis-master
+  namespace: {{ .Values.workers_namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+      role: master
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: master
+        tier: backend
+    spec:
+      containers:
+        - env: []
+          command: ["redis-server", "--appendonly", "yes"]
+          image: redis:6.2.1
+          name: master
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          volumeMounts:
+            {{- range $name, $value := .Values.redis.volumeMounts }}
+            - name: {{ $value.name }}
+              mountPath: {{ quote $value.mountPath }}
+            {{- end }}
+      volumes: 
+        {{- range $name, $value := .Values.redis.volumes }}
+        - name: {{ $value.name }}
+          {{ if $value.hostPath }}
+          hostPath:
+            path: {{ $value.hostPath.path }}
+            type: {{ $value.hostPath.type }}
+          {{ end }}
+          {{ if $value.gcePersistentDisk }}
+          gcePersistentDisk:
+            pdName: {{ $value.gcePersistentDisk.pdName }}
+            fsType: {{ $value.gcePersistentDisk.fsType }}
+          {{ end }}
+        {{- end}}
+      nodeSelector:
+        component: api

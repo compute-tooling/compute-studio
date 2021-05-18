@@ -4,8 +4,12 @@ nodes:
   - role: control-plane
   - role: worker
     extraMounts:
-      - hostPath: /home/hankdoupe/compute-studio/redis-data
-        containerPath: /redis-data
+      - hostPath: /home/hankdoupe/compute-studio/redis-queue-data
+        containerPath: /redis-queue-data
+      - hostPath: /home/hankdoupe/compute-studio/workers-db-data
+        containerPath: /workers-db-data
+      - hostPath: /home/hankdoupe/compute-studio
+        containerPath: /code
   - role: worker
   - role: worker
     extraMounts:
