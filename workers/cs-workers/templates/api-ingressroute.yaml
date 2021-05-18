@@ -3,7 +3,7 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: api-tls
-  namespace: {{ .Values.workers_api_namespace }}
+  namespace: {{ .Values.workers_namespace }}
 spec:
   entryPoints:
     - websecure
