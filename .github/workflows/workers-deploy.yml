@@ -1,4 +1,4 @@
-name: Dev Workers Deploy
+name: Workers Deploy
 
 on:
   push:
@@ -23,7 +23,7 @@ env:
   TAG: ${{ github.sha }}
 
   CS_CONFIG: ${{ secrets.CS_CONFIG }}
-  WORKERS_VALUES: ${{ secrets.DEV_WORKERS_VALUES }}
+  WORKERS_VALUES: ${{ secrets.WORKERS_VALUES }}
 
 jobs:
   setup-build-publish-deploy:
