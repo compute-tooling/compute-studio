@@ -125,7 +125,15 @@ def create_job(
     db.refresh(instance)
 
     project_data = schemas.Project.from_orm(project).dict()
-    utils.set_resource_requirements(project_data)
+
+    # Use lower memory target for these tasks.
+    if task_name in ("version", "defaults", "parse",):
+        project_data["resources"] = {
+            "requests": {"memory": f"0.25G", "cpu": 0.7},
+            "limits": {"memory": f"0.7G", "cpu": 1},
+        }
+    else:
+        utils.set_resource_requirements(project_data)
 
     if settings.settings.WORKERS_API_HOST:
         url = f"https://{settings.settings.WORKERS_API_HOST}"
