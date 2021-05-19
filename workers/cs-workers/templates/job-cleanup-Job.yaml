@@ -4,7 +4,7 @@ metadata:
   name: job-cleanup
   namespace: {{ .Values.workers_namespace }}
 spec:
-  schedule: "*/30 * * * *"
+  schedule: "*/3 * * * *"
   successfulJobsHistoryLimit: 0
   jobTemplate:
     spec:
