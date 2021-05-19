@@ -129,8 +129,8 @@ def create_job(
     # Use lower memory target for these tasks.
     if task_name in ("version", "defaults", "parse",):
         project_data["resources"] = {
-            "requests": {"memory": f"0.25G", "cpu": 0.7},
-            "limits": {"memory": f"0.7G", "cpu": 1},
+            "requests": {"memory": "0.25G", "cpu": 0.7},
+            "limits": {"memory": "0.7G", "cpu": 1},
         }
     else:
         utils.set_resource_requirements(project_data)
