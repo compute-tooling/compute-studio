@@ -41,5 +41,5 @@ def cli():
     parser = argparse.ArgumentParser(description="CLI for C/S jobs.")
     parser.add_argument("--callback-url", required=True)
     parser.add_argument("--route-name", required=True)
-    parser.set_defaults(func=main)
-    parser.parse_args()
+    args = parser.parse_args()
+    main(args)
