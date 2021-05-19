@@ -87,12 +87,11 @@ class ModelParameters:
                 model_version=str(self.project.latest_tag),
                 meta_parameters_values=meta_parameters_values,
             )
-            print("STATUS", self.config.status)
-            if self.config.status != "SUCCESS" and not self.config.is_stale():
-                print("raise yo")
+            print("model config status", self.config.status)
+            if self.config.status != "SUCCESS":  # and not self.config.is_stale():
                 raise NotReady(self.config)
-            elif self.config.status != "SUCCESS" and self.config.is_stale():
-                raise Stale(self.config)
+            # elif self.config.status != "SUCCESS" and self.config.is_stale():
+            #     raise Stale(self.config)
         except (ModelConfig.DoesNotExist, Stale) as e:
             response = self.compute.submit_job(
                 project=self.project,

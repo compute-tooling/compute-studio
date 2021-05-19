@@ -104,8 +104,7 @@ class Job:
             name=job_id,
             image=f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{tag}",
             command=[
-                "csw",
-                "job",
+                "cs-jobs",
                 "--callback-url",
                 callback_url,
                 "--route-name",

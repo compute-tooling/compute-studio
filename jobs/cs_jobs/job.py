@@ -1,10 +1,8 @@
 import argparse
 import asyncio
 
-import httpx
-
 import cs_storage
-from cs_workers.models.executors.task_wrapper import task_wrapper
+from cs_jobs.task_wrapper import task_wrapper
 
 try:
     from cs_config import functions
@@ -39,8 +37,9 @@ def main(args: argparse.Namespace):
     )
 
 
-def cli(subparsers: argparse._SubParsersAction):
-    parser = subparsers.add_parser("job", description="CLI for C/S jobs.")
+def cli():
+    parser = argparse.ArgumentParser(description="CLI for C/S jobs.")
     parser.add_argument("--callback-url", required=True)
     parser.add_argument("--route-name", required=True)
-    parser.set_defaults(func=main)
+    args = parser.parse_args()
+    main(args)
