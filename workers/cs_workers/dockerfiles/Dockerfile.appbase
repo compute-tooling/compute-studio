@@ -11,9 +11,6 @@ RUN conda config --append channels conda-forge && \
     pip install gunicorn \
     "cs-kit>=1.16.2" \
     pytest \
-    "git+https://github.com/compute-tooling/compute-studio.git@${BRANCH}#egg=cs-secrets&subdirectory=secrets" \
-    "git+https://github.com/compute-tooling/compute-studio.git@${BRANCH}#egg=cs-deploy&subdirectory=deploy" \
-    "git+https://github.com/compute-tooling/compute-studio.git@${BRANCH}#egg=cs-workers&subdirectory=workers"
-
+    "git+https://github.com/compute-tooling/compute-studio.git@${BRANCH}#egg=cs-jobs&subdirectory=jobs"
 
 WORKDIR /home
