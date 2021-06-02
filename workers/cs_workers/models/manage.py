@@ -389,7 +389,7 @@ class Manager(BaseManager):
         if app_version and print_stdout:
             sys.stdout.write(app_version)
 
-        return app_version
+        return app_version or str(datetime.now().date())
 
     def stage_app(self, app):
         app_version = self.get_version(app, print_stdout=False)
