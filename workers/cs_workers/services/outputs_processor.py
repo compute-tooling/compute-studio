@@ -48,7 +48,8 @@ def push(job_id: str, result: Result):
     resp = None
     if result.task.task_name == "sim":
         print(f"posting data to {result.url}/outputs/api/")
-        result.task.outputs = write(job_id, result.task.outputs)
+        if result.task.status == "SUCCESS":
+            result.task.outputs = write(job_id, result.task.outputs)
         resp = httpx.put(
             f"{result.url}/outputs/api/",
             json=dict(job_id=job_id, **result.task.dict()),

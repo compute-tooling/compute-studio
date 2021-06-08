@@ -94,9 +94,6 @@ class Manager:
         self.templates_dir = BASE_PATH / Path("templates")
         self.dockerfiles_dir = BASE_PATH / Path("dockerfiles")
 
-        with open(self.templates_dir / "secret.template.yaml", "r") as f:
-            self.secret_template = yaml.safe_load(f.read())
-
         self._redis_secrets = None
         self._secrets = None
 
