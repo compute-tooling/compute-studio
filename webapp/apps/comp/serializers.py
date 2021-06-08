@@ -14,12 +14,12 @@ class OutputsSerializer(serializers.Serializer):
     job_id = serializers.UUIDField()
     status = serializers.ChoiceField(choices=(("SUCCESS", "Success"), ("FAIL", "Fail")))
     traceback = serializers.CharField(required=False, allow_null=True)
-    model_version = serializers.CharField(required=False)
+    model_version = serializers.CharField(required=False, allow_null=True)
     meta = serializers.JSONField()
-    outputs = serializers.JSONField(required=False)
+    outputs = serializers.JSONField(required=False, allow_null=True)
     # only used with v0!
     aggr_outputs = serializers.JSONField(required=False)
-    version = serializers.CharField(required=False)
+    version = serializers.CharField(required=False, allow_null=True)
 
     def to_internal_value(self, data):
         if "task_id" in data:
