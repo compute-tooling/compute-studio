@@ -122,24 +122,6 @@ class Manager(BaseManager):
 
     def load_templates(self):
         with open(
-            BASE_PATH
-            / Path("templates")
-            / "models"
-            / Path("api-task-deployment.template.yaml"),
-            "r",
-        ) as f:
-            self.api_task_template = yaml.safe_load(f.read())
-
-        with open(
-            BASE_PATH
-            / Path("templates")
-            / "models"
-            / Path("api-task-service.template.yaml"),
-            "r",
-        ) as f:
-            self.api_task_service_template = yaml.safe_load(f.read())
-
-        with open(
             BASE_PATH / Path("templates") / "models" / Path("secret.template.yaml"), "r"
         ) as f:
             self.secret_template = yaml.safe_load(f.read())
@@ -164,7 +146,6 @@ class Manager(BaseManager):
 
     def write_app_config(self):
         self.apply_method_to_apps(method=self.write_secrets)
-        # self.apply_method_to_apps(method=self._write_api_task)
 
     def apply_method_to_apps(self, method):
         """
@@ -454,69 +435,6 @@ class Manager(BaseManager):
                 f.write(yaml.dump(secret_config))
 
         return secret_config
-
-    def _write_api_task(self, app):
-        if app["tech"] != "python-paramtools":
-            return
-        deployment = copy.deepcopy(self.api_task_template)
-        safeowner = clean(app["owner"])
-        safetitle = clean(app["title"])
-        name = f"{safeowner}-{safetitle}-api-task"
-
-        deployment["metadata"]["name"] = name
-        deployment["spec"]["selector"]["matchLabels"]["app"] = name
-        deployment["spec"]["template"]["metadata"]["labels"]["app"] = name
-
-        container_config = deployment["spec"]["template"]["spec"]["containers"][0]
-
-        if self.use_latest_tag:
-            tag = self.get_latest_tag(app)
-        else:
-            tag = self.tag
-
-        container_config.update(
-            {
-                "name": name,
-                "image": f"{self.cr}/{self.project}/{safeowner}_{safetitle}_tasks:{tag}",
-                "command": ["csw", "api-task", "--start"],
-            }
-        )
-
-        container_config["env"] += [
-            {"name": "exp_task_time", "value": str(app["exp_task_time"])},
-            {
-                "name": "REDIS_HOST",
-                "valueFrom": {
-                    "secretKeyRef": {"name": "worker-secret", "key": "REDIS_HOST"}
-                },
-            },
-        ]
-
-        self._set_secrets(app, container_config)
-
-        service = copy.deepcopy(self.api_task_service_template)
-        service["metadata"]["name"] = name
-        service["spec"]["selector"]["app"] = name
-
-        if self.kubernetes_target == "-":
-            sys.stdout.write(yaml.dump(deployment))
-            sys.stdout.write("---")
-            sys.stdout.write("\n")
-            sys.stdout.write(yaml.dump(service))
-            sys.stdout.write("---")
-            sys.stdout.write("\n")
-
-        else:
-            with open(
-                self.kubernetes_target / Path(f"{name}-api-tasks-deployment.yaml"), "w"
-            ) as f:
-                f.write(yaml.dump(deployment))
-            with open(
-                self.kubernetes_target / Path(f"{name}-api-tasks-service.yaml"), "w"
-            ) as f:
-                f.write(yaml.dump(service))
-
-        return deployment, service
 
     def _set_secrets(self, app, config):
         safeowner = clean(app["owner"])
