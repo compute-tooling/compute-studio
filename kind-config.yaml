@@ -8,8 +8,8 @@ nodes:
         containerPath: /redis-queue-data
       - hostPath: /home/hankdoupe/compute-studio/workers-db-data
         containerPath: /workers-db-data
-      - hostPath: /home/hankdoupe/compute-studio
-        containerPath: /code
+      - hostPath: /home/hankdoupe/compute-studio/workers/cs_workers
+        containerPath: /home/cs_workers
   - role: worker
   - role: worker
     extraMounts:

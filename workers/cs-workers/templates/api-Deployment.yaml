@@ -66,6 +66,9 @@ spec:
             limits:
               cpu: 1
               memory: 2G
+          volumeMounts:
+            - mountPath: /home/cs_workers
+              name: api-code-volume
 
         {{ if .Values.db.use_gcp_cloud_proxy }}
         - name: cloud-sql-proxy
@@ -76,5 +79,13 @@ spec:
           securityContext:
             runAsNonRoot: true
         {{ end }}
+
+      {{if .Values.api.dev_mode }}
+      volumes:
+        - name: api-code-volume
+          hostPath:
+            path: /home/cs_workers
+            type: Directory
+      {{ end }}
       nodeSelector:
         component: api
