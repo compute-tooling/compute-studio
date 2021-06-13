@@ -2,6 +2,7 @@ from datetime import datetime
 from operator import attrgetter
 import os
 import random
+from typing import Union
 import yaml
 from .api import GitHub, PullRequest, Repo
 from .logs import parse_logs
@@ -57,8 +58,14 @@ def create_job(owner, title):
         return pull
 
 
-def job_status(pull: PullRequest):
-    workflow_runs = list(pull.workflow_runs())
+def job_status(
+    repo_name: str, repo_title: str, pull_request: Union[int, PullRequest], **kwargs
+):
+    if isinstance(pull_request, int):
+        gh = GitHub(token)
+        repo = gh.repo(repo_name, repo_title)
+        pull_request = PullRequest(repo, pull_request)
+    workflow_runs = list(pull_request.workflow_runs())
     if not workflow_runs:
         return
     wf = max(workflow_runs, key=attrgetter("created_at"))
@@ -85,3 +92,17 @@ def job_status(pull: PullRequest):
         "workflow_job": job,
         "logs": logs,
     }
+
+
+def cancel_job(
+    repo_name: str, repo_title: str, pull_request: Union[int, PullRequest], **kwargs
+):
+    if isinstance(pull_request, int):
+        gh = GitHub(token)
+        repo = gh.repo(repo_name, repo_title)
+        pull_request = PullRequest(repo, pull_request)
+    workflow_runs = list(pull_request.workflow_runs())
+    if not workflow_runs:
+        return
+    wf = max(workflow_runs, key=attrgetter("created_at"))
+    wf.cancel()

@@ -86,6 +86,8 @@ class Settings(BaseSettings):
 
     JOB_NAMESPACE: str = "worker-api"
 
+    GITHUB_TOKEN: Optional[str]
+
     class Config:
         case_sensitive = True
 

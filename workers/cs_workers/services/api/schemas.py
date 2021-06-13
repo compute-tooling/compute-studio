@@ -2,9 +2,11 @@ from datetime import datetime
 from typing import List, Optional, Dict, Optional, Any
 from enum import Enum
 import uuid
+from cs_workers.services.api.database import Base
 
 from pydantic import BaseModel, Json  # pylint: disable=no-name-in-module
-from pydantic.networks import EmailStr, AnyHttpUrl  # pylint: disable=no-name-in-module
+from pydantic.networks import EmailStr, AnyHttpUrl
+from sqlalchemy.sql.sqltypes import DateTime  # pylint: disable=no-name-in-module
 
 
 class JobBase(BaseModel):
@@ -147,3 +149,27 @@ class DeploymentDelete(BaseModel):
     deployment: Deleted
     svc: Deleted
     ingressroute: Deleted
+
+
+class GithubLogs(BaseModel):
+    cmd: str
+    logs: str
+    stage: str
+
+
+class GithubProviderData(BaseModel):
+    stage: str
+    logs: Optional[GithubLogs]
+    repo_owner: str
+    repo_name: str
+    pull_request: int
+
+
+class Build(BaseModel):
+    id: int
+    project_id: int
+    provider: str = "github"
+    provider_data: Optional[GithubProviderData]
+    created_at: datetime
+    finished_at: datetime
+    cancelled_at: datetime

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Body, HTTPException
 from sqlalchemy.orm import Session
 
 from cs_workers.models.clients import server
-from .. import utils, models, schemas, dependencies as deps, security, settings
+from .. import utils, models, schemas, dependencies as deps, settings
 
 incluster = os.environ.get("KUBERNETES_SERVICE_HOST", False) is not False
 

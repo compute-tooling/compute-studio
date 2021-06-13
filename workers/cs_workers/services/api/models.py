@@ -13,6 +13,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy.sql.expression import null
+from sqlalchemy.sql.sqltypes import Date
 
 from .database import Base
 
@@ -74,6 +76,24 @@ class Project(Base):
             "owner", "title", "user_id", name="unique_owner_title_project",
         ),
     )
+
+    class Config:
+        orm_mode = True
+        extra = "ignore"
+
+
+class Build(Base):
+    __tablename__ = "builds"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("projects.id"))
+    provider = Column(String, nullable=False)
+    provider_data = Column(JSON, nullable=True)
+    created_at = Column(DateTime)
+    finished_at = Column(DateTime)
+    cancelled_at = Column(DateTime)
+    status = Column(String)
+
+    project = relationship("Project", back_populates="builds")
 
     class Config:
         orm_mode = True

@@ -16,11 +16,14 @@ workers_namespace: workers
 project_namespace: projects
 
 api:
+  dev_mode: true
   secret_key: abc123
   allow_origins:
     - "http://10.0.0.137:5000"
     - "http://localhost:5000"
     - "http://api.workers.svc.cluster.local"
+
+  github_token: "abc"
 redis:
   host: "redis-master"
   port: "6379"
