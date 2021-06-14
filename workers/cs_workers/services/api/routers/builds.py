@@ -52,12 +52,8 @@ def create(
     return build
 
 
-@router.get(
-    "/{owner}/{title}/{build_id}/", response_model=schemas.Build, status_code=201
-)
+@router.get("/{build_id}/", response_model=schemas.Build, status_code=201)
 def get(
-    owner: str,
-    title: str,
     build_id: str,
     db: Session = Depends(deps.get_db),
     user: schemas.User = Depends(deps.get_current_active_user),
@@ -66,12 +62,7 @@ def get(
     build: models.Build = (
         db.query(models.Build)
         .join(models.Project)
-        .filter(
-            models.Project.owner == owner,
-            models.Project.title == title,
-            models.Project.user_id == user.id,
-            models.Build.id == build_id,
-        )
+        .filter(models.Project.user_id == user.id, models.Build.id == build_id,)
         .one_or_none()
     )
 
@@ -94,12 +85,8 @@ def get(
     return build_data
 
 
-@router.delete(
-    "/{owner}/{title}/{build_id}/", response_model=schemas.Build, status_code=201
-)
+@router.delete("/{build_id}/", response_model=schemas.Build, status_code=201)
 def delete(
-    owner: str,
-    title: str,
     build_id: str,
     db: Session = Depends(deps.get_db),
     user: schemas.User = Depends(deps.get_current_active_user),
@@ -108,12 +95,7 @@ def delete(
     build: models.Build = (
         db.query(models.Build)
         .join(models.Project)
-        .filter(
-            models.Project.owner == owner,
-            models.Project.title == title,
-            models.Project.user_id == user.id,
-            models.Build.id == build_id,
-        )
+        .filter(models.Project.user_id == user.id, models.Build.id == build_id,)
         .one_or_none()
     )
 
