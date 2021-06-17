@@ -210,6 +210,7 @@ class EmbedView(InputsMixin, View):
 
         context = {
             "object": project,
+            "embed_approval": embed_approval,
             "deployment": deployment,
             "protocol": "https",
             "viz_host": project.cluster.viz_host or DEFAULT_VIZ_HOST,
