@@ -60,7 +60,14 @@
     </div>
   </body>
 
-  <script type="text/javascript" src="{% static 'js/vendor/iframeResizer/iframeResizer.min.js' %}"></script>
+{% if object.use_iframe_resizer %}
+<script>
+  window.iFrameResizer = {
+    targetOrigin: "{{embed_approval.url}}"
+  }
+</script>
+{% endif %}
+<script type="text/javascript" src="{% static 'js/vendor/iframeResizer/iframeResizer.min.js' %}"></script>
   <script>
     const checkReady = function() {
       const resp = fetch(
