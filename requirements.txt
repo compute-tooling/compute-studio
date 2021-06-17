@@ -12,7 +12,7 @@ pytest
 pytest-django
 django-widget-tweaks
 django-crispy-forms
-psycopg2-binary
+psycopg2-binary==2.8.6
 ipython
 markdown
 django-guardian

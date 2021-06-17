@@ -22,11 +22,20 @@
       }
 
       .embedded {
+        {% if not object.use_iframe_resizer %}
         position: relative;
         height: 100vh;
         width: 100%;
+        {% endif %}
         border: 0;
       }
+
+      /* iframe-resizer */
+      {% if object.use_iframe_resizer %}
+      iframe {
+        min-width: 100%;
+      }
+      {% endif %}
     </style>
   </head>
 
@@ -36,6 +45,7 @@
       id="embedded-iframe"
       class="embedded"
       title="{{object.title}}"
+      scrolling="no"
       src="{{protocol}}://{{viz_host}}/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/"
     ></iframe>
     {% else %}
@@ -50,6 +60,7 @@
     </div>
   </body>
 
+  <script type="text/javascript" src="{% static 'js/vendor/iframeResizer/iframeResizer.min.js' %}"></script>
   <script>
     const checkReady = function() {
       const resp = fetch(
@@ -66,8 +77,10 @@
             iframe.title = "{{object.title}}";
             iframe.className = "embedded";
             iframe.id = "embedded-iframe";
+            iframe.scrolling = "no"
             container.appendChild(iframe);
             setTimeout(pingDeployment, 10000);
+            iFrameResize({ log: true }, '#embedded-iframe')
           } else {
             setTimeout(checkReady, 3000);
           }
@@ -113,4 +126,5 @@
       }
     };
   </script>
+  <script type="text/javascript" src="{% static 'js/vendor/iframeResizer/iframeResizer.contentWindow.min.js' %}"></script>
 </html>
