@@ -33,7 +33,6 @@
       /* iframe-resizer */
       {% if object.use_iframe_resizer %}
       iframe {
-        width: 1px;
         min-width: 100%;
       }
       {% endif %}
@@ -60,7 +59,7 @@
       /></a>
     </div>
   </body>
-  
+
   <script type="text/javascript" src="{% static 'js/vendor/iframeResizer/iframeResizer.min.js' %}"></script>
   <script>
     const checkReady = function() {
