@@ -40,6 +40,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     is_public = serializers.BooleanField(required=False)
     social_image_link = serializers.URLField(required=False)
     embed_background_color = serializers.CharField(required=False)
+    use_iframe_resizer = serializers.BooleanField(required=False)
 
     # see to_representation
     # has_write_access = serializers.BooleanField(source="has_write_access")
@@ -91,6 +92,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "is_public",
             "social_image_link",
             "embed_background_color",
+            "use_iframe_resizer",
         )
         read_only = (
             "sim_count",
@@ -109,6 +111,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
     is_public = serializers.BooleanField(required=False)
     social_image_link = serializers.URLField(required=False)
     embed_background_color = serializers.CharField(required=False)
+    use_iframe_resizer = serializers.BooleanField(required=False)
 
     # see to_representation
     # has_write_access = serializers.BooleanField(source="has_write_access")
@@ -151,6 +154,7 @@ class ProjectWithVersionSerializer(serializers.ModelSerializer):
             "is_public",
             "social_image_link",
             "embed_background_color",
+            "use_iframe_resizer",
         )
         read_only = ("sim_count", "status", "user_count", "version", "latest_tag")
 

@@ -22,17 +22,21 @@
       }
 
       .embedded {
-        /* position: relative; */
-        /* height: 100vh;
-        width: 100%; */
+        {% if not object.use_iframe_resizer %}
+        position: relative;
+        height: 100vh;
+        width: 100%;
+        {% endif %}
         border: 0;
       }
 
       /* iframe-resizer */
+      {% if object.use_iframe_resizer %}
       iframe {
         width: 1px;
         min-width: 100%;
       }
+      {% endif %}
     </style>
   </head>
 
