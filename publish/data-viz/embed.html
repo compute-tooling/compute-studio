@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Model Guide &#8212; Compute Studio Developer Docs</title>
+    <title>Embedding &#8212; Compute Studio Developer Docs</title>
     
   <link href="../../_static/css/theme.css" rel="stylesheet" />
   <link href="../../_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
@@ -51,8 +51,8 @@
     <script async="async" src="../../_static/sphinx-thebe.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Inputs" href="inputs.html" />
-    <link rel="prev" title="Publishing on Compute Studio" href="../guide.html" />
+    <link rel="next" title="Project Environment" href="../environment.html" />
+    <link rel="prev" title="Data-Viz Guide" href="guide.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
     
@@ -100,45 +100,45 @@
    Publishing on Compute Studio
   </a>
  </li>
- <li class="toctree-l1 current active has-children">
-  <a class="current reference internal" href="#">
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../model/guide.html">
    Model Guide
   </a>
-  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
   <label for="toctree-checkbox-1">
    <i class="fas fa-chevron-down">
    </i>
   </label>
   <ul>
    <li class="toctree-l2">
-    <a class="reference internal" href="inputs.html">
+    <a class="reference internal" href="../model/inputs.html">
      Inputs
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="outputs.html">
+    <a class="reference internal" href="../model/outputs.html">
      Outputs
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="functions.html">
+    <a class="reference internal" href="../model/functions.html">
      Python functions
     </a>
    </li>
   </ul>
  </li>
- <li class="toctree-l1 has-children">
-  <a class="reference internal" href="../data-viz/guide.html">
+ <li class="toctree-l1 current active has-children">
+  <a class="reference internal" href="guide.html">
    Data-Viz Guide
   </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
   <label for="toctree-checkbox-2">
    <i class="fas fa-chevron-down">
    </i>
   </label>
-  <ul>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../data-viz/embed.html">
+  <ul class="current">
+   <li class="toctree-l2 current active">
+    <a class="current reference internal" href="#">
      Embedding
     </a>
    </li>
@@ -222,7 +222,7 @@
         <!-- ipynb file if we had a myst markdown file -->
         
         <!-- Download raw file -->
-        <a class="dropdown-buttons" href="../../_sources/publish/model/guide.md"><button type="button"
+        <a class="dropdown-buttons" href="../../_sources/publish/data-viz/embed.md"><button type="button"
                 class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
                 data-placement="left">.md</button></a>
         <!-- Download PDF via print -->
@@ -253,18 +253,8 @@
             <nav id="bd-toc-nav">
                 <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#data-formats">
-   Data formats
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#functions">
-   Functions
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#publish">
-   Publish
+  <a class="reference internal nav-link" href="#set-up-iframe-resizer-optional">
+   Set up Iframe-resizer (optional)
   </a>
  </li>
 </ul>
@@ -278,25 +268,51 @@
         
               <div>
                 
-  <div class="section" id="model-guide">
-<h1>Model Guide<a class="headerlink" href="#model-guide" title="Permalink to this headline">¶</a></h1>
-<p>Compute Studio uses <a class="reference external" href="https://paramtools.dev">ParamTools</a> to serve models. Once you have set up your model inputs with ParamTools, you can quickly publish a model using C/S.</p>
-<p>If you have any questions as you proceed through this guide, send Hank an email at <a href="mailto:hank@compute.studio">hank&#64;compute.studio</a>.</p>
-<div class="section" id="data-formats">
-<h2>Data formats<a class="headerlink" href="#data-formats" title="Permalink to this headline">¶</a></h2>
-<p>Compute Studio relies on two data formats, one for the <a class="reference internal" href="inputs.html"><span class="doc std std-doc">inputs</span></a> and one for the <a class="reference internal" href="outputs.html"><span class="doc std std-doc">outputs</span></a>. These are JSON schemas that your model will need to adopt for Compute Studio to be able to generate input forms representing your model’s default specification, validate user adjustments, and display model outputs.</p>
+  <div class="section" id="embedding">
+<h1>Embedding<a class="headerlink" href="#embedding" title="Permalink to this headline">¶</a></h1>
+<p>Projects hosted on Compute Studio can be embedded as an <a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe"><code class="docutils literal notranslate"><span class="pre">iframe</span></code></a> on any website. Once you’ve published your project, send me an email at <a class="reference external" href="mailto:hank&#37;&#52;&#48;compute&#46;studio">hank<span>&#64;</span>compute<span>&#46;</span>studio</a>. I’ll generate a special embed link for your project. <a class="footnote-reference brackets" href="#embed" id="id1">1</a></p>
+<p>Next, embed the link on the target website with code like this. Take care to replace the example <code class="docutils literal notranslate"><span class="pre">title</span></code> and <code class="docutils literal notranslate"><span class="pre">src</span></code> values with your own:</p>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">iframe</span>
+<span class="na">id</span><span class="o">=</span><span class="s">&quot;cs-iframe&quot;</span>
+<span class="na">title</span><span class="o">=</span><span class="s">&quot;Test Iframe&quot;</span>
+<span class="na">scrolling</span><span class="o">=</span><span class="s">&quot;no&quot;</span>
+<span class="na">src</span><span class="o">=</span><span class="s">&quot;https://compute.studio/hdoupe/dash-demo/embed/app/&quot;</span>
+<span class="p">&gt;&lt;/</span><span class="nt">iframe</span><span class="p">&gt;</span>
+</pre></div>
 </div>
-<div class="section" id="functions">
-<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
-<p>Compute Studio interacts with your model using <a class="reference internal" href="functions.html"><span class="doc std std-doc">4 Python functions</span></a>: one for getting the model’s version, one for getting the default inputs, one for validating user inputs, and one for running the model.</p>
+<div class="section" id="set-up-iframe-resizer-optional">
+<h2>Set up Iframe-resizer (optional)<a class="headerlink" href="#set-up-iframe-resizer-optional" title="Permalink to this headline">¶</a></h2>
+<p>Compute Studio uses the <a class="reference external" href="https://github.com/davidjbradshaw/iframe-resizer">Iframe-resizer</a> library to dynamically resize your embedded project so that it loads responsively for all screen sizes. This requires a few extra steps:</p>
+<ol>
+<li><p>Install the content script in your project’s static assets: <a class="reference external" href="https://raw.githubusercontent.com/davidjbradshaw/iframe-resizer/master/js/iframeResizer.contentWindow.min.js"><code class="docutils literal notranslate"><span class="pre">iframeResizer.contentWindow.min.js</span></code></a></p></li>
+<li><p>Go to the “Configure” tab in your project’s settings on Compute studio and make sure the iframe-resizer integration is activated:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="n">Use</span> <span class="n">Iframe</span> <span class="n">Resizer</span><span class="p">:</span> <span class="n">Use</span> <span class="n">the</span> <span class="n">iframe</span><span class="o">-</span><span class="n">resizer</span> <span class="n">library</span> <span class="n">when</span> <span class="n">embedding</span> <span class="n">this</span> <span class="n">project</span><span class="o">.</span>
+</pre></div>
 </div>
-<div class="section" id="publish">
-<h2>Publish<a class="headerlink" href="#publish" title="Permalink to this headline">¶</a></h2>
-<p>Now it’s time to publish your model. The first step is to install <a class="reference external" href="https://github.com/compute-tooling/compute-studio-kit/#compute-studio-kit">Compute Studio Kit</a> via <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">cs-kit</span></code>. Next, create a directory named <code class="docutils literal notranslate"><span class="pre">cs-config</span></code> in your model’s source code repository with the command <code class="docutils literal notranslate"><span class="pre">csk</span> <span class="pre">init</span></code>. This creates a light-weight python package that includes an installation script, a <code class="docutils literal notranslate"><span class="pre">functions.py</span></code> file with stubs for each of the four Python functions, and a <a class="reference external" href="https://docs.pytest.org/en/latest/">py.test</a> ready test suite located at <code class="docutils literal notranslate"><span class="pre">cs-config/cs_config/tests/test_functions.py</span></code>. Once you’ve filled in your functions, you can test whether they are compliant with the C/S criteria by running <code class="docutils literal notranslate"><span class="pre">py.test</span> <span class="pre">cs-config/</span></code>.</p>
-<p>Once your functions are passing the <code class="docutils literal notranslate"><span class="pre">cs-kit</span></code> tests, fill out the <a class="reference external" href="https://compute.studio/publish">publish form</a> that asks you to provide a title and overview for your new Compute Studio app and a link to your model’s source code repository. If you would like to see a publishing template that has already been completed, you can view the Matchups template <a class="reference external" href="https://compute.studio/hdoupe/Matchups/detail">here</a>.</p>
-<p>Once you’ve submitted the publishing form, Hank will review it and get back to you within 24 hours to inform you whether the model is ready to be published or if there are criteria that have not been satisfied. Your model will be deployed to Compute Studio once it has met all of the critera. You will have the opportunity to test it out after it has been deployed.</p>
+</li>
+<li><p>On your website, add the controller script from <code class="docutils literal notranslate"><span class="pre">iframe-resizer</span></code>: <a class="reference external" href="https://raw.githubusercontent.com/davidjbradshaw/iframe-resizer/master/js/iframeResizer.min.js"><code class="docutils literal notranslate"><span class="pre">iframeResizer.min.js</span></code></a></p>
+<p>Then add this CSS:</p>
+<div class="highlight-css notranslate"><div class="highlight"><pre><span></span><span class="nt">iframe</span> <span class="p">{</span>
+<span class="k">min-width</span><span class="p">:</span> <span class="mi">100</span><span class="kt">%</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
 </div>
-<div class="toctree-wrapper compound">
+<p>And, this Javascript:</p>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/javascript&quot;</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;/assets/iframeResizer.min.js&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+    <span class="nx">iFrameResize</span><span class="p">({</span> <span class="nx">log</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span> <span class="nx">heightCalculationMethod</span><span class="o">:</span> <span class="s1">&#39;lowestElement&#39;</span> <span class="p">},</span> <span class="s1">&#39;#cs-iframe&#39;</span><span class="p">);</span>
+<span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>For more information about Iframe-resizer, checkout the <a class="reference external" href="http://davidjbradshaw.github.io/iframe-resizer/#typical-setup">docs</a>.</p>
+<hr class="footnotes docutils" />
+<dl class="footnote brackets">
+<dt class="label" id="embed"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p>This link is only good for one domain. This restriction prevents other people from using your data visualization on their website without your permission. If you need to embed it on multiple websites, then I’ll generate a link for each one.</p>
+</dd>
+</dl>
 </div>
 </div>
 
@@ -313,7 +329,7 @@
         },
         kernelOptions: {
             kernelName: "python3",
-            path: "./publish/model"
+            path: "./publish/data-viz"
         },
         predefinedOutput: true
     }
@@ -325,8 +341,8 @@
         
         <div class='prev-next-bottom'>
             
-    <a class='left-prev' id="prev-link" href="../guide.html" title="previous page">Publishing on Compute Studio</a>
-    <a class='right-next' id="next-link" href="inputs.html" title="next page">Inputs</a>
+    <a class='left-prev' id="prev-link" href="guide.html" title="previous page">Data-Viz Guide</a>
+    <a class='right-next' id="next-link" href="../environment.html" title="next page">Project Environment</a>
 
         </div>
         
