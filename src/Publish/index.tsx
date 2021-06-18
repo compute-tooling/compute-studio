@@ -319,7 +319,7 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
           <ErrorMessage name="embed_background_color" render={msg => <Message msg={msg} />} />
         </div>
       </div>
-      <p className="my-1">
+      <p className="mt-3">
         <label>
           <Field
             component={CheckboxField}
@@ -330,8 +330,9 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
           />
           <strong>Use Iframe Resizer:</strong>
           <span className="ml-1">
-            Use the <a href="https://github.com/davidjbradshaw/iframe-resizer">iframe-resizer</a>
-            library when embedding this project.</span>
+            Use the <a href="https://github.com/davidjbradshaw/iframe-resizer">iframe-resizer</a>{" "}
+            library when embedding this project.
+          </span>
         </label>
       </p>
     </div>

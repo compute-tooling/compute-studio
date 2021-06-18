@@ -9,6 +9,8 @@
         - file: publish/model/functions
 
     - file: publish/data-viz/guide
+      sections:
+        - file: publish/data-viz/embed
 
     - file: publish/environment
 
