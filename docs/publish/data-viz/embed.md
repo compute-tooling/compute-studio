@@ -29,8 +29,8 @@ Compute Studio uses the [Iframe-resizer](https://github.com/davidjbradshaw/ifram
     Then add this CSS:
 
     ```css
-    iframe {
-    min-width: 100%;
+    iframe.cs-iframe {
+      min-width: 100%;
     }
     ```
 
