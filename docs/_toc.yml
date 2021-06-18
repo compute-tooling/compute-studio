@@ -1,23 +1,22 @@
-- file: intro
-- part: Publish
+format: jb-book
+root: intro
+parts:
+- caption: Publish
   chapters:
-    - file: publish/guide
-    - file: publish/model/guide
-      sections:
-        - file: publish/model/inputs
-        - file: publish/model/outputs
-        - file: publish/model/functions
-
-    - file: publish/data-viz/guide
-      sections:
-        - file: publish/data-viz/embed
-
-    - file: publish/environment
-
-- part: API
+  - file: publish/guide
+  - file: publish/model/guide
+    sections:
+    - file: publish/model/inputs
+    - file: publish/model/outputs
+    - file: publish/model/functions
+  - file: publish/data-viz/guide
+    sections:
+    - file: publish/data-viz/embed
+  - file: publish/environment
+- caption: API
   chapters:
-    - file: api/guide
-    - file: api/auth
-    - file: api/python-client-example
-    - file: api/python-api
-    - file: api/rest
+  - file: api/guide
+  - file: api/auth
+  - file: api/python-client-example
+  - file: api/python-api
+  - file: api/rest
