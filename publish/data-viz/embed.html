@@ -285,10 +285,8 @@
 <p>Compute Studio uses the <a class="reference external" href="https://github.com/davidjbradshaw/iframe-resizer">Iframe-resizer</a> library to dynamically resize your embedded project so that it loads responsively for all screen sizes. This requires a few extra steps:</p>
 <ol>
 <li><p>Install the content script in your project’s static assets: <a class="reference external" href="https://raw.githubusercontent.com/davidjbradshaw/iframe-resizer/master/js/iframeResizer.contentWindow.min.js"><code class="docutils literal notranslate"><span class="pre">iframeResizer.contentWindow.min.js</span></code></a></p></li>
-<li><p>Go to the “Configure” tab in your project’s settings on Compute studio and make sure the iframe-resizer integration is activated:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="n">Use</span> <span class="n">Iframe</span> <span class="n">Resizer</span><span class="p">:</span> <span class="n">Use</span> <span class="n">the</span> <span class="n">iframe</span><span class="o">-</span><span class="n">resizer</span> <span class="n">library</span> <span class="n">when</span> <span class="n">embedding</span> <span class="n">this</span> <span class="n">project</span><span class="o">.</span>
-</pre></div>
-</div>
+<li><p>Go to the “Configure” tab in your project’s settings on Compute studio and make sure <strong>Use Iframe Resizer</strong> is checked:</p>
+<p><img alt="Embed docs" src="https://user-images.githubusercontent.com/9206065/122590340-6c109b00-d02f-11eb-94a2-ab465ed68e6a.png" /></p>
 </li>
 <li><p>On your website, add the controller script from <code class="docutils literal notranslate"><span class="pre">iframe-resizer</span></code>: <a class="reference external" href="https://raw.githubusercontent.com/davidjbradshaw/iframe-resizer/master/js/iframeResizer.min.js"><code class="docutils literal notranslate"><span class="pre">iframeResizer.min.js</span></code></a></p>
 <p>Then add this CSS:</p>

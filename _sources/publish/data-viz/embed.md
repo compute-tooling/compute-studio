@@ -20,11 +20,9 @@ Compute Studio uses the [Iframe-resizer](https://github.com/davidjbradshaw/ifram
 
 1. Install the content script in your project's static assets: [`iframeResizer.contentWindow.min.js`](https://raw.githubusercontent.com/davidjbradshaw/iframe-resizer/master/js/iframeResizer.contentWindow.min.js)
 
-2. Go to the "Configure" tab in your project's settings on Compute studio and make sure the iframe-resizer integration is activated:
+2. Go to the "Configure" tab in your project's settings on Compute studio and make sure **Use Iframe Resizer** is checked:
 
-    ```
-    [x] Use Iframe Resizer: Use the iframe-resizer library when embedding this project.
-    ```
+    ![Embed docs](https://user-images.githubusercontent.com/9206065/122590340-6c109b00-d02f-11eb-94a2-ab465ed68e6a.png)
 
 3. On your website, add the controller script from `iframe-resizer`: [`iframeResizer.min.js`](https://raw.githubusercontent.com/davidjbradshaw/iframe-resizer/master/js/iframeResizer.min.js)
 
