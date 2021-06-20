@@ -120,7 +120,7 @@ class Server:
                 f"--allow-websocket-origin={self.viz_host}",
             ]
         elif config["tech"] == "streamlit":
-            cms = [
+            cmd = [
                 "streamlit",
                 "run",
                 config["app_location"],
