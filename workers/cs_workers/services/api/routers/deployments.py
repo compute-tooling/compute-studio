@@ -38,7 +38,7 @@ def create_deployment(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found.")
 
-    if project.tech not in ("dash", "bokeh"):
+    if project.tech not in ("dash", "bokeh", "streamlit"):
         return HTTPException(status_code=400, detail=f"Unsuported tech: {project.tech}")
 
     project_data = schemas.Project.from_orm(project).dict()
@@ -91,7 +91,7 @@ def get_deployment(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found.")
 
-    if project.tech not in ("dash", "bokeh"):
+    if project.tech not in ("dash", "bokeh", "streamlit"):
         return HTTPException(status_code=400, detail=f"Unsuported tech: {project.tech}")
 
     project_data = schemas.Project.from_orm(project).dict()
@@ -139,7 +139,7 @@ def delete_deployment(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found.")
 
-    if project.tech not in ("dash", "bokeh"):
+    if project.tech not in ("dash", "bokeh", "streamlit"):
         return HTTPException(status_code=400, detail=f"Unsuported tech: {project.tech}")
 
     project_data = schemas.Project.from_orm(project).dict()
