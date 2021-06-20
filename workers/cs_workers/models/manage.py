@@ -243,7 +243,7 @@ class Manager(BaseManager):
             ]
             ports = viz_ports
         elif app["tech"] == "streamlit":
-            cms = [
+            cmd = [
                 "streamlit",
                 "run",
                 app["app_location"],
@@ -254,6 +254,7 @@ class Manager(BaseManager):
                 "--server.baseUrlPath",
                 f"/{app['owner']}/{app['owner']}/test/",
             ]
+            ports = viz_ports
         else:
             raise ValueError(f"Unknown tech: {app['tech']}")
 
@@ -280,7 +281,7 @@ class Manager(BaseManager):
                     print(strip_secrets(line, secrets))
                 raise RuntimeError(f"Container exited with status: {container.status}")
 
-            if app["tech"] in ("bokeh", "dash"):
+            if app["tech"] in ("bokeh", "dash", "streamlit"):
                 # Run function for showing logs in another thread so test/monitoring
                 # can run in main thread.
                 thread = threading.Thread(
