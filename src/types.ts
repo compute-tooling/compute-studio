@@ -173,7 +173,7 @@ export interface AccessStatus {
   project: string;
 }
 
-export type Tech = "python-paramtools" | "dash" | "bokeh";
+export type Tech = "python-paramtools" | "dash" | "bokeh" | "streamlit";
 
 export interface Project {
   title: string;

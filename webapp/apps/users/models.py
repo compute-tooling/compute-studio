@@ -383,6 +383,7 @@ class Project(models.Model):
             ("python-paramtools", "Python-ParamTools"),
             ("dash", "Dash"),
             ("bokeh", "Bokeh"),
+            ("streamlit", "Streamlit"),
         ),
         max_length=64,
         null=True,
