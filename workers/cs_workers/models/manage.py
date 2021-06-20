@@ -242,6 +242,18 @@ class Manager(BaseManager):
                 f"/{app['owner']}/{app['owner']}/test/",
             ]
             ports = viz_ports
+        elif app["tech"] == "streamlit":
+            cms = [
+                "streamlit",
+                "run",
+                app["app_location"],
+                "--server.address",
+                "0.0.0.0",
+                "--server.port",
+                "8010",
+                "--server.baseUrlPath",
+                f"/{app['owner']}/{app['owner']}/test/",
+            ]
         else:
             raise ValueError(f"Unknown tech: {app['tech']}")
 
