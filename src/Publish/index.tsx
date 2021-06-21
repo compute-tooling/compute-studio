@@ -23,24 +23,28 @@ const techLinks = {
   "python-paramtools": "https://paramtools.dev",
   bokeh: "https://bokeh.org",
   dash: "https://dash.plotly.com/",
+  streamlit: "https://streamlit.io",
 };
 
 const techDocsLinks = {
   "python-paramtools": "https://docs.compute.studio/publish/guide/",
   bokeh: "https://bokeh.org",
   dash: "https://dash.plotly.com/",
+  streamlit: "https://streamlit.io",
 };
 
 const techGuideLinks = {
   bokeh: "https://docs.compute.studio/publish/data-viz/guide.html#bokeh",
   dash: "https://docs.compute.studio/publish/data-viz/guide.html#dash",
   "python-paramtools": "https://docs.compute.studio/publish/model/guide.html",
+  streamlit: "https://docs.compute.studio/publish/data-viz/guide.html#streamlit",
 };
 
 const techTitles = {
   dash: "Dash",
   bokeh: "Bokeh",
   "python-paramtools": "ParamTools",
+  streamlit: "Streamlit",
 };
 
 interface Match {
@@ -182,7 +186,7 @@ const TechSelectDropdown: React.FC<{
   selectedTech: Tech | null;
   onSelectTech: (tech: Tech) => void;
 }> = ({ selectedTech, onSelectTech }) => {
-  const techChoices: Array<Tech> = ["python-paramtools", "bokeh", "dash"];
+  const techChoices: Array<Tech> = ["python-paramtools", "bokeh", "dash", "streamlit"];
   return (
     <Dropdown>
       <Dropdown.Toggle variant="outline-primary" id="dropdown-basic" className="w-100">
@@ -261,6 +265,7 @@ const VizWithServer: React.FC<{ tech: Tech }> = ({ tech }) => {
   const title = {
     dash: "Dash",
     bokeh: "Bokeh",
+    streamlit: "Streamlit",
   }[tech];
   return (
     <div>
@@ -724,7 +729,7 @@ const NewProjectForm: React.FC<{
           </i>
         </div>
         {props.values.tech === "python-paramtools" && <PythonParamTools />}
-        {["bokeh", "dash"].includes(props.values.tech) && (
+        {["bokeh", "dash", "streamlit"].includes(props.values.tech) && (
           <VizWithServer tech={props.values.tech} />
         )}
         <div className="py-4">
@@ -800,7 +805,7 @@ const ProjectSettings: React.FC<{
                   <TechSelect props={props} project={project} />
                 </div>
                 {props.values.tech === "python-paramtools" && <PythonParamTools />}
-                {["bokeh", "dash"].includes(props.values.tech) && (
+                {["bokeh", "dash", "streamlit"].includes(props.values.tech) && (
                   <VizWithServer tech={props.values.tech} />
                 )}
               </>
