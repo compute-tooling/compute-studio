@@ -125,7 +125,7 @@ class Server:
                 "run",
                 config["app_location"],
                 "--server.address",
-                self.viz_host,
+                "0.0.0.0",
                 "--server.port",
                 str(PORT),
                 "--server.baseUrlPath",
