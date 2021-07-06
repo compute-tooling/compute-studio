@@ -20,8 +20,8 @@ spec:
         tier: backend
     spec:
       containers:
-        - env: []
-          command: ["redis-server", "--appendonly", "yes"]
+        - command: ["redis-server"]
+          args: ["--appendonly yes", "--requirepass $(REDIS_PASSWORD)"]
           image: redis:6.2.1
           name: master
           ports:
@@ -30,6 +30,12 @@ spec:
             requests:
               cpu: 100m
               memory: 100Mi
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: workers-redis-secret
+                  key: PASSWORD
           volumeMounts:
             {{- range $name, $value := .Values.redis.volumeMounts }}
             - name: {{ $value.name }}
