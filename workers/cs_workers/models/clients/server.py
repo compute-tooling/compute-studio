@@ -119,9 +119,21 @@ class Server:
                 f"/{self.owner}/{self.title}/{self.deployment_name}/",
                 f"--allow-websocket-origin={self.viz_host}",
             ]
+        elif config["tech"] == "streamlit":
+            cmd = [
+                "streamlit",
+                "run",
+                config["app_location"],
+                "--server.address",
+                "0.0.0.0",
+                "--server.port",
+                str(PORT),
+                "--server.baseUrlPath",
+                f"/{self.owner}/{self.title}/{self.deployment_name}/",
+            ]
         else:
             raise ValueError(
-                f"Unknown tech: {config['tech']}. Must be one of: bokeh, dash."
+                f"Unknown tech: {config['tech']}. Must be one of: bokeh, dash, streamlit."
             )
 
         print("got config", config)

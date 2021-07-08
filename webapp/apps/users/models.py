@@ -383,6 +383,7 @@ class Project(models.Model):
             ("python-paramtools", "Python-ParamTools"),
             ("dash", "Dash"),
             ("bokeh", "Bokeh"),
+            ("streamlit", "Streamlit"),
         ),
         max_length=64,
         null=True,
@@ -422,6 +423,8 @@ class Project(models.Model):
     embed_background_color = models.CharField(default="white", max_length=128)
 
     objects = ProjectManager()
+
+    use_iframe_resizer = models.BooleanField(default=True, null=True, blank=True)
 
     def __str__(self):
         return f"{self.owner}/{self.title}"
