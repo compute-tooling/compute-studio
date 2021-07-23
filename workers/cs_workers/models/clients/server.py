@@ -1,3 +1,4 @@
+import math
 import os
 import redis
 import sys
@@ -105,7 +106,15 @@ class Server:
 
         if config["tech"] == "dash":
             app_module = config.get("app_location", None) or "cs_config.functions"
-            cmd = ["gunicorn", f"{app_module}:{self.callable_name}"]
+            cpu = math.floor(float(config["resources"]["requests"]["cpu"]))
+            workers = int(2 * cpu + 1)
+            print("Starting gunicorn server with workers", workers, config["resources"])
+            cmd = [
+                "gunicorn",
+                "--workers",
+                str(workers),
+                f"{app_module}:{self.callable_name}",
+            ]
         elif config["tech"] == "bokeh":
             cmd = [
                 "bokeh",
