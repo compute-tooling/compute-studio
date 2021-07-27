@@ -24,9 +24,11 @@
     }
 
     .embedded {
+      {% if not object.use_iframe_resizer %}
       position: relative;
       height: 100vh;
       width: 100%;
+      {% endif %}
       border: 0;
     }
 
@@ -38,6 +40,14 @@
       margin-right: auto;
       margin-left: auto;
     }
+
+    /* iframe-resizer */
+    {% if object.use_iframe_resizer %}
+    iframe {
+      min-width: 100%;
+    }
+    {% endif %}
+
   </style>
 </head>
 
@@ -60,6 +70,10 @@
   </div>
 </body>
 
+{% if object.use_iframe_resizer %}
+<script type="text/javascript" src="{% static 'js/vendor/iframeResizer/iframeResizer.min.js' %}"></script>
+{% endif %}
+
 <script>
   const checkReady = function () {
     const resp = fetch(
@@ -78,6 +92,9 @@
           iframe.id = "embedded-iframe";
           container.appendChild(iframe);
           setTimeout(pingDeployment, 10000);
+          {% if object.use_iframe_resizer %}
+          iFrameResize({ log: true }, '#embedded-iframe')
+          {% endif %}
         } else {
           setTimeout(checkReady, 3000);
         }
@@ -119,6 +136,9 @@
     if (initIframe === null) {
       return checkReady();
     } else {
+      {% if object.use_iframe_resizer %}
+      iFrameResize({ log: true }, '#embedded-iframe')
+      {% endif %}
       return pingDeployment();
     }
   };
