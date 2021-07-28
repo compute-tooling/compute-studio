@@ -18,6 +18,9 @@
         margin: 0;
         font-family: sans-serif;
         background-color: {{ object.embed_background_color }};
+        {% if not object.use_iframe_resizer %}
+        overflow: hidden;
+        {% endif %}
       }
 
       .embedded {
@@ -44,7 +47,6 @@
       id="embedded-iframe"
       class="embedded"
       title="{{object.title}}"
-      scrolling="no"
       src="{{protocol}}://{{viz_host}}/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/"
     ></iframe>
     {% else %}
@@ -84,10 +86,14 @@
             iframe.title = "{{object.title}}";
             iframe.className = "embedded";
             iframe.id = "embedded-iframe";
-            iframe.scrolling = "no"
+            if (window.iFrameResize) {
+              iframe.scrolling = "no"
+            }
             container.appendChild(iframe);
             setTimeout(pingDeployment, 10000);
-            iFrameResize({ log: true }, '#embedded-iframe')
+            if (window.iFrameResize) {
+              iFrameResize({ log: true }, '#embedded-iframe')
+            }
           } else {
             setTimeout(checkReady, 3000);
           }
@@ -129,9 +135,10 @@
       if (initIframe === null) {
         return checkReady();
       } else {
-        {% if object.use_iframe_resizer %}
-        iFrameResize({ log: true }, '#embedded-iframe')
-        {% endif %}
+        if (window.iFrameResize) {
+          initIframe.scrolling = "no"
+          iFrameResize({ log: true }, '#embedded-iframe')
+        }
         return pingDeployment();
       }
     };
