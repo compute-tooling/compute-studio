@@ -13,13 +13,16 @@
 
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
     integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous" />
-
+q
   <style>
     html,
     body {
       height: 100%;
       margin: 0;
       font-family: sans-serif;
+      {% if not object.use_iframe_resizer %}
+      overflow: hidden;
+      {% endif %}
     }
 
     .embedded {
@@ -57,8 +60,7 @@
     class="embedded"
     title="{{object.title}}"
     src="{{protocol}}://{{viz_host}}/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/"
-    scrolling="no"
-    ></iframe>
+  ></iframe>
   {% else %}
   <div id="notready">
     <p>Starting the {{object.owner}}/{{object.title}} visualization...</p>
@@ -94,12 +96,14 @@
           iframe.title = "{{object.title}}";
           iframe.className = "embedded";
           iframe.id = "embedded-iframe";
-          iframe.scrolling = "no"
+          if (window.iFrameResize) {
+            iframe.scrolling = "no"
+          }
           container.appendChild(iframe);
           setTimeout(pingDeployment, 10000);
-          {% if object.use_iframe_resizer %}
-          iFrameResize({ log: true }, '#embedded-iframe')
-          {% endif %}
+          if (window.iFrameResize) {
+            iFrameResize({ log: true }, '#embedded-iframe')
+          }
         } else {
           setTimeout(checkReady, 3000);
         }
@@ -141,9 +145,10 @@
     if (initIframe === null) {
       return checkReady();
     } else {
-      {% if object.use_iframe_resizer %}
-      iFrameResize({ log: true }, '#embedded-iframe')
-      {% endif %}
+      if (window.iFrameResize) {
+        initIframe.scrolling = "no"
+        iFrameResize({ log: true }, '#embedded-iframe')
+      }
       return pingDeployment();
     }
   };
