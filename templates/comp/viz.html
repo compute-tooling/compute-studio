@@ -19,7 +19,6 @@
     body {
       height: 100%;
       margin: 0;
-      overflow: hidden;
       font-family: sans-serif;
     }
 
@@ -53,8 +52,13 @@
 
 <body class="main container-fluid" id="iframe-container">
   {% if deployment.status == "running" %}
-  <iframe id="embedded-iframe" class="embedded" title="{{object.title}}"
-    src="{{protocol}}://{{viz_host}}/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/"></iframe>
+  <iframe
+    id="embedded-iframe"
+    class="embedded"
+    title="{{object.title}}"
+    src="{{protocol}}://{{viz_host}}/{{object.owner}}/{{object.title}}/{{deployment.public_name}}/"
+    scrolling="no"
+    ></iframe>
   {% else %}
   <div id="notready">
     <p>Starting the {{object.owner}}/{{object.title}} visualization...</p>
@@ -90,6 +94,7 @@
           iframe.title = "{{object.title}}";
           iframe.className = "embedded";
           iframe.id = "embedded-iframe";
+          iframe.scrolling = "no"
           container.appendChild(iframe);
           setTimeout(pingDeployment, 10000);
           {% if object.use_iframe_resizer %}
