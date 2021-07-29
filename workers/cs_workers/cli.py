@@ -4,7 +4,6 @@ from pathlib import Path
 from cs_deploy.config import workers_config as config
 import cs_workers.services.manage
 
-import cs_workers.services.outputs_processor
 import cs_workers.models.manage
 
 

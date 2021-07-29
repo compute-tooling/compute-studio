@@ -1,8 +1,8 @@
 """Add build table
 
-Revision ID: 53587595e908
+Revision ID: 9783f1909495
 Revises: 49437c661c80
-Create Date: 2021-06-13 21:10:31.164572+00:00
+Create Date: 2021-07-08 01:56:55.274799+00:00
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "53587595e908"
+revision = "9783f1909495"
 down_revision = "49437c661c80"
 branch_labels = None
 depends_on = None
@@ -22,13 +22,15 @@ def upgrade():
         "builds",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=True),
+        sa.Column("project_id", sa.Integer(), nullable=True),
         sa.Column("provider", sa.String(), nullable=False),
         sa.Column("provider_data", sa.JSON(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("finished_at", sa.DateTime(), nullable=True),
         sa.Column("cancelled_at", sa.DateTime(), nullable=True),
         sa.Column("status", sa.String(), nullable=True),
-        sa.ForeignKeyConstraint(["user_id"], ["projects.id"],),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.id"],),
+        sa.ForeignKeyConstraint(["user_id"], ["users.id"],),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_builds_id"), "builds", ["id"], unique=False)

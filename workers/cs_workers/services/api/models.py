@@ -70,6 +70,7 @@ class Project(Base):
     memory = Column(Float)
 
     user = relationship("User", back_populates="projects")
+    builds = relationship("Build", back_populates="project")
 
     __table_args__ = (
         UniqueConstraint(
@@ -85,7 +86,8 @@ class Project(Base):
 class Build(Base):
     __tablename__ = "builds"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("projects.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    project_id = Column(Integer, ForeignKey("projects.id"))
     provider = Column(String, nullable=False)
     provider_data = Column(JSON, nullable=True)
     created_at = Column(DateTime)
