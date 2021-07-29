@@ -12,9 +12,6 @@
   <link rel="icon" href="{{object.social_image_link}}" type="image/x-icon" />
   {% endif %}
 
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
-    integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous" />
-
   <style>
     html,
     body {
@@ -67,13 +64,9 @@
     <p>Starting the {{object.owner}}/{{object.title}} visualization...</p>
   </div>
   {% endif %}
-  <div style="position: fixed; top: 2rem; right: 2rem;">
-    <a href="/{{object.owner}}/{{object.title}}/" style="color:#586069 !important"><i
-        class="fas fa-times fa-2x"></i></a>
-  </div>
 
   <div style="position: fixed; bottom: 1rem; right: 1rem;">
-    <a href="/"><img height="50" width="50" alt="Compute Studio Logo" src="{% static 'imgs/cslashs.png' %}" /></a>
+    <a href="/{{object.owner}}/{{object.title}}/"><img height="50" width="50" alt="Compute Studio Logo" src="{% static 'imgs/cslashs.png' %}" /></a>
   </div>
 </body>
 
