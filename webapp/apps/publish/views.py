@@ -1,5 +1,6 @@
 import json
 import re
+from django.http.response import HttpResponseNotFound
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
@@ -31,6 +32,7 @@ from webapp.settings import USE_STRIPE
 from webapp.apps.users.auth import ClusterAuthentication
 from webapp.apps.users.exceptions import PrivateAppException
 from webapp.apps.users.models import (
+    Build,
     Project,
     Cluster,
     Deployment,
@@ -43,6 +45,7 @@ from webapp.apps.users.models import (
 from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 
 from webapp.apps.users.serializers import (
+    BuildSerializer,
     ProjectSerializer,
     ProjectWithVersionSerializer,
     TagSerializer,
@@ -135,13 +138,24 @@ class ProjectDetailView(GetProjectMixin, View):
         return render(request, self.template_name, context={"object": self.object})
 
 
-class ProjectSettingsView(GetProjectMixin, View):
+class ProjectReactView(GetProjectMixin, View):
     template_name = "publish/publish.html"
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object(**kwargs)
         if not self.object.has_write_access(request.user):
             raise PermissionDenied()
+        return render(request, self.template_name, context={"object": self.object})
+
+
+class BuildDetailReactView(GetProjectMixin, View):
+    template_name = "publish/publish.html"
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object(**kwargs)
+        if not self.object.has_write_access(request.user):
+            raise PermissionDenied()
+        get_object_or_404(Build, project=self.object, pk=kwargs["id"])
         return render(request, self.template_name, context={"object": self.object})
 
 
@@ -362,6 +376,61 @@ class ProfileModelsAPIView(generics.ListAPIView):
             listed=True,
             pk__in=projects_with_access(self.request.user),
         )
+
+
+class BuildView(generics.ListCreateAPIView):
+    permission_classes = (RequiresActive,)
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    queryset = Build.objects.all()
+    serializer_class = BuildSerializer
+
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+    search_fields = ["status", "status__in"]
+    ordering_fields = ["created_at", "project__title", "project__owner"]
+    ordering = ["-created_at"]
+
+    def get_project(self, username, title, **kwargs):
+        return get_project_or_404(
+            Project.objects.all(),
+            user=self.request.user,
+            title__iexact=title,
+            owner__user__username__iexact=username,
+        )
+
+    def post(self, request, *args, **kwargs):
+        project = self.get_project(**kwargs)
+        build = Build.objects.create(project=project)
+        build.start()
+        return Response(
+            BuildSerializer(instance=build).data, status=status.HTTP_201_CREATED
+        )
+
+    def get(self, request, *args, **kwargs):
+        project = self.get_project(**kwargs)
+        queryset = self.queryset.filter(project=project)
+        queryset = self.filter_queryset(queryset)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class BuildDetailView(APIView):
+    def get(self, request, *args, **kwargs):
+        build = get_object_or_404(
+            Build.objects.prefetch_related("project"), pk=kwargs["id"]
+        )
+        if not build.project.has_write_access(request.user):
+            raise Http404("Build not found.")
+        build.refresh_status()
+        return Response(BuildSerializer(instance=build).data, status=status.HTTP_200_OK)
 
 
 class EmbedApprovalView(GetProjectMixin, APIView):

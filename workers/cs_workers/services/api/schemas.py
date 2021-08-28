@@ -6,7 +6,10 @@ from cs_workers.services.api.database import Base
 
 from pydantic import BaseModel, Json  # pylint: disable=no-name-in-module
 from pydantic.networks import EmailStr, AnyHttpUrl
-from sqlalchemy.sql.sqltypes import DateTime  # pylint: disable=no-name-in-module
+from sqlalchemy.sql.sqltypes import (
+    DateTime,
+    String,
+)  # pylint: disable=no-name-in-module
 
 
 class JobBase(BaseModel):
@@ -159,7 +162,7 @@ class GithubLogs(BaseModel):
 
 class GithubProviderData(BaseModel):
     stage: str
-    logs: Optional[GithubLogs]
+    logs: Optional[List[GithubLogs]]
     repo_owner: str
     repo_name: str
     pull_request: int
@@ -171,5 +174,9 @@ class Build(BaseModel):
     provider: str = "github"
     provider_data: Optional[GithubProviderData]
     created_at: datetime
-    finished_at: datetime
-    cancelled_at: datetime
+    finished_at: Optional[datetime]
+    cancelled_at: Optional[datetime]
+    status: str
+
+    class Config:
+        orm_mode = True

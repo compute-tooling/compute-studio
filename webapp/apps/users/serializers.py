@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from webapp.apps.users.models import Project, EmbedApproval, Deployment, Tag
+from webapp.apps.users.models import Build, Project, EmbedApproval, Deployment, Tag
 
 
 class DeploymentSerializer(serializers.ModelSerializer):
@@ -208,3 +208,20 @@ class EmbedApprovalSerializer(serializers.ModelSerializer):
             "url",
         )
         read_only = ("owner", "project")
+
+
+class BuildSerializer(serializers.ModelSerializer):
+    project = serializers.StringRelatedField()
+
+    class Meta:
+        model = Build
+        fields = (
+            "id",
+            "project",
+            "cluster_build_id",
+            "created_at",
+            "finished_at",
+            "cancelled_at",
+            "status",
+            "provider_data",
+        )

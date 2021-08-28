@@ -42,14 +42,18 @@ def create(
         created_at=datetime.utcnow(),
         provider="github",
         provider_data={
+            "stage": "started",
             "repo_owner": pull_request.repo.owner,
             "repo_name": pull_request.repo.name,
             "pull_request": pull_request.pull_number,
         },
         status="created",
     )
+    db.add(build)
+    db.commit()
+    db.refresh(build)
 
-    return build
+    return schemas.Build.from_orm(build)
 
 
 @router.get("/{build_id}/", response_model=schemas.Build, status_code=201)
@@ -69,18 +73,29 @@ def get(
     if not build:
         raise HTTPException(status_code=404, detail="Build not found.")
 
-    build_data = schemas.Build.from_orm(build).todict()
+    build_data = schemas.Build.from_orm(build).dict()
 
     status = github_actions.job_status(**build_data["provider_data"])
+    if status:
+        build.provider_data = {
+            "stage": status["stage"],
+            "repo_owner": status["pull_request"].repo.owner,
+            "repo_name": status["pull_request"].repo.name,
+            "pull_request": status["pull_request"].pull_number,
+        }
+        build.status = status["stage"]
 
-    build.provider_data["stage"] = status["stage"]
-    build.status = status["stage"]
+    if build.status in ("success", "failure"):
+        build.finished_at = datetime.utcnow()
     db.add(build)
     db.commit()
     db.refresh(build)
 
     build_data = schemas.Build.from_orm(build)
-    build_data.provider_data.logs = status["logs"]
+    print("Build status", build.status)
+
+    if status:
+        build_data.provider_data.logs = status["logs"]
 
     return build_data
 
