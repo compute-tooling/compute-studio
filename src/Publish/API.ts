@@ -1,5 +1,5 @@
 import axios from "axios";
-import { AccessStatus, Project } from "../types";
+import { AccessStatus, Build, Project } from "../types";
 
 export default class API {
   owner?: string;
@@ -17,15 +17,33 @@ export default class API {
   }
 
   async getProject(): Promise<Project> {
-    return (await axios.get(`/apps/api/v1/${this.owner}/${this.title}/`)).data;
+    return (await axios.get(`/projects/api/v1/${this.owner}/${this.title}/`)).data;
   }
 
   async updateProject(data): Promise<Project> {
-    return (await axios.put(`/apps/api/v1/${this.owner}/${this.title}/`, data)).data;
+    return (await axios.put(`/projects/api/v1/${this.owner}/${this.title}/`, data)).data;
   }
 
   async createProject(data): Promise<Project> {
-    return (await axios.post(`/apps/api/v1/`, data)).data;
+    return (await axios.post(`/projects/api/v1/`, data)).data;
+  }
+
+  async createBuild(data): Promise<Build> {
+    return (await axios.post(`/projects/api/v1/${this.owner}/${this.title}/builds/`, data)).data;
+  }
+
+  async getBuild(id: number): Promise<Build> {
+    return (await axios.get(`/projects/api/v1/builds/${id}/`)).data;
+  }
+
+  async listBuilds(): Promise<{
+    count: number;
+    next?: string;
+    previous: string;
+    results: Build[];
+  }> {
+    console.log("URL", `projects/api/v1/${this.owner}/${this.title}/builds/`);
+    return (await axios.get(`/projects/api/v1/${this.owner}/${this.title}/builds/`)).data;
   }
 
   async save(data): Promise<Project> {

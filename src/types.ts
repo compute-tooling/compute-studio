@@ -196,6 +196,17 @@ export interface Project {
   social_image_link?: string;
 }
 
+export interface Build {
+  id: number;
+  project: string;
+  cluster_build_id: number;
+  created_at: Date;
+  cancelled_at: Date;
+  finished_at: Date;
+  status: string;
+  provider_data: any;
+}
+
 export interface MiniSimulation {
   api_url: string;
   creation_date: Date;
