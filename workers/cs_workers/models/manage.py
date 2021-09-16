@@ -497,7 +497,12 @@ class Manager(BaseManager):
         except docker.errors.ImageNotFound as e:
             print("Docker image not available.")
             app_version = None
-        build_id = build_id_from_env()
+        build_id = os.environ.get("BUILD_ID", None)
+        if build_id is None:
+            with open(f"config/{app['owner']}/{app['title']}.yaml", "r") as f:
+                data = yaml.safe_load(f.read())
+                print("got data", data)
+                build_id = data["build_id"]
         assert build_id
         access_token = get_cluster_access_token(
             self.cs_cluster_url, self.cs_cluster_username, self.cs_cluster_password
