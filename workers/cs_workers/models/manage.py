@@ -511,6 +511,7 @@ class Manager(BaseManager):
             f"{self.cs_cluster_url}/api/v1/builds/{build_id}/done/",
             json={"image_tag": self.image_tag, "version": app_version},
             headers={"Authorization": f"Bearer {access_token}"},
+            timeout=30,
         )
         assert (
             resp.status_code == 200
