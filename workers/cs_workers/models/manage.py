@@ -1,6 +1,7 @@
 import argparse
 import copy
 import os
+import re
 import sys
 import threading
 import time
@@ -14,7 +15,13 @@ import docker
 import httpx
 
 from cs_deploy.config import workers_config
-from cs_workers.utils import run, clean, parse_owner_title
+from cs_workers.utils import (
+    get_projects_from_cluster,
+    run,
+    clean,
+    parse_owner_title,
+    get_cluster_access_token,
+)
 
 from cs_workers.services.secrets import ServicesSecrets  # TODO
 from cs_workers.config import ModelConfig
@@ -22,6 +29,20 @@ from cs_workers.models import secrets
 
 CURR_PATH = Path(os.path.abspath(os.path.dirname(__file__)))
 BASE_PATH = CURR_PATH / ".."
+
+import sys, re, os
+
+result = re.search(r"build_id=(\d+)", os.environ.get("MSG", ""))
+sys.stdout.write(result[1] if result else "")
+
+
+def build_id_from_env():
+    """Retrieve build id from the commit message."""
+    result = re.search(r"build_id=(\d+)", os.environ.get("COMMIT_MESSAGE", ""))
+    if result:
+        return result[1]
+    else:
+        return None
 
 
 def strip_secrets(line, secrets):
@@ -68,9 +89,13 @@ class Manager(BaseManager):
         base_branch="origin/master",
         cs_url=None,
         cs_api_token=None,
+        cs_cluster_url=None,
+        cs_cluster_username=None,
+        cs_cluster_password=None,
         kubernetes_target=None,
         use_kind=False,
         staging_tag=None,
+        image_tag=None,
         use_latest_tag=False,
         cs_appbase_tag="master",
         cr="gcr.io",
@@ -95,6 +120,11 @@ class Manager(BaseManager):
         self.use_kind = use_kind
 
         self.staging_tag = staging_tag
+        self.image_tag = image_tag
+        self.cs_cluster_url = cs_cluster_url
+        self.cs_cluster_username = cs_cluster_username
+        self.cs_cluster_password = cs_cluster_password
+
         self.use_latest_tag = use_latest_tag
         self.cs_appbase_tag = cs_appbase_tag
 
@@ -110,7 +140,16 @@ class Manager(BaseManager):
             models += self.models
 
         self.projects = {}
-        for ot, data in self.config.projects(models=models).items():
+        if self.cs_cluster_url:
+            # from cs cluster
+            projects = get_projects_from_cluster(
+                self.cs_cluster_url, self.cs_cluster_username, self.cs_cluster_password
+            )
+        else:
+            # from cs webapp
+            projects = self.config.projects(models=models)
+
+        for ot, data in projects.items():
             o, t = parse_owner_title(ot)
             self.projects[(o, t)] = data
 
@@ -146,6 +185,9 @@ class Manager(BaseManager):
 
     def write_app_config(self):
         self.apply_method_to_apps(method=self.write_secrets)
+
+    def build_done(self):
+        self.apply_method_to_apps(method=self.send_build_done)
 
     def apply_method_to_apps(self, method):
         """
@@ -449,6 +491,24 @@ class Manager(BaseManager):
 
         return secret_config
 
+    def send_build_done(self, app):
+        app_version = self.get_version(app, print_stdout=False)
+        build_id = build_id_from_env()
+        assert build_id
+        access_token = get_cluster_access_token(
+            self.cs_cluster_url, self.cs_cluster_username, self.cs_cluster_password
+        )
+        resp = httpx.post(
+            f"{self.config.cs_cluster_url}/api/v1/builds/{build_id}/done",
+            json={"image_tag": self.image_tag, "version": app_version},
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        assert (
+            resp.status_code == 200
+        ), f"Got: {resp.url} {resp.status_code} {resp.text}"
+
+        sys.stdout.write(resp.json()["image_tag"])
+
     def _set_secrets(self, app, config):
         safeowner = clean(app["owner"])
         safetitle = clean(app["title"])
@@ -557,6 +617,24 @@ def stage(args: argparse.Namespace):
     manager.stage()
 
 
+def build_done(args: argparse.Namespace):
+    manager = Manager(
+        project=args.project,
+        tag=args.tag,
+        cs_cluster_url=getattr(args, "cs_cluster_url", None)
+        or workers_config["CS_CLUSTER_URL"],
+        cs_cluster_username=getattr(args, "cs_cluster_username", None)
+        or workers_config["CS_CLUSTER_USERNAME"],
+        cs_cluster_password=getattr(args, "cs_cluster_password", None)
+        or workers_config["CS_CLUSTER_PASSWORD"],
+        models=args.names,
+        base_branch=args.base_branch,
+        cr=args.cr,
+        image_tag=getattr(args, "image_tag", None),
+    )
+    manager.build_done()
+
+
 def version(args: argparse.Namespace):
     manager = Manager(
         project=args.project,
@@ -601,11 +679,20 @@ def cli(subparsers: argparse._SubParsersAction):
     config_parser.set_defaults(func=config)
 
     stage_parser = model_subparsers.add_parser("stage")
+    stage_parser.add_argument("--build-id", type=str, required=False)
     stage_parser.add_argument("staging_tag", type=str)
     stage_parser.set_defaults(func=stage)
 
     promote_parser = model_subparsers.add_parser("promote")
     promote_parser.set_defaults(func=promote)
+
+    build_done_parser = model_subparsers.add_parser("build-done")
+    build_done_parser.add_argument("--build-id", type=str, required=False)
+    build_done_parser.add_argument("--cs-cluster-url", type=str, required=False)
+    build_done_parser.add_argument("--cs-cluster-username", type=str, required=False)
+    build_done_parser.add_argument("--cs-cluster-password", type=str, required=False)
+    build_done_parser.add_argument("image_tag", type=str)
+    build_done_parser.set_defaults(func=build_done)
 
     version_parser = model_subparsers.add_parser("version")
     version_parser.set_defaults(func=version)

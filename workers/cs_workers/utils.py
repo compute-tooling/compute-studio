@@ -64,7 +64,10 @@ def get_projects(cs_url, api_token=None, auth_headers=None, max_retries=5):
     tries = 0
     while True:
         try:
-            return _get_projects(cs_url, api_token=api_token, auth_headers=auth_headers)
+            return _get_projects(
+                cs_url,
+                auth_headers={"Authorization": f"Token {api_token}", **auth_headers},
+            )
         except Exception as e:
             if tries < max_retries:
                 print("Got exception", e)
@@ -75,16 +78,64 @@ def get_projects(cs_url, api_token=None, auth_headers=None, max_retries=5):
                 raise e
 
 
-def _get_projects(cs_url, api_token=None, auth_headers=None):
-    if api_token is not None:
-        headers = {"Authorization": f"Token {api_token}"}
-    elif auth_headers is not None:
-        headers = auth_headers
-    else:
-        headers = {}
+def get_cluster_access_token(
+    cs_cluster_url, cs_cluster_username, cs_cluster_password, max_retries=5
+):
+    tries = 0
+    while True:
+        try:
+            resp = httpx.post(
+                f"{cs_cluster_url}/api/v1/login/access-token",
+                data={
+                    "username": cs_cluster_username,
+                    "password": cs_cluster_password,
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return data["access_token"]
+        except Exception as e:
+            if tries < max_retries:
+                print("Got exception retrieving token", e)
+                print("Sleeping for", 2 ** tries, "seconds")
+                time.sleep(2 ** tries)
+                tries += 1
+            else:
+                raise e
 
+
+def get_projects_from_cluster(
+    cs_cluster_url, cs_cluster_username, cs_cluster_password, max_retries=5
+):
+    access_token = get_cluster_access_token(
+        cs_cluster_url,
+        cs_cluster_username,
+        cs_cluster_password,
+        max_retries=max_retries,
+    )
+    print(cs_cluster_url, cs_cluster_username, cs_cluster_password, access_token)
+    tries = 0
+    while True:
+        try:
+            return _get_projects(
+                cs_cluster_url,
+                auth_headers={"Authorization": f"Bearer {access_token}"},
+                path="/api/v1/projects/",
+            )
+        except Exception as e:
+            if tries < max_retries:
+                print("Got exception", e)
+                print("Sleeping for", 2 ** tries, "seconds")
+                time.sleep(2 ** tries)
+                tries += 1
+            else:
+                raise e
+
+
+def _get_projects(cs_url, auth_headers=None, path="/apps/api/v1/"):
+    headers = auth_headers or {}
     client = httpx.Client(headers=headers, timeout=5)
-    resp = client.get(f"{cs_url}/apps/api/v1/")
+    resp = client.get(f"{cs_url}{path}")
     assert resp.status_code == 200, f"Got {resp.status_code}, {resp.text}"
     page = resp.json()
 
