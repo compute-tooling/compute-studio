@@ -492,7 +492,11 @@ class Manager(BaseManager):
         return secret_config
 
     def send_build_done(self, app):
-        app_version = self.get_version(app, print_stdout=False)
+        try:
+            app_version = self.get_version(app, print_stdout=False)
+        except docker.errors.ImageNotFound as e:
+            print("Docker image not available.")
+            app_version = None
         build_id = build_id_from_env()
         assert build_id
         access_token = get_cluster_access_token(
