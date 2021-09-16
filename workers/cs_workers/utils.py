@@ -113,7 +113,6 @@ def get_projects_from_cluster(
         cs_cluster_password,
         max_retries=max_retries,
     )
-    print(cs_cluster_url, cs_cluster_username, cs_cluster_password, access_token)
     tries = 0
     while True:
         try:

@@ -22,7 +22,7 @@ def existing_app_pr(owner, title, repo: Repo):
     return pull, ref
 
 
-def create_job(owner, title, primary_branch="hdoupe-local"):
+def create_job(owner, title, primary_branch="hdoupe-local", build_id=None):
     gh = GitHub(token)
     repo = gh.repo(
         "compute-tooling", "compute-studio-publish", primary_branch=primary_branch
@@ -41,7 +41,12 @@ def create_job(owner, title, primary_branch="hdoupe-local"):
         ref = repo.create_ref(ref_name)
         print(f"Created new ref: {ref}")
 
-    message = f"(auto) Update {owner}/{title} - {str(now.strftime('%Y-%m-%d %H:%M'))}"
+    if build_id is not None:
+        build_id_msg = f" build_id={build_id}"
+    else:
+        build_id_msg = ""
+
+    message = f"(auto) Update {owner}/{title} - {str(now.strftime('%Y-%m-%d %H:%M'))}{build_id_msg}"
 
     gh.content(repo=repo, path=f"config/{owner}/{title}.yaml", ref=ref).write(
         yaml.dump(
@@ -49,6 +54,7 @@ def create_job(owner, title, primary_branch="hdoupe-local"):
                 "owner": owner,
                 "title": title,
                 "timestamp": str(now.strftime("%Y-%m-%d %H:%M")),
+                "build_id": build_id,
             }
         ),
         message=message,
@@ -74,6 +80,17 @@ def job_status(
     workflow_runs = list(pull_request.workflow_runs())
     if not workflow_runs:
         return
+    wf_runs_list = list(workflow_runs)
+    pr_commits_list = list(pull_request.commits)
+
+    if len(wf_runs_list) != len(pr_commits_list):
+        return {
+            "stage": "created",
+            "workflow_run": None,
+            "workflow_job": None,
+            "logs": [],
+            "pull_request": pull_request,
+        }
     wf = max(workflow_runs, key=attrgetter("created_at"))
     job = next(wf.jobs())
 
@@ -81,9 +98,12 @@ def job_status(
         stage = wf.conclusion
 
     else:
-        stage = "staging"
+        stage = "created"
         for step in job.steps:
-            print("checking step", step.name)
+            print("checking step", step.name, step.status)
+            if step.status == "failure":
+                stage = "failure"
+                break
             if step.started_at and not step.completed_at:
                 if step.name == "Build":
                     stage = "building"
@@ -91,6 +111,8 @@ def job_status(
                     stage = "testing"
                 elif step.name == "Push":
                     stage = "pushing"
+                elif step.name == "Callback":
+                    stage = "success"
                 break
 
     try:
@@ -104,6 +126,41 @@ def job_status(
         "logs": logs,
         "pull_request": pull_request,
     }
+
+
+class JobFailedException(Exception):
+    pass
+
+
+class JobNotReadyException(Exception):
+    pass
+
+
+def deploy(
+    repo_owner: str,
+    repo_name: str,
+    pull_request: Union[int, PullRequest],
+    primary_branch="hdoupe-local",
+    **kwargs,
+):
+    if isinstance(pull_request, int):
+        gh = GitHub(token)
+        repo = gh.repo(repo_owner, repo_name, primary_branch=primary_branch)
+        pull_request = PullRequest(repo, pull_request)
+    workflow_runs = list(pull_request.workflow_runs())
+    if not workflow_runs:
+        return
+    wf = max(workflow_runs, key=attrgetter("created_at"))
+
+    if wf.conclusion == "failure":
+        raise JobFailedException()
+    elif wf.conclusion != "success":
+        raise JobNotReadyException()
+
+    pull_request.merge(
+        commit_title=f"Update {repo_owner}/{repo_name} (#{pull_request.pull_number})",
+        commit_message="",
+    )
 
 
 def cancel_job(

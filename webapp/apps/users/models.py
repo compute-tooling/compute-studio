@@ -725,8 +725,10 @@ class Build(models.Model):
         self.save()
         return data
 
-    def refresh_status(self):
+    def refresh_status(self, force=False):
         cluster: Cluster = self.project.cluster
+        if not force and self.status in ("success", "failure"):
+            return
         resp = requests.get(
             f"{cluster.url}{cluster.path_prefix}/builds/{self.cluster_build_id}/",
             json={},
@@ -757,6 +759,9 @@ class Tag(models.Model):
     memory = models.DecimalField(max_digits=5, decimal_places=1, null=True, default=6)
     created_at = models.DateTimeField(auto_now_add=True)
     version = models.CharField(max_length=255, null=True)
+    build = models.OneToOneField(
+        "Build", on_delete=models.SET_NULL, related_name="tag", null=True
+    )
 
     def __str__(self):
         return str(self.image_tag)

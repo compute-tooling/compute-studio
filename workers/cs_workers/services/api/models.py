@@ -68,6 +68,8 @@ class Project(Base):
     exp_task_time = Column(String, nullable=False)
     cpu = Column(Float)
     memory = Column(Float)
+    repo_tag = Column(String)
+    repo_url = Column(String)
 
     user = relationship("User", back_populates="projects")
     builds = relationship("Build", back_populates="project")
@@ -94,6 +96,8 @@ class Build(Base):
     finished_at = Column(DateTime)
     cancelled_at = Column(DateTime)
     status = Column(String)
+    image_tag = Column(String)
+    version = Column(String)
 
     project = relationship("Project", back_populates="builds")
 

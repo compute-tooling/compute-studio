@@ -105,17 +105,17 @@ urlpatterns = [
     path(
         "<str:username>/<str:title>/builds/<int:id>/",
         publishviews.BuildDetailReactView.as_view(),
-        name="app_settings",
+        name="build_detail_page",
     ),
     path(
         "<str:username>/<str:title>/builds/new/",
         publishviews.ProjectReactView.as_view(),
-        name="app_settings",
+        name="new_build_page",
     ),
     path(
         "<str:username>/<str:title>/builds/",
         publishviews.ProjectReactView.as_view(),
-        name="app_settings",
+        name="build_history_page",
     ),
     # add project URL's here
     path("<str:username>/<str:title>/", include("webapp.apps.comp.urls")),

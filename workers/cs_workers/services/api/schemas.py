@@ -90,6 +90,7 @@ class User(UserInDBBase):
 class UserInDB(UserInDBBase):
     id: Optional[int] = None
     hashed_password: str
+    is_superuser: Optional[bool]
 
 
 class Token(BaseModel):
@@ -118,6 +119,8 @@ class ProjectSync(BaseModel):
     exp_task_time: int
     cpu: float
     memory: float
+    repo_tag: Optional[str]
+    repo_url: Optional[str]
 
 
 class Project(ProjectSync):
@@ -126,6 +129,13 @@ class Project(ProjectSync):
     class Config:
         orm_mode = True
         extra = "ignore"
+
+
+class PaginatedProject(BaseModel):
+    count: int
+    next: Optional[str]
+    previous: Optional[str]
+    results: List[Project]
 
 
 class DeploymentCreate(BaseModel):
@@ -177,6 +187,24 @@ class Build(BaseModel):
     finished_at: Optional[datetime]
     cancelled_at: Optional[datetime]
     status: str
+    image_tag: Optional[str]
+    version: Optional[str]
 
     class Config:
         orm_mode = True
+
+
+class BuildArtifact(BaseModel):
+    image_tag: Optional[str]
+    version: Optional[str]
+
+
+class WebappBuildCallback(BaseModel):
+    tag: dict
+    project: str
+    cluster_build_id: int
+    provider_data: Optional[GithubProviderData]
+    status: str
+    created_at: datetime
+    finished_at: Optional[datetime]
+    cancelled_at: Optional[datetime]

@@ -29,7 +29,7 @@ from rest_framework.pagination import PageNumberPagination
 # from webapp.settings import DEBUG
 
 from webapp.settings import USE_STRIPE
-from webapp.apps.users.auth import ClusterAuthentication
+from webapp.apps.users.auth import ClusterAuthentication, ClientOAuth2Authentication
 from webapp.apps.users.exceptions import PrivateAppException
 from webapp.apps.users.models import (
     Build,
@@ -46,6 +46,7 @@ from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 
 from webapp.apps.users.serializers import (
     BuildSerializer,
+    ClusterBuildSerializer,
     ProjectSerializer,
     ProjectWithVersionSerializer,
     TagSerializer,
@@ -298,12 +299,13 @@ class TagsAPIView(GetProjectMixin, APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         data = serializer.validated_data
+
         if data.get("staging_tag") is not None:
             tag, _ = Tag.objects.get_or_create(
                 project=project,
                 image_tag=data.get("staging_tag"),
                 version=data.get("version"),
-                defaults=dict(cpu=project.cpu, memory=project.memory),
+                defaults=dict(cpu=project.cpu, memory=project.memory, build=build),
             )
             project.staging_tag = tag
         elif "staging_tag" in data:
@@ -314,7 +316,7 @@ class TagsAPIView(GetProjectMixin, APIView):
                 project=project,
                 image_tag=data.get("latest_tag"),
                 version=data.get("version"),
-                defaults=dict(cpu=project.cpu, memory=project.memory),
+                defaults=dict(cpu=project.cpu, memory=project.memory, build=build),
             )
             project.latest_tag = tag
 
@@ -423,14 +425,53 @@ class BuildView(generics.ListCreateAPIView):
 
 
 class BuildDetailView(APIView):
-    def get(self, request, *args, **kwargs):
-        build = get_object_or_404(
-            Build.objects.prefetch_related("project"), pk=kwargs["id"]
+    permission_classes = (RequiresActive,)
+    authentication_classes = (
+        ClientOAuth2Authentication,
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    def is_using_cluster_id(self):
+        return self.request.query_params.get("cluster_id", None) == "true"
+
+    def get_object(self, **kwargs):
+        query_kwargs = {}
+        query_params = self.request.query_params
+        if self.is_using_cluster_id():
+            query_kwargs["cluster_build_id"] = kwargs["id"]
+        else:
+            query_kwargs["id"] = kwargs["id"]
+
+        return get_object_or_404(
+            Build.objects.prefetch_related("project"), **query_kwargs
         )
+
+    def get(self, request, *args, **kwargs):
+        build = self.get_object(**kwargs)
         if not build.project.has_write_access(request.user):
             raise Http404("Build not found.")
         build.refresh_status()
         return Response(BuildSerializer(instance=build).data, status=status.HTTP_200_OK)
+
+    def put(self, request, *args, **kwargs):
+        build = self.get_object(**kwargs)
+        if not build.project.has_write_access(request.user):
+            raise Http404("Build not found.")
+
+        if self.is_using_cluster_id():
+            serializer = ClusterBuildSerializer(instance=build, data=request.data)
+        else:
+            serializer = BuildSerializer(instance=build, data=request.data)
+
+        if serializer.is_valid():
+            instance = serializer.save()
+            return Response(
+                BuildSerializer(instance=instance).data, status=status.HTTP_200_OK
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class EmbedApprovalView(GetProjectMixin, APIView):

@@ -409,6 +409,17 @@ class PullRequest:
     def workflow_runs(self, event: str = None, status: str = None):
         return WorkflowRun(self.repo, branch=self.head, event="pull_request").list()
 
+    @property
+    def commits(self):
+        """Get raw commit objects for pull request"""
+        resp = client.get(
+            f"/repos/{self.repo.owner}/{self.repo.name}/pulls/{self.pull_number}/commits",
+            params={"limit": 100},
+        )
+        resp.raise_for_status()
+        for commit in resp.json():
+            yield commit
+
 
 class WorkflowRun:
     def __init__(
