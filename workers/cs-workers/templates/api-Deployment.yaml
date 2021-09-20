@@ -45,6 +45,10 @@ spec:
                   name: api-secret
                   key: GITHUB_TOKEN
                   optional: true
+            {{ if .Values.api.github_build_branch }}
+            - name: GITHUB_BUILD_BRANCH
+              value: {{ .Values.api.github_build_branch }}
+            {{ end }}
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
