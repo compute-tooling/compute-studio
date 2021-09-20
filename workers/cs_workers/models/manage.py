@@ -593,6 +593,12 @@ def push(args: argparse.Namespace):
         tag=args.tag,
         cs_url=getattr(args, "cs_url", None) or workers_config["CS_URL"],
         cs_api_token=getattr(args, "cs_api_token", None),
+        cs_cluster_url=getattr(args, "cs_cluster_url", None)
+        or workers_config["CS_CLUSTER_URL"],
+        cs_cluster_username=getattr(args, "cs_cluster_username", None)
+        or workers_config["CS_CLUSTER_USERNAME"],
+        cs_cluster_password=getattr(args, "cs_cluster_password", None)
+        or workers_config["CS_CLUSTER_PASSWORD"],
         models=args.names,
         base_branch=args.base_branch,
         use_kind=args.use_kind,
