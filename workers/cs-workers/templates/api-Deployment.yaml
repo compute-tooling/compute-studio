@@ -39,14 +39,12 @@ spec:
               value: '{{ .Values.api.allow_origins | toJson }}'
             - name: PROJECT_NAMESPACE
               value: '{{ .Values.project_namespace }}'
-            {{ if .Values.api.github_token }}
             - name: GITHUB_TOKEN
-              value: {{ .Values.api.github_token }}
-            {{ end }}
-            {{ if .Values.api.github_build_branch }}
-            - name: GITHUB_BUILD_BRANCH
-              value: {{ .Values.api.github_build_branch }}
-            {{ end }}
+              valueFrom:
+                secretKeyRef:
+                  name: api-secret
+                  key: GITHUB_TOKEN
+                  optional: true
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
