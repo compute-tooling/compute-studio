@@ -27,7 +27,7 @@ async def build_done(
     current_super_user: models.User = Depends(deps.get_current_active_superuser),
     artifact: schemas.BuildArtifact = Body(...),
 ):
-    print("check build status", build_id)
+    print("check build status", build_id, artifact.dict())
     build: models.Build = (
         db.query(models.Build)
         .join(models.Project)
@@ -49,6 +49,7 @@ async def build_done(
             "pull_request": status["pull_request"].pull_number,
         }
         build.status = status["stage"]
+        build.failed_at_stage = status["failed_at_stage"]
 
     build.finished_at = datetime.utcnow()
     build.image_tag = artifact.image_tag
@@ -76,6 +77,7 @@ async def build_done(
         "cancelled_at",
         "status",
         "provider_data",
+        "failed_at_stage",
     ]:
         data[field] = refreshed_data.get(field, None)
 
@@ -170,6 +172,7 @@ def get(
             "pull_request": status["pull_request"].pull_number,
         }
         build.status = status["stage"]
+        build.failed_at_stage = status["failed_at_stage"]
 
     if build.status in ("success", "failure") and build.finished_at is None:
         build.finished_at = datetime.utcnow()

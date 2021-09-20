@@ -95,6 +95,7 @@ class Build(Base):
     created_at = Column(DateTime)
     finished_at = Column(DateTime)
     cancelled_at = Column(DateTime)
+    failed_at_stage = Column(String)
     status = Column(String)
     image_tag = Column(String)
     version = Column(String)

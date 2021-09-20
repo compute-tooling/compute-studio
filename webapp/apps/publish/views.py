@@ -305,7 +305,7 @@ class TagsAPIView(GetProjectMixin, APIView):
                 project=project,
                 image_tag=data.get("staging_tag"),
                 version=data.get("version"),
-                defaults=dict(cpu=project.cpu, memory=project.memory, build=build),
+                defaults=dict(cpu=project.cpu, memory=project.memory),
             )
             project.staging_tag = tag
         elif "staging_tag" in data:
@@ -316,7 +316,7 @@ class TagsAPIView(GetProjectMixin, APIView):
                 project=project,
                 image_tag=data.get("latest_tag"),
                 version=data.get("version"),
-                defaults=dict(cpu=project.cpu, memory=project.memory, build=build),
+                defaults=dict(cpu=project.cpu, memory=project.memory),
             )
             project.latest_tag = tag
 
@@ -405,6 +405,10 @@ class BuildView(generics.ListCreateAPIView):
 
     def post(self, request, *args, **kwargs):
         project = self.get_project(**kwargs)
+        if project.builds.filter(
+            ~Q(status__in=["success", "failure", "cancelled"])
+        ).count():
+            return Response({"errors": "Only one build can be run at a time."})
         build = Build.objects.create(project=project)
         build.start()
         return Response(
@@ -452,7 +456,10 @@ class BuildDetailView(APIView):
         build = self.get_object(**kwargs)
         if not build.project.has_write_access(request.user):
             raise Http404("Build not found.")
-        build.refresh_status()
+        build.refresh_status(
+            force_reload=request.query_params.get("force_reload", None) == "true"
+        )
+        build.refresh_from_db()
         return Response(BuildSerializer(instance=build).data, status=status.HTTP_200_OK)
 
     def put(self, request, *args, **kwargs):
@@ -467,11 +474,41 @@ class BuildDetailView(APIView):
 
         if serializer.is_valid():
             instance = serializer.save()
+            instance.refresh_from_db()
             return Response(
                 BuildSerializer(instance=instance).data, status=status.HTTP_200_OK
             )
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TagPromoteView(APIView):
+    permission_classes = (RequiresActive,)
+    authentication_classes = (
+        ClientOAuth2Authentication,
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    def post(self, request, *args, **kwargs):
+        build = self.get_object(**kwargs)
+        if not build.project.has_write_access(request.user):
+            raise Http404("Build not found.")
+
+        if getattr(build, "tag", None) is None:
+            return Response(
+                {"errors": "Build not successful and cannot be promoted."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        build.project.latest_tag = build.tag
+        build.project.save()
+
+        return Response(BuildSerializer(instance=build).data, status=status.HTTP_200_OK)
+
+    def get(self, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class EmbedApprovalView(GetProjectMixin, APIView):

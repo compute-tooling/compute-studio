@@ -679,32 +679,39 @@ class Project(models.Model):
 class Build(models.Model):
     objects: models.Manager
 
+    BUILD_STATUSES = (
+        ("created", "Created"),
+        ("building", "Building"),
+        ("testing", "Testing"),
+        ("pushing", "Pushing"),
+        ("cancelled", "Cancelled"),
+        ("success", "Success"),
+        ("failure", "Failure"),
+    )
+
     project = models.ForeignKey(
         "Project", on_delete=models.SET_NULL, related_name="builds", null=True
+    )
+    cluster = models.ForeignKey(
+        "Cluster", on_delete=models.SET_NULL, related_name="builds", null=True,
     )
     cluster_build_id = models.IntegerField(null=True)
     created_at = models.DateTimeField(null=True)
     finished_at = models.DateTimeField(null=True)
     cancelled_at = models.DateTimeField(null=True)
     provider_data = JSONField(null=True)
-    status = models.CharField(
-        null=True,
-        max_length=32,
-        choices=(
-            ("created", "Created"),
-            ("building", "Building"),
-            ("testing", "Testing"),
-            ("pushing", "Pushing"),
-            ("cancelled", "Cancelled"),
-            ("success", "Success"),
-            ("failure", "Failure"),
-        ),
+    status = models.CharField(null=True, max_length=32, choices=BUILD_STATUSES,)
+    failed_at_stage = models.CharField(
+        null=True, max_length=32, choices=BUILD_STATUSES,
+    )
+    tag = models.OneToOneField(
+        "Tag", on_delete=models.SET_NULL, related_name="build", null=True
     )
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["project", "cluster_build_id"], name="unique_project_build"
+                fields=["cluster", "cluster_build_id"], name="unique_cluster_build"
             )
         ]
 
@@ -725,9 +732,9 @@ class Build(models.Model):
         self.save()
         return data
 
-    def refresh_status(self, force=False):
+    def refresh_status(self, force_reload=False):
         cluster: Cluster = self.project.cluster
-        if not force and self.status in ("success", "failure"):
+        if not force_reload and self.status in ("success", "failure"):
             return
         resp = requests.get(
             f"{cluster.url}{cluster.path_prefix}/builds/{self.cluster_build_id}/",
@@ -740,6 +747,7 @@ class Build(models.Model):
         self.created_at = data["created_at"]
         self.cancelled_at = data["cancelled_at"]
         self.finished_at = data["finished_at"]
+        self.failed_at_stage = data.get("failed_at_stage")
         self.status = data["status"]
 
         # TODO: Store abbreviated version of logs.
@@ -759,9 +767,6 @@ class Tag(models.Model):
     memory = models.DecimalField(max_digits=5, decimal_places=1, null=True, default=6)
     created_at = models.DateTimeField(auto_now_add=True)
     version = models.CharField(max_length=255, null=True)
-    build = models.OneToOneField(
-        "Build", on_delete=models.SET_NULL, related_name="tag", null=True
-    )
 
     def __str__(self):
         return str(self.image_tag)
