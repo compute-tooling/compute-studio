@@ -199,6 +199,7 @@ class Manager(BaseManager):
             if self.models and f"{name[0]}/{name[1]}" not in self.models:
                 continue
             try:
+                print("app info", app)
                 method(app)
             except Exception as e:
                 if not self.ignore_ci_errors:
