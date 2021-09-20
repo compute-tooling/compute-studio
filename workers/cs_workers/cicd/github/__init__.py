@@ -95,28 +95,27 @@ def job_status(
     wf = max(workflow_runs, key=attrgetter("created_at"))
     job = next(wf.jobs())
 
-    if wf.conclusion == "success":
-        stage = "success"
-        failed_at_stage = None
-    else:
-        stage = "created"
-        failed_at_stage = None
-        for step in job.steps:
-            print("checking step", step.name, step.status)
-            if step.status == "failure":
-                stage = "failure"
-                failed_at_stage = step.name
+    stage = "created"
+    failed_at_stage = None
+    for step in job.steps:
+        print("checking step", step.name, step.status)
+        if step.status == "failure":
+            stage = "failure"
+            failed_at_stage = step.name
+            break
+        if step.started_at and not step.completed_at:
+            if step.name == "Build":
+                stage = "building"
+            elif step.name == "Test":
+                stage = "testing"
+            elif step.name == "Push":
+                stage = "pushing"
+            elif step.name == "Callback":
+                stage = "success"
                 break
-            if step.started_at and not step.completed_at:
-                if step.name == "Build":
-                    stage = "building"
-                elif step.name == "Test":
-                    stage = "testing"
-                elif step.name == "Push":
-                    stage = "pushing"
-                elif step.name == "Callback":
-                    stage = "success"
-                    break
+
+    if wf.conclusion:
+        stage = wf.conclusion
 
     try:
         logs = parse_logs(job.logs())
