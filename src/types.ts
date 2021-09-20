@@ -196,6 +196,11 @@ export interface Project {
   social_image_link?: string;
 }
 
+export interface Tag {
+  image_tag: string;
+  version?: string;
+}
+
 export interface Build {
   id: number;
   project: string;
@@ -205,6 +210,7 @@ export interface Build {
   finished_at: Date;
   status: string;
   provider_data: any;
+  tag: Tag;
 }
 
 export interface MiniSimulation {

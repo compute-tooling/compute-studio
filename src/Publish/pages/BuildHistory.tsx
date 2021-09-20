@@ -1,11 +1,41 @@
 import moment = require("moment");
 import React = require("react");
-import { Row, Col, Card } from "react-bootstrap";
+import { Row, Col, Card, Button, Table } from "react-bootstrap";
 import { AuthPortal, AuthButtons } from "../../auth";
+import { Tip } from "../../components";
 import { Project, AccessStatus, Build } from "../../types";
 import API from "../API";
 import { AppTitle } from "../components";
 import { Match, ProjectSettingsSection } from "../types";
+
+const BuildStatus: React.FC<{ status: string }> = ({ status }) => {
+  switch (status) {
+    case "success":
+      return (
+        <Tip id="build-status" tip="Success">
+          <i className="fas fa-check-circle text-success"></i>
+        </Tip>
+      );
+    case "failure":
+      return (
+        <Tip id="build-status" tip="Failure">
+          <i className="fas fa-exclamation-circle text-danger"></i>
+        </Tip>
+      );
+    case "cancelled":
+      return (
+        <Tip id="build-status" tip="Cancelled">
+          <i className="fas fa-exclamation-circle text-info"></i>
+        </Tip>
+      );
+    default:
+      return (
+        <Tip id="build-status" tip="Running">
+          <i className="fas fa-clock text-warning"></i>
+        </Tip>
+      );
+  }
+};
 
 class BuildHistory extends React.Component<
   { match: Match; section?: ProjectSettingsSection },
@@ -26,6 +56,12 @@ class BuildHistory extends React.Component<
     const accessStatus = await this.api.getAccessStatus();
     this.setState({ accessStatus });
     return accessStatus;
+  }
+
+  async startNewBuild() {
+    const { username, app_name, build_id } = this.props.match.params;
+    const build = await this.api.createBuild({});
+    window.location.replace(`/${username}/${app_name}/builds/${build.id}/`);
   }
 
   async componentDidMount() {
@@ -63,12 +99,41 @@ class BuildHistory extends React.Component<
                 <Card.Title>
                   <AppTitle project={this.state.project} />
                 </Card.Title>
-                {this.state.builds.map((build, index) => (
-                  <Row key={index}>
-                    <Col>{build.created_at && moment(build.created_at).toLocaleString()}</Col>
-                    <Col>{build.status}</Col>
-                  </Row>
-                ))}
+                <Table>
+                  <thead>
+                    <tr>
+                      <th>Link</th>
+                      <th>Created at</th>
+                      <th>Status</th>
+                      <th>Tag</th>
+                      <th>Version</th>
+                    </tr>
+                  </thead>
+                  {this.state.builds.map((build, index) => (
+                    <tr key={index}>
+                      <th>
+                        <a href={`/${build.project}/builds/${build.id}/`}>
+                          <i className="fas fa-link" />
+                        </a>
+                      </th>
+                      <th>{build.created_at && moment(build.created_at).format("lll")}</th>
+                      <th>
+                        <BuildStatus status={build.status} />
+                      </th>
+                      <th>
+                        {build.tag?.image_tag ? (
+                          <code>{build.tag.image_tag.slice(0, 6)}</code>
+                        ) : (
+                          "N/A"
+                        )}
+                      </th>
+                      <th>{build.tag?.version || "N/A"}</th>
+                    </tr>
+                  ))}
+                </Table>
+                <Button variant="success" onClick={async () => await this.startNewBuild()}>
+                  New Build
+                </Button>
               </Card.Body>
             </Col>
           </Row>

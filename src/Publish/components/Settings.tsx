@@ -87,7 +87,14 @@ const ProjectSettings: React.FC<{
               </div>
             )}
 
-            <button className="btn inline-block btn-success mt-5" type="submit">
+            <button
+              className="btn inline-block btn-success mt-5"
+              type="submit"
+              onClick={e => {
+                e.preventDefault();
+                props.submitForm();
+              }}
+            >
               <strong>Save changes</strong>
             </button>
           </Form>
