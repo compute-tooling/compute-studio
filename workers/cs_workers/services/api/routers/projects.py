@@ -64,12 +64,12 @@ def get_projects(
     url += settings.settings.API_PREFIX_STR
 
     if total_count == 30:
-        next_page = f"{url}?page={page+1}"
+        next_page = f"{url}/projects/?page={page+1}"
     else:
         next_page = None
 
     if page > 0:
-        previous_page = f"{url}?page={page-1}"
+        previous_page = f"{url}/projects/?page={page-1}"
     else:
         previous_page = None
 
