@@ -25,12 +25,12 @@ spec:
             limits:
               memory: 2G
               cpu: "2"
-          livenessProbe:
-            httpGet:
-              path: /users/me/
-              port: 8000
-            initialDelaySeconds: 5
-            periodSeconds: 10
+          # livenessProbe:
+          #   httpGet:
+          #     path: /users/me/
+          #     port: 8000
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 10
           env:
             - name: PORT
               value: "8000"
