@@ -9,7 +9,7 @@ NAMESPACE_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 
 class Settings(BaseSettings):
     API_PREFIX_STR: str = "/api/v1"
-    API_SECRET_KEY: str
+    API_SECRET_KEY: Optional[str]
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     SERVER_NAME: Optional[str]
@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     ]
 
     WORKERS_API_HOST: Optional[str]
-    VIZ_HOST: str
+    VIZ_HOST: Optional[str]
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
@@ -59,10 +59,10 @@ class Settings(BaseSettings):
             return None
         return v
 
-    DB_HOST: str
-    DB_USER: str
-    DB_PASS: str
-    DB_NAME: str
+    DB_HOST: Optional[str]
+    DB_USER: Optional[str]
+    DB_PASS: Optional[str]
+    DB_NAME: Optional[str]
 
     TEST_DB_NAME: str = "test"
     TEST_DB_PASS: str = os.environ.get("TEST_DB_PASS", "test")
