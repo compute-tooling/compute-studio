@@ -22,7 +22,7 @@ def existing_app_pr(owner, title, repo: Repo):
     return pull, ref
 
 
-def create_job(owner, title, primary_branch="hdoupe-local", build_id=None):
+def create_job(owner, title, primary_branch="production", build_id=None):
     gh = GitHub(token)
     repo = gh.repo(
         "compute-tooling", "compute-studio-publish", primary_branch=primary_branch
@@ -70,7 +70,7 @@ def job_status(
     repo_owner: str,
     repo_name: str,
     pull_request: Union[int, PullRequest],
-    primary_branch="hdoupe-local",
+    primary_branch="production",
     **kwargs,
 ):
     if isinstance(pull_request, int):
@@ -144,7 +144,7 @@ def deploy(
     repo_owner: str,
     repo_name: str,
     pull_request: Union[int, PullRequest],
-    primary_branch="hdoupe-local",
+    primary_branch="production",
     **kwargs,
 ):
     if isinstance(pull_request, int):

@@ -43,6 +43,10 @@ spec:
             - name: GITHUB_TOKEN
               value: {{ .Values.api.github_token }}
             {{ end }}
+            {{ if .Values.api.github_build_branch }}
+            - name: GITHUB_BUILD_BRANCH
+              value: {{ .Values.api.github_build_branch }}
+            {{ end }}
             - name: DB_USER
               valueFrom:
                 secretKeyRef:

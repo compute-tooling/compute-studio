@@ -9,6 +9,7 @@ from cs_workers.cicd import github as github_actions
 from fastapi.responses import JSONResponse
 from sqlalchemy.sql.functions import user
 from .. import models, schemas, dependencies as deps, security
+from ..settings import settings
 
 incluster = os.environ.get("KUBERNETES_SERVICE_HOST", False) is not False
 
@@ -40,7 +41,9 @@ async def build_done(
         raise HTTPException(status_code=404, detail="Build not found.")
 
     build_data = schemas.Build.from_orm(build).dict()
-    status = github_actions.job_status(**build_data["provider_data"])
+    status = github_actions.job_status(
+        primary_branch=settings.GITHUB_BUILD_BRANCH, **build_data["provider_data"]
+    )
     if status:
         build.provider_data = {
             "stage": status["stage"],
@@ -126,7 +129,10 @@ def create(
     db.refresh(build)
 
     pull_request = github_actions.create_job(
-        project.owner, project.title, build_id=build.id
+        project.owner,
+        project.title,
+        build_id=build.id,
+        primary_branch=settings.GITHUB_BUILD_BRANCH,
     )
 
     build.created_at = datetime.utcnow()
@@ -163,7 +169,9 @@ def get(
 
     build_data = schemas.Build.from_orm(build).dict()
 
-    status = github_actions.job_status(**build_data["provider_data"])
+    status = github_actions.job_status(
+        primary_branch=settings.GITHUB_BUILD_BRANCH, **build_data["provider_data"]
+    )
     if status:
         build.provider_data = {
             "stage": status["stage"],
@@ -208,7 +216,9 @@ def delete(
 
     build_data = schemas.Build.from_orm(build).todict()
 
-    github_actions.cancel_job(**build_data["provider_data"])
+    github_actions.cancel_job(
+        primary_branch=settings.GITHUB_BUILD_BRANCH, **build_data["provider_data"]
+    )
 
     build.provider_data["stage"] = "cancelled"
     build.status = "cancelled"

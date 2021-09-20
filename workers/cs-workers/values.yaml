@@ -24,6 +24,7 @@ api:
     - "http://api.workers.svc.cluster.local"
 
   github_token: "abc"
+  github_build_branch: "hdoupe-local"
 
 redis:
   host: "redis-master"
