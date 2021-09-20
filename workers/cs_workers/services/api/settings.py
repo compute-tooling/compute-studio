@@ -32,7 +32,7 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
 
-    PROJECT_NAMESPACE: str
+    PROJECT_NAMESPACE: Optional[str]
 
     @validator("PROJECT_NAMESPACE", pre=True)
     def get_project_namespace(cls, v: Optional[str]) -> str:
