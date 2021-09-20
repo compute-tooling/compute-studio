@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends, Body
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, dependencies as deps
+from .. import models, schemas, dependencies as deps, settings
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -40,9 +40,42 @@ def sync_projects(
     return orm_projects
 
 
-@router.get("/", response_model=List[schemas.Project], status_code=200)
+@router.get("/", response_model=schemas.PaginatedProject, status_code=200)
 def get_projects(
     db: Session = Depends(deps.get_db),
-    user: schemas.User = Depends(deps.get_current_active_user),
+    user: schemas.UserInDB = Depends(deps.get_current_active_user),
+    page: int = 0,
 ):
-    return user.projects
+    if user.is_superuser:
+        user_projects = db.query(models.Project)
+    else:
+        user_projects = db.query(models.Project).filter(
+            models.Project.user_id == user.id
+        )
+
+    results = user_projects.limit(30).offset(page)
+    total_count = results.count()
+
+    if settings.settings.WORKERS_API_HOST:
+        url = f"https://{settings.settings.WORKERS_API_HOST}"
+    else:
+        url = f"http://api.{settings.settings.NAMESPACE}.svc.cluster.local"
+
+    url += settings.settings.API_PREFIX_STR
+
+    if total_count == 30:
+        next_page = f"{url}?page={page+1}"
+    else:
+        next_page = None
+
+    if page > 0:
+        previous_page = f"{url}?page={page-1}"
+    else:
+        previous_page = None
+
+    return {
+        "count": total_count,
+        "next": next_page,
+        "previous": previous_page,
+        "results": results.all(),
+    }

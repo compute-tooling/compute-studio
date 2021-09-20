@@ -12,6 +12,8 @@ from .views import (
     DeploymentsView,
     DeploymentsDetailView,
     DeploymentsIdView,
+    BuildView,
+    BuildDetailView,
 )
 
 
@@ -23,7 +25,18 @@ urlpatterns = [
         name="deployments_id_view",
     ),
     path("api/v1/deployments/", DeploymentsView.as_view(), name="list_deployments_api"),
+    path("api/v1/builds/<int:id>/", BuildDetailView.as_view(), name="build_detail_api"),
+    path(
+        "api/v1/builds/<int:id>/promote/",
+        BuildDetailView.as_view(),
+        name="build_promote_api",
+    ),
     path("api/v1/", ProjectAPIView.as_view(), name="project_create_api"),
+    path(
+        "api/v1/<str:username>/<str:title>/builds/",
+        BuildView.as_view(),
+        name="build_create_api",
+    ),
     path(
         "api/v1/<str:username>/<str:title>/embedapprovals/",
         EmbedApprovalView.as_view(),

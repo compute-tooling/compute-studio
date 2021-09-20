@@ -53,5 +53,5 @@ spec:
             type: {{ $value.hostPath.type }}
         {{- end}}
       nodeSelector:
-        component: web
+        component: api
 {{ end }}

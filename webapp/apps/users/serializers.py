@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from webapp.apps.users.models import Project, EmbedApproval, Deployment, Tag
+from webapp.apps.users.models import Build, Project, EmbedApproval, Deployment, Tag
 
 
 class DeploymentSerializer(serializers.ModelSerializer):
@@ -172,9 +172,20 @@ class TagUpdateSerializer(serializers.Serializer):
         return attrs
 
 
+class BuildTagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Build
+        fields = (
+            "id",
+            "created_at",
+            "status",
+        )
+
+
 class TagSerializer(serializers.ModelSerializer):
     project = serializers.StringRelatedField()
     version = serializers.CharField(allow_null=True, required=False)
+    build = BuildTagSerializer(required=False, allow_null=True)
 
     class Meta:
         model = Tag
@@ -185,6 +196,7 @@ class TagSerializer(serializers.ModelSerializer):
             "cpu",
             "created_at",
             "version",
+            "build",
         )
 
         read_only = (
@@ -192,7 +204,68 @@ class TagSerializer(serializers.ModelSerializer):
             "memory",
             "cpu",
             "created_at",
+            # "build",
         )
+
+
+class BuildSerializer(serializers.ModelSerializer):
+    project = serializers.StringRelatedField()
+    tag = TagSerializer()
+
+    class Meta:
+        model = Build
+        fields = (
+            "id",
+            "project",
+            "cluster_build_id",
+            "created_at",
+            "finished_at",
+            "cancelled_at",
+            "status",
+            "provider_data",
+            "tag",
+            "failed_at_stage",
+        )
+        read_only = (
+            "created_at",
+            "finished_at",
+            "cancelled_at",
+            "failed_at_stage",
+        )
+
+
+class BuildTag(serializers.Serializer):
+    image_tag = serializers.CharField()
+    version = serializers.CharField(required=False, allow_null=True)
+
+
+class ClusterBuildSerializer(BuildSerializer):
+    instance: Build
+    tag = BuildTag()
+
+    def update(self, instance, validated_data):
+        project = self.instance.project
+        if self.validated_data.get("tag") and getattr(instance, "tag", None) is None:
+            tag, _ = Tag.objects.get_or_create(
+                project=project,
+                image_tag=validated_data["tag"]["image_tag"],
+                version=validated_data["tag"].get("version"),
+                defaults=dict(cpu=project.cpu, memory=project.memory, build=instance),
+            )
+            print("NEW TAG", tag, instance.id, tag.id, tag.version, str(tag))
+        else:
+            print("TAG EXISTS", build.tag)
+
+        validated_data.pop("tag", None)
+
+        instance.created_at = validated_data["created_at"]
+        instance.finished_at = validated_data["finished_at"]
+        instance.cancelled_at = validated_data["cancelled_at"]
+        instance.status = validated_data["status"]
+        instance.provider_data = validated_data["provider_data"]
+        instance.save()
+
+        return instance
 
 
 class EmbedApprovalSerializer(serializers.ModelSerializer):

@@ -13,6 +13,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy.sql.expression import null
+from sqlalchemy.sql.sqltypes import Date
 
 from .database import Base
 
@@ -66,14 +68,39 @@ class Project(Base):
     exp_task_time = Column(String, nullable=False)
     cpu = Column(Float)
     memory = Column(Float)
+    repo_tag = Column(String)
+    repo_url = Column(String)
 
     user = relationship("User", back_populates="projects")
+    builds = relationship("Build", back_populates="project")
 
     __table_args__ = (
         UniqueConstraint(
             "owner", "title", "user_id", name="unique_owner_title_project",
         ),
     )
+
+    class Config:
+        orm_mode = True
+        extra = "ignore"
+
+
+class Build(Base):
+    __tablename__ = "builds"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    project_id = Column(Integer, ForeignKey("projects.id"))
+    provider = Column(String, nullable=False)
+    provider_data = Column(JSON, nullable=True)
+    created_at = Column(DateTime)
+    finished_at = Column(DateTime)
+    cancelled_at = Column(DateTime)
+    failed_at_stage = Column(String)
+    status = Column(String)
+    image_tag = Column(String)
+    version = Column(String)
+
+    project = relationship("Project", back_populates="builds")
 
     class Config:
         orm_mode = True

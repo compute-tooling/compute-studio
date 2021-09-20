@@ -30,6 +30,7 @@ urlpatterns = [
     path("api-token-auth/", rf_views.obtain_auth_token),
     path("", include("webapp.apps.pages.urls")),
     path("apps/", include("webapp.apps.publish.urls")),
+    path("projects/", include("webapp.apps.publish.urls")),
     path("publish/", include("webapp.apps.publish.urls")),
     path("new/", publishviews.ProjectView.as_view(), name="new_project"),
     path("users/", include("webapp.apps.users.urls")),
@@ -78,28 +79,43 @@ urlpatterns = [
     ),
     path(
         "<str:username>/<str:title>/settings/about/",
-        publishviews.ProjectSettingsView.as_view(),
+        publishviews.ProjectReactView.as_view(),
         name="app_settings_about",
     ),
     path(
         "<str:username>/<str:title>/settings/configure/",
-        publishviews.ProjectSettingsView.as_view(),
+        publishviews.ProjectReactView.as_view(),
         name="app_settings_config",
     ),
     path(
         "<str:username>/<str:title>/settings/environment/",
-        publishviews.ProjectSettingsView.as_view(),
+        publishviews.ProjectReactView.as_view(),
         name="app_settings_env",
     ),
     path(
         "<str:username>/<str:title>/settings/access/",
-        publishviews.ProjectSettingsView.as_view(),
+        publishviews.ProjectReactView.as_view(),
         name="app_settings_access",
     ),
     path(
         "<str:username>/<str:title>/settings/",
-        publishviews.ProjectSettingsView.as_view(),
+        publishviews.ProjectReactView.as_view(),
         name="app_settings",
+    ),
+    path(
+        "<str:username>/<str:title>/builds/<int:id>/",
+        publishviews.BuildDetailReactView.as_view(),
+        name="build_detail_page",
+    ),
+    path(
+        "<str:username>/<str:title>/builds/new/",
+        publishviews.ProjectReactView.as_view(),
+        name="new_build_page",
+    ),
+    path(
+        "<str:username>/<str:title>/builds/",
+        publishviews.ProjectReactView.as_view(),
+        name="build_history_page",
     ),
     # add project URL's here
     path("<str:username>/<str:title>/", include("webapp.apps.comp.urls")),
