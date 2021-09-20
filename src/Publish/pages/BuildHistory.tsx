@@ -19,7 +19,7 @@ const BuildStatus: React.FC<{ status: string }> = ({ status }) => {
     case "failure":
       return (
         <Tip id="build-status" tip="Failure">
-          <i className="fas fa-exclamation-circle text-danger"></i>
+          <i className="fas fa-times-circle text-danger"></i>
         </Tip>
       );
     case "cancelled":
@@ -31,7 +31,7 @@ const BuildStatus: React.FC<{ status: string }> = ({ status }) => {
     default:
       return (
         <Tip id="build-status" tip="Running">
-          <i className="fas fa-clock text-warning"></i>
+          <i className="fas fa-running text-warning"></i>
         </Tip>
       );
   }
@@ -39,7 +39,7 @@ const BuildStatus: React.FC<{ status: string }> = ({ status }) => {
 
 class BuildHistory extends React.Component<
   { match: Match; section?: ProjectSettingsSection },
-  { project?: Project; accessStatus?: AccessStatus; builds?: Build[] }
+  { project?: Project; accessStatus?: AccessStatus; builds?: Build[]; errorMessage?: string }
 > {
   api: API;
   constructor(props) {
@@ -61,6 +61,11 @@ class BuildHistory extends React.Component<
   async startNewBuild() {
     const { username, app_name, build_id } = this.props.match.params;
     const build = await this.api.createBuild({});
+    if ((build as any).errors) {
+      this.setState({ errorMessage: (build as any).errors });
+      window.scrollTo(0, 0);
+      return;
+    }
     window.location.replace(`/${username}/${app_name}/builds/${build.id}/`);
   }
 
@@ -99,6 +104,12 @@ class BuildHistory extends React.Component<
                 <Card.Title>
                   <AppTitle project={this.state.project} />
                 </Card.Title>
+                {this.state.errorMessage && (
+                    <div className="alert alert-danger" role="alert">
+                      {this.state.errorMessage}
+                    </div>
+                  )}
+
                 <Table>
                   <thead>
                     <tr>
@@ -109,27 +120,29 @@ class BuildHistory extends React.Component<
                       <th>Version</th>
                     </tr>
                   </thead>
-                  {this.state.builds.map((build, index) => (
-                    <tr key={index}>
-                      <th>
-                        <a href={`/${build.project}/builds/${build.id}/`}>
-                          <i className="fas fa-link" />
-                        </a>
-                      </th>
-                      <th>{build.created_at && moment(build.created_at).format("lll")}</th>
-                      <th>
-                        <BuildStatus status={build.status} />
-                      </th>
-                      <th>
-                        {build.tag?.image_tag ? (
-                          <code>{build.tag.image_tag.slice(0, 6)}</code>
-                        ) : (
-                          "N/A"
-                        )}
-                      </th>
-                      <th>{build.tag?.version || "N/A"}</th>
-                    </tr>
-                  ))}
+                  <tbody>
+                    {this.state.builds.map((build, index) => (
+                      <tr key={index}>
+                        <th>
+                          <a href={`/${build.project}/builds/${build.id}/`}>
+                            <i className="fas fa-link" />
+                          </a>
+                        </th>
+                        <th>{build.created_at && moment(build.created_at).format("lll")}</th>
+                        <th>
+                          <BuildStatus status={build.status} />
+                        </th>
+                        <th>
+                          {build.tag?.image_tag ? (
+                            <code>{build.tag.image_tag.slice(0, 6)}</code>
+                          ) : (
+                            "N/A"
+                          )}
+                        </th>
+                        <th>{build.tag?.version || "N/A"}</th>
+                      </tr>
+                    ))}
+                  </tbody>
                 </Table>
                 <Button variant="success" onClick={async () => await this.startNewBuild()}>
                   New Build

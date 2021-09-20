@@ -32,7 +32,8 @@ const StageComponent: React.FC<{
   label: string;
   currentStage: string;
   logItem?: LogItem;
-}> = ({ name, label, currentStage, logItem }) => {
+  failed_at_stage?: string;
+}> = ({ name, label, currentStage, logItem, failed_at_stage }) => {
   const [showLogs, setShowLogs] = React.useState(false);
   return (
     <ListGroupItem className="w-100">
@@ -45,14 +46,15 @@ const StageComponent: React.FC<{
         <Col className="col-1">
           {name === currentStage && (
             <Tip id="build-status" tip="Running">
-              <i className="fas fa-clock text-warning"></i>
+              <i className="fas fa-running text-warning"></i>
             </Tip>
           )}
-          {isBefore(name, currentStage) && !["cancelled", "failure"].includes(currentStage) && (
+          {isBefore(name, currentStage) && failed_at_stage !== name && (
             <Tip id="build-status" tip="Success">
               <i className="fas fa-check-circle text-success"></i>
             </Tip>
           )}
+
         </Col>
         <Col className="col-8">
           <h3>{label}</h3>
@@ -158,7 +160,16 @@ class BuildPage extends React.Component<
             <Col>
               <Card.Body>
                 <Card.Title>
-                  <AppTitle project={this.state.project} />
+                  <Row className="justify-conent-between align-items-center">
+                    <Col className="col-9">
+                      <AppTitle project={this.state.project} />
+                    </Col>
+                    <Col className="col-3">
+                      <a href={`/${username}/${app_name}/builds/`}>
+                        <i className="fas fa-history"></i> Build History
+                      </a>
+                    </Col>
+                  </Row>
                 </Card.Title>
                 {build_id ? (
                   <div>
@@ -170,10 +181,7 @@ class BuildPage extends React.Component<
                         </pre>
                       </details>
                     </summary> */}
-                    <p>
-                      Started at{" "}
-                      {moment(build.created_at).format("lll")}.
-                    </p>
+                    <p>Started at {moment(build.created_at).format("lll")}.</p>
                     {build.finished_at && (
                       <p>
                         Completed in{" "}
@@ -182,7 +190,8 @@ class BuildPage extends React.Component<
                             new Date(build.finished_at).getTime() -
                               new Date(build.created_at).getTime()
                           )
-                          .humanize()}.
+                          .humanize()}
+                        .
                       </p>
                     )}
                     {build.status === "success" && (
@@ -201,6 +210,7 @@ class BuildPage extends React.Component<
                             logItem={(build.provider_data?.logs as Array<LogItem>)?.find(
                               item => item.stage === "build"
                             )}
+                            failed_at_stage={build.failed_at_stage}
                           />
                           <StageComponent
                             name="testing"
@@ -209,6 +219,7 @@ class BuildPage extends React.Component<
                             logItem={(build.provider_data?.logs as Array<LogItem>)?.find(
                               item => item.stage === "test"
                             )}
+                            failed_at_stage={build.failed_at_stage}
                           />
                           <StageComponent
                             name="pushing"
@@ -217,6 +228,7 @@ class BuildPage extends React.Component<
                             logItem={(build.provider_data?.logs as Array<LogItem>)?.find(
                               item => item.stage === "push"
                             )}
+                            failed_at_stage={build.failed_at_stage}
                           />
                         </>
                       )}
@@ -228,7 +240,7 @@ class BuildPage extends React.Component<
                         </Button>
                       )}
                       {build.status === "success" && (
-                        <Button onClick={async () => await this.promoteTag()}>Make it live!</Button>
+                        <Button onClick={async () => await this.promoteTag()}>Release</Button>
                       )}
                       {build.status === "failure" && (
                         <Button onClick={async () => await this.startNewBuild()}>

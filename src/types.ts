@@ -211,6 +211,7 @@ export interface Build {
   status: string;
   provider_data: any;
   tag: Tag;
+  failed_at_stage?: string;
 }
 
 export interface MiniSimulation {
