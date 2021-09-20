@@ -142,9 +142,15 @@ class Manager(BaseManager):
         self.projects = {}
         if self.cs_cluster_url:
             # from cs cluster
-            projects = get_projects_from_cluster(
+            all_projects = get_projects_from_cluster(
                 self.cs_cluster_url, self.cs_cluster_username, self.cs_cluster_password
             )
+            projects = {}
+            if models:
+                for owner, title in models:
+                    projects[f"{owner}/{title}"] = all_projects[f"{owner}/{title}"]
+            else:
+                projects = all_projects
         else:
             # from cs webapp
             projects = self.config.projects(models=models)
