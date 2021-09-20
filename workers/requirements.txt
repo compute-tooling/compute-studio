@@ -12,3 +12,4 @@ pyjwt
 uvicorn[standard]
 fastapi
 pydantic[email,dotenv]
+pytz
