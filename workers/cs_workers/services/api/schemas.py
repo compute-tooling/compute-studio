@@ -2,9 +2,14 @@ from datetime import datetime
 from typing import List, Optional, Dict, Optional, Any
 from enum import Enum
 import uuid
+from cs_workers.services.api.database import Base
 
 from pydantic import BaseModel, Json  # pylint: disable=no-name-in-module
-from pydantic.networks import EmailStr, AnyHttpUrl  # pylint: disable=no-name-in-module
+from pydantic.networks import EmailStr, AnyHttpUrl
+from sqlalchemy.sql.sqltypes import (
+    DateTime,
+    String,
+)  # pylint: disable=no-name-in-module
 
 
 class JobBase(BaseModel):
@@ -85,6 +90,7 @@ class User(UserInDBBase):
 class UserInDB(UserInDBBase):
     id: Optional[int] = None
     hashed_password: str
+    is_superuser: Optional[bool]
 
 
 class Token(BaseModel):
@@ -113,6 +119,8 @@ class ProjectSync(BaseModel):
     exp_task_time: int
     cpu: float
     memory: float
+    repo_tag: Optional[str]
+    repo_url: Optional[str]
 
 
 class Project(ProjectSync):
@@ -121,6 +129,13 @@ class Project(ProjectSync):
     class Config:
         orm_mode = True
         extra = "ignore"
+
+
+class PaginatedProject(BaseModel):
+    count: int
+    next: Optional[str]
+    previous: Optional[str]
+    results: List[Project]
 
 
 class DeploymentCreate(BaseModel):
@@ -147,3 +162,49 @@ class DeploymentDelete(BaseModel):
     deployment: Deleted
     svc: Deleted
     ingressroute: Deleted
+
+
+class GithubLogs(BaseModel):
+    cmd: str
+    logs: str
+    stage: str
+
+
+class GithubProviderData(BaseModel):
+    stage: str
+    logs: Optional[List[GithubLogs]]
+    repo_owner: str
+    repo_name: str
+    pull_request: int
+
+
+class Build(BaseModel):
+    id: int
+    project_id: int
+    provider: str = "github"
+    provider_data: Optional[GithubProviderData]
+    created_at: datetime
+    finished_at: Optional[datetime]
+    cancelled_at: Optional[datetime]
+    status: str
+    image_tag: Optional[str]
+    version: Optional[str]
+
+    class Config:
+        orm_mode = True
+
+
+class BuildArtifact(BaseModel):
+    image_tag: Optional[str]
+    version: Optional[str]
+
+
+class WebappBuildCallback(BaseModel):
+    tag: dict
+    project: str
+    cluster_build_id: int
+    provider_data: Optional[GithubProviderData]
+    status: str
+    created_at: datetime
+    finished_at: Optional[datetime]
+    cancelled_at: Optional[datetime]

@@ -1,5 +1,6 @@
 import json
 import re
+from django.http.response import HttpResponseNotFound
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
@@ -28,9 +29,10 @@ from rest_framework.pagination import PageNumberPagination
 # from webapp.settings import DEBUG
 
 from webapp.settings import USE_STRIPE
-from webapp.apps.users.auth import ClusterAuthentication
+from webapp.apps.users.auth import ClusterAuthentication, ClientOAuth2Authentication
 from webapp.apps.users.exceptions import PrivateAppException
 from webapp.apps.users.models import (
+    Build,
     Project,
     Cluster,
     Deployment,
@@ -43,6 +45,8 @@ from webapp.apps.users.models import (
 from webapp.apps.users.permissions import StrictRequiresActive, RequiresActive
 
 from webapp.apps.users.serializers import (
+    BuildSerializer,
+    ClusterBuildSerializer,
     ProjectSerializer,
     ProjectWithVersionSerializer,
     TagSerializer,
@@ -135,13 +139,24 @@ class ProjectDetailView(GetProjectMixin, View):
         return render(request, self.template_name, context={"object": self.object})
 
 
-class ProjectSettingsView(GetProjectMixin, View):
+class ProjectReactView(GetProjectMixin, View):
     template_name = "publish/publish.html"
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object(**kwargs)
         if not self.object.has_write_access(request.user):
             raise PermissionDenied()
+        return render(request, self.template_name, context={"object": self.object})
+
+
+class BuildDetailReactView(GetProjectMixin, View):
+    template_name = "publish/publish.html"
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object(**kwargs)
+        if not self.object.has_write_access(request.user):
+            raise PermissionDenied()
+        get_object_or_404(Build, project=self.object, pk=kwargs["id"])
         return render(request, self.template_name, context={"object": self.object})
 
 
@@ -284,6 +299,7 @@ class TagsAPIView(GetProjectMixin, APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         data = serializer.validated_data
+
         if data.get("staging_tag") is not None:
             tag, _ = Tag.objects.get_or_create(
                 project=project,
@@ -362,6 +378,137 @@ class ProfileModelsAPIView(generics.ListAPIView):
             listed=True,
             pk__in=projects_with_access(self.request.user),
         )
+
+
+class BuildView(generics.ListCreateAPIView):
+    permission_classes = (RequiresActive,)
+    authentication_classes = (
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+    queryset = Build.objects.all()
+    serializer_class = BuildSerializer
+
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+    search_fields = ["status", "status__in"]
+    ordering_fields = ["created_at", "project__title", "project__owner"]
+    ordering = ["-created_at"]
+
+    def get_project(self, username, title, **kwargs):
+        return get_project_or_404(
+            Project.objects.all(),
+            user=self.request.user,
+            title__iexact=title,
+            owner__user__username__iexact=username,
+        )
+
+    def post(self, request, *args, **kwargs):
+        project = self.get_project(**kwargs)
+        if project.builds.filter(
+            ~Q(status__in=["success", "failure", "cancelled"])
+        ).count():
+            return Response({"errors": "Only one build can be run at a time."})
+        build = Build.objects.create(project=project)
+        build.start()
+        return Response(
+            BuildSerializer(instance=build).data, status=status.HTTP_201_CREATED
+        )
+
+    def get(self, request, *args, **kwargs):
+        project = self.get_project(**kwargs)
+        queryset = self.queryset.filter(project=project)
+        queryset = self.filter_queryset(queryset)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class BuildDetailView(APIView):
+    permission_classes = (RequiresActive,)
+    authentication_classes = (
+        ClientOAuth2Authentication,
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    def is_using_cluster_id(self):
+        return self.request.query_params.get("cluster_id", None) == "true"
+
+    def get_object(self, **kwargs):
+        query_kwargs = {}
+        query_params = self.request.query_params
+        if self.is_using_cluster_id():
+            query_kwargs["cluster_build_id"] = kwargs["id"]
+        else:
+            query_kwargs["id"] = kwargs["id"]
+
+        return get_object_or_404(
+            Build.objects.prefetch_related("project"), **query_kwargs
+        )
+
+    def get(self, request, *args, **kwargs):
+        build = self.get_object(**kwargs)
+        if not build.project.has_write_access(request.user):
+            raise Http404("Build not found.")
+        build.refresh_status(
+            force_reload=request.query_params.get("force_reload", None) == "true"
+        )
+        build.refresh_from_db()
+        return Response(BuildSerializer(instance=build).data, status=status.HTTP_200_OK)
+
+    def put(self, request, *args, **kwargs):
+        build = self.get_object(**kwargs)
+        if not build.project.has_write_access(request.user):
+            raise Http404("Build not found.")
+
+        if self.is_using_cluster_id():
+            serializer = ClusterBuildSerializer(instance=build, data=request.data)
+        else:
+            serializer = BuildSerializer(instance=build, data=request.data)
+
+        if serializer.is_valid():
+            instance = serializer.save()
+            instance.refresh_from_db()
+            return Response(
+                BuildSerializer(instance=instance).data, status=status.HTTP_200_OK
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TagPromoteView(APIView):
+    permission_classes = (RequiresActive,)
+    authentication_classes = (
+        ClientOAuth2Authentication,
+        SessionAuthentication,
+        BasicAuthentication,
+        TokenAuthentication,
+    )
+
+    def post(self, request, *args, **kwargs):
+        build = self.get_object(**kwargs)
+        if not build.project.has_write_access(request.user):
+            raise Http404("Build not found.")
+
+        if getattr(build, "tag", None) is None:
+            return Response(
+                {"errors": "Build not successful and cannot be promoted."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        build.project.latest_tag = build.tag
+        build.project.save()
+
+        return Response(BuildSerializer(instance=build).data, status=status.HTTP_200_OK)
+
+    def get(self, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class EmbedApprovalView(GetProjectMixin, APIView):

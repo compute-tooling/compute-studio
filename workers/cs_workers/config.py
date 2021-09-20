@@ -67,7 +67,7 @@ class ModelConfig:
 
         return self._cluster_user
 
-    def projects(self, models=None):
+    def projects(self, models=None) -> dict:
         if self.rclient is not None:
             projects = self.rclient.hget("projects", self.cluster_user)
             if projects is None:

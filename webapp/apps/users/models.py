@@ -676,6 +676,86 @@ class Project(models.Model):
         )
 
 
+class Build(models.Model):
+    objects: models.Manager
+
+    BUILD_STATUSES = (
+        ("created", "Created"),
+        ("building", "Building"),
+        ("testing", "Testing"),
+        ("pushing", "Pushing"),
+        ("cancelled", "Cancelled"),
+        ("success", "Success"),
+        ("failure", "Failure"),
+    )
+
+    project = models.ForeignKey(
+        "Project", on_delete=models.SET_NULL, related_name="builds", null=True
+    )
+    cluster = models.ForeignKey(
+        "Cluster", on_delete=models.SET_NULL, related_name="builds", null=True,
+    )
+    cluster_build_id = models.IntegerField(null=True)
+    created_at = models.DateTimeField(null=True)
+    finished_at = models.DateTimeField(null=True)
+    cancelled_at = models.DateTimeField(null=True)
+    provider_data = JSONField(null=True)
+    status = models.CharField(null=True, max_length=32, choices=BUILD_STATUSES,)
+    failed_at_stage = models.CharField(
+        null=True, max_length=32, choices=BUILD_STATUSES,
+    )
+    tag = models.OneToOneField(
+        "Tag", on_delete=models.SET_NULL, related_name="build", null=True
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cluster", "cluster_build_id"], name="unique_cluster_build"
+            )
+        ]
+
+    def start(self):
+        cluster: Cluster = self.project.cluster
+        resp = requests.post(
+            f"{cluster.url}{cluster.path_prefix}/builds/{self.project}/",
+            json={},
+            headers=cluster.headers(),
+        )
+        resp.raise_for_status()
+
+        data = resp.json()
+        print("data", data)
+        self.created_at = data["created_at"]
+        # self.status = data["status"]
+        self.cluster_build_id = data["id"]
+        self.save()
+        return data
+
+    def refresh_status(self, force_reload=False):
+        cluster: Cluster = self.project.cluster
+        if not force_reload and self.status in ("success", "failure"):
+            return
+        resp = requests.get(
+            f"{cluster.url}{cluster.path_prefix}/builds/{self.cluster_build_id}/",
+            json={},
+            headers=cluster.headers(),
+        )
+        resp.raise_for_status()
+        data = resp.json()
+
+        self.created_at = data["created_at"]
+        self.cancelled_at = data["cancelled_at"]
+        self.finished_at = data["finished_at"]
+        self.failed_at_stage = data.get("failed_at_stage")
+        self.status = data["status"]
+
+        # TODO: Store abbreviated version of logs.
+        self.provider_data = data["provider_data"]
+        self.save()
+        return data
+
+
 class Tag(models.Model):
     objects: models.Manager
 

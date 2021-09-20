@@ -1,8 +1,9 @@
+from cs_workers.services.api.routers import builds
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from .settings import settings
-from .routers import users, login, projects, jobs, deployments
+from .routers import users, login, projects, jobs, deployments, builds
 
 app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_PREFIX_STR}/openapi.json",
@@ -23,3 +24,4 @@ app.include_router(users.router, prefix=settings.API_PREFIX_STR)
 app.include_router(projects.router, prefix=settings.API_PREFIX_STR)
 app.include_router(jobs.router, prefix=settings.API_PREFIX_STR)
 app.include_router(deployments.router, prefix=settings.API_PREFIX_STR)
+app.include_router(builds.router, prefix=settings.API_PREFIX_STR)

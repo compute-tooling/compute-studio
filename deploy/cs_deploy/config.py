@@ -52,6 +52,9 @@ def load_workers_config():
         "VIZ_HOST",
         "CS_APPBASE_TAG",
         "CS_CRYPT_KEY",
+        "CS_CLUSTER_URL",
+        "CS_CLUSTER_USERNAME",
+        "CS_CLUSTER_PASSWORD",
     ] | user_config.keys():
         if os.environ.get(var):
             config[var] = os.environ.get(var)
