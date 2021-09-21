@@ -97,23 +97,22 @@ def job_status(
 
     stage = "created"
     failed_at_stage = None
-    for step in job.steps:
-        print("checking step", step.name, step.status)
-        if step.status == "failure":
-            stage = "failure"
-            failed_at_stage = step.name
-            break
-        if step.started_at and not step.completed_at:
-            if step.name == "Build":
-                stage = "building"
-            elif step.name == "Test":
-                stage = "testing"
-            elif step.name == "Push":
-                stage = "pushing"
-            elif step.name == "Callback":
-                stage = "success"
-                break
 
+    step_map = {"Build": "building", "Test": "testing", "Push": "staging"}
+    for step in job.steps:
+        print("checking step", step.name, step.status, step.conclusion)
+        if step.name not in step_map:
+            continue
+
+        if step.status == "in_progress":
+            stage = step_map[step.name]
+            break
+        elif step.conclusion == "failure":
+            stage = "failure"
+            failed_at_stage = step_map[step.name]
+            break
+
+    # likely redundant
     if wf.conclusion:
         stage = wf.conclusion
 
