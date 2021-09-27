@@ -189,6 +189,7 @@ class Build(BaseModel):
     status: str
     image_tag: Optional[str]
     version: Optional[str]
+    failed_at_stage: Optional[str]
 
     class Config:
         orm_mode = True
@@ -208,3 +209,4 @@ class WebappBuildCallback(BaseModel):
     created_at: datetime
     finished_at: Optional[datetime]
     cancelled_at: Optional[datetime]
+    failed_at_stage: Optional[str]

@@ -49,12 +49,17 @@ const StageComponent: React.FC<{
               <i className="fas fa-running text-warning"></i>
             </Tip>
           )}
-          {isBefore(name, currentStage) && failed_at_stage !== name && (
+          {isBefore(name, currentStage) && (!failed_at_stage || isBefore(name, failed_at_stage)) && (
             <Tip id="build-status" tip="Success">
               <i className="fas fa-check-circle text-success"></i>
             </Tip>
           )}
 
+          {failed_at_stage === name && (
+            <Tip id="build-status" tip="Failure">
+              <i className="fas fa-times-circle text-danger"></i>
+            </Tip>
+          )}
         </Col>
         <Col className="col-8">
           <h3>{label}</h3>

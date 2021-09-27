@@ -105,10 +105,10 @@ class BuildHistory extends React.Component<
                   <AppTitle project={this.state.project} />
                 </Card.Title>
                 {this.state.errorMessage && (
-                    <div className="alert alert-danger" role="alert">
-                      {this.state.errorMessage}
-                    </div>
-                  )}
+                  <div className="alert alert-danger" role="alert">
+                    {this.state.errorMessage}
+                  </div>
+                )}
 
                 <Table>
                   <thead>
