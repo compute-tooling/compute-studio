@@ -245,11 +245,7 @@ class ClusterBuildSerializer(BuildSerializer):
 
     def update(self, instance, validated_data):
         project = self.instance.project
-        if (
-            self.validated_data.get("tag")
-            and getattr(instance, "tag", None) is None
-            and validated_data["status"] == "success"
-        ):
+        if self.validated_data.get("tag") and getattr(instance, "tag", None) is None:
             tag, _ = Tag.objects.get_or_create(
                 project=project,
                 image_tag=validated_data["tag"]["image_tag"],
@@ -258,7 +254,7 @@ class ClusterBuildSerializer(BuildSerializer):
             )
             print("NEW TAG", tag, instance.id, tag.id, tag.version, str(tag))
         else:
-            print("TAG EXISTS", build.tag)
+            print("TAG EXISTS", instance.tag)
 
         validated_data.pop("tag", None)
 
