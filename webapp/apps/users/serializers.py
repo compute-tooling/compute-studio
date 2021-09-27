@@ -245,7 +245,11 @@ class ClusterBuildSerializer(BuildSerializer):
 
     def update(self, instance, validated_data):
         project = self.instance.project
-        if self.validated_data.get("tag") and getattr(instance, "tag", None) is None:
+        if (
+            self.validated_data.get("tag")
+            and getattr(instance, "tag", None) is None
+            and validated_data["status"] == "success"
+        ):
             tag, _ = Tag.objects.get_or_create(
                 project=project,
                 image_tag=validated_data["tag"]["image_tag"],
@@ -263,6 +267,7 @@ class ClusterBuildSerializer(BuildSerializer):
         instance.cancelled_at = validated_data["cancelled_at"]
         instance.status = validated_data["status"]
         instance.provider_data = validated_data["provider_data"]
+        instance.failed_at_stage = validated_data.get("failed_at_stage")
         instance.save()
 
         return instance
