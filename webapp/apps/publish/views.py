@@ -320,6 +320,19 @@ class TagsAPIView(GetProjectMixin, APIView):
             )
             project.latest_tag = tag
 
+            for deployment in project.deployments.filter(
+                status__in=["creating", "running"]
+            ):
+                try:
+                    deployment.delete_deployment()
+                except Exception as e:
+                    print(
+                        "Exception when deleting deployment",
+                        deployment.public_name,
+                        project,
+                        e,
+                    )
+
         project.save()
 
         return Response(
