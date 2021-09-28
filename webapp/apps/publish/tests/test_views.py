@@ -381,13 +381,20 @@ class TestPublishViews:
             else:
                 assert "sim_count" not in project and "user_count" not in project
 
-    def test_tags_api(self, api_client, test_models, visibility_params):
+    def test_tags_api(
+        self,
+        api_client,
+        test_models,
+        visibility_params,
+        mock_deployments_requests_to_cluster,
+    ):
         owner, is_public = visibility_params
         prof = Profile.objects.get(user__username="comp-api-user")
         api_client.force_login(prof.user)
 
         project = test_models[0].project
         project.is_public = is_public
+        project.tech = "dash"
         project.save()
         assert project.has_write_access(prof.user)
 
@@ -400,6 +407,10 @@ class TestPublishViews:
         assert resp.status_code == 200
         project.refresh_from_db()
         assert project.latest_tag == Tag.objects.get(project=project, image_tag="v5")
+
+        resp = api_client.get(f"/{project.owner}/{project.title}/viz/")
+        assert resp.status_code == 200
+        assert project.deployments.filter(status="creating").count() == 1
 
         resp = api_client.post(
             f"/apps/api/v1/{project.owner}/{project.title}/tags/",
@@ -422,6 +433,7 @@ class TestPublishViews:
         project.refresh_from_db()
         assert project.staging_tag is None
         assert project.latest_tag == Tag.objects.get(project=project, image_tag="v6")
+        assert project.deployments.filter(status="terminated").count() == 1
 
         resp = api_client.post(
             f"/apps/api/v1/{project.owner}/{project.title}/tags/",
