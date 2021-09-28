@@ -318,20 +318,22 @@ class TagsAPIView(GetProjectMixin, APIView):
                 version=data.get("version"),
                 defaults=dict(cpu=project.cpu, memory=project.memory),
             )
+            previous_tag = project.latest_tag
             project.latest_tag = tag
 
-            for deployment in project.deployments.filter(
-                status__in=["creating", "running"]
-            ):
-                try:
-                    deployment.delete_deployment()
-                except Exception as e:
-                    print(
-                        "Exception when deleting deployment",
-                        deployment.public_name,
-                        project,
-                        e,
-                    )
+            if previous_tag:
+                for deployment in project.deployments.filter(
+                    status__in=["creating", "running"], tag=previous_tag
+                ):
+                    try:
+                        deployment.delete_deployment()
+                    except Exception as e:
+                        print(
+                            "Exception when deleting deployment",
+                            deployment.public_name,
+                            project,
+                            e,
+                        )
 
         project.save()
 
