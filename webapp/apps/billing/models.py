@@ -11,7 +11,6 @@ import pytz
 from django.db import models, IntegrityError
 from django.db.models import Q
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
 from django.utils import timezone
 
 from webapp.settings import USE_STRIPE, DEBUG
@@ -61,7 +60,7 @@ class Customer(models.Model):
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default=USD)
     delinquent = models.BooleanField(default=False)
     default_source = models.TextField(blank=True, null=True)
-    metadata = JSONField()
+    metadata = models.JSONField()
 
     objects = CustomerManager()
 
@@ -268,7 +267,7 @@ class Product(models.Model):
     stripe_id = models.CharField(max_length=255, unique=True)
     project = models.OneToOneField("users.Project", null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
-    metadata = JSONField()
+    metadata = models.JSONField()
 
     @staticmethod
     def create_stripe_object(name):
@@ -336,7 +335,7 @@ class Plan(models.Model):
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default=USD)
     interval = models.CharField(max_length=5, choices=INTERVAL_CHOICES, default=MONTH)
     livemode = models.BooleanField(default=False)
-    metadata = JSONField()
+    metadata = models.JSONField()
     nickname = models.CharField(max_length=255)
     product = models.ForeignKey(
         Product, null=True, on_delete=models.CASCADE, related_name="plans"
@@ -414,7 +413,7 @@ class Subscription(models.Model):
     )
     plans = models.ManyToManyField(Plan, related_name="subscriptions")
     livemode = models.BooleanField(default=False)
-    metadata = JSONField()
+    metadata = models.JSONField()
     cancel_at_period_end = models.BooleanField(default=False, null=True)
     current_period_start = models.DateTimeField(null=True, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
@@ -571,7 +570,7 @@ class SubscriptionItem(models.Model):
 class Event(models.Model):
     stripe_id = models.CharField(max_length=255, unique=True)
     created = models.DateTimeField()
-    data = JSONField()
+    data = models.JSONField()
     livemode = models.BooleanField(default=False)
     # pending_webhooks = models.IntegerField()
     request = models.CharField(max_length=255)
@@ -579,7 +578,7 @@ class Event(models.Model):
     customer = models.ForeignKey(
         Customer, null=True, on_delete=models.CASCADE, related_name="customer"
     )
-    metadata = JSONField()
+    metadata = models.JSONField()
 
     @staticmethod
     def construct(stripe_event, customer=None, invoice=None):

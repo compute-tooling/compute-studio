@@ -14,7 +14,6 @@ from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.core.mail import EmailMessage, send_mail
 from django.urls import reverse
-from django.contrib.postgres.fields import ArrayField, JSONField
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.utils import timezone
@@ -141,7 +140,11 @@ class Profile(models.Model):
             res = (
                 sims.values(month=TruncMonth("creation_date"))
                 .annotate(
-                    effective=Case(When(run_cost=0.0, then=0.01), default=F("run_cost"))
+                    effective=Case(
+                        When(run_cost=0.0, then=0.01),
+                        default=F("run_cost"),
+                        output_field=models.FloatField(),
+                    )
                 )
                 .annotate(Sum("effective"))
             )
@@ -699,7 +702,7 @@ class Build(models.Model):
     created_at = models.DateTimeField(null=True)
     finished_at = models.DateTimeField(null=True)
     cancelled_at = models.DateTimeField(null=True)
-    provider_data = JSONField(null=True)
+    provider_data = models.JSONField(null=True)
     status = models.CharField(null=True, max_length=32, choices=BUILD_STATUSES,)
     failed_at_stage = models.CharField(
         null=True, max_length=32, choices=BUILD_STATUSES,

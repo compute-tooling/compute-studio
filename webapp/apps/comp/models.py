@@ -11,18 +11,14 @@ from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.db import IntegrityError, transaction
 from django.http import Http404
-from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils import timezone
-from django.contrib.postgres.fields import JSONField as JSONBField
-from django.contrib.auth.models import Group
+from django.db.models import JSONField as JSONBField
 from django.urls import reverse
 from django.utils import timezone
 from django.db import transaction
 
-from guardian.shortcuts import assign_perm, remove_perm, get_perms, get_users_with_perms
-
-import cs_storage
+from guardian.shortcuts import assign_perm, remove_perm, get_perms
 
 from webapp.settings import HAS_USAGE_RESTRICTIONS, USE_STRIPE, FREE_PRIVATE_SIMS
 
@@ -45,6 +41,12 @@ ANON_BEFORE = timezone.make_aware(datetime.datetime(2020, 1, 16, 23, 59, 59), ut
 class JSONField(JSONBField):
     def db_type(self, connection):
         return "json"
+
+    def from_db_value(self, value, *args):
+        if isinstance(value, dict):
+            return value
+        else:
+            return super().from_db_value(value, *args)
 
 
 class ModelConfigManager(models.Manager):
