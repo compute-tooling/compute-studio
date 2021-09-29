@@ -1695,9 +1695,9 @@ class TestDeployments:
             resp = client.get(f"/{viz}/embed/test/")
 
         assert resp.status_code == 200
-        assert resp._headers["content-security-policy"] == (
-            "Content-Security-Policy",
-            "frame-ancestors http://embed.compute.studio",
+        assert (
+            resp.headers["content-security-policy"]
+            == "frame-ancestors http://embed.compute.studio"
         )
 
         resp = client.get((f"/{viz}/embed/doesnotexist/"))

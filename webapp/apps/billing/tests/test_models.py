@@ -76,7 +76,7 @@ class TestStripeModels:
         create_three_month_pro_subscription(user)
 
         now = datetime.utcnow().replace(tzinfo=pytz.UTC)
-        if now.month < 9:
+        if now.month <= 9:
             three_months = now.replace(month=now.month + 3)
         else:
             three_months = now.replace(year=now.year + 1, month=now.month + 3 - 12)
