@@ -54,6 +54,8 @@ HAS_USAGE_RESTRICTIONS = (
 
 COMPUTE_PRICING = {"cpu": 0.021811, "memory": 0.002923}
 
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
 
 def get_salt(env_var, dev_value):
     salt = os.environ.get(env_var, None)

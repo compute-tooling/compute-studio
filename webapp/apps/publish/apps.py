@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class PublishConfig(AppConfig):
-    name = "publish"
+    name = "webapp.apps.publish"
