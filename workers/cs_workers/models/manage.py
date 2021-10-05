@@ -147,7 +147,8 @@ class Manager(BaseManager):
             )
             projects = {}
             if models:
-                for owner, title in models:
+                for owner_title in models:
+                    owner, title = parse_owner_title(owner_title)
                     projects[f"{owner}/{title}"] = all_projects[f"{owner}/{title}"]
             else:
                 projects = all_projects
@@ -377,8 +378,12 @@ class Manager(BaseManager):
 
                 container.reload()
                 exit_status = container.wait()
-                if exit_status["StatusCode"] == 1:
-                    raise RuntimeError("Tests failed with exit status 1.")
+
+                if exit_status["StatusCode"] != 0:
+                    raise RuntimeError(
+                        f"Tests failed with exit status {exit_status['StatusCode']}."
+                    )
+
         finally:
             container.reload()
             if container.status != "exited":
