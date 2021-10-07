@@ -10,11 +10,17 @@ from .logs import parse_logs
 token = os.environ.get("GITHUB_TOKEN")
 
 
-def existing_app_pr(owner, title, repo: Repo):
+def existing_app_pr(owner, title, repo: Repo, base_branch: str):
     pull = None
     ref = None
     for open_pull in repo.pull_requests(state="open"):
-        if f"{owner}/{title}" in open_pull.title:
+        if open_pull.base is not None:
+            pull_base_branch = open_pull.base.name
+        else:
+            pull_base_branch = None
+        if f"{owner}/{title}" in open_pull.title and (
+            pull_base_branch == base_branch or pull_base_branch is None
+        ):
             print(f"Found open pull request for app: {open_pull}")
             pull = open_pull
             ref = open_pull.head
@@ -28,7 +34,7 @@ def create_job(owner, title, primary_branch="production", build_id=None):
         "compute-tooling", "compute-studio-publish", primary_branch=primary_branch
     )
 
-    pull, ref = existing_app_pr(owner, title, repo)
+    pull, ref = existing_app_pr(owner, title, repo, base_branch=primary_branch)
     now = datetime.now()
 
     if ref is None:
