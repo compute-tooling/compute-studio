@@ -28,7 +28,7 @@ const ViewProject: React.FC<{
               className="btn btn-outline-primary"
               href={`/${project.owner}/${project.title}/settings/`}
             >
-              Edit
+              <i className="fa fa-cog mr-2"></i>Settings
             </a>
           </Col>
         )}

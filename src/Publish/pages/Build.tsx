@@ -1,5 +1,7 @@
 import moment = require("moment");
 import React = require("react");
+import ReactLoading from "react-loading";
+
 import { Row, Col, Card, Button, ListGroup, ListGroupItem } from "react-bootstrap";
 import { AuthPortal, AuthButtons } from "../../auth";
 import { Tip } from "../../components";
@@ -38,26 +40,36 @@ const StageComponent: React.FC<{
   return (
     <ListGroupItem className="w-100">
       <Row className="w-50">
-        <Col className="col-3">
-          <Button variant="outline-primary" onClick={() => setShowLogs(!showLogs)}>
-            <i className={`fas fa-arrow-${showLogs ? "down" : "right"}`}></i>
-          </Button>
-        </Col>
+        {logItem?.logs && (
+          <Col className="col-3">
+            <Button variant="outline-primary" onClick={() => setShowLogs(!showLogs)}>
+              <i className={`fas fa-arrow-${showLogs ? "down" : "right"}`}></i>
+            </Button>
+          </Col>
+        )}
+
         <Col className="col-1">
           {name === currentStage && (
             <Tip id="build-status" tip="Running">
-              <i className="fas fa-running text-warning"></i>
+              <ReactLoading type="spin" color="#DBAB0A" height={"20px"} width={"20px"} />
             </Tip>
           )}
-          {isBefore(name, currentStage) && (!failed_at_stage || isBefore(name, failed_at_stage)) && (
-            <Tip id="build-status" tip="Success">
-              <i className="fas fa-check-circle text-success"></i>
-            </Tip>
-          )}
-
           {failed_at_stage === name && (
             <Tip id="build-status" tip="Failure">
               <i className="fas fa-times-circle text-danger"></i>
+            </Tip>
+          )}
+          {isBefore(name, currentStage) &&
+            (!failed_at_stage || isBefore(name, failed_at_stage)) &&
+            currentStage !== "cancelled" && (
+              <Tip id="build-status" tip="Success">
+                <i className="fas fa-check-circle text-success"></i>
+              </Tip>
+            )}
+
+          {currentStage === "cancelled" && (
+            <Tip id="build-status" tip="Cancelled">
+              <i className="fas fa-exclamation-circle text-info"></i>
             </Tip>
           )}
         </Col>
@@ -66,7 +78,10 @@ const StageComponent: React.FC<{
         </Col>
       </Row>
       {showLogs && (
-        <Row className="py-4 rounded" style={{ backgroundColor: "rgb(36, 41, 47)" }}>
+        <Row
+          className="py-4 rounded"
+          style={{ backgroundColor: "rgb(36, 41, 47)", overflowY: "scroll", maxHeight: "100vh" }}
+        >
           <Col>
             <pre>
               <code style={{ color: "rgb(208, 215, 222)" }}>
@@ -127,6 +142,8 @@ class BuildPage extends React.Component<
       const { build_id } = this.props.match.params;
       const build = await this.api.getBuild(build_id, true);
       this.setState({ build });
+    } else {
+      setTimeout(async () => await this.refreshBuild(), 15000);
     }
   }
 
@@ -142,6 +159,9 @@ class BuildPage extends React.Component<
       project,
       build: build,
     });
+    if (!["success", "cancelled", "failure"].includes(build.status)) {
+      setTimeout(async () => await this.refreshBuild(), 10000);
+    }
   }
 
   render() {
@@ -186,6 +206,31 @@ class BuildPage extends React.Component<
                         </pre>
                       </details>
                     </summary> */}
+                    {build.status === "success" && (
+                      <p className="lead">
+                        <Tip id="build-status" tip="Success">
+                          <i className="fas fa-check-circle text-success"></i>
+                        </Tip>
+                        <span className="px-2">Build succeeded</span>
+                      </p>
+                    )}
+                    {build.status === "failure" && (
+                      <p className="lead">
+                        <Tip id="build-status" tip="Failure">
+                          <i className="fas fa-times-circle text-danger"></i>
+                        </Tip>
+                        <span className="px-2">Build failed</span>
+                      </p>
+                    )}
+                    {build.status === "cancelled" && (
+                      <p className="lead">
+                        <Tip id="build-status" tip="Cancelled">
+                          <i className="fas fa-exclamation-circle text-info"></i>
+                        </Tip>
+                        <span className="px-2">Build cancelled</span>
+                      </p>
+                    )}
+
                     <p>Started at {moment(build.created_at).format("lll")}.</p>
                     {build.finished_at && (
                       <p>
@@ -203,11 +248,11 @@ class BuildPage extends React.Component<
                       <p>Project version: {build.tag?.version || "Version not available."}</p>
                     )}
 
-                    <Card className="mt-5">
+                    <Card className={`mt-5 ${build.status === "created" && "border-0"}`}>
                       {build.status === "created" && <p>Starting the build...</p>}
                       {isAfter(build.status, "created") && (
                         <>
-                          <Card.Header>Stages</Card.Header>
+                          <Card.Header>Steps</Card.Header>
                           <StageComponent
                             name="building"
                             label="Build"
@@ -239,15 +284,10 @@ class BuildPage extends React.Component<
                       )}
                     </Card>
                     <div className="py-5">
-                      {!["success", "failure"].includes(build.status) && (
-                        <Button onClick={async () => await this.refreshBuild()}>
-                          Refresh Status
-                        </Button>
-                      )}
                       {build.status === "success" && (
                         <Button onClick={async () => await this.promoteTag()}>Release</Button>
                       )}
-                      {build.status === "failure" && (
+                      {["failure", "cancelled"].includes(build.status) && (
                         <Button onClick={async () => await this.startNewBuild()}>
                           Failure. Start new build
                         </Button>
