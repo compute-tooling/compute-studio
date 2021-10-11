@@ -694,7 +694,11 @@ def cli(subparsers: argparse._SubParsersAction):
         "models", description="Deploy and manage models on C/S compute cluster."
     )
     parser.add_argument("--names", "-n", type=str, required=False, default=None)
-    parser.add_argument("--base-branch", default="origin/master", required=False)
+    parser.add_argument(
+        "--base-branch",
+        default=os.environ.get("BASE_BRANCH", "origin/master"),
+        required=False,
+    )
     parser.add_argument("--cr", default="gcr.io", required=False)
     parser.add_argument("--ignore-ci-errors", action="store_true")
     model_subparsers = parser.add_subparsers()
