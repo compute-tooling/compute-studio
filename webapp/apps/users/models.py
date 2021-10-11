@@ -746,7 +746,6 @@ class Build(models.Model):
         )
         resp.raise_for_status()
         data = resp.json()
-
         self.created_at = data["created_at"]
         self.cancelled_at = data["cancelled_at"]
         self.finished_at = data["finished_at"]

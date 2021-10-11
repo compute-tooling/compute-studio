@@ -1,11 +1,12 @@
 import moment = require("moment");
 import React = require("react");
+import ReactLoading from "react-loading";
 import { Row, Col, Card, Button, Table } from "react-bootstrap";
 import { AuthPortal, AuthButtons } from "../../auth";
 import { Tip } from "../../components";
 import { Project, AccessStatus, Build } from "../../types";
 import API from "../API";
-import { AppTitle } from "../components";
+import { AppTitle, SettingsSidebar } from "../components";
 import { Match, ProjectSettingsSection } from "../types";
 
 const BuildStatus: React.FC<{ status: string }> = ({ status }) => {
@@ -31,7 +32,7 @@ const BuildStatus: React.FC<{ status: string }> = ({ status }) => {
     default:
       return (
         <Tip id="build-status" tip="Running">
-          <i className="fas fa-running text-warning"></i>
+          <ReactLoading type="spin" color="#DBAB0A" height={"20px"} width={"20px"} />
         </Tip>
       );
   }
@@ -97,9 +98,12 @@ class BuildHistory extends React.Component<
             message="You must be logged in to update an app."
           />
         </AuthPortal>
-        <Card className="card-outer">
+        <Card className="card-outer p-4">
           <Row className="w-100 justify-content-center">
-            <Col>
+            <Col className="col-md-3">
+              <SettingsSidebar project={project} section="build-history" />
+            </Col>
+            <Col className="col-md-9">
               <Card.Body>
                 <Card.Title>
                   <AppTitle project={this.state.project} />

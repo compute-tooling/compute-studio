@@ -55,6 +55,8 @@ async def build_done(
         build.failed_at_stage = status["failed_at_stage"]
 
     build.finished_at = datetime.utcnow()
+    if build.status == "cancelled":
+        build.cancelled_at = datetime.utcnow()
     build.image_tag = artifact.image_tag
     build.version = artifact.version
     db.add(build)
@@ -182,8 +184,13 @@ def get(
         build.status = status["stage"]
         build.failed_at_stage = status["failed_at_stage"]
 
-    if build.status in ("success", "failure") and build.finished_at is None:
+    if (
+        build.status in ("success", "failure", "cancelled")
+        and build.finished_at is None
+    ):
         build.finished_at = datetime.utcnow()
+    if build.status == "cancelled" and build.cancelled_at is None:
+        build.cancelled_at = datetime.utcnow()
     db.add(build)
     db.commit()
     db.refresh(build)

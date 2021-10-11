@@ -245,6 +245,12 @@ class ClusterBuildSerializer(BuildSerializer):
 
     def update(self, instance, validated_data):
         project = self.instance.project
+        print(
+            "status",
+            self.instance.status,
+            validated_data["status"],
+            validated_data.get("tag"),
+        )
         if self.validated_data.get("tag") and getattr(instance, "tag", None) is None:
             tag, _ = Tag.objects.get_or_create(
                 project=project,

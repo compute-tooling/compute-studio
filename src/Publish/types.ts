@@ -3,7 +3,7 @@ import { AccessStatus, Project, Tech } from "../types";
 
 type Step = "create" | "configure" | "advanced" | "staging" | "access";
 
-type ProjectSettingsSection = "about" | "configure" | "environment" | "access";
+type ProjectSettingsSection = "about" | "configure" | "environment" | "access" | "build-history";
 
 interface ProjectValues {
   title: string;
