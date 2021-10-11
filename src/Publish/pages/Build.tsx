@@ -78,7 +78,10 @@ const StageComponent: React.FC<{
         </Col>
       </Row>
       {showLogs && (
-        <Row className="py-4 rounded" style={{ backgroundColor: "rgb(36, 41, 47)" }}>
+        <Row
+          className="py-4 rounded"
+          style={{ backgroundColor: "rgb(36, 41, 47)", overflowY: "scroll", maxHeight: "100vh" }}
+        >
           <Col>
             <pre>
               <code style={{ color: "rgb(208, 215, 222)" }}>
