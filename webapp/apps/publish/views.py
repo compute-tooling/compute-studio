@@ -482,7 +482,6 @@ class BuildDetailView(APIView):
         if not build.project.has_write_access(request.user):
             raise Http404("Build not found.")
 
-        print("is_using_cluster_id", self.is_using_cluster_id())
         if self.is_using_cluster_id():
             serializer = ClusterBuildSerializer(instance=build, data=request.data)
         else:
