@@ -256,8 +256,9 @@ class ClusterBuildSerializer(BuildSerializer):
                 project=project,
                 image_tag=validated_data["tag"]["image_tag"],
                 version=validated_data["tag"].get("version"),
-                defaults=dict(cpu=project.cpu, memory=project.memory, build=instance),
+                defaults=dict(cpu=project.cpu, memory=project.memory),
             )
+            instance.tag = tag
             print("NEW TAG", tag, instance.id, tag.id, tag.version, str(tag))
         else:
             print("TAG EXISTS", instance.tag)
