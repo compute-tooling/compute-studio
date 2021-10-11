@@ -287,18 +287,6 @@ class PullRequest:
         sort: str = None,  # ["created", "updated", "popularity", "long-running"]
         direct: str = None,  # ["asc", "desc"]
     ):
-        print(
-            "PULL PROPS",
-            filter_props(
-                {
-                    "state": state,
-                    "head": head,
-                    "base": base,
-                    "sort": sort,
-                    "direct": direct,
-                }
-            ),
-        )
         resp = client.get(
             f"/repos/{self.repo}/pulls",
             params=filter_props(

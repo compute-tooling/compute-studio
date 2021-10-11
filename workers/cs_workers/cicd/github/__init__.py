@@ -18,7 +18,7 @@ def existing_app_pr(owner, title, repo: Repo, base_branch: str):
             pull_base_branch = open_pull.base.name
         else:
             pull_base_branch = None
-        if f"{owner}/{title}" in open_pull.title and (
+        if f"{owner}/{title}" == open_pull.title and (
             pull_base_branch == base_branch or pull_base_branch is None
         ):
             print(f"Found open pull request for app: {open_pull}")
@@ -67,7 +67,7 @@ def create_job(owner, title, primary_branch="production", build_id=None):
     )
     print("got pull", pull)
     if pull is None:
-        return gh.pull_request(repo).create(title=message, head=ref)
+        return gh.pull_request(repo).create(title=f"{owner}/{title}", head=ref)
     else:
         return pull
 
@@ -107,6 +107,13 @@ def job_status(
     step_map = {"Build": "building", "Test": "testing", "Push": "staging"}
     for step in job.steps:
         print("checking step", step.name, step.status, step.conclusion)
+
+        # Callback runs on every execution, regardless of success or failure. But,
+        # on failure, this loop is terminated at the stage that failed.
+        if step.name == "Callback" and step.status == "in_progress":
+            stage = "success"
+            break
+
         if step.name not in step_map:
             continue
 

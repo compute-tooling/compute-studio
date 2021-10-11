@@ -140,7 +140,7 @@ class BuildPage extends React.Component<
       const build = await this.api.getBuild(build_id, true);
       this.setState({ build });
     } else {
-      setTimeout(async () => await this.refreshBuild(), 10000);
+      setTimeout(async () => await this.refreshBuild(), 15000);
     }
   }
 
@@ -157,7 +157,7 @@ class BuildPage extends React.Component<
       build: build,
     });
     if (!["success", "cancelled", "failure"].includes(build.status)) {
-      setTimeout(async () => await this.refreshBuild(), 5000);
+      setTimeout(async () => await this.refreshBuild(), 10000);
     }
   }
 
@@ -249,7 +249,7 @@ class BuildPage extends React.Component<
                       {build.status === "created" && <p>Starting the build...</p>}
                       {isAfter(build.status, "created") && (
                         <>
-                          <Card.Header>Stages</Card.Header>
+                          <Card.Header>Steps</Card.Header>
                           <StageComponent
                             name="building"
                             label="Build"
