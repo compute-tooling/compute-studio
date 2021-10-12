@@ -272,11 +272,11 @@ class BuildPage extends React.Component<
                             failed_at_stage={build.failed_at_stage}
                           />
                           <StageComponent
-                            name="pushing"
+                            name="staging"
                             label="Stage"
                             currentStage={build.status}
                             logItem={(build.provider_data?.logs as Array<LogItem>)?.find(
-                              item => item.stage === "push"
+                              item => item.stage === "staging"
                             )}
                             failed_at_stage={build.failed_at_stage}
                           />
