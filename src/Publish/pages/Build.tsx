@@ -20,7 +20,7 @@ const statusOrder = {
   created: 0,
   building: 1,
   testing: 2,
-  pushing: 3,
+  staging: 3,
   success: 4,
   failure: 5,
   cancelled: 6,
