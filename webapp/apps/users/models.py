@@ -686,7 +686,7 @@ class Build(models.Model):
         ("created", "Created"),
         ("building", "Building"),
         ("testing", "Testing"),
-        ("pushing", "Pushing"),
+        ("staging", "Staging"),
         ("cancelled", "Cancelled"),
         ("success", "Success"),
         ("failure", "Failure"),
