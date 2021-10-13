@@ -24,7 +24,7 @@ RUN if test -f "./cs-config/install.sh"; then  bash ./cs-config/install.sh; fi
 RUN if test -f "./cs-config/setup.py"; then  pip install -e ./cs-config; fi
 
 # Check if cs-jobs package was removed when installing the project's dependencies.
-RUN if ! cs-jobs --help -- $?; then pip install --no-dependencies cs-jobs; fi
+RUN if ! cs-jobs --help -- $?; then pip install cs-jobs; fi
 
 ######################
 
