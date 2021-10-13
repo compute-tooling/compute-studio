@@ -35,6 +35,7 @@ def get_client(api_token=None):
     return httpx.Client(
         headers={"Authorization": f"token {api_token}"},
         base_url="https://api.github.com",
+        follow_redirects=True,
     )
 
 
