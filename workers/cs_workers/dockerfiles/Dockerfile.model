@@ -16,7 +16,6 @@ ARG TIME_STAMP=0
 RUN git clone -b ${REPO_TAG} ${REPO_URL}
 WORKDIR ${REPO_NAME}
 
-
 RUN csk build-env
 
 RUN if test -f "./cs-config/install.sh"; then  cat ./cs-config/install.sh; fi
@@ -24,6 +23,8 @@ RUN if test -f "./cs-config/install.sh"; then  bash ./cs-config/install.sh; fi
 
 RUN if test -f "./cs-config/setup.py"; then  pip install -e ./cs-config; fi
 
+# Check if cs-jobs package was removed when installing the project's dependencies.
+RUN if ! cs-jobs --help -- $?; then pip install --no-dependencies cs-jobs; fi
 
 ######################
 
