@@ -22,8 +22,8 @@
       
 
     
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" />
     <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.css" />
@@ -33,17 +33,17 @@
     
   <link rel="preload" as="script" href="../_static/js/index.1c5a1a01449ed65a7b51.js">
 
-    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
     <script src="../_static/togglebutton.js"></script>
     <script src="../_static/clipboard.min.js"></script>
     <script src="../_static/copybutton.js"></script>
-    <script >var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
     <script src="../_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
     <script async="async" src="https://unpkg.com/thebe@0.5.1/lib/index.js"></script>
-    <script >
+    <script>
         const thebe_selector = ".thebe"
         const thebe_selector_input = "pre"
         const thebe_selector_output = ".output"
@@ -93,7 +93,7 @@
   </a>
  </li>
 </ul>
-<p class="caption">
+<p class="caption" role="heading">
  <span class="caption-text">
   Publish
  </span>
@@ -154,7 +154,7 @@
   </a>
  </li>
 </ul>
-<p class="caption">
+<p class="caption" role="heading">
  <span class="caption-text">
   API
  </span>
@@ -262,8 +262,8 @@
   <div class="section" id="python-client">
 <span id="cs-kit"></span><h1>Python Client<a class="headerlink" href="#python-client" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
-<dt id="cs_kit.api.ComputeStudio">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">cs_kit.api.</span></code><code class="sig-name descname"><span class="pre">ComputeStudio</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_token</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cs_kit/api.html#ComputeStudio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cs_kit.api.ComputeStudio" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="cs_kit.api.ComputeStudio">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">cs_kit.api.</span></span><span class="sig-name descname"><span class="pre">ComputeStudio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_token</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cs_kit/api.html#ComputeStudio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cs_kit.api.ComputeStudio" title="Permalink to this definition">¶</a></dt>
 <dd><p>Python client for the ComputeStudio webapp.</p>
 <ul class="simple">
 <li><p>Run simulations</p></li>
@@ -280,8 +280,8 @@ you can save it in a file named <code class="docutils literal notranslate"><span
 computer. You can also set it as an environment variable or pass it directly
 to the <code class="docutils literal notranslate"><span class="pre">ComputeStudio</span></code> class.</p>
 <dl class="py method">
-<dt id="cs_kit.api.ComputeStudio.create">
-<code class="sig-name descname"><span class="pre">create</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adjustment</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta_parameters</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cs_kit/api.html#ComputeStudio.create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cs_kit.api.ComputeStudio.create" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="cs_kit.api.ComputeStudio.create">
+<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adjustment</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta_parameters</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cs_kit/api.html#ComputeStudio.create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cs_kit.api.ComputeStudio.create" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a simulation on Compute Studio.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -300,8 +300,8 @@ to the <code class="docutils literal notranslate"><span class="pre">ComputeStudi
 </dd></dl>
 
 <dl class="py method">
-<dt id="cs_kit.api.ComputeStudio.detail">
-<code class="sig-name descname"><span class="pre">detail</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_pk</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_outputs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polling_interval</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">600</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cs_kit/api.html#ComputeStudio.detail"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cs_kit.api.ComputeStudio.detail" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="cs_kit.api.ComputeStudio.detail">
+<span class="sig-name descname"><span class="pre">detail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_pk</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_outputs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polling_interval</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">600</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cs_kit/api.html#ComputeStudio.detail"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cs_kit.api.ComputeStudio.detail" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get detail for a simulation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -323,14 +323,14 @@ to the <code class="docutils literal notranslate"><span class="pre">ComputeStudi
 </dd></dl>
 
 <dl class="py method">
-<dt id="cs_kit.api.ComputeStudio.get_token">
-<code class="sig-name descname"><span class="pre">get_token</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_token</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cs_kit/api.html#ComputeStudio.get_token"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cs_kit.api.ComputeStudio.get_token" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="cs_kit.api.ComputeStudio.get_token">
+<span class="sig-name descname"><span class="pre">get_token</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_token</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cs_kit/api.html#ComputeStudio.get_token"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cs_kit.api.ComputeStudio.get_token" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve the API token</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="cs_kit.api.ComputeStudio.inputs">
-<code class="sig-name descname"><span class="pre">inputs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_pk</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cs_kit/api.html#ComputeStudio.inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cs_kit.api.ComputeStudio.inputs" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="cs_kit.api.ComputeStudio.inputs">
+<span class="sig-name descname"><span class="pre">inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_pk</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cs_kit/api.html#ComputeStudio.inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cs_kit.api.ComputeStudio.inputs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the inputs for a simulation or retrieve the inputs documentation for the app.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -346,8 +346,8 @@ to the <code class="docutils literal notranslate"><span class="pre">ComputeStudi
 </dd></dl>
 
 <dl class="py method">
-<dt id="cs_kit.api.ComputeStudio.results">
-<code class="sig-name descname"><span class="pre">results</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_pk</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">600</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cs_kit/api.html#ComputeStudio.results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cs_kit.api.ComputeStudio.results" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="cs_kit.api.ComputeStudio.results">
+<span class="sig-name descname"><span class="pre">results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_pk</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">600</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cs_kit/api.html#ComputeStudio.results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cs_kit.api.ComputeStudio.results" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve and parse results into the appropriate data structure. Currently,
 CSV outputs are loaded into a pandas <cite>DataFrame</cite>. Other outputs are returned
 as is.</p>
@@ -368,8 +368,8 @@ as is.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="cs_kit.api.ComputeStudio.update">
-<code class="sig-name descname"><span class="pre">update</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_pk</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_public</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notify_on_completion</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cs_kit/api.html#ComputeStudio.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cs_kit.api.ComputeStudio.update" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="cs_kit.api.ComputeStudio.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_pk</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_public</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notify_on_completion</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cs_kit/api.html#ComputeStudio.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cs_kit.api.ComputeStudio.update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update meta data about a simulation.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
     <span class="n">model_pk</span><span class="o">=</span><span class="mi">123</span><span class="p">,</span>
