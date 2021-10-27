@@ -2,8 +2,8 @@ import itertools
 from io import BytesIO
 from zipfile import ZipFile
 import json
-import time
 import os
+import re
 
 from bokeh.resources import CDN
 import requests
@@ -53,6 +53,8 @@ from webapp.apps.comp.serializers import OutputsSerializer
 from .core import InputsMixin, GetOutputsObjectMixin
 
 BUCKET = os.environ.get("BUCKET")
+
+kubernetes_name_exp = re.compile("[^0-9a-zA-Z]")
 
 
 class ModelPageView(InputsMixin, View):
@@ -169,6 +171,10 @@ class VizView(InputsMixin, View):
         )
         if project.tech == "python-paramtools":
             return redirect(f"/{project.owner}/{project.title}/new/")
+
+        deployment_name = kwargs.get("rd_name", "default")
+        if re.search(kubernetes_name_exp, deployment_name):
+            raise Http404()
         context = self.project_context(request, project)
         if is_profile_active(request.user):
             owner = request.user.profile
@@ -176,7 +182,7 @@ class VizView(InputsMixin, View):
             owner = None
         try:
             deployment, _ = Deployment.objects.get_or_create_deployment(
-                project=project, name=kwargs.get("rd_name", "default"), owner=owner
+                project=project, name=deployment_name, owner=owner
             )
         except DeploymentException:
             raise Http404("Viz apps must have a sponsor.")
