@@ -1713,3 +1713,18 @@ class TestDeployments:
 
         resp = api_client.get(f"/apps/api/v1/deployments/{deployment.pk}/")
         assert resp.status_code == 200
+
+    def test_robots_names(
+        self, client, api_client, viz, mock_deployments_requests_to_cluster
+    ):
+        resp = client.get(f"/{viz}/viz/")
+        if not viz.is_public:
+            assert resp.status_code == 404
+            client.force_login(viz.owner.user)
+            resp = client.get(f"/{viz}/viz/")
+
+        assert resp.status_code == 200
+
+        for name in ("robots.txt", "sitemap.xml"):
+            resp = client.get(f"/{viz}/viz/{name}/")
+            assert resp.status_code == 404
