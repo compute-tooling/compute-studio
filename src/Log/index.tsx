@@ -643,14 +643,13 @@ class Log extends React.Component<LogProps, LogState> {
     this.setAccessStatus = this.setAccessStatus.bind(this);
   }
 
-  setAccessStatus() {
-    this.api.getAccessStatus().then(accessStatus => {
-      this.setState({ accessStatus: accessStatus });
-    });
+  async setAccessStatus() {
+    const accessStatus = await this.api.getAccessStatus();
+    this.setState({ accessStatus });
   }
 
-  componentDidMount() {
-    this.setAccessStatus();
+  async componentDidMount() {
+    await this.setAccessStatus();
     if (this.props.pageName === "home" || this.props.pageName === "profile") {
       this.api.initSimulations().then(simFeed => {
         this.setState({ simFeed: simFeed });
