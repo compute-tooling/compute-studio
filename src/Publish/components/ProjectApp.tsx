@@ -76,7 +76,7 @@ class ProjectApp extends React.Component<
                 console.log(error.response.data);
                 actions.setSubmitting(false);
                 if (error.response.status == 400) {
-                  actions.setStatus(error.response.data);
+                  actions.setStatus({ private_app: error.response.data?.app});
                 } else if (error.response.status == 401) {
                   actions.setStatus({
                     auth: "You must be logged in to publish an app.",
@@ -112,9 +112,9 @@ class ProjectApp extends React.Component<
                   message="You must be logged in to create or update an app."
                 />
               )}
-              {props.status?.collaborators && (
+              {props.status?.private_app && (
                 <PrivateAppException
-                  upgradeTo={(props.status.collaborators as ResourceLimitException).upgrade_to}
+                  upgradeTo={(props.status.private_app as ResourceLimitException).upgrade_to}
                 />
               )}
               {project?.status === "running" || project?.status === "staging" ? (
