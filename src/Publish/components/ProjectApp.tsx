@@ -76,7 +76,7 @@ class ProjectApp extends React.Component<
                 console.log(error.response.data);
                 actions.setSubmitting(false);
                 if (error.response.status == 400) {
-                  actions.setStatus({ private_app: error.response.data?.app});
+                  actions.setStatus({ private_app: error.response.data?.app });
                 } else if (error.response.status == 401) {
                   actions.setStatus({
                     auth: "You must be logged in to publish an app.",
@@ -121,7 +121,6 @@ class ProjectApp extends React.Component<
                 <ProjectSettings
                   props={props}
                   project={project}
-                  accessStatus={accessStatus}
                   section={this.props.section}
                 />
               ) : (

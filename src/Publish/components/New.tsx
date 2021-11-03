@@ -1,14 +1,13 @@
 import { Step } from "bokehjs";
-import { Form, FormikProps } from "formik";
+import { ErrorMessage, Field, Form, FormikProps } from "formik";
 import React = require("react");
-import { AboutAppFields } from ".";
+import { Col, Row } from "react-bootstrap";
+import { Message } from ".";
 import { Project, AccessStatus } from "../../types";
-import { techGuideLinks, techTitles } from "../constants";
+import { inputStyle, techGuideLinks, techTitles } from "../constants";
 import { ProjectValues } from "../types";
 import { PublicPrivateRadio } from "./PublicPrivate";
 import { PythonParamTools } from "./PythonParamTools";
-import { ReadmeField } from "./Readme";
-import { SourceCodeFields } from "./SourceCode";
 import { TechSelect } from "./TechSelect";
 import { VizWithServer } from "./VizWithServer";
 
@@ -21,53 +20,94 @@ const NewProjectForm: React.FC<{
   <Form>
     {step === (("create" as unknown) as Step) && (
       <>
-        <AboutAppFields
-          accessStatus={accessStatus}
-          props={props}
-          project={project}
-          showReadme={false}
-        />
+        <Row className="w-100 justify-content-between">
+          <Col className="col-9">
+            <label>
+              <b>Repo URL:</b> Link to the project's code repository
+            </label>
+            <div className="mt-1 mb-1">
+              <Field
+                className="form-control w-50rem"
+                type="url"
+                name="repo_url"
+                placeholder="https://..."
+                style={inputStyle}
+                onBlur={() => {
+                  const { repo_url, title } = props.values || {};
+                  if (repo_url && !title) {
+                    const pieces = repo_url.split("/");
+                    const title = pieces[pieces.length - 1].replace("/", "");
+                    props.setFieldValue("title", title);
+                  }
+                }}
+              />
+              <ErrorMessage name="repo_url" render={msg => <Message msg={msg} />} />
+            </div>
+          </Col>
+          <Col className="col-3">
+            <label>
+              <b>Title</b>
+            </label>
+            <div className="mt-1 mb-1">
+              <Field
+                className="form-control w-50rem"
+                type="text"
+                name="title"
+                placeholder="My awesome project"
+                style={inputStyle}
+                onChange={e => {
+                  e.target.value = e.target.value.replace(/[^a-zA-Z0-9]+/g, "-");
+                  props.setFieldValue("title", e.target.value);
+                }}
+              />
+            </div>
+          </Col>
+        </Row>
+        <Row className="w-100 pt-4">
+          <Col className="col-6">
+            <label>
+              <b>Repo Tag:</b> Your project will be deployed from here
+            </label>
+            <div className="mt-1 mb-1">
+              <Field
+                className="form-control w-50rem"
+                type="text"
+                name="repo_tag"
+                placeholder="Link to the model's code repository"
+                style={inputStyle}
+              />
+              <ErrorMessage name="repo_tag" render={msg => <Message msg={msg} />} />
+            </div>
+          </Col>
+        </Row>
         <div className="mt-4">
           <PublicPrivateRadio props={props} project={project} />
         </div>
         <TechSelect props={props} project={project} />
-      </>
-    )}
-    {project && !((["running", "staging"] as unknown) as Step[]).includes(step) && (
-      <>
-        <ReadmeField />
-        <div className="py-4">
-          <h5>Connect app:</h5>
-          <TechSelect props={props} project={project} />
-        </div>
-        <div className="py-2">
-          <i>
-            Go to the{" "}
-            <a href={`${techGuideLinks[props.values.tech]}`} target="_blank">
-              {techTitles[props.values.tech]} guide
-            </a>{" "}
-            for more information.
-          </i>
-        </div>
-        {props.values.tech === "python-paramtools" && <PythonParamTools />}
-        {["bokeh", "dash", "streamlit"].includes(props.values.tech) && (
-          <VizWithServer tech={props.values.tech} />
+        {props.values?.tech && (
+          <>
+            <div className="py-2">
+              <i>
+                Go to the{" "}
+                <a href={`${techGuideLinks[props.values.tech]}`} target="_blank">
+                  {techTitles[props.values.tech]} guide
+                </a>{" "}
+                for more information.
+              </i>
+            </div>
+            {props.values.tech === "python-paramtools" && <PythonParamTools />}
+            {["bokeh", "dash", "streamlit"].includes(props.values.tech) && (
+              <VizWithServer tech={props.values.tech} />
+            )}
+          </>
         )}
-        <div className="py-4">
-          <SourceCodeFields />
-        </div>
       </>
     )}
-
     <div className="mt-5">
       <button className="btn inline-block btn-success" type="submit">
-        <strong>{step === (("create" as unknown) as Step) ? "Create app" : "Connect app"}</strong>
+        <strong>Create app</strong>
       </button>
     </div>
-
-    {!project && (
-      <p className="mt-3">Next, you will learn how to connect your app based on your technology.</p>
-    )}
   </Form>
 );
 

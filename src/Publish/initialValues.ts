@@ -15,7 +15,7 @@ const initialValues: ProjectValues = {
   is_public: true,
   social_image_link: null,
   embed_background_color: "white",
-  use_iframe_resizer: true,
+  use_iframe_resizer: false,
 };
 
 export { initialValues };

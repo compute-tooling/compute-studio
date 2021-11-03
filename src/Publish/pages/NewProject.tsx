@@ -48,7 +48,7 @@ class NewProject extends React.Component<{}, { accessStatus?: AccessStatus }> {
             <Col style={{ maxWidth: "1000px" }}>
               <Card.Body>
                 <Card.Title>
-                  <h1 className="mb-2 pb-2 border-bottom">Create a new application</h1>
+                  <h1 className="mb-2 pb-2 border-bottom">Create a new project</h1>
                   <small className="mb-3">
                     <i>
                       Not sure where to get started?{" "}

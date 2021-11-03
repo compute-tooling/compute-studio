@@ -17,9 +17,8 @@ import { SettingsSidebar } from "./SettingsSidebar";
 const ProjectSettings: React.FC<{
   props: FormikProps<ProjectValues>;
   project?: Project;
-  accessStatus: AccessStatus;
   section?: ProjectSettingsSection;
-}> = ({ props, project, accessStatus, section }) => {
+}> = ({ props, project, section }) => {
   return (
     <>
       <Row>
@@ -28,14 +27,7 @@ const ProjectSettings: React.FC<{
         </Col>
         <Col className="col-9">
           <Form>
-            {section === "about" && (
-              <AboutAppFields
-                accessStatus={accessStatus}
-                props={props}
-                project={project}
-                showReadme={true}
-              />
-            )}
+            {section === "about" && <AboutAppFields />}
 
             {section === "configure" && (
               <>
