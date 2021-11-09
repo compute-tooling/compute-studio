@@ -96,7 +96,7 @@ const StageComponent: React.FC<{
 };
 
 class BuildPage extends React.Component<
-  { match: Match },
+  { match: Match; api?: API },
   { project?: Project; accessStatus?: AccessStatus; build?: Build }
 > {
   api: API;
@@ -105,8 +105,11 @@ class BuildPage extends React.Component<
     this.state = {};
     const owner = this.props.match.params.username;
     const title = this.props.match.params.app_name;
-    this.api = new API(owner, title);
-
+    if (this.props.api) {
+      this.api = this.props.api;
+    } else {
+      this.api = new API(owner, title);
+    }
     this.resetAccessStatus = this.resetAccessStatus.bind(this);
   }
 

@@ -19,7 +19,7 @@ var Schema = yup.object().shape({
   tech: yup.string().required(requiredMessage),
   callable_name: yup.string(),
   is_public: yup.boolean(),
-  social_image_link: yup.string().url(),
+  social_image_link: yup.string().url().nullable(),
   use_iframe_resizer: yup.boolean(),
 });
 

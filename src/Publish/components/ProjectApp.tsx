@@ -117,20 +117,7 @@ class ProjectApp extends React.Component<
                   upgradeTo={(props.status.private_app as ResourceLimitException).upgrade_to}
                 />
               )}
-              {project?.status === "running" || project?.status === "staging" ? (
-                <ProjectSettings
-                  props={props}
-                  project={project}
-                  section={this.props.section}
-                />
-              ) : (
-                <NewProjectForm
-                  props={props}
-                  project={project}
-                  accessStatus={accessStatus}
-                  step={(step as unknown) as Step}
-                />
-              )}
+              <ProjectSettings props={props} project={project} section={this.props.section} />
             </>
           )}
         </Formik>
