@@ -47,10 +47,6 @@ import jwt
 try:
     cryptkeeper = cs_crypt.CryptKeeper()
 except cs_crypt.EncryptionUnavailable:
-    import warnings
-
-    warnings.warn("Encryption unavailable.")
-
     cryptkeeper = None
 
 

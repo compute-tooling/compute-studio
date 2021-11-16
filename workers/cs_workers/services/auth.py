@@ -30,9 +30,6 @@ def get_cryptkeeper():
         try:
             return cs_crypt.CryptKeeper()
         except cs_crypt.EncryptionUnavailable:
-            import warnings
-
-            warnings.warn("Encryption unavailable.")
             return None
 
 
