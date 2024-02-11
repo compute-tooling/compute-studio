@@ -147,11 +147,12 @@ class Manager:
             "DATABASE_URL",
             "DEFAULT_CLUSTER_USER",
             "DEFAULT_VIZ_HOST",
-            "USE_STRIPE",
         ]:
             if webapp_config.get(var, None):
                 web_configmap["data"][var] = webapp_config[var]
 
+        web_configmap["data"]["USE_STRIPE"] = False
+        
         if dev:
             warnings.warn("Web deployment is being created in DEBUG mode!")
             spec["containers"][0]["volumeMounts"] = [

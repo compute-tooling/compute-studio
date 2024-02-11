@@ -1,4 +1,5 @@
 django>=3.2,<4
+jinja2
 djangorestframework
 msgpack
 requests>=2.20
@@ -12,13 +13,13 @@ pytest
 pytest-django
 django-widget-tweaks
 django-crispy-forms
-psycopg2-binary==2.8.6
+psycopg2-binary
 ipython
 markdown
 django-guardian
 hashids
 django-rest-auth
-django-allauth
+django-allauth==0.54.0
 cs-storage>=1.11.0
 cs-crypt>=0.0.2
 pyjwt

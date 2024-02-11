@@ -1,7 +1,9 @@
-FROM webbase
+FROM webbase:latest
 
-RUN conda install -c conda-forge pylint black --yes
+# RUN conda install -c conda-forge pylint black --yes
 
+COPY ./google-creds.json ./google-creds.json
 ENV GOOGLE_APPLICATION_CREDENTIALS ./google-creds.json
 
+WORKDIR /code
 CMD python manage.py runserver 0.0.0.0:$PORT

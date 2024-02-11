@@ -29,8 +29,10 @@ setuptools.setup(
         "cs-storage>=1.11.0",
         "docker",
         "pydantic[email,dotenv]",
+        "pydantic-settings",
         "fastapi",
         "rq",
+        "alembic",
     ],
     include_package_data=True,
     entry_points={

@@ -60,6 +60,8 @@
    cs secrets set DJANGO_SECRET_KEY $(openssl rand -hex 32)
    cs secrets set WEB_CS_CRYPT_KEY $(openssl rand -hex 32)
    cs secrets set CS_CRYPT_KEY $(openssl rand -hex 32)
+   # Swap HDOUPE out for your username of choice :)
+   cs secrets set HDOUPE_POSTGRES_PASSWORD $(openssl rand -hex 32)
    ```
 
 1. Build webapp docker image:
@@ -219,4 +221,29 @@ You may need to restart the web and db pods to get things synced back up:
 kubectl delete pods $DB_POD
 export WEB_POD=$(kubectl get pod -l app=web -o jsonpath="{.items[0].metadata.name}")
 kubectl delete pods $WEB_POD
+```
+
+### Workers
+
+```
+cs secrets set WORKERS_DB_PASSWORD $(openssl rand -hex 32)
+# Swap HDOUPE out for your username of choice :)
+cs secrets set HDOUPE_WORKERS_REDIS_PASSWORD $(openssl rand -hex 32)
+cs secrets set HDOUPE_WORKERS_API_SECRET_KEY $(openssl rand -hex 32)
+```
+
+```
+helm template cs-workers \
+    --set project=$PROJECT \
+    --set tag=$TAG \
+    --set api.secret_key=$(cs secrets get HDOUPE_WORKERS_API_SECRET_KEY) \
+    --set redis.password=$(cs secrets get HDOUPE_WORKERS_REDIS_PASSWORD) \
+    --set db.password=$(cs secrets get WORKERS_DB_PASSWORD)  \
+    --namespace workers
+```
+
+```
+kubectl exec --namespace workers -it deployments/api -- /bin/bash
+cd api
+alembic upgrade head
 ```

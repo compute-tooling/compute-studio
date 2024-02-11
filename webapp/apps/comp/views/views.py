@@ -5,7 +5,6 @@ import json
 import os
 import re
 
-from bokeh.resources import CDN
 import requests
 
 from django.db import models

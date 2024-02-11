@@ -15,7 +15,7 @@ from webapp.apps.users.models import Cluster, create_profile_from_user, Profile
 import webapp.apps.users.models
 
 
-stripe.api_key = os.environ.get("STRIPE_SECRET")
+# # stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 User = get_user_model()
 

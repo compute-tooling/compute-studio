@@ -14,8 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
-from django.conf.urls import url
+from django.urls import path, include, re_path
 from rest_framework.authtoken import views as rf_views
 
 from webapp.apps.comp import views as compviews
@@ -48,8 +47,8 @@ urlpatterns = [
         compviews.ModelConfigAPIView.as_view(),
         name="modelconfig_api",
     ),
-    url(r"^rest-auth/", include("rest_auth.urls")),
-    url(r"^rest-auth/registration/", include("rest_auth.registration.urls")),
+    re_path(r"^rest-auth/", include("rest_auth.urls")),
+    re_path(r"^rest-auth/registration/", include("rest_auth.registration.urls")),
     path("api/v1/sims", compviews.UserSimsAPIView.as_view(), name="sim_api"),
     path("feed/", pageviews.LogView.as_view(), name="feed"),
     path("log/", pageviews.LogView.as_view(), name="log"),

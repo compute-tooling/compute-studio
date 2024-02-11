@@ -12,6 +12,8 @@ pyjwt
 uvicorn[standard]
 fastapi
 pydantic[email,dotenv]
+pydantic-settings
 pytz
 sqlalchemy
 psycopg2-binary
+alembic

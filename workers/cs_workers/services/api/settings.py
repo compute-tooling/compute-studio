@@ -2,7 +2,8 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import AnyHttpUrl, BaseSettings, EmailStr, HttpUrl, PostgresDsn, validator
+from pydantic import AnyHttpUrl, EmailStr, HttpUrl, PostgresDsn, validator
+from pydantic_settings import BaseSettings
 
 NAMESPACE_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 
@@ -12,8 +13,6 @@ class Settings(BaseSettings):
     API_SECRET_KEY: Optional[str]
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
-    SERVER_NAME: Optional[str]
-    SERVER_HOST: Optional[AnyHttpUrl]
 
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = [
         "http://10.0.0.137:5000",
@@ -21,7 +20,7 @@ class Settings(BaseSettings):
         "https://hdoupe.ngrok.io",
     ]
 
-    WORKERS_API_HOST: Optional[str]
+    WORKERS_API_HOST: Optional[str] = ""
     VIZ_HOST: Optional[str]
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
@@ -36,9 +35,9 @@ class Settings(BaseSettings):
 
     @validator("PROJECT_NAMESPACE", pre=True)
     def get_project_namespace(cls, v: Optional[str]) -> str:
-        return v or "default"
+        return v or "projects"
 
-    NAMESPACE: Optional[str]
+    NAMESPACE: Optional[str] = "projects"
 
     @validator("NAMESPACE", pre=True)
     def get_namespace(cls, v: Optional[str]) -> str:
@@ -48,7 +47,7 @@ class Settings(BaseSettings):
             with open(NAMESPACE_PATH) as f:
                 return f.read().strip()
         else:
-            return "default"
+            return "workers"
 
     PROJECT_NAME: str = "C/S Cluster Api"
     SENTRY_DSN: Optional[HttpUrl] = None
@@ -80,11 +79,6 @@ class Settings(BaseSettings):
             host=values.get("DB_HOST"),
             path=f"/{values.get('DB_NAME')}",
         )
-
-    FIRST_SUPERUSER: Optional[EmailStr]
-    FIRST_SUPERUSER_PASSWORD: Optional[str]
-
-    JOB_NAMESPACE: str = "worker-api"
 
     GITHUB_TOKEN: Optional[str]
     GITHUB_BUILD_BRANCH: Optional[str]

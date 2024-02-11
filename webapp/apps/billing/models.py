@@ -17,7 +17,7 @@ from webapp.settings import USE_STRIPE, DEBUG
 
 from .email import send_subscribe_to_plan_email, send_sub_canceled_email
 
-stripe.api_key = os.environ.get("STRIPE_SECRET")
+# stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 
 def timestamp_to_datetime(timestamp):

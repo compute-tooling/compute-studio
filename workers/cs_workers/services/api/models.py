@@ -40,6 +40,10 @@ class User(Base):
     jobs = relationship("Job", back_populates="user")
     projects = relationship("Project", back_populates="user")
 
+    class Config:
+        from_attributes=True
+        extra = "ignore"
+
 
 class Job(Base):
     __tablename__ = "jobs"
@@ -54,6 +58,10 @@ class Job(Base):
     tag = Column(String)
 
     user = relationship("User", back_populates="jobs")
+
+    class Config:
+        from_attributes=True
+        extra = "ignore"
 
 
 class Project(Base):
@@ -81,7 +89,7 @@ class Project(Base):
     )
 
     class Config:
-        orm_mode = True
+        from_attributes=True
         extra = "ignore"
 
 

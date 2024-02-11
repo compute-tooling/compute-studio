@@ -22,7 +22,7 @@ from webapp.apps.billing.models import (
 from webapp.apps.billing.utils import create_three_month_pro_subscription
 
 User = get_user_model()
-stripe.api_key = os.environ.get("STRIPE_SECRET")
+# stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 
 def time_is_close(a, b):

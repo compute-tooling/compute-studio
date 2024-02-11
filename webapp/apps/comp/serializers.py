@@ -55,7 +55,7 @@ class MiniSimulationSerializer(serializers.ModelSerializer):
     status = serializers.CharField(required=False)
     api_url = serializers.CharField(required=False, source="get_absolute_api_url")
     gui_url = serializers.CharField(required=False, source="get_absolute_url")
-    is_public = serializers.NullBooleanField(required=False)
+    is_public = serializers.BooleanField(required=False)
 
     # see to_representation
     # role = serializers.BooleanField(source="role")

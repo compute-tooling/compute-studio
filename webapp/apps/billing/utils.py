@@ -6,7 +6,7 @@ from webapp.apps.billing.models import Product, Customer
 
 import stripe
 
-stripe.api_key = os.environ.get("STRIPE_SECRET")
+# stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 
 def update_payment(user, stripe_token):

@@ -1,5 +1,4 @@
-from django.conf.urls import url
-from django.urls import path
+from django.urls import path, re_path
 
 from .views import (
     ProjectView,
@@ -18,7 +17,7 @@ from .views import (
 
 
 urlpatterns = [
-    url(r"^$", ProjectView.as_view(), name="publish"),
+    re_path(r"^$", ProjectView.as_view(), name="publish"),
     path(
         "api/v1/deployments/<str:id>/",
         DeploymentsIdView.as_view(),

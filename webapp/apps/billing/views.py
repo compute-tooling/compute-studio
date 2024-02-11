@@ -25,7 +25,7 @@ from .models import (
 
 from .utils import update_payment, has_payment_method
 
-stripe.api_key = os.environ.get("STRIPE_SECRET")
+# stripe.api_key = os.environ.get("STRIPE_SECRET")
 wh_secret = os.environ.get("WEBHOOK_SECRET")
 
 white_listed_urls = set(

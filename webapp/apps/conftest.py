@@ -35,7 +35,7 @@ from webapp.apps.comp.model_parameters import ModelParameters
 from webapp.apps.comp.models import Inputs, Simulation
 
 
-stripe.api_key = os.environ.get("STRIPE_SECRET")
+# # stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 ###########################User/Billing Fixtures###############################
 from django.conf import settings
@@ -59,13 +59,13 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
         # User for pushing outputs from the workers to the webapp.
         comp_api_user = User.objects.create_user(
-            username="comp-api-user",
-            email="comp-api-user@email.com",
+            username="cs-api-user",
+            email="cs-api-user@email.com",
             password="heyhey2222",
         )
 
-        webapp.settings.DEFAULT_CLUSTER_USER = "comp-api-user"
-        webapp.apps.users.models.DEFAULT_CLUSTER_USER = "comp-api-user"
+        webapp.settings.DEFAULT_CLUSTER_USER = "cs-api-user"
+        webapp.apps.users.models.DEFAULT_CLUSTER_USER = "cs-api-user"
         for u in [modeler, sponsor, hdoupe, comp_api_user]:
             Token.objects.create(user=u)
             Profile.objects.create(user=u, is_active=True)
@@ -385,7 +385,7 @@ def get_inputs(comp_inputs_json):
 
 @pytest.fixture
 def comp_api_user(db):
-    return Profile.objects.get(user__username="comp-api-user")
+    return Profile.objects.get(user__username="cs-api-user")
 
 
 ####### Mock requests to kubernetes cluster ##########

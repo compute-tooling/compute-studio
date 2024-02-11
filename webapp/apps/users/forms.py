@@ -13,7 +13,7 @@ from .models import Profile, Project, create_profile_from_user
 
 User = get_user_model()
 
-stripe.api_key = os.environ.get("STRIPE_SECRET")
+# # stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 
 class UserCreationForm(authforms.UserCreationForm):

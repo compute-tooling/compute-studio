@@ -164,7 +164,6 @@ def default_db_url():
         "PORT": "5432",
     }
 
-
 DATABASES = {
     "default": default_db_url(),
     # override database name for tests.
@@ -190,7 +189,6 @@ AUTH_USER_MODEL = "users.User"
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_AUTHENTICATION_METHOD = "username_email"
-ACCOUNT_UNIQUE_EMAIL = False
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators

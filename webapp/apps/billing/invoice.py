@@ -19,7 +19,7 @@ from webapp.apps.billing.models import Customer
 
 import stripe
 
-stripe.api_key = os.environ.get("STRIPE_SECRET")
+# stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 
 def process_simulations(simulations):

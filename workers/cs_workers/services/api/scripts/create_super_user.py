@@ -28,4 +28,4 @@ if __name__ == "__main__":
     session.commit()
     session.refresh(user)
     print("User created successfully:")
-    print(UserSchema.from_orm(user).dict())
+    print(UserSchema.from_attributes(user).dict())

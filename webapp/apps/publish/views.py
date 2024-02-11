@@ -218,10 +218,13 @@ class ProjectAPIView(generics.ListAPIView):
         TokenAuthentication,
         ClusterAuthentication,
     )
-    api_user = User.objects.get(username="comp-api-user")
 
     serializer_class = ProjectSerializer
     pagination_class = ProjectResultsPagination
+
+    @property
+    def api_user(self):
+        return User.objects.get(username="cs-api-user")
 
     def get_queryset(self):
         return projects_with_access(self.request.user)

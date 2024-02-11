@@ -5,7 +5,7 @@ import stripe
 from .models import Customer
 
 
-stripe.api_key = os.environ.get('STRIPE_SECRET')
+# stripe.api_key = os.environ.get('STRIPE_SECRET')
 
 
 def get_customer_from_event(stripe_event):

@@ -63,7 +63,7 @@ class TestPublishViews:
         assert project
         assert project.server_cost
 
-        api_user = Profile.objects.get(user__username="comp-api-user")
+        api_user = Profile.objects.get(user__username="cs-api-user")
         assert project.has_write_access(api_user.user)
         assert project.role(api_user.user) == "write"
         assert project.role(project.cluster.service_account.user) == "write"
@@ -389,7 +389,7 @@ class TestPublishViews:
         mock_deployments_requests_to_cluster,
     ):
         owner, is_public = visibility_params
-        prof = Profile.objects.get(user__username="comp-api-user")
+        prof = Profile.objects.get(user__username="cs-api-user")
         api_client.force_login(prof.user)
 
         project = test_models[0].project

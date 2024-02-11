@@ -10,7 +10,7 @@ from .models import Event, Customer, Subscription
 from .events import get_customer_from_event
 
 
-stripe.api_key = os.environ.get("STRIPE_SECRET")
+# stripe.api_key = os.environ.get("STRIPE_SECRET")
 
 
 def customer_created(event):
