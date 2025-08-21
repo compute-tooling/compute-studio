@@ -370,7 +370,7 @@ document.write(`
 <li><p><strong>Python Example:</strong></p></li>
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="k">def</span> <span class="nf">get_version</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_version</span><span class="p">():</span>
     <span class="k">return</span> <span class="s2">&quot;1.0.0&quot;</span>
 
 </pre></div>
@@ -382,10 +382,10 @@ document.write(`
 <ul class="simple">
 <li><p><strong>Python Example</strong>:</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matchups</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matchups</span>
 
 
-<span class="k">def</span> <span class="nf">get_inputs</span><span class="p">(</span><span class="n">meta_params_dict</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_inputs</span><span class="p">(</span><span class="n">meta_params_dict</span><span class="p">):</span>
     <span class="n">meta_params</span> <span class="o">=</span> <span class="n">matchups</span><span class="o">.</span><span class="n">MetaParams</span><span class="p">()</span>
     <span class="n">meta_params</span><span class="o">.</span><span class="n">adjust</span><span class="p">(</span><span class="n">meta_params_dict</span><span class="p">)</span>
     <span class="n">params</span> <span class="o">=</span> <span class="n">matchups</span><span class="o">.</span><span class="n">MatchupsParams</span><span class="p">()</span>
@@ -441,9 +441,9 @@ document.write(`
 <ul class="simple">
 <li><p><strong>Python</strong>:</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matchups</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matchups</span>
 
-<span class="k">def</span> <span class="nf">validate_inputs</span><span class="p">(</span><span class="n">meta_param_dict</span><span class="p">,</span> <span class="n">adjustment</span><span class="p">,</span> <span class="n">errors_warnings</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_inputs</span><span class="p">(</span><span class="n">meta_param_dict</span><span class="p">,</span> <span class="n">adjustment</span><span class="p">,</span> <span class="n">errors_warnings</span><span class="p">):</span>
     <span class="c1"># matchups doesn&#39;t look at meta_param_dict for validating inputs.</span>
     <span class="n">params</span> <span class="o">=</span> <span class="n">matchups</span><span class="o">.</span><span class="n">MatchupsParams</span><span class="p">()</span>
     <span class="n">params</span><span class="o">.</span><span class="n">adjust</span><span class="p">(</span><span class="n">adjustment</span><span class="p">[</span><span class="s2">&quot;matchup&quot;</span><span class="p">],</span> <span class="n">raise_errors</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -471,9 +471,9 @@ document.write(`
 <ul class="simple">
 <li><p><strong>Python Example</strong>:</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matchups</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matchups</span>
 
-<span class="k">def</span> <span class="nf">get_matchup</span><span class="p">(</span><span class="n">meta_param_dict</span><span class="p">,</span> <span class="n">adjustment</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_matchup</span><span class="p">(</span><span class="n">meta_param_dict</span><span class="p">,</span> <span class="n">adjustment</span><span class="p">):</span>
     <span class="n">result</span> <span class="o">=</span> <span class="n">matchups</span><span class="o">.</span><span class="n">get_matchup</span><span class="p">(</span><span class="n">meta_param_dict</span><span class="p">,</span> <span class="n">adjustment</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">result</span>
 </pre></div>

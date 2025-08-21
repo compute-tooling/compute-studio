@@ -378,7 +378,7 @@ Allow:<span class="w"> </span>POST,<span class="w"> </span>OPTIONS
 </section>
 <section id="python-with-the-requests-library">
 <h2><a class="reference external" href="https://2.python-requests.org/en/master/">Python with the Requests library</a><a class="headerlink" href="#python-with-the-requests-library" title="Permalink to this heading">#</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span> <span class="nn">requests</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 
 <span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">resp</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;https://compute.studio/api-token-auth/&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="s2">&quot;hdoupe&quot;</span><span class="p">,</span> <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;mypass&quot;</span><span class="p">})</span>
 

@@ -395,14 +395,14 @@ document.write(`
 
 <span class="c1"># Adapted from the Dash docs: https://dash.plotly.com/basic-callbacks</span>
 
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">dash</span>
-<span class="kn">import</span> <span class="nn">dash_core_components</span> <span class="k">as</span> <span class="nn">dcc</span>
-<span class="kn">import</span> <span class="nn">dash_html_components</span> <span class="k">as</span> <span class="nn">html</span>
-<span class="kn">from</span> <span class="nn">dash.dependencies</span> <span class="kn">import</span> <span class="n">Input</span><span class="p">,</span> <span class="n">Output</span>
-<span class="kn">import</span> <span class="nn">plotly.express</span> <span class="k">as</span> <span class="nn">px</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dash</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dash_core_components</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dcc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dash_html_components</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">html</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dash.dependencies</span><span class="w"> </span><span class="kn">import</span> <span class="n">Input</span><span class="p">,</span> <span class="n">Output</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">plotly.express</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">px</span>
 
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
 <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;https://raw.githubusercontent.com/plotly/datasets/master/gapminderDataFiveYear.csv&#39;</span><span class="p">)</span>
 
@@ -434,7 +434,7 @@ document.write(`
 <span class="nd">@app</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span>
     <span class="n">Output</span><span class="p">(</span><span class="s1">&#39;graph-with-slider&#39;</span><span class="p">,</span> <span class="s1">&#39;figure&#39;</span><span class="p">),</span>
     <span class="p">[</span><span class="n">Input</span><span class="p">(</span><span class="s1">&#39;year-slider&#39;</span><span class="p">,</span> <span class="s1">&#39;value&#39;</span><span class="p">)])</span>
-<span class="k">def</span> <span class="nf">update_figure</span><span class="p">(</span><span class="n">selected_year</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_figure</span><span class="p">(</span><span class="n">selected_year</span><span class="p">):</span>
     <span class="n">filtered_df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">year</span> <span class="o">==</span> <span class="n">selected_year</span><span class="p">]</span>
 
     <span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">filtered_df</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;gdpPercap&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;lifeExp&quot;</span><span class="p">,</span>
@@ -490,12 +490,12 @@ document.write(`
 
 <span class="c1"># Downloaded from: https://github.com/bokeh/bokeh/blob/branch-2.3/examples/app/sliders.py</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span> <span class="nn">bokeh.io</span> <span class="kn">import</span> <span class="n">curdoc</span>
-<span class="kn">from</span> <span class="nn">bokeh.layouts</span> <span class="kn">import</span> <span class="n">column</span><span class="p">,</span> <span class="n">row</span>
-<span class="kn">from</span> <span class="nn">bokeh.models</span> <span class="kn">import</span> <span class="n">ColumnDataSource</span><span class="p">,</span> <span class="n">Slider</span><span class="p">,</span> <span class="n">TextInput</span>
-<span class="kn">from</span> <span class="nn">bokeh.plotting</span> <span class="kn">import</span> <span class="n">figure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">curdoc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.layouts</span><span class="w"> </span><span class="kn">import</span> <span class="n">column</span><span class="p">,</span> <span class="n">row</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColumnDataSource</span><span class="p">,</span> <span class="n">Slider</span><span class="p">,</span> <span class="n">TextInput</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">figure</span>
 
 <span class="c1"># Set up data</span>
 <span class="n">N</span> <span class="o">=</span> <span class="mi">200</span>
@@ -521,12 +521,12 @@ document.write(`
 
 
 <span class="c1"># Set up callbacks</span>
-<span class="k">def</span> <span class="nf">update_title</span><span class="p">(</span><span class="n">attrname</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_title</span><span class="p">(</span><span class="n">attrname</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
     <span class="n">plot</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">value</span>
 
 <span class="n">text</span><span class="o">.</span><span class="n">on_change</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">,</span> <span class="n">update_title</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">update_data</span><span class="p">(</span><span class="n">attrname</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_data</span><span class="p">(</span><span class="n">attrname</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
 
     <span class="c1"># Get the current slider values</span>
     <span class="n">a</span> <span class="o">=</span> <span class="n">amplitude</span><span class="o">.</span><span class="n">value</span>

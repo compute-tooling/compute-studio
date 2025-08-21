@@ -388,7 +388,7 @@ document.write(`
 <li><p><code class="docutils literal notranslate"><span class="pre">MP4</span></code></p></li>
 </ul>
 <p>Here’s an example for how to create a full result in Python:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">append_output</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">renderable</span><span class="p">,</span> <span class="n">downloadable</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">append_output</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">renderable</span><span class="p">,</span> <span class="n">downloadable</span><span class="p">):</span>
   	<span class="n">js</span><span class="p">,</span> <span class="n">div</span> <span class="o">=</span> <span class="n">make_my_plot</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">title</span><span class="p">)</span>
     <span class="n">renderable</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
         <span class="p">{</span>
@@ -438,8 +438,8 @@ document.write(`
 <ul class="simple">
 <li><p><strong>Python example:</strong></p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">bokeh.plotting</span> <span class="kn">import</span> <span class="n">figure</span>
-<span class="kn">from</span> <span class="nn">bokeh.embed</span> <span class="kn">import</span> <span class="n">json_item</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">figure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.embed</span><span class="w"> </span><span class="kn">import</span> <span class="n">json_item</span>
 
 <span class="c1"># see: https://bokeh.pydata.org/en/latest/docs/user_guide/quickstart.html#getting-started</span>
 
@@ -479,7 +479,7 @@ document.write(`
 <ul class="simple">
 <li><p><strong>Python example:</strong></p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
 <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]})</span>
 <span class="n">table</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">to_html</span><span class="p">()</span>
@@ -507,7 +507,7 @@ document.write(`
 <ul class="simple">
 <li><p><strong>Python example:</strong></p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
 <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]})</span>
 <span class="n">csv</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">()</span>
@@ -535,10 +535,10 @@ document.write(`
 <ul class="simple">
 <li><p><strong>Python example:</strong></p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">io</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
 
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="c1"># see: https://matplotlib.org/tutorials/introductory/usage.html#matplotlib-pyplot-and-pylab-how-are-they-related</span>
 
