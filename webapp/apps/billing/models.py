@@ -448,7 +448,7 @@ class Subscription(models.Model):
         subscription = stripe.Subscription.create(
             customer=customer.stripe_id,
             items=[{"plan": plan.stripe_id} for plan in plans],
-            coupon=coupon,
+            discounts=[{'coupon': coupon}],
             cancel_at=int(cancel_at.timestamp()) if cancel_at is not None else None,
             trial_end=int(trial_end.timestamp()) if trial_end is not None else None,
         )
